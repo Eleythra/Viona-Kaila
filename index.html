@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0e14" />
+    <title>Viona — Kaila Beach Hotel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- Dil seçimi -->
+      <section id="view-lang" class="view view--lang" aria-label="Dil seçimi">
+        <div class="lang-bg" aria-hidden="true"></div>
+        <div class="lang-overlay"></div>
+        <div class="lang-content">
+          <div class="lang-content-accent" aria-hidden="true"></div>
+          <p class="lang-brand">Viona</p>
+          <h1 class="lang-title" data-i18n="langScreenTitle">Dil seçin</h1>
+          <p class="lang-sub" data-i18n="langScreenSubtitle"></p>
+          <div class="lang-grid" role="group" aria-label="Diller">
+            <button type="button" class="lang-chip" data-lang="tr" aria-pressed="false">Türkçe</button>
+            <button type="button" class="lang-chip" data-lang="en" aria-pressed="false">English</button>
+            <button type="button" class="lang-chip" data-lang="de" aria-pressed="false">Deutsch</button>
+            <button type="button" class="lang-chip" data-lang="ru" aria-pressed="false">Русский</button>
+          </div>
+          <button type="button" class="btn-primary lang-cta" id="btn-lang-continue" data-i18n="continue" disabled>
+            Devam et
+          </button>
+        </div>
+      </section>
+
+      <!-- Ana sayfa -->
+      <main id="view-home" class="view view--home hidden" aria-hidden="true">
+        <header class="home-head">
+          <div class="carousel" id="carousel" aria-roledescription="carousel">
+            <div class="carousel-track" id="carousel-track"></div>
+            <div class="carousel-shine" aria-hidden="true"></div>
+          </div>
+          <div class="home-hero glass-block">
+            <h1 class="home-hero__title" data-i18n="homeTitle">Kaila Beach Hotel</h1>
+            <p class="home-hero__slogan" data-i18n="introLead"></p>
+          </div>
+        </header>
+
+        <div class="home-body">
+          <article class="glass-block glass-block--accent home-app-card home-reveal">
+            <p class="home-app-kicker" data-i18n="appVionaTitle"></p>
+            <p class="home-app-text" data-i18n="appIntro"></p>
+          </article>
+
+          <div class="dual-actions home-reveal">
+            <button type="button" class="action-tile action-tile--gold" id="btn-open-rate">
+              <svg class="action-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                <path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7L12 17.8 5.7 21l2.3-7-6-4.6h7.6L12 2z" />
+              </svg>
+              <span class="action-tile__text">
+                <span class="action-tile__title" data-i18n="btnRate">Bizi değerlendirin</span>
+                <span class="action-tile__hint" data-i18n="btnRateHint"></span>
+              </span>
+            </button>
+            <button type="button" class="action-tile action-tile--cyan" id="btn-open-viona">
+              <svg class="action-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                <rect x="5" y="8" width="14" height="10" rx="3" />
+                <path d="M9 8V6a3 3 0 016 0v2" />
+                <circle cx="10" cy="13" r="1" fill="currentColor" />
+                <circle cx="14" cy="13" r="1" fill="currentColor" />
+                <path d="M9 18v2M15 18v2" />
+              </svg>
+              <span class="action-tile__text">
+                <span class="action-tile__title" data-i18n="btnViona">Viona otel asistanı</span>
+                <span class="action-tile__hint" data-i18n="btnVionaHint"></span>
+              </span>
+            </button>
+          </div>
+
+          <div class="module-grid home-module-grid" id="module-grid"></div>
+
+          <footer class="site-footer" data-i18n="footer"></footer>
+        </div>
+      </main>
+
+      <!-- Modül / alt sayfa -->
+      <section id="view-module" class="view view--module hidden" aria-hidden="true">
+        <button type="button" class="btn-back" id="btn-back" data-i18n="back">Geri</button>
+        <div class="module-inner glass-block" id="module-inner"></div>
+      </section>
+
+      <!-- Değerlendirme modal -->
+      <div class="modal-root hidden" id="modal-rate" role="dialog" aria-modal="true" aria-labelledby="modal-rate-title">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-sheet glass-block">
+          <div class="modal-head">
+            <div class="modal-head-text">
+              <h2 id="modal-rate-title" data-i18n="rateModalTitle"></h2>
+              <p class="modal-lead" data-i18n="rateModalLead"></p>
+            </div>
+            <button type="button" class="btn-icon-close" data-close-modal data-i18n-aria="close">
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
+          <div class="rate-modal-body" id="rate-links"></div>
+        </div>
+      </div>
+
+      <!-- Viona modal — otel asistanı (metin sohbet, API: js/viona-chat-config.js) -->
+      <div class="modal-root hidden" id="modal-viona" role="dialog" aria-modal="true" aria-labelledby="modal-viona-title">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-sheet modal-sheet--viona glass-block" id="modal-viona-sheet">
+          <div class="modal-head modal-head--viona">
+            <div class="modal-head-text">
+              <h2 id="modal-viona-title" data-i18n="btnViona"></h2>
+              <p class="modal-lead modal-lead--viona" data-i18n="vionaIntro"></p>
+            </div>
+            <button type="button" class="btn-icon-close" data-close-modal data-i18n-aria="close">
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
+
+          <div class="viona-chat" id="viona-chat" aria-describedby="modal-viona-title">
+            <div class="viona-chat__toolbar" role="toolbar" data-i18n-aria="chatAriaToolbar">
+              <button type="button" class="viona-chat__toolbar-btn" id="viona-chat-clear" data-i18n="chatClear"></button>
+            </div>
+
+            <div
+              class="viona-chat__scroll"
+              id="viona-chat-scroll"
+              role="log"
+              aria-live="polite"
+              aria-relevant="additions"
+              data-i18n-aria="chatAriaLog"
+            >
+              <div class="viona-chat__welcome" id="viona-chat-welcome">
+                <div class="viona-chat__welcome-ico" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                    <rect x="5" y="8" width="14" height="10" rx="3" />
+                    <path d="M9 8V6a3 3 0 016 0v2" />
+                    <circle cx="10" cy="13" r="1" fill="currentColor" />
+                    <circle cx="14" cy="13" r="1" fill="currentColor" />
+                  </svg>
+                </div>
+                <p class="viona-chat__welcome-title"><span class="viona-chat__welcome-brand">Viona</span><span data-i18n="chatWelcomeTitleLine"></span></p>
+                <p class="viona-chat__welcome-lead" data-i18n="chatWelcomeLead"></p>
+                <p class="viona-chat__welcome-hint" data-i18n="chatEmptyHint"></p>
+              </div>
+              <div class="viona-chat__messages" id="viona-chat-messages"></div>
+              <div class="viona-chat__typing hidden" id="viona-chat-typing" aria-hidden="true"></div>
+            </div>
+
+            <div class="viona-chat__quick" id="viona-chat-quick" role="group" data-i18n-aria="chatAriaQuick"></div>
+
+            <div class="viona-chat__composer">
+              <label class="viona-chat__label visually-hidden" for="viona-chat-input" data-i18n="chatComposerLabel"></label>
+              <textarea
+                id="viona-chat-input"
+                class="viona-chat__input"
+                rows="1"
+                maxlength="2000"
+                autocomplete="off"
+                data-i18n-placeholder="chatPlaceholder"
+                data-i18n-aria="chatAriaInput"
+              ></textarea>
+              <button type="button" class="viona-chat__send btn-primary" id="viona-chat-send" data-i18n="chatSend"></button>
+            </div>
+            <p class="viona-chat__fineprint" data-i18n="chatFineprint"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/i18n.js"></script>
+    <script src="js/content-shared.js"></script>
+    <script src="js/requests/config.js"></script>
+    <script src="js/requests/mock-api.js"></script>
+    <script src="js/calendar-picker.js"></script>
+    <script src="js/content-general.js"></script>
+    <script src="js/content-rest.js"></script>
+    <script src="js/content-beach.js"></script>
+    <script src="js/content-alacarte.js"></script>
+    <script src="js/content-spa.js"></script>
+    <script src="js/content-discount.js"></script>
+    <script src="js/content-activities.js"></script>
+    <script src="js/content-miniclub.js"></script>
+    <script src="js/content-meeting.js"></script>
+    <script src="js/content-alanya.js"></script>
+    <script src="js/render-requests-module.js"></script>
+    <script src="js/content-where.js"></script>
+    <script src="js/viona-chat-config.js"></script>
+    <script src="js/viona-chat.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>
