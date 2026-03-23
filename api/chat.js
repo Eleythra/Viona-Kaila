@@ -208,7 +208,31 @@ Kurallar:
       }),
     });
 
-    const data = await openaiRes.json();
+    console.log("[OPENAI STATUS]", openaiRes.status, openaiRes.statusText);
+    const rawBody = await openaiRes.text();
+    console.log("[OPENAI RESPONSE]", rawBody);
+
+    let data = {};
+    try {
+      data = rawBody ? JSON.parse(rawBody) : {};
+    } catch (parseError) {
+      console.error("[OPENAI ERROR]", "response_parse_failed", parseError);
+      data = {};
+    }
+
+    if (!openaiRes.ok) {
+      console.error("[OPENAI ERROR]", {
+        status: openaiRes.status,
+        message: (data && (data.error?.message || data.message)) || "openai_request_failed",
+      });
+      const reply = lang.fallback;
+      return res.status(200).json({ reply });
+    }
+
+    console.log("[OPENAI RESPONSE] output_text:", data ? data.output_text : undefined);
+    console.log("[OPENAI RESPONSE] output:", data ? data.output : undefined);
+    console.log("[OPENAI RESPONSE] error:", data ? data.error : undefined);
+
     const reply = data && data.output_text ? data.output_text : lang.fallback;
     return res.status(200).json({ reply });
   } catch (error) {
