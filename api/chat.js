@@ -129,6 +129,27 @@ async function parseBody(req) {
   return {};
 }
 
+function extractReplyFromResponse(data) {
+  if (data && typeof data.output_text === "string" && data.output_text.trim()) {
+    return data.output_text.trim();
+  }
+
+  const output = data && Array.isArray(data.output) ? data.output : [];
+  const parts = [];
+
+  for (const item of output) {
+    if (!item || item.type !== "message" || !Array.isArray(item.content)) continue;
+    for (const contentItem of item.content) {
+      if (contentItem && contentItem.type === "output_text" && typeof contentItem.text === "string") {
+        const text = contentItem.text.trim();
+        if (text) parts.push(text);
+      }
+    }
+  }
+
+  return parts.join("\n").trim();
+}
+
 module.exports = async function handler(req, res) {
   if (req.method === "OPTIONS") {
     res.setHeader("Allow", "POST,OPTIONS");
@@ -233,7 +254,8 @@ Kurallar:
     console.log("[OPENAI RESPONSE] output:", data ? data.output : undefined);
     console.log("[OPENAI RESPONSE] error:", data ? data.error : undefined);
 
-    const reply = data && data.output_text ? data.output_text : lang.fallback;
+    const extractedReply = extractReplyFromResponse(data);
+    const reply = extractedReply || lang.fallback;
     return res.status(200).json({ reply });
   } catch (error) {
     console.error("CHAT ERROR:", error);
