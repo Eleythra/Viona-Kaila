@@ -14,6 +14,7 @@
     { id: "miniclub", i18nKey: "modMini", icon: "smile" },
     { id: "meeting", i18nKey: "modMeet", icon: "users" },
     { id: "alanya", i18nKey: "modAlanya", icon: "compass" },
+    { id: "survey", i18nKey: "modSurvey", icon: "star", isSurvey: true },
   ];
 
   const REQUEST_SUBS = [
@@ -46,6 +47,7 @@
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M17 21v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>',
     compass:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><path d="M14.5 9.5l-3 5-2-2 5-3z"/></svg>',
+    star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7L12 17.8 5.7 21l2.3-7-6-4.6h7.6L12 2z"/></svg>',
   };
 
   /** i18n.js ile aynı anahtar; burada da tanımlı olsun (bağımsız yükleme). */
@@ -60,12 +62,26 @@
 
   let moduleId = null;
   let requestSub = null;
+  let surveySub = null;
 
   const el = (id) => document.getElementById(id);
+
+  const SURVEY_TITLE_FALLBACK = {
+    tr: "Otel ve Uygulama Deneyiminizi Değerlendirin",
+    en: "Rate Your Hotel and App Experience",
+    de: "Bewerten Sie Ihr Hotel- und App-Erlebnis",
+    ru: "Оцените ваш опыт отеля и приложения",
+  };
 
   function t(key) {
     const L = I18N[lang] || I18N.tr;
     return L[key] !== undefined ? L[key] : I18N.tr[key] || key;
+  }
+
+  function surveyTitleText() {
+    const translated = t("modSurvey");
+    if (translated !== "modSurvey") return translated;
+    return SURVEY_TITLE_FALLBACK[lang] || SURVEY_TITLE_FALLBACK.tr;
   }
 
   function applyI18n(root) {
@@ -168,14 +184,14 @@
     MODULE_DEFS.forEach((def) => {
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "module-card";
+      btn.className = "module-card" + (def.isSurvey ? " module-card--survey" : "");
       btn.dataset.moduleId = def.id;
       const iconWrap = document.createElement("div");
       iconWrap.className = "module-card__icon";
       iconWrap.innerHTML = ICONS[def.icon] || ICONS.building;
       const text = document.createElement("div");
       text.className = "module-card__text";
-      text.textContent = t(def.i18nKey);
+      text.textContent = def.isSurvey ? surveyTitleText() : def.title || t(def.i18nKey);
       btn.appendChild(iconWrap);
       btn.appendChild(text);
       btn.addEventListener("click", () => openModule(def.id));
@@ -270,6 +286,7 @@
   function openModule(id) {
     moduleId = id;
     requestSub = null;
+    surveySub = null;
     renderModuleContent();
     showView("module");
   }
@@ -304,6 +321,24 @@
         const p = document.createElement("p");
         p.className = "placeholder";
         p.textContent = t("reqErrApi");
+        inner.appendChild(p);
+      }
+      return;
+    }
+
+    if (def.isSurvey) {
+      if (typeof window.renderSurveyModule === "function") {
+        window.renderSurveyModule(inner, surveySub, {
+          setSub: (id) => {
+            surveySub = id;
+            renderModuleContent();
+          },
+          moduleTitle: surveyTitleText(),
+        });
+      } else {
+        const p = document.createElement("p");
+        p.className = "placeholder";
+        p.textContent = t("placeholderBody");
         inner.appendChild(p);
       }
       return;
@@ -348,6 +383,11 @@
       renderModuleContent();
       return;
     }
+    if (moduleId === "survey" && surveySub) {
+      surveySub = null;
+      renderModuleContent();
+      return;
+    }
     const inner = el("module-inner");
     if (inner._whereCleanup && typeof inner._whereCleanup === "function") {
       inner._whereCleanup();
@@ -355,6 +395,7 @@
     }
     moduleId = null;
     requestSub = null;
+    surveySub = null;
     showView("home");
   }
 
@@ -404,6 +445,7 @@
       }
       setLang(selectedLangCode);
       showView("home");
+      if (typeof window.showDiscountPopup === "function") window.showDiscountPopup();
     });
   }
 
@@ -459,6 +501,7 @@
         c.setAttribute("aria-pressed", on ? "true" : "false");
       });
       showView("home");
+      if (typeof window.showDiscountPopup === "function") window.showDiscountPopup();
     } else {
       applyI18n(document);
       showView("lang");

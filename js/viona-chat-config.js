@@ -1,23 +1,17 @@
 /**
- * Viona sohbet — backend / RAG API bağlantısı
- * Endpoint boş bırakıldığında yerel önizleme yanıtı kullanılır.
- *
- * Beklenen istek gövdesi (POST JSON):
- *   { "messages": [{ "role": "user"|"assistant", "content": "..." }], "locale": "tr"|"en"|"de"|"ru" }
- * Beklenen yanıt (200):
- *   { "reply": "..." } veya { "message": "..." } veya { "text": "..." } veya { "answer": "..." }
+ * Viona sohbet — frontend yapılandırması
+ * Backend endpoint'i ve istemci tarafı varsayılanlar.
  */
 (function () {
   "use strict";
 
+  var isLocalhost =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
+
   window.VIONA_CHAT_CONFIG = {
-    /** Örn. "/api/viona/chat" veya tam URL. Boş = demo modu. */
-    endpoint: "",
-    /** fetch için ek başlıklar (örn. Authorization) */
-    headers: {},
-    /** "same-origin" | "omit" | "include" */
-    credentials: "same-origin",
-    /** Demo modunda yapay gecikme (ms) */
-    mockDelayMs: 850,
+    endpoint: isLocalhost ? "http://localhost:3001/api/chat" : "/api/chat",
+    errorReply:
+      "Şu anda asistana ulaşılamıyor. Lütfen birkaç saniye sonra tekrar deneyin.",
   };
 })();

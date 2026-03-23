@@ -3,5 +3,7 @@ Thumbs.db
 *.swp
 *~
 node_modules/
+server/node_modules/
 .env
 .env.*
+.vercel/

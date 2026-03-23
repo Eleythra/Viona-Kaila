@@ -1,5 +1,5 @@
 /**
- * Viona otel asistanı — metin sohbeti (ses yok). API: viona-chat-config.js
+ * Viona otel asistanı — metin sohbeti (backend: http://localhost:3001/api/chat)
  */
 (function () {
   "use strict";
@@ -7,93 +7,6 @@
   var LANG_KEY = "viona_lang";
   var MAX_INPUT = 2000;
   var MAX_MESSAGES = 80;
-
-  /** API yokken otel odaklı, çok dilli demo yanıtları (anahtar kelime eşlemesi). */
-  var MOCK_ANSWERS = {
-    tr: {
-      restaurant:
-        "Ana restoran ve barlar gün boyu Ultra Her Şey Dahil kapsamında hizmet verir; à la carte seçenekleri için uygulamada «Restaurant & barlar» ve «A la carte» bölümlerine bakın. Güncel saat ve menü için resepsiyon: dahili 9.",
-      pool:
-        "Tesis denize sıfırdır; plajda şezlong ve şemsiye ücretsizdir. Açık ve kapalı havuzlar, aquapark ve çocuk havuzu mevcuttur. Ayrıntılar için «Plaj & havuzlar» modülüne göz atabilirsiniz.",
-      spa:
-        "Spa ve wellness hizmetleri için «Spa & wellness» bölümünden bilgi alın; randevu ve saatler için spa birimi veya resepsiyon (dahili 9) ile iletişime geçebilirsiniz.",
-      checkin:
-        "Check-in saati 14:00, check-out 12:00’dir. Resepsiyon 24 saattir; dahili hat 9. Kart veya hassas bilgileri sohbette paylaşmayın — yüz yüze veya telefonla iletin.",
-      wifi:
-        "Genel alanlarda ve odalarda ücretsiz Wi‑Fi sunulur. Bağlantı sorununda resepsiyona (dahili 9) danışın.",
-      default:
-        "Kaila Beach Hotel, Alanya Obagöl’de denize sıfır konumda Ultra Her Şey Dahil konseptiyle hizmet verir. Restoran, havuz, spa ve daha fazlası için ana sayfadaki modüllere bakın veya sorunuzu kısaca detaylandırın. Resepsiyon: dahili 9.",
-    },
-    en: {
-      restaurant:
-        "Main restaurant and bars operate on Ultra All Inclusive throughout the day; see «Restaurants & bars» and «À la carte» in the app for venues and details. For the latest hours, contact reception (dial 9).",
-      pool:
-        "The resort is beachfront; sun loungers and parasols are free on the beach. Outdoor and indoor pools, aquapark and kids’ pool are available — see «Beach & pools» for more.",
-      spa:
-        "For spa & wellness, open «Spa & wellness» in the app. Book or confirm times via the spa desk or reception (dial 9).",
-      checkin:
-        "Check-in is from 14:00 and check-out by 12:00. Reception is 24h (dial 9). Do not share card or sensitive data in chat — use the desk or phone.",
-      wifi:
-        "Free Wi‑Fi is available in public areas and guest rooms. If you have connection issues, ask reception (dial 9).",
-      default:
-        "Kaila Beach Hotel is in Obagöl, Alanya, beachfront with Ultra All Inclusive. Browse the home modules for restaurants, pools, spa and more, or rephrase your question with a bit more detail. Reception: dial 9.",
-    },
-    de: {
-      restaurant:
-        "Hauptrestaurant und Bars sind tagsüber im Ultra-All-inclusive inklusive; «Restaurants & Bars» und «À la carte» in der App zeigen Details. Aktuelle Zeiten: Rezeption (Nebenstelle 9).",
-      pool:
-        "Direkt am Strand; Liegen und Schirme am Strand kostenlos. Außen- und Hallenbad, Aquapark und Kinderbecken — mehr unter «Strand & Pools».",
-      spa:
-        "Spa & Wellness: Infos unter «Spa & Wellness»; Termine über Spa oder Rezeption (9).",
-      checkin:
-        "Check-in ab 14:00, Check-out bis 12:00. Rezeption 24 h (9). Keine Kartendaten im Chat — bitte am Schalter oder telefonisch.",
-      wifi:
-        "Kostenloses WLAN in öffentlichen Bereichen und Zimmern. Bei Problemen: Rezeption (9).",
-      default:
-        "Kaila Beach Hotel liegt in Alanya Obagöl, direkt am Strand, Ultra All Inclusive. Nutzen Sie die Module auf der Startseite oder präzisieren Sie Ihre Frage. Rezeption: 9.",
-    },
-    ru: {
-      restaurant:
-        "Основной ресторан и бары работают в концепции Ultra All Inclusive; детали — в разделах «Рестораны и бары» и «À la carte». Актуальное время — на ресепшене (доб. 9).",
-      pool:
-        "Отель на первой линии; шезлонги и зонты на пляже бесплатны. Открытый и крытый бассейны, аквапарк, детский бассейн — см. «Пляж и бассейны».",
-      spa:
-        "Спа и wellness — раздел «Спа и wellness»; запись через спа или ресепшен (доб. 9).",
-      checkin:
-        "Заезд с 14:00, выезд до 12:00. Ресепшен круглосуточно (доб. 9). Не отправляйте данные карт в чате — только лично или по телефону.",
-      wifi:
-        "Бесплатный Wi‑Fi в зонах общего пользования и в номерах. Проблемы с сетью — на ресепшен (доб. 9).",
-      default:
-        "Kaila Beach Hotel в Обагёле, Аланья, первая линия, Ultra All Inclusive. Подробности — в модулях на главной или уточните вопрос. Ресепшен: доб. 9.",
-    },
-  };
-
-  function pickMockAnswer(userText, locale) {
-    var q = userText.toLowerCase();
-    var pack = MOCK_ANSWERS[locale] || MOCK_ANSWERS.en;
-    if (
-      /restoran|restaurant|bar|yemek|buffet|breakfast|kahvaltı|frühstück|завтрак|ужин|обед|ресторан|essen|à la carte|a la carte|alacarte|dinner|lunch/.test(
-        q
-      )
-    ) {
-      return pack.restaurant;
-    }
-    if (/havuz|pool|plaj|beach|strand|aquapark|aqua|пляж|бассейн|аквапарк|sun|deniz|sea|meer/.test(q)) {
-      return pack.pool;
-    }
-    if (/spa|wellness|massage|masaj|massage|массаж|hamam|сауна|peeling|кесе/.test(q)) {
-      return pack.spa;
-    }
-    if (
-      /check|giriş|çıkış|check-in|checkout|check-out|rezeption|засел|выезд|заезд|выезд|14:00|12:00|uhrzeit|час заезда/.test(q)
-    ) {
-      return pack.checkin;
-    }
-    if (/wifi|wi-fi|wlan|internet|интернет|беспровод|kablosuz|kabel|netz/.test(q)) {
-      return pack.wifi;
-    }
-    return pack.default;
-  }
 
   var state = {
     messages: [],
@@ -207,7 +120,6 @@
     }
     if (!lastUserText) return;
 
-    var locale = getLang();
     state.pending = true;
     setTyping(true);
     if (els.input) {
@@ -219,7 +131,7 @@
       els.send.setAttribute("aria-busy", "true");
     }
 
-    callChatApi(lastUserText, locale)
+    askViona(lastUserText, getLang())
       .then(function (reply) {
         state.messages.push({ role: "assistant", content: reply });
         trimHistory();
@@ -227,7 +139,7 @@
       .catch(function () {
         state.messages.push({
           role: "assistant",
-          content: t("chatError"),
+          content: getClientErrorReply(),
           error: true,
         });
         trimHistory();
@@ -266,55 +178,33 @@
     }
   }
 
-  function mockReply(userText, locale) {
+  function getClientErrorReply() {
     var cfg = window.VIONA_CHAT_CONFIG || {};
-    var delay = typeof cfg.mockDelayMs === "number" ? cfg.mockDelayMs : 780;
-    var text = pickMockAnswer(userText, locale);
-    return new Promise(function (resolve) {
-      setTimeout(function () {
-        resolve(text);
-      }, delay);
-    });
+    if (typeof cfg.errorReply === "string" && cfg.errorReply.trim()) {
+      return cfg.errorReply.trim();
+    }
+    return t("chatError");
   }
 
-  function callChatApi(userText, locale) {
+  async function askViona(message, locale) {
     var cfg = window.VIONA_CHAT_CONFIG || {};
-    var url = cfg.endpoint;
-    if (!url || String(url).trim() === "") {
-      return mockReply(userText, locale);
-    }
-
-    var payloadMessages = state.messages
-      .filter(function (m) {
-        return !m.error;
-      })
-      .map(function (m) {
-        return { role: m.role, content: m.content };
-      });
-
-    return fetch(url, {
+    var endpoint =
+      typeof cfg.endpoint === "string" && cfg.endpoint.trim()
+        ? cfg.endpoint.trim()
+        : "http://localhost:3001/api/chat";
+    var response = await fetch(endpoint, {
       method: "POST",
-      headers: Object.assign({ "Content-Type": "application/json" }, cfg.headers || {}),
-      body: JSON.stringify({
-        messages: payloadMessages,
-        locale: locale,
-        lastUserMessage: userText,
-      }),
-      credentials: cfg.credentials || "same-origin",
-    }).then(function (res) {
-      if (!res.ok) throw new Error("http_" + res.status);
-      return res.json();
-    }).then(function (data) {
-      var text =
-        (data && (data.reply || data.message || data.text || data.answer || data.content)) || "";
-      text = typeof text === "string" ? text : String(text || "");
-      if (!text.trim()) throw new Error("empty_reply");
-      return text;
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: message, locale: locale || "tr" }),
     });
+    var data = await response.json();
+    var reply = data && data.reply ? String(data.reply) : "";
+    if (!response.ok && !reply.trim()) throw new Error("http_" + response.status);
+    if (!reply.trim()) throw new Error("empty_reply");
+    return reply;
   }
 
   function sendPipeline(text) {
-    var locale = getLang();
     var clean = text.replace(/\r/g, "").trim();
     if (!clean || state.pending) return;
 
@@ -332,7 +222,7 @@
       els.send.setAttribute("aria-busy", "true");
     }
 
-    callChatApi(clean, locale)
+    askViona(clean, getLang())
       .then(function (reply) {
         state.messages.push({ role: "assistant", content: reply });
         trimHistory();
@@ -340,7 +230,7 @@
       .catch(function () {
         state.messages.push({
           role: "assistant",
-          content: t("chatError"),
+          content: getClientErrorReply(),
           error: true,
         });
         trimHistory();
