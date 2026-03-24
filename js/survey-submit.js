@@ -1,20 +1,29 @@
 (function () {
   "use strict";
 
-  function submitSurvey(payload, opts) {
+  async function submitSurvey(payload, opts) {
     var options = opts || {};
     if (typeof options.onBeforeSubmit === "function") {
       options.onBeforeSubmit(payload);
     }
 
-    // Supabase entegrasyonunda bu fonksiyon doğrudan insert çağrısına bağlanabilir.
-    console.log("survey_payload", payload);
-
-    return Promise.resolve({
-      ok: true,
-      message: "mock_submitted",
-      payload: payload,
+    var cfg = window.VIONA_API_CONFIG || {};
+    var endpoint = cfg.surveysEndpoint || "/api/surveys";
+    var response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload || {}),
     });
+    var data = await response.json();
+
+    if (!response.ok || !data || data.ok !== true || !data.id) {
+      throw new Error((data && data.error) || "survey_submit_failed");
+    }
+
+    return {
+      ok: true,
+      id: String(data.id),
+    };
   }
 
   window.SurveySubmit = {

@@ -17,13 +17,24 @@
    * @param {GuestRequestPayload} payload
    * @returns {Promise<{ ok: boolean, id: string }>}
    */
-  window.submitGuestRequest = function (payload) {
-    return new Promise(function (resolve) {
-      var id = "req-" + Date.now().toString(36);
-      console.info("[Viona mock API] submitGuestRequest", id, payload);
-      setTimeout(function () {
-        resolve({ ok: true, id: id });
-      }, 400);
+  window.submitGuestRequest = async function (payload) {
+    var cfg = window.VIONA_API_CONFIG || {};
+    var endpoint = cfg.guestRequestsEndpoint || "/api/guest-requests";
+
+    var response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload || {}),
     });
+    var data = await response.json();
+
+    if (!response.ok || !data || data.ok !== true || !data.id) {
+      throw new Error((data && data.error) || "guest_request_submit_failed");
+    }
+    return {
+      ok: true,
+      id: String(data.id),
+      bucket: String(data.bucket || ""),
+    };
   };
 })();
