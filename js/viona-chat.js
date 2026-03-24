@@ -288,7 +288,7 @@
 
   function wireQuick() {
     if (!els.quick) return;
-    var prompts = ["chatQuickRest", "chatQuickPool", "chatQuickSpa", "chatQuickCheck", "chatQuickWifi"];
+    var prompts = ["chatQuickRest", "chatQuickPool", "chatQuickSpa", "chatQuickAnim"];
     els.quick.innerHTML = "";
     prompts.forEach(function (key) {
       var btn = document.createElement("button");

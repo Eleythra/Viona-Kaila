@@ -1,47 +1,47 @@
 const TEXTS = {
   tr: {
     greeting:
-      "Merhaba, ben Viona. Kaila Beach Hotel için geliştirilen sanal asistanım. Size nasıl yardımcı olabilirim?",
+      "Merhaba, ben Viona. Kaila Beach Hotel'deki tatilinizi daha keyifli hale getirmek icin buradayim; size hemen yardimci olayim.",
     checkout: "Check-out saati en geç 12:00'dır.",
     checkin: "Check-in saati 14:00'tür.",
     wifi: "Wi-Fi hem odalarda hem genel alanlarda ücretsizdir.",
     fallback:
       "Bu konuda elimde doğrulanmış bilgi bulunmuyor. En doğru bilgi için lütfen resepsiyonla iletişime geçin.",
     responseLangRule: "Her zaman Türkçe cevap ver.",
-    wellbeing: "Merhaba! Kaila Beach Hotel ile ilgili bir sorunuz varsa yardımcı olabilirim.",
+    wellbeing: "Cok iyiyim, tesekkur ederim. Kaila Beach Hotel ile ilgili neye ihtiyaciniz varsa memnuniyetle yardimci olurum.",
   },
   en: {
     greeting:
-      "Hello, I am Viona, the virtual assistant for Kaila Beach Hotel. How can I help you?",
+      "Hello, I am Viona. I am here to make your Kaila Beach Hotel stay easier and more enjoyable.",
     checkout: "Check-out time is 12:00 at the latest.",
     checkin: "Check-in time is 14:00.",
     wifi: "Wi-Fi is free in both rooms and common areas.",
     fallback:
       "I do not have verified information on this topic. Please contact reception for the most accurate information.",
     responseLangRule: "Always reply in English.",
-    wellbeing: "Hello! If you have a question about Kaila Beach Hotel, I can help you.",
+    wellbeing: "I am doing great, thank you. I am here if you need anything about Kaila Beach Hotel.",
   },
   de: {
     greeting:
-      "Hallo, ich bin Viona, die virtuelle Assistentin des Kaila Beach Hotels. Wie kann ich Ihnen helfen?",
+      "Hallo, ich bin Viona. Ich bin hier, um Ihren Aufenthalt im Kaila Beach Hotel einfacher und angenehmer zu machen.",
     checkout: "Die Check-out-Zeit ist spaetestens 12:00 Uhr.",
     checkin: "Die Check-in-Zeit ist 14:00 Uhr.",
     wifi: "WLAN ist in Zimmern und Gemeinschaftsbereichen kostenlos.",
     fallback:
       "Dazu liegen mir keine verifizierten Informationen vor. Bitte wenden Sie sich fuer die genaueste Auskunft an die Rezeption.",
     responseLangRule: "Antworte immer auf Deutsch.",
-    wellbeing: "Hallo! Wenn Sie eine Frage zum Kaila Beach Hotel haben, helfe ich Ihnen gerne.",
+    wellbeing: "Mir geht es sehr gut, danke. Wenn Sie etwas zum Kaila Beach Hotel brauchen, helfe ich Ihnen gern.",
   },
   ru: {
     greeting:
-      "Здравствуйте, я Viona, виртуальный ассистент Kaila Beach Hotel. Чем могу помочь?",
+      "Здравствуйте, я Viona. Я здесь, чтобы сделать ваш отдых в Kaila Beach Hotel более комфортным и приятным.",
     checkout: "Время выезда не позднее 12:00.",
     checkin: "Время заезда с 14:00.",
     wifi: "Wi-Fi бесплатный и в номерах, и в общих зонах.",
     fallback:
       "У меня нет подтвержденной информации по этому вопросу. Для наиболее точной информации обратитесь на ресепшн.",
     responseLangRule: "Всегда отвечай на русском языке.",
-    wellbeing: "Здравствуйте! Если у вас есть вопрос о Kaila Beach Hotel, я с радостью помогу.",
+    wellbeing: "Спасибо, у меня все отлично. С радостью помогу вам по любым вопросам о Kaila Beach Hotel.",
   },
 };
 
@@ -90,29 +90,57 @@ function isWellbeing(text) {
 }
 
 function getHardcodedAnswer(text, locale) {
-  const t = String(text || "").toLowerCase();
-  const lang = TEXTS[locale] || TEXTS.tr;
+  const t = String(text || "").toLowerCase().trim();
+  const lang = resolveLocale(locale);
+
+  const answers = {
+    tr: {
+      restaurant:
+        "Restoran saatleri:\nKaila Beach Hotel restoran ve yeme icme birimlerinin saatleri su sekildedir:\n- Ana Restoran: Kahvalti 07:00-10:00, Gec kahvalti 10:00-10:30, Ogle yemegi 12:30-14:00, Aksam yemegi 19:00-21:00, Mini gece bufesi 23:30-00:00\n- Sinton BBQ Restaurant (a la carte): 13:00-22:00, Pazartesi kapali\n- La Terrace A La Carte Restaurant: 18:45-21:00\n- Mare Restaurant (a la carte, balik): rezervasyonlu\n- Dolphin Snack: 12:00-16:00\n- Beach Imbiss: 12:00-16:00, Icecek servisi 10:00-17:00\n- Gusto Snack: 11:00-18:00\n- Libum Cafe: 11:00-16:30\n- Moss Bar ve Snack Restoran: 10:00-19:00\nBarlar:\n- Havuz Bar: 10:00-00:00\n- Lobby Bar: 10:00-00:00\n- Aqua Bar: 10:00-18:00 ve 20:00-23:00\n- Dolphin Bar: 10:00-17:00",
+      pool:
+        "Havuz ve plaj:\nKaila Beach Hotel'de ozel plaj bulunmaktadir; plajda sezlong, semsiye ve plaj havlusu ucretsizdir, plaj kullanim saatleri 08:30-19:00 arasindadir. Havuz olarak ise acik havuzlardan Relax Pool (08:00-19:00), aquapark (10:00-12:00 ve 14:00-16:00) ve Dolphin Pool (10:00-12:00 ve 14:00-16:00) ile kapali havuz (08:00-19:00) mevcuttur.",
+      spa:
+        "Spa ve wellness:\nKaila Beach Hotel'de La Serenite Spa adiyla bir spa alani bulunmaktadir; 08:30-19:00 saatleri arasinda acik olup, sauna, Turk hamami, buhar odasi ve kapali havuz ucretsiz; masaj, peeling, cilt bakimi gibi profesyonel bakim hizmetleri ise ucretlidir.",
+      animation:
+        "Animasyon ve etkinlikler:\nKaila Beach Hotel'de animasyon ve etkinlikler aksam programlarinda duzenlenir; akrobatik dans sovlari, temali geceler, canli muzik, DJ performanslari ve animasyon etkinlikleri yer alabilir. Ayrica cocuklar icin Mini Club (10:00-12:30, 14:30-17:00) ve Mini Disco (20:45-21:30) ucretsiz olarak sunulmaktadir.",
+    },
+  };
+
+  answers.en = answers.tr;
+  answers.de = answers.tr;
+  answers.ru = answers.tr;
+
+  const map = answers[lang] || answers.tr;
 
   if (
-    t.includes("check out") ||
-    t.includes("checkout") ||
-    t.includes("check-out") ||
-    t.includes("çıkış saati")
-  ) {
-    return lang.checkout;
-  }
+    t.includes("restoran saatleri") ||
+    t.includes("restaurant hours") ||
+    t.includes("restaurantzeiten") ||
+    t.includes("часы ресторанов")
+  ) return map.restaurant;
 
   if (
-    t.includes("check in") ||
-    t.includes("check-in") ||
-    t.includes("giriş saati")
-  ) {
-    return lang.checkin;
-  }
+    t.includes("havuz ve plaj") ||
+    t.includes("pool & beach") ||
+    t.includes("pool and beach") ||
+    t.includes("pool strand") ||
+    t.includes("бассейн и пляж")
+  ) return map.pool;
 
-  if (t.includes("wifi") || t.includes("wi-fi") || t.includes("internet")) {
-    return lang.wifi;
-  }
+  if (
+    t.includes("spa ve wellness") ||
+    t.includes("spa & wellness") ||
+    t.includes("spa wellness") ||
+    t.includes("спа")
+  ) return map.spa;
+
+  if (
+    t.includes("animasyon ve etkinlikler") ||
+    t.includes("animation & events") ||
+    t.includes("animation and events") ||
+    t.includes("animation veranstaltungen") ||
+    t.includes("анимация и мероприятия")
+  ) return map.animation;
 
   return null;
 }
