@@ -104,11 +104,37 @@ function getHardcodedAnswer(text, locale) {
       animation:
         "Animasyon ve etkinlikler:\nKaila Beach Hotel'de animasyon ve etkinlikler aksam programlarinda duzenlenir; akrobatik dans sovlari, temali geceler, canli muzik, DJ performanslari ve animasyon etkinlikleri yer alabilir. Ayrica cocuklar icin Mini Club (10:00-12:30, 14:30-17:00) ve Mini Disco (20:45-21:30) ucretsiz olarak sunulmaktadir.",
     },
+    en: {
+      restaurant:
+        "Restaurant hours:\nThe restaurant and food service hours at Kaila Beach Hotel are as follows:\n- Main Restaurant: Breakfast 07:00-10:00, Late breakfast 10:00-10:30, Lunch 12:30-14:00, Dinner 19:00-21:00, Mini night buffet 23:30-00:00\n- Sinton BBQ Restaurant (a la carte): 13:00-22:00, closed on Mondays\n- La Terrace A La Carte Restaurant: 18:45-21:00\n- Mare Restaurant (a la carte, fish): reservation required\n- Dolphin Snack: 12:00-16:00\n- Beach Imbiss: 12:00-16:00, Drink service 10:00-17:00\n- Gusto Snack: 11:00-18:00\n- Libum Cafe: 11:00-16:30\n- Moss Bar and Snack Restaurant: 10:00-19:00\nBars:\n- Pool Bar: 10:00-00:00\n- Lobby Bar: 10:00-00:00\n- Aqua Bar: 10:00-18:00 and 20:00-23:00\n- Dolphin Bar: 10:00-17:00",
+      pool:
+        "Pool and beach:\nKaila Beach Hotel has a private beach; sunbeds, umbrellas, and beach towels are free of charge. Beach use hours are between 08:30 and 19:00. Pool options include Relax Pool (08:00-19:00), aquapark (10:00-12:00 and 14:00-16:00), Dolphin Pool (10:00-12:00 and 14:00-16:00), and an indoor pool (08:00-19:00).",
+      spa:
+        "Spa and wellness:\nKaila Beach Hotel offers a spa area called La Serenite Spa, open between 08:30 and 19:00. Sauna, Turkish bath, steam room, and indoor pool are free of charge; professional care services such as massage, peeling, and skin care are paid.",
+      animation:
+        "Animation and events:\nAt Kaila Beach Hotel, animation and events are organized in evening programs; acrobatic dance shows, themed nights, live music, DJ performances, and animation activities may take place. In addition, Mini Club (10:00-12:30, 14:30-17:00) and Mini Disco (20:45-21:30) are offered free of charge for children.",
+    },
+    de: {
+      restaurant:
+        "Restaurantzeiten:\nDie Oeffnungszeiten der Restaurants und Verpflegungsbereiche im Kaila Beach Hotel sind wie folgt:\n- Hauptrestaurant: Fruehstueck 07:00-10:00, Spaetfruehstueck 10:00-10:30, Mittagessen 12:30-14:00, Abendessen 19:00-21:00, Mini-Nachtbuffet 23:30-00:00\n- Sinton BBQ Restaurant (a la carte): 13:00-22:00, montags geschlossen\n- La Terrace A La Carte Restaurant: 18:45-21:00\n- Mare Restaurant (a la carte, Fisch): mit Reservierung\n- Dolphin Snack: 12:00-16:00\n- Beach Imbiss: 12:00-16:00, Getraenkeservice 10:00-17:00\n- Gusto Snack: 11:00-18:00\n- Libum Cafe: 11:00-16:30\n- Moss Bar und Snack-Restaurant: 10:00-19:00\nBars:\n- Pool Bar: 10:00-00:00\n- Lobby Bar: 10:00-00:00\n- Aqua Bar: 10:00-18:00 und 20:00-23:00\n- Dolphin Bar: 10:00-17:00",
+      pool:
+        "Pool und Strand:\nDas Kaila Beach Hotel verfuegt ueber einen privaten Strand. Liegen, Sonnenschirme und Strandhandtuecher sind kostenlos; die Strandnutzung ist zwischen 08:30 und 19:00 moeglich. Zu den Pools gehoeren Relax Pool (08:00-19:00), Aquapark (10:00-12:00 und 14:00-16:00), Dolphin Pool (10:00-12:00 und 14:00-16:00) sowie ein Hallenbad (08:00-19:00).",
+      spa:
+        "Spa und Wellness:\nIm Kaila Beach Hotel gibt es den Spa-Bereich La Serenite Spa, geoeffnet von 08:30 bis 19:00 Uhr. Sauna, Tuerkisches Bad, Dampfbad und Hallenbad sind kostenlos; professionelle Anwendungen wie Massage, Peeling und Hautpflege sind kostenpflichtig.",
+      animation:
+        "Animation und Veranstaltungen:\nIm Kaila Beach Hotel werden Animation und Veranstaltungen im Abendprogramm organisiert; akrobatische Tanzshows, Themenabende, Live-Musik, DJ-Auftritte und Animationsaktivitaeten sind moeglich. Fuer Kinder werden zusaetzlich Mini Club (10:00-12:30, 14:30-17:00) und Mini Disco (20:45-21:30) kostenlos angeboten.",
+    },
+    ru: {
+      restaurant:
+        "Часы работы ресторанов:\nЧасы работы ресторанов и точек питания в Kaila Beach Hotel:\n- Основной ресторан: завтрак 07:00-10:00, поздний завтрак 10:00-10:30, обед 12:30-14:00, ужин 19:00-21:00, мини-ночной буфет 23:30-00:00\n- Sinton BBQ Restaurant (a la carte): 13:00-22:00, по понедельникам закрыт\n- La Terrace A La Carte Restaurant: 18:45-21:00\n- Mare Restaurant (a la carte, рыбный): по предварительной записи\n- Dolphin Snack: 12:00-16:00\n- Beach Imbiss: 12:00-16:00, напитки 10:00-17:00\n- Gusto Snack: 11:00-18:00\n- Libum Cafe: 11:00-16:30\n- Moss Bar и Snack Restaurant: 10:00-19:00\nБары:\n- Pool Bar: 10:00-00:00\n- Lobby Bar: 10:00-00:00\n- Aqua Bar: 10:00-18:00 и 20:00-23:00\n- Dolphin Bar: 10:00-17:00",
+      pool:
+        "Бассейн и пляж:\nВ Kaila Beach Hotel есть собственный пляж; шезлонги, зонты и пляжные полотенца предоставляются бесплатно. Время использования пляжа: 08:30-19:00. По бассейнам доступны Relax Pool (08:00-19:00), аквапарк (10:00-12:00 и 14:00-16:00), Dolphin Pool (10:00-12:00 и 14:00-16:00), а также крытый бассейн (08:00-19:00).",
+      spa:
+        "Спа и wellness:\nВ Kaila Beach Hotel работает спа-зона La Serenite Spa с 08:30 до 19:00. Сауна, турецкий хаммам, паровая комната и крытый бассейн бесплатны; профессиональные услуги, такие как массаж, пилинг и уход за кожей, предоставляются за дополнительную плату.",
+      animation:
+        "Анимация и мероприятия:\nВ Kaila Beach Hotel анимация и мероприятия проходят в вечерних программах; возможны акробатические танцевальные шоу, тематические вечера, живая музыка, DJ-выступления и анимационные активности. Для детей также бесплатно доступны Mini Club (10:00-12:30, 14:30-17:00) и Mini Disco (20:45-21:30).",
+    },
   };
-
-  answers.en = answers.tr;
-  answers.de = answers.tr;
-  answers.ru = answers.tr;
 
   const map = answers[lang] || answers.tr;
 
