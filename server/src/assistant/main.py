@@ -5,7 +5,21 @@ FastAPI ASGI application for the controlled assistant.
   or from ``server/``: ``uvicorn assistant.main:app --app-dir src --host 0.0.0.0 --port $PORT``
 - ``POST /api/chat`` is registered by ``assistant.api.routes_chat`` (router prefix ``/api``, path ``/chat``).
   Fallback ``POST /api/chat`` exists only if the router fails to load.
+
+``assistant.*`` absolute imports need ``server/src`` on ``sys.path``. The block below prepends that
+directory so imports stay consistent once this module is loading.
+
+Note: Python must still resolve the ``assistant`` package first (e.g. ``uvicorn assistant.main:app
+--app-dir server/src`` from repo root, or ``PYTHONPATH=server/src``, or ``cd server/src`` when using
+``python -m``). This file cannot fix the very first package lookup before it runs.
 """
+import sys
+from pathlib import Path
+
+_SRC_ROOT = Path(__file__).resolve().parent.parent  # .../server/src (parent of package ``assistant``)
+if str(_SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(_SRC_ROOT))
+
 from fastapi import FastAPI
 
 from assistant.core.config import get_settings
