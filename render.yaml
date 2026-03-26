@@ -1,0 +1,13 @@
+# Render Blueprint: Python web service for the FastAPI assistant only.
+# After deploy, set Vercel ASSISTANT_CHAT_ENDPOINT to: https://<this-service>.onrender.com/api/chat
+services:
+  - type: web
+    name: viona-assistant
+    runtime: python
+    plan: free
+    rootDir: server
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn assistant.main:app --app-dir src --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.0"

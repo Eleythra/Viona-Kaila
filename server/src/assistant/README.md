@@ -19,7 +19,7 @@
 
 ## Run
 ```bash
-pip install -r server/requirements-assistant.txt
+pip install -r server/requirements.txt
 uvicorn assistant.main:app --app-dir server/src --reload --port 8010
 ```
 

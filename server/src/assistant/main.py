@@ -1,3 +1,11 @@
+"""
+FastAPI ASGI application for the controlled assistant.
+
+- Uvicorn / Render: ``uvicorn assistant.main:app --app-dir server/src`` (repo root)
+  or from ``server/``: ``uvicorn assistant.main:app --app-dir src --host 0.0.0.0 --port $PORT``
+- ``POST /api/chat`` is registered by ``assistant.api.routes_chat`` (router prefix ``/api``, path ``/chat``).
+  Fallback ``POST /api/chat`` exists only if the router fails to load.
+"""
 from fastapi import FastAPI
 
 from assistant.core.config import get_settings
