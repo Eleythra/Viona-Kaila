@@ -1,33 +1,6 @@
 (function () {
   "use strict";
   var P = window.VionaContent.pick;
-  var activitiesCarouselTimerId = null;
-
-  function clearActivitiesCarousel() {
-    if (activitiesCarouselTimerId !== null) {
-      clearInterval(activitiesCarouselTimerId);
-      activitiesCarouselTimerId = null;
-    }
-  }
-
-  function startActivitiesCarousel(trackEl) {
-    clearActivitiesCarousel();
-    var slides = trackEl.querySelectorAll(".activities-carousel-slide");
-    if (slides.length < 2) return;
-    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      return;
-    }
-    var idx = 0;
-    activitiesCarouselTimerId = window.setInterval(function () {
-      slides[idx].classList.remove("activities-carousel-slide--active");
-      slides[idx].setAttribute("aria-hidden", "true");
-      idx = (idx + 1) % slides.length;
-      slides[idx].classList.add("activities-carousel-slide--active");
-      slides[idx].setAttribute("aria-hidden", "false");
-    }, 4000);
-  }
-
-  window._vionaClearActivitiesCarousel = clearActivitiesCarousel;
 
   function T(row) {
     return P(row || {});
@@ -40,42 +13,245 @@
     return n;
   }
 
-  function renderKv(pairs) {
-    var dl = document.createElement("dl");
-    dl.className = "beach-kv activities-kv";
-    pairs.forEach(function (pair) {
-      var dt = document.createElement("dt");
-      dt.textContent = T(pair.label);
-      var dd = document.createElement("dd");
-      dd.textContent = typeof pair.value === "string" ? pair.value : T(pair.value);
-      dl.appendChild(dt);
-      dl.appendChild(dd);
-    });
-    return dl;
-  }
+  var MODULE_TEXT = {
+    sectionTitle: {
+      tr: "Animasyon & aktiviteler",
+      en: "Animation & activities",
+      de: "Animation & Aktivitäten",
+      ru: "Анимация и активности",
+    },
+    lead: {
+      tr:
+        "Bu program, otelin günlük eğlence ve aktivite planını gösterir. Etkinlikler sabah havuz aktiviteleri ile başlar, öğlen mola verir ve öğleden sonra tekrar devam eder.",
+      en:
+        "This schedule shows the hotel’s daily entertainment and activity flow. Pool activities start in the morning, pause at midday, and continue in the afternoon.",
+      de:
+        "Dieser Plan zeigt das tägliche Unterhaltungs- und Aktivitätsprogramm des Hotels. Die Poolaktivitäten starten morgens, pausieren mittags und laufen am Nachmittag weiter.",
+      ru:
+        "Эта программа показывает ежедневный план развлечений и активностей в отеле. Утром начинаются активности у бассейна, в полдень перерыв, затем продолжение после обеда.",
+    },
+    location: {
+      tr: "Yer: Aqua Pool – Aqua Havuzda",
+      en: "Location: Aqua Pool",
+      de: "Ort: Aqua Pool",
+      ru: "Место: Aqua Pool",
+    },
+    scheduleTitle: {
+      tr: "Günlük aktivite programı",
+      en: "Daily activity schedule",
+      de: "Tägliches Aktivitätsprogramm",
+      ru: "Ежедневная программа активностей",
+    },
+    colTime: { tr: "Saat", en: "Time", de: "Uhrzeit", ru: "Время" },
+    colActivity: { tr: "Etkinlik", en: "Activity", de: "Aktivität", ru: "Активность" },
+    summaryTitle: {
+      tr: "Genel akış",
+      en: "General flow",
+      de: "Allgemeiner Ablauf",
+      ru: "Общий формат",
+    },
+  };
 
-  var CARDS = [
+  var SCHEDULE = [
     {
-      slides: [
-        {
-          img: "assets/images/activities/night-pool.png",
-          alt: {
-            tr: "Gece havuz ve otel ışıkları",
-            en: "Evening pool and resort lights",
-            de: "Abendstimmung am Pool",
-            ru: "Вечер у бассейна",
-          },
-        },
-        {
-          img: "assets/images/activities/night-show.png",
-          alt: {
-            tr: "Gece gösterisi ve sahne",
-            en: "Evening show on stage",
-            de: "Abendshow auf der Bühne",
-            ru: "Вечернее шоу на сцене",
-          },
-        },
-      ],
+      time: "10:00",
+      activity: {
+        tr: "Radyo açılışı",
+        en: "Radio opening",
+        de: "Radio-Eröffnung",
+        ru: "Открытие радио",
+      },
+    },
+    {
+      time: "10:30",
+      activity: {
+        tr: "Su jimnastiği",
+        en: "Water aerobics",
+        de: "Wassergymnastik",
+        ru: "Аквагимнастика",
+      },
+    },
+    {
+      time: "11:00",
+      activity: {
+        tr: "Dart oyunu",
+        en: "Darts game",
+        de: "Dartspiel",
+        ru: "Игра в дартс",
+      },
+    },
+    {
+      time: "11:30",
+      activity: {
+        tr: "Su topu",
+        en: "Water polo",
+        de: "Wasserball",
+        ru: "Водное поло",
+      },
+    },
+    {
+      time: "12:30 – 14:00",
+      activity: {
+        tr: "Mola",
+        en: "Break time",
+        de: "Pause",
+        ru: "Перерыв",
+      },
+    },
+    {
+      time: "14:45",
+      activity: {
+        tr: "Su jimnastiği",
+        en: "Water aerobics",
+        de: "Wassergymnastik",
+        ru: "Аквагимнастика",
+      },
+    },
+    {
+      time: "15:00",
+      activity: {
+        tr: "Dart oyunu",
+        en: "Darts game",
+        de: "Dartspiel",
+        ru: "Игра в дартс",
+      },
+    },
+    {
+      time: "16:00",
+      activity: {
+        tr: "Su topu",
+        en: "Water polo",
+        de: "Wasserball",
+        ru: "Водное поло",
+      },
+    },
+    {
+      time: "17:00",
+      activity: {
+        tr: "Mola",
+        en: "Break",
+        de: "Pause",
+        ru: "Перерыв",
+      },
+    },
+  ];
+
+  var ACTIVITY_CARDS = [
+    {
+      img: "assets/images/activities/aqua-gym.png",
+      alt: {
+        tr: "Su jimnastiği havuz etkinliği",
+        en: "Water aerobics pool activity",
+        de: "Wassergymnastik im Pool",
+        ru: "Аквагимнастика в бассейне",
+      },
+      title: {
+        tr: "Su jimnastiği",
+        en: "Water aerobics",
+        de: "Wassergymnastik",
+        ru: "Аквагимнастика",
+      },
+      text: {
+        tr:
+          "Sadece havuza girmeniz yeterli. Suyun doğal direnciyle vücudunuzu nazikçe çalıştırırken aynı zamanda serinliğin keyfini çıkarabilirsiniz. Ekstra yük bindirmeden yapılan bu egzersiz, her yaş grubuna uygun rahat ve eğlenceli bir aktivitedir.",
+        en:
+          "Just step into the pool. While the natural resistance of water works your body gently, you can enjoy a refreshing workout. This low-impact exercise is comfortable, fun, and suitable for all age groups.",
+        de:
+          "Steigen Sie einfach ins Becken. Der natürliche Wasserwiderstand trainiert den Körper sanft und sorgt gleichzeitig für Erfrischung. Diese gelenkschonende Übung ist angenehm, unterhaltsam und für alle Altersgruppen geeignet.",
+        ru:
+          "Достаточно зайти в бассейн. Естественное сопротивление воды мягко тренирует тело и одновременно освежает. Это комфортная и веселая активность без лишней нагрузки, подходящая для всех возрастов.",
+      },
+    },
+    {
+      img: "assets/images/activities/dart.png",
+      alt: {
+        tr: "Dart oyunu etkinliği",
+        en: "Darts game activity",
+        de: "Dartspiel-Aktivität",
+        ru: "Активность дартс",
+      },
+      title: {
+        tr: "Dart oyunu",
+        en: "Darts game",
+        de: "Dartspiel",
+        ru: "Игра в дартс",
+      },
+      text: {
+        tr:
+          "Okunuzu alın ve hedefe odaklanın. Dostça rekabetin tadını çıkarabileceğiniz bu oyun, hem konsantrasyon hem keyif sunar. İlk kez deneyenler de deneyimli misafirler de rahatça katılabilir.",
+        en:
+          "Take your dart and focus on the target. This friendly game offers both concentration and fun. Whether you are trying it for the first time or already experienced, everyone can join.",
+        de:
+          "Nehmen Sie den Dartpfeil und konzentrieren Sie sich auf das Ziel. Dieses freundliche Spiel verbindet Fokus und Spaß. Ob Einsteiger oder erfahrene Gäste: alle können mitmachen.",
+        ru:
+          "Возьмите дротик и сосредоточьтесь на цели. Эта дружеская игра сочетает концентрацию и удовольствие. Подходит и для новичков, и для опытных игроков.",
+      },
+    },
+    {
+      img: "assets/images/activities/water-polo.png",
+      alt: {
+        tr: "Su topu havuz etkinliği",
+        en: "Water polo pool activity",
+        de: "Wasserball im Pool",
+        ru: "Водное поло в бассейне",
+      },
+      title: {
+        tr: "Su topu",
+        en: "Water polo",
+        de: "Wasserball",
+        ru: "Водное поло",
+      },
+      text: {
+        tr:
+          "Havuzda hareket başlıyor. Takım halinde oynanan bu eğlenceli oyun enerjinizi yükseltir ve sosyal bir deneyim sunar. Serin suyun içinde aktif kalırken keyifli ve bol kahkahalı anlar sizi bekliyor.",
+        en:
+          "Action starts in the pool. This team game boosts your energy and creates a social, fun atmosphere. Stay active in cool water and enjoy plenty of laughter.",
+        de:
+          "Im Pool geht es los. Dieses Teamspiel steigert die Energie und bietet ein soziales, unterhaltsames Erlebnis. Bleiben Sie aktiv im kühlen Wasser und genießen Sie viele fröhliche Momente.",
+        ru:
+          "Движение начинается в бассейне. Эта командная игра заряжает энергией и дарит живое общение. Оставайтесь активными в прохладной воде и наслаждайтесь весёлыми моментами.",
+      },
+    },
+  ];
+
+  var SUMMARY = {
+    bullets: [
+      {
+        tr: "Su jimnastiği -> Hafif spor ve eğlence",
+        en: "Water aerobics -> Light exercise and fun",
+        de: "Wassergymnastik -> Leichte Bewegung und Spaß",
+        ru: "Аквагимнастика -> Лёгкая активность и удовольствие",
+      },
+      {
+        tr: "Dart oyunu -> Sosyal oyun",
+        en: "Darts game -> Social game",
+        de: "Dartspiel -> Soziales Spiel",
+        ru: "Дартс -> Социальная игра",
+      },
+      {
+        tr: "Su topu -> Grup aktivitesi ve eğlence",
+        en: "Water polo -> Group activity and entertainment",
+        de: "Wasserball -> Gruppenaktivität und Unterhaltung",
+        ru: "Водное поло -> Групповая активность и развлечение",
+      },
+      {
+        tr: "Mola -> Dinlenme arası",
+        en: "Break -> Rest period",
+        de: "Pause -> Erholungszeit",
+        ru: "Перерыв -> Время отдыха",
+      },
+    ],
+  };
+
+  var LEGACY_CARDS = [
+    {
+      highlight: true,
+      kicker: {
+        tr: "Gece programı",
+        en: "Night program",
+        de: "Abendprogramm",
+        ru: "Вечерняя программа",
+      },
       title: {
         tr: "Gece şovları & eğlenceler",
         en: "Evening shows & entertainment",
@@ -84,23 +260,36 @@
       },
       text: {
         tr:
-          "Güneş battıktan sonra Kaila Beach Hotel’de atmosfer bambaşka bir enerjiye bürünür. Her akşam misafirlerimizi farklı bir eğlence programı beklemektedir; akrobatik dans showları, özel temalı geceler, canlı müzik veya DJ performansları bunlardan yalnızca bazılarıdır. Animasyon ekibimiz sayesinde geceler; neşe, ritim ve Akdeniz ruhuyla dolu geçer.",
+          "Güneş battıktan sonra Kaila Beach Hotel’de atmosfer bambaşka bir enerjiye bürünür. Her akşam farklı bir eğlence programı sunulur: akrobatik dans şovları, özel temalı geceler, canlı müzik veya DJ performansları.",
         en:
-          "After sunset, Kaila Beach Hotel takes on a whole new energy. Each evening brings a different entertainment programme for our guests—acrobatic dance shows, themed nights, live music or DJ sets are just a few examples. Thanks to our animation team, evenings are filled with joy, rhythm and the spirit of the Mediterranean.",
+          "After sunset, Kaila Beach Hotel takes on a different energy. A new entertainment program is offered each evening, including acrobatic dance shows, themed nights, live music, and DJ performances.",
         de:
-          "Nach Sonnenuntergang gewinnt das Kaila Beach Hotel eine ganz eigene Energie. Jeden Abend erwartet Sie ein anderes Unterhaltungsprogramm: akrobatische Tanzshows, thematische Abende, Live-Musik oder DJ-Auftritte sind nur einige Beispiele. Dank unseres Animationsteams sind die Abende voller Lebensfreude, Rhythmus und Mittelmeerflair.",
+          "Nach Sonnenuntergang bekommt das Kaila Beach Hotel eine besondere Energie. Jeden Abend gibt es ein anderes Unterhaltungsprogramm: akrobatische Tanzshows, Themenabende, Live-Musik oder DJ-Auftritte.",
         ru:
-          "После заката в Kaila Beach Hotel царит особая атмосфера. Каждый вечер вас ждёт развлекательная программа: акробатические шоу, тематические вечера, живая музыка или выступления DJ — лишь часть того, что мы предлагаем. Благодаря команде анимации вечера наполнены радостью, ритмом и духом Средиземноморья.",
+          "После заката в Kaila Beach Hotel царит особая атмосфера. Каждый вечер проходит новая развлекательная программа: акробатические шоу, тематические вечера, живая музыка или DJ-сеты.",
       },
+      images: [
+        {
+          src: "assets/images/activities/night-pool.png",
+          alt: {
+            tr: "Gece havuz etkinliği",
+            en: "Night pool activity",
+            de: "Abendaktivität am Pool",
+            ru: "Вечерняя активность у бассейна",
+          },
+        },
+        {
+          src: "assets/images/activities/night-show.png",
+          alt: {
+            tr: "Gece gösterisi",
+            en: "Night show",
+            de: "Abendshow",
+            ru: "Вечернее шоу",
+          },
+        },
+      ],
     },
     {
-      img: "assets/images/activities/fitness.png",
-      alt: {
-        tr: "Fitness merkezi ve spor aletleri",
-        en: "Fitness centre and gym equipment",
-        de: "Fitnessbereich und Geräte",
-        ru: "Фитнес-зал и тренажёры",
-      },
       title: {
         tr: "Fitness merkezi",
         en: "Fitness centre",
@@ -109,117 +298,216 @@
       },
       text: {
         tr:
-          "Tam donanımlı fitness merkezimizde enerjik bir antrenman için ihtiyacınız olan her şey var. Koşu bantları, ağırlıklar, modern spor aletleri ve gerekli tüm ekipmanlar sizi bekliyor. Rahat ve motive edici bir ortamda, tatiliniz boyunca formda kalmak için ideal bir alan sunmaktayız.",
+          "Tam donanımlı fitness merkezinde koşu bantları, ağırlıklar ve modern spor ekipmanları bulunur. Tatil boyunca formda kalmak isteyen misafirler için motive edici bir alan sunar.",
         en:
-          "Our fully equipped fitness centre has everything you need for an energetic workout. Treadmills, weights, modern machines and all essential equipment await you. In a comfortable, motivating setting, it is the ideal place to stay in shape throughout your holiday.",
+          "The fully equipped fitness centre includes treadmills, weights, and modern training equipment. It offers a motivating space for guests who want to stay in shape during their holiday.",
         de:
-          "In unserem voll ausgestatteten Fitnessbereich finden Sie alles für ein energiegeladenes Training: Laufbänder, Gewichte, moderne Geräte und die nötige Ausstattung. In einer angenehmen, motivierenden Atmosphäre bleiben Sie ideal in Form.",
+          "Im voll ausgestatteten Fitnessbereich stehen Laufbänder, Gewichte und moderne Trainingsgeräte bereit. Ein motivierender Bereich für Gäste, die auch im Urlaub fit bleiben möchten.",
         ru:
-          "В нашем полностью оборудованном фитнес-зале есть всё для энергичной тренировки: беговые дорожки, веса, современные тренажёры и всё необходимое. Уютная, мотивирующая обстановка — идеальное место, чтобы оставаться в форме во время отпуска.",
+          "В полностью оборудованном фитнес-центре есть беговые дорожки, веса и современные тренажёры. Это удобное место для гостей, которые хотят оставаться в форме во время отдыха.",
       },
-      kv: [
+      images: [
         {
-          label: { tr: "Çalışma saatleri", en: "Opening hours", de: "Öffnungszeiten", ru: "Часы работы" },
-          value: "07:00 – 19:00",
+          src: "assets/images/activities/fitness.png",
+          alt: {
+            tr: "Fitness merkezi",
+            en: "Fitness centre",
+            de: "Fitnessbereich",
+            ru: "Фитнес-центр",
+          },
+        },
+        {
+          src: "assets/images/activities/fitness-2.png",
+          alt: {
+            tr: "Fitness merkezi ekipmanları",
+            en: "Fitness centre equipment",
+            de: "Fitnessgeräte im Fitnessbereich",
+            ru: "Оборудование фитнес-центра",
+          },
         },
       ],
     },
     {
-      textOnly: true,
       title: {
-        tr: "Alışveriş merkezi",
+        tr: "Alışveriş alanı",
         en: "Shopping area",
         de: "Einkaufsbereich",
         ru: "Торговая зона",
       },
       text: {
         tr:
-          "09:00 ile 23:00 arasında Fotoğrafçı, Deri Mağazası, Market ve Kuaför olarak hizmet vermektedirler.",
+          "09:00–23:00 saatleri arasında fotoğrafçı, deri mağazası, market ve kuaför hizmetleri kullanılabilir.",
         en:
-          "From 09:00 to 23:00, services include a photographer, leather shop, market and hairdresser.",
+          "From 09:00 to 23:00, guests can access photographer, leather shop, market, and hairdresser services.",
         de:
-          "Von 09:00 bis 23:00 Uhr: Fotograf, Lederwaren, Markt und Friseur.",
+          "Von 09:00 bis 23:00 stehen Fotograf, Ledergeschäft, Markt und Friseur zur Verfügung.",
         ru:
-          "С 09:00 до 23:00 работают фотограф, магазин кожаных изделий, мини-маркет и парикмахерская.",
+          "С 09:00 до 23:00 доступны услуги фотографа, магазина кожи, маркета и парикмахера.",
       },
+      images: [],
     },
   ];
 
-  function renderActivitiesModule(container) {
-    clearActivitiesCarousel();
-    var root = el("div", "viona-mod viona-mod--activities");
+  function renderScheduleTable() {
+    var wrap = el("div", "activities-table-wrap");
+    var title = el("h3", "activities-block-title", T(MODULE_TEXT.scheduleTitle));
+    wrap.appendChild(title);
 
-    var secTitle = el("p", "rest-section-title", T({ tr: "Aktiviteler", en: "Activities", de: "Aktivitäten", ru: "Активности" }));
-    root.appendChild(secTitle);
+    var table = document.createElement("table");
+    table.className = "activities-table";
+    var thead = document.createElement("thead");
+    var trh = document.createElement("tr");
+    var thTime = document.createElement("th");
+    thTime.textContent = T(MODULE_TEXT.colTime);
+    var thAct = document.createElement("th");
+    thAct.textContent = T(MODULE_TEXT.colActivity);
+    trh.appendChild(thTime);
+    trh.appendChild(thAct);
+    thead.appendChild(trh);
 
-    var lead = el("p", "viona-mod-lead");
-    lead.textContent = T({
-      tr:
-        "Bu bölümde gece eğlenceleri, fitness ve alışveriş alanına dair genel bilgiler yer alır. Günlük program paylaşılmadığında yine de burada özet bilgilere yer verilir.",
-      en:
-        "Evening entertainment, fitness and shopping — overview below, including when no daily programme sheet is available.",
-      de:
-        "Abendprogramm, Fitness und Einkauf — Kurzüberblick; auch wenn kein Tagesplan ausliegt.",
-      ru:
-        "Вечерние развлечения, фитнес и торговая зона — краткий обзор, в том числе если нет листа с расписанием на день.",
+    var tbody = document.createElement("tbody");
+    SCHEDULE.forEach(function (row) {
+      var tr = document.createElement("tr");
+      var tdTime = document.createElement("td");
+      tdTime.className = "activities-table__time";
+      tdTime.textContent = row.time;
+      var tdAct = document.createElement("td");
+      tdAct.className = "activities-table__activity";
+      tdAct.textContent = T(row.activity);
+      tr.appendChild(tdTime);
+      tr.appendChild(tdAct);
+      tbody.appendChild(tr);
     });
-    root.appendChild(lead);
 
-    var stack = el("div", "venue-stack");
-    CARDS.forEach(function (c) {
-      if (c.textOnly) {
-        var textBlock = el("div", "activities-text-block");
-        textBlock.appendChild(el("h3", "activities-text-block__title", T(c.title)));
-        textBlock.appendChild(el("p", "activities-text-block__text", T(c.text)));
-        stack.appendChild(textBlock);
-        return;
-      }
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    return wrap;
+  }
 
+  function renderSummary() {
+    var box = el("div", "activities-summary");
+    box.appendChild(el("h3", "activities-block-title", T(MODULE_TEXT.summaryTitle)));
+    var ul = el("ul", "activities-summary__list");
+    SUMMARY.bullets.forEach(function (b) {
+      ul.appendChild(el("li", null, T(b)));
+    });
+    box.appendChild(ul);
+    return box;
+  }
+
+  function renderActivityCards() {
+    var grid = el("div", "activities-cards");
+    ACTIVITY_CARDS.forEach(function (c) {
       var card = el("article", "venue-card venue-card--rest");
-      var fig = el("div", "venue-card__media venue-card__media--activities-carousel");
-
-      if (c.slides && c.slides.length) {
-        var car = el("div", "activities-carousel");
-        car.setAttribute("role", "region");
-        car.setAttribute("aria-roledescription", "carousel");
-        var track = el("div", "activities-carousel-track");
-        c.slides.forEach(function (slide, i) {
-          var slideEl = el(
-            "div",
-            "activities-carousel-slide" + (i === 0 ? " activities-carousel-slide--active" : "")
-          );
-          slideEl.setAttribute("aria-hidden", i === 0 ? "false" : "true");
-          var img = document.createElement("img");
-          img.src = slide.img;
-          img.alt = T(slide.alt);
-          img.decoding = "async";
-          img.loading = i === 0 ? "eager" : "lazy";
-          slideEl.appendChild(img);
-          track.appendChild(slideEl);
-        });
-        car.appendChild(track);
-        fig.appendChild(car);
-        startActivitiesCarousel(track);
-      } else {
-        var img = document.createElement("img");
-        img.src = c.img;
-        img.alt = T(c.alt);
-        img.loading = "lazy";
-        fig.appendChild(img);
-      }
-
+      var fig = el("div", "venue-card__media");
+      var img = document.createElement("img");
+      img.src = c.img;
+      img.alt = T(c.alt);
+      img.loading = "lazy";
+      img.decoding = "async";
+      fig.appendChild(img);
       var body = el("div", "venue-card__body");
-      var h = el("h3", "venue-card__title", T(c.title));
-      var p = el("p", "venue-card__text", T(c.text));
-      body.appendChild(h);
-      body.appendChild(p);
-      if (c.kv) body.appendChild(renderKv(c.kv));
-
+      body.appendChild(el("h3", "venue-card__title", T(c.title)));
+      body.appendChild(el("p", "venue-card__text", T(c.text)));
       card.appendChild(fig);
       card.appendChild(body);
+      grid.appendChild(card);
+    });
+    return grid;
+  }
+
+  function renderLegacySection() {
+    var wrap = el("section", "activities-legacy");
+    var stack = el("div", "activities-legacy__stack");
+    LEGACY_CARDS.forEach(function (item) {
+      var card = el("article", "activities-legacy-card" + (item.highlight ? " activities-legacy-card--highlight" : ""));
+      if (item.kicker) {
+        card.appendChild(el("p", "activities-legacy-card__kicker", T(item.kicker)));
+      }
+      card.appendChild(el("h4", "activities-legacy-card__title", T(item.title)));
+      card.appendChild(el("p", "activities-legacy-card__text", T(item.text)));
+
+      if (item.images && item.images.length) {
+        var gallery = item.highlight
+          ? renderShowcaseGallery(item.images)
+          : renderSimpleGallery(item.images);
+        card.appendChild(gallery);
+      }
       stack.appendChild(card);
     });
-    root.appendChild(stack);
+    wrap.appendChild(stack);
+    return wrap;
+  }
+
+  function renderSimpleGallery(images) {
+    var gallery = el("div", "activities-legacy-card__gallery");
+    images.forEach(function (imgSpec) {
+      var fig = el("figure", "activities-legacy-card__figure");
+      var img = document.createElement("img");
+      img.src = imgSpec.src;
+      img.alt = T(imgSpec.alt || {});
+      img.loading = "lazy";
+      img.decoding = "async";
+      fig.appendChild(img);
+      gallery.appendChild(fig);
+    });
+    return gallery;
+  }
+
+  function renderShowcaseGallery(images) {
+    var root = el("div", "activities-showcase");
+    var viewport = el("div", "activities-showcase__viewport");
+    var track = el("div", "activities-showcase__track");
+    var idx = 0;
+    var slides = [];
+    var timer = null;
+
+    images.forEach(function (imgSpec, i) {
+      var fig = el("figure", "activities-showcase__slide" + (i === 0 ? " is-active" : ""));
+      var img = document.createElement("img");
+      img.src = imgSpec.src;
+      img.alt = T(imgSpec.alt || {});
+      img.loading = i === 0 ? "eager" : "lazy";
+      img.decoding = "async";
+      fig.appendChild(img);
+      track.appendChild(fig);
+      slides.push(fig);
+    });
+
+    function setIndex(nextIdx, noReset) {
+      if (!slides.length) return;
+      idx = (nextIdx + slides.length) % slides.length;
+      track.style.transform = "translateX(" + String(idx * -100) + "%)";
+      slides.forEach(function (s, i) {
+        s.classList.toggle("is-active", i === idx);
+      });
+      if (!noReset) restartAuto();
+    }
+
+    function restartAuto() {
+      if (timer) clearInterval(timer);
+      if (slides.length < 2) return;
+      timer = window.setInterval(function () {
+        setIndex(idx + 1, true);
+      }, 2500);
+    }
+
+    viewport.appendChild(track);
+    root.appendChild(viewport);
+    restartAuto();
+    return root;
+  }
+
+  function renderActivitiesModule(container) {
+    var root = el("div", "viona-mod viona-mod--activities");
+    root.appendChild(el("p", "rest-section-title", T(MODULE_TEXT.sectionTitle)));
+    root.appendChild(el("p", "viona-mod-lead", T(MODULE_TEXT.lead)));
+    root.appendChild(el("p", "activities-location", T(MODULE_TEXT.location)));
+    root.appendChild(renderScheduleTable());
+    root.appendChild(renderSummary());
+    root.appendChild(renderActivityCards());
+    root.appendChild(renderLegacySection());
     container.appendChild(root);
   }
 

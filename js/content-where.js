@@ -4,6 +4,143 @@
  */
 (function () {
   "use strict";
+  var P = window.VionaContent && window.VionaContent.pick;
+
+  function T(row) {
+    if (typeof row === "string") return row;
+    if (typeof P === "function") return P(row || {});
+    if (row && typeof row === "object") return row.tr || row.en || row.de || row.ru || "";
+    return row || "";
+  }
+
+  function L(tr, en, de, ru) {
+    return { tr: tr, en: en, de: de, ru: ru };
+  }
+
+  var WHERE_I18N = {
+    title: {
+      "Resepsiyon": L("Resepsiyon", "Reception", "Rezeption", "Ресепшен"),
+      "Lobi": L("Lobi", "Lobby", "Lobby", "Лобби"),
+      "Lobi Bar": L("Lobi Bar", "Lobby Bar", "Lobby Bar", "Лобби-бар"),
+      "Odalar (3101–3612)": L("Odalar (3101–3612)", "Rooms (3101–3612)", "Zimmer (3101–3612)", "Номера (3101–3612)"),
+      "Astra Toplantı & Etkinlik Salonu": L("Astra Toplantı & Etkinlik Salonu", "Astra Meeting & Event Hall", "Astra Tagungs- & Eventsaal", "Зал Astra для встреч и мероприятий"),
+      "Havuz": L("Relax Havuz", "Relax Pool", "Relax Pool", "Релакс-бассейн"),
+      "Havuz Bar": L("Havuz Bar", "Pool Bar", "Pool Bar", "Бар у бассейна"),
+      "Gusto Snack Bar": L("Gusto Snack Bar", "Gusto Snack Bar", "Gusto Snack Bar", "Gusto Snack Bar"),
+      "Mağazalar": L("Mağazalar", "Shops", "Geschäfte", "Магазины"),
+      "Ana Restoran": L("Ana Restoran", "Main Restaurant", "Hauptrestaurant", "Основной ресторан"),
+      "A’la Carte Restoran": L("A’la Carte Restoran", "À La Carte Restaurant", "À-la-carte-Restaurant", "Ресторан à la carte"),
+      "Mare A’la Carte Restoran": L("Mare A’la Carte Restoran", "Mare À La Carte Restaurant", "Mare À-la-carte-Restaurant", "Mare ресторан à la carte"),
+      "Odalar (1001–1638)": L("Odalar (1001–1638)", "Rooms (1001–1638)", "Zimmer (1001–1638)", "Номера (1001–1638)"),
+      "Spa": L("Spa", "Spa", "Spa", "Спа"),
+      "Kapalı Havuz": L("Kapalı Havuz", "Indoor Pool", "Hallenbad", "Крытый бассейн"),
+      "Fitness": L("Fitness Salonu", "Fitness Hall", "Fitnessraum", "Фитнес-зал"),
+      "Libum Cafe": L("Libum Cafe", "Libum Cafe", "Libum Cafe", "Libum Cafe"),
+      "Fonksiyon Salonu": L("Fonksiyon Salonu", "Function Hall", "Funktionssaal", "Функциональный зал"),
+      "Odalar (2101–2612)": L("Odalar (2101–2612)", "Rooms (2101–2612)", "Zimmer (2101–2612)", "Номера (2101–2612)"),
+      "Dolphin A’la Carte": L("Dolphin A’la Carte", "Dolphin À La Carte", "Dolphin À-la-carte", "Dolphin à la carte"),
+      "Dolphin Bar / Jammies Mini Club": L("Dolphin Bar / Jammies Mini Club", "Dolphin Bar / Jammies Mini Club", "Dolphin Bar / Jammies Mini Club", "Dolphin Bar / Jammies Mini Club"),
+      "Dolphin Havuzu": L("Dolphin Havuzu", "Dolphin Pool", "Dolphin Pool", "Бассейн Dolphin"),
+      "Otopark": L("Otopark", "Car Park", "Parkplatz", "Парковка"),
+      "Çocuk Oyun Alanı": L("Çocuk Oyun Alanı", "Children’s Playground", "Kinderspielplatz", "Детская площадка"),
+      "Gösteri Alanı": L("Gösteri Alanı", "Show Area", "Showbereich", "Зона шоу"),
+      "Aquapark": L("Aquapark", "Aquapark", "Aquapark", "Аквапарк"),
+      "Çocuk Havuzu": L("Çocuk Havuzu", "Kids’ Pool", "Kinderbecken", "Детский бассейн"),
+      "Aqua Bar": L("Aqua Bar", "Aqua Bar", "Aqua Bar", "Aqua Bar"),
+      "Alt Geçit": L("Alt Geçit", "Underpass", "Unterführung", "Подземный переход"),
+      "Sahil Büfesi": L("Sahil Büfesi", "Beach Snack", "Strand-Snack", "Пляжный снек"),
+      "Moss Bar": L("Moss Beach Restaurant & Bar", "Moss Beach Restaurant & Bar", "Moss Beach Restaurant & Bar", "Moss Beach Restaurant & Bar"),
+    },
+    konum: {
+      "Giriş alanı": L("Giriş alanı", "Entrance area", "Eingangsbereich", "Входная зона"),
+      "Giriş katı": L("Giriş katı", "Ground floor", "Eingangsebene", "Входной этаж"),
+      "Lobi alanı": L("Lobi alanı", "Lobby area", "Lobbybereich", "Зона лобби"),
+      "Üst katlar": L("Üst katlar", "Upper floors", "Obere Etagen", "Верхние этажи"),
+      "Alt kat": L("Alt kat", "Lower floor", "Untere Etage", "Нижний этаж"),
+      "Açık alan": L("Açık alan", "Outdoor area", "Außenbereich", "Открытая зона"),
+      "Havuz kenarı": L("Havuz kenarı", "Poolside", "Am Pool", "У бассейна"),
+      "Havuz alanı": L("Havuz alanı", "Pool area", "Poolbereich", "Зона бассейна"),
+      "Geçiş alanı": L("Geçiş alanı", "Passage area", "Durchgangsbereich", "Переходная зона"),
+      "Teras alanı": L("Teras alanı", "Terrace area", "Terrassenbereich", "Зона террасы"),
+      "Dış alan": L("Dış alan", "Outdoor zone", "Außenbereich", "Внешняя зона"),
+      "Dış sağ alan": L("Dış sağ alan", "Outer right area", "Rechter Außenbereich", "Правая внешняя зона"),
+      "Spa alanı": L("Spa alanı", "Spa area", "Spa-Bereich", "Спа-зона"),
+      "Üst seviye": L("Üst seviye", "Upper level", "Obere Ebene", "Верхний уровень"),
+      "Bağlantı alanı": L("Bağlantı alanı", "Connection area", "Verbindungsbereich", "Соединительная зона"),
+      "C blok": L("C blok", "Block C", "Block C", "Блок C"),
+      "Sahil": L("Sahil", "Beach", "Strand", "Пляж"),
+      "Sahil geçişi": L("Sahil geçişi", "Beach access", "Strandzugang", "Выход к пляжу"),
+      "Aquapark yanında": L("Aquapark yanında", "Near aquapark", "Neben dem Aquapark", "Рядом с аквапарком"),
+      "Aquapark içinde": L("Aquapark içinde", "Inside aquapark", "Im Aquapark", "Внутри аквапарка"),
+      "Arka alan": L("Arka alan", "Rear area", "Hinterer Bereich", "Задняя зона"),
+      "Bar alanı": L("Bar alanı", "Bar area", "Barbereich", "Зона бара"),
+    },
+    yon: {
+      "Otele girişte ön tarafta": L("Otele girişte ön tarafta", "At the front on hotel entrance", "Vorne am Hoteleingang", "Спереди у входа в отель"),
+      "Resepsiyondan içeri doğru": L("Resepsiyondan içeri doğru", "Inward from reception", "Von der Rezeption nach innen", "Внутрь от ресепшена"),
+      "Lobiden sağa doğru": L("Lobiden sağa doğru", "To the right from lobby", "Von der Lobby nach rechts", "Направо от лобби"),
+      "Lobiden yukarı çıkılarak": L("Lobiden yukarı çıkılarak", "Upstairs from lobby", "Von der Lobby nach oben", "Наверх от лобби"),
+      "Lobiden aşağı inerek": L("Lobiden aşağı inerek", "Downstairs from lobby", "Von der Lobby nach unten", "Вниз от лобби"),
+      "Lobiden dışarı çıkınca": L("Lobiden dışarı çıkınca", "When exiting the lobby", "Beim Verlassen der Lobby", "При выходе из лобби"),
+      "Havuz çevresinde": L("Havuz çevresinde", "Around the pool", "Rund um den Pool", "Вокруг бассейна"),
+      "Havuzdan sağ tarafa doğru": L("Havuzdan sağ tarafa doğru", "Right side from pool", "Vom Pool nach rechts", "Направо от бассейна"),
+      "Havuzdan sağa doğru ilerlerken": L("Havuzdan sağa doğru ilerlerken", "Moving right from pool", "Beim Rechtsgehen vom Pool", "Двигаясь направо от бассейна"),
+      "Havuzdan sağa doğru": L("Havuzdan sağa doğru", "To the right from pool", "Vom Pool nach rechts", "Направо от бассейна"),
+      "Restorandan sağa doğru": L("Restorandan sağa doğru", "Right from restaurant", "Vom Restaurant nach rechts", "Направо от ресторана"),
+      "İleri sağ tarafta": L("İleri sağ tarafta", "Further right ahead", "Weiter vorne rechts", "Дальше справа"),
+      "Bina içinde yukarı": L("Bina içinde yukarı", "Up inside building", "Im Gebäude nach oben", "Вверх внутри корпуса"),
+      "Bina içinde aşağı": L("Bina içinde aşağı", "Down inside building", "Im Gebäude nach unten", "Вниз внутри корпуса"),
+      "Spa içinde": L("Spa içinde", "Inside spa", "Im Spa", "Внутри спа"),
+      "Spa yakınında": L("Spa yakınında", "Near spa", "In der Nähe vom Spa", "Рядом со спа"),
+      "Bina içinde üst katta": L("Bina içinde üst katta", "Upper floor in building", "Im Gebäude im Obergeschoss", "На верхнем этаже в корпусе"),
+      "Üst kat geçiş bölümünde": L("Üst kat geçiş bölümünde", "In upper-floor transition area", "Im Übergangsbereich im Obergeschoss", "В переходной зоне верхнего этажа"),
+      "Bina ön tarafında": L("Bina ön tarafında", "In front of building", "Vorderseite des Gebäudes", "Перед зданием"),
+      "Havuz tarafında": L("Havuz tarafında", "Pool side", "Auf der Poolseite", "Со стороны бассейна"),
+      "Bina önünde": L("Bina önünde", "In front of building", "Vor dem Gebäude", "Перед зданием"),
+      "Arka tarafta": L("Arka tarafta", "At the back side", "Auf der Rückseite", "Сзади"),
+      "Arka bölgede": L("Arka bölgede", "In rear zone", "Im hinteren Bereich", "В задней части"),
+      "Orta bölgede": L("Orta bölgede", "In central zone", "Im mittleren Bereich", "В центральной зоне"),
+      "Sol üst bölgede": L("Sol üst bölgede", "Upper left zone", "Im oberen linken Bereich", "В верхней левой зоне"),
+      "Sağ tarafında": L("Sağ tarafında", "On the right side", "Auf der rechten Seite", "С правой стороны"),
+      "Merkezde": L("Merkezde", "In the center", "Im Zentrum", "В центре"),
+      "Havuzdan sahile doğru": L("Havuzdan sahile doğru", "From pool towards beach", "Vom Pool Richtung Strand", "От бассейна к пляжу"),
+      "Sağ tarafta": L("Sağ tarafta", "On the right side", "Auf der rechten Seite", "С правой стороны"),
+    },
+    desc: {
+      "Otelin karşılama ve giriş noktası": L("Otelin karşılama ve giriş noktası", "Hotel welcome and entrance point", "Empfangs- und Eingangspunkt des Hotels", "Точка встречи и входа в отель"),
+      "Dinlenme ve bekleme alanı": L("Dinlenme ve bekleme alanı", "Lounge and waiting area", "Ruhe- und Wartebereich", "Зона отдыха и ожидания"),
+      "İçecek servisi yapılan bar": L("İçecek servisi yapılan bar", "Bar with drink service", "Bar mit Getränkeservice", "Бар с подачей напитков"),
+      "Konaklama odaları": L("Konaklama odaları", "Guest rooms", "Gästezimmer", "Гостевые номера"),
+      "Toplantı ve organizasyon alanı": L("Toplantı ve organizasyon alanı", "Meeting and event area", "Tagungs- und Veranstaltungsbereich", "Зона встреч и мероприятий"),
+      "Ana yüzme havuzu": L("Ana yüzme havuzu", "Main swimming pool", "Hauptschwimmbecken", "Главный бассейн"),
+      "İçecek servisi yapılan alan": L("İçecek servisi yapılan alan", "Area with drink service", "Bereich mit Getränkeservice", "Зона с подачей напитков"),
+      "Atıştırmalık yiyecek alanı": L("Atıştırmalık yiyecek alanı", "Snack area", "Snackbereich", "Зона закусок"),
+      "Alışveriş noktaları": L("Alışveriş noktaları", "Shopping points", "Einkaufspunkte", "Точки для покупок"),
+      "Açık büfe ana restoran": L("Açık büfe ana restoran", "Main open buffet restaurant", "Hauptrestaurant mit offenem Buffet", "Основной ресторан со шведским столом"),
+      "Özel menü restoran": L("Özel menü restoran", "Special menu restaurant", "Restaurant mit Spezialmenü", "Ресторан со специальным меню"),
+      "Deniz ürünleri restoranı": L("Deniz ürünleri restoranı", "Seafood restaurant", "Meeresfrüchterestaurant", "Ресторан морепродуктов"),
+      "Spa ve wellness alanı": L("Spa ve wellness alanı", "Spa and wellness area", "Spa- und Wellnessbereich", "Спа и велнес зона"),
+      "Kapalı yüzme havuzu": L("Kapalı yüzme havuzu", "Indoor swimming pool", "Hallenbad", "Крытый бассейн"),
+      "Spor salonu": L("Spor salonu", "Gym hall", "Fitnessraum", "Тренажерный зал"),
+      "Kafe ve tatlı alanı": L("Kafe ve tatlı alanı", "Cafe and dessert area", "Café- und Dessertbereich", "Кафе и зона десертов"),
+      "Bar ve çocuk kulübü": L("Bar ve çocuk kulübü", "Bar and kids club", "Bar und Kinderclub", "Бар и детский клуб"),
+      "Ek yüzme havuzu": L("Ek yüzme havuzu", "Additional swimming pool", "Zusätzliches Schwimmbecken", "Дополнительный бассейн"),
+      "Araç park alanı": L("Araç park alanı", "Parking area", "Parkbereich", "Парковочная зона"),
+      "Çocuklar için oyun alanı": L("Çocuklar için oyun alanı", "Play area for children", "Spielbereich für Kinder", "Игровая зона для детей"),
+      "Etkinlik ve gösteri alanı": L("Etkinlik ve gösteri alanı", "Activity and show area", "Aktivitäts- und Showbereich", "Зона активностей и шоу"),
+      "Su kaydırakları alanı": L("Su kaydırakları alanı", "Water slides area", "Wasserrutschenbereich", "Зона водных горок"),
+      "Çocuklara özel havuz": L("Çocuklara özel havuz", "Pool for children", "Kinderpool", "Бассейн для детей"),
+      "Plaja ulaşım yolu": L("Plaja ulaşım yolu", "Route to beach", "Weg zum Strand", "Путь к пляжу"),
+      "Beach bar ve restoran": L("Beach bar ve restoran", "Beach bar and restaurant", "Beach-Bar und Restaurant", "Пляжный бар и ресторан"),
+    },
+  };
+
+  function localizeField(kind, value) {
+    if (value && typeof value === "object") return value;
+    if (typeof value !== "string") return value;
+    if (WHERE_I18N[kind] && WHERE_I18N[kind][value]) return WHERE_I18N[kind][value];
+    return L(value, value, value, value);
+  }
 
   var MAP_COORDS = {
     "a-lobi": { left: 51.14, top: 50.77 },
@@ -132,7 +269,12 @@
     },
     {
       id: 6,
-      title: "Havuz",
+      title: {
+        tr: "Relax Havuz",
+        en: "Relax Pool",
+        de: "Relax Pool",
+        ru: "Релакс-бассейн",
+      },
       konum: "Açık alan",
       yon: "Lobiden dışarı çıkınca",
       desc: "Ana yüzme havuzu",
@@ -323,10 +465,10 @@
         id: slug,
         left: c.left,
         top: c.top,
-        title: d.title,
-        konum: d.konum,
-        yon: d.yon,
-        desc: d.desc,
+        title: localizeField("title", d.title),
+        konum: localizeField("konum", d.konum),
+        yon: localizeField("yon", d.yon),
+        desc: localizeField("desc", d.desc),
       };
     }).filter(Boolean);
   }
@@ -438,7 +580,7 @@
     sheet.appendChild(sheetBody);
 
     function openSheet(poi) {
-      sheetTitle.textContent = poi.title;
+      sheetTitle.textContent = T(poi.title);
       sheetBody.innerHTML = "";
       function addBlock(labelKey, text) {
         var sec = document.createElement("section");
@@ -448,7 +590,7 @@
         lbl.textContent = t(labelKey);
         var val = document.createElement("p");
         val.className = "where-sheet-value";
-        val.textContent = text;
+        val.textContent = T(text);
         sec.appendChild(lbl);
         sec.appendChild(val);
         sheetBody.appendChild(sec);
@@ -483,7 +625,7 @@
         return;
       }
       liveCoordsEl.textContent =
-        poi.title + " — left " + poi.left + "% · top " + poi.top + "%";
+        T(poi.title) + " — left " + poi.left + "% · top " + poi.top + "%";
     }
 
     function refreshJsonOutput() {
@@ -655,7 +797,7 @@
       if (editMode) {
         labelEl = document.createElement("span");
         labelEl.className = "where-marker-label";
-        labelEl.textContent = poi.title;
+        labelEl.textContent = T(poi.title);
         mark.appendChild(labelEl);
       }
       markerByPoiId[poi.id] = { mark: mark, labelEl: labelEl };

@@ -5,6 +5,8 @@
   "use strict";
 
   var LANG_KEY = "viona_lang";
+  /** Session reply language for API (mirrors last assistant meta.language); separate from site UI. */
+  var CONV_LANG_KEY = "viona_chat_conversation_lang";
   var MAX_INPUT = 2000;
   var MAX_MESSAGES = 80;
 
@@ -21,6 +23,28 @@
       if (c && I18N[c]) return c;
     } catch (e) {}
     return "tr";
+  }
+
+  function getConversationLang() {
+    try {
+      var c = sessionStorage.getItem(CONV_LANG_KEY);
+      if (c === "tr" || c === "en" || c === "de" || c === "ru") return c;
+    } catch (e) {}
+    return null;
+  }
+
+  function setConversationLangFromMeta(metaLang) {
+    var s = String(metaLang || "").toLowerCase().trim();
+    if (s !== "tr" && s !== "en" && s !== "de" && s !== "ru") return;
+    try {
+      sessionStorage.setItem(CONV_LANG_KEY, s);
+    } catch (e) {}
+  }
+
+  function clearConversationLang() {
+    try {
+      sessionStorage.removeItem(CONV_LANG_KEY);
+    } catch (e) {}
   }
 
   function t(key) {
@@ -132,8 +156,8 @@
     }
 
     askViona(lastUserText, getLang())
-      .then(function (reply) {
-        state.messages.push({ role: "assistant", content: reply });
+      .then(function (result) {
+        state.messages.push({ role: "assistant", content: result.reply });
         trimHistory();
       })
       .catch(function () {
@@ -192,16 +216,36 @@
       typeof cfg.endpoint === "string" && cfg.endpoint.trim()
         ? cfg.endpoint.trim()
         : "http://localhost:3001/api/chat";
+    var conv = getConversationLang();
+    var body = {
+      message: message,
+      locale: locale || "tr",
+      ui_language: locale || "tr",
+    };
+    if (conv) body.conversation_language = conv;
     var response = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: message, locale: locale || "tr" }),
+      body: JSON.stringify(body),
     });
     var data = await response.json();
-    var reply = data && data.reply ? String(data.reply) : "";
+    // Compatibility: new assistant shape {type,message,meta} + legacy {reply,locale}
+    var reply = "";
+    if (data && typeof data.message === "string") {
+      reply = String(data.message);
+    } else if (data && typeof data.reply === "string") {
+      reply = String(data.reply);
+    }
+    var resolvedLocale = "";
+    if (data && data.meta && typeof data.meta.language === "string") {
+      resolvedLocale = String(data.meta.language);
+    } else if (data && typeof data.locale === "string") {
+      resolvedLocale = String(data.locale);
+    }
     if (!response.ok && !reply.trim()) throw new Error("http_" + response.status);
     if (!reply.trim()) throw new Error("empty_reply");
-    return reply;
+    if (resolvedLocale) setConversationLangFromMeta(resolvedLocale);
+    return { reply: reply, locale: resolvedLocale };
   }
 
   function sendPipeline(text) {
@@ -223,8 +267,8 @@
     }
 
     askViona(clean, getLang())
-      .then(function (reply) {
-        state.messages.push({ role: "assistant", content: reply });
+      .then(function (result) {
+        state.messages.push({ role: "assistant", content: result.reply });
         trimHistory();
       })
       .catch(function () {
@@ -276,6 +320,7 @@
     if (!window.confirm(t("chatClearConfirm"))) return;
     state.messages = [];
     state.pending = false;
+    clearConversationLang();
     setTyping(false);
     renderMessages();
     if (els.input) {

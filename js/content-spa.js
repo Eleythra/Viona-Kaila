@@ -60,18 +60,18 @@
     },
     note: {
       tr:
-        "08:30 – 19:00 arası açıktır. Sauna, Türk hamamı, buhar odası ve kapalı havuz ücretsizdir; masaj ve bakım hizmetleri ücretlidir.",
+        "09:00 – 19:00 arası açıktır. Sauna, Türk hamamı, buhar odası ve kapalı havuz ücretsizdir; masaj ve bakım hizmetleri ücretlidir.",
       en:
-        "Open 08:30 – 19:00. Sauna, Turkish bath, steam room and indoor pool are complimentary; massages and treatments are charged.",
+        "Open 09:00 – 19:00. Sauna, Turkish bath, steam room and indoor pool are complimentary; massages and treatments are charged.",
       de:
-        "Geöffnet 08:30 – 19:00. Sauna, Hamam, Dampfbad und Hallenbad inklusive; Massagen kostenpflichtig.",
+        "Geöffnet 09:00 – 19:00. Sauna, Hamam, Dampfbad und Hallenbad inklusive; Massagen kostenpflichtig.",
       ru:
-        "08:30 – 19:00. Сауна, хамам, парная и бассейн бесплатно; массаж и уход — платно.",
+        "09:00 – 19:00. Сауна, хамам, парная и бассейн бесплатно; массаж и уход — платно.",
     },
     kv: [
       {
         label: { tr: "Genel çalışma saatleri", en: "Opening hours", de: "Öffnungszeiten", ru: "Часы работы" },
-        value: "08:30 – 19:00",
+        value: "09:00 – 19:00",
       },
       {
         label: { tr: "Konum", en: "Location", de: "Ort", ru: "Место" },
@@ -116,7 +116,7 @@
       kv: [
         {
           label: { tr: "Saatler", en: "Hours", de: "Zeiten", ru: "Часы" },
-          value: "08:30 – 19:00",
+          value: "09:00 – 19:00",
         },
         {
           label: { tr: "Ücret", en: "Charge", de: "Preis", ru: "Оплата" },
@@ -135,7 +135,7 @@
       kv: [
         {
           label: { tr: "Saatler", en: "Hours", de: "Zeiten", ru: "Часы" },
-          value: "08:30 – 19:00",
+          value: "09:00 – 19:00",
         },
         {
           label: { tr: "Ücret", en: "Charge", de: "Preis", ru: "Оплата" },
@@ -154,7 +154,7 @@
       kv: [
         {
           label: { tr: "Saatler", en: "Hours", de: "Zeiten", ru: "Часы" },
-          value: "08:30 – 19:00",
+          value: "09:00 – 19:00",
         },
         {
           label: { tr: "Ücret", en: "Charge", de: "Preis", ru: "Оплата" },

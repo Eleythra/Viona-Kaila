@@ -1,13 +1,15 @@
 (function () {
   "use strict";
 
-  var SESSION_KEY = "viona_discount_popup_closed";
+  var POPUP_SEEN_KEY_PREFIX = "viona_discount_popup_seen_";
+  var PROMO_CACHE_KEY = "viona_discount_popup_cache_v1";
+  var currentPopupVersion = "v0";
   var POPUP_ID = "discount-promo-popup";
   var IMAGE_BY_LANG = {
-    tr: "assets/images/promo/discount-tr.png",
-    en: "assets/images/promo/discount-en.png",
-    de: "assets/images/promo/discount-de.png",
-    ru: "assets/images/promo/discount-ru.png",
+    tr: "",
+    en: "",
+    de: "",
+    ru: "",
   };
 
   function getLang() {
@@ -18,17 +20,22 @@
     }
   }
 
-  function isClosedForSession() {
+  function seenKeyForLang(lang) {
+    return POPUP_SEEN_KEY_PREFIX + String(lang || "tr");
+  }
+
+  function isClosedForSession(version, lang) {
     try {
-      return sessionStorage.getItem(SESSION_KEY) === "1";
+      return localStorage.getItem(seenKeyForLang(lang)) === String(version || "v0");
     } catch (e) {
       return false;
     }
   }
 
-  function markClosedForSession() {
+  function markClosedForSession(version) {
+    var lang = getLang();
     try {
-      sessionStorage.setItem(SESSION_KEY, "1");
+      localStorage.setItem(seenKeyForLang(lang), String(version || "v0"));
     } catch (e) {
       /* no-op */
     }
@@ -39,11 +46,51 @@
     if (!popup) return;
     popup.classList.remove("is-open");
     popup.setAttribute("aria-hidden", "true");
-    markClosedForSession();
+    markClosedForSession(currentPopupVersion);
   }
 
   function imageForLang(code) {
-    return IMAGE_BY_LANG[code] || IMAGE_BY_LANG.tr;
+    return IMAGE_BY_LANG[code] || "";
+  }
+
+  async function loadPromoConfig() {
+    var cfg = window.VIONA_API_CONFIG || {};
+    var endpoint = cfg.adminPromoConfigEndpoint || "/api/admin/promo-config";
+    try {
+      var res = await fetch(endpoint, { method: "GET" });
+      var data = await res.json();
+      if (!res.ok || !data || !data.ok || !data.config) return null;
+      return data.config;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function readCachedPromoConfig() {
+    try {
+      var raw = localStorage.getItem(PROMO_CACHE_KEY);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" ? parsed : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function writeCachedPromoConfig(cfg) {
+    try {
+      localStorage.setItem(PROMO_CACHE_KEY, JSON.stringify(cfg || {}));
+    } catch (e) {
+      /* no-op */
+    }
+  }
+
+  function applyConfig(cfg) {
+    if (!cfg || typeof cfg !== "object") return;
+    IMAGE_BY_LANG.tr = cfg.image_tr || "";
+    IMAGE_BY_LANG.en = cfg.image_en || "";
+    IMAGE_BY_LANG.de = cfg.image_de || "";
+    IMAGE_BY_LANG.ru = cfg.image_ru || "";
   }
 
   function ensurePopup() {
@@ -72,14 +119,42 @@
     return root;
   }
 
-  function showDiscountPopup() {
-    if (isClosedForSession()) return;
+  async function showDiscountPopup() {
     var home = document.getElementById("view-home");
     if (!home || home.classList.contains("hidden")) return;
 
+    var lang = getLang();
+    var cached = readCachedPromoConfig();
+    var cachedVersion = (cached && cached.updated_at) || "v0";
+    if (cached && cached.enabled === false) return;
+    if (cached) applyConfig(cached);
+    if (isClosedForSession(cachedVersion, lang)) return;
+
+    var src = imageForLang(lang);
+    var popup = null;
+    var img = null;
+    if (src) {
+      currentPopupVersion = cachedVersion;
+      popup = ensurePopup();
+      img = popup.querySelector(".promo-popup__image");
+      img.src = src;
+      popup.classList.add("is-open");
+      popup.setAttribute("aria-hidden", "false");
+    }
+
+    var remoteCfg = await loadPromoConfig();
+    if (!remoteCfg) return;
+    writeCachedPromoConfig(remoteCfg);
+    var remoteVersion = remoteCfg.updated_at || "v0";
+    if (remoteCfg.enabled === false) return closePopup();
+    if (isClosedForSession(remoteVersion, lang)) return closePopup();
+    applyConfig(remoteCfg);
+    src = imageForLang(lang);
+    if (!src) return;
+    currentPopupVersion = remoteVersion;
     var popup = ensurePopup();
     var img = popup.querySelector(".promo-popup__image");
-    img.src = imageForLang(getLang());
+    img.src = src;
     popup.classList.add("is-open");
     popup.setAttribute("aria-hidden", "false");
   }

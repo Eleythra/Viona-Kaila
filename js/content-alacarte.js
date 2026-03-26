@@ -96,7 +96,7 @@
             de: "La Terrace A La Carte Restaurant",
             ru: "La Terrace A La Carte Restaurant",
           },
-          time: "18:45 – 21:00",
+          time: "18:30 – 21:00",
           format: {
             tr: "A La Carte restoran · Menü servisi",
             en: "À la carte restaurant · Table service",
@@ -106,10 +106,10 @@
           charge: BADGE_PAID,
           res: BADGE_RES_REQUIRED,
           detail: {
-            tr: "7 gece ve üzeri konaklamalarda 1 kez ücretsiz.",
-            en: "One complimentary visit for stays of 7 nights or more.",
-            de: "Bei Aufenthalten ab 7 Nächten einmal kostenfrei.",
-            ru: "При проживании от 7 ночей — один раз бесплатно.",
+            tr: "5 gece ve üzeri konaklamalarda 1 kez ücretsiz. 18:30 – 21:00 arası hizmet verir.",
+            en: "One complimentary visit for stays of 5 nights or more. Service hours: 18:30 – 21:00.",
+            de: "Bei Aufenthalten ab 5 Nächten einmal kostenfrei. Servicezeit: 18:30 – 21:00.",
+            ru: "При проживании от 5 ночей — один раз бесплатно. Часы работы: 18:30 – 21:00.",
           },
         },
       ],
@@ -187,10 +187,10 @@
           charge: BADGE_PAID,
           extraBadges: [
             {
-              tr: "Kaila misafirlerine %20 indirim",
-              en: "20% off for Kaila guests",
-              de: "20 % Rabatt für Kaila-Gäste",
-              ru: "Скидка 20% для гостей Kaila",
+              tr: "Kaila misafirlerine %10 indirim",
+              en: "10% off for Kaila guests",
+              de: "10 % Rabatt für Kaila-Gäste",
+              ru: "Скидка 10% для гостей Kaila",
             },
           ],
           detail: {

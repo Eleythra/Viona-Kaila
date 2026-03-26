@@ -49,21 +49,21 @@
     },
     lead: {
       tr:
-        "Bu bölümde otelin anlaşmalı olduğu iki noktada (Moss Beach ve Sinton) Kaila misafirlerine tanınan %20 indirim açıklanır. Her iki mekân dışarıdan da kullanılabilir; indirim yalnızca otelde konaklayan misafirlerimize özeldir.",
+        "Bu bölümde otelin anlaşmalı olduğu iki noktada (Moss Beach ve Sinton) Kaila misafirlerine tanınan %10 indirim açıklanır. Her iki mekân dışarıdan da kullanılabilir; indirim yalnızca otelde konaklayan misafirlerimize özeldir.",
       en:
-        "Your 20% guest discount at Moss Beach and Sinton — explained here. Both venues are open to visitors who are not staying at the hotel; the discount applies only to Kaila Hotels guests.",
+        "Your 10% guest discount at Moss Beach and Sinton — explained here. Both venues are open to visitors who are not staying at the hotel; the discount applies only to Kaila Hotels guests.",
       de:
-        "Ihr 20 % Gästerabatt bei Moss Beach und Sinton — hier erklärt. Beide sind auch für externe Besucher geöffnet; der Rabatt gilt nur für Kaila-Hotels-Gäste.",
+        "Ihr 10 % Gästerabatt bei Moss Beach und Sinton — hier erklärt. Beide sind auch für externe Besucher geöffnet; der Rabatt gilt nur für Kaila-Hotels-Gäste.",
       ru:
-        "Скидка 20% в Moss Beach и Sinton для гостей отеля — описано здесь. Оба заведения доступны и без проживания; скидка только для гостей Kaila Hotels.",
+        "Скидка 10% в Moss Beach и Sinton для гостей отеля — описано здесь. Оба заведения доступны и без проживания; скидка только для гостей Kaila Hotels.",
     },
   };
 
   var HIGHLIGHT = {
-    tr: "Kaila Hotels misafirlerine özel %20 indirim",
-    en: "20% off for Kaila Hotels guests",
-    de: "20 % Rabatt für Kaila-Hotels-Gäste",
-    ru: "Скидка 20% для гостей Kaila Hotels",
+    tr: "Kaila Hotels misafirlerine özel %10 indirim",
+    en: "10% off for Kaila Hotels guests",
+    de: "10 % Rabatt für Kaila-Hotels-Gäste",
+    ru: "Скидка 10% для гостей Kaila Hotels",
   };
 
   var ITEMS = [
@@ -107,13 +107,13 @@
         },
         {
           tr:
-            "Yerel alkollü ve alkolsüz içecekler, çay, kahve, meyve suları ve yiyecekler ekstra olarak temin edilebilir. Kaila Hotels misafirlerine özel %20 indirim avantajı sunulmaktadır.",
+            "Yerel alkollü ve alkolsüz içecekler, çay, kahve, meyve suları ve yiyecekler ekstra olarak temin edilebilir. Kaila Hotels misafirlerine özel %10 indirim avantajı sunulmaktadır.",
           en:
-            "Local alcoholic and soft drinks, tea, coffee, juices and food are available for an extra charge. Kaila Hotels guests enjoy an exclusive 20% discount.",
+            "Local alcoholic and soft drinks, tea, coffee, juices and food are available for an extra charge. Kaila Hotels guests enjoy an exclusive 10% discount.",
           de:
-            "Lokale alkoholische und alkoholfreie Getränke, Tee, Kaffee, Säfte und Speisen gegen Aufpreis. Kaila-Hotels-Gäste erhalten 20 % Rabatt.",
+            "Lokale alkoholische und alkoholfreie Getränke, Tee, Kaffee, Säfte und Speisen gegen Aufpreis. Kaila-Hotels-Gäste erhalten 10 % Rabatt.",
           ru:
-            "Местные напитки, чай, кофе, соки и еда — за доплату. Для гостей Kaila Hotels — скидка 20%.",
+            "Местные напитки, чай, кофе, соки и еда — за доплату. Для гостей Kaila Hotels — скидка 10%.",
         },
       ],
     },
@@ -157,13 +157,13 @@
         },
         {
           tr:
-            "Kaila Hotels misafirlerine özel %20 indirim avantajı sunulmaktadır. Restoranımız, pazartesi günleri hariç her gün 13:00–22:00 saatleri arasında hizmet vermektedir.",
+            "Kaila Hotels misafirlerine özel %10 indirim avantajı sunulmaktadır. Restoranımız, pazartesi günleri hariç her gün 13:00–22:00 saatleri arasında hizmet vermektedir.",
           en:
-            "Kaila Hotels guests enjoy an exclusive 20% discount. We are open 13:00–22:00 every day except Mondays.",
+            "Kaila Hotels guests enjoy an exclusive 10% discount. We are open 13:00–22:00 every day except Mondays.",
           de:
-            "20 % Rabatt für Kaila-Hotels-Gäste. Geöffnet 13:00–22:00, montags geschlossen.",
+            "10 % Rabatt für Kaila-Hotels-Gäste. Geöffnet 13:00–22:00, montags geschlossen.",
           ru:
-            "Скидка 20% для гостей Kaila Hotels. Режим: 13:00–22:00, выходной — понедельник.",
+            "Скидка 10% для гостей Kaila Hotels. Режим: 13:00–22:00, выходной — понедельник.",
         },
       ],
     },
@@ -199,7 +199,7 @@
     var root = el("div", "viona-mod viona-mod--discount");
 
     var hero = el("div", "discount-hero discount-hero--premium");
-    hero.appendChild(el("p", "discount-hero__kicker", T({ tr: "%20 misafir avantajı", en: "20% guest benefit", de: "20 % Gästevorteil", ru: "Выгода 20%" })));
+    hero.appendChild(el("p", "discount-hero__kicker", T({ tr: "%10 misafir avantajı", en: "10% guest benefit", de: "10 % Gästevorteil", ru: "Выгода 10%" })));
     hero.appendChild(el("h3", "discount-hero__title", T(HERO.title)));
     hero.appendChild(el("p", "discount-hero__lead", T(HERO.lead)));
     root.appendChild(hero);
@@ -207,7 +207,7 @@
     var grid = el("div", "discount-grid");
     ITEMS.forEach(function (v) {
       var card = el("article", "discount-card");
-      var badge = el("span", "discount-badge", "%20");
+      var badge = el("span", "discount-badge", "%10");
       var media = el("div", "discount-card__media");
       media.appendChild(buildCarousel(v.slides));
       var body = el("div", "discount-card__body");

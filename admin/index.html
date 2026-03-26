@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Viona Admin Panel</title>
+    <link rel="stylesheet" href="../css/styles.css" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="admin-body">
+    <section id="admin-login" class="admin-login">
+      <form id="admin-login-form" class="glass-block admin-login__card">
+        <h1>Viona Admin Giriş</h1>
+        <p>Devam etmek için kullanıcı adı ve şifre girin.</p>
+        <label>Kullanıcı Adı <input id="admin-username" type="text" autocomplete="username" required /></label>
+        <label>Şifre</label>
+        <div class="admin-password-row">
+          <input id="admin-password" type="password" autocomplete="current-password" required />
+          <button id="admin-password-toggle" type="button" class="btn-small">Göster</button>
+        </div>
+        <button class="btn-primary" type="submit">Giriş Yap</button>
+        <p id="admin-login-error" class="admin-login__error"></p>
+      </form>
+    </section>
+
+    <div id="admin-layout" class="admin-layout hidden">
+      <aside class="admin-sidebar glass-block">
+        <h1>Viona Admin</h1>
+        <nav class="admin-nav">
+          <button data-tab="requests" title="İstek kayıtlarını açar">İstekler</button>
+          <button data-tab="complaints" title="Şikayet kayıtlarını açar">Şikayetler</button>
+          <button data-tab="faults" title="Arıza kayıtlarını açar">Arızalar</button>
+          <button data-tab="reservations" title="Rezervasyon ekranını açar">Rezervasyonlar</button>
+          <div class="admin-nav-sub" aria-label="Rezervasyon alt sekmeleri">
+            <button data-tab="reservations" data-res-subtab="laTerrace" title="La Terrace rezervasyonlarını filtreler">La Terrace A La Carte</button>
+            <button data-tab="reservations" data-res-subtab="mare" title="Mare rezervasyonlarını filtreler">Mare Restaurant</button>
+            <button data-tab="reservations" data-res-subtab="sinton" title="Sinton rezervasyonlarını filtreler">Sinton BBQ Restaurant</button>
+            <button data-tab="reservations" data-res-subtab="spa" title="Spa rezervasyonlarını filtreler">Spa</button>
+          </div>
+          <button data-tab="promo" title="Promosyon görsellerini yönetir">Promosyonlar</button>
+          <button data-tab="pdf-report" class="admin-nav__pdf-tab" title="PDF rapor oluşturma ekranını açar">📄 PDF Raporlama</button>
+        </nav>
+      </aside>
+
+      <main class="admin-main">
+        <section id="tab-dashboard" class="admin-tab">
+          <h2>Dashboard ve Raporlar</h2>
+          <p class="section-lead">
+            Bu ekran otel operasyonunu tek noktadan izlemek icin tasarlandi. KPI kartlari anlik durumu, rapor kutulari ise trend ve kaliteyi gosterir.
+          </p>
+          <div id="kpi-cards" class="kpi-grid"></div>
+          <article class="glass-block dashboard-reminders">
+            <h3>Hatırlatmalar</h3>
+            <div id="dashboard-alerts"></div>
+          </article>
+          <div class="report-grid">
+            <article class="glass-block report-card">
+              <h3>Chatbot Performans</h3>
+              <p class="report-help">Kullanim yogunlugu, fallback ve soru dagilimi ile botun operasyonel verimini olcer.</p>
+              <div id="report-chatbot"></div>
+            </article>
+            <article class="glass-block report-card">
+              <h3>Memnuniyet</h3>
+              <p class="report-help">Misafir puanlariyla hizmet kalitesinin guclu ve zayif alanlarini gosterir.</p>
+              <div id="report-satisfaction"></div>
+            </article>
+            <article class="glass-block report-card">
+              <h3>Cevaplanamayan Sorular</h3>
+              <p class="report-help">Bilgi eksigini bulur; fallback artan konulari icerik iyilestirme listesine donusturur.</p>
+              <div id="report-unanswered"></div>
+            </article>
+            <article class="glass-block report-card">
+              <h3>Gelire Etki / Conversion</h3>
+              <p class="report-help">Chat sonrasi aksiyon ve donusum oranlariyla botun ticari etkisini olcer.</p>
+              <div id="report-conversion"></div>
+            </article>
+          </div>
+        </section>
+
+        <section id="tab-requests" class="admin-tab hidden">
+          <div class="section-head">
+            <h2>İstekler</h2>
+            <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
+          </div>
+          <p class="section-lead">Misafir taleplerini öncelik sırasına göre takip edin, açık kayıtları hızlıca güncelleyin.</p>
+          <div id="list-requests"></div>
+        </section>
+        <section id="tab-complaints" class="admin-tab hidden">
+          <div class="section-head">
+            <h2>Şikayetler</h2>
+            <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
+          </div>
+          <p class="section-lead">Şikayet kayıtlarını hızla sınıflandırın, çözüm sürecini görünür şekilde yönetin.</p>
+          <div id="list-complaints"></div>
+        </section>
+        <section id="tab-faults" class="admin-tab hidden">
+          <div class="section-head">
+            <h2>Arızalar</h2>
+            <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
+          </div>
+          <p class="section-lead">Teknik arızaları açık/işlemde/tamamlandı durumlarında izleyerek operasyonu aksatmadan yönetin.</p>
+          <div id="list-faults"></div>
+        </section>
+        <section id="tab-reservations" class="admin-tab hidden">
+          <div class="section-head">
+            <h2>Rezervasyonlar</h2>
+            <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
+          </div>
+          <p class="section-lead">Sol menüdeki alt sekmeden servis seçin; günlük takvim listesinde ilgili gün ve saatteki rezervasyonları yönetin.</p>
+          <p id="reservation-nav-status" class="reservation-nav-status">Aktif servis filtresi: La Terrace A La Carte</p>
+          <div id="list-reservations"></div>
+        </section>
+
+        <section id="tab-promo" class="admin-tab hidden">
+          <div class="section-head">
+            <h2>Promosyonlar</h2>
+            <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
+          </div>
+          <p class="section-lead">Her dil için tek bir aktif görsel tutulur. Yeni görsel eklemeden önce ilgili dildeki mevcut görseli silin; ardından kaydedin.</p>
+          <form id="promo-form" class="glass-block promo-form">
+            <label><input type="checkbox" id="promo-enabled" /> Popup aktif</label>
+            <div class="promo-row">
+              <label>TR görsel URL <input id="promo-tr" type="text" /></label>
+              <label>TR görsel yükle <input id="promo-tr-file" type="file" accept="image/*" /></label>
+              <button type="button" class="btn-small promo-clear-btn" data-promo-lang="tr">TR görseli sil</button>
+              <img id="promo-tr-preview" class="promo-preview" alt="TR önizleme" />
+            </div>
+            <div class="promo-row">
+              <label>EN görsel URL <input id="promo-en" type="text" /></label>
+              <label>EN görsel yükle <input id="promo-en-file" type="file" accept="image/*" /></label>
+              <button type="button" class="btn-small promo-clear-btn" data-promo-lang="en">EN görseli sil</button>
+              <img id="promo-en-preview" class="promo-preview" alt="EN önizleme" />
+            </div>
+            <div class="promo-row">
+              <label>DE görsel URL <input id="promo-de" type="text" /></label>
+              <label>DE görsel yükle <input id="promo-de-file" type="file" accept="image/*" /></label>
+              <button type="button" class="btn-small promo-clear-btn" data-promo-lang="de">DE görseli sil</button>
+              <img id="promo-de-preview" class="promo-preview" alt="DE önizleme" />
+            </div>
+            <div class="promo-row">
+              <label>RU görsel URL <input id="promo-ru" type="text" /></label>
+              <label>RU görsel yükle <input id="promo-ru-file" type="file" accept="image/*" /></label>
+              <button type="button" class="btn-small promo-clear-btn" data-promo-lang="ru">RU görseli sil</button>
+              <img id="promo-ru-preview" class="promo-preview" alt="RU önizleme" />
+            </div>
+            <button class="btn-primary" type="submit">Kaydet</button>
+            <p id="promo-status"></p>
+          </form>
+        </section>
+
+        <section id="tab-pdf-report" class="admin-tab hidden">
+          <div class="section-head">
+            <h2>PDF Raporlama ve Otomatik Yorumlama</h2>
+            <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
+          </div>
+          <p class="section-lead">
+            Tek bir PDF içinde chatbot performansı, memnuniyet, cevaplanamayan sorular ve gelir etkisi analizini yönetici seviyesinde oluşturun.
+          </p>
+          <article class="glass-block pdf-report-panel">
+            <h3>📘 Viona AI Otel Performans Raporu</h3>
+            <p class="pdf-report-panel__desc">
+              Bu modül tek tıkla indirmek yerine önce kapsamı doğrular. Tarih aralığını seçin, açıklamayı inceleyin ve ardından raporu indirin.
+            </p>
+            <div class="pdf-pro-grid">
+              <article class="pdf-pro-card">
+                <h4>Ne üretir?</h4>
+                <p>Tek PDF içinde performans, memnuniyet, fallback, gelir etkisi, aksiyonlar ve metodoloji.</p>
+              </article>
+              <article class="pdf-pro-card">
+                <h4>Veri yoksa ne olur?</h4>
+                <p>Rapor yine üretilir; içerikte "Bu tarih aralığında hiç veri yok" notu gösterilir.</p>
+              </article>
+            </div>
+            <div class="pdf-form-grid">
+              <label>Başlangıç Tarihi <input id="pdf-date-from" type="date" /></label>
+              <label>Bitiş Tarihi <input id="pdf-date-to" type="date" /></label>
+            </div>
+            <div class="pdf-callout" role="status">
+              <strong>Rapor Notu:</strong>
+              <span id="pdf-warning-text">Bu rapor bir karar destek çıktısıdır; mutlak benchmark garantisi vermez ve sezon/segment farklarıyla birlikte okunmalıdır.</span>
+            </div>
+            <div class="pdf-report-actions">
+              <button id="pdf-preview-info-btn" class="btn-small" type="button">Rapor Açıklamasını Göster</button>
+              <button id="pdf-download-btn" class="btn-primary" type="button">Raporu PDF Olarak İndir</button>
+            </div>
+            <p id="pdf-download-status"></p>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <script src="../js/api-config.js"></script>
+    <script src="js/data-adapter.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

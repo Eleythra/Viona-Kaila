@@ -1,0 +1,95 @@
+fault_report:
+  - bozuldu
+  - bozuk
+  - çalışmıyor
+  - calismiyor
+  - açılmıyor
+  - acilmiyor
+  - kapanmıyor
+  - kapanmiyor
+  - arızalı
+  - arizali
+  - kırıldı
+  - kirildi
+  - klima çalışmıyor
+  - klima bozuk
+  - klima soğutmuyor
+  - klima sogutmuyor
+  - televizyon çalışmıyor
+  - televizyon bozuk
+  - tv bozuldu
+  - tv bozuk
+  - kapı kartı çalışmıyor
+  - kapı kartı açılmıyor
+  - ışık yanmıyor
+  - duş bozuk
+  - broken
+  - not working
+  - ac broken
+  - tv broken
+  - key card not working
+  - kaputt
+  - defekt
+
+complaint:
+  - şikayetçiyim
+  - memnun değilim
+  - rahatsız oldum
+  - kötü
+  - gürültü var
+  - hizmet kötü
+  - ilgilenilmedi
+  - complaint
+  - dissatisfied
+  - noisy
+  - poor service
+
+request:
+  - istiyorum
+  - rica ediyorum
+  - gönderir misiniz
+  - lazım
+  - ek havlu
+  - su istiyorum
+  - yastık istiyorum
+  - battaniye istiyorum
+  - i need
+  - can you send
+  - extra towel
+  - extra pillow
+  - blanket
+
+reservation:
+  - erken giriş
+  - erken giris
+  - geç çıkış
+  - gec cikis
+  - rezervasyon
+  - reservation
+  - oda değiş
+  - oda degis
+  - room change
+  - late checkout
+  - early checkin
+  - rezervasyonum görünmüyor
+  - rezervasyonum gorunmuyor
+  - uzatmak istiyorum
+  - iki gece daha
+
+special_need:
+  - gluten
+  - alerjen
+  - alerji
+  - hassasiyet
+  - çölyak
+  - laktoz
+  - vegan
+  - özel beslenme
+  - özel ihtiyaç
+  - erişilebilirlik
+  - allergy
+  - allergen
+  - celiac
+  - lactose
+  - dietary
+  - accessibility

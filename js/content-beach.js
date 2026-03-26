@@ -50,11 +50,11 @@
     },
     {
       tr:
-        "Otelin özel alt geçidinden geçerek size ayrılmış plaj alanımıza kolayca ulaşabilirsiniz. Gün boyunca atıştırmalıklar, alkolsüz içecekler, bira ve gözleme gibi geleneksel Türk lezzetleri ikram edilir; hepsi konaklamanıza dahildir. Daha özel ve seçkin bir deniz keyfi arayanlar için ise sahilde yer alan Moss Beach bar & restaurant sizi bekliyor. Bu özel beach club’da lezzetli à la carte yemekler, sağlıklı seçenekler ve geniş bir premium alkollü ve alkolsüz içecek menüsü sunulmaktadır.",
+        "Otelin özel alt geçidinden geçerek size ayrılmış plaj alanımıza kolayca ulaşabilirsiniz. Gün boyunca atıştırmalıklar, alkolsüz içecekler, bira ve gözleme gibi geleneksel Türk lezzetleri ikram edilir; hepsi konaklamanıza dahildir. Daha özel ve seçkin bir deniz keyfi arayanlar için ise sahilde yer alan Moss Beach Restaurant & Bar sizi bekliyor. Bu özel beach club’da lezzetli à la carte yemekler, sağlıklı seçenekler ve geniş bir premium alkollü ve alkolsüz içecek menüsü sunulmaktadır.",
       en:
-        "Reach the private beach via the hotel’s underpass. During the day, snacks, soft drinks, beer and gözleme are served on the beach — included in your stay. Moss Beach bar & restaurant on the shore offers à la carte dining and a premium drink menu for an extra special sea experience.",
+        "Reach the private beach via the hotel’s underpass. During the day, snacks, soft drinks, beer and gözleme are served on the beach — included in your stay. Moss Beach Restaurant & Bar on the shore offers à la carte dining and a premium drink menu for an extra special sea experience.",
       de:
-        "Über die Unterführung gelangen Sie zum Privatstrand. Snacks, alkoholfreie Getränke, Bier und Gözleme sind inklusive. Moss Beach bar & restaurant bietet À-la-carte und Premium-Getränke.",
+        "Über die Unterführung gelangen Sie zum Privatstrand. Snacks, alkoholfreie Getränke, Bier und Gözleme sind inklusive. Moss Beach Restaurant & Bar bietet À-la-carte und Premium-Getränke.",
       ru:
         "Через подземный переход — к собственному пляжу. Закуски, безалкогольные напитки, пиво и гёзлеме включены. Moss Beach — à la carte и премиальные напитки.",
     },
@@ -65,7 +65,7 @@
     { label: { tr: "Plaj konumu", en: "Beach position", de: "Lage", ru: "Позиция" }, value: { tr: "1. sıra · otele çok yakın", en: "First line · very close", de: "Erste Reihe", ru: "Первая линия" } },
     { label: { tr: "Plaj türü", en: "Beach type", de: "Strandart", ru: "Тип пляжа" }, value: { tr: "Kum ve çakıl", en: "Sand & pebble", de: "Sand & Kies", ru: "Песок и галька" } },
     { label: { tr: "Plaj statüsü", en: "Beach status", de: "Status", ru: "Статус" }, value: { tr: "Otelin özel plajı", en: "Hotel private beach", de: "Hotelprivatstrand", ru: "Собственный пляж отеля" } },
-    { label: { tr: "Kullanım saatleri", en: "Hours", de: "Zeiten", ru: "Часы" }, value: "08:30 – 19:00" },
+    { label: { tr: "Kullanım saatleri", en: "Hours", de: "Zeiten", ru: "Часы" }, value: "08:30 – 18:30" },
     { label: { tr: "Plaj havlusu", en: "Beach towels", de: "Strandtücher", ru: "Полотенца" }, value: { tr: "Ücretsiz", en: "Free", de: "Kostenlos", ru: "Бесплатно" } },
     { label: { tr: "Şemsiye", en: "Parasols", de: "Schirme", ru: "Зонты" }, value: { tr: "Ücretsiz", en: "Free", de: "Kostenlos", ru: "Бесплатно" } },
     { label: { tr: "Şezlong", en: "Sun loungers", de: "Liegen", ru: "Шезлонги" }, value: { tr: "Ücretsiz", en: "Free", de: "Kostenlos", ru: "Бесплатно" } },
@@ -93,26 +93,26 @@
       },
     },
     {
-      label: { tr: "Moss Beach bar & restaurant", en: "Moss Beach bar & restaurant", de: "Moss Beach", ru: "Moss Beach" },
+      label: { tr: "Moss Beach Restaurant & Bar", en: "Moss Beach Restaurant & Bar", de: "Moss Beach Restaurant & Bar", ru: "Moss Beach Restaurant & Bar" },
       value: {
-        tr: "10:00 – 19:00 · ücretli (à la carte)",
-        en: "10:00 – 19:00 · paid (à la carte)",
-        de: "10:00 – 19:00 · kostenpflichtig",
-        ru: "10:00 – 19:00 · платно (à la carte)",
+        tr: "10:00 – 19:00 · ücretli (à la carte) · Kaila misafirlerine %10 indirim",
+        en: "10:00 – 19:00 · paid (à la carte) · 10% discount for Kaila guests",
+        de: "10:00 – 19:00 · kostenpflichtig · 10 % Rabatt für Kaila-Gäste",
+        ru: "10:00 – 19:00 · платно (à la carte) · скидка 10% для гостей Kaila",
       },
     },
   ];
 
   var POOLS = [
     {
-      img: "assets/images/beach/havuz1-a7d2f8ca-d530-46a2-be40-09ba2a6ee720.png",
+      img: "assets/images/beach/havuz2-9839c4c2-5299-42d9-93c0-4aabdf8beacb.png",
       title: { tr: "Relax Pool", en: "Relax Pool", de: "Relax Pool", ru: "Relax Pool" },
       tag: { tr: "Dinlenme havuzu", en: "Relaxation pool", de: "Ruhepool", ru: "Релакс-бассейн" },
       kv: [
         { label: { tr: "Havuz türü", en: "Type", de: "Typ", ru: "Тип" }, value: { tr: "Açık havuz", en: "Outdoor", de: "Außen", ru: "Открытый" } },
         { label: { tr: "Su türü", en: "Water", de: "Wasser", ru: "Вода" }, value: { tr: "Tatlı su", en: "Fresh water", de: "Süßwasser", ru: "Пресная" } },
         { label: { tr: "Hacim", en: "Volume", de: "Volumen", ru: "Объём" }, value: "560 m³" },
-        { label: { tr: "Kullanım saatleri", en: "Hours", de: "Zeiten", ru: "Часы" }, value: "08:00 – 19:00" },
+        { label: { tr: "Kullanım saatleri", en: "Hours", de: "Zeiten", ru: "Часы" }, value: "08:30 – 18:30" },
         { label: { tr: "Derinlik", en: "Depth", de: "Tiefe", ru: "Глубина" }, value: "140 cm (1,4 m)" },
       ],
     },
@@ -134,7 +134,7 @@
       ],
     },
     {
-      img: "assets/images/beach/havuz2-9839c4c2-5299-42d9-93c0-4aabdf8beacb.png",
+      img: "assets/images/beach/havuz1-a7d2f8ca-d530-46a2-be40-09ba2a6ee720.png",
       title: { tr: "Dolphin Pool", en: "Dolphin Pool", de: "Dolphin Pool", ru: "Dolphin Pool" },
       tag: { tr: "Dolphin havuz", en: "Dolphin pool", de: "Dolphin-Becken", ru: "Бассейн Dolphin" },
       kv: [
@@ -143,7 +143,7 @@
         { label: { tr: "Hacim", en: "Volume", de: "Volumen", ru: "Объём" }, value: "125 m³" },
         {
           label: { tr: "Kullanım saatleri", en: "Hours", de: "Zeiten", ru: "Часы" },
-          value: "10:00 – 12:00 · 14:00 – 16:00",
+          value: "08:30 – 18:30",
         },
       ],
     },
@@ -208,10 +208,10 @@
     },
     lines: [
       {
-        tr: "Plaj / havuz havlu servisi 08:30 – 19:00 arasındadır.",
-        en: "Beach / pool towel service 08:30 – 19:00.",
-        de: "Handtuchservice Strand/Pool 08:30 – 19:00.",
-        ru: "Полотенца пляж/бассейн 08:30 – 19:00.",
+        tr: "Plaj / havuz havlu servisi 08:30 – 18:30 arasındadır.",
+        en: "Beach / pool towel service 08:30 – 18:30.",
+        de: "Handtuchservice Strand/Pool 08:30 – 18:30.",
+        ru: "Полотенца пляж/бассейн 08:30 – 18:30.",
       },
       {
         tr: "Plaj havlusu konaklamanıza dahil olarak ücretsiz sunulmaktadır.",

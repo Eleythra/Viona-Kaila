@@ -18,5 +18,8 @@
     adminRequestsEndpoint: base + "/admin/requests",
     adminSurveysEndpoint: base + "/admin/surveys",
     adminSurveyReportEndpoint: base + "/admin/surveys/report",
+    adminDashboardReportEndpoint: base + "/admin/reports/dashboard",
+    adminPdfReportEndpoint: base + "/admin/reports/pdf",
+    adminPromoConfigEndpoint: base + "/admin/promo-config",
   };
 })();

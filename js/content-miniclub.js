@@ -141,7 +141,7 @@
       slots: [
         {
           name: { tr: "Mini Disco", en: "Mini Disco", de: "Mini-Disco", ru: "Мини-диско" },
-          time: "20:45 – 21:30",
+          time: "20:45 – 21:00",
           format: {
             tr: "Amfi / gösteri alanı · Eğlence aktivitesi",
             en: "Amphitheatre / show area · Entertainment activity",
@@ -187,7 +187,7 @@
             de: "Kinderspielplatz",
             ru: "Детская площадка",
           },
-          time: "07:00 – 22:00",
+          time: "07:00 – 21:00",
           format: {
             tr: "Açık alan · Oyun alanı",
             en: "Outdoor area · Play area",

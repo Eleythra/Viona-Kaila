@@ -1,5 +1,15 @@
 import { Router } from "express";
-import { getSurveyReport, listAdminBucket, listSurveySubmissions } from "./admin.service.js";
+import {
+  deleteAdminItem,
+  getDashboardReports,
+  getPromoConfig,
+  getPdfReportPackage,
+  getSurveyReport,
+  listAdminBucket,
+  listSurveySubmissions,
+  updateAdminItemStatus,
+  upsertPromoConfig,
+} from "./admin.service.js";
 
 const router = Router();
 
@@ -28,6 +38,65 @@ router.get("/surveys/report", async (req, res) => {
     return res.status(200).json({ ok: true, report });
   } catch (error) {
     return res.status(400).json({ ok: false, error: error?.message || "admin_survey_report_failed" });
+  }
+});
+
+router.patch("/requests/:type/:id/status", async (req, res) => {
+  try {
+    const data = await updateAdminItemStatus(req.params.type, req.params.id, req.body?.status);
+    return res.status(200).json({ ok: true, item: data });
+  } catch (error) {
+    return res.status(400).json({ ok: false, error: error?.message || "admin_status_update_failed" });
+  }
+});
+
+router.delete("/requests/:type/:id", async (req, res) => {
+  try {
+    const data = await deleteAdminItem(req.params.type, req.params.id);
+    return res.status(200).json({ ok: true, ...data });
+  } catch (error) {
+    return res.status(400).json({ ok: false, error: error?.message || "admin_item_delete_failed" });
+  }
+});
+
+router.get("/promo-config", async (req, res) => {
+  try {
+    const config = await getPromoConfig();
+    return res.status(200).json({ ok: true, config });
+  } catch (error) {
+    return res.status(400).json({ ok: false, error: error?.message || "promo_config_fetch_failed" });
+  }
+});
+
+router.put("/promo-config", async (req, res) => {
+  try {
+    const config = await upsertPromoConfig(req.body || {});
+    return res.status(200).json({ ok: true, config });
+  } catch (error) {
+    return res.status(400).json({ ok: false, error: error?.message || "promo_config_update_failed" });
+  }
+});
+
+router.get("/reports/dashboard", async (req, res) => {
+  try {
+    const report = await getDashboardReports(req.query || {});
+    return res.status(200).json({ ok: true, report });
+  } catch (error) {
+    return res.status(400).json({ ok: false, error: error?.message || "dashboard_report_failed" });
+  }
+});
+
+router.get("/reports/pdf", async (req, res) => {
+  try {
+    const result = await getPdfReportPackage(req.query || {});
+    const pdfBuffer = Buffer.isBuffer(result.buffer) ? result.buffer : Buffer.from(result.buffer);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${result.fileName}"`);
+    res.setHeader("X-Viona-No-Data", result.noData ? "1" : "0");
+    res.setHeader("Content-Length", String(pdfBuffer.length));
+    return res.status(200).end(pdfBuffer);
+  } catch (error) {
+    return res.status(400).json({ ok: false, error: error?.message || "pdf_report_failed" });
   }
 });
 

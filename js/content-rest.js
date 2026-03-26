@@ -198,7 +198,7 @@
       slots: [
         {
           name: { tr: "Servis", en: "Service", de: "Service", ru: "Сервис" },
-          time: "11:00 – 16:30",
+          time: "11:00 – 18:00",
           format: { tr: "Self servis", en: "Self-service", de: "Selbstbedienung", ru: "Самообслуживание" },
           charge: { tr: "Ücretsiz", en: "Included", de: "Inklusive", ru: "Включено" },
           res: { tr: "Rezervasyon gerekmiyor", en: "No reservation", de: "Keine Reservierung", ru: "Без записи" },
@@ -215,12 +215,22 @@
       type: "card",
       img: "assets/images/rest/mossrestaurant-1a5f4011-0342-4d17-b484-8f91a1b97456.png",
       title: {
-        tr: "Moss Bar ve Snack Restoran",
-        en: "Moss Bar & Snack Restaurant",
-        de: "Moss Bar & Snack",
-        ru: "Moss Bar и снек-ресторан",
+        tr: "Moss Beach Restaurant & Bar",
+        en: "Moss Beach Restaurant & Bar",
+        de: "Moss Beach Restaurant & Bar",
+        ru: "Moss Beach Restaurant & Bar",
       },
       location: { tr: "Sahilde · masaya servis", en: "Beachfront · table service", de: "Am Strand", ru: "На пляже" },
+      action: {
+        label: {
+          tr: "Menüye Ulaşın",
+          en: "Open Menu",
+          de: "Menü Öffnen",
+          ru: "Открыть меню",
+        },
+        href: "assets/docs/moss-beach-menu.pdf",
+        download: "moss-beach-menu.pdf",
+      },
       slots: [
         {
           name: { tr: "Bar ve snack", en: "Bar & snack", de: "Bar & Snack", ru: "Бар и снек" },
@@ -461,6 +471,19 @@
       slotsWrap.appendChild(renderSlot(slot));
     });
     body.appendChild(slotsWrap);
+    if (item.action && item.action.href) {
+      var actions = document.createElement("div");
+      actions.className = "venue-card__actions";
+      var cta = document.createElement("a");
+      cta.className = "venue-card__cta";
+      cta.href = item.action.href;
+      cta.setAttribute("download", item.action.download || "");
+      cta.setAttribute("target", "_blank");
+      cta.setAttribute("rel", "noopener");
+      cta.textContent = T(item.action.label || {});
+      actions.appendChild(cta);
+      body.appendChild(actions);
+    }
     card.appendChild(fig);
     card.appendChild(body);
     return card;

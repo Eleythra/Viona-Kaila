@@ -47,8 +47,8 @@
     return min.getFullYear() + "-" + pad(min.getMonth() + 1) + "-" + pad(min.getDate());
   };
 
-  /** La Terrace A La Carte: 18:45 – 21:00 (otel verisi) */
-  var LA_TERRACE = slots15("18:45", "21:00");
+  /** La Terrace A La Carte: 18:30 – 21:00 (otel verisi) */
+  var LA_TERRACE = slots15("18:30", "21:00");
   /** Mare (balık a la carte): akşam rezervasyon penceresi 18:00 – 22:00 */
   var MARE = slots15("18:00", "22:00");
   /** Sinton BBQ: 13:00 – 22:00 (otel verisi; Pazartesi kapalı operasyon ayrı yönetilir) */

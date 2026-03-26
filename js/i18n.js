@@ -11,7 +11,7 @@ const I18N = {
     homeTitle: "Kaila Beach Hotel",
 
     introLead:
-      "Alanya Obagöl’de denize sıfır konumda; Ultra Her Şey Dahil konseptiyle konforlu bir tatil deneyimi.",
+      "Alanya Obagöl’de denize sıfır konumda; Her Şey Dahil konseptiyle konforlu bir tatil deneyimi.",
 
     appVionaTitle: "Viona · Akıllı konaklama uygulamanız",
     appIntro:
@@ -19,14 +19,14 @@ const I18N = {
 
     introAboutHeading: "Otel hakkında",
     introAbout1:
-      "Kaila Beach Hotel, Antalya'nın Alanya bölgesinde, denize sıfır konumda yer alan modern ve konfor odaklı bir tatil otelidir. Misafirlerine hem dinlenme hem de eğlenceyi bir arada sunan tesis, aileler, çiftler ve bireysel tatilciler için uygun konsepti ile hizmet vermektedir. Ultra Her Şey Dahil konsepti ile gün boyu yeme-içme, aktivite ve dinlenme imkanlarını bir arada sunmaktadır. Tesis, modern mimarisi, geniş sosyal alanları, havuzları, aquaparkı, spa merkezi ve çeşitli restoran/bar seçenekleri ile dikkat çekmektedir. Hem şehir merkezine yakınlığı hem de sahil erişimi sayesinde konforlu ve erişilebilir bir tatil deneyimi sunar.",
+      "Kaila Beach Hotel, Antalya'nın Alanya bölgesinde, denize sıfır konumda yer alan modern ve konfor odaklı bir tatil otelidir. Misafirlerine hem dinlenme hem de eğlenceyi bir arada sunan tesis, aileler, çiftler ve bireysel tatilciler için uygun konsepti ile hizmet vermektedir. Her Şey Dahil konsepti ile gün boyu yeme-içme, aktivite ve dinlenme imkanlarını bir arada sunmaktadır. Tesis, modern mimarisi, geniş sosyal alanları, havuzları, aquaparkı, spa merkezi ve çeşitli restoran/bar seçenekleri ile dikkat çekmektedir. Hem şehir merkezine yakınlığı hem de sahil erişimi sayesinde konforlu ve erişilebilir bir tatil deneyimi sunar.",
     introAbout2:
       "Konum: Antalya, Alanya, Obagöl Mevki. Alanya şehir merkezi yaklaşık 3 km, Gazipaşa Havalimanı yaklaşık 38 km, Antalya Havalimanı yaklaşık 25 km mesafededir. Tesis, Alanya şehir merkezine yakın olup toplu taşıma ve taksi ile kolay erişim sağlanabilir.",
     introAbout3:
       "Sürdürülebilirlik ve çevre: Kaila Beach Hotel olarak turizmdeki hizmet kalitemizi uluslararası sürdürülebilirlik standartlarıyla bütünleştiriyoruz. Travelife Gold ve GSTC sertifikalarına sahip bir tesis olarak; karbon ayak izimizi en aza indirmeyi, biyolojik çeşitliliği korumayı ve kültürel mirası gelecek nesillere aktarmayı temel sorumluluğumuz kabul ediyoruz.",
 
     intro1:
-      "Kaila Beach Hotel, Antalya'nın Alanya bölgesinde, denize sıfır konumda yer alan modern ve konfor odaklı bir tatil otelidir. Misafirlerine hem dinlenme hem de eğlenceyi bir arada sunan tesis, aileler, çiftler ve bireysel tatilciler için uygun konsepti ile hizmet vermektedir. Ultra Her Şey Dahil konsepti ile gün boyu yeme-içme, aktivite ve dinlenme imkanlarını bir arada sunmaktadır.",
+      "Kaila Beach Hotel, Antalya'nın Alanya bölgesinde, denize sıfır konumda yer alan modern ve konfor odaklı bir tatil otelidir. Misafirlerine hem dinlenme hem de eğlenceyi bir arada sunan tesis, aileler, çiftler ve bireysel tatilciler için uygun konsepti ile hizmet vermektedir. Her Şey Dahil konsepti ile gün boyu yeme-içme, aktivite ve dinlenme imkanlarını bir arada sunmaktadır.",
     intro2:
       "Tesis, modern mimarisi, geniş sosyal alanları, havuzları, aquaparkı, spa merkezi ve çeşitli restoran/bar seçenekleri ile dikkat çekmektedir. Hem şehir merkezine yakınlığı hem de sahil erişimi sayesinde konforlu ve erişilebilir bir tatil deneyimi sunar.",
 
@@ -226,8 +226,8 @@ const I18N = {
     reqErrDate: "Tarih seçin.",
     reqErrStayDates: "Konaklama giriş ve çıkış tarihlerini seçin.",
     reqErrStayRange: "Çıkış tarihi girişten sonra olmalıdır.",
-    reqStayPromo7: "7 gece ve üzeri konaklamalarda 1 gün ücretsizdir.",
-    reqStayPaid: "7 geceden az konaklamalarda rezervasyon ücretlidir.",
+    reqStayPromo7: "5 gece ve üzeri konaklamalarda 1 gün ücretsizdir.",
+    reqStayPaid: "5 geceden az konaklamalarda rezervasyon ücretlidir.",
     reqRestMain: "Ana Restaurant",
     reqRestTerrace: "La Terrace",
     reqRestDolphin: "Dolphin",
@@ -279,7 +279,7 @@ const I18N = {
     homeTitle: "Kaila Beach Hotel",
 
     introLead:
-      "Beachfront in Obagöl, Alanya — Ultra All Inclusive for a comfortable holiday experience.",
+      "Beachfront in Obagöl, Alanya — All Inclusive for a comfortable holiday experience.",
 
     appVionaTitle: "Viona · Your smart stay app",
     appIntro:
@@ -287,14 +287,14 @@ const I18N = {
 
     introAboutHeading: "About the hotel",
     introAbout1:
-      "Kaila Beach Hotel is a modern, comfort-focused resort in Alanya, Antalya, directly on the sea. It offers relaxation and entertainment for families, couples, and solo travellers. With Ultra All Inclusive, dining, activities, and leisure are combined throughout the day. The resort stands out for its contemporary architecture, generous social areas, pools, aquapark, spa, and diverse restaurant and bar options. Proximity to the town centre and direct beach access make for a comfortable, accessible stay.",
+      "Kaila Beach Hotel is a modern, comfort-focused resort in Alanya, Antalya, directly on the sea. It offers relaxation and entertainment for families, couples, and solo travellers. With All Inclusive, dining, activities, and leisure are combined throughout the day. The resort stands out for its contemporary architecture, generous social areas, pools, aquapark, spa, and diverse restaurant and bar options. Proximity to the town centre and direct beach access make for a comfortable, accessible stay.",
     introAbout2:
       "Location: Antalya, Alanya, Obagöl. Alanya city centre approx. 3 km, Gazipaşa Airport approx. 38 km, Antalya Airport approx. 25 km. The hotel is well placed for the centre of Alanya; public transport and taxis are readily available.",
     introAbout3:
       "Sustainability: we align our service quality with international sustainability standards. As a Travelife Gold and GSTC certified property, we aim to minimise our carbon footprint, protect biodiversity, and pass cultural heritage to future generations.",
 
     intro1:
-      "Kaila Beach Hotel is a modern, comfort-focused resort in Alanya, Antalya, directly on the sea. It offers relaxation and entertainment for families, couples, and solo travellers. With Ultra All Inclusive, dining, activities, and leisure are combined throughout the day.",
+      "Kaila Beach Hotel is a modern, comfort-focused resort in Alanya, Antalya, directly on the sea. It offers relaxation and entertainment for families, couples, and solo travellers. With All Inclusive, dining, activities, and leisure are combined throughout the day.",
     intro2:
       "The resort stands out for its contemporary architecture, generous social areas, pools, aquapark, spa, and diverse restaurant and bar options. Proximity to the town centre and direct beach access make for a comfortable, accessible stay.",
 
@@ -494,8 +494,8 @@ const I18N = {
     reqErrDate: "Please choose a date.",
     reqErrStayDates: "Select stay check-in and check-out.",
     reqErrStayRange: "Check-out must be after check-in.",
-    reqStayPromo7: "For stays of 7 nights or more, 1 day is free.",
-    reqStayPaid: "For stays under 7 nights, the reservation is charged.",
+    reqStayPromo7: "For stays of 5 nights or more, 1 day is free.",
+    reqStayPaid: "For stays under 5 nights, the reservation is charged.",
     reqRestMain: "Main Restaurant",
     reqRestTerrace: "La Terrace",
     reqRestDolphin: "Dolphin",
@@ -547,7 +547,7 @@ const I18N = {
     homeTitle: "Kaila Beach Hotel",
 
     introLead:
-      "Direkt am Strand in Obagöl, Alanya — Ultra All Inclusive für einen komfortablen Urlaub.",
+      "Direkt am Strand in Obagöl, Alanya — All Inclusive für einen komfortablen Urlaub.",
 
     appVionaTitle: "Viona · Ihre intelligente Aufenthalts-App",
     appIntro:
@@ -555,14 +555,14 @@ const I18N = {
 
     introAboutHeading: "Über das Hotel",
     introAbout1:
-      "Das Kaila Beach Hotel liegt in Alanya, Antalya, direkt am Meer und bietet modernen Komfort. Es verbindet Erholung und Unterhaltung für Familien, Paare und Einzelreisende. Im Ultra-All-inclusive sind Verpflegung, Aktivitäten und Entspannung über den Tag verteilt vereint. Die Anlage besticht durch moderne Architektur, großzügige Bereiche, Pools, Aquapark, Spa sowie vielfältige Restaurant- und Barangebote. Die Nähe zum Stadtzentrum und der direkte Strandzugang sorgen für einen komfortablen Aufenthalt.",
+      "Das Kaila Beach Hotel liegt in Alanya, Antalya, direkt am Meer und bietet modernen Komfort. Es verbindet Erholung und Unterhaltung für Familien, Paare und Einzelreisende. Im All-inclusive sind Verpflegung, Aktivitäten und Entspannung über den Tag verteilt vereint. Die Anlage besticht durch moderne Architektur, großzügige Bereiche, Pools, Aquapark, Spa sowie vielfältige Restaurant- und Barangebote. Die Nähe zum Stadtzentrum und der direkte Strandzugang sorgen für einen komfortablen Aufenthalt.",
     introAbout2:
       "Lage: Antalya, Alanya, Obagöl. Zentrum Alanya ca. 3 km, Flughafen Gazipaşa ca. 38 km, Flughafen Antalya ca. 25 km. Das Hotel liegt günstig nahe dem Zentrum von Alanya. Öffentliche Verkehrsmittel und Taxis sind gut erreichbar.",
     introAbout3:
       "Nachhaltigkeit: Wir verbinden unsere Servicequalität mit internationalen Nachhaltigkeitsstandards. Als Travelife-Gold- und GSTC-zertifizierte Anlage minimieren wir unseren CO₂-Fußabdruck, schützen die Biodiversität und bewahren kulturelles Erbe.",
 
     intro1:
-      "Das Kaila Beach Hotel liegt in Alanya, Antalya, direkt am Meer und bietet modernen Komfort. Es verbindet Erholung und Unterhaltung für Familien, Paare und Einzelreisende. Im Ultra-All-inclusive sind Verpflegung, Aktivitäten und Entspannung über den Tag verteilt vereint.",
+      "Das Kaila Beach Hotel liegt in Alanya, Antalya, direkt am Meer und bietet modernen Komfort. Es verbindet Erholung und Unterhaltung für Familien, Paare und Einzelreisende. Im All-inclusive sind Verpflegung, Aktivitäten und Entspannung über den Tag verteilt vereint.",
     intro2:
       "Die Anlage besticht durch moderne Architektur, großzügige Bereiche, Pools, Aquapark, Spa sowie vielfältige Restaurant- und Barangebote. Die Nähe zum Stadtzentrum und der direkte Strandzugang sorgen für einen komfortablen Aufenthalt.",
 
@@ -762,8 +762,8 @@ const I18N = {
     reqErrDate: "Bitte ein Datum wählen.",
     reqErrStayDates: "Anreise und Abreise wählen.",
     reqErrStayRange: "Abreise muss nach Anreise liegen.",
-    reqStayPromo7: "Ab 7 Übernachtungen ist 1 Tag kostenfrei.",
-    reqStayPaid: "Bei unter 7 Übernachtungen ist die Reservierung kostenpflichtig.",
+    reqStayPromo7: "Ab 5 Übernachtungen ist 1 Tag kostenfrei.",
+    reqStayPaid: "Bei unter 5 Übernachtungen ist die Reservierung kostenpflichtig.",
     reqRestMain: "Hauptrestaurant",
     reqRestTerrace: "La Terrace",
     reqRestDolphin: "Dolphin",
@@ -815,7 +815,7 @@ const I18N = {
     homeTitle: "Kaila Beach Hotel",
 
     introLead:
-      "Первая линия в Обагёле, Аланья — Ultra All Inclusive для комфортного отдыха.",
+      "Первая линия в Обагёле, Аланья — All Inclusive для комфортного отдыха.",
 
     appVionaTitle: "Viona · Умное приложение для проживания",
     appIntro:
@@ -823,14 +823,14 @@ const I18N = {
 
     introAboutHeading: "Об отеле",
     introAbout1:
-      "Kaila Beach Hotel — современный комфортный курортный отель в Аланье (Анталья), на первой линии моря. Подходит для семей, пар и индивидуальных путешественников. Концепция Ultra All Inclusive объединяет питание, развлечения и отдых в течение дня. Отель выделяется современной архитектурой, просторными зонами отдыха, бассейнами, аквапарком, спа и разнообразными ресторанами и барами. Близость к центру города и выход к пляжу обеспечивают удобный отдых.",
+      "Kaila Beach Hotel — современный комфортный курортный отель в Аланье (Анталья), на первой линии моря. Подходит для семей, пар и индивидуальных путешественников. Концепция All Inclusive объединяет питание, развлечения и отдых в течение дня. Отель выделяется современной архитектурой, просторными зонами отдыха, бассейнами, аквапарком, спа и разнообразными ресторанами и барами. Близость к центру города и выход к пляжу обеспечивают удобный отдых.",
     introAbout2:
       "Расположение: Анталья, Аланья, Обагёль. Центр Аланьи около 3 км, аэропорт Газипаша около 38 км, аэропорт Антальи около 25 км. Отель удобно расположен относительно центра Аланьи; доступны общественный транспорт и такси.",
     introAbout3:
       "Устойчивое развитие: мы сочетаем качество сервиса с международными стандартами устойчивости. Сертификаты Travelife Gold и GSTC: снижение углеродного следа, сохранение биоразнообразия и культурного наследия.",
 
     intro1:
-      "Kaila Beach Hotel — современный комфортный курортный отель в Аланье (Анталья), на первой линии моря. Подходит для семей, пар и индивидуальных путешественников. Концепция Ultra All Inclusive объединяет питание, развлечения и отдых в течение дня.",
+      "Kaila Beach Hotel — современный комфортный курортный отель в Аланье (Анталья), на первой линии моря. Подходит для семей, пар и индивидуальных путешественников. Концепция All Inclusive объединяет питание, развлечения и отдых в течение дня.",
     intro2:
       "Отель выделяется современной архитектурой, просторными зонами отдыха, бассейнами, аквапарком, спа и разнообразными ресторанами и барами. Близость к центру города и выход к пляжу обеспечивают удобный отдых.",
 
@@ -1030,8 +1030,8 @@ const I18N = {
     reqErrDate: "Выберите дату.",
     reqErrStayDates: "Укажите даты заезда и выезда.",
     reqErrStayRange: "Выезд должен быть позже заезда.",
-    reqStayPromo7: "При проживании от 7 ночей 1 день бесплатно.",
-    reqStayPaid: "При проживании менее 7 ночей бронирование платное.",
+    reqStayPromo7: "При проживании от 5 ночей 1 день бесплатно.",
+    reqStayPaid: "При проживании менее 5 ночей бронирование платное.",
     reqRestMain: "Основной ресторан",
     reqRestTerrace: "La Terrace",
     reqRestDolphin: "Dolphin",

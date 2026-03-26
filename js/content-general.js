@@ -66,13 +66,13 @@
       },
       html: {
         tr:
-          "<p>Kaila Beach Hotel, Antalya’nın Alanya bölgesinde, denize sıfır konumda yer alan modern ve konfor odaklı bir tatil otelidir. Misafirlerine hem dinlenme hem de eğlenceyi bir arada sunan tesis, aileler, çiftler ve bireysel tatilciler için uygun konsepti ile hizmet vermektedir. Ultra Her Şey Dahil konsepti ile gün boyu yeme-içme, aktivite ve dinlenme imkanlarını bir arada sunmaktadır.</p><p>Tesis, modern mimarisi, geniş sosyal alanları, havuzları, aquaparkı, spa merkezi ve çeşitli restoran/bar seçenekleri ile dikkat çekmektedir. Hem şehir merkezine yakınlığı hem de sahil erişimi sayesinde konforlu ve erişilebilir bir tatil deneyimi sunar.</p>",
+          "<p>Kaila Beach Hotel, Antalya’nın Alanya bölgesinde, denize sıfır konumda yer alan modern ve konfor odaklı bir tatil otelidir. Misafirlerine hem dinlenme hem de eğlenceyi bir arada sunan tesis, aileler, çiftler ve bireysel tatilciler için uygun konsepti ile hizmet vermektedir. Her Şey Dahil konsepti ile gün boyu yeme-içme, aktivite ve dinlenme imkanlarını bir arada sunmaktadır.</p><p>Tesis, modern mimarisi, geniş sosyal alanları, havuzları, aquaparkı, spa merkezi ve çeşitli restoran/bar seçenekleri ile dikkat çekmektedir. Hem şehir merkezine yakınlığı hem de sahil erişimi sayesinde konforlu ve erişilebilir bir tatil deneyimi sunar.</p>",
         en:
-          "<p>Kaila Beach Hotel is a modern comfort-focused resort in Alanya, Antalya, directly on the sea. It combines relaxation and entertainment for families, couples and individual travellers. Ultra All Inclusive brings dining, activities and leisure together throughout the day.</p><p>The resort features contemporary architecture, generous social areas, pools, aquapark, spa and several restaurant/bar options. Proximity to the town centre and direct beach access ensure a comfortable stay.</p>",
+          "<p>Kaila Beach Hotel is a modern comfort-focused resort in Alanya, Antalya, directly on the sea. It combines relaxation and entertainment for families, couples and individual travellers. All Inclusive brings dining, activities and leisure together throughout the day.</p><p>The resort features contemporary architecture, generous social areas, pools, aquapark, spa and several restaurant/bar options. Proximity to the town centre and direct beach access ensure a comfortable stay.</p>",
         de:
-          "<p>Das Kaila Beach Hotel in Alanya, Antalya, liegt direkt am Meer und bietet modernen Komfort für Familien, Paare und Einzelreisende. Ultra All Inclusive vereint Verpflegung, Aktivitäten und Erholung über den Tag.</p><p>Moderne Architektur, großzügige Bereiche, Pools, Aquapark, Spa sowie Restaurants und Bars; zudem Nähe zum Zentrum und Strandzugang.</p>",
+          "<p>Das Kaila Beach Hotel in Alanya, Antalya, liegt direkt am Meer und bietet modernen Komfort für Familien, Paare und Einzelreisende. All Inclusive vereint Verpflegung, Aktivitäten und Erholung über den Tag.</p><p>Moderne Architektur, großzügige Bereiche, Pools, Aquapark, Spa sowie Restaurants und Bars; zudem Nähe zum Zentrum und Strandzugang.</p>",
         ru:
-          "<p>Kaila Beach Hotel в Аланье (Анталья) на первой линии моря — современный комфортный курорт для семей, пар и индивидуальных гостей. Ultra All Inclusive объединяет питание, активности и отдых.</p><p>Современная архитектура, зоны отдыха, бассейны, аквапарк, спа, рестораны и бары; близко к центру и к пляжу.</p>",
+          "<p>Kaila Beach Hotel в Аланье (Анталья) на первой линии моря — современный комфортный курорт для семей, пар и индивидуальных гостей. All Inclusive объединяет питание, активности и отдых.</p><p>Современная архитектура, зоны отдыха, бассейны, аквапарк, спа, рестораны и бары; близко к центру и к пляжу.</p>",
       },
     },
     {
@@ -101,13 +101,13 @@
       },
       html: {
         tr:
-          '<ul class="viona-list"><li>Toplam alan: 10.000 m²</li><li>Toplam bina sayısı: 3</li><li>Toplam oda sayısı: 363</li><li>Toplam yatak sayısı: 886</li><li>Konsept: Ultra Her Şey Dahil – 5 yıldızlı</li><li>Sezon: Yaz sezonu ağırlıklı hizmet</li><li>Misafir profili: Aileler, çiftler ve bireysel tatilciler</li></ul>',
+          '<ul class="viona-list"><li>Toplam alan: 10.000 m²</li><li>Toplam bina sayısı: 3</li><li>Toplam oda sayısı: 363</li><li>Toplam yatak sayısı: 886</li><li>Konsept: Her Şey Dahil – 5 yıldızlı</li><li>Sezon: Yaz sezonu ağırlıklı hizmet</li><li>Misafir profili: Aileler, çiftler ve bireysel tatilciler</li></ul>',
         en:
-          '<ul class="viona-list"><li>Total area: 10,000 m²</li><li>Buildings: 3</li><li>Rooms: 363</li><li>Beds: 886</li><li>Concept: Ultra All Inclusive – 5-star</li><li>Season: summer-focused operation</li><li>Guests: families, couples, individual travellers</li></ul>',
+          '<ul class="viona-list"><li>Total area: 10,000 m²</li><li>Buildings: 3</li><li>Rooms: 363</li><li>Beds: 886</li><li>Concept: All Inclusive – 5-star</li><li>Season: summer-focused operation</li><li>Guests: families, couples, individual travellers</li></ul>',
         de:
-          '<ul class="viona-list"><li>Gesamtfläche: 10.000 m²</li><li>Gebäude: 3</li><li>Zimmer: 363</li><li>Betten: 886</li><li>Konzept: Ultra All Inclusive – 5 Sterne</li><li>Saison: schwerpunktmäßig Sommer</li><li>Gäste: Familien, Paare, Einzelreisende</li></ul>',
+          '<ul class="viona-list"><li>Gesamtfläche: 10.000 m²</li><li>Gebäude: 3</li><li>Zimmer: 363</li><li>Betten: 886</li><li>Konzept: All Inclusive – 5 Sterne</li><li>Saison: schwerpunktmäßig Sommer</li><li>Gäste: Familien, Paare, Einzelreisende</li></ul>',
         ru:
-          '<ul class="viona-list"><li>Площадь: 10 000 м²</li><li>Корпусов: 3</li><li>Номеров: 363</li><li>Мест: 886</li><li>Концепция: Ultra All Inclusive, 5*</li><li>Сезон: преимущественно лето</li><li>Гости: семьи, пары, индивидуальные</li></ul>',
+          '<ul class="viona-list"><li>Площадь: 10 000 м²</li><li>Корпусов: 3</li><li>Номеров: 363</li><li>Мест: 886</li><li>Концепция: All Inclusive, 5*</li><li>Сезон: преимущественно лето</li><li>Гости: семьи, пары, индивидуальные</li></ul>',
       },
     },
     {
@@ -439,13 +439,13 @@
       },
       html: {
         tr:
-          "<p>A la carte ücretlidir; kullanmadan önce rezervasyon yaptırılması gerekir. A la carte restoran hizmeti: 7 gece ve üzeri konaklamalarda 1 kez ücretsizdir ve rezervasyon gereklidir.</p>",
+          "<p>A la carte ücretlidir; kullanmadan önce rezervasyon yaptırılması gerekir. A la carte restoran hizmeti: 5 gece ve üzeri konaklamalarda 1 kez ücretsizdir ve rezervasyon gereklidir.</p>",
         en:
-          "<p>À la carte is charged; reservation is required before use. À la carte restaurant: for stays of 7 nights or more, one visit is free and reservation is still required.</p>",
+          "<p>À la carte is charged; reservation is required before use. À la carte restaurant: for stays of 5 nights or more, one visit is free and reservation is still required.</p>",
         de:
-          "<p>À la carte kostenpflichtig; Reservierung erforderlich. Bei Aufenthalten ab 7 Nächten: einmal kostenfrei, dennoch Reservierung nötig.</p>",
+          "<p>À la carte kostenpflichtig; Reservierung erforderlich. Bei Aufenthalten ab 5 Nächten: einmal kostenfrei, dennoch Reservierung nötig.</p>",
         ru:
-          "<p>À la carte платно; нужна запись. При проживании от 7 ночей — один раз бесплатно, запись обязательна.</p>",
+          "<p>À la carte платно; нужна запись. При проживании от 5 ночей — один раз бесплатно, запись обязательна.</p>",
       },
     },
     {
