@@ -1,5 +1,6 @@
 from assistant.services.localization_service import LocalizationService
 from datetime import datetime
+import re
 
 
 DEVICE_LABELS = {
@@ -33,12 +34,134 @@ DEVICE_LABELS = {
     },
 }
 
+SOCIAL_VARIANTS = {
+    "tr": {
+        "greeting": [
+            "Merhaba, ben Viona; Kaila Beach Hotel'deki dijital asistanınızım. Size nasıl yardımcı olabilirim?",
+            "Merhaba. Kaila Beach Hotel'de konaklamanızla ilgili sorularınızda yardımcı olabilirim.",
+            "Selam, hoş geldiniz. Otel hizmetleriyle ilgili size kısa ve net şekilde yardımcı olabilirim.",
+        ],
+        "thanks": [
+            "Rica ederim. Konaklamanızla ilgili başka bir konuda yardımcı olabilirim.",
+            "Ne demek, memnuniyetle. Kaila Beach Hotel ile ilgili başka bir sorunuz varsa buradayım.",
+            "Ben teşekkür ederim. İsterseniz başka bir konuda da yardımcı olabilirim.",
+        ],
+        "farewell": [
+            "Görüşmek üzere. İhtiyacınız olursa yine buradayım.",
+            "Hoşça kalın. Dilediğiniz zaman yazabilirsiniz.",
+        ],
+        "apology_from_user": [
+            "Hiç sorun değil. Size memnuniyetle yardımcı olmaya devam edebilirim.",
+            "Sorun değil, anlayışla karşılıyorum. Devam edebiliriz.",
+        ],
+        "compliment": [
+            "Nazik geri bildiriminiz için teşekkür ederim. Yardımcı olabildiysem ne mutlu bana.",
+            "Güzel sözleriniz için teşekkür ederim. Her zaman yardımcı olmaya hazırım.",
+        ],
+        "how_are_you": [
+            "Teşekkür ederim, iyiyim. Kaila Beach Hotel ile ilgili sorularınızda yanınızdayım.",
+            "Gayet iyiyim, teşekkürler. Konaklamanızla ilgili nasıl yardımcı olabilirim?",
+        ],
+    },
+    "en": {
+        "greeting": [
+            "Hello, I'm Viona, your digital assistant at Kaila Beach Hotel. How can I help you?",
+            "Hello. I can help with your stay and hotel services at Kaila Beach Hotel.",
+            "Hi and welcome. Ask me anything about the hotel or your stay.",
+        ],
+        "thanks": [
+            "You're very welcome. I'm here if you need any help with your stay at Kaila Beach Hotel.",
+            "Glad to help. Let me know if you need anything else about the hotel or your stay.",
+            "My pleasure. I can also help with other questions about your stay.",
+        ],
+        "farewell": [
+            "See you. I'm here whenever you need help during your stay.",
+            "Goodbye for now. Feel free to message me anytime.",
+        ],
+        "apology_from_user": [
+            "No worries at all. I'm happy to keep helping you.",
+            "That's absolutely okay. We can continue anytime.",
+        ],
+        "compliment": [
+            "Thank you for your kind words. Glad I could help.",
+            "I appreciate it. I'm always here to support your stay.",
+        ],
+        "how_are_you": [
+            "I'm doing well, thank you. I'm here to help with anything about Kaila Beach Hotel.",
+            "Doing great, thank you. How can I assist you with your stay?",
+        ],
+    },
+    "de": {
+        "greeting": [
+            "Hallo, ich bin Viona, Ihre digitale Assistentin im Kaila Beach Hotel. Wie kann ich Ihnen helfen?",
+            "Hallo. Ich unterstütze Sie gern bei Fragen zu Ihrem Aufenthalt im Kaila Beach Hotel.",
+            "Willkommen. Ich helfe Ihnen gern bei Hotelservices und Aufenthaltsthemen.",
+        ],
+        "thanks": [
+            "Gern geschehen. Wenn Sie noch Fragen zu Ihrem Aufenthalt haben, helfe ich Ihnen gern weiter.",
+            "Sehr gern. Ich bin hier, wenn Sie weitere Hilfe rund um das Hotel benötigen.",
+            "Keine Ursache. Bei weiteren Fragen unterstütze ich Sie gern.",
+        ],
+        "farewell": [
+            "Auf Wiedersehen. Ich bin jederzeit für Sie da, wenn Sie Hilfe brauchen.",
+            "Bis bald. Schreiben Sie mir gern wieder.",
+        ],
+        "apology_from_user": [
+            "Kein Problem. Ich helfe Ihnen gern weiter.",
+            "Alles gut. Wir können direkt weitermachen.",
+        ],
+        "compliment": [
+            "Vielen Dank für Ihr nettes Feedback. Es freut mich, dass ich helfen konnte.",
+            "Danke für die freundlichen Worte. Ich unterstütze Sie jederzeit gern.",
+        ],
+        "how_are_you": [
+            "Danke, mir geht es gut. Ich unterstütze Sie gern bei Fragen rund um das Kaila Beach Hotel.",
+            "Mir geht es gut, danke. Wie kann ich Ihnen bei Ihrem Aufenthalt helfen?",
+        ],
+    },
+    "ru": {
+        "greeting": [
+            "Здравствуйте! Я Виона, ваш цифровой ассистент в отеле Kaila Beach. Чем могу помочь?",
+            "Здравствуйте. Я помогу с вопросами по проживанию и услугам Kaila Beach Hotel.",
+            "Добро пожаловать. Я рядом, чтобы помочь по вопросам отеля и проживания.",
+        ],
+        "thanks": [
+            "Пожалуйста. Если у вас будут ещё вопросы по отелю или проживанию, я помогу.",
+            "Всегда пожалуйста. Я рядом, если вам понадобится помощь по услугам отеля.",
+            "Рада помочь. Если нужно, подскажу и по другим вопросам.",
+        ],
+        "farewell": [
+            "До встречи. Если понадобится помощь, я рядом.",
+            "До свидания. Пишите в любое время.",
+        ],
+        "apology_from_user": [
+            "Ничего страшного. Я с удовольствием продолжу помогать вам.",
+            "Всё в порядке. Давайте продолжим.",
+        ],
+        "compliment": [
+            "Спасибо за тёплые слова. Рада, что смогла помочь.",
+            "Благодарю за отзыв. Я всегда готова помочь.",
+        ],
+        "how_are_you": [
+            "Спасибо, у меня всё хорошо. Я рядом, чтобы помочь с вопросами по Kaila Beach Hotel.",
+            "У меня всё хорошо, спасибо. Чем помочь по вашему проживанию?",
+        ],
+    },
+}
+
 
 class ResponseComposer:
     def __init__(self, localization_service: LocalizationService):
         self.i18n = localization_service
 
-    def compose(self, intent: str, sub_intent: str | None, entity: str | None, language: str) -> str:
+    def compose(
+        self,
+        intent: str,
+        sub_intent: str | None,
+        entity: str | None,
+        language: str,
+        seed_text: str | None = None,
+    ) -> str:
         if intent == "fault_report":
             return self._fault(sub_intent, entity, language)
         if intent == "complaint":
@@ -50,7 +173,7 @@ class ResponseComposer:
         if intent == "special_need":
             return self._special_need(sub_intent, entity, language)
         if intent == "chitchat":
-            return self._chitchat(sub_intent, entity, language)
+            return self._chitchat(sub_intent, entity, language, seed_text)
         if intent == "current_time":
             return self._current_time(language)
         return self.i18n.get("reception_fallback_message", language)
@@ -117,12 +240,35 @@ class ResponseComposer:
             return self.i18n.get("special_need_accessibility_need", language)
         return self.i18n.get("special_need_default", language)
 
-    def _chitchat(self, sub_intent: str | None, entity: str | None, language: str) -> str:
+    def _pick_social_variant(self, language: str, intent_key: str, seed_text: str | None) -> str | None:
+        lang = language if language in SOCIAL_VARIANTS else "tr"
+        choices = SOCIAL_VARIANTS.get(lang, {}).get(intent_key, [])
+        if not choices:
+            return None
+        seed = (seed_text or "").lower().strip()
+        seed = re.sub(r"\s+", " ", seed)
+        sig = f"{lang}|{intent_key}|{seed}"
+        idx = sum(ord(ch) for ch in sig) % len(choices)
+        return choices[idx]
+
+    def _chitchat(self, sub_intent: str | None, entity: str | None, language: str, seed_text: str | None = None) -> str:
         if sub_intent == "language_switch" and entity in ("tr", "en", "de", "ru"):
             return self.i18n.get(f"chitchat_switch_{entity}", language)
-        if sub_intent == "assistant_intro":
-            return self.i18n.get("chitchat_assistant_intro", language)
-        return self.i18n.get("chitchat_greeting", language)
+        if sub_intent in ("assistant_intro", "identity_question"):
+            return self.i18n.get("chitchat_identity_question", language)
+        if sub_intent == "thanks":
+            return self._pick_social_variant(language, "thanks", seed_text) or self.i18n.get("chitchat_thanks", language)
+        if sub_intent == "farewell":
+            return self._pick_social_variant(language, "farewell", seed_text) or self.i18n.get("chitchat_farewell", language)
+        if sub_intent == "apology_from_user":
+            return self._pick_social_variant(language, "apology_from_user", seed_text) or self.i18n.get(
+                "chitchat_apology_from_user", language
+            )
+        if sub_intent == "compliment":
+            return self._pick_social_variant(language, "compliment", seed_text) or self.i18n.get("chitchat_compliment", language)
+        if sub_intent == "how_are_you":
+            return self._pick_social_variant(language, "how_are_you", seed_text) or self.i18n.get("chitchat_how_are_you", language)
+        return self._pick_social_variant(language, "greeting", seed_text) or self.i18n.get("chitchat_greeting", language)
 
     def _current_time(self, language: str) -> str:
         now = datetime.now()

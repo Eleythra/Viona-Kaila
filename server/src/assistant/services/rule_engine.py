@@ -676,57 +676,73 @@ class RuleEngine:
 
     @staticmethod
     def _is_chitchat_query(text: str) -> bool:
-        t = (text or "").lower().strip()
-        # Remove most punctuation at ends/inside to handle inputs like "selam ," safely.
-        t = re.sub(r"[^a-zA-ZçğıöşüÇĞİÖŞÜа-яА-ЯёЁ\\s'’‘]", " ", t)
-        t = re.sub(r"\\s+", " ", t).strip()
-        chitchat_multi = {
-            "привет как дела",
-            "привет как ты",
-            "hi how are you",
-            "hello how are you",
-            "hallo wie gehts",
-            "hallo wie geht es",
-        }
-        if t in chitchat_multi:
-            return True
-        chitchat_greeting = {
-            "merhaba",
-            "selam",
-            "naber",
-            "nasılsın",
-            "nasilsin",
-            "iyi misin",
-            "iyi misin?",
-            "kimsin",
-            "sen kimsin",
-            "who are you",
-            "who are u",
-            "who's you",
-            "hi",
-            "hello",
-            "hey",
-            "how are you",
-            "how are u",
-            "hallo",
-            "wie geht’s",
-            "wie geht's",
-            "wer bist du",
-            "привет",
-            "здравствуйте",
-            "как дела",
-            "кто ты",
-        }
-        return t in chitchat_greeting
+        return RuleEngine._chitchat_sub_intent(text) is not None
 
     @staticmethod
-    def _chitchat_sub_intent(text: str) -> str:
-        t = (text or "").lower()
-        # Identity queries => assistant intro message
-        identity_markers = ["kimsin", "sen kimsin", "who are you", "wer bist du", "кто ты"]
-        if any(m in t for m in identity_markers):
-            return "assistant_intro"
-        return "greeting"
+    def _normalize_social_text(text: str) -> str:
+        t = (text or "").lower().strip()
+        t = re.sub(r"[^a-zA-ZçğıöşüÇĞİÖŞÜäöüßÄÖÜẞа-яА-ЯёЁ\\s'’‘]", " ", t)
+        t = re.sub(r"\\s+", " ", t).strip()
+        return t
+
+    @staticmethod
+    def _chitchat_sub_intent(text: str) -> str | None:
+        t = RuleEngine._normalize_social_text(text)
+        if not t:
+            return None
+
+        social_patterns: dict[str, set[str]] = {
+            "identity_question": {
+                "sen kimsin", "kimsin", "nesin",
+                "who are you", "what are you",
+                "wer bist du",
+                "кто ты",
+            },
+            "how_are_you": {
+                "nasılsın", "nasilsin", "iyi misin", "naber", "nasıl gidiyor", "nasil gidiyor", "ne haber",
+                "how are you", "how are u", "how is it going", "how's it going", "whats up", "what's up",
+                "hi how are you", "hello how are you",
+                "wie geht's", "wie geht’s", "wie gehts", "wie geht es dir", "wie läuft's", "wie laeufts", "wie läuft es",
+                "hallo wie gehts", "hallo wie geht es",
+                "как дела", "как идет", "как идёт", "привет как дела", "привет как ты",
+            },
+            "thanks": {
+                "teşekkürler", "teşekkür ederim", "çok teşekkürler",
+                "tesekkurler", "tesekkur ederim", "cok tesekkurler",
+                "sağ ol", "sag ol", "sağ olun", "sag olun",
+                "thanks", "thank you", "thanks a lot", "appreciate it",
+                "danke", "danke schön", "dankeschön", "vielen dank",
+                "спасибо", "большое спасибо", "благодарю",
+            },
+            "farewell": {
+                "görüşürüz", "gorusuruz", "hoşça kal", "hosca kal", "iyi günler", "iyi gunler",
+                "bye", "goodbye", "see you",
+                "tschüss", "tschuss", "auf wiedersehen",
+                "пока", "до свидания",
+            },
+            "apology_from_user": {
+                "kusura bakmayın", "kusura bakmayin", "pardon", "özür dilerim", "ozur dilerim",
+                "sorry", "my apologies",
+                "entschuldigung", "tut mir leid",
+                "извините", "прошу прощения",
+            },
+            "compliment": {
+                "harikasın", "harikasin", "çok iyisin", "cok iyisin",
+                "you are great", "awesome", "very helpful",
+                "du bist toll", "sehr hilfreich",
+                "ты молодец", "очень полезно",
+            },
+            "greeting": {
+                "merhaba", "selam", "günaydın", "gunaydin", "iyi akşamlar", "iyi aksamlar",
+                "hi", "hello", "good morning", "good evening",
+                "hallo", "guten morgen", "guten abend",
+                "привет", "здравствуйте", "доброе утро", "добрый вечер",
+            },
+        }
+        for intent_name, patterns in social_patterns.items():
+            if t in patterns:
+                return intent_name
+        return None
 
     @staticmethod
     def _is_current_time_query(text: str) -> bool:

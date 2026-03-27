@@ -169,6 +169,109 @@ def test_chitchat_multilang():
         assert res.meta.source == "rule"
 
 
+def test_social_thanks_is_rule_based_without_llm_dependency():
+    orch, _, intent = build_orchestrator()
+    for msg, loc in [("teşekkürler", "tr"), ("thanks", "en"), ("danke", "de"), ("спасибо", "ru")]:
+        res = orch.handle(ChatRequest(message=msg, ui_language=loc, locale=loc))
+        assert res.meta.intent == "chitchat"
+        assert res.type == "inform"
+        assert res.meta.source == "rule"
+    assert intent.calls == 0
+
+
+def test_selected_language_has_priority_for_social_intents():
+    orch, _, intent = build_orchestrator()
+    tr_res = orch.handle(ChatRequest(message="thanks", ui_language="tr", locale="tr"))
+    en_res = orch.handle(ChatRequest(message="teşekkürler", ui_language="en", locale="en"))
+    assert tr_res.meta.language == "tr"
+    assert any(x in tr_res.message.lower() for x in ("rica ederim", "ne demek", "ben teşekkür ederim"))
+    assert en_res.meta.language == "en"
+    assert any(x in en_res.message.lower() for x in ("you're very welcome", "glad to help", "my pleasure"))
+    assert intent.calls == 0
+
+
+def test_identity_is_introduced_but_thanks_is_not_robotic_intro():
+    orch, _, _ = build_orchestrator()
+    identity = orch.handle(ChatRequest(message="sen kimsin", ui_language="tr", locale="tr"))
+    thanks = orch.handle(ChatRequest(message="teşekkür ederim", ui_language="tr", locale="tr"))
+    assert "viona" in identity.message.lower()
+    assert any(x in thanks.message.lower() for x in ("rica ederim", "ne demek", "ben teşekkür ederim"))
+    assert "ben viona" not in thanks.message.lower()
+
+
+def test_persona_fallback_message_is_warm_and_guiding():
+    orch, _, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="qzxw 123 ???", ui_language="tr", locale="tr"))
+    assert res.type == "fallback"
+    assert res.meta.source == "fallback"
+    assert "daha kısa" in res.message.lower()
+
+
+def test_social_intents_still_work_when_classifier_always_unknown():
+    orch, _, intent = build_orchestrator()
+    res = orch.handle(ChatRequest(message="görüşürüz", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "chitchat"
+    assert res.meta.source == "rule"
+    assert res.type == "inform"
+    assert intent.calls == 0
+
+
+def test_social_token_plus_hotel_question_routes_to_hotel_info():
+    orch, _, intent = build_orchestrator()
+    res_tr = orch.handle(ChatRequest(message="merhaba restoran saatleri", ui_language="tr", locale="tr"))
+    res_en = orch.handle(ChatRequest(message="thanks restaurant hours", ui_language="en", locale="en"))
+    assert res_tr.meta.intent == "hotel_info"
+    assert res_tr.type == "answer"
+    assert res_en.meta.intent == "hotel_info"
+    assert res_en.type == "answer"
+    # These are fixed hotel-info entries; they should still bypass social chitchat path.
+    assert res_tr.meta.source == "rule"
+    assert res_en.meta.source == "rule"
+    # deterministic rule path should avoid classifier for these common queries
+    assert intent.calls == 0
+
+
+def test_social_reply_uses_selected_ui_language_first():
+    orch, _, intent = build_orchestrator()
+    res_tr = orch.handle(ChatRequest(message="thanks", ui_language="tr", locale="tr"))
+    res_en = orch.handle(ChatRequest(message="teşekkürler", ui_language="en", locale="en"))
+    assert res_tr.meta.language == "tr"
+    assert any(x in res_tr.message.lower() for x in ("rica ederim", "ne demek", "ben teşekkür ederim"))
+    assert res_en.meta.language == "en"
+    assert any(x in res_en.message.lower() for x in ("you're very welcome", "glad to help", "my pleasure"))
+    assert intent.calls == 0
+
+
+def test_how_are_you_phrase_nasil_gidiyor_routes_to_social_rule():
+    orch, _, intent = build_orchestrator()
+    res = orch.handle(ChatRequest(message="nasıl gidiyor", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "chitchat"
+    assert res.meta.source == "rule"
+    assert res.meta.language == "tr"
+    assert any(x in res.message.lower() for x in ("iyiyim", "gayet iyiyim"))
+    assert intent.calls == 0
+
+
+def test_social_variation_is_deterministic_for_same_input():
+    orch, _, intent = build_orchestrator()
+    r1 = orch.handle(ChatRequest(message="teşekkürler", ui_language="tr", locale="tr"))
+    r2 = orch.handle(ChatRequest(message="teşekkürler", ui_language="tr", locale="tr"))
+    assert r1.message == r2.message
+    assert r1.meta.intent == "chitchat"
+    assert intent.calls == 0
+
+
+def test_social_variation_respects_selected_language_for_same_meaning():
+    orch, _, intent = build_orchestrator()
+    tr = orch.handle(ChatRequest(message="thanks", ui_language="tr", locale="tr"))
+    en = orch.handle(ChatRequest(message="teşekkürler", ui_language="en", locale="en"))
+    assert tr.meta.language == "tr"
+    assert en.meta.language == "en"
+    assert ("konaklama" in tr.message.lower()) or ("kaila beach hotel" in tr.message.lower())
+    assert ("your stay" in en.message.lower()) or ("kaila beach hotel" in en.message.lower())
+    assert intent.calls == 0
+
+
 def test_russian_chitchat_multiword_rule():
     orch, _, _ = build_orchestrator()
     res = orch.handle(ChatRequest(message="привет как дела", ui_language="ru", locale="ru"))
@@ -432,7 +535,7 @@ def test_turkish_gluten_allergen_label_not_detected_as_english():
 
 
 def test_special_need_gluten_tr_even_when_ui_locale_is_english():
-    """Reply language must follow message text, not site locale (locale=en)."""
+    """Selected UI/session language should have priority for reply language."""
     orch, _, _ = build_orchestrator()
     res = orch.handle(
         ChatRequest(
@@ -442,9 +545,8 @@ def test_special_need_gluten_tr_even_when_ui_locale_is_english():
         )
     )
     assert res.meta.intent == "special_need"
-    assert res.meta.language == "tr"
-    assert "Misafir" in res.message or "misafir" in res.message.lower()
-    assert "Guest Relations" not in res.message
+    assert res.meta.language == "en"
+    assert "Guest Relations" in res.message
 
     res2 = orch.handle(
         ChatRequest(
@@ -454,8 +556,8 @@ def test_special_need_gluten_tr_even_when_ui_locale_is_english():
         )
     )
     assert res2.meta.intent == "special_need"
-    assert res2.meta.language == "tr"
-    assert "Guest Relations" not in res2.message
+    assert res2.meta.language == "en"
+    assert "Guest Relations" in res2.message
 
 
 def test_single_token_special_need_labels_in_tr():

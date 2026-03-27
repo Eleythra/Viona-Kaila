@@ -59,17 +59,12 @@ class ChatOrchestrator:
         if ui_language not in ("tr", "en", "de", "ru"):
             ui_language = "tr"
         conv = _valid_conversation_language(payload.conversation_language)
-        # Detection fallback: prefer session reply language, then site UI.
-        fb = conv or ui_language
-        if fb not in ("tr", "en", "de", "ru"):
-            fb = "tr"
-        # Message language for templates/RAG/fallback (detect), not site UI alone,
-        # or English UI + Turkish text yields English Guest Relations strings.
-        msg_detect = self.language_service.detect(normalized, fallback=fb)
-        coerce_ui = conv or ui_language
-        msg_detect = self.language_service.coerce_reply_language(normalized, msg_detect, coerce_ui)
-        # Session language wins over one-shot detection so replies stay consistent after a switch.
-        reply_base = conv if conv else msg_detect
+        # Primary reply language must follow selected session/app language.
+        # Message-level detection is only a backup when selected language is absent.
+        selected_lang = conv or ui_language
+        msg_detect = self.language_service.detect(normalized, fallback=selected_lang or "tr")
+        msg_detect = self.language_service.coerce_reply_language(normalized, msg_detect, selected_lang)
+        reply_base = selected_lang if selected_lang in ("tr", "en", "de", "ru") else msg_detect
 
         if self.throttle_service.is_limited(payload.user_id):
             resp = self._fallback_response("unknown", 0.0, reply_base, ui_language)
@@ -298,6 +293,7 @@ class ChatOrchestrator:
                 sub_intent,
                 entity,
                 reply_language,
+                seed_text=message,
             )
             return self.response_service.build(
                 "inform",
