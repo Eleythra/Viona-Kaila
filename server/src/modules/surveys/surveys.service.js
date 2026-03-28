@@ -1,4 +1,4 @@
-import { supabase } from "../../lib/supabase.js";
+import { getSupabase } from "../../lib/supabase.js";
 
 function cleanText(value, maxLen = 5000) {
   return String(value || "").trim().slice(0, maxLen);
@@ -31,7 +31,7 @@ function validate(row) {
 export async function createSurveySubmission(payload) {
   const row = normalize(payload);
   validate(row);
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("survey_submissions")
     .insert({
       submitted_at: row.submittedAt,

@@ -4,7 +4,7 @@ import { getEnv } from "./config/env.js";
 import guestRequestsRouter from "./modules/guest-requests/guest-requests.router.js";
 import surveysRouter from "./modules/surveys/surveys.router.js";
 import adminRouter from "./modules/admin/admin.router.js";
-import { supabase } from "./lib/supabase.js";
+import { getSupabase, isSupabaseConfigured } from "./lib/supabase.js";
 
 const env = getEnv();
 const app = express();
@@ -104,6 +104,7 @@ async function writeChatObservation({
   decisionPath,
 }) {
   try {
+    if (!isSupabaseConfigured()) return;
     const intent = String(response?.meta?.intent || "unknown");
     const source = String(response?.meta?.source || "fallback");
     const responseType = String(response?.type || "fallback");
@@ -139,7 +140,7 @@ async function writeChatObservation({
         response,
       },
     };
-    await supabase.from("chat_observations").insert(row);
+    await getSupabase().from("chat_observations").insert(row);
   } catch (err) {
     console.warn("chat_observation_write_failed error=%s", err?.message || err);
   }
@@ -154,7 +155,7 @@ app.get("/api/health", (_req, res) => {
     ok: true,
     hasApiKey: !!env.openAiApiKey,
     hasVectorStoreId: !!env.openAiVectorStoreId,
-    hasSupabase: !!env.supabaseUrl && !!env.supabaseServiceRoleKey,
+    hasSupabase: env.hasSupabase,
     assistantEndpoint: ASSISTANT_CHAT_ENDPOINT,
   });
 });

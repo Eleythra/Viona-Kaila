@@ -18,13 +18,18 @@ import {
 
 const router = Router();
 
+function adminErr(res, error, fallbackMsg) {
+  const code = error?.statusCode === 503 ? 503 : 400;
+  return res.status(code).json({ ok: false, error: error?.message || fallbackMsg });
+}
+
 router.get("/requests", async (req, res) => {
   try {
     const type = String(req.query.type || "");
     const result = await listAdminBucket(type, req.query || {});
     return res.status(200).json({ ok: true, type, ...result });
   } catch (error) {
-    return res.status(400).json({ ok: false, error: error?.message || "admin_list_failed" });
+    return adminErr(res, error, "admin_list_failed");
   }
 });
 
@@ -33,7 +38,7 @@ router.get("/surveys", async (req, res) => {
     const result = await listSurveySubmissions(req.query || {});
     return res.status(200).json({ ok: true, ...result });
   } catch (error) {
-    return res.status(400).json({ ok: false, error: error?.message || "admin_survey_list_failed" });
+    return adminErr(res, error, "admin_survey_list_failed");
   }
 });
 
@@ -42,7 +47,7 @@ router.get("/surveys/report", async (req, res) => {
     const report = await getSurveyReport(req.query || {});
     return res.status(200).json({ ok: true, report });
   } catch (error) {
-    return res.status(400).json({ ok: false, error: error?.message || "admin_survey_report_failed" });
+    return adminErr(res, error, "admin_survey_report_failed");
   }
 });
 
@@ -51,7 +56,7 @@ router.patch("/requests/:type/:id/status", async (req, res) => {
     const data = await updateAdminItemStatus(req.params.type, req.params.id, req.body?.status);
     return res.status(200).json({ ok: true, item: data });
   } catch (error) {
-    return res.status(400).json({ ok: false, error: error?.message || "admin_status_update_failed" });
+    return adminErr(res, error, "admin_status_update_failed");
   }
 });
 
@@ -60,7 +65,7 @@ router.delete("/requests/:type/:id", async (req, res) => {
     const data = await deleteAdminItem(req.params.type, req.params.id);
     return res.status(200).json({ ok: true, ...data });
   } catch (error) {
-    return res.status(400).json({ ok: false, error: error?.message || "admin_item_delete_failed" });
+    return adminErr(res, error, "admin_item_delete_failed");
   }
 });
 
@@ -69,7 +74,7 @@ router.get("/promo-config", async (req, res) => {
     const config = await getPromoConfig();
     return res.status(200).json({ ok: true, config });
   } catch (error) {
-    return res.status(400).json({ ok: false, error: error?.message || "promo_config_fetch_failed" });
+    return adminErr(res, error, "promo_config_fetch_failed");
   }
 });
 
@@ -78,7 +83,7 @@ router.put("/promo-config", async (req, res) => {
     const config = await upsertPromoConfig(req.body || {});
     return res.status(200).json({ ok: true, config });
   } catch (error) {
-    return res.status(400).json({ ok: false, error: error?.message || "promo_config_update_failed" });
+    return adminErr(res, error, "promo_config_update_failed");
   }
 });
 
@@ -87,7 +92,7 @@ router.get("/reports/dashboard", async (req, res) => {
     const report = await getDashboardReports(req.query || {});
     return res.status(200).json({ ok: true, report });
   } catch (error) {
-    return res.status(400).json({ ok: false, error: error?.message || "dashboard_report_failed" });
+    return adminErr(res, error, "dashboard_report_failed");
   }
 });
 
@@ -96,7 +101,7 @@ router.get("/logs", async (req, res) => {
     const result = await listChatObservations(req.query || {});
     return res.status(200).json({ ok: true, ...result });
   } catch (error) {
-    return res.status(400).json({ ok: false, error: error?.message || "admin_logs_list_failed" });
+    return adminErr(res, error, "admin_logs_list_failed");
   }
 });
 
@@ -105,7 +110,7 @@ router.get("/logs/summary", async (req, res) => {
     const summary = await getChatObservationSummary(req.query || {});
     return res.status(200).json({ ok: true, summary });
   } catch (error) {
-    return res.status(400).json({ ok: false, error: error?.message || "admin_logs_summary_failed" });
+    return adminErr(res, error, "admin_logs_summary_failed");
   }
 });
 
@@ -114,7 +119,7 @@ router.patch("/logs/:id/review", async (req, res) => {
     const item = await updateChatObservationReview(req.params.id, req.body || {});
     return res.status(200).json({ ok: true, item });
   } catch (error) {
-    return res.status(400).json({ ok: false, error: error?.message || "admin_log_review_failed" });
+    return adminErr(res, error, "admin_log_review_failed");
   }
 });
 
@@ -123,7 +128,7 @@ router.delete("/logs/:id", async (req, res) => {
     const data = await deleteChatObservation(req.params.id);
     return res.status(200).json({ ok: true, ...data });
   } catch (error) {
-    return res.status(400).json({ ok: false, error: error?.message || "admin_log_delete_failed" });
+    return adminErr(res, error, "admin_log_delete_failed");
   }
 });
 
@@ -134,7 +139,7 @@ router.get("/logs/export.csv", async (req, res) => {
     res.setHeader("Content-Disposition", 'attachment; filename="chat_observations.csv"');
     return res.status(200).send(csv);
   } catch (error) {
-    return res.status(400).json({ ok: false, error: error?.message || "admin_logs_export_csv_failed" });
+    return adminErr(res, error, "admin_logs_export_csv_failed");
   }
 });
 
@@ -145,7 +150,7 @@ router.get("/logs/export.json", async (req, res) => {
     res.setHeader("Content-Disposition", 'attachment; filename="chat_observations.json"');
     return res.status(200).send(json);
   } catch (error) {
-    return res.status(400).json({ ok: false, error: error?.message || "admin_logs_export_json_failed" });
+    return adminErr(res, error, "admin_logs_export_json_failed");
   }
 });
 
@@ -160,7 +165,7 @@ router.get("/reports/pdf", async (req, res) => {
     res.setHeader("Content-Length", String(pdfBuffer.length));
     return res.status(200).end(pdfBuffer);
   } catch (error) {
-    return res.status(400).json({ ok: false, error: error?.message || "pdf_report_failed" });
+    return adminErr(res, error, "pdf_report_failed");
   }
 });
 

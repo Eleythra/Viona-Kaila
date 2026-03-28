@@ -2,14 +2,6 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-function mustGet(name) {
-  const value = process.env[name];
-  if (!value || !String(value).trim()) {
-    throw new Error(`Missing required env variable: ${name}`);
-  }
-  return String(value).trim();
-}
-
 function optional(name, fallback = "") {
   const value = process.env[name];
   if (value === undefined || value === null || String(value).trim() === "") {
@@ -52,7 +44,12 @@ export function getEnv() {
     /** Eski davranış (tüm zaman); artık kullanılmıyor — PDF/pano varsayılanı son 30 gündür. */
     reportPdfFullFrom: optional("REPORT_PDF_FULL_FROM", ""),
     chatDebug: optional("CHAT_DEBUG", "0") === "1",
-    supabaseUrl: mustGet("SUPABASE_URL"),
-    supabaseServiceRoleKey: mustGet("SUPABASE_SERVICE_ROLE_KEY"),
+    supabaseUrl: optional("SUPABASE_URL", ""),
+    supabaseServiceRoleKey: optional("SUPABASE_SERVICE_ROLE_KEY", ""),
+    get hasSupabase() {
+      return Boolean(
+        String(this.supabaseUrl || "").trim() && String(this.supabaseServiceRoleKey || "").trim(),
+      );
+    },
   };
 }

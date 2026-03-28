@@ -1,6 +1,12 @@
 /**
- * Tek kaynak: Render’da çalışan Node (Express) API tabanı (/admin, /guest-requests, /api/chat proxy).
- * Python asistanın URL’si burası DEĞİL. Render’da servis adın farklıysa yalnızca bu satırı güncelle.
+ * Canlı API tek adres: Render’daki Node (Express). Tarayıcıdan tüm /api buraya gider;
+ * Node /api/chat isteğini sunucu içinden Python asistana iletir (CORS tek yerde).
+ *
+ * Render’da bu Web Service için zorunlu ortam değişkenleri:
+ *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ASSISTANT_CHAT_ENDPOINT (Python /api/chat tam URL)
+ *
+ * Sağlık kontrolü: https://BU-HOST/api/health → JSON, hasSupabase:true ve assistantEndpoint dolu olmalı.
+ * Servis adın farklıysa yalnızca aşağıdaki satırı güncelle.
  */
 (function () {
   "use strict";

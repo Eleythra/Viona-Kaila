@@ -1,4 +1,4 @@
-import { supabase } from "../../lib/supabase.js";
+import { getSupabase } from "../../lib/supabase.js";
 import { getEnv } from "../../config/env.js";
 import { buildVionaReportData } from "./reporting/report-engine.js";
 import { renderVionaPdfBuffer } from "./reporting/pdf.service.js";
@@ -127,7 +127,7 @@ async function fetchAllChatObservationRowsForSummary(filterQuery) {
   const all = [];
   let offset = 0;
   for (;;) {
-    let qb = supabase.from("chat_observations").select(cols);
+    let qb = getSupabase().from("chat_observations").select(cols);
     qb = applyChatObservationListFilters(qb, filterQuery);
     qb = qb.order("created_at", { ascending: true });
     const { data, error } = await qb.range(offset, offset + OBS_BATCH - 1);
@@ -146,7 +146,7 @@ async function fetchAllRowsBatched(table, selectCols, dateQuery, dateColumn = "c
   let offset = 0;
   let truncated = false;
   for (;;) {
-    let q = supabase.from(table).select(selectCols);
+    let q = getSupabase().from(table).select(selectCols);
     q = applyDateFilters(q, dateQuery, dateColumn);
     q = q.order(dateColumn, { ascending: true });
     const { data, error } = await q.range(offset, offset + OBS_BATCH - 1);
@@ -174,7 +174,7 @@ export async function listAdminBucket(type, query = {}) {
   if (!cfg) throw new Error("invalid admin bucket type");
 
   const paging = parsePaging(query);
-  let qb = supabase.from(cfg.table).select("*", { count: "exact" }).order("submitted_at", { ascending: false });
+  let qb = getSupabase().from(cfg.table).select("*", { count: "exact" }).order("submitted_at", { ascending: false });
   qb = applyDateFilters(qb, query, "submitted_at");
   if (query.status) qb = qb.eq("status", String(query.status));
   if (type === "reservation") {
@@ -199,7 +199,7 @@ export async function listAdminBucket(type, query = {}) {
 
 export async function listSurveySubmissions(query = {}) {
   const paging = parsePaging(query);
-  let qb = supabase.from("survey_submissions").select("*", { count: "exact" }).order("submitted_at", { ascending: false });
+  let qb = getSupabase().from("survey_submissions").select("*", { count: "exact" }).order("submitted_at", { ascending: false });
   qb = applyDateFilters(qb, query, "submitted_at");
   if (query.language) qb = qb.eq("language", String(query.language));
   const { data, error, count } = await qb.range(paging.from, paging.to);
@@ -337,7 +337,7 @@ export async function updateAdminItemStatus(type, id, status) {
   if (!id) throw new Error("id is required");
   if (!VALID_STATUS.has(String(status || ""))) throw new Error("invalid status");
   const table = tableForType(type);
-  const { data, error } = await supabase.from(table).update({ status }).eq("id", id).select("id,status").single();
+  const { data, error } = await getSupabase().from(table).update({ status }).eq("id", id).select("id,status").single();
   if (error) throw error;
   return data;
 }
@@ -345,13 +345,13 @@ export async function updateAdminItemStatus(type, id, status) {
 export async function deleteAdminItem(type, id) {
   if (!id) throw new Error("id is required");
   const table = tableForType(type);
-  const { error } = await supabase.from(table).delete().eq("id", id);
+  const { error } = await getSupabase().from(table).delete().eq("id", id);
   if (error) throw error;
   return { id };
 }
 
 export async function getPromoConfig() {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("promo_configs")
     .select("*")
     .eq("key", "discount_popup")
@@ -394,7 +394,7 @@ export async function upsertPromoConfig(payload = {}) {
     image_ru: String(payload.image_ru || "").trim(),
     updated_at: new Date().toISOString(),
   };
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("promo_configs")
     .upsert(row, { onConflict: "key" })
     .select("*")
@@ -563,7 +563,7 @@ function stripNonFilterLogQuery(query = {}) {
 
 export async function listChatObservations(query = {}) {
   const paging = parsePaging(query);
-  let qb = supabase.from("chat_observations").select("*", { count: "exact" });
+  let qb = getSupabase().from("chat_observations").select("*", { count: "exact" });
   qb = applyChatObservationListFilters(qb, query);
   qb = qb.order("created_at", { ascending: false });
 
@@ -588,7 +588,7 @@ export async function updateChatObservationReview(id, payload = {}) {
     reviewed_by: payload.reviewed_by == null ? null : String(payload.reviewed_by),
     reviewed_at: new Date().toISOString(),
   };
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("chat_observations")
     .update(patch)
     .eq("id", id)
@@ -600,7 +600,7 @@ export async function updateChatObservationReview(id, payload = {}) {
 
 export async function deleteChatObservation(id) {
   if (!id) throw new Error("id is required");
-  const { error } = await supabase.from("chat_observations").delete().eq("id", id);
+  const { error } = await getSupabase().from("chat_observations").delete().eq("id", id);
   if (error) throw error;
   return { id };
 }
@@ -709,7 +709,7 @@ function extractExportFilters(query = {}) {
 }
 
 export async function exportChatObservations(query = {}, format = "csv") {
-  let qb = supabase.from("chat_observations").select("*").order("created_at", { ascending: false });
+  let qb = getSupabase().from("chat_observations").select("*").order("created_at", { ascending: false });
   qb = applyDateFilters(qb, query, "created_at");
   if (query.language) qb = qb.eq("ui_language", String(query.language));
   if (query.intent) qb = qb.eq("intent", String(query.intent));

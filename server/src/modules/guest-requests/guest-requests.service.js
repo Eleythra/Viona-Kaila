@@ -1,4 +1,4 @@
-import { supabase } from "../../lib/supabase.js";
+import { getSupabase } from "../../lib/supabase.js";
 
 const SIMPLE_TYPES = new Set(["request", "complaint", "fault"]);
 const RESERVATION_TYPES = new Set(["reservation_alacarte", "reservation_spa"]);
@@ -326,7 +326,7 @@ async function insertSimple(table, normalized) {
     row.category = normalized.category || null;
     row.details = normalized.details || {};
   }
-  let { data, error } = await supabase.from(table).insert(row).select("id").single();
+  let { data, error } = await getSupabase().from(table).insert(row).select("id").single();
   if (
     error &&
     (table === "guest_requests" || table === "guest_faults" || table === "guest_complaints") &&
@@ -334,7 +334,7 @@ async function insertSimple(table, normalized) {
   ) {
     delete row.category;
     delete row.details;
-    const retry = await supabase.from(table).insert(row).select("id").single();
+    const retry = await getSupabase().from(table).insert(row).select("id").single();
     data = retry.data;
     error = retry.error;
   }
@@ -372,7 +372,7 @@ async function insertReservation(normalized) {
     status: "new",
     raw_payload: normalized,
   };
-  let { data, error } = await supabase.from("guest_reservations").insert(row).select("id").single();
+  let { data, error } = await getSupabase().from("guest_reservations").insert(row).select("id").single();
   if (
     error &&
     /column .*language|column .*service_code|column .*service_label|column .*reservation_date|column .*reservation_time|column .*guest_count|column .*updated_at/i.test(
@@ -386,7 +386,7 @@ async function insertReservation(normalized) {
     delete row.reservation_time;
     delete row.guest_count;
     delete row.updated_at;
-    const retry = await supabase.from("guest_reservations").insert(row).select("id").single();
+    const retry = await getSupabase().from("guest_reservations").insert(row).select("id").single();
     data = retry.data;
     error = retry.error;
   }

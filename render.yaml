@@ -34,7 +34,10 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "20.18.0"
-      # Python asistan (mevcut viona-kaila vb.) — Node /api/chat buraya proxy eder
       - key: ASSISTANT_CHAT_ENDPOINT
         value: https://viona-kaila.onrender.com/api/chat
-      # Zorunlu: Render panosunda SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY ekleyin
+      # Aşağısı olmadan Node process env yüklerken çöker → Render "no-server" / tarayıcıda Failed to fetch
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
