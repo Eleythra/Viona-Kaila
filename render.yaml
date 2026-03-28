@@ -34,7 +34,7 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "20.18.0"
-      # Render panosunda ekleyin: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-      # ve aşağıdakini Python servisin tam chat URL’si yapın:
-      # - key: ASSISTANT_CHAT_ENDPOINT
-      #   value: https://viona-assistant.onrender.com/api/chat
+      # Python asistan (mevcut viona-kaila vb.) — Node /api/chat buraya proxy eder
+      - key: ASSISTANT_CHAT_ENDPOINT
+        value: https://viona-kaila.onrender.com/api/chat
+      # Zorunlu: Render panosunda SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY ekleyin

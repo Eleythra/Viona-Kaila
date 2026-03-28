@@ -13,6 +13,7 @@ Note: Python must still resolve the ``assistant`` package first (e.g. ``uvicorn 
 --app-dir server/src`` from repo root, or ``PYTHONPATH=server/src``, or ``cd server/src`` when using
 ``python -m``). This file cannot fix the very first package lookup before it runs.
 """
+import os
 import sys
 from pathlib import Path
 
@@ -21,6 +22,7 @@ if str(_SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(_SRC_ROOT))
 
 from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
 
 from assistant.core.config import get_settings
 from assistant.core.logger import get_logger
@@ -65,9 +67,28 @@ def _safe_register_router(app: FastAPI) -> bool:
         return False
 
 
+def _cors_allow_origins() -> list[str]:
+    """
+    Browser (Vercel / özel alan) → Render doğrudan POST /api/chat için gerekli.
+    ASSISTANT_CORS_ORIGINS virgüllü liste; boşsa tüm kökenlere izin (kimlik bilgisi yok).
+    """
+    raw = (os.getenv("ASSISTANT_CORS_ORIGINS") or "").strip()
+    if raw:
+        return [o.strip() for o in raw.split(",") if o.strip()]
+    return ["*"]
+
+
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(title=settings.app_name)
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_cors_allow_origins(),
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     # Absolute file existence checks (no relative paths).
     assistant_dir = __import__("pathlib").Path(__file__).resolve().parent
