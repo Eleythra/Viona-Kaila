@@ -1,29 +1,16 @@
-# Render Blueprint — iki ayrı web servisi:
+# Render Blueprint — bu repodan SADECE Node (Express) API.
+# Python asistan ayrı repoda / ayrı servis (örn. https://viona-kaila.onrender.com) ise
+# burada ikinci bir web servisi tanımlamayın; çift deploy olmasın.
 #
-# 1) Python (uvicorn): sadece asistan — POST /api/chat ve ilgili uçlar.
-#    Yanıt başlığında x-render-origin-server: uvicorn görürsünüz.
+# Panel: New → Blueprint → bu repo. Oluşan URL, servis adıyla biter:
+#   name: viona-node-api  →  https://viona-node-api.onrender.com
+# Frontend (viona-backend-url.js + vercel.json) bu host ile uyumludur.
 #
-# 2) Node (Express): admin panosu, anketler, misafir istekleri, /api/chat proxy.
-#    /api/admin/reports/dashboard burada tanımlıdır; Python servisinde YOKTUR → oraya
-#    istek atarsanız 404 alırsınız.
-#
-# Kurulum: Node servisinde ASSISTANT_CHAT_ENDPOINT = Python servisinizin
-#   https://<python-service>.onrender.com/api/chat adresi olmalı.
-# Vercel / statik site API tabanı: Node servisin https://<node-service>.onrender.com/api
-# (Python URL’si değil.)
+# Zorunlu env (Render Dashboard → Environment):
+#   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+#   ASSISTANT_CHAT_ENDPOINT = Python asistanın tam chat URL’si (aşağıdaki varsayılan)
 #
 services:
-  - type: web
-    name: viona-assistant
-    runtime: python
-    plan: free
-    rootDir: server
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn assistant.main:app --app-dir src --host 0.0.0.0 --port $PORT
-    envVars:
-      - key: PYTHON_VERSION
-        value: "3.12.0"
-
   - type: web
     name: viona-node-api
     runtime: node
@@ -36,8 +23,13 @@ services:
         value: "20.18.0"
       - key: ASSISTANT_CHAT_ENDPOINT
         value: https://viona-kaila.onrender.com/api/chat
-      # Aşağısı olmadan Node process env yüklerken çöker → Render "no-server" / tarayıcıda Failed to fetch
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_VECTOR_STORE_ID
+        sync: false
+      - key: GEMINI_API_KEY
         sync: false
