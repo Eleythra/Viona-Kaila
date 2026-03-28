@@ -1,13 +1,9 @@
 /**
  * Genel API endpoint yapılandırması.
  *
- * Üretim (Vercel vb.): daima göreli "/api". Tarayıcı aynı kökene istek atar; kökendeki
- * vercel.json rewrites "/api/*" → Render Node tek adresi. Başka dosyada Render URL
- * tekrarlamayın — sadece vercel.json destination.
- * Vercel Project Settings → Root Directory boş / repo kökü olmalı (vercel.json yüklensin).
- *
- * İstisna: başka hostta statik dosya veya özel proxy yoksa, bu scriptten önce
- *   window.__VIONA_API_BASE__ = "https://tam-api-adresiniz/api";
+ * Canlıda taban: js/viona-backend-url.js → __VIONA_NODE_RENDER_API__ (Render Node). Vercel
+ * rewrites bazen uygulanmaz (x-render-routing: no-server, /api 404); doğrudan Node daha güvenilir.
+ * Tamamen elle: window.__VIONA_API_BASE__ bu scriptten önce.
  *
  * Admin panel veri eşlemesi (özet):
  * - Ana sayfa raporu: adminDashboardReportEndpoint → varsayılan son ~30 gün (tarih parametresi yoksa).
@@ -30,7 +26,12 @@
   } else if (isLocalhost || isFile) {
     base = "http://127.0.0.1:3001/api";
   } else {
-    base = "/api";
+    var nodeBase = window.__VIONA_NODE_RENDER_API__;
+    if (typeof nodeBase === "string" && nodeBase.trim()) {
+      base = nodeBase.trim().replace(/\/+$/, "");
+    } else {
+      base = "/api";
+    }
   }
 
   window.VIONA_API_CONFIG = {
