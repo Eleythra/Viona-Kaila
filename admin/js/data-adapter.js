@@ -9,13 +9,13 @@
     if (typeof custom === "string" && custom.trim()) {
       return custom.trim().replace(/\/+$/, "");
     }
-    var c = window.VIONA_API_CONFIG || {};
-    if (c.baseUrl && String(c.baseUrl).trim()) {
-      return String(c.baseUrl).trim().replace(/\/+$/, "");
-    }
     var host = String(window.location.hostname || "");
     if (host.indexOf("vercel.app") !== -1) {
       return "https://viona-kaila.onrender.com/api";
+    }
+    var c = window.VIONA_API_CONFIG || {};
+    if (c.baseUrl && String(c.baseUrl).trim()) {
+      return String(c.baseUrl).trim().replace(/\/+$/, "");
     }
     return "/api";
   }
