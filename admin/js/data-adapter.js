@@ -1,13 +1,21 @@
 (function () {
   "use strict";
 
-  var cfg = window.VIONA_API_CONFIG || {};
+  function getApiBase() {
+    var custom = window.__VIONA_API_BASE__;
+    if (typeof custom === "string" && custom.trim()) {
+      return custom.trim().replace(/\/+$/, "");
+    }
+    var c = window.VIONA_API_CONFIG || {};
+    if (c.baseUrl && String(c.baseUrl).trim()) {
+      return String(c.baseUrl).trim().replace(/\/+$/, "");
+    }
+    return "/api";
+  }
 
-  /** Liste GET ile aynı kök; baseUrl + '/admin/requests' sapmasını önler. */
+  /** Liste GET ile aynı kök. */
   function adminRequestsCollectionUrl() {
-    var ep = cfg.adminRequestsEndpoint || "/api/admin/requests";
-    var q = ep.indexOf("?");
-    return q >= 0 ? ep.slice(0, q) : ep;
+    return getApiBase() + "/admin/requests";
   }
 
   function jfetch(url, options) {
@@ -44,25 +52,23 @@
 
   window.AdminDataAdapter = {
     getDashboardReport: async function () {
-      var data = await jfetch(cfg.adminDashboardReportEndpoint || "/api/admin/reports/dashboard");
+      var data = await jfetch(getApiBase() + "/admin/reports/dashboard");
       return data.report;
     },
     getSurveyReport: function (params) {
       var q = buildQuery(params || {});
-      var base = cfg.adminSurveyReportEndpoint || "/api/admin/surveys/report";
-      var url = base + (q ? "?" + q : "");
+      var url = getApiBase() + "/admin/surveys/report" + (q ? "?" + q : "");
       return jfetch(url).then(function (d) {
         return d.report;
       });
     },
-    /** Tek sayfa; sunucu en fazla 500 satır döner. */
     getBucketPage: function (type, page, pageSize) {
       var q = buildQuery({
         type: type,
         page: page,
         pageSize: pageSize,
       });
-      var endpoint = (cfg.adminRequestsEndpoint || "/api/admin/requests") + "?" + q;
+      var endpoint = adminRequestsCollectionUrl() + "?" + q;
       return jfetch(endpoint).then(function (d) {
         return {
           items: d.items || [],
@@ -75,10 +81,6 @@
         };
       });
     },
-    /**
-     * Dashboard özeti / rezervasyon tahtası: 500’lük sayfaları birleştirir.
-     * Üst sınır app.js içindeki BUCKET_MERGE_MAX_PAGES ile uyumlu olmalı (varsayılan 100 sayfa ≈ 50k satır).
-     */
     getBucketMergeAll: async function (type, maxPages) {
       var pageSize = 500;
       var cap = typeof maxPages === "number" && maxPages > 0 ? maxPages : 100;
@@ -94,8 +96,7 @@
       return all;
     },
     createGuestRequest: function (payload) {
-      var endpoint = cfg.guestRequestsEndpoint || "/api/guest-requests";
-      return jfetch(endpoint, {
+      return jfetch(getApiBase() + "/guest-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload || {}),
@@ -121,19 +122,22 @@
       return jfetch(endpoint, { method: "DELETE" });
     },
     getPromoConfig: function () {
-      return jfetch(cfg.adminPromoConfigEndpoint || "/api/admin/promo-config").then(function (d) { return d.config; });
+      return jfetch(getApiBase() + "/admin/promo-config").then(function (d) {
+        return d.config;
+      });
     },
     savePromoConfig: function (payload) {
-      return jfetch(cfg.adminPromoConfigEndpoint || "/api/admin/promo-config", {
+      return jfetch(getApiBase() + "/admin/promo-config", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload || {}),
-      }).then(function (d) { return d.config; });
+      }).then(function (d) {
+        return d.config;
+      });
     },
     downloadPdfReport: async function (params) {
-      var endpoint = cfg.adminPdfReportEndpoint || "/api/admin/reports/pdf";
       var query = buildQuery(params || {});
-      var url = endpoint + (query ? "?" + query : "");
+      var url = getApiBase() + "/admin/reports/pdf" + (query ? "?" + query : "");
       var response = await fetch(url, { cache: "no-store" });
       if (!response.ok) {
         var msg = "pdf_report_failed";
@@ -152,23 +156,21 @@
       return { blob: blob, fileName: fileName, noData: noData, reportSnapshotId: reportSnapshotId };
     },
     getLogsSummary: function (params) {
-      var endpoint = cfg.adminLogsSummaryEndpoint || "/api/admin/logs/summary";
       var query = buildQuery(params || {});
-      var url = endpoint + (query ? "?" + query : "");
+      var url = getApiBase() + "/admin/logs/summary" + (query ? "?" + query : "");
       return jfetch(url).then(function (d) {
         return d.summary || {};
       });
     },
     getLogs: function (params) {
-      var endpoint = cfg.adminLogsEndpoint || "/api/admin/logs";
       var query = buildQuery(params || {});
-      var url = endpoint + (query ? "?" + query : "");
+      var url = getApiBase() + "/admin/logs" + (query ? "?" + query : "");
       return jfetch(url).then(function (d) {
         return { items: d.items || [], pagination: d.pagination || {} };
       });
     },
     reviewLog: function (id, payload) {
-      var endpoint = (cfg.adminLogsEndpoint || "/api/admin/logs") + "/" + encodeURIComponent(id) + "/review";
+      var endpoint = getApiBase() + "/admin/logs/" + encodeURIComponent(id) + "/review";
       return jfetch(endpoint, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -178,21 +180,19 @@
       });
     },
     deleteLog: function (id) {
-      var endpoint = (cfg.adminLogsEndpoint || "/api/admin/logs") + "/" + encodeURIComponent(id);
+      var endpoint = getApiBase() + "/admin/logs/" + encodeURIComponent(id);
       return jfetch(endpoint, { method: "DELETE" });
     },
     downloadLogsCsv: async function (params) {
-      var endpoint = cfg.adminLogsExportCsvEndpoint || "/api/admin/logs/export.csv";
       var query = buildQuery(params || {});
-      var url = endpoint + (query ? "?" + query : "");
+      var url = getApiBase() + "/admin/logs/export.csv" + (query ? "?" + query : "");
       var r = await fetch(url, { cache: "no-store" });
       if (!r.ok) throw new Error("logs_csv_export_failed");
       return r.blob();
     },
     downloadLogsJson: async function (params) {
-      var endpoint = cfg.adminLogsExportJsonEndpoint || "/api/admin/logs/export.json";
       var query = buildQuery(params || {});
-      var url = endpoint + (query ? "?" + query : "");
+      var url = getApiBase() + "/admin/logs/export.json" + (query ? "?" + query : "");
       var r = await fetch(url, { cache: "no-store" });
       if (!r.ok) throw new Error("logs_json_export_failed");
       return r.blob();

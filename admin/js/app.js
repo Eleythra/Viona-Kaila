@@ -117,11 +117,13 @@
   async function loadDashboard() {
     var report;
     var dashReportOk = true;
+    var dashReportErr = "";
     try {
       report = await adapter.getDashboardReport();
-    } catch (_e) {
+    } catch (e) {
       dashReportOk = false;
       report = {};
+      dashReportErr = e && e.message ? String(e.message) : "";
     }
     var buckets = await Promise.all([
       adapter.getBucketMergeAll("request", BUCKET_MERGE_MAX_PAGES).catch(emptyBucket),
@@ -132,7 +134,10 @@
     var warnEl = document.getElementById("dashboard-api-warning");
     if (warnEl) {
       if (!dashReportOk) {
-        warnEl.textContent = "Rapor özeti şu an alınamadı; backend veya ağ bağlantısını kontrol edin. Operasyon kartları yüklendi.";
+        warnEl.textContent =
+          "Rapor özeti şu an alınamadı" +
+          (dashReportErr ? " (" + dashReportErr + ")" : "") +
+          ". Ağ sekmesinde GET …/admin/reports/dashboard isteğini kontrol edin (404 ise API tabanı yanlış; Render uyuyorsa ikinci deneme). Operasyon listeleri ayrı istekle yüklenir.";
         warnEl.classList.remove("hidden");
         warnEl.removeAttribute("aria-hidden");
       } else {
