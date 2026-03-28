@@ -87,11 +87,21 @@
 
   var promoConfigFetchPromise = null;
 
+  function resolvePromoConfigEndpoint() {
+    if (typeof document !== "undefined" && document.documentElement) {
+      var domAttr = document.documentElement.getAttribute("data-viona-live-api");
+      if (domAttr && String(domAttr).trim()) {
+        return String(domAttr).trim().replace(/\/+$/, "") + "/admin/promo-config";
+      }
+    }
+    if (typeof window.vionaGetApiBase === "function") {
+      return window.vionaGetApiBase() + "/admin/promo-config";
+    }
+    return (window.VIONA_API_CONFIG || {}).adminPromoConfigEndpoint || "/api/admin/promo-config";
+  }
+
   async function loadPromoConfig() {
-    var endpoint =
-      typeof window.vionaGetApiBase === "function"
-        ? window.vionaGetApiBase() + "/admin/promo-config"
-        : (window.VIONA_API_CONFIG || {}).adminPromoConfigEndpoint || "/api/admin/promo-config";
+    var endpoint = resolvePromoConfigEndpoint();
     try {
       var res = await fetch(endpoint, { method: "GET", headers: { Accept: "application/json" } });
       var text = await res.text();

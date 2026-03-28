@@ -1,5 +1,17 @@
-# Render Blueprint: Python web service for the FastAPI assistant only.
-# After deploy, set Vercel ASSISTANT_CHAT_ENDPOINT to: https://<this-service>.onrender.com/api/chat
+# Render Blueprint — iki ayrı web servisi:
+#
+# 1) Python (uvicorn): sadece asistan — POST /api/chat ve ilgili uçlar.
+#    Yanıt başlığında x-render-origin-server: uvicorn görürsünüz.
+#
+# 2) Node (Express): admin panosu, anketler, misafir istekleri, /api/chat proxy.
+#    /api/admin/reports/dashboard burada tanımlıdır; Python servisinde YOKTUR → oraya
+#    istek atarsanız 404 alırsınız.
+#
+# Kurulum: Node servisinde ASSISTANT_CHAT_ENDPOINT = Python servisinizin
+#   https://<python-service>.onrender.com/api/chat adresi olmalı.
+# Vercel / statik site API tabanı: Node servisin https://<node-service>.onrender.com/api
+# (Python URL’si değil.)
+#
 services:
   - type: web
     name: viona-assistant
@@ -11,3 +23,18 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.0"
+
+  - type: web
+    name: viona-node-api
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node src/index.js
+    envVars:
+      - key: NODE_VERSION
+        value: "20.18.0"
+      # Render panosunda ekleyin: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+      # ve aşağıdakini Python servisin tam chat URL’si yapın:
+      # - key: ASSISTANT_CHAT_ENDPOINT
+      #   value: https://viona-assistant.onrender.com/api/chat

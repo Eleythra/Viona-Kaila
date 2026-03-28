@@ -2,6 +2,12 @@
   "use strict";
 
   function getApiBase() {
+    if (typeof document !== "undefined" && document.documentElement) {
+      var domAttr = document.documentElement.getAttribute("data-viona-live-api");
+      if (domAttr && String(domAttr).trim()) {
+        return String(domAttr).trim().replace(/\/+$/, "");
+      }
+    }
     if (typeof window.vionaGetApiBase === "function") {
       return window.vionaGetApiBase();
     }
