@@ -1,5 +1,7 @@
 from assistant.schemas.response import ChatMeta, ChatResponse
 from assistant.core.logger import get_logger
+from assistant.services.localization_service import LocalizationService
+import re
 
 
 logger = get_logger("assistant.response")
@@ -16,14 +18,6 @@ FORBIDDEN_TECH_TERMS = [
     "context icinde yok",
 ]
 
-SAFE_FALLBACK_BY_LANG = {
-    "tr": "Bu konuda doğrulanmış bilgiye erişemiyorum. Lütfen resepsiyon ile iletişime geçiniz.",
-    "en": "I don’t have verified information about this. Please contact reception for assistance.",
-    "de": "Ich kann zu diesem Thema keine verifizierten Informationen abrufen. Bitte kontaktieren Sie die Rezeption.",
-    "ru": "У меня нет подтвержденной информации по этому вопросу. Пожалуйста, обратитесь на ресепшн.",
-}
-
-
 def _normalize_message(message: str) -> str:
     # Preserve paragraph/list line breaks while still cleaning extra spaces.
     raw = (message or "").replace("\r\n", "\n").strip()
@@ -39,7 +33,11 @@ def _normalize_message(message: str) -> str:
             continue
         compact.append(line)
         prev_empty = is_empty
-    return "\n".join(compact).strip()
+    normalized = "\n".join(compact).strip()
+    # Remove inline citation artifacts from model output (e.g. 【5:16†file.md】).
+    normalized = re.sub(r"【[^】]+】", "", normalized)
+    normalized = re.sub(r"\[[^\]]+†[^\]]+\]", "", normalized)
+    return normalized.strip()
 
 
 def _contains_forbidden_tech_terms(message: str) -> bool:
@@ -48,6 +46,9 @@ def _contains_forbidden_tech_terms(message: str) -> bool:
 
 
 class ResponseService:
+    def __init__(self):
+        self.i18n = LocalizationService()
+
     def build(
         self,
         type_: str,
@@ -57,27 +58,37 @@ class ResponseService:
         language: str,
         ui_language: str,
         source: str,
+        action: dict | ChatMeta.ChatAction | None = None,
+        multi_intent: bool = False,
     ) -> ChatResponse:
+        action_payload = action
+        if isinstance(action, dict):
+            action_payload = ChatMeta.ChatAction.model_validate(action)
         meta = ChatMeta(
             intent=intent,
             confidence=confidence,
             language=language,
             ui_language=ui_language,
             source=source,
+            multi_intent=bool(multi_intent),
+            action=action_payload,
         )
         normalized = _normalize_message(message)
         if _contains_forbidden_tech_terms(normalized):
-            normalized = SAFE_FALLBACK_BY_LANG.get(language, SAFE_FALLBACK_BY_LANG["tr"])
+            normalized = self.i18n.canonical_fallback(language, reason="safe")
         try:
             return ChatResponse.model_validate({"type": type_, "message": normalized, "meta": meta})
         except Exception as exc:
             logger.exception("response_validation_failed: %s", exc)
+            safe_lang = language if language in ("tr", "en", "de", "ru") else "tr"
+            safe_ui = ui_language if ui_language in ("tr", "en", "de", "ru") else "tr"
             safe_meta = ChatMeta(
                 intent="unknown",
                 confidence=0.0,
-                language=language if language in ("tr", "en", "de", "ru") else "tr",
-                ui_language=ui_language if ui_language in ("tr", "en", "de", "ru") else "tr",
+                language=safe_lang,
+                ui_language=safe_ui,
                 source="fallback",
             )
-            return ChatResponse(type="fallback", message="Güvenli yanıt üretilemedi.", meta=safe_meta)
+            safe_message = self.i18n.canonical_fallback(safe_lang, reason="validation_error")
+            return ChatResponse(type="fallback", message=safe_message, meta=safe_meta)
 

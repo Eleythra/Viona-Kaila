@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 
 
 IntentName = Literal[
+    "recommendation",
     "fault_report",
     "complaint",
     "request",
@@ -23,6 +24,7 @@ class IntentResult(BaseModel):
     sub_intent: Optional[str] = None
     entity: Optional[str] = None
     department: Optional[DepartmentName] = None
+    reason: Optional[str] = None
     needs_rag: bool = False
     response_mode: ResponseMode = "fallback"
     confidence: float = Field(ge=0.0, le=1.0)

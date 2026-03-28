@@ -4,9 +4,15 @@
   "type": "module",
   "main": "src/index.js",
   "scripts": {
-    "dev": "node src/index.js"
+    "test": "node --test src/modules/admin/reporting/*.test.mjs src/modules/admin/*.test.mjs",
+    "test:assistant": "PYTHONPATH=src .venv/bin/python -m pytest src/assistant/tests -q --tb=line",
+    "dev": "node src/index.js",
+    "seed:surveys-test": "node scripts/seed-survey-evaluations-test.mjs",
+    "seed:surveys-test:clean": "node scripts/delete-survey-evaluations-seed.mjs",
+    "verify:surveys-report": "node scripts/verify-survey-evaluations-report.mjs"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
     "@supabase/supabase-js": "^2.100.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

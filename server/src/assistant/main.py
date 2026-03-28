@@ -26,8 +26,10 @@ from assistant.core.config import get_settings
 from assistant.core.logger import get_logger
 from assistant.schemas.response import ChatResponse, ChatMeta
 from assistant.schemas.chat import ChatRequest
+from assistant.services.localization_service import LocalizationService
 
 logger = get_logger("assistant.main")
+_I18N = LocalizationService()
 
 
 def _safe_register_router(app: FastAPI) -> bool:
@@ -47,14 +49,15 @@ def _safe_register_router(app: FastAPI) -> bool:
         @app.post("/api/chat", response_model=ChatResponse)
         def chat_fallback(payload: ChatRequest):
             lang = payload.locale or payload.ui_language or "tr"
+            safe_lang = _I18N.normalize_lang(lang)
             return ChatResponse(
                 type="fallback",
-                message="Bu konuda doğrulanmış bilgiye erişemiyorum. Lütfen resepsiyon ile iletişime geçiniz.",
+                message=_I18N.canonical_fallback(safe_lang, reason="safe"),
                 meta=ChatMeta(
                     intent="unknown",
                     confidence=0.0,
-                    language=lang,
-                    ui_language=lang,
+                    language=safe_lang,
+                    ui_language=safe_lang,
                     source="fallback",
                 ),
             )

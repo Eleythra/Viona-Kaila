@@ -10,6 +10,10 @@ DEVICE_LABELS = {
         "keycard": "Kart",
         "hvac": "Klima",
         "lighting": "Işık",
+        "internet": "İnternet bağlantısı",
+        "kettle": "Kettle",
+        "minibar": "Minibar",
+        "cabinet": "Dolap",
     },
     "en": {
         "television": "TV",
@@ -17,6 +21,10 @@ DEVICE_LABELS = {
         "keycard": "key card",
         "hvac": "air conditioner",
         "lighting": "lighting",
+        "internet": "internet connection",
+        "kettle": "kettle",
+        "minibar": "minibar",
+        "cabinet": "cabinet",
     },
     "de": {
         "television": "Fernseher",
@@ -24,6 +32,10 @@ DEVICE_LABELS = {
         "keycard": "Karte",
         "hvac": "Klimaanlage",
         "lighting": "Licht",
+        "internet": "Internetverbindung",
+        "kettle": "Wasserkocher",
+        "minibar": "Minibar",
+        "cabinet": "Schrank",
     },
     "ru": {
         "television": "Телевизор",
@@ -31,6 +43,10 @@ DEVICE_LABELS = {
         "keycard": "Карта",
         "hvac": "Кондиционер",
         "lighting": "Свет",
+        "internet": "интернет",
+        "kettle": "чайник",
+        "minibar": "мини-бар",
+        "cabinet": "шкаф",
     },
 }
 
@@ -164,6 +180,8 @@ class ResponseComposer:
     ) -> str:
         if intent == "fault_report":
             return self._fault(sub_intent, entity, language)
+        if intent == "recommendation":
+            return self._recommendation(sub_intent, entity, language)
         if intent == "complaint":
             return self._complaint(sub_intent, language)
         if intent == "request":
@@ -200,6 +218,21 @@ class ResponseComposer:
 
         return self.i18n.get("fault_template_generic", language)
 
+    def _recommendation(self, sub_intent: str | None, entity: str | None, language: str) -> str:
+        key_by_entity = {
+            "fish_pref": "recommendation_fish",
+            "meat_bbq_pref": "recommendation_meat",
+            "pizza_snack_pref": "recommendation_pizza_snack",
+            "coffee_dessert_pref": "recommendation_coffee_dessert",
+            "kids_activity_pref": "recommendation_kids_activity",
+            "romantic_dinner_pref": "recommendation_romantic_dinner",
+            "general_dining_pref": "recommendation_general_dining",
+        }
+        key = key_by_entity.get(entity or "")
+        if not key:
+            key = "recommendation_kids_activity" if sub_intent == "activity_recommendation" else "recommendation_pizza_snack"
+        return self.i18n.get(key, language)
+
     def _complaint(self, sub_intent: str | None, language: str) -> str:
         if sub_intent == "noise_complaint":
             return self.i18n.get("complaint_noise", language)
@@ -212,6 +245,16 @@ class ResponseComposer:
             return self.i18n.get("request_towel", language)
         if entity == "blanket":
             return self.i18n.get("request_blanket", language)
+        if entity == "housekeeping_service":
+            return self.i18n.get("request_housekeeping", language)
+        if entity == "reception_contact":
+            return self.i18n.get("request_reception_contact", language)
+        if entity == "guest_relations_contact":
+            return self.i18n.get("request_guest_relations_contact", language)
+        if entity == "transfer_request":
+            return self.i18n.get("request_transfer", language)
+        if entity == "lunch_box_request":
+            return self.i18n.get("request_lunch_box", language)
         return self.i18n.get("request_default", language)
 
     def _reservation(self, sub_intent: str | None, entity: str | None, language: str) -> str:

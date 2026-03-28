@@ -32,10 +32,13 @@ class RagService:
         self.settings = settings
         self.openai = openai_adapter
         self.prompt = prompt_path.read_text(encoding="utf-8")
+        self.last_reason = "not_called"
 
     def answer(self, message: str, language: str) -> str | None:
+        self.last_reason = "started"
         if not (self.settings.openai_vector_store_id or "").strip():
             logger.warning("missing_vector_store_id")
+            self.last_reason = "missing_vector_store_id"
             return None
         try:
             response = self.openai.responses_create(
@@ -60,21 +63,25 @@ class RagService:
                     chunk_stats,
                     self.settings.rag_min_qualified_chunks,
                 )
+                self.last_reason = "low_chunks"
                 return None
 
             if self._has_contradiction(qualified_chunks, message):
                 logger.info("rag_rejected_contradiction")
+                self.last_reason = "contradiction"
                 return None
 
             raw = (response.output_text or "").strip()
             payload = self._parse_structured_with_retry(message, language, raw)
             if not payload.get("found"):
                 logger.info("rag_rejected_parse_or_not_found")
+                self.last_reason = "parse_or_not_found"
                 return None
 
             answer = " ".join(str(payload.get("answer", "")).strip().split())
             if not answer:
                 logger.info("rag_rejected_empty_answer")
+                self.last_reason = "empty_answer"
                 return None
             if len(answer) < self.settings.rag_min_answer_length:
                 logger.info(
@@ -82,13 +89,16 @@ class RagService:
                     len(answer),
                     self.settings.rag_min_answer_length,
                 )
+                self.last_reason = "short_answer"
                 return None
             lowered = answer.lower()
             if self.settings.rag_block_hedging_phrases and any(p in lowered for p in RAG_BLOCKED_PHRASES):
                 logger.info("rag_rejected_hedging_phrase")
+                self.last_reason = "hedging_phrase"
                 return None
             if not self.settings.rag_block_hedging_phrases and any(p in lowered for p in RAG_BLOCKED_PHRASES):
                 logger.info("rag_allowed_despite_hedging_phrase rag_block_hedging_phrases=false")
+            self.last_reason = "ok"
             return answer
         except Exception as exc:
             reason = "rag_failure"
@@ -97,7 +107,14 @@ class RagService:
                 reason = "missing_api_key"
             elif "openai_401" in text:
                 reason = "openai_401"
+            elif "openai_429" in text:
+                reason = "openai_429"
+            elif "openai_timeout" in text:
+                reason = "openai_timeout"
+            elif "openai_bad_response" in text:
+                reason = "openai_bad_response"
             logger.warning("rag_failed_or_timeout reason=%s error=%s", reason, exc)
+            self.last_reason = reason
             return None
 
     def _try_parse_structured(self, raw: str) -> dict | None:

@@ -781,63 +781,13 @@ body {
     box-shadow 0.25s ease, background 0.2s ease;
 }
 
+/* Anket kartı: diğer modül kartlarıyla aynı dil; yalnızca tam genişlik */
 .module-card--survey {
   grid-column: 1 / -1;
-  position: relative;
-  overflow: hidden;
-  min-height: 96px;
-  padding: 18px 20px;
-  gap: 16px;
-  border-radius: calc(var(--radius-sm) + 2px);
-  border-color: rgba(167, 139, 250, 0.5);
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.34), rgba(20, 24, 36, 0.96));
-  box-shadow:
-    0 14px 36px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(167, 139, 250, 0.22) inset;
-}
-
-.module-card--survey::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(110deg, transparent 25%, rgba(255, 255, 255, 0.16) 48%, transparent 72%);
-  transform: translateX(-120%);
-  transition: transform 0.75s ease;
-  pointer-events: none;
-}
-
-.module-card--survey::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(120% 160% at 0% 0%, rgba(255, 255, 255, 0.2), transparent 45%);
-  pointer-events: none;
 }
 
 .module-card--survey:hover {
-  border-color: rgba(196, 181, 253, 0.8);
-  box-shadow:
-    0 18px 42px rgba(0, 0, 0, 0.42),
-    0 0 0 1px rgba(196, 181, 253, 0.32) inset;
-}
-
-.module-card--survey:hover::before {
-  transform: translateX(120%);
-}
-
-.module-card--survey .module-card__icon {
-  width: 42px;
-  height: 42px;
-  background: rgba(167, 139, 250, 0.22);
-  border-color: rgba(167, 139, 250, 0.5);
-  color: #ddd6fe;
-}
-
-.module-card--survey .module-card__text {
-  color: #f5f3ff;
-  font-size: clamp(1rem, 3.4vw, 1.12rem);
-  line-height: 1.3;
-  text-shadow: 0 1px 10px rgba(76, 29, 149, 0.32);
+  border-color: rgba(30, 139, 195, 0.35);
 }
 
 .module-card:hover {
@@ -893,8 +843,17 @@ body {
 }
 
 .survey-wrap .req-intro {
-  border-color: rgba(167, 139, 250, 0.35);
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.18) 0%, rgba(0, 0, 0, 0.18) 100%);
+  border-color: rgba(46, 184, 199, 0.22);
+  background: linear-gradient(135deg, rgba(46, 184, 199, 0.08) 0%, rgba(0, 0, 0, 0.16) 100%);
+}
+
+.survey-wrap__title {
+  margin: 0 0 10px;
+  font-size: clamp(1.05rem, 3.6vw, 1.28rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.28;
+  color: var(--text);
 }
 
 .survey-hub {
@@ -910,14 +869,14 @@ body {
 }
 
 .survey-card {
+  position: relative;
   margin-top: 8px;
-  border: 1px solid rgba(167, 139, 250, 0.34);
+  border: 1px solid var(--stroke);
   border-radius: 16px;
   padding: 14px 12px;
-  border-color: rgba(167, 139, 250, 0.34);
-  background: linear-gradient(155deg, rgba(139, 92, 246, 0.14) 0%, rgba(18, 24, 36, 0.82) 44%, rgba(12, 18, 30, 0.92) 100%);
+  background: linear-gradient(155deg, rgba(30, 139, 195, 0.08) 0%, rgba(18, 24, 36, 0.88) 50%, rgba(12, 18, 30, 0.94) 100%);
   box-shadow:
-    0 0 0 1px rgba(167, 139, 250, 0.2) inset,
+    0 0 0 1px rgba(46, 184, 199, 0.1) inset,
     0 12px 34px rgba(0, 0, 0, 0.22);
 }
 
@@ -959,13 +918,13 @@ body {
 }
 
 .survey-tabs__btn.is-active {
-  border-color: rgba(167, 139, 250, 0.72);
-  background: rgba(139, 92, 246, 0.26);
-  box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.26);
+  border-color: rgba(46, 184, 199, 0.55);
+  background: rgba(46, 184, 199, 0.14);
+  box-shadow: 0 0 0 1px rgba(30, 139, 195, 0.2) inset;
 }
 
 .survey-tabs__btn:focus-visible {
-  outline: 2px solid rgba(196, 181, 253, 0.95);
+  outline: 2px solid var(--pool);
   outline-offset: 2px;
 }
 
@@ -982,11 +941,6 @@ body {
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.11);
   background: rgba(0, 0, 0, 0.18);
-}
-
-.survey-panel--viona {
-  border-color: rgba(167, 139, 250, 0.5);
-  background: linear-gradient(160deg, rgba(139, 92, 246, 0.2), rgba(0, 0, 0, 0.24));
 }
 
 .survey-q-list {
@@ -1028,33 +982,15 @@ body {
 }
 
 .survey-score__btn.is-active {
-  border-color: rgba(167, 139, 250, 0.75);
-  background: rgba(139, 92, 246, 0.3);
+  border-color: rgba(46, 184, 199, 0.75);
+  background: linear-gradient(145deg, rgba(30, 139, 195, 0.35), rgba(46, 184, 199, 0.12));
+  color: var(--text);
+  box-shadow: 0 0 0 1px rgba(212, 168, 83, 0.2) inset;
 }
 
-.survey-stars {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.survey-stars__btn {
-  min-width: 44px;
-  min-height: 44px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(0, 0, 0, 0.26);
-  color: rgba(242, 244, 248, 0.48);
-  font: inherit;
-  font-size: 1.2rem;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.survey-stars__btn.is-active {
-  color: #f7ce68;
-  border-color: rgba(247, 206, 104, 0.7);
-  background: rgba(247, 206, 104, 0.14);
+.survey-score__btn:focus-visible {
+  outline: 2px solid var(--pool);
+  outline-offset: 2px;
 }
 
 .survey-textarea {
@@ -1104,6 +1040,124 @@ body {
   color: rgba(209, 250, 229, 0.95);
   font-size: 0.92rem;
   line-height: 1.45;
+}
+
+.survey-error-msg {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  background: rgba(248, 113, 113, 0.12);
+  color: rgba(254, 226, 226, 0.95);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.survey-success-sub {
+  margin: 8px 0 0;
+  padding: 0 2px;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: rgba(209, 250, 229, 0.75);
+}
+
+.survey-hub-hint {
+  margin: 0 0 14px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: rgba(242, 244, 248, 0.65);
+}
+
+.req-hub__card--complete {
+  border-color: rgba(52, 211, 153, 0.35);
+  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.15) inset;
+}
+
+/* Anket: gönder öncesi onay (sekme bazlı) */
+.survey-confirm {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: stretch;
+  padding: 10px;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.survey-confirm__backdrop {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: inherit;
+  background: rgba(5, 8, 14, 0.78);
+  backdrop-filter: blur(5px);
+  cursor: pointer;
+}
+
+.survey-confirm__sheet {
+  position: relative;
+  z-index: 1;
+  padding: 16px 14px max(16px, env(safe-area-inset-bottom));
+  border-radius: 14px;
+  border: 1px solid var(--stroke);
+  background: rgba(18, 24, 36, 0.97);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.35);
+}
+
+.survey-confirm__title {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.survey-confirm__lead {
+  margin: 10px 0 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: rgba(242, 244, 248, 0.78);
+}
+
+.survey-confirm__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+@media (min-width: 400px) {
+  .survey-confirm__actions {
+    flex-direction: row-reverse;
+  }
+  .survey-confirm__actions .survey-confirm__btn {
+    flex: 1;
+  }
+}
+
+.survey-confirm__btn {
+  min-height: 48px;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.12s ease;
+}
+
+.survey-confirm__btn:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.survey-confirm__btn--secondary {
+  border: 1px solid var(--stroke);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
 }
 
 /* ---------- Modül görünümü ---------- */
@@ -2668,6 +2722,50 @@ body {
   font-size: 0.95rem;
 }
 
+.req-input:focus,
+.req-textarea:focus {
+  outline: none;
+  border-color: rgba(46, 184, 199, 0.62);
+  box-shadow:
+    0 0 0 1px rgba(46, 184, 199, 0.3),
+    0 0 0 4px rgba(46, 184, 199, 0.12);
+}
+
+select.req-input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 42px;
+  background-color: rgba(8, 14, 24, 0.82);
+  border-color: rgba(255, 255, 255, 0.18);
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(212, 168, 83, 0.95) 50%),
+    linear-gradient(135deg, rgba(212, 168, 83, 0.95) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 2px),
+    calc(100% - 12px) calc(50% - 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+}
+
+select.req-input:hover {
+  border-color: rgba(212, 168, 83, 0.45);
+  background-color: rgba(10, 18, 30, 0.92);
+}
+
+select.req-input:required:invalid {
+  color: rgba(242, 244, 248, 0.62);
+}
+
+select.req-input option {
+  color: #f2f4f8;
+  background: #0f1724;
+}
+
 /* iOS: 16px altında odakta sayfa yakınlaştırmasını önler */
 @media (max-width: 540px) {
   .req-input,
@@ -2753,18 +2851,47 @@ body {
 .req-back-hub {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   margin: 0 0 16px;
-  padding: 8px 0;
-  border: none;
-  background: none;
-  color: rgba(46, 184, 199, 0.95);
+  padding: 9px 14px;
+  border: 1px solid rgba(46, 184, 199, 0.35);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(46, 184, 199, 0.14), rgba(12, 18, 30, 0.72));
+  color: rgba(230, 248, 250, 0.96);
   font: inherit;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 600;
+  letter-spacing: 0.01em;
   cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration: none;
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.22),
+    0 0 0 1px rgba(46, 184, 199, 0.12) inset;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.req-back-hub::before {
+  content: "←";
+  font-size: 0.95rem;
+  line-height: 1;
+  color: rgba(46, 184, 199, 0.95);
+}
+
+.req-back-hub:hover {
+  border-color: rgba(46, 184, 199, 0.6);
+  background: linear-gradient(135deg, rgba(46, 184, 199, 0.2), rgba(12, 18, 30, 0.84));
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(46, 184, 199, 0.2) inset;
+}
+
+.req-back-hub:focus-visible {
+  outline: 2px solid rgba(46, 184, 199, 0.7);
+  outline-offset: 2px;
 }
 
 .req-hub {
@@ -3060,6 +3187,17 @@ body {
   gap: 10px;
 }
 
+.req-res-info-note {
+  margin: 2px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(212, 168, 83, 0.26);
+  background: rgba(212, 168, 83, 0.08);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: rgba(248, 230, 190, 0.95);
+}
+
 .req-res-rest-card {
   display: flex;
   align-items: flex-start;
@@ -3108,6 +3246,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+  width: 100%;
 }
 
 .req-res-cal__row {
@@ -3116,6 +3256,10 @@ body {
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(0, 0, 0, 0.18);
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .req-res-cal__picked {
@@ -3125,6 +3269,7 @@ body {
   gap: 6px 10px;
   margin-top: 10px;
   font-size: 0.84rem;
+  min-width: 0;
 }
 
 .req-res-cal__picked-label {
@@ -3199,6 +3344,7 @@ body {
   gap: 14px;
   width: 100%;
   min-width: 0;
+  align-items: start;
 }
 
 @media (min-width: 520px) {
@@ -3212,6 +3358,20 @@ body {
 .req-res-stay-grid .req-res-cal {
   min-width: 0;
   max-width: 100%;
+}
+
+.req-res-stay-grid .cal-picker {
+  width: 100%;
+  max-width: none;
+}
+
+.req-res-stay-grid .cal-picker__grid {
+  width: 100%;
+}
+
+.req-res-stay-grid .cal-picker__cell {
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .req-res-slot-wrap--scroll {

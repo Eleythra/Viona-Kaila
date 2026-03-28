@@ -49,6 +49,10 @@
       hotelComment: "",
       vionaComment: "",
       submittedMessage: "",
+      /** true = hata metni (kırmızı kutu), false = teşekkür vb. */
+      submittedIsError: false,
+      /** Başarı sonrası teşekkürün altında gösterilen kısa açıklama (i18n). */
+      submitExtraLine: "",
       lastSubmittedPayload: null,
     };
   }
@@ -129,6 +133,84 @@
     return payload;
   }
 
+  /** Gönderilen sekmenin puan ve yorumunu sıfırlar (aynı sekmede yeniden değerlendirme). */
+  function resetSubmittedTab(state, schema, tabId) {
+    var tab = null;
+    schema.tabs.forEach(function (t) {
+      if (t.id === tabId) tab = t;
+    });
+    if (!tab) return;
+    if (tab.isViona) {
+      tab.questions.forEach(function (q) {
+        state.vionaAnswers[q.id] = 0;
+      });
+    } else {
+      tab.questions.forEach(function (q) {
+        state.hotelAnswers[q.id] = 0;
+      });
+    }
+    state.tabComments[tabId] = "";
+  }
+
+  /** Yalnızca seçilen sekmenin puanları; diğer bölümler gönderilmez (çoklu gönderim). */
+  function buildPayloadForTab(state, schema, tabId) {
+    var tab = null;
+    schema.tabs.forEach(function (t) {
+      if (t.id === tabId) tab = t;
+    });
+    if (!tab) throw new Error("invalid_survey_tab");
+
+    var hotelAnswers = {};
+    var vionaAnswers = {};
+    var hotelCategories = {};
+
+    if (tab.isViona) {
+      tab.questions.forEach(function (q) {
+        vionaAnswers[q.id] = state.vionaAnswers[q.id];
+      });
+    } else {
+      tab.questions.forEach(function (q) {
+        hotelAnswers[q.id] = state.hotelAnswers[q.id];
+      });
+      var vals = tab.questions.map(function (q) {
+        return state.hotelAnswers[q.id] || 0;
+      });
+      hotelCategories[tab.id] = average(vals);
+    }
+
+    var hotelCommentParts = [];
+    if (!tab.isViona) {
+      var txt = String(state.tabComments[tab.id] || "").trim();
+      if (txt) hotelCommentParts.push(tab.id + ": " + txt);
+    }
+
+    var overallScore = 0;
+    if (tab.isViona) {
+      overallScore = average(
+        tab.questions.map(function (q) {
+          return state.vionaAnswers[q.id] || 0;
+        })
+      );
+    } else {
+      overallScore = hotelCategories[tab.id] || 0;
+    }
+
+    return {
+      submittedAt: new Date().toISOString(),
+      overallScore: overallScore,
+      hotelCategories: hotelCategories,
+      hotelAnswers: hotelAnswers,
+      hotelComment: hotelCommentParts.join(" | "),
+      vionaRating: tab.isViona ? Number(state.vionaAnswers.viona_overall || 0) : 0,
+      vionaAnswers: vionaAnswers,
+      vionaComment: tab.isViona ? String(state.tabComments.viona || "").trim() : "",
+      deviceType: detectDeviceType(),
+      language: getLanguage(),
+      submittedTabId: tabId,
+      partialSubmission: true,
+    };
+  }
+
   window.SurveyState = {
     createInitialState: createInitialState,
     setActiveTab: setActiveTab,
@@ -138,5 +220,7 @@
     setVionaComment: setVionaComment,
     setTabComment: setTabComment,
     buildPayload: buildPayload,
+    buildPayloadForTab: buildPayloadForTab,
+    resetSubmittedTab: resetSubmittedTab,
   };
 })();

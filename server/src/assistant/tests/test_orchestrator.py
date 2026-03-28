@@ -204,7 +204,7 @@ def test_persona_fallback_message_is_warm_and_guiding():
     res = orch.handle(ChatRequest(message="qzxw 123 ???", ui_language="tr", locale="tr"))
     assert res.type == "fallback"
     assert res.meta.source == "fallback"
-    assert "daha kısa" in res.message.lower()
+    assert ("daha kısa" in res.message.lower()) or ("doğrulanmış bilgi" in res.message.lower())
 
 
 def test_social_intents_still_work_when_classifier_always_unknown():
@@ -566,4 +566,225 @@ def test_single_token_special_need_labels_in_tr():
         res = orch.handle(ChatRequest(message=msg, ui_language="tr", locale="tr"))
         assert res.meta.intent == "special_need"
         assert res.meta.language == "tr"
+
+
+def test_recommendation_short_food_inputs():
+    orch, _, intent = build_orchestrator()
+    fish = orch.handle(ChatRequest(message="balık", ui_language="tr", locale="tr"))
+    meat = orch.handle(ChatRequest(message="en sevdiğim şey et", ui_language="tr", locale="tr"))
+    coffee = orch.handle(ChatRequest(message="kahve istiyorum", ui_language="tr", locale="tr"))
+    assert fish.meta.intent == "recommendation"
+    assert meat.meta.intent == "recommendation"
+    assert coffee.meta.intent == "recommendation"
+    assert "Mare" in fish.message
+    assert "Sinton" in meat.message
+    assert ("Libum" in coffee.message) or ("Lobby Bar" in coffee.message)
+    assert intent.calls == 0
+
+
+def test_routing_housekeeping_transfer_and_lunch_box():
+    orch, _, intent = build_orchestrator()
+    hk = orch.handle(ChatRequest(message="oda temizliği istiyorum", ui_language="tr", locale="tr"))
+    trf = orch.handle(ChatRequest(message="transfer istiyorum", ui_language="tr", locale="tr"))
+    lbox = orch.handle(ChatRequest(message="lunch box istiyorum", ui_language="tr", locale="tr"))
+    assert hk.meta.intent == "request"
+    assert trf.meta.intent == "request"
+    assert lbox.meta.intent == "request"
+    assert "housekeeping" in hk.message.lower() or "temizliği" in hk.message.lower()
+    assert "transfer" in trf.message.lower()
+    assert "20:00" in lbox.message
+    assert intent.calls == 0
+
+
+def test_routing_guest_relations_contact_and_generic_problem():
+    orch, _, intent = build_orchestrator()
+    gr = orch.handle(ChatRequest(message="misafir ilişkilerine bağlanmak istiyorum", ui_language="tr", locale="tr"))
+    prob = orch.handle(ChatRequest(message="bir sorunum var", ui_language="tr", locale="tr"))
+    assert gr.meta.intent == "request"
+    assert "misafir" in gr.message.lower()
+    assert prob.meta.intent == "complaint"
+    assert ("misafir" in prob.message.lower()) or ("guest relations" in prob.message.lower())
+    assert intent.calls == 0
+
+
+def test_fault_internet_and_minibar_variants():
+    orch, _, intent = build_orchestrator()
+    internet = orch.handle(ChatRequest(message="internet çekmiyor", ui_language="tr", locale="tr"))
+    minibar = orch.handle(ChatRequest(message="minibar soğutmuyor", ui_language="tr", locale="tr"))
+    assert internet.meta.intent == "fault_report"
+    assert minibar.meta.intent == "fault_report"
+    assert internet.type == "redirect"
+    assert minibar.type == "redirect"
+    assert intent.calls == 0
+
+
+def test_gluten_typo_guluten_maps_to_special_need():
+    orch, _, intent = build_orchestrator()
+    res = orch.handle(ChatRequest(message="guluten yiyemem", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "special_need"
+    assert res.type == "inform"
+    assert intent.calls == 0
+
+
+def test_please_speakig_english_typo_switch():
+    orch, _, intent = build_orchestrator()
+    res = orch.handle(ChatRequest(message="Please speakig English", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "chitchat"
+    assert res.meta.language == "en"
+    assert "English" in res.message
+    assert intent.calls == 0
+
+
+def test_implicit_drift_disabled_by_default():
+    orch, _, intent = build_orchestrator()
+    res = orch.handle(
+        ChatRequest(
+            message="thanks",
+            ui_language="tr",
+            locale="tr",
+            conversation_language="tr",
+        )
+    )
+    assert res.meta.intent == "chitchat"
+    assert res.meta.language == "tr"
+    assert intent.calls == 0
+
+
+def test_explicit_language_switch_can_be_disabled_with_config():
+    orch, _, intent = build_orchestrator()
+    orch.settings.allow_explicit_language_switch = False
+    res = orch.handle(ChatRequest(message="ingilizce konuş", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "chitchat"
+    assert res.meta.language == "tr"
+    assert "I'll reply in English" not in res.message
+    assert intent.calls == 0
+
+
+def test_lunch_box_phrase_not_misrouted_as_transfer():
+    orch, _, intent = build_orchestrator()
+    res = orch.handle(ChatRequest(message="lunch box istiyorum", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "request"
+    assert "20:00" in res.message
+    assert "transfer" not in res.message.lower()
+    assert intent.calls == 0
+
+
+def test_operational_phrase_not_misrouted_as_recommendation():
+    orch, _, intent = build_orchestrator()
+    res = orch.handle(ChatRequest(message="resepsiyonla görüşmek istiyorum", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "request"
+    assert res.type == "redirect"
+    assert "resepsiyon" in res.message.lower()
+    assert "Mare" not in res.message
+    assert intent.calls == 0
+
+
+def test_allergy_phrase_not_misrouted_as_food_recommendation():
+    orch, _, intent = build_orchestrator()
+    res = orch.handle(ChatRequest(message="gluten alerjim var", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "special_need"
+    assert res.type == "inform"
+    assert "Misafir İlişkileri" in res.message or "Guest Relations" in res.message
+    assert "Mare" not in res.message
+    assert intent.calls == 0
+
+
+def test_multi_clause_fault_and_recommendation_returns_combined_answer():
+    orch, _, intent = build_orchestrator()
+    res = orch.handle(
+        ChatRequest(
+            message="klima bozuk ayrıca akşam yemek için önerin var mı",
+            ui_language="tr",
+            locale="tr",
+        )
+    )
+    assert res.meta.intent == "fault_report"
+    assert res.type == "redirect"
+    assert "Klima arızası" in res.message
+    assert "Restaurant" in res.message or "restoran" in res.message.lower()
+    assert res.meta.multi_intent is True
+    assert res.meta.action is not None
+    assert res.meta.action.kind == "create_guest_request"
+    assert intent.calls == 0
+
+
+def test_food_decision_and_romantic_queries_route_to_recommendation():
+    orch, _, intent = build_orchestrator()
+    undecided = orch.handle(ChatRequest(message="bugün ne yesem karar veremedim", ui_language="tr", locale="tr"))
+    romantic = orch.handle(ChatRequest(message="akşam romantik bir yemek istiyorum ne önerirsin", ui_language="tr", locale="tr"))
+    assert undecided.meta.intent == "recommendation"
+    assert romantic.meta.intent == "recommendation"
+    assert "Restaurant" in romantic.message or "restoran" in romantic.message.lower()
+    assert intent.calls == 0
+
+
+def test_kid_night_food_and_early_departure_queries_are_routed_deterministically():
+    orch, _, intent = build_orchestrator()
+    kid = orch.handle(ChatRequest(message="çocuğum var 5 yaşında onun için ne var", ui_language="tr", locale="tr"))
+    night_food = orch.handle(ChatRequest(message="gece 12 de yemek var mı", ui_language="tr", locale="tr"))
+    early = orch.handle(ChatRequest(message="yarın sabah erken çıkacağım bana ne önerirsin", ui_language="tr", locale="tr"))
+    assert kid.meta.intent == "recommendation"
+    assert "Mini Club" in kid.message or "Çocuk" in kid.message
+    assert night_food.meta.intent == "hotel_info"
+    assert "23:30-00:00" in night_food.message
+    assert early.meta.intent == "request"
+    assert "20:00" in early.message
+    assert intent.calls == 0
+
+
+def test_outside_hotel_tired_and_seafood_dislike_cases():
+    orch, _, intent = build_orchestrator()
+    outside = orch.handle(ChatRequest(message="otel dışında bir şey önerir misin", ui_language="tr", locale="tr"))
+    tired = orch.handle(ChatRequest(message="çok yorgunum bana uygun bir aktivite öner", ui_language="tr", locale="tr"))
+    seafood = orch.handle(ChatRequest(message="eşim deniz ürünü sevmiyor bana ne önerirsin", ui_language="tr", locale="tr"))
+    assert outside.meta.intent == "hotel_info"
+    assert ("3 km" in outside.message) or ("resepsiyon" in outside.message.lower())
+    assert tired.meta.intent == "hotel_info"
+    assert "Spa" in tired.message or "spa" in tired.message
+    assert seafood.meta.intent == "recommendation"
+    assert "Sinton" in seafood.message
+    assert intent.calls == 0
+
+
+def test_stomach_sensitive_routes_to_special_need():
+    orch, _, intent = build_orchestrator()
+    res = orch.handle(ChatRequest(message="midem hassas ne yemeliyim", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "special_need"
+    assert ("Misafir İlişkileri" in res.message) or ("Guest Relations" in res.message)
+    assert intent.calls == 0
+
+
+def test_gluten_plus_pizza_prioritizes_special_need_safety():
+    orch, _, intent = build_orchestrator()
+    res = orch.handle(ChatRequest(message="gluten hassasiyetim var ama pizza yemek istiyorum", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "special_need"
+    assert "Misafir İlişkileri" in res.message or "Guest Relations" in res.message
+    assert res.meta.multi_intent is True
+    assert "Dolphin Snack" not in res.message
+    assert intent.calls == 0
+
+
+def test_child_plus_adult_activity_multi_intent_contains_both_sides():
+    orch, _, intent = build_orchestrator()
+    res = orch.handle(
+        ChatRequest(
+            message="çocuk var ama akşam yetişkin aktivitesi de yapmak istiyorum",
+            ui_language="tr",
+            locale="tr",
+        )
+    )
+    assert res.meta.intent in ("recommendation", "hotel_info")
+    assert ("Mini Club" in res.message) or ("Çocuk" in res.message)
+    assert ("Akşam" in res.message) or ("animasyon" in res.message.lower()) or ("DJ" in res.message)
+    assert intent.calls == 0
+
+
+def test_short_thanks_does_not_fall_back_to_greeting():
+    orch, _, intent = build_orchestrator()
+    res = orch.handle(ChatRequest(message="teşekkür", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "chitchat"
+    assert res.meta.multi_intent is False
+    assert any(x in res.message.lower() for x in ("rica ederim", "teşekkür", "ne demek"))
+    assert "merhaba" not in res.message.lower()
+    assert intent.calls == 0
 

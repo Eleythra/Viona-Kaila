@@ -37,22 +37,19 @@
     return out;
   }
 
-  /** Takvim: en erken 1 Mart 2026 veya bugün (hangisi geç ise). */
+  /** Takvim: geçmiş günler kapalı — yalnızca bugün ve sonrası (yerel tarih). */
   window.getCalendarMinDateISO = function () {
-    var floor = new Date(2026, 2, 1);
     var today = new Date();
     today.setHours(0, 0, 0, 0);
-    floor.setHours(0, 0, 0, 0);
-    var min = floor > today ? floor : today;
-    return min.getFullYear() + "-" + pad(min.getMonth() + 1) + "-" + pad(min.getDate());
+    return today.getFullYear() + "-" + pad(today.getMonth() + 1) + "-" + pad(today.getDate());
   };
 
-  /** La Terrace A La Carte: 18:30 – 21:00 (otel verisi) */
-  var LA_TERRACE = slots15("18:30", "21:00");
-  /** Mare (balık a la carte): akşam rezervasyon penceresi 18:00 – 22:00 */
-  var MARE = slots15("18:00", "22:00");
-  /** Sinton BBQ: 13:00 – 22:00 (otel verisi; Pazartesi kapalı operasyon ayrı yönetilir) */
-  var SINTON = slots15("13:00", "22:00");
+  /** La Terrace A La Carte: 18:30 – 20:30 */
+  var LA_TERRACE = slots15("18:30", "20:30");
+  /** Mare (balık a la carte): 18:00 – 21:30 */
+  var MARE = slots15("18:00", "21:30");
+  /** Sinton BBQ: 13:00 – 21:15 (Pazartesi kapalı) */
+  var SINTON = slots15("13:00", "21:15");
 
   /** Spa: La Serenite 08:30–19:00 arası 15 dk (ücretli hizmet randevusu) */
   var SPA_SLOTS = slots15("08:30", "19:00");
@@ -61,42 +58,70 @@
     floorCalendarDate: "2026-03-01",
     categories: {
       request: [
-        { id: "extraTowels", key: "reqCatReqTowels" },
+        { id: "towel", key: "reqCatReqTowel" },
         { id: "bedding", key: "reqCatReqBedding" },
-        { id: "roomCleaning", key: "reqCatReqCleaning" },
+        { id: "room_cleaning", key: "reqCatReqCleaning" },
         { id: "minibar", key: "reqCatReqMinibar" },
-        { id: "babyBed", key: "reqCatReqBabyBed" },
+        { id: "baby_equipment", key: "reqCatReqBabyEquipment" },
+        { id: "room_equipment", key: "reqCatReqRoomEquipment" },
         { id: "other", key: "reqCatOther" },
       ],
       complaint: [
-        { id: "roomCleaning", key: "reqCatComplaintCleaning" },
+        { id: "room_cleaning", key: "reqCatComplaintCleaning" },
         { id: "noise", key: "reqCatComplaintNoise" },
-        { id: "restaurantSvc", key: "reqCatComplaintRestaurant" },
-        { id: "staff", key: "reqCatComplaintStaff" },
         { id: "climate", key: "reqCatComplaintClimate" },
+        { id: "room_comfort", key: "reqCatComplaintRoomComfort" },
+        { id: "minibar", key: "reqCatComplaintMinibar" },
+        { id: "restaurant_service", key: "reqCatComplaintRestaurant" },
+        { id: "staff_behavior", key: "reqCatComplaintStaffBehavior" },
+        { id: "general_areas", key: "reqCatComplaintGeneralAreas" },
+        { id: "hygiene", key: "reqCatComplaintHygiene" },
+        { id: "internet_tv", key: "reqCatComplaintInternetTv" },
         { id: "other", key: "reqCatOther" },
       ],
       fault: [
-        { id: "ac", key: "reqCatFaultAc" },
-        { id: "tv", key: "reqCatFaultTv" },
-        { id: "lighting", key: "reqCatFaultLight" },
-        { id: "bathroom", key: "reqCatFaultBath" },
-        { id: "doorLock", key: "reqCatFaultDoor" },
-        { id: "phone", key: "reqCatFaultPhone" },
+        { id: "hvac", key: "reqCatFaultHvac" },
+        { id: "electric", key: "reqCatFaultElectric" },
+        { id: "water_bathroom", key: "reqCatFaultWaterBathroom" },
+        { id: "tv_electronics", key: "reqCatFaultTvElectronics" },
+        { id: "door_lock", key: "reqCatFaultDoorLock" },
+        { id: "furniture_item", key: "reqCatFaultFurnitureItem" },
+        { id: "cleaning_equipment_damage", key: "reqCatFaultCleaningEquipmentDamage" },
+        { id: "balcony_window", key: "reqCatFaultBalconyWindow" },
         { id: "other", key: "reqCatOther" },
       ],
     },
     restaurants: [
-      { id: "laTerrace", key: "reqRestLaTerrace", slotProfile: "laTerrace" },
-      { id: "mare", key: "reqRestMare", slotProfile: "mare" },
-      { id: "sinton", key: "reqRestSinton", slotProfile: "sinton" },
+      {
+        id: "laTerrace",
+        code: "la_terrace",
+        key: "reqRestLaTerrace",
+        slotProfile: "laTerrace",
+        infoKey: "reqResInfoLaTerrace",
+        closedWeekdays: [],
+      },
+      {
+        id: "mare",
+        code: "mare",
+        key: "reqRestMare",
+        slotProfile: "mare",
+        infoKey: "reqResInfoMare",
+        closedWeekdays: [],
+      },
+      {
+        id: "sinton",
+        code: "sinton_bbq",
+        key: "reqRestSinton",
+        slotProfile: "sinton",
+        infoKey: "reqResInfoSinton",
+        closedWeekdays: [1],
+      },
     ],
     spaServices: [
-      { id: "massage", key: "reqSpaMassage" },
-      { id: "kese", key: "reqSpaKese" },
-      { id: "peeling", key: "reqSpaPeeling" },
-      { id: "skin", key: "reqSpaSkin" },
-      { id: "other", key: "reqCatOther" },
+      { id: "massage", code: "massage", key: "reqSpaMassage" },
+      { id: "peeling", code: "peeling", key: "reqSpaPeeling" },
+      { id: "skin_care", code: "skin_care", key: "reqSpaSkin" },
+      { id: "other_care", code: "other_care", key: "reqSpaOtherCare" },
     ],
     laTerraceSlots: LA_TERRACE,
     mareSlots: MARE,

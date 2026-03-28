@@ -20,5 +20,14 @@ class OpenAIClientAdapter:
             if status == 401:
                 logger.warning("openai_401")
                 raise RuntimeError("openai_401") from exc
-            raise
+            if status == 429:
+                logger.warning("openai_429")
+                raise RuntimeError("openai_429") from exc
+            name = exc.__class__.__name__.lower()
+            error_text = str(exc).lower()
+            if "timeout" in name or "timed out" in error_text or "timeout" in error_text:
+                logger.warning("openai_timeout")
+                raise RuntimeError("openai_timeout") from exc
+            logger.warning("openai_bad_response error=%s", exc)
+            raise RuntimeError("openai_bad_response") from exc
 

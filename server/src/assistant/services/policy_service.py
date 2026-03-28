@@ -4,6 +4,7 @@ from assistant.schemas.intent import IntentName
 
 
 PolicyName = Literal[
+    "compose_recommendation",
     "compose_fault",
     "compose_complaint",
     "compose_request",
@@ -18,6 +19,8 @@ PolicyName = Literal[
 
 class PolicyService:
     def choose(self, intent: IntentName, confidence: float, threshold: float, source: str | None = None) -> PolicyName:
+        if intent == "recommendation":
+            return "compose_recommendation"
         if intent == "fault_report":
             return "compose_fault"
         if intent == "complaint":

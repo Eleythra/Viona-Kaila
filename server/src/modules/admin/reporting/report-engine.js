@@ -1,3 +1,5 @@
+import { labelHotelSurveyKey } from "./survey-labels-tr.js";
+
 function clamp(v, min = 0, max = 100) {
   return Math.max(min, Math.min(max, v));
 }
@@ -101,6 +103,16 @@ function summarizeTrend(curr, prev, label, inverse = false) {
   return `${label} önceki döneme göre %${Math.abs(change)} ${up ? "arttı" : "azaldı"}.`;
 }
 
+function displayFivePoint(score, source, submissionCount) {
+  const n = safeNumber(score);
+  const src = String(source || "none");
+  const sub = safeNumber(submissionCount);
+  if (n > 0) return String(n);
+  if (sub > 0) return "—";
+  if (src === "none") return "yok";
+  return "—";
+}
+
 export function buildVionaReportData({ hotelName, dateRange, current, previous }) {
   const chatbot = current.chatbotPerformance || {};
   const satisfaction = current.satisfaction || {};
@@ -131,11 +143,13 @@ export function buildVionaReportData({ hotelName, dateRange, current, previous }
 
   const categoryValues = Object.values(satisfaction.categories || {}).map((x) => safeNumber(x)).filter((x) => x > 0);
   const categoryAvg = categoryValues.length ? categoryValues.reduce((a, b) => a + b, 0) / categoryValues.length : 0;
+  const hoRaw = safeNumber(satisfaction.overallScore);
+  const voRaw = safeNumber(satisfaction.vionaScore);
+  const hoForScore = hoRaw > 0 ? hoRaw : categoryAvg > 0 ? categoryAvg : 0;
+  const voForScore = voRaw > 0 ? voRaw : 0;
   const satisfactionScore = hasData
     ? clamp(
-    normalizeFiveScale(satisfaction.overallScore || 0) * 0.4 +
-      normalizeFiveScale(satisfaction.vionaScore || 0) * 0.4 +
-      normalizeFiveScale(categoryAvg || 0) * 0.2
+        normalizeFiveScale(hoForScore) * 0.45 + normalizeFiveScale(voForScore) * 0.45 + normalizeFiveScale(categoryAvg || 0) * 0.1
       )
     : 0;
 
@@ -147,23 +161,24 @@ export function buildVionaReportData({ hotelName, dateRange, current, previous }
       })
     : 0;
 
-  const businessScore = hasData
-    ? commercialScore({
-        chatToConversionRate: conversion.chatToConversionRate || 0,
-        actionConversionRate: conversion.actionConversionRate || 0,
-        actionClicks: conversion.actionClicks || 0,
-      })
-    : 0;
-
-  const overallScore = clamp(chatbotScore * 0.35 + satisfactionScore * 0.25 + contentScore * 0.2 + businessScore * 0.2);
+  const overallScore = clamp(chatbotScore * 0.38 + satisfactionScore * 0.34 + contentScore * 0.28);
 
   const scores = [
-    { key: "chatbot", title: "Chatbot Performans Skoru", score: Number(chatbotScore.toFixed(1)), label: scoreLabel(chatbotScore) },
-    { key: "satisfaction", title: "Memnuniyet Skoru", score: Number(satisfactionScore.toFixed(1)), label: scoreLabel(satisfactionScore) },
+    { key: "chatbot", title: "Dijital Asistan Kullanım Skoru", score: Number(chatbotScore.toFixed(1)), label: scoreLabel(chatbotScore) },
+    {
+      key: "satisfaction",
+      title: "Memnuniyet Skoru",
+      score: Number(satisfactionScore.toFixed(1)),
+      label: scoreLabel(satisfactionScore),
+      highlight: hasData && satisfactionScore < 55 ? "critical" : "",
+    },
     { key: "content", title: "İçerik Yeterlilik Skoru", score: Number(contentScore.toFixed(1)), label: scoreLabel(contentScore) },
-    { key: "commercial", title: "Ticari Etki Skoru", score: Number(businessScore.toFixed(1)), label: scoreLabel(businessScore) },
-    { key: "overall", title: "Genel Viona Skoru", score: Number(overallScore.toFixed(1)), label: scoreLabel(overallScore) },
+    { key: "overall", title: "Genel Performans Skoru", score: Number(overallScore.toFixed(1)), label: scoreLabel(overallScore) },
   ];
+
+  const subCount = safeNumber(satisfaction.submissionCount);
+  const overallDisplay = displayFivePoint(satisfaction.overallScore, satisfaction.overallScoreSource, subCount);
+  const vionaDisplay = displayFivePoint(satisfaction.vionaScore, satisfaction.vionaScoreSource, subCount);
 
   const weakestCategory = Object.entries(satisfaction.categories || {})
     .map(([k, v]) => ({ key: k, value: safeNumber(v) }))
@@ -174,64 +189,130 @@ export function buildVionaReportData({ hotelName, dateRange, current, previous }
 
   const summary = [];
   if (!hasData) {
-    summary.push("Bu tarih aralığında rapor üretimi için yeterli veri bulunmamaktadır.");
-    summary.push("Skorlar ve bölüm yorumları veri eksikliği nedeniyle sınırlı değerlendirme içerir.");
-    summary.push("Rapor, altyapının çalıştığını ve veri akışının izlenebilir olduğunu göstermek amacıyla yine de oluşturulmuştur.");
-    summary.push("İlk öncelik chatbot logları, aksiyon tıklamaları ve memnuniyet kayıtlarının düzenli toplanmasıdır.");
+    summary.push("Bu tarih aralığında rapor için yeterli veri yok.");
+    summary.push("Skorlar ve metinler sınırlı kalır; öncelik anket ve misafir temas noktalarından veri toplamaktır.");
+    summary.push("Rapor yine de veri boşluklarını göstermek için üretilmiştir.");
+    summary.push("Dijital asistan mesajları, yönlendirme tıklamaları ve anket kayıtlarının düzenli işlendiğinden emin olun.");
   } else {
-    if ((chatbot.totalChats || 0) <= 0) summary.push("Seçili dönemde chatbot kullanımı yok veya veri sınırlı; kararların ihtiyatlı okunması önerilir.");
-    else if ((chatbot.totalChats || 0) < 50) summary.push("Chatbot kullanımı erken aşamadadır; mevcut bulgular yön tayini için değerlidir fakat trend takibi kritik önemdedir.");
-    else summary.push("Chatbot kullanım hacmi analiz için yeterli seviyededir ve operasyonel sinyaller netleşmektedir.");
-    summary.push(`Genel Viona skoru ${Number(overallScore.toFixed(1))}/100 olup durum etiketi '${scoreLabel(overallScore)}' seviyesindedir.`);
-    summary.push(`En güçlü alan '${scores.slice(0, 4).sort((a, b) => b.score - a.score)[0].title}' olarak gözükmektedir.`);
-    summary.push(`En kritik iyileştirme alanı '${scores.slice(0, 4).sort((a, b) => a.score - b.score)[0].title}' tarafındadır.`);
-    if ((conversion.actionClicks || 0) > 0 && (conversion.actionConversions || 0) === 0) summary.push("Ticari akışta tıklama olmasına rağmen dönüşüm alınmaması teklif, fiyat algısı veya rezervasyon deneyiminde sürtünme olduğunu gösterebilir.");
-    if ((conversion.actionClicks || 0) === 0) summary.push("Ticari aksiyon tıklaması görülmemesi CTA görünürlüğü veya yönlendirme kurgusunun güçlendirilmesi gerektiğine işaret eder.");
-    summary.push("İlk aksiyon olarak tekrar eden fallback konularının bilgi tabanına öncelikli eklenmesi önerilir.");
+    const wk = weakestCategory
+      ? `${labelHotelSurveyKey(weakestCategory.key)} (${weakestCategory.value})`
+      : "anket kırılımı";
+    summary.push(
+      `Misafir deneyimi: otel özeti ${
+        overallDisplay === "yok" || overallDisplay === "—" ? "ölçülemedi" : `${overallDisplay}/5`
+      }; kritik zayıflık adayı ${wk}.`
+    );
+    if ((chatbot.totalChats || 0) <= 0) {
+      summary.push("Dijital asistan kullanımı bu dönemde yok veya çok sınırlı; görünürlük ve tanıtım gözden geçirilmeli.");
+    } else if ((chatbot.totalChats || 0) < 50) {
+      summary.push(
+        "Dijital asistan hacmi düşük: onboarding veya değer algısı eksik olabilir; check-in tanıtımı ve ilk mesaj deneyimini netleştirin."
+      );
+    } else {
+      summary.push("Dijital asistan kullanım hacmi yorum için yeterli seviyededir.");
+    }
+    summary.push(`Genel performans skoru ${Number(overallScore.toFixed(1))}/100; durum '${scoreLabel(overallScore)}'.`);
+    summary.push(`Performans bileşenleri içinde görece en güçlü: ${scores.slice(0, 3).sort((a, b) => b.score - a.score)[0].title}.`);
+    summary.push(`Görece en zayıf bileşen: ${scores.slice(0, 3).sort((a, b) => a.score - b.score)[0].title}.`);
+    summary.push("Öncelik: en düşük anket boyutu için 7 gün içinde saha kontrolü + sorumlu + kapanış tarihi.");
   }
 
-  const actions = [
-    `İlk 2 hafta içinde en kritik 3 fallback konusu (${prioritizedFallbacks.slice(0, 3).map((x) => x.key).join(", ") || "veri bekleniyor"}) için içerik kartları oluşturun.`,
-    "Chat akışında ticari CTA bloklarını görünür hale getirip servis bazlı yönlendirme metinlerini sadeleştirin.",
-    "Memnuniyet skorlarında düşük kalan kategori için operasyon ekibi ile haftalık iyileştirme sprinti planlayın.",
-    "Düşüş trendi görülen KPI'lar için önceki dönemle karşılaştırmalı kök neden analizi uygulayın.",
-    "Onboarding mesajlarını optimize ederek chatbot benimsenmesini artırmak için check-in anına yönelik tetikleyiciler ekleyin.",
+  const weakestLabel = weakestCategory ? labelHotelSurveyKey(weakestCategory.key) : "en düşük kategori";
+  const actionsHotel = [
+    `"${weakestLabel}" için 7 gün içinde saha kontrolü + düzeltme tarihi ve sorumlu yayınlayın.`,
+    "Resepsiyon ve housekeeping ile sessizlik, temizlik ve servis hızı için kontrol listesi uygulayın.",
+    "Çıkış anında kısa memnuniyet turu ve tavsiye için net jest listesi + sorumlu yayınlayın.",
   ];
+  const actionsViona = [
+    `En sık üç yanıtlanamayan konu (${prioritizedFallbacks.slice(0, 3).map((x) => x.key).join(", ") || "veri toplandıkça"}) için kısa hazır yanıtlar yazın.`,
+    "Check-in ve Wi‑Fi girişinde Viona’yı tek ekran veya QR ile kısaca tanıtın.",
+    "Asistan girişine rezervasyon, spa ve restoran yönlendirmelerini sabit düğmeler olarak ekleyin.",
+    "İlk mesajı günlük öneri veya etkinlik sorusu ile açın.",
+  ];
+  const actions = [...actionsHotel, ...actionsViona];
 
   const prev = previous || null;
   const trends = [
-    summarizeTrend(chatbot.fallbackRate || 0, prev?.chatbotPerformance?.fallbackRate, "Fallback oranı", true),
-    summarizeTrend(chatbot.avgMessagesPerUser || 0, prev?.chatbotPerformance?.avgMessagesPerUser, "Kullanıcı başına mesaj"),
+    summarizeTrend(chatbot.fallbackRate || 0, prev?.chatbotPerformance?.fallbackRate, "Yanıtlanamayan mesaj oranı", true),
+    summarizeTrend(chatbot.avgMessagesPerUser || 0, prev?.chatbotPerformance?.avgMessagesPerUser, "Misafir başına mesaj"),
     summarizeTrend(satisfaction.vionaScore || 0, prev?.satisfaction?.vionaScore, "Viona memnuniyeti"),
-    summarizeTrend(conversion.chatToConversionRate || 0, prev?.conversion?.chatToConversionRate, "Chat -> dönüşüm oranı"),
   ].filter(Boolean);
 
-  const vionaVsHotelComment =
-    satisfaction.vionaScore >= 4 && satisfaction.overallScore < 3.8
-      ? "Kullanıcılar dijital asistan deneyiminden memnunken genel konaklama deneyiminde operasyonel iyileştirme ihtiyacı dikkat çekmektedir."
-      : satisfaction.overallScore >= 4 && satisfaction.vionaScore < 3.8
-      ? "Genel otel deneyimi güçlü olmasına rağmen chatbot kalitesi veya içerik kapsamında geliştirme gereksinimi vardır."
-      : satisfaction.overallScore < 3.5 && satisfaction.vionaScore < 3.5
-      ? "Hem hizmet deneyimi hem de dijital asistan performansı tarafında iyileştirme ihtiyacı vardır."
-      : "Otel ve Viona memnuniyet skorlarının birbirine yakın seyri genel deneyimde dengeli bir görünüme işaret etmektedir.";
+  const vo = safeNumber(satisfaction.vionaScore);
+  const ho = safeNumber(satisfaction.overallScore);
+  const vionaHotelDiff = vo - ho;
+  const vionaVsHotelComment = (() => {
+    if (!hasData) return "";
+    if (vo <= 0 && ho <= 0) return "Bu dönem için anket özetinden otel veya Viona puanı okunamıyor; anket akışını kontrol edin.";
+    if (vo >= 4.45 && vionaHotelDiff >= 0.25) {
+      return `Viona ${vo.toFixed(2)}/5 ile güçlü bir skor; 5 üzerinden misafir dijital asistanı neredeyse tam nota yakın buluyor. Otel geneli ${ho.toFixed(2)}/5 kaldığı için asıl mesaj şu: fiziksel deneyim ve iletişim standardı, dijital kanaldaki olumlu algıyı sahada yakalamıyor.`;
+    }
+    if (vionaHotelDiff >= 0.3) {
+      return `Viona memnuniyeti (${vo.toFixed(2)}/5) genel otel memnuniyetinin (${ho.toFixed(2)}/5) üzerindedir. Dijital temas noktası misafire oda ve sahadan daha olumlu geliyor; operasyonel deneyimle hizalanmalıdır.`;
+    }
+    if (vionaHotelDiff <= -0.3) {
+      return `Genel otel memnuniyeti (${ho.toFixed(2)}/5) Viona puanından (${vo.toFixed(2)}/5) yüksektir. Fiziksel deneyim önde; asistanın kapsamı veya beklenti yönetimi güçlendirilmelidir.`;
+    }
+    if (Math.abs(vionaHotelDiff) < 0.12) {
+      return `İki skor arasındaki fark (${vionaHotelDiff >= 0 ? "+" : ""}${vionaHotelDiff.toFixed(2)}) küçük; daha fazla anket yanıtı ile ayrışma netleşir.`;
+    }
+    return `Viona ${vo.toFixed(2)}, otel ${ho.toFixed(2)} — orta düzey fark var; kategori ve soru kırılımıyla kök neden ayrıştırılmalıdır.`;
+  })();
+
+  const vionaUsageGapNote = (() => {
+    if (!hasData || vo <= 0) return "";
+    const tc = chatbot.totalChats || 0;
+    if (vo >= 4 && tc > 0 && tc < 30) {
+      return "Anket Viona puanı yüksek; konuşma hacmi düşük — kanal muhtemelen beğeniliyor fakat görünürlük veya onboarding zayıf.";
+    }
+    if (vo >= 4 && tc === 0) {
+      return "Anket Viona puanı yüksek; bu dönemde kayıtlı sohbet yok — kullanım verisi ile memnuniyet arasında kopukluk var.";
+    }
+    return "";
+  })();
+
+  const hotelExperienceComment = (() => {
+    if (!hasData) return "Otel deneyimi için yeterli anket verisi yok.";
+    const parts = [];
+    if (overallDisplay !== "yok" && overallDisplay !== "—" && ho > 0) parts.push(`Genel otel memnuniyeti özeti ${ho.toFixed(2)}/5.`);
+    else if (overallDisplay === "yok" || overallDisplay === "—")
+      return "Bu dönem için genel otel puanı raporlanamıyor; değerlendirmeler sekmesinde yanıt ve tarih aralığını doğrulayın.";
+    if (weakestCategory && weakestCategory.value > 0) {
+      parts.push(
+        `Kırılımda görece en zayıf alan: ${labelHotelSurveyKey(weakestCategory.key)} (${weakestCategory.value}).`
+      );
+    }
+    if (strongestCategory && strongestCategory.value > 0) {
+      parts.push(
+        `Görece en güçlü alan: ${labelHotelSurveyKey(strongestCategory.key)} (${strongestCategory.value}).`
+      );
+    }
+    return parts.length ? parts.join(" ") : "Kategori kırılımı için yeterli anket yanıtı birikmeli.";
+  })();
 
   const chatbotComment = !hasData
-    ? "Chatbot performansı için yeterli veri bulunmamaktadır."
-    :
-    chatbot.fallbackRate > 20
-      ? "Fallback oranı kritik seviyededir. Bilgi tabanı kapsamı ve intent modelleme acilen güçlendirilmelidir."
+    ? "Dijital asistan kullanımı için yeterli veri yok."
+    : (chatbot.totalChats || 0) > 0 &&
+        (chatbot.totalChats || 0) < 25 &&
+        (chatbot.avgMessagesPerUser || 0) < 2.5
+      ? `${chatbot.totalChats} konuşma ve misafir başına ~${Number(chatbot.avgMessagesPerUser || 0).toFixed(1)} mesaj: misafir sohbeti derinleştirmiyor; tek seferlik soru–cevap kalıbı hakim. Büyük olasılıkla check-in’de tanıtım/onboarding yok veya asistanın değeri görünmüyor. Görünürlük ve ilk mesaj deneyimini ayrı ele alın.`
+      : (chatbot.totalChats || 0) > 0 && (chatbot.totalChats || 0) < 25
+      ? `Konuşma sayısı düşük (${chatbot.totalChats}); hacim artana kadar bulgular yön tayini içindir.`
+      : chatbot.fallbackRate > 20
+      ? "Yanıt verilemeyen mesaj oranı kritik düzeydedir; hazır yanıt seti ve net yönlendirme eksikliği öne çıkar."
       : chatbot.fallbackRate > 10
-      ? "Fallback oranı geliştirilmeli seviyededir. Sıklıkla gelen soru kalıpları için yeni cevap kartları önerilir."
-      : "Fallback oranı kabul edilebilir seviyededir; kapsam yönetimi sürdürülerek kalite korunmalıdır.";
+      ? "Yanıt verilemeyen mesaj oranı yüksek; sık tekrar eden sorular için kısa, doğrudan yanıtlar yazılmalıdır."
+      : "Yanıt verilemeyen mesaj oranı kontrol edilebilir; yeni konu başlıkları için içerik güncellemesi sürdürülmelidir.";
 
   const conversionComment = !hasData
-    ? "Gelire etki analizi için yeterli veri bulunmamaktadır."
-    :
-    conversion.actionClicks === 0
-      ? "Tıklama görülmemesi chatbotta ticari yönlendirme görünürlüğünün düşük olduğuna işaret eder."
+    ? "Ticari etki için yeterli veri yok."
+    : conversion.actionClicks === 0 && conversion.actionConversions === 0
+      ? "Ölçülen tıklama ve dönüşüm sıfır: ticari huni bu raporda çalışmıyor görünüyor. Ölçüm hatası ihtimalini satış ile ayıklayın; gerçekten sıfırsa yönlendirme ve teklif görünürlüğü acil revize edilmeli."
+      : conversion.actionClicks === 0
+      ? "Tıklama kaydı yok; yönlendirme görünmüyor veya rapora düşmüyor olabilir."
       : conversion.actionClicks > 0 && conversion.actionConversions === 0
-      ? "Bot yönlendirme üretebilse de dönüşüm alınmıyor; fiyat algısı, teklif netliği veya rezervasyon akışı test edilmelidir."
-      : "Tıklama ve dönüşüm birlikteliği chatbotun ticari katkısının oluştuğunu göstermektedir.";
+      ? "Tıklama var, dönüşüm yok; teklif netliği veya rezervasyon sürecinde sürtünme olabilir."
+      : "Tıklama ve dönüşüm kayıtları birlikte geliyor; ticari yönlendirme işliyor.";
 
   return {
     hotelName: hotelName || "Kaila Beach Hotel",
@@ -250,11 +331,25 @@ export function buildVionaReportData({ hotelName, dateRange, current, previous }
     },
     satisfactionMetrics: {
       overall: satisfaction.overallScore || 0,
+      overallDisplay,
       viona: satisfaction.vionaScore || 0,
+      vionaDisplay,
       categories: satisfaction.categories || {},
       weakestCategory: weakestCategory || null,
       strongestCategory: strongestCategory || null,
-      comment: hasData ? vionaVsHotelComment : "Memnuniyet analizi için yeterli veri bulunmamaktadır.",
+      comment: hasData ? hotelExperienceComment : "Otel deneyimi için yeterli veri yok.",
+      vionaLayerComment: hasData ? vionaVsHotelComment : "",
+      vionaUsageGapNote,
+      overallInferredNote:
+        satisfaction.overallScoreSource === "hotel_categories_mean" ||
+        satisfaction.overallScoreSource === "hotel_questions_mean"
+          ? "Genel otel puanı, formlarda toplam skor alanı çoğunlukla boş olduğundan kategori/soru ortalamalarından hesaplanmıştır (değerlendirmeler sekmesi ile aynı mantık)."
+          : "",
+      vionaInferredNote:
+        satisfaction.vionaScoreSource === "viona_questions_mean"
+          ? "Özet puan, tek alan yerine Viona soru ortalamalarından türetilmiştir (değerlendirmeler sekmesi ile uyumlu)."
+          : "",
+      vionaByQuestion: {},
     },
     unansweredMetrics: {
       fallbackCount: unanswered.fallbackCount || 0,
@@ -262,7 +357,7 @@ export function buildVionaReportData({ hotelName, dateRange, current, previous }
       repeatedUnanswered: unanswered.repeatedUnanswered || [],
       prioritizedBacklog: prioritizedFallbacks.slice(0, 8),
       comment:
-        "Bu bölüm bir içerik geliştirme backlog'u olarak okunmalıdır. Tekrar eden fallback başlıkları önceliklendirilerek bilgi tabanına eklenmelidir.",
+        "Bu liste, misafire net cevap veya yönlendirme yazılması gereken konuların öncelik sırasıdır; operasyon ve dijital ekip birlikte tamamlamalıdır.",
     },
     conversionMetrics: {
       actionClicks: conversion.actionClicks || 0,
@@ -274,26 +369,32 @@ export function buildVionaReportData({ hotelName, dateRange, current, previous }
     },
     insights: {
       trend: trends,
-      strongest: [`En güçlü memnuniyet kategorisi: ${strongestCategory ? `${strongestCategory.key} (${strongestCategory.value})` : "veri yok"}.`],
+      strongest: [
+        `En güçlü memnuniyet kategorisi: ${strongestCategory ? `${labelHotelSurveyKey(strongestCategory.key)} (${strongestCategory.value})` : "veri yok"}.`,
+      ],
       risks: [
         !hasData
           ? "Veri akışı eksikliği nedeniyle risk analizi sınırlıdır."
           : chatbot.fallbackRate > 15
-          ? "Yüksek fallback, bilgi kapsamı ve yanıt kalitesinde risk oluşturur."
-          : "Fallback riski kontrol altındadır.",
+          ? "Yüksek yanıtlanamayan mesaj oranı; hazır yanıt ve yönlendirme kalitesinde risk oluşturur."
+          : "Yanıtlanamayan mesaj riski kontrol edilebilir düzeydedir.",
         !hasData
-          ? "Veri toplama enstrümantasyonu tamamlanmadan ticari etki yorumu yapılamaz."
-          : conversion.chatToConversionRate < 1
-          ? "Chatten ticari aksiyona geçiş kritik seviyede düşüktür."
-          : "Chatten ticari aksiyona geçiş temel seviyenin üzerindedir.",
+          ? "Ölçüm eksikliği nedeniyle risk özeti sınırlıdır."
+          : (chatbot.totalChats || 0) > 0 && (chatbot.totalChats || 0) < 30
+          ? "Düşük sohbet hacmi: onboarding ve görünürlük varsayılan risk olarak izlenmelidir."
+          : "Hacim ve içerik sinyalleri birlikte okunmalıdır.",
       ],
     },
     actions,
+    actionsHotel,
+    actionsViona,
     methodology: [
-      "Skorlar mutlak sektör garantisi değildir; segment, sezon, kanal karması ve misafir profiline göre değişebilir.",
-      "Değerlendirme başlangıç operasyon eşikleri ve mevcut dönem performansı bir arada okunarak üretilmiştir.",
-      "Metrikler yorumlanırken oran, hacim ve tekrar eden konu yoğunluğu birlikte dikkate alınmıştır.",
-      "Benchmark felsefesi: tek evrensel eşik yerine trend ve dönemsel değişim odaklı yönetici kararı desteği.",
+      "Skorlar sektör garantisi değildir; sezon ve misafir profiline göre değişir.",
+      "Dönem performansı ve oranlar birlikte okunmalıdır.",
+      "Tekrarlayan konular ile hacim birlikte değerlendirilir.",
+      "Kıyaslamada tek sabit eşik yerine trend ve dönem farkı önemlidir.",
+      "Asistan metrikleri kayıtlı mesaj özetlerinden; memnuniyet Supabase anket gönderimlerinden (admin Değerlendirmeler) hesaplanır.",
+      "Tarih seçilmediyse pencere yaklaşık son 30 gündür; PDF indirme anındaki canlı özet ile pano uyumludur.",
     ],
   };
 }

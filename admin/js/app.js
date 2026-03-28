@@ -7,8 +7,55 @@
   var LOGIN_USER = "Kaila-Vİona";
   var LOGIN_PASS = "Viona.2026";
   var LOGIN_OK_KEY = "viona_admin_login_ok";
-  var reservationSubtab = "laTerrace";
+  var reservationSubtab = "overview";
+  /** null = dashboard; operasyon listeleri için otomatik yenileme hedefi */
+  var activeAdminTab = null;
+  var refreshTimer = null;
+  var refreshInFlight = false;
+  /** Görünür sekmede arka plan yenilemesi (ms); sekmeye dönüşte ayrıca anlık tazeleme */
+  var AUTO_REFRESH_MS = 60000;
+  var visibilityRefreshTimer = null;
+  /** İstek / şikayet / arıza listeleri için sunucu sayfalama (rezervasyon: tümü birleştirilir). */
+  var BUCKET_LIST_PAGE_SIZE = 100;
+  /** Ana sayfa özetinde birleştirilen kayıt üst sınırı (sayfa × getBucketPage boyutu). */
+  var BUCKET_MERGE_MAX_PAGES = 100;
+  var bucketListPage = { request: 1, complaint: 1, fault: 1 };
+  /** Chatbot log tablosu sayfalama */
+  var logsPage = 1;
+  var LOGS_PAGE_SIZE = 70;
+
+  var INTENT_LABEL_TR = {
+    unknown: "Bilinmeyen",
+    hotel_info: "Otel bilgisi",
+    recommendation: "Öneri",
+    request: "Talep",
+    complaint: "Şikâyet",
+    fault_report: "Arıza",
+    reservation: "Rezervasyon",
+    special_need: "Özel ihtiyaç",
+    chitchat: "Sohbet",
+    current_time: "Saat",
+  };
+
+  function dashboardFmtPct(part, total) {
+    var p = Number(part) || 0;
+    var t = Number(total) || 0;
+    if (!t) return "0%";
+    return ((p / t) * 100).toFixed(1) + "%";
+  }
+
+  function intentLabelTr(raw) {
+    var k = String(raw || "unknown").toLowerCase().trim() || "unknown";
+    return INTENT_LABEL_TR[k] || raw || "—";
+  }
+
+  function formatTopIntentLine(entry) {
+    if (!entry || entry.key == null || entry.key === "") return "—";
+    return intentLabelTr(entry.key) + " · " + entry.count + " mesaj";
+  }
+
   var reservationSubtabLabels = {
+    overview: "Günlük takip (tümü)",
     laTerrace: "La Terrace A La Carte",
     mare: "Mare Restaurant",
     sinton: "Sinton BBQ Restaurant",
@@ -20,25 +67,39 @@
     complaints: "tab-complaints",
     faults: "tab-faults",
     reservations: "tab-reservations",
+    evaluations: "tab-evaluations",
     promo: "tab-promo",
     "pdf-report": "tab-pdf-report",
+    logs: "tab-logs",
   };
 
   function openTab(tab) {
+    var isHome = tab == null || tab === "" || tab === "home";
+    activeAdminTab = isHome ? null : tab;
     var home = document.getElementById("tab-dashboard");
-    if (home) home.classList.toggle("hidden", Boolean(tab));
+    if (home) home.classList.toggle("hidden", !isHome);
     Object.keys(tabMap).forEach(function (k) {
       var el = document.getElementById(tabMap[k]);
       if (!el) return;
-      el.classList.toggle("hidden", tab !== k);
+      el.classList.toggle("hidden", isHome || tab !== k);
     });
     document.querySelectorAll(".admin-nav button").forEach(function (b) {
       var isReservationSub = b.hasAttribute("data-res-subtab");
-      var isActive = b.getAttribute("data-tab") === tab;
-      if (isReservationSub) {
+      var dt = b.getAttribute("data-tab") || "";
+      var isActive;
+      if (isHome) {
+        isActive = dt === "home";
+      } else if (isReservationSub) {
         isActive = tab === "reservations" && b.getAttribute("data-res-subtab") === reservationSubtab;
+      } else {
+        isActive = dt === tab;
       }
       b.classList.toggle("is-active", isActive);
+      if (isActive) {
+        b.setAttribute("aria-current", "page");
+      } else {
+        b.removeAttribute("aria-current");
+      }
     });
   }
 
@@ -46,90 +107,385 @@
     var el = document.getElementById("reservation-nav-status");
     if (!el) return;
     var label = reservationSubtabLabels[reservationSubtab] || reservationSubtab;
-    el.textContent = "Aktif servis filtresi: " + label;
+    el.textContent = "Aktif görünüm: " + label;
+  }
+
+  function emptyBucket() {
+    return [];
   }
 
   async function loadDashboard() {
-    var report = await adapter.getDashboardReport();
+    var report;
+    var dashReportOk = true;
+    try {
+      report = await adapter.getDashboardReport();
+    } catch (_e) {
+      dashReportOk = false;
+      report = {};
+    }
     var buckets = await Promise.all([
-      adapter.getBucket("request"),
-      adapter.getBucket("complaint"),
-      adapter.getBucket("fault"),
-      adapter.getBucket("reservation"),
+      adapter.getBucketMergeAll("request", BUCKET_MERGE_MAX_PAGES).catch(emptyBucket),
+      adapter.getBucketMergeAll("complaint", BUCKET_MERGE_MAX_PAGES).catch(emptyBucket),
+      adapter.getBucketMergeAll("fault", BUCKET_MERGE_MAX_PAGES).catch(emptyBucket),
+      adapter.getBucketMergeAll("reservation", BUCKET_MERGE_MAX_PAGES).catch(emptyBucket),
     ]);
-    renderDashboardAlerts({
+    var warnEl = document.getElementById("dashboard-api-warning");
+    if (warnEl) {
+      if (!dashReportOk) {
+        warnEl.textContent = "Rapor özeti şu an alınamadı; backend veya ağ bağlantısını kontrol edin. Operasyon kartları yüklendi.";
+        warnEl.classList.remove("hidden");
+        warnEl.removeAttribute("aria-hidden");
+      } else {
+        warnEl.textContent = "";
+        warnEl.classList.add("hidden");
+        warnEl.setAttribute("aria-hidden", "true");
+      }
+    }
+    if (!report || typeof report !== "object") {
+      report = {};
+    }
+    var cb = report.chatbotPerformance || {};
+    if (!Array.isArray(cb.dailyUsage)) cb.dailyUsage = [];
+    if (!Array.isArray(cb.topQuestions)) cb.topQuestions = [];
+    var sat = report.satisfaction || {};
+    var satCat = sat.categories || {};
+    var uq = report.unansweredQuestions || {};
+    if (!Array.isArray(uq.topFallbackQuestions)) uq.topFallbackQuestions = [];
+    if (!Array.isArray(uq.repeatedUnanswered)) uq.repeatedUnanswered = [];
+
+    var dashData = {
       request: buckets[0] || [],
       complaint: buckets[1] || [],
       fault: buckets[2] || [],
       reservation: buckets[3] || [],
-    });
+    };
+    renderHomeTopStrip(dashData, report);
+    renderDashboardAlerts(dashData);
     ui.renderKpis(document.getElementById("kpi-cards"), report.kpis);
     ui.renderMetricRows(document.getElementById("report-chatbot"), [
-      { title: "Toplam Sohbet", value: report.chatbotPerformance.totalChats, desc: "Toplam bot mesaj etkileşimi." },
-      { title: "Günlük Kullanım Noktası", value: report.chatbotPerformance.dailyUsage.length, desc: "Aktif kullanım görülen gün adedi." },
-      { title: "Kullanıcı Başına Mesaj", value: report.chatbotPerformance.avgMessagesPerUser, desc: "Bir oturumdaki ortalama mesaj sayısı." },
-      { title: "Ortalama Sohbet Uzunluğu", value: report.chatbotPerformance.avgConversationLength, desc: "Konuşma başına ortalama uzunluk." },
-      { title: "Fallback Oranı", value: report.chatbotPerformance.fallbackRate + "%", desc: "Botun yanıt üretemediği durumların oranı." },
-      { title: "Top Soru 1", value: (report.chatbotPerformance.topQuestions[0] || {}).key || "-", desc: "En sık gelen ilk soru." },
+      { title: "Toplam Sohbet", value: cb.totalChats, desc: "chat_observations satır sayısı (her misafir mesajı için bir kayıt)." },
+      { title: "Benzersiz oturum", value: cb.uniqueSessions != null ? cb.uniqueSessions : "—", desc: "Farklı session_id (veya bilinmeyen) grupları." },
+      { title: "Günlük kullanım (gün)", value: cb.dailyUsage.length, desc: "En az bir kayıt olan takvim günü sayısı." },
+      { title: "Oturum başına mesaj", value: cb.avgMessagesPerUser, desc: "Toplam satır ÷ benzersiz oturum." },
+      { title: "Fallback oranı", value: (cb.fallbackRate != null ? cb.fallbackRate : 0) + "%", desc: "layer_used=fallback olan satırların payı." },
+      { title: "En sık soru (metin)", value: (cb.topQuestions[0] || {}).key || "-", desc: "user_message alanına göre gruplanır (küçük harfe çevrilmiş)." },
     ]);
     ui.renderMetricRows(document.getElementById("report-satisfaction"), [
-      { title: "Genel Otel Memnuniyet", value: report.satisfaction.overallScore, desc: "Misafirlerin toplam otel deneyimi puanı." },
-      { title: "Viona Memnuniyet", value: report.satisfaction.vionaScore, desc: "Asistan deneyimine verilen ortalama puan." },
-      { title: "Yemek", value: (report.satisfaction.categories || {}).food || "-", desc: "Yiyecek ve sunum memnuniyet ortalaması." },
-      { title: "Konfor", value: (report.satisfaction.categories || {}).comfort || "-", desc: "Oda ve konfor deneyimi puanı." },
-      { title: "Temizlik", value: (report.satisfaction.categories || {}).cleanliness || "-", desc: "Temizlik kalitesine verilen ortalama puan." },
-      { title: "Personel", value: (report.satisfaction.categories || {}).staff || "-", desc: "Personel hizmet kalitesi puanı." },
+      {
+        title: "Anket ortalaması (özet)",
+        value: sat.overallScore,
+        desc: "overall_score satır ortalaması.",
+      },
+      {
+        title: "Viona ortalaması",
+        value: sat.vionaScore,
+        desc: "viona_rating (Viona bölümü dolu kayıtlar).",
+      },
+      { title: "Yemek & içecek", value: satCat.food || "-", desc: "hotel_categories.food ortalaması." },
+      { title: "Oda & konfor", value: satCat.comfort || "-", desc: "hotel_categories.comfort." },
+      { title: "Temizlik", value: satCat.cleanliness || "-", desc: "hotel_categories.cleanliness." },
+      { title: "Personel", value: satCat.staff || "-", desc: "hotel_categories.staff." },
+      { title: "Havuz & plaj", value: satCat.poolBeach || "-", desc: "hotel_categories.poolBeach." },
+      { title: "Spa & wellness", value: satCat.spaWellness || "-", desc: "hotel_categories.spaWellness." },
+      { title: "Genel deneyim", value: satCat.generalExperience || "-", desc: "hotel_categories.generalExperience." },
     ]);
     ui.renderMetricRows(document.getElementById("report-unanswered"), [
-      { title: "Fallback Soru Sayısı", value: report.unansweredQuestions.fallbackCount, desc: "Botun yanıtlayamadığı soru adedi." },
-      { title: "Top Fallback 1", value: (report.unansweredQuestions.topFallbackQuestions[0] || {}).key || "-", desc: "En sık yanıtsız kalan ilk soru." },
-      { title: "Tekrar Eden", value: report.unansweredQuestions.repeatedUnanswered.length, desc: "Sık tekrar eden yanıtsız soru başlıkları." },
+      { title: "Fallback satır sayısı", value: uq.fallbackCount, desc: "chat_observations içinde layer_used=fallback." },
+      { title: "En sık fallback metni", value: (uq.topFallbackQuestions[0] || {}).key || "-", desc: "Aynı user_message gruplaması (küçük harf)." },
+      { title: "Tekrarlayan başlık", value: uq.repeatedUnanswered.length, desc: "En az 2 kez görülen fallback mesajı çeşidi." },
     ]);
-    ui.renderMetricRows(document.getElementById("report-conversion"), [
-      { title: "Toplam Tıklama", value: report.conversion.actionClicks, desc: "Chat sonrası hizmet aksiyonu tıklamaları." },
-      { title: "Toplam Dönüşüm", value: report.conversion.actionConversions, desc: "Aksiyon sonrası tamamlanan işlem sayısı." },
-      { title: "Action Conversion Oranı", value: report.conversion.actionConversionRate + "%", desc: "Aksiyonların dönüşüme gitme yüzdesi." },
-      { title: "Chat -> Dönüşüm", value: report.conversion.chatToConversionRate + "%", desc: "Sohbetten satış/rezervasyona dönüşüm oranı." },
+    var ins = report.chatInsights || {};
+    var ti0 = ins.topIntents && ins.topIntents[0];
+    var lang0 = ins.topUiLanguages && ins.topUiLanguages[0];
+    var totalC = Number(cb.totalChats) || 0;
+    var recN = ins.recommendationCount != null ? ins.recommendationCount : 0;
+    ui.renderMetricRows(document.getElementById("report-chat-insights"), [
+      {
+        title: "En sık niyet",
+        value: formatTopIntentLine(ti0),
+        desc: "intent alanı (küçük harf gruplanır). Ham anahtar: " + (ti0 && ti0.key ? ti0.key : "—") + ".",
+      },
+      {
+        title: "Öneri / venue sinyali",
+        value: (ins.recommendationRate != null ? ins.recommendationRate : 0) + "%",
+        desc: "recommendation_made=true satırları (" + recN + " / " + totalC + ").",
+      },
+      {
+        title: "Resepsiyon hedefi",
+        value: (ins.routeReception != null ? ins.routeReception : 0) + " (" + dashboardFmtPct(ins.routeReception, totalC) + ")",
+        desc: "route_target = reception.",
+      },
+      {
+        title: "Misafir ilişkileri hedefi",
+        value: (ins.routeGuestRelations != null ? ins.routeGuestRelations : 0) + " (" + dashboardFmtPct(ins.routeGuestRelations, totalC) + ")",
+        desc: "route_target = guest_relations.",
+      },
+      {
+        title: "Hedef yok / diğer",
+        value: (ins.routeOther != null ? ins.routeOther : 0) + " (" + dashboardFmtPct(ins.routeOther, totalC) + ")",
+        desc: "Boş, none veya başka route_target.",
+      },
+      {
+        title: "En sık arayüz dili",
+        value: lang0 && lang0.key ? String(lang0.key).toUpperCase() + " · " + lang0.count + " mesaj" : "—",
+        desc: "ui_language (misafir dil seçimi).",
+      },
+      {
+        title: "Farklı niyet çeşidi",
+        value: ins.intentVariety != null ? ins.intentVariety : "—",
+        desc: "Dönemde görülen benzersiz intent sayısı.",
+      },
     ]);
+    renderAnalyticsDataSources(report);
   }
 
-  async function loadBucket(type, mountId) {
-    var rows = await adapter.getBucket(type);
-    ui.renderBucketTable(document.getElementById(mountId), type, rows, {
-      onStatus: async function (itemType, id, status) {
-        await adapter.updateStatus(itemType, id, status);
-        await loadBucket(type, mountId);
-      },
-      onDelete: async function (itemType, id) {
-        if (!window.confirm("Kaydı silmek istiyor musunuz?")) return;
-        await adapter.deleteItem(itemType, id);
-        await loadBucket(type, mountId);
-      },
-      onCreate: async function (payload) {
-        await adapter.createGuestRequest(payload);
-        await loadBucket(type, mountId);
-      },
-    });
-    if (type === "reservation") {
-      var mount = document.getElementById(mountId);
-      if (mount) {
+  function clearAutoRefresh() {
+    if (refreshTimer) {
+      clearInterval(refreshTimer);
+      refreshTimer = null;
+    }
+  }
+
+  function scheduleAutoRefresh() {
+    clearAutoRefresh();
+    refreshTimer = setInterval(function () {
+      if (document.hidden || activeAdminTab === "pdf-report") return;
+      void refreshCurrentView();
+    }, AUTO_REFRESH_MS);
+  }
+
+  async function refreshCurrentView() {
+    if (document.hidden || refreshInFlight) return;
+    if (activeAdminTab === "pdf-report") return;
+    refreshInFlight = true;
+    try {
+      if (activeAdminTab == null) {
+        await loadDashboard();
+      } else if (activeAdminTab === "requests") {
+        await loadBucket("request", "list-requests");
+      } else if (activeAdminTab === "complaints") {
+        await loadBucket("complaint", "list-complaints");
+      } else if (activeAdminTab === "faults") {
+        await loadBucket("fault", "list-faults");
+      } else if (activeAdminTab === "reservations") {
+        await loadBucket("reservation", "list-reservations");
+      } else if (activeAdminTab === "evaluations") {
+        await loadEvaluations();
+      } else if (activeAdminTab === "promo") {
+        await loadPromo();
+      } else if (activeAdminTab === "logs") {
+        await loadLogs();
+      }
+    } catch (_e) {
+    } finally {
+      refreshInFlight = false;
+    }
+  }
+
+  async function loadBucket(type, mountId, page) {
+    var mount = document.getElementById(mountId);
+    if (!mount) return;
+    try {
+      var rows;
+      var pagination = null;
+      if (type === "reservation") {
+        rows = await adapter.getBucketMergeAll("reservation", BUCKET_MERGE_MAX_PAGES);
+      } else {
+        var pageNum = page != null ? page : bucketListPage[type] || 1;
+        bucketListPage[type] = pageNum;
+        var res = await adapter.getBucketPage(type, pageNum, BUCKET_LIST_PAGE_SIZE);
+        rows = res.items || [];
+        pagination = res.pagination || null;
+        if (
+          rows.length === 0 &&
+          pagination &&
+          pagination.page > 1 &&
+          (pagination.total || 0) > 0
+        ) {
+          await loadBucket(type, mountId, pagination.page - 1);
+          return;
+        }
+      }
+      ui.renderBucketTable(mount, type, rows, {
+        initialReservationSubtab: type === "reservation" ? reservationSubtab : undefined,
+        pagination: pagination,
+        onPage:
+          type === "reservation"
+            ? undefined
+            : function (nextPage) {
+                void loadBucket(type, mountId, nextPage);
+              },
+        onStatus: async function (itemType, id, status) {
+          await adapter.updateStatus(itemType, id, status);
+          await loadBucket(type, mountId);
+        },
+        onDelete: async function (itemType, id) {
+          if (!window.confirm("Kaydı silmek istiyor musunuz?")) return;
+          await adapter.deleteItem(itemType, id);
+          await loadBucket(type, mountId);
+        },
+        onCreate: async function (payload) {
+          await adapter.createGuestRequest(payload);
+          await loadBucket(type, mountId);
+        },
+      });
+      if (type === "reservation") {
         mount.dispatchEvent(
           new CustomEvent("reservation:setSubtab", {
             detail: { key: reservationSubtab },
           })
         );
       }
+    } catch (_e) {
+      mount.innerHTML =
+        '<p class="admin-load-error">Veri yüklenemedi. Ağ bağlantısını kontrol edip tekrar deneyin veya sekmeyi yeniden açın.</p>';
+    }
+  }
+
+  async function loadEvaluations() {
+    var mount = document.getElementById("evaluations-mount");
+    var statusEl = document.getElementById("evaluations-status");
+    if (!mount) return;
+    var fromEl = document.getElementById("eval-date-from");
+    var toEl = document.getElementById("eval-date-to");
+    var params = {};
+    if (fromEl && fromEl.value) params.from = fromEl.value;
+    if (toEl && toEl.value) params.to = toEl.value;
+    if (statusEl) {
+      statusEl.textContent = "Yükleniyor…";
+      statusEl.classList.remove("eval-status--error");
+    }
+    try {
+      var report = await adapter.getSurveyReport(params);
+      ui.renderSurveyEvaluations(mount, report);
+      if (statusEl) statusEl.textContent = "";
+    } catch (_e) {
+      ui.renderSurveyEvaluations(mount, null);
+      if (statusEl) {
+        statusEl.textContent = "Anket raporu alınamadı; API veya tarih aralığını kontrol edin.";
+        statusEl.classList.add("eval-status--error");
+      }
+    }
+  }
+
+  function wireEvaluationsToolbar() {
+    var applyBtn = document.getElementById("eval-apply");
+    var clearBtn = document.getElementById("eval-clear-dates");
+    if (applyBtn) applyBtn.addEventListener("click", function () { void loadEvaluations(); });
+    if (clearBtn) {
+      clearBtn.addEventListener("click", function () {
+        var fromEl = document.getElementById("eval-date-from");
+        var toEl = document.getElementById("eval-date-to");
+        if (fromEl) fromEl.value = "";
+        if (toEl) toEl.value = "";
+        void loadEvaluations();
+      });
     }
   }
 
   async function loadPromo() {
-    var cfg = await adapter.getPromoConfig();
-    document.getElementById("promo-enabled").checked = cfg.enabled !== false;
-    document.getElementById("promo-tr").value = cfg.image_tr || "";
-    document.getElementById("promo-en").value = cfg.image_en || "";
-    document.getElementById("promo-de").value = cfg.image_de || "";
-    document.getElementById("promo-ru").value = cfg.image_ru || "";
-    syncPromoPreviews();
+    try {
+      var cfg = await adapter.getPromoConfig();
+      document.getElementById("promo-enabled").checked = cfg.enabled !== false;
+      document.getElementById("promo-tr").value = cfg.image_tr || "";
+      document.getElementById("promo-en").value = cfg.image_en || "";
+      document.getElementById("promo-de").value = cfg.image_de || "";
+      document.getElementById("promo-ru").value = cfg.image_ru || "";
+      syncPromoPreviews();
+    } catch (_e) {
+      var ps = document.getElementById("promo-status");
+      if (ps) {
+        ps.textContent = "Ayarlar yüklenemedi. Bağlantıyı kontrol edin.";
+        ps.className = "promo-status promo-status--error";
+      }
+    }
+  }
+
+  async function loadLogs() {
+    var sumEl = document.getElementById("logs-summary");
+    var tableEl = document.getElementById("logs-table");
+    try {
+      var params = getLogsParams();
+      var pair = await Promise.all([adapter.getLogsSummary(params), adapter.getLogs(params)]);
+      var summary = pair[0];
+      var result = pair[1];
+      var pag = result.pagination || {};
+      var totalPages = pag.totalPages != null ? pag.totalPages : 1;
+      if (totalPages >= 1 && logsPage > totalPages) {
+        logsPage = Math.max(1, totalPages);
+        return loadLogs();
+      }
+      ui.renderLogsSummary(sumEl, summary || {});
+      ui.renderLogsTable(tableEl, result.items || [], {
+        pagination: pag,
+        onPage: function (nextPage) {
+          logsPage = nextPage;
+          void loadLogs();
+        },
+        onDelete: async function (id) {
+          if (!window.confirm("Bu log kaydı silinsin mi?")) return;
+          await adapter.deleteLog(id);
+          await loadLogs();
+        },
+      });
+    } catch (_e) {
+      if (sumEl) sumEl.innerHTML = "";
+      if (tableEl) {
+        tableEl.innerHTML =
+          '<p class="admin-load-error">Loglar yüklenemedi. Filtreleri sadeleştirip tekrar deneyin.</p>';
+      }
+    }
+  }
+
+  function getLogsParams() {
+    return {
+      page: logsPage,
+      pageSize: LOGS_PAGE_SIZE,
+      search: (document.getElementById("logs-search") || {}).value || "",
+      from: (document.getElementById("logs-from") || {}).value || "",
+      to: (document.getElementById("logs-to") || {}).value || "",
+      language: (document.getElementById("logs-language") || {}).value || "",
+      intent: (document.getElementById("logs-intent") || {}).value || "",
+      layer: (document.getElementById("logs-layer") || {}).value || "",
+      include_raw_payload: (document.getElementById("logs-include-raw") || {}).checked ? "true" : "false",
+    };
+  }
+
+  function downloadBlob(blob, fileName) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function wireLogsControls() {
+    var applyBtn = document.getElementById("logs-apply");
+    var csvBtn = document.getElementById("logs-csv");
+    var jsonBtn = document.getElementById("logs-json");
+    if (applyBtn) {
+      applyBtn.addEventListener("click", function () {
+        logsPage = 1;
+        loadLogs();
+      });
+    }
+    if (csvBtn) {
+      csvBtn.addEventListener("click", async function () {
+        var params = getLogsParams();
+        var blob = await adapter.downloadLogsCsv(params);
+        downloadBlob(blob, "chat_observations.csv");
+      });
+    }
+    if (jsonBtn) {
+      jsonBtn.addEventListener("click", async function () {
+        var params = getLogsParams();
+        var blob = await adapter.downloadLogsJson(params);
+        downloadBlob(blob, "chat_observations.json");
+      });
+    }
   }
 
   function setPreview(lang, src) {
@@ -199,6 +555,82 @@
     }).length;
   }
 
+  function renderAnalyticsDataSources(report) {
+    var el = document.getElementById("dashboard-analytics-meta");
+    if (!el) return;
+    var ds = report && report.dataSources;
+    if (!ds) {
+      el.textContent = "";
+      el.className = "home-analytics-meta";
+      return;
+    }
+    var chatOk = ds.chatObservations === true;
+    var survOk = ds.surveys === true;
+    var line =
+      "Veri kaynakları: chat_observations " +
+      (chatOk ? "OK" : "yok/hata") +
+      " · survey_submissions " +
+      (survOk ? "OK" : "yok/hata") +
+      ". Sohbet sayıları sunucuda toplu okunur. Sekme açıkken bu özet yaklaşık " +
+      Math.round(AUTO_REFRESH_MS / 1000) +
+      " sn'de bir tekrar çekilir (önbellek devre dışı).";
+    el.className = "home-analytics-meta" + (ds.usedMockFallback ? " home-analytics-meta--warn" : "");
+    if (ds.usedMockFallback) {
+      el.textContent =
+        "Uyarı: En az bir kaynak okunamadı; aşağıdaki bazı rakamlar 0 veya eksik görünebilir. " + line;
+    } else {
+      el.textContent = line;
+    }
+  }
+
+  function renderHomeTopStrip(data, report) {
+    var el = document.getElementById("home-top-strip");
+    if (!el) return;
+    var reqRows = data.request || [];
+    var comRows = data.complaint || [];
+    var faultRows = data.fault || [];
+    var resRows = data.reservation || [];
+    var req = countPending(reqRows);
+    var com = countPending(comRows);
+    var fault = countPending(faultRows);
+    var res = countPending(resRows);
+    var totalOpen = req + com + fault + res;
+    var totalRecords = reqRows.length + comRows.length + faultRows.length + resRows.length;
+    var kpis = report && report.kpis ? report.kpis : {};
+    var totalChats = kpis.totalChats != null ? kpis.totalChats : "—";
+    var fb = kpis.fallbackRate != null ? kpis.fallbackRate + "%" : "—";
+    var mem =
+      kpis.overallSatisfaction != null && kpis.vionaSatisfaction != null
+        ? kpis.overallSatisfaction + " / " + kpis.vionaSatisfaction
+        : "—";
+    var refreshed =
+      typeof ui.formatDateTimeDisplayTr === "function"
+        ? ui.formatDateTimeDisplayTr(new Date().toISOString())
+        : String(new Date().toLocaleString("tr-TR"));
+    el.innerHTML =
+      '<div class="home-top-strip__bar home-top-strip__bar--metrics">' +
+      '<ul class="home-top-strip__stats" role="list">' +
+      '<li class="home-stat"><span class="home-stat__label">Açık iş</span><span class="home-stat__value">' +
+      totalOpen +
+      "</span></li>" +
+      '<li class="home-stat"><span class="home-stat__label">Kayıt (toplam)</span><span class="home-stat__value">' +
+      totalRecords +
+      "</span></li>" +
+      '<li class="home-stat"><span class="home-stat__label">Sohbet</span><span class="home-stat__value">' +
+      totalChats +
+      "</span></li>" +
+      '<li class="home-stat"><span class="home-stat__label">Fallback</span><span class="home-stat__value">' +
+      fb +
+      "</span></li>" +
+      '<li class="home-stat"><span class="home-stat__label">Memnuniyet (otel / Viona)</span><span class="home-stat__value home-stat__value--compact">' +
+      mem +
+      "</span></li>" +
+      '<li class="home-stat"><span class="home-stat__label">Güncellendi</span><span class="home-stat__value home-stat__value--time">' +
+      refreshed +
+      "</span></li>" +
+      "</ul></div>";
+  }
+
   function oldestOpenText(rows) {
     var open = rows
       .filter(function (r) {
@@ -210,15 +642,14 @@
       });
     if (!open.length) return "Açık kayıt yok";
     var raw = String(open[0].submitted_at || "");
-    return raw ? raw.slice(0, 16).replace("T", " ") : "Tarih yok";
+    if (!raw) return "Tarih yok";
+    return typeof ui.formatDateTimeDisplayTr === "function" ? ui.formatDateTimeDisplayTr(raw) : raw;
   }
 
   function renderReminderCard(opts) {
     return (
       '<article class="alert-card">' +
-      '<div class="alert-card__head"><span class="alert-card__icon" aria-hidden="true">' +
-      opts.icon +
-      "</span><h4>" +
+      '<div class="alert-card__head"><h4 class="alert-card__title">' +
       opts.title +
       "</h4></div>" +
       '<p class="alert-card__kpi">Açık Kayıt: <strong>' +
@@ -234,9 +665,9 @@
       '<p class="alert-card__meta">En eski açık kayıt: ' +
       opts.oldestOpen +
       "</p>" +
-      '<button class="alert-linkbtn" data-go-tab="' +
+      '<button type="button" class="alert-openbtn" data-go-tab="' +
       opts.tab +
-      '">Detay sayfasına git</button>' +
+      '"><span class="alert-openbtn__text">Listeyi aç</span><span class="alert-openbtn__arrow" aria-hidden="true">→</span></button>' +
       "</article>"
     );
   }
@@ -253,15 +684,10 @@
     var com = countPending(comRows);
     var fault = countPending(faultRows);
     var res = countPending(resRows);
-    var total = req + com + fault + res;
 
     var html =
-      '<div class="alert-summary">Toplam açık operasyon kaydı: <strong>' +
-      total +
-      "</strong></div>" +
       '<div class="alert-grid">' +
       renderReminderCard({
-        icon: "🧾",
         title: "İstekler",
         openCount: req,
         newCount: countByStatus(reqRows, "new"),
@@ -271,7 +697,6 @@
         tab: "requests",
       }) +
       renderReminderCard({
-        icon: "⚠️",
         title: "Şikayetler",
         openCount: com,
         newCount: countByStatus(comRows, "new"),
@@ -281,7 +706,6 @@
         tab: "complaints",
       }) +
       renderReminderCard({
-        icon: "🛠️",
         title: "Arızalar",
         openCount: fault,
         newCount: countByStatus(faultRows, "new"),
@@ -291,7 +715,6 @@
         tab: "faults",
       }) +
       renderReminderCard({
-        icon: "📅",
         title: "Rezervasyonlar",
         openCount: res,
         newCount: countByStatus(resRows, "new"),
@@ -302,14 +725,19 @@
       }) +
       "</div>";
     el.innerHTML = html;
-    el.querySelectorAll("[data-go-tab]").forEach(function (btn) {
+    el.querySelectorAll(".alert-openbtn[data-go-tab]").forEach(function (btn) {
       btn.addEventListener("click", async function () {
         var tab = btn.getAttribute("data-go-tab");
         openTab(tab);
         if (tab === "requests") await loadBucket("request", "list-requests");
         if (tab === "complaints") await loadBucket("complaint", "list-complaints");
         if (tab === "faults") await loadBucket("fault", "list-faults");
-        if (tab === "reservations") await loadBucket("reservation", "list-reservations");
+        if (tab === "reservations") {
+          reservationSubtab = "overview";
+          updateReservationNavStatus();
+          await loadBucket("reservation", "list-reservations");
+        }
+        scheduleAutoRefresh();
       });
     });
   }
@@ -365,18 +793,31 @@
     });
   }
 
-  function setDefaultPdfDates() {
-    function toLocalDateInputValue(d) {
-      var dt = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-      return dt.toISOString().slice(0, 10);
-    }
+  function pdfToLocalDateInputValue(d) {
+    var dt = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+    return dt.toISOString().slice(0, 10);
+  }
+
+  function seedPdfCustomDatesIfEmpty() {
     var fromEl = document.getElementById("pdf-date-from");
     var toEl = document.getElementById("pdf-date-to");
     if (!fromEl || !toEl) return;
     if (fromEl.value && toEl.value) return;
     var now = new Date();
-    toEl.value = toLocalDateInputValue(now);
-    fromEl.value = toLocalDateInputValue(new Date(now.getTime() - 1000 * 60 * 60 * 24 * 30));
+    toEl.value = pdfToLocalDateInputValue(now);
+    fromEl.value = pdfToLocalDateInputValue(new Date(now.getTime() - 1000 * 60 * 60 * 24 * 30));
+  }
+
+  function setPdfCustomRangeUi(active) {
+    var wrap = document.getElementById("pdf-custom-dates-wrap");
+    var fromEl = document.getElementById("pdf-date-from");
+    var toEl = document.getElementById("pdf-date-to");
+    if (wrap) {
+      wrap.classList.toggle("is-active", active);
+      wrap.setAttribute("aria-disabled", active ? "false" : "true");
+    }
+    if (fromEl) fromEl.disabled = !active;
+    if (toEl) toEl.disabled = !active;
   }
 
   function triggerBlobDownload(blob, fileName) {
@@ -391,52 +832,66 @@
   }
 
   function wirePdfReportPanel() {
-    setDefaultPdfDates();
     var explainBtn = document.getElementById("pdf-preview-info-btn");
     var downloadBtn = document.getElementById("pdf-download-btn");
     var statusEl = document.getElementById("pdf-download-status");
     var warningText = document.getElementById("pdf-warning-text");
+    var customCb = document.getElementById("pdf-custom-range");
     if (!downloadBtn) return;
+
+    setPdfCustomRangeUi(false);
+    if (customCb) {
+      customCb.addEventListener("change", function () {
+        var on = Boolean(customCb.checked);
+        setPdfCustomRangeUi(on);
+        if (on) seedPdfCustomDatesIfEmpty();
+      });
+    }
 
     if (explainBtn) {
       explainBtn.addEventListener("click", function () {
         if (warningText) {
           warningText.textContent =
-            "Rapor; ölçüm -> sınıflandırma -> yorum -> öneri mantığıyla üretilir. Veriler trendle birlikte okunmalı, tek döneme bakarak kesin hüküm verilmemelidir.";
+            "Rapor; ölçüm, sınıflandırma, yorum ve öneri adımlarıyla üretilir. Sonuçları trendle birlikte okuyun; tek döneme dayanarak kesin yargıya varmayın.";
         }
-        window.alert("PDF indirme adimindan once rapor kapsami ve metodolojisi gosterildi.");
+        window.alert("Kapsam ve metodoloji metni güncellendi. İndirmeden önce bu notu inceleyebilirsiniz.");
       });
     }
 
     downloadBtn.addEventListener("click", async function () {
+      var hotelName = "Kaila Beach Hotel";
+      var useCustom = customCb && customCb.checked;
       var from = (document.getElementById("pdf-date-from").value || "").trim();
       var to = (document.getElementById("pdf-date-to").value || "").trim();
-      var hotelName = "Kaila Beach Hotel";
+      var params = { hotelName: hotelName };
 
-      if (!from || !to) return window.alert("Lütfen önce tarih aralığını seçin.");
-      if (new Date(from).getTime() > new Date(to).getTime()) return window.alert("Başlangıç tarihi bitiş tarihinden büyük olamaz.");
-      if (!window.confirm("Seçilen tarih aralığı için PDF raporu indirilsin mi?")) return;
+      if (useCustom) {
+        if (!from || !to) return window.alert("Özel dönem için başlangıç ve bitiş tarihlerini seçin.");
+        if (new Date(from).getTime() > new Date(to).getTime()) {
+          return window.alert("Başlangıç tarihi bitiş tarihinden büyük olamaz.");
+        }
+        params.from = from;
+        params.to = to;
+        if (!window.confirm("Seçtiğiniz tarih aralığı için PDF indirilsin mi?")) return;
+      } else {
+        if (!window.confirm("Güncel özet penceresiyle (pano ile aynı dönem) PDF indirilsin mi?")) return;
+      }
 
       if (statusEl) statusEl.textContent = "PDF rapor oluşturuluyor...";
       downloadBtn.disabled = true;
       try {
-        var result = await adapter.downloadPdfReport({
-          from: from,
-          to: to,
-          hotelName: hotelName,
-        });
+        var result = await adapter.downloadPdfReport(params);
         triggerBlobDownload(result.blob, result.fileName);
         if (statusEl) {
+          var snap = result.reportSnapshotId ? " Veri özeti (snapshot): " + result.reportSnapshotId + "." : "";
           statusEl.textContent = result.noData
-            ? "Bu tarih aralığında hiç veri yok. PDF boş veri notu ile oluşturuldu."
-            : "PDF rapor başarıyla indirildi.";
+            ? "Seçilen kapsamda veri yok veya çok sınırlı. PDF yine oluşturuldu." + snap
+            : "PDF indirildi; varsayılan indirmede dönem pano özetiyle uyumludur (snapshot)." + snap;
         }
       } catch (e) {
         var msg = String((e && e.message) || "");
         if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
-          if (statusEl) statusEl.textContent = "PDF rapor oluşturulamadı: Sunucuya ulaşılamıyor. Backend'in çalıştığını kontrol edin (http://localhost:3001).";
-        } else if (msg.includes("no_data_for_range")) {
-          if (statusEl) statusEl.textContent = "Bu tarih aralığında hiç veri yok.";
+          if (statusEl) statusEl.textContent = "PDF rapor oluşturulamadı: Sunucuya ulaşılamıyor. Backend'in çalıştığını kontrol edin (http://127.0.0.1:3001).";
         } else {
           if (statusEl) statusEl.textContent = "PDF rapor oluşturulamadı. Lütfen tekrar deneyin.";
         }
@@ -446,40 +901,83 @@
     });
   }
 
+  document.addEventListener("viona:reservationSubtab", function (ev) {
+    var key = ev && ev.detail && ev.detail.key;
+    if (key == null || key === undefined) return;
+    reservationSubtab = String(key);
+    updateReservationNavStatus();
+    openTab("reservations");
+    void loadBucket("reservation", "list-reservations").then(function () {
+      scheduleAutoRefresh();
+    });
+  });
+
   function wireTabs() {
     document.querySelectorAll(".admin-nav button").forEach(function (btn) {
       btn.addEventListener("click", async function () {
         var tab = btn.getAttribute("data-tab");
         var sub = btn.getAttribute("data-res-subtab");
-        if (sub) reservationSubtab = sub;
+        if (tab === "reservations") {
+          reservationSubtab = sub != null && sub !== "" ? sub : "overview";
+        }
         openTab(tab);
+        if (activeAdminTab === null) {
+          try {
+            await loadDashboard();
+          } catch (_e) {}
+          updateReservationNavStatus();
+          scheduleAutoRefresh();
+          return;
+        }
         if (tab === "requests") await loadBucket("request", "list-requests");
         if (tab === "complaints") await loadBucket("complaint", "list-complaints");
         if (tab === "faults") await loadBucket("fault", "list-faults");
         if (tab === "reservations") await loadBucket("reservation", "list-reservations");
+        if (tab === "evaluations") await loadEvaluations();
         if (tab === "promo") await loadPromo();
-        if (tab === "pdf-report") setDefaultPdfDates();
+        if (tab === "pdf-report") setPdfCustomRangeUi(Boolean(document.getElementById("pdf-custom-range") && document.getElementById("pdf-custom-range").checked));
+        if (tab === "logs") await loadLogs();
         updateReservationNavStatus();
+        scheduleAutoRefresh();
       });
     });
   }
 
   function wireBackHomeButtons() {
     document.querySelectorAll(".js-back-home").forEach(function (btn) {
-      btn.addEventListener("click", function () {
+      btn.addEventListener("click", async function () {
         openTab(null);
+        try {
+          await loadDashboard();
+        } catch (_e) {}
+        scheduleAutoRefresh();
       });
+    });
+  }
+
+  function wireVisibilityRefresh() {
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) return;
+      if (visibilityRefreshTimer) clearTimeout(visibilityRefreshTimer);
+      visibilityRefreshTimer = setTimeout(function () {
+        visibilityRefreshTimer = null;
+        void refreshCurrentView();
+      }, 450);
     });
   }
 
   async function init() {
     wireTabs();
+    wireEvaluationsToolbar();
     wirePromoForm();
     wirePdfReportPanel();
+    wireLogsControls();
     wireBackHomeButtons();
+    wireVisibilityRefresh();
     openTab(null);
     updateReservationNavStatus();
     await loadDashboard();
+    scheduleAutoRefresh();
   }
 
   function showPanel() {

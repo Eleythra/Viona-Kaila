@@ -29,6 +29,59 @@
     return Math.round((d2 - d1) / 86400000);
   }
 
+  function weekdayFromIso(iso) {
+    if (!iso) return -1;
+    var p = String(iso).split("-");
+    if (p.length !== 3) return -1;
+    var d = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+    if (isNaN(d.getTime())) return -1;
+    return d.getDay();
+  }
+
+  function currentUiLanguage() {
+    var v = (document.documentElement && document.documentElement.lang) || "tr";
+    v = String(v).toLowerCase();
+    if (v !== "tr" && v !== "en" && v !== "de" && v !== "ru") return "tr";
+    return v;
+  }
+
+  function isRoomNumber(v) {
+    return /^\d+$/.test(String(v || "").trim());
+  }
+
+  function isNationalityText(v) {
+    return /^[A-Za-z]{2,12}$/.test(String(v || "").trim());
+  }
+
+  function isNameText(v) {
+    var s = String(v || "").trim();
+    if (!s) return false;
+    if (/\d/.test(s)) return false;
+    return /[A-Za-zÀ-žА-Яа-яİıĞğÜüŞşÖöÇç]/.test(s);
+  }
+
+  function validateGuestFields(form, err, t) {
+    var name = String((form.querySelector('[name="name"]') || {}).value || "").trim();
+    var room = String((form.querySelector('[name="room"]') || {}).value || "").trim();
+    var nationality = String((form.querySelector('[name="nationality"]') || {}).value || "").trim();
+    if (!isNameText(name)) {
+      err.textContent = t("reqErrNameInvalid");
+      err.hidden = false;
+      return false;
+    }
+    if (!isRoomNumber(room)) {
+      err.textContent = t("reqErrRoomDigits");
+      err.hidden = false;
+      return false;
+    }
+    if (!isNationalityText(nationality)) {
+      err.textContent = t("reqErrNationalityInvalid");
+      err.hidden = false;
+      return false;
+    }
+    return true;
+  }
+
   function mountCalendar(host, hidden, minIso, minMonth) {
     if (!window.CalendarPicker) return;
     var v = (hidden && hidden.value) || "";
@@ -134,6 +187,11 @@
     inp.className = "req-input";
     inp.type = "text";
     inp.autocomplete = "name";
+    if (name === "room") {
+      inp.inputMode = "numeric";
+      inp.pattern = "[0-9]+";
+      inp.autocomplete = "off";
+    }
     if (required) inp.required = true;
     var w = document.createElement("div");
     w.className = "req-field";
@@ -171,9 +229,10 @@
     return w;
   }
 
-  function fieldDesc(t, idPrefix, nameAttr) {
+  function fieldDesc(t, idPrefix, nameAttr, required) {
     var pid = idPrefix || "rf";
     nameAttr = nameAttr || "description";
+    required = required !== false;
     var lab = document.createElement("label");
     lab.className = "req-label";
     lab.htmlFor = pid + "-desc";
@@ -183,7 +242,7 @@
     ta.name = nameAttr;
     ta.className = "req-input req-textarea";
     ta.rows = 4;
-    ta.required = true;
+    ta.required = required;
     var w = document.createElement("div");
     w.className = "req-field";
     w.appendChild(lab);
@@ -248,6 +307,512 @@
     return wrap;
   }
 
+  function buildSingleCategoryField(group, labelKey, t, nameAttr) {
+    var cfg = getCfg();
+    var list = (cfg.categories[group] || []).slice();
+    nameAttr = nameAttr || "category";
+    var wrap = document.createElement("div");
+    wrap.className = "req-field";
+    var leg = document.createElement("span");
+    leg.className = "req-label";
+    leg.textContent = t(labelKey);
+    var chips = document.createElement("div");
+    chips.className = "req-chips";
+    chips.setAttribute("role", "radiogroup");
+    chips.setAttribute("aria-label", t(labelKey));
+
+    list.forEach(function (c, idx) {
+      var lab = document.createElement("label");
+      lab.className = "req-chip";
+      var radio = document.createElement("input");
+      radio.type = "radio";
+      radio.name = nameAttr;
+      radio.value = c.id;
+      radio.required = idx === 0;
+      var span = document.createElement("span");
+      span.className = "req-chip__text";
+      span.textContent = t(c.key);
+      lab.appendChild(radio);
+      lab.appendChild(span);
+      chips.appendChild(lab);
+    });
+    wrap.appendChild(leg);
+    wrap.appendChild(chips);
+    return { wrap: wrap, chips: chips };
+  }
+
+  function getRequestDetailSchema(category) {
+    if (category === "towel") {
+      return {
+        fields: [
+          {
+            name: "itemType",
+            label: "reqLabelItemType",
+            required: true,
+            options: [
+              { value: "", key: "reqSelectPlaceholder" },
+              { value: "bath_towel", key: "reqOptBathTowel" },
+              { value: "hand_towel", key: "reqOptHandTowel" },
+            ],
+          },
+          { name: "quantity", label: "reqLabelQuantity", required: true, min: 1, max: 20 },
+        ],
+      };
+    }
+    if (category === "bedding") {
+      return {
+        fields: [
+          {
+            name: "itemType",
+            label: "reqLabelProductType",
+            required: true,
+            options: [
+              { value: "", key: "reqSelectPlaceholder" },
+              { value: "pillow", key: "reqOptPillow" },
+              { value: "duvet_cover", key: "reqOptDuvetCover" },
+              { value: "blanket", key: "reqOptBlanket" },
+            ],
+          },
+          { name: "quantity", label: "reqLabelQuantity", required: true, min: 1, max: 20 },
+        ],
+      };
+    }
+    if (category === "room_cleaning") {
+      return {
+        fields: [
+          {
+            name: "requestType",
+            label: "reqLabelRequestType",
+            required: true,
+            options: [
+              { value: "", key: "reqSelectPlaceholder" },
+              { value: "general_cleaning", key: "reqOptGeneralCleaning" },
+              { value: "towel_change", key: "reqOptTowelChange" },
+              { value: "room_check", key: "reqOptRoomCheck" },
+            ],
+          },
+          {
+            name: "timing",
+            label: "reqLabelTiming",
+            required: true,
+            options: [
+              { value: "", key: "reqSelectPlaceholder" },
+              { value: "now", key: "reqOptNow" },
+              { value: "later", key: "reqOptLater" },
+            ],
+          },
+        ],
+      };
+    }
+    if (category === "minibar") {
+      return {
+        fields: [
+          {
+            name: "requestType",
+            label: "reqLabelRequestType",
+            required: true,
+            options: [
+              { value: "", key: "reqSelectPlaceholder" },
+              { value: "refill", key: "reqOptRefill" },
+              { value: "missing_item_report", key: "reqOptMissingItem" },
+              { value: "check_request", key: "reqOptCheckRequest" },
+            ],
+          },
+        ],
+      };
+    }
+    if (category === "baby_equipment") {
+      return {
+        fields: [
+          {
+            name: "itemType",
+            label: "reqLabelEquipmentType",
+            required: true,
+            options: [
+              { value: "", key: "reqSelectPlaceholder" },
+              { value: "baby_bed", key: "reqOptBabyBed" },
+              { value: "high_chair", key: "reqOptHighChair" },
+              { value: "other", key: "reqCatOther" },
+            ],
+          },
+          { name: "quantity", label: "reqLabelQuantity", required: true, min: 1, max: 20 },
+        ],
+      };
+    }
+    if (category === "room_equipment") {
+      return {
+        fields: [
+          {
+            name: "itemType",
+            label: "reqLabelEquipmentType",
+            required: true,
+            options: [
+              { value: "", key: "reqSelectPlaceholder" },
+              { value: "bathrobe", key: "reqOptBathrobe" },
+              { value: "slippers", key: "reqOptSlippers" },
+              { value: "hanger", key: "reqOptHanger" },
+              { value: "kettle", key: "reqOptKettle" },
+              { value: "other", key: "reqCatOther" },
+            ],
+          },
+          { name: "quantity", label: "reqLabelQuantity", required: true, min: 1, max: 20 },
+        ],
+      };
+    }
+    return { fields: [] };
+  }
+
+  function renderRequestDetailsFields(mount, category, t) {
+    mount.innerHTML = "";
+    var schema = getRequestDetailSchema(category);
+    schema.fields.forEach(function (f) {
+      var field = document.createElement("div");
+      field.className = "req-field";
+      var lab = document.createElement("label");
+      lab.className = "req-label";
+      lab.textContent = t(f.label);
+      field.appendChild(lab);
+      if (f.options) {
+        var sel = document.createElement("select");
+        sel.className = "req-input";
+        sel.name = "detail_" + f.name;
+        if (f.required) sel.required = true;
+        f.options.forEach(function (opt) {
+          var o = document.createElement("option");
+          o.value = opt.value;
+          o.textContent = t(opt.key);
+          sel.appendChild(o);
+        });
+        field.appendChild(sel);
+      } else {
+        var input = document.createElement("input");
+        input.type = "number";
+        input.className = "req-input";
+        input.name = "detail_" + f.name;
+        input.step = "1";
+        if (f.min != null) input.min = String(f.min);
+        if (f.max != null) input.max = String(f.max);
+        if (f.required) input.required = true;
+        field.appendChild(input);
+      }
+      mount.appendChild(field);
+    });
+  }
+
+  function collectRequestDetails(form, category) {
+    var details = {};
+    var schema = getRequestDetailSchema(category);
+    schema.fields.forEach(function (f) {
+      var el = form.querySelector('[name="detail_' + f.name + '"]');
+      if (!el) return;
+      var v = String(el.value || "").trim();
+      if (f.name === "quantity") {
+        details[f.name] = Number(v || "0");
+      } else {
+        details[f.name] = v;
+      }
+    });
+    return details;
+  }
+
+  function buildRequestForm(t) {
+    var form = document.createElement("form");
+    form.className = "req-form";
+    form.noValidate = true;
+
+    var guestSection = resSection("reqResSectionGuest", t);
+    guestSection.inner.appendChild(fieldText("name", "reqLabelName", t, true));
+    guestSection.inner.appendChild(fieldText("room", "reqLabelRoom", t, true));
+    guestSection.inner.appendChild(fieldNationality(t));
+    form.appendChild(guestSection.section);
+
+    var detailSection = resSection("reqSectionRequestDetails", t);
+    var categoryField = buildSingleCategoryField("request", "reqLabelRequestCategory", t, "category");
+    detailSection.inner.appendChild(categoryField.wrap);
+    var dynamicFields = document.createElement("div");
+    dynamicFields.className = "req-request-details";
+    detailSection.inner.appendChild(dynamicFields);
+    form.appendChild(detailSection.section);
+
+    var noteSection = resSection("reqSectionExtraNote", t);
+    var noteField = fieldDesc(t, "rr", "description", false);
+    noteField.querySelector("label").textContent = t("reqLabelExtraNote");
+    noteSection.inner.appendChild(noteField);
+    form.appendChild(noteSection.section);
+
+    var err = document.createElement("p");
+    err.className = "req-err";
+    err.hidden = true;
+    form.appendChild(err);
+
+    var submit = document.createElement("button");
+    submit.type = "submit";
+    submit.className = "btn-primary req-submit";
+    submit.textContent = t("reqSubmit");
+    form.appendChild(submit);
+
+    var success = document.createElement("div");
+    success.className = "req-success";
+    success.hidden = true;
+    success.innerHTML = '<h3 class="req-success__title"></h3><p class="req-success__body"></p>';
+
+    function selectedCategory() {
+      var c = form.querySelector('input[name="category"]:checked');
+      return c ? c.value : "";
+    }
+
+    categoryField.chips.addEventListener("change", function () {
+      renderRequestDetailsFields(dynamicFields, selectedCategory(), t);
+    });
+
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      err.hidden = true;
+      var category = selectedCategory();
+      if (!category) {
+        err.textContent = t("reqErrCategoryRequired");
+        err.hidden = false;
+        return;
+      }
+      if (!form.reportValidity()) return;
+      if (!validateGuestFields(form, err, t)) return;
+
+      var details = collectRequestDetails(form, category);
+      if ((details.quantity != null && (!Number.isFinite(details.quantity) || details.quantity < 1))) {
+        err.textContent = t("reqErrQuantity");
+        err.hidden = false;
+        return;
+      }
+      var description = String((form.querySelector('[name="description"]') || {}).value || "").trim();
+      var needsDesc =
+        category === "other" ||
+        details.itemType === "other";
+      if (needsDesc && !description) {
+        err.textContent = t("reqErrDescriptionRequiredForOther");
+        err.hidden = false;
+        return;
+      }
+      var payload = {
+        type: "request",
+        name: (form.querySelector('[name="name"]') || {}).value,
+        room: (form.querySelector('[name="room"]') || {}).value,
+        nationality: (form.querySelector('[name="nationality"]') || {}).value,
+        category: category,
+        details: details,
+        description: description,
+        categories: [category],
+      };
+      runSubmit(payload, form, err, success, submit, t);
+    });
+    return { form: form, success: success };
+  }
+
+  function buildComplaintForm(t) {
+    var form = document.createElement("form");
+    form.className = "req-form";
+    form.noValidate = true;
+
+    var guestSection = resSection("reqResSectionGuest", t);
+    guestSection.inner.appendChild(fieldText("name", "reqLabelName", t, true));
+    guestSection.inner.appendChild(fieldText("room", "reqLabelRoom", t, true));
+    guestSection.inner.appendChild(fieldNationality(t));
+    form.appendChild(guestSection.section);
+
+    var detailSection = resSection("reqSectionRequestDetails", t);
+    var categoryField = buildSingleCategoryField("complaint", "reqLabelComplaintCategory", t, "complaintCategory");
+    detailSection.inner.appendChild(categoryField.wrap);
+    form.appendChild(detailSection.section);
+
+    var noteSection = resSection("reqSectionExtraNote", t);
+    var noteField = fieldDesc(t, "cf", "description", false);
+    noteField.querySelector("label").textContent = t("reqLabelExtraNote");
+    noteSection.inner.appendChild(noteField);
+    form.appendChild(noteSection.section);
+
+    var err = document.createElement("p");
+    err.className = "req-err";
+    err.hidden = true;
+    form.appendChild(err);
+
+    var submit = document.createElement("button");
+    submit.type = "submit";
+    submit.className = "btn-primary req-submit";
+    submit.textContent = t("reqSubmit");
+    form.appendChild(submit);
+
+    var success = document.createElement("div");
+    success.className = "req-success";
+    success.hidden = true;
+    success.innerHTML = '<h3 class="req-success__title"></h3><p class="req-success__body"></p>';
+
+    var descriptionRequiredCategories = {
+      staff_behavior: true,
+      general_areas: true,
+      hygiene: true,
+      other: true,
+    };
+
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      err.hidden = true;
+      var catEl = form.querySelector('input[name="complaintCategory"]:checked');
+      var category = catEl ? catEl.value : "";
+      if (!category) {
+        err.textContent = t("reqErrComplaintCategoryRequired");
+        err.hidden = false;
+        return;
+      }
+      if (!form.reportValidity()) return;
+      if (!validateGuestFields(form, err, t)) return;
+      var description = String((form.querySelector('[name="description"]') || {}).value || "").trim();
+      if (descriptionRequiredCategories[category] && !description) {
+        err.textContent = t("reqErrComplaintDescriptionRequired");
+        err.hidden = false;
+        return;
+      }
+      var payload = {
+        type: "complaint",
+        name: (form.querySelector('[name="name"]') || {}).value,
+        room: (form.querySelector('[name="room"]') || {}).value,
+        nationality: (form.querySelector('[name="nationality"]') || {}).value,
+        category: category,
+        description: description,
+        categories: [category],
+      };
+      if (category === "other") {
+        payload.otherCategoryNote = description;
+      }
+      runSubmit(payload, form, err, success, submit, t);
+    });
+
+    return { form: form, success: success };
+  }
+
+  function buildFaultForm(t) {
+    var form = document.createElement("form");
+    form.className = "req-form";
+    form.noValidate = true;
+
+    var guestSection = resSection("reqResSectionGuest", t);
+    guestSection.inner.appendChild(fieldText("name", "reqLabelName", t, true));
+    guestSection.inner.appendChild(fieldText("room", "reqLabelRoom", t, true));
+    guestSection.inner.appendChild(fieldNationality(t));
+    form.appendChild(guestSection.section);
+
+    var detailSection = resSection("reqSectionRequestDetails", t);
+    var categoryField = buildSingleCategoryField("fault", "reqLabelFaultCategory", t, "faultCategory");
+    detailSection.inner.appendChild(categoryField.wrap);
+
+    var locField = document.createElement("div");
+    locField.className = "req-field";
+    var locLabel = document.createElement("label");
+    locLabel.className = "req-label";
+    locLabel.textContent = t("reqLabelFaultLocation");
+    var locSelect = document.createElement("select");
+    locSelect.className = "req-input";
+    locSelect.name = "location";
+    locSelect.required = true;
+    [
+      { value: "", key: "reqSelectPlaceholder" },
+      { value: "room_inside", key: "reqOptFaultLocationRoomInside" },
+      { value: "bathroom", key: "reqOptFaultLocationBathroom" },
+      { value: "balcony", key: "reqOptFaultLocationBalcony" },
+      { value: "other", key: "reqCatOther" },
+    ].forEach(function (o) {
+      var op = document.createElement("option");
+      op.value = o.value;
+      op.textContent = t(o.key);
+      locSelect.appendChild(op);
+    });
+    locField.appendChild(locLabel);
+    locField.appendChild(locSelect);
+    detailSection.inner.appendChild(locField);
+
+    var urgField = document.createElement("div");
+    urgField.className = "req-field";
+    var urgLabel = document.createElement("label");
+    urgLabel.className = "req-label";
+    urgLabel.textContent = t("reqLabelFaultUrgency");
+    var urgSelect = document.createElement("select");
+    urgSelect.className = "req-input";
+    urgSelect.name = "urgency";
+    urgSelect.required = true;
+    [
+      { value: "", key: "reqSelectPlaceholder" },
+      { value: "normal", key: "reqOptFaultUrgencyNormal" },
+      { value: "urgent", key: "reqOptFaultUrgencyUrgent" },
+    ].forEach(function (o2) {
+      var op2 = document.createElement("option");
+      op2.value = o2.value;
+      op2.textContent = t(o2.key);
+      urgSelect.appendChild(op2);
+    });
+    urgField.appendChild(urgLabel);
+    urgField.appendChild(urgSelect);
+    detailSection.inner.appendChild(urgField);
+    form.appendChild(detailSection.section);
+
+    var noteSection = resSection("reqSectionExtraNote", t);
+    var noteField = fieldDesc(t, "ff", "description", false);
+    noteField.querySelector("label").textContent = t("reqLabelExtraNote");
+    noteSection.inner.appendChild(noteField);
+    form.appendChild(noteSection.section);
+
+    var err = document.createElement("p");
+    err.className = "req-err";
+    err.hidden = true;
+    form.appendChild(err);
+
+    var submit = document.createElement("button");
+    submit.type = "submit";
+    submit.className = "btn-primary req-submit";
+    submit.textContent = t("reqSubmit");
+    form.appendChild(submit);
+
+    var success = document.createElement("div");
+    success.className = "req-success";
+    success.hidden = true;
+    success.innerHTML = '<h3 class="req-success__title"></h3><p class="req-success__body"></p>';
+
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      err.hidden = true;
+      var catEl = form.querySelector('input[name="faultCategory"]:checked');
+      var category = catEl ? catEl.value : "";
+      if (!category) {
+        err.textContent = t("reqErrFaultCategoryRequired");
+        err.hidden = false;
+        return;
+      }
+      if (!form.reportValidity()) return;
+      if (!validateGuestFields(form, err, t)) return;
+      var description = String((form.querySelector('[name="description"]') || {}).value || "").trim();
+      var location = String((form.querySelector('[name="location"]') || {}).value || "").trim();
+      if ((category === "other" || location === "other") && !description) {
+        err.textContent = t("reqErrDescriptionRequiredForOther");
+        err.hidden = false;
+        return;
+      }
+      var payload = {
+        type: "fault",
+        name: (form.querySelector('[name="name"]') || {}).value,
+        room: (form.querySelector('[name="room"]') || {}).value,
+        nationality: (form.querySelector('[name="nationality"]') || {}).value,
+        category: category,
+        location: location,
+        urgency: (form.querySelector('[name="urgency"]') || {}).value,
+        description: description,
+        categories: [category],
+      };
+      if (category === "other") {
+        payload.otherCategoryNote = description;
+      }
+      runSubmit(payload, form, err, success, submit, t);
+    });
+
+    return { form: form, success: success };
+  }
+
   function validateSimpleForm(form, err, t) {
     var cats = form.querySelectorAll('input[name="categories"]:checked');
     if (!cats.length) {
@@ -276,6 +841,7 @@
       ev.preventDefault();
       err.hidden = true;
       if (!validateSimpleForm(form, err, t)) return;
+      if (!validateGuestFields(form, err, t)) return;
       var fd = new FormData(form);
       var catIds = [];
       form.querySelectorAll('input[name="categories"]:checked').forEach(function (c) {
@@ -296,7 +862,8 @@
     });
   }
 
-  function runSubmit(payload, form, err, success, submitBtn, t) {
+  function runSubmit(payload, form, err, success, submitBtn, t, options) {
+    options = options || {};
     submitBtn.disabled = true;
     submitBtn.textContent = t("reqSending");
     var fn = window.submitGuestRequest;
@@ -313,7 +880,7 @@
         success.hidden = false;
         success.querySelector(".req-success__title").textContent = t("reqSuccessTitle");
         success.querySelector(".req-success__body").textContent =
-          t("reqSuccessBody") + (res && res.id ? " (" + res.id + ")" : "");
+          t(options.successBodyKey || "reqSuccessBody");
       })
       .catch(function () {
         err.textContent = t("reqErrSend");
@@ -357,7 +924,7 @@
 
   function buildReservationBlock(t, minIso, minMonth) {
     var cfg = getCfg();
-    var calMinMonth = minIso.slice(0, 7) >= "2026-03" ? minIso.slice(0, 7) : "2026-03";
+    var calMinMonth = minIso.slice(0, 7);
 
     var root = document.createElement("div");
     root.className = "req-res-prestige";
@@ -433,6 +1000,9 @@
         restGrid.appendChild(lab);
       });
       s1.inner.appendChild(restGrid);
+      var ruleInfo = document.createElement("p");
+      ruleInfo.className = "req-res-info-note";
+      s1.inner.appendChild(ruleInfo);
       form.appendChild(s1.section);
 
       var s2 = resSection("reqResSectionDateTime", t);
@@ -464,6 +1034,8 @@
           return [];
         })(rid);
         fillSlotButtons(slotWrap, slots, timeHidden, t, "reqPickRestaurantFirst");
+        var rest = cfg.restaurants.filter(function (x) { return x.id === rid; })[0];
+        ruleInfo.textContent = rest && rest.infoKey ? t(rest.infoKey) : "";
       }
 
       restGrid.addEventListener("change", function () {
@@ -528,10 +1100,27 @@
 
       form.appendChild(s3.section);
 
-      var noteAl = fieldDesc(t, "al", "note");
+      var noteAl = fieldDesc(t, "al", "note", false);
       noteAl.querySelector("label").textContent = t("reqLabelNote");
       noteAl.querySelector("textarea").classList.add("req-input--res");
       form.appendChild(noteAl);
+
+      var guestCountField = document.createElement("div");
+      guestCountField.className = "req-field";
+      var guestCountLabel = document.createElement("label");
+      guestCountLabel.className = "req-label";
+      guestCountLabel.textContent = t("reqLabelGuestCount");
+      var guestCountInput = document.createElement("input");
+      guestCountInput.type = "number";
+      guestCountInput.name = "guestCount";
+      guestCountInput.className = "req-input";
+      guestCountInput.min = "1";
+      guestCountInput.max = "12";
+      guestCountInput.step = "1";
+      guestCountInput.required = true;
+      guestCountField.appendChild(guestCountLabel);
+      guestCountField.appendChild(guestCountInput);
+      form.appendChild(guestCountField);
 
       var errAl = document.createElement("p");
       errAl.className = "req-err";
@@ -572,25 +1161,51 @@
           return;
         }
         if (!form.reportValidity()) return;
+        if (!validateGuestFields(form, errAl, t)) return;
         var fd = new FormData(form);
+        var rid = String(fd.get("restaurant") || "");
+        var restCfg = cfg.restaurants.filter(function (x) { return x.id === rid; })[0] || null;
+        var selectedWeekday = weekdayFromIso(String(fd.get("reservationDate") || ""));
+        if (
+          restCfg &&
+          Array.isArray(restCfg.closedWeekdays) &&
+          restCfg.closedWeekdays.indexOf(selectedWeekday) >= 0
+        ) {
+          errAl.textContent = t("reqErrRestaurantClosedDay");
+          errAl.hidden = false;
+          return;
+        }
         var nts = nightsBetween(fd.get("stayCheckIn"), fd.get("stayCheckOut"));
+        var guestCount = parseInt(String(fd.get("guestCount") || "0"), 10);
+        if (!Number.isFinite(guestCount) || guestCount < 1) {
+          errAl.textContent = t("reqErrGuestCount");
+          errAl.hidden = false;
+          return;
+        }
         var payload = {
           type: "reservation_alacarte",
           name: fd.get("name"),
           room: fd.get("room"),
           nationality: fd.get("nationality"),
           description: fd.get("note"),
+          language: currentUiLanguage(),
+          guestCount: guestCount,
           reservation: {
-            restaurantId: fd.get("restaurant"),
+            restaurantId: rid,
+            restaurantCode: restCfg && restCfg.code ? restCfg.code : rid,
+            serviceLabel: restCfg ? t(restCfg.key) : rid,
             reservationDate: fd.get("reservationDate"),
             time: fd.get("time"),
             stayCheckIn: fd.get("stayCheckIn"),
             stayCheckOut: fd.get("stayCheckOut"),
             nights: nts,
             stayPromoApplies: nts >= 7,
+            guestCount: guestCount,
           },
         };
-        runSubmit(payload, form, errAl, okAl, subAl, t);
+        runSubmit(payload, form, errAl, okAl, subAl, t, {
+          successBodyKey: "reqSuccessBodyReservation",
+        });
       });
 
       outer.appendChild(form);
@@ -660,10 +1275,27 @@
 
       form.appendChild(s2.section);
 
-      var noteSp = fieldDesc(t, "sp", "note");
+      var noteSp = fieldDesc(t, "sp", "note", false);
       noteSp.querySelector("label").textContent = t("reqLabelNote");
       noteSp.querySelector("textarea").classList.add("req-input--res");
       form.appendChild(noteSp);
+
+      var guestCountField = document.createElement("div");
+      guestCountField.className = "req-field";
+      var guestCountLabel = document.createElement("label");
+      guestCountLabel.className = "req-label";
+      guestCountLabel.textContent = t("reqLabelGuestCount");
+      var guestCountInput = document.createElement("input");
+      guestCountInput.type = "number";
+      guestCountInput.name = "guestCount";
+      guestCountInput.className = "req-input";
+      guestCountInput.min = "1";
+      guestCountInput.max = "6";
+      guestCountInput.step = "1";
+      guestCountInput.required = true;
+      guestCountField.appendChild(guestCountLabel);
+      guestCountField.appendChild(guestCountInput);
+      form.appendChild(guestCountField);
 
       var errSp = document.createElement("p");
       errSp.className = "req-err";
@@ -694,20 +1326,36 @@
           return;
         }
         if (!form.reportValidity()) return;
+        if (!validateGuestFields(form, errSp, t)) return;
         var fd = new FormData(form);
+        var guestCount = parseInt(String(fd.get("guestCount") || "0"), 10);
+        if (!Number.isFinite(guestCount) || guestCount < 1) {
+          errSp.textContent = t("reqErrGuestCount");
+          errSp.hidden = false;
+          return;
+        }
+        var svcId = String(fd.get("spaService") || "");
+        var svcCfg = cfg.spaServices.filter(function (x) { return x.id === svcId; })[0] || null;
         var payload = {
           type: "reservation_spa",
           name: fd.get("name"),
           room: fd.get("room"),
           nationality: fd.get("nationality"),
           description: fd.get("note"),
+          language: currentUiLanguage(),
+          guestCount: guestCount,
           reservation: {
-            spaServiceId: fd.get("spaService"),
+            spaServiceId: svcId,
+            serviceCode: svcCfg && svcCfg.code ? svcCfg.code : svcId,
+            serviceLabel: svcCfg ? t(svcCfg.key) : svcId,
             date: fd.get("spaDate"),
             time: fd.get("time"),
+            guestCount: guestCount,
           },
         };
-        runSubmit(payload, form, errSp, okSp, subSp, t);
+        runSubmit(payload, form, errSp, okSp, subSp, t, {
+          successBodyKey: "reqSuccessBodyReservation",
+        });
       });
 
       outer.appendChild(form);
@@ -827,15 +1475,15 @@
     wrap.appendChild(backHub);
 
     if (subId === "request") {
-      var b = buildSimpleTypeForm("request", "request", t);
+      var b = buildRequestForm(t);
       wrap.appendChild(b.form);
       wrap.appendChild(b.success);
     } else if (subId === "complaint") {
-      var bc = buildSimpleTypeForm("complaint", "complaint", t);
+      var bc = buildComplaintForm(t);
       wrap.appendChild(bc.form);
       wrap.appendChild(bc.success);
     } else if (subId === "fault") {
-      var bf = buildSimpleTypeForm("fault", "fault", t);
+      var bf = buildFaultForm(t);
       wrap.appendChild(bf.form);
       wrap.appendChild(bf.success);
     } else if (subId === "res") {

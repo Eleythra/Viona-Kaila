@@ -26,5 +26,5 @@ def test_fault_rule_redirect_cases():
         data = response.json()
         assert data["type"] == "redirect"
         assert data["meta"]["intent"] == "fault_report"
-        assert "action" not in data
+        assert "action" in data["meta"]
 

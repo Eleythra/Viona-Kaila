@@ -3,8 +3,20 @@
 
   var cfg = window.VIONA_API_CONFIG || {};
 
+  /** Liste GET ile aynı kök; baseUrl + '/admin/requests' sapmasını önler. */
+  function adminRequestsCollectionUrl() {
+    var ep = cfg.adminRequestsEndpoint || "/api/admin/requests";
+    var q = ep.indexOf("?");
+    return q >= 0 ? ep.slice(0, q) : ep;
+  }
+
   function jfetch(url, options) {
-    return fetch(url, options).then(async function (r) {
+    var opts = options ? Object.assign({}, options) : {};
+    var m = String(opts.method || "GET").toUpperCase();
+    if (m === "GET" && !opts.cache) {
+      opts.cache = "no-store";
+    }
+    return fetch(url, opts).then(async function (r) {
       var text = await r.text();
       var d = null;
       try {
@@ -30,48 +42,56 @@
     return q.toString();
   }
 
-  var mockReport = {
-    kpis: { totalChats: 340, fallbackRate: 12.4, overallSatisfaction: 4.32, vionaSatisfaction: 4.05 },
-    chatbotPerformance: {
-      totalChats: 340,
-      dailyUsage: [{ date: "2026-03-20", count: 45 }, { date: "2026-03-21", count: 53 }, { date: "2026-03-22", count: 40 }],
-      avgMessagesPerUser: 4.8,
-      avgConversationLength: 4.8,
-      fallbackRate: 12.4,
-      topQuestions: [{ key: "restoran saatleri", count: 26 }, { key: "wifi şifresi", count: 22 }],
-    },
-    satisfaction: {
-      overallScore: 4.32,
-      vionaScore: 4.05,
-      categories: { food: 4.2, comfort: 4.4, cleanliness: 4.5, staff: 4.3, poolBeach: 4.1, spaWellness: 4.0, generalExperience: 4.35 },
-    },
-    unansweredQuestions: {
-      fallbackCount: 42,
-      topFallbackQuestions: [{ key: "havaalanı transfer ücreti", count: 11 }, { key: "late checkout fiyatı", count: 8 }],
-      repeatedUnanswered: [{ key: "havaalanı transfer ücreti", count: 11 }],
-    },
-    conversion: {
-      actionClicksByType: { spa: 44, restaurant: 30, activity: 19, transfer: 12 },
-      actionClicks: 105,
-      actionConversions: 28,
-      actionConversionRate: 26.67,
-      chatToConversionRate: 8.24,
-    },
-    dataSources: { chatLogs: false, actions: false, surveys: true, usedMockFallback: true },
-  };
-
   window.AdminDataAdapter = {
     getDashboardReport: async function () {
-      try {
-        var data = await jfetch(cfg.adminDashboardReportEndpoint || "/api/admin/reports/dashboard");
-        return data.report;
-      } catch (_e) {
-        return mockReport;
-      }
+      var data = await jfetch(cfg.adminDashboardReportEndpoint || "/api/admin/reports/dashboard");
+      return data.report;
     },
-    getBucket: function (type) {
-      var endpoint = (cfg.adminRequestsEndpoint || "/api/admin/requests") + "?type=" + encodeURIComponent(type) + "&page=1&pageSize=100";
-      return jfetch(endpoint).then(function (d) { return d.items || []; });
+    getSurveyReport: function (params) {
+      var q = buildQuery(params || {});
+      var base = cfg.adminSurveyReportEndpoint || "/api/admin/surveys/report";
+      var url = base + (q ? "?" + q : "");
+      return jfetch(url).then(function (d) {
+        return d.report;
+      });
+    },
+    /** Tek sayfa; sunucu en fazla 500 satır döner. */
+    getBucketPage: function (type, page, pageSize) {
+      var q = buildQuery({
+        type: type,
+        page: page,
+        pageSize: pageSize,
+      });
+      var endpoint = (cfg.adminRequestsEndpoint || "/api/admin/requests") + "?" + q;
+      return jfetch(endpoint).then(function (d) {
+        return {
+          items: d.items || [],
+          pagination: d.pagination || {
+            page: page || 1,
+            pageSize: pageSize || 20,
+            total: (d.items || []).length,
+            totalPages: 1,
+          },
+        };
+      });
+    },
+    /**
+     * Dashboard özeti / rezervasyon tahtası: 500’lük sayfaları birleştirir.
+     * Üst sınır app.js içindeki BUCKET_MERGE_MAX_PAGES ile uyumlu olmalı (varsayılan 100 sayfa ≈ 50k satır).
+     */
+    getBucketMergeAll: async function (type, maxPages) {
+      var pageSize = 500;
+      var cap = typeof maxPages === "number" && maxPages > 0 ? maxPages : 100;
+      var all = [];
+      var page = 1;
+      var totalPages = 1;
+      do {
+        var d = await this.getBucketPage(type, page, pageSize);
+        all = all.concat(d.items || []);
+        totalPages = (d.pagination && d.pagination.totalPages) || 1;
+        page++;
+      } while (page <= totalPages && page <= cap);
+      return all;
     },
     createGuestRequest: function (payload) {
       var endpoint = cfg.guestRequestsEndpoint || "/api/guest-requests";
@@ -82,7 +102,13 @@
       });
     },
     updateStatus: function (type, id, status) {
-      var endpoint = (cfg.baseUrl || "/api") + "/admin/requests/" + encodeURIComponent(type) + "/" + encodeURIComponent(id) + "/status";
+      var endpoint =
+        adminRequestsCollectionUrl() +
+        "/" +
+        encodeURIComponent(type) +
+        "/" +
+        encodeURIComponent(id) +
+        "/status";
       return jfetch(endpoint, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -90,7 +116,8 @@
       });
     },
     deleteItem: function (type, id) {
-      var endpoint = (cfg.baseUrl || "/api") + "/admin/requests/" + encodeURIComponent(type) + "/" + encodeURIComponent(id);
+      var endpoint =
+        adminRequestsCollectionUrl() + "/" + encodeURIComponent(type) + "/" + encodeURIComponent(id);
       return jfetch(endpoint, { method: "DELETE" });
     },
     getPromoConfig: function () {
@@ -107,7 +134,7 @@
       var endpoint = cfg.adminPdfReportEndpoint || "/api/admin/reports/pdf";
       var query = buildQuery(params || {});
       var url = endpoint + (query ? "?" + query : "");
-      var response = await fetch(url);
+      var response = await fetch(url, { cache: "no-store" });
       if (!response.ok) {
         var msg = "pdf_report_failed";
         try {
@@ -121,7 +148,54 @@
       var match = cd.match(/filename=\"?([^\";]+)\"?/i);
       var fileName = (match && match[1]) || "viona-raporu.pdf";
       var noData = String(response.headers.get("X-Viona-No-Data") || "") === "1";
-      return { blob: blob, fileName: fileName, noData: noData };
+      var reportSnapshotId = String(response.headers.get("X-Viona-Report-Snapshot-Id") || "").trim();
+      return { blob: blob, fileName: fileName, noData: noData, reportSnapshotId: reportSnapshotId };
+    },
+    getLogsSummary: function (params) {
+      var endpoint = cfg.adminLogsSummaryEndpoint || "/api/admin/logs/summary";
+      var query = buildQuery(params || {});
+      var url = endpoint + (query ? "?" + query : "");
+      return jfetch(url).then(function (d) {
+        return d.summary || {};
+      });
+    },
+    getLogs: function (params) {
+      var endpoint = cfg.adminLogsEndpoint || "/api/admin/logs";
+      var query = buildQuery(params || {});
+      var url = endpoint + (query ? "?" + query : "");
+      return jfetch(url).then(function (d) {
+        return { items: d.items || [], pagination: d.pagination || {} };
+      });
+    },
+    reviewLog: function (id, payload) {
+      var endpoint = (cfg.adminLogsEndpoint || "/api/admin/logs") + "/" + encodeURIComponent(id) + "/review";
+      return jfetch(endpoint, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload || {}),
+      }).then(function (d) {
+        return d.item;
+      });
+    },
+    deleteLog: function (id) {
+      var endpoint = (cfg.adminLogsEndpoint || "/api/admin/logs") + "/" + encodeURIComponent(id);
+      return jfetch(endpoint, { method: "DELETE" });
+    },
+    downloadLogsCsv: async function (params) {
+      var endpoint = cfg.adminLogsExportCsvEndpoint || "/api/admin/logs/export.csv";
+      var query = buildQuery(params || {});
+      var url = endpoint + (query ? "?" + query : "");
+      var r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) throw new Error("logs_csv_export_failed");
+      return r.blob();
+    },
+    downloadLogsJson: async function (params) {
+      var endpoint = cfg.adminLogsExportJsonEndpoint || "/api/admin/logs/export.json";
+      var query = buildQuery(params || {});
+      var url = endpoint + (query ? "?" + query : "");
+      var r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) throw new Error("logs_json_export_failed");
+      return r.blob();
     },
   };
 })();

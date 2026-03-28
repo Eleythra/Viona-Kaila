@@ -28,18 +28,69 @@
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/></svg>',
   };
 
+  var TAB_BY_ID = {};
+  schema.tabs.forEach(function (t) {
+    TAB_BY_ID[t.id] = t;
+  });
+  var ORDERED_TABS = HUB_ORDER.map(function (id) {
+    return TAB_BY_ID[id];
+  }).filter(Boolean);
+
+  /** Aktif sekme içeriği kökü; tekrarlayan #survey-active-section sorgularını önler. */
+  var surveyPanelMount = null;
+  var submitInFlight = false;
+  var lastRenderedSurveySubId;
+  /** Gönder öncesi onay katmanı (sekme bazlı). */
+  var surveyConfirmOpen = false;
+  var surveyConfirmTabId = null;
+  var surveyThankYouTimer = null;
+  /** Başarı sonrası ana sayfaya dönmek için app.js’ten atanır. */
+  var surveySuccessGoHome = null;
+  var SURVEY_SUCCESS_THEN_HOME_MS = 2600;
+
+  function clearSurveyThankYouTimer() {
+    if (surveyThankYouTimer) {
+      clearTimeout(surveyThankYouTimer);
+      surveyThankYouTimer = null;
+    }
+  }
+
+  function closeSubmitConfirm() {
+    surveyConfirmOpen = false;
+    surveyConfirmTabId = null;
+    renderActiveSection();
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape" || !surveyConfirmOpen) return;
+    e.preventDefault();
+    closeSubmitConfirm();
+  });
+
   var SURVEY_FALLBACK = {
     tr: {
       modSurvey: "Otel ve Uygulama Deneyiminizi Değerlendirin",
       surveyTitle: "Otel ve Uygulama Deneyiminizi Değerlendirin",
       surveyDescription:
-        "Konaklamanız ve Viona asistanı hakkındaki görüşlerinizi paylaşın. Geri bildiriminiz hizmet kalitemizi geliştirmemize yardımcı olur.",
+        "İstediğiniz başlığı açın; yalnızca o bölümdeki sorular için 1–5 puan verip gönderebilirsiniz. Diğer bölümler isteğe bağlıdır. Yorum eklemek zorunlu değildir.",
       surveyBackToTopics: "Değerlendirme başlıklarına dön",
-      surveyVionaHubLabel: "Uygulamayı Değerlendirin",
+      surveyVionaHubLabel: "Viona",
       surveySubmitButtonText: "Değerlendirmeyi Gönder",
       surveyThankYouMessage: "Geri bildiriminiz için teşekkür ederiz.",
-      surveyErrorFillRatings: "Lütfen tüm puanlamaları tamamlayın.",
+      surveyErrorFillRatings: "Lütfen bu bölümdeki tüm puanları seçin (1–5).",
+      surveyErrorMissingTopics: "Eksik başlıklar: {list}.",
+      surveyHubHint:
+        "Her başlık ayrı gönderilir. Bir konuyu açıp o konudaki tüm sorulara puan verin; gönderin. Zorunlu değil: diğer başlıkları doldurmak.",
+      surveyThankYouSubtext:
+        "Bu bölüm kaydedildi. Form sıfırlandı; dilerseniz yeniden puan verebilirsiniz.",
+      surveyConfirmTitle: "Gönderiyi onaylıyor musunuz?",
+      surveyConfirmBody:
+        "“{tab}” bölümündeki puanlarınız kaydedilecek. Diğer başlıkları ayrı gönderebilirsiniz.",
+      surveyConfirmSend: "Evet, gönder",
+      surveyConfirmCancel: "Vazgeç",
+      surveyConfirmDismiss: "Onayı kapat",
       surveyErrorSubmit: "Gönderim sırasında bir hata oluştu.",
+      surveyScaleHint: "5 üzerinden",
       surveyStarWord: "yıldız",
       surveyVionaCommentPlaceholder: "Viona asistanı hakkındaki görüşünüzü yazın",
       surveyTabCommentPlaceholder: "{tab} hakkında yorumunuz (opsiyonel)",
@@ -80,13 +131,24 @@
       modSurvey: "Rate Your Hotel and App Experience",
       surveyTitle: "Rate Your Hotel and App Experience",
       surveyDescription:
-        "Share your feedback about your stay and the Viona assistant. Your input helps us improve our service quality.",
+        "Open any topic you want; rate only the questions in that section (1–5) and submit. Other topics are optional. Comments are optional.",
       surveyBackToTopics: "Back to review topics",
-      surveyVionaHubLabel: "Rate the App",
-      surveySubmitButtonText: "Submit Review",
+      surveyVionaHubLabel: "Viona",
+      surveySubmitButtonText: "Submit review",
       surveyThankYouMessage: "Thank you for your feedback.",
-      surveyErrorFillRatings: "Please complete all ratings.",
+      surveyErrorFillRatings: "Please select all scores (1–5) in this section.",
+      surveyErrorMissingTopics: "Incomplete sections: {list}.",
+      surveyHubHint:
+        "Each topic is submitted on its own. Open one, score every question there, and send. You do not need to fill the other topics.",
+      surveyThankYouSubtext: "This section was saved. The form was cleared; you can rate again if you want.",
+      surveyConfirmTitle: "Send this section?",
+      surveyConfirmBody:
+        "Your scores for “{tab}” will be saved. You can submit other topics separately.",
+      surveyConfirmSend: "Yes, send",
+      surveyConfirmCancel: "Go back",
+      surveyConfirmDismiss: "Close confirmation",
       surveyErrorSubmit: "An error occurred while submitting.",
+      surveyScaleHint: "out of 5",
       surveyStarWord: "stars",
       surveyVionaCommentPlaceholder: "Write your feedback about the Viona assistant",
       surveyTabCommentPlaceholder: "Your comments about {tab} (optional)",
@@ -127,13 +189,25 @@
       modSurvey: "Bewerten Sie Ihr Hotel- und App-Erlebnis",
       surveyTitle: "Bewerten Sie Ihr Hotel- und App-Erlebnis",
       surveyDescription:
-        "Teilen Sie Ihr Feedback zu Ihrem Aufenthalt und zum Viona-Assistenten. Ihre Rückmeldung hilft uns, unsere Servicequalität zu verbessern.",
+        "Öffnen Sie ein beliebiges Thema; bewerten Sie nur die Fragen dort (1–5) und senden Sie ab. Andere Themen sind optional. Kommentare sind freiwillig.",
       surveyBackToTopics: "Zurück zu den Bewertungsthemen",
-      surveyVionaHubLabel: "App bewerten",
+      surveyVionaHubLabel: "Viona",
       surveySubmitButtonText: "Bewertung senden",
       surveyThankYouMessage: "Vielen Dank für Ihr Feedback.",
-      surveyErrorFillRatings: "Bitte füllen Sie alle Bewertungen aus.",
+      surveyErrorFillRatings: "Bitte in diesem Abschnitt alle Punktwerte (1–5) wählen.",
+      surveyErrorMissingTopics: "Noch offen: {list}.",
+      surveyHubHint:
+        "Jedes Thema wird einzeln gesendet. Eines öffnen, alle Fragen dort bewerten, absenden. Die übrigen Themen sind nicht nötig.",
+      surveyThankYouSubtext:
+        "Dieser Abschnitt wurde gespeichert. Das Formular wurde zurückgesetzt; Sie können erneut bewerten.",
+      surveyConfirmTitle: "Abschnitt senden?",
+      surveyConfirmBody:
+        "Ihre Bewertungen für „{tab}“ werden gespeichert. Andere Themen können Sie separat senden.",
+      surveyConfirmSend: "Ja, senden",
+      surveyConfirmCancel: "Zurück",
+      surveyConfirmDismiss: "Bestätigung schließen",
       surveyErrorSubmit: "Beim Senden ist ein Fehler aufgetreten.",
+      surveyScaleHint: "von 5",
       surveyStarWord: "Sterne",
       surveyVionaCommentPlaceholder: "Schreiben Sie Ihr Feedback zum Viona-Assistenten",
       surveyTabCommentPlaceholder: "Ihr Kommentar zu {tab} (optional)",
@@ -174,13 +248,25 @@
       modSurvey: "Оцените ваш опыт отеля и приложения",
       surveyTitle: "Оцените ваш опыт отеля и приложения",
       surveyDescription:
-        "Поделитесь мнением о проживании и ассистенте Viona. Ваш отзыв помогает нам улучшать качество сервиса.",
+        "Откройте нужный раздел; оцените только вопросы в нём (1–5) и отправьте. Остальные разделы по желанию. Комментарии необязательны.",
       surveyBackToTopics: "Назад к разделам оценки",
-      surveyVionaHubLabel: "Оценить приложение",
+      surveyVionaHubLabel: "Viona",
       surveySubmitButtonText: "Отправить оценку",
       surveyThankYouMessage: "Спасибо за ваш отзыв.",
-      surveyErrorFillRatings: "Пожалуйста, заполните все оценки.",
+      surveyErrorFillRatings: "Выберите все оценки (1–5) в этом разделе.",
+      surveyErrorMissingTopics: "Не заполнено: {list}.",
+      surveyHubHint:
+        "Каждый раздел отправляется отдельно. Откройте один, оцените все вопросы в нём и отправьте. Остальные разделы заполнять не обязательно.",
+      surveyThankYouSubtext:
+        "Раздел сохранён. Форма сброшена; при необходимости оцените снова.",
+      surveyConfirmTitle: "Отправить этот раздел?",
+      surveyConfirmBody:
+        "Оценки по разделу «{tab}» будут сохранены. Остальные разделы можно отправить отдельно.",
+      surveyConfirmSend: "Да, отправить",
+      surveyConfirmCancel: "Назад",
+      surveyConfirmDismiss: "Закрыть подтверждение",
       surveyErrorSubmit: "Произошла ошибка при отправке.",
+      surveyScaleHint: "из 5",
       surveyStarWord: "звезд",
       surveyVionaCommentPlaceholder: "Напишите ваш отзыв об ассистенте Viona",
       surveyTabCommentPlaceholder: "Ваш комментарий о {tab} (необязательно)",
@@ -251,44 +337,43 @@
     return node;
   }
 
-  function createScoreButtons(value, onSelect) {
+  function createScoreButtons(value, onSelect, ariaQuestion) {
+    var scaleHint = tr("surveyScaleHint", "5 üzerinden");
     var wrap = el("div", "survey-score");
+    wrap.setAttribute("role", "radiogroup");
+    wrap.setAttribute("aria-label", ariaQuestion || scaleHint);
+    wrap.addEventListener("click", function (e) {
+      var t = e.target;
+      if (!t || t.nodeName !== "BUTTON" || !wrap.contains(t)) return;
+      var val = Number(t.getAttribute("data-score"));
+      if (val >= 1 && val <= 5) onSelect(val);
+    });
     for (var i = 1; i <= 5; i++) {
       var b = el("button", "survey-score__btn" + (value === i ? " is-active" : ""));
       b.type = "button";
+      b.setAttribute("data-score", String(i));
+      b.setAttribute("role", "radio");
+      b.setAttribute("aria-checked", value === i ? "true" : "false");
       b.textContent = String(i);
-      b.setAttribute("aria-pressed", value === i ? "true" : "false");
-      b.addEventListener("click", onSelect.bind(null, i));
+      b.setAttribute(
+        "aria-label",
+        (ariaQuestion ? ariaQuestion + " — " : "") + i + " / 5 (" + scaleHint + ")"
+      );
       wrap.appendChild(b);
     }
     return wrap;
   }
 
-  function createStars(value, onSelect) {
-    var wrap = el("div", "survey-stars");
-    wrap.setAttribute("role", "radiogroup");
-    for (var i = 1; i <= 5; i++) {
-      var s = el("button", "survey-stars__btn" + (i <= value ? " is-active" : ""));
-      s.type = "button";
-      s.setAttribute("role", "radio");
-      s.setAttribute("aria-checked", i === value ? "true" : "false");
-      s.setAttribute("aria-label", i + " " + tr("surveyStarWord", "star"));
-      s.textContent = "★";
-      s.addEventListener("click", onSelect.bind(null, i));
-      wrap.appendChild(s);
-    }
-    return wrap;
+  function isScoreChosen(v) {
+    var n = Number(v);
+    return n >= 1 && n <= 5;
   }
 
-  function hasAllRatingsSelected() {
-    var allFilled = true;
-    schema.tabs.forEach(function (tab) {
-      tab.questions.forEach(function (q) {
-        var v = tab.isViona ? state.vionaAnswers[q.id] : state.hotelAnswers[q.id];
-        if (!Number(v)) allFilled = false;
-      });
+  function tabRatingsComplete(tab) {
+    return tab.questions.every(function (q) {
+      var v = tab.isViona ? state.vionaAnswers[q.id] : state.hotelAnswers[q.id];
+      return isScoreChosen(v);
     });
-    return allFilled;
   }
 
   function renderQuestionRow(tab, question) {
@@ -297,28 +382,35 @@
     title.textContent = questionLabel(question);
     row.appendChild(title);
 
-    if (tab.isViona) {
-      row.appendChild(
-        createStars(state.vionaAnswers[question.id] || 0, function (val) {
+    var qLabel = questionLabel(question);
+    var scoreVal = tab.isViona ? state.vionaAnswers[question.id] || 0 : state.hotelAnswers[question.id] || 0;
+    var onPick = tab.isViona
+      ? function (val) {
           stateApi.setVionaAnswer(state, question.id, val);
+          surveyConfirmOpen = false;
+          surveyConfirmTabId = null;
+          clearSurveyThankYouTimer();
           state.submittedMessage = "";
+          state.submittedIsError = false;
+          state.submitExtraLine = "";
           renderActiveSection();
-        })
-      );
-    } else {
-      row.appendChild(
-        createScoreButtons(state.hotelAnswers[question.id] || 0, function (val) {
+        }
+      : function (val) {
           stateApi.setHotelAnswer(state, question.id, val);
+          surveyConfirmOpen = false;
+          surveyConfirmTabId = null;
+          clearSurveyThankYouTimer();
           state.submittedMessage = "";
+          state.submittedIsError = false;
+          state.submitExtraLine = "";
           renderActiveSection();
-        })
-      );
-    }
+        };
+    row.appendChild(createScoreButtons(scoreVal, onPick, qLabel));
     return row;
   }
 
   function renderTabPanel(tab) {
-    var panel = el("section", "survey-panel" + (tab.isViona ? " survey-panel--viona" : ""));
+    var panel = el("section", "survey-panel");
     var list = el("div", "survey-q-list");
 
     tab.questions.forEach(function (q) {
@@ -334,49 +426,163 @@
     tabComment.value = state.tabComments[tab.id] || "";
     tabComment.addEventListener("input", function (e) {
       stateApi.setTabComment(state, tab.id, e.target.value);
+      if (surveyConfirmOpen && surveyConfirmTabId === tab.id) {
+        surveyConfirmOpen = false;
+        surveyConfirmTabId = null;
+        renderActiveSection();
+      }
     });
     panel.appendChild(tabComment);
 
     return panel;
   }
 
-  function submitCurrentState() {
-    if (!hasAllRatingsSelected()) {
-      state.submittedMessage = tr("surveyErrorFillRatings", "Lütfen tüm puanlamaları tamamlayın.");
+  /** 1. adım: doğrula ve onay diyaloğunu aç. */
+  function beginSubmitFlow() {
+    var activeTab = TAB_BY_ID[state.activeTabId];
+    if (!activeTab) return;
+    clearSurveyThankYouTimer();
+    if (!tabRatingsComplete(activeTab)) {
+      surveyConfirmOpen = false;
+      surveyConfirmTabId = null;
+      state.submittedMessage = tr(
+        "surveyErrorFillRatings",
+        "Lütfen bu bölümdeki tüm puanları seçin (1–5)."
+      );
+      state.submittedIsError = true;
+      state.submitExtraLine = "";
       renderActiveSection();
+      scrollSurveyFeedbackIntoView();
       return;
     }
-    var payload = stateApi.buildPayload(state, schema);
+    if (submitInFlight) return;
+    surveyConfirmOpen = true;
+    surveyConfirmTabId = state.activeTabId;
+    state.submittedMessage = "";
+    state.submittedIsError = false;
+    state.submitExtraLine = "";
+    renderActiveSection();
+    requestAnimationFrame(function () {
+      var mount = surveyPanelMount || document.getElementById("survey-active-section");
+      if (!mount) return;
+      var sendBtn = mount.querySelector("[data-survey-confirm-send]");
+      if (sendBtn && typeof sendBtn.focus === "function") sendBtn.focus();
+    });
+  }
+
+  /** 2. adım: onay sonrası API; başarıda sekme sıfırlanır. */
+  function executeConfirmedSubmit() {
+    if (!surveyConfirmOpen || surveyConfirmTabId !== state.activeTabId) return;
+    if (submitInFlight) return;
+    var tabId = state.activeTabId;
+    var activeTab = TAB_BY_ID[tabId];
+    if (!activeTab || !tabRatingsComplete(activeTab)) {
+      closeSubmitConfirm();
+      return;
+    }
+    surveyConfirmOpen = false;
+    surveyConfirmTabId = null;
+    submitInFlight = true;
+    renderActiveSection();
+    var payload = stateApi.buildPayloadForTab(state, schema, tabId);
     submitApi
       .submitSurvey(payload)
       .then(function () {
+        submitInFlight = false;
         state.lastSubmittedPayload = payload;
+        stateApi.resetSubmittedTab(state, schema, tabId);
         state.submittedMessage = tr("surveyThankYouMessage", schema.thankYouMessage);
+        state.submittedIsError = false;
+        state.submitExtraLine = tr("surveyThankYouSubtext", "").trim();
         renderActiveSection();
+        scrollSurveyFeedbackIntoView();
+        clearSurveyThankYouTimer();
+        surveyThankYouTimer = setTimeout(function () {
+          surveyThankYouTimer = null;
+          state.submittedMessage = "";
+          state.submitExtraLine = "";
+          var goHome = surveySuccessGoHome;
+          surveySuccessGoHome = null;
+          if (typeof goHome === "function") goHome();
+          else renderActiveSection();
+        }, SURVEY_SUCCESS_THEN_HOME_MS);
       })
       .catch(function () {
+        submitInFlight = false;
         state.submittedMessage = tr("surveyErrorSubmit", "Gönderim sırasında bir hata oluştu.");
+        state.submittedIsError = true;
+        state.submitExtraLine = "";
         renderActiveSection();
+        scrollSurveyFeedbackIntoView();
       });
   }
 
-  function getTabsOrdered() {
-    var map = {};
-    schema.tabs.forEach(function (tab) {
-      map[tab.id] = tab;
+  function renderSubmitConfirmLayer(card, activeTab) {
+    var tabName =
+      activeTab.id === "viona" ? tr("surveyVionaHubLabel", "Viona") : tabLabel(activeTab);
+    var overlay = el("div", "survey-confirm");
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.setAttribute("aria-labelledby", "survey-confirm-title");
+
+    var backdrop = el("button", "survey-confirm__backdrop");
+    backdrop.type = "button";
+    backdrop.setAttribute("aria-label", tr("surveyConfirmDismiss", "Kapat"));
+    backdrop.addEventListener("click", closeSubmitConfirm);
+
+    var sheet = el("div", "survey-confirm__sheet");
+    var h3 = el("h3", "survey-confirm__title");
+    h3.id = "survey-confirm-title";
+    h3.textContent = tr("surveyConfirmTitle", "Gönderiyi onaylıyor musunuz?");
+    sheet.appendChild(h3);
+
+    var lead = el("p", "survey-confirm__lead");
+    lead.textContent = tr("surveyConfirmBody", "“{tab}” bölümündeki puanlarınız kaydedilecek.").replace(
+      "{tab}",
+      tabName
+    );
+    sheet.appendChild(lead);
+
+    var actions = el("div", "survey-confirm__actions");
+    var cancelBtn = el("button", "survey-confirm__btn survey-confirm__btn--secondary");
+    cancelBtn.type = "button";
+    cancelBtn.textContent = tr("surveyConfirmCancel", "Vazgeç");
+    cancelBtn.addEventListener("click", closeSubmitConfirm);
+
+    var sendBtn = el("button", "btn-primary survey-confirm__btn");
+    sendBtn.type = "button";
+    sendBtn.setAttribute("data-survey-confirm-send", "1");
+    sendBtn.textContent = tr("surveyConfirmSend", "Evet, gönder");
+    sendBtn.addEventListener("click", executeConfirmedSubmit);
+
+    actions.appendChild(cancelBtn);
+    actions.appendChild(sendBtn);
+    sheet.appendChild(actions);
+
+    overlay.appendChild(backdrop);
+    overlay.appendChild(sheet);
+    card.appendChild(overlay);
+  }
+
+  function scrollSurveyFeedbackIntoView() {
+    requestAnimationFrame(function () {
+      var mount = surveyPanelMount;
+      if (!mount || !mount.isConnected) {
+        mount = document.getElementById("survey-active-section");
+      }
+      if (!mount) return;
+      var msg = mount.querySelector(".survey-error-msg, .survey-success");
+      (msg || mount).scrollIntoView({ behavior: "smooth", block: "nearest" });
     });
-    return HUB_ORDER.map(function (id) {
-      return map[id];
-    }).filter(Boolean);
   }
 
   function renderHub(container, setSub) {
-    var orderedTabs = getTabsOrdered();
     var hub = el("div", "survey-hub");
-    orderedTabs.forEach(function (tab) {
+    ORDERED_TABS.forEach(function (tab) {
       var btn = el("button", "req-hub__card");
       btn.type = "button";
-      var label = tab.id === "viona" ? tr("surveyVionaHubLabel", "Uygulamayı Değerlendirin") : tabLabel(tab);
+      if (tabRatingsComplete(tab)) btn.classList.add("req-hub__card--complete");
+      var label = tab.id === "viona" ? tr("surveyVionaHubLabel", "Viona") : tabLabel(tab);
       btn.innerHTML =
         '<span class="req-hub__icon" aria-hidden="true">' +
         (HUB_ICONS[tab.id] || HUB_ICONS.generalExperience) +
@@ -385,7 +591,12 @@
         "</span>";
       btn.addEventListener("click", function () {
         stateApi.setActiveTab(state, tab.id);
+        surveyConfirmOpen = false;
+        surveyConfirmTabId = null;
+        clearSurveyThankYouTimer();
         state.submittedMessage = "";
+        state.submittedIsError = false;
+        state.submitExtraLine = "";
         setSub(tab.id);
       });
       hub.appendChild(btn);
@@ -394,13 +605,15 @@
   }
 
   function renderActiveSection() {
-    var panelMount = document.querySelector("#survey-active-section");
+    var panelMount = surveyPanelMount;
+    if (!panelMount || !panelMount.isConnected) {
+      panelMount = document.getElementById("survey-active-section");
+      surveyPanelMount = panelMount;
+    }
     if (!panelMount) return;
     panelMount.innerHTML = "";
 
-    var activeTab = schema.tabs.find(function (tab) {
-      return tab.id === state.activeTabId;
-    });
+    var activeTab = TAB_BY_ID[state.activeTabId];
     if (!activeTab) return;
 
     var card = el("section", "survey-card");
@@ -409,13 +622,23 @@
     var submitBtn = el("button", "btn-primary survey-submit survey-submit--main");
     submitBtn.type = "button";
     submitBtn.textContent = tr("surveySubmitButtonText", schema.submitButtonText);
-    submitBtn.addEventListener("click", submitCurrentState);
+    submitBtn.disabled = submitInFlight || surveyConfirmOpen;
+    submitBtn.addEventListener("click", beginSubmitFlow);
     card.appendChild(submitBtn);
 
+    if (surveyConfirmOpen && surveyConfirmTabId === state.activeTabId) {
+      renderSubmitConfirmLayer(card, activeTab);
+    }
+
     if (state.submittedMessage) {
-      var ok = el("p", "survey-success");
+      var ok = el("p", state.submittedIsError ? "survey-error-msg" : "survey-success");
       ok.textContent = state.submittedMessage;
       card.appendChild(ok);
+      if (state.submitExtraLine && String(state.submitExtraLine).trim()) {
+        var sub = el("p", "survey-success-sub");
+        sub.textContent = state.submitExtraLine;
+        card.appendChild(sub);
+      }
     }
 
     panelMount.appendChild(card);
@@ -423,12 +646,23 @@
 
   function renderSurveyModule(container, subId, api) {
     api = api || {};
+    clearSurveyThankYouTimer();
     var setSub = api.setSub || function () {};
     var moduleTitle = api.moduleTitle || tr("modSurvey", "Bizi Değerlendirin");
+    surveySuccessGoHome =
+      typeof api.onSurveySuccessGoHome === "function" ? api.onSurveySuccessGoHome : null;
+    if (lastRenderedSurveySubId !== subId) {
+      submitInFlight = false;
+      surveyConfirmOpen = false;
+      surveyConfirmTabId = null;
+      clearSurveyThankYouTimer();
+      lastRenderedSurveySubId = subId;
+    }
+    surveyPanelMount = null;
     container.innerHTML = "";
 
     var wrap = el("div", "survey-wrap");
-    var h2 = el("h2", "");
+    var h2 = el("h2", "survey-wrap__title");
     h2.textContent = subId ? tr("surveyTitle", schema.title) : moduleTitle;
     wrap.appendChild(h2);
 
@@ -436,21 +670,33 @@
       var intro = el("p", "req-intro");
       intro.textContent = tr("surveyDescription", schema.description);
       wrap.appendChild(intro);
+      var hubHint = el("p", "survey-hub-hint");
+      hubHint.textContent = tr("surveyHubHint", "");
+      if (hubHint.textContent) wrap.appendChild(hubHint);
       renderHub(wrap, setSub);
       container.appendChild(wrap);
       return;
     }
 
+    stateApi.setActiveTab(state, subId);
+
     var backHub = el("button", "req-back-hub");
     backHub.type = "button";
     backHub.textContent = tr("surveyBackToTopics", "Değerlendirme başlıklarına dön");
     backHub.addEventListener("click", function () {
+      surveyConfirmOpen = false;
+      surveyConfirmTabId = null;
+      clearSurveyThankYouTimer();
+      state.submittedMessage = "";
+      state.submittedIsError = false;
+      state.submitExtraLine = "";
       setSub(null);
     });
     wrap.appendChild(backHub);
 
     var mount = el("div", "");
     mount.id = "survey-active-section";
+    surveyPanelMount = mount;
     wrap.appendChild(mount);
     container.appendChild(wrap);
     renderActiveSection();

@@ -334,6 +334,12 @@
             renderModuleContent();
           },
           moduleTitle: surveyTitleText(),
+          onSurveySuccessGoHome: () => {
+            inner.innerHTML = "";
+            moduleId = null;
+            surveySub = null;
+            showView("home");
+          },
         });
       } else {
         const p = document.createElement("p");
@@ -406,6 +412,9 @@
     if (typeof window.vionaChatRefreshI18n === "function") window.vionaChatRefreshI18n();
     renderModuleGrid();
     renderRateLinks();
+    if (moduleId) {
+      renderModuleContent();
+    }
     const htmlLang = { tr: "tr", en: "en", de: "de", ru: "ru" }[code] || "tr";
     document.documentElement.lang = htmlLang;
   }
@@ -419,6 +428,13 @@
   function closeModals() {
     document.querySelectorAll(".modal-root").forEach((m) => m.classList.add("hidden"));
     document.body.style.overflow = "";
+  }
+
+  function scheduleDiscountPopup() {
+    if (typeof window.showDiscountPopup !== "function") return;
+    requestAnimationFrame(() => {
+      void window.showDiscountPopup();
+    });
   }
 
   function wireLanguageScreen() {
@@ -445,7 +461,7 @@
       }
       setLang(selectedLangCode);
       showView("home");
-      if (typeof window.showDiscountPopup === "function") window.showDiscountPopup();
+      scheduleDiscountPopup();
     });
   }
 
@@ -501,7 +517,7 @@
         c.setAttribute("aria-pressed", on ? "true" : "false");
       });
       showView("home");
-      if (typeof window.showDiscountPopup === "function") window.showDiscountPopup();
+      scheduleDiscountPopup();
     } else {
       applyI18n(document);
       showView("lang");

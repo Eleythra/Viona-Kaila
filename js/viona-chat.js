@@ -7,6 +7,7 @@
   var LANG_KEY = "viona_lang";
   /** Session reply language for API (mirrors last assistant meta.language); separate from site UI. */
   var CONV_LANG_KEY = "viona_chat_conversation_lang";
+  var USER_ID_KEY = "viona_chat_user_id";
   var MAX_INPUT = 2000;
   var MAX_MESSAGES = 80;
 
@@ -45,6 +46,23 @@
     try {
       sessionStorage.removeItem(CONV_LANG_KEY);
     } catch (e) {}
+  }
+
+  function _generateUserId() {
+    var rnd = Math.random().toString(36).slice(2, 10);
+    return "viona_u_" + Date.now().toString(36) + "_" + rnd;
+  }
+
+  function getOrCreateUserId() {
+    try {
+      var existing = localStorage.getItem(USER_ID_KEY);
+      if (existing && /^viona_u_[a-z0-9_]+$/i.test(existing)) return existing;
+      var created = _generateUserId();
+      localStorage.setItem(USER_ID_KEY, created);
+      return created;
+    } catch (e) {
+      return _generateUserId();
+    }
   }
 
   function t(key) {
@@ -221,13 +239,27 @@
       message: message,
       locale: locale || "tr",
       ui_language: locale || "tr",
+      user_id: getOrCreateUserId(),
     };
     if (conv) body.conversation_language = conv;
-    var response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    var timeoutMs = Number(cfg.timeoutMs || 15000);
+    if (!Number.isFinite(timeoutMs) || timeoutMs < 3000) timeoutMs = 15000;
+    if (timeoutMs > 60000) timeoutMs = 60000;
+    var abortController = new AbortController();
+    var timer = setTimeout(function () {
+      abortController.abort();
+    }, timeoutMs);
+    var response;
+    try {
+      response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: abortController.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
     var data = await response.json();
     // Compatibility: new assistant shape {type,message,meta} + legacy {reply,locale}
     var reply = "";

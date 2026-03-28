@@ -11,7 +11,8 @@
 
   window.VIONA_CHAT_CONFIG = {
     endpoint: isLocalhost ? "http://localhost:3001/api/chat" : "/api/chat",
+    timeoutMs: 15000,
     errorReply:
-      "Şu anda asistana ulaşılamıyor. Lütfen birkaç saniye sonra tekrar deneyin.",
+      "Şu anda asistana kısa süreli erişim sorunu yaşıyorum. Lütfen birkaç saniye sonra tekrar deneyiniz.",
   };
 })();

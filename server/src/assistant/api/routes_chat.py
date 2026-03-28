@@ -29,7 +29,7 @@ def chat(payload: ChatRequest, orchestrator: ChatOrchestrator = Depends(get_orch
     except Exception as exc:
         logger.exception("chat_endpoint_failed: %s", exc)
         lang = _resolve_chat_lang(payload)
-        message = _LOCALIZATION.get("reception_fallback_message", lang)
+        message = _LOCALIZATION.canonical_fallback(lang, reason="safe")
         ui = payload.ui_language if payload.ui_language in ("tr", "en", "de", "ru") else lang
         safe = ChatResponse(
             type="fallback",

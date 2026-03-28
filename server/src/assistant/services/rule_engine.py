@@ -12,7 +12,7 @@ FAULT_WORDS = [
     # TR
     "bozuldu", "bozuk", "çalışmıyor", "calismiyor", "soğutmuyor", "sogutmuyor",
     "arızalı", "arizali", "kırıldı", "kirildi", "açılmıyor", "acilmiyor",
-    "kapanmıyor", "kapanmiyor", "yanmıyor", "yanmiyor",
+    "kapanmıyor", "kapanmiyor", "yanmıyor", "yanmiyor", "çekmiyor", "cekmiyor",
     # EN
     "broken", "not working", "doesn't work", "doesnt work",
     "doesn't open", "doesnt open", "out of order",
@@ -69,6 +69,39 @@ REQUEST_WORDS = [
     "buegeln",
     "bügeln",
 ]
+ROUTING_HOUSEKEEPING_WORDS = [
+    "oda temizliği", "oda temizligi", "oda düzenle", "oda duzenle",
+    "housekeeping", "room cleaning", "clean my room",
+    "zimmerreinigung", "reinigung bitte",
+    "уборка номера", "уберите номер",
+]
+ROUTING_RECEPTION_WORDS = [
+    "resepsiyon", "resepsiyonla görüş", "resepsiyonla gorus",
+    "reception", "front desk",
+    "rezeption",
+    "ресепшн", "стойка регистрации",
+]
+ROUTING_GUEST_RELATIONS_WORDS = [
+    "misafir ilişkileri", "misafir iliskileri",
+    "guest relations",
+    "gästebetreuung", "gaestebetreuung",
+    "служба по работе с гостями",
+]
+ROUTING_TRANSFER_WORDS = [
+    "transfer istiyorum", "transfer",
+    "i need transfer", "airport transfer",
+    "transfer bitte",
+    "нужен трансфер", "трансфер",
+]
+ROUTING_LUNCHBOX_WORDS = [
+    "lunch box", "lunchbox", "öğle paketi", "ogle paketi", "paket kahvaltı", "paket kahvalti",
+]
+ROUTING_GENERIC_COMPLAINT_WORDS = [
+    "bir sorunum var", "sorunum var",
+    "i have a problem", "problem with service",
+    "ich habe ein problem",
+    "у меня проблема",
+]
 RESERVATION_WORDS = [
     "erken giriş",
     "erken giris",
@@ -106,6 +139,12 @@ SPECIAL_WORDS = [
     "zöliakie",
     "целиакия",
     "gluten",
+    "guluten",
+    "glutten",
+    "glutenfree",
+    "gluten free",
+    "glutenfrei",
+    "без глютена",
     "kein gluten",
     "gluten yiyemem",
     "gluten can not",
@@ -115,6 +154,9 @@ SPECIAL_WORDS = [
     "hassasiyeti",
     "gluten hassasiyeti",
     "laktoz",
+    "midem hassas",
+    "hassas mide",
+    "mide hassas",
     "laktose",
     "lactose",
     "süt dokunuyor",
@@ -157,6 +199,25 @@ SPECIAL_WORDS = [
     "доступ",
     "коляска",
 ]
+RECOMMENDATION_WORDS = [
+    "öner", "oner", "öneri", "oneri",
+    "ne yesem", "karar veremedim",
+    "romantik", "romantic",
+    "çok açım", "cok acim", "hızlı bir şey", "hizli bir sey",
+    "deniz ürünü sevmiyor", "deniz urunu sevmiyor", "seafood sevmiyor", "doesn't like seafood",
+    "balık", "balik", "fish",
+    "et", "meat", "bbq", "barbeku", "barbecue",
+    "pizza", "snack", "atıştırmalık", "atistirmalik",
+    "kahve", "coffee", "tatlı", "tatli", "dessert",
+    "çocuk", "cocuk", "çocuğum", "cocugum", "kids", "mini club", "mini disco", "5 yaş", "5 yas", "aktivite", "activity",
+]
+URGENT_CONTACT_WORDS = [
+    "acil", "hemen", "urgent", "right now", "asap",
+    "şimdi biriyle konuşmam lazım", "simdi biriyle konusmam lazim",
+]
+OUTSIDE_HOTEL_WORDS = [
+    "otel dışında", "otel disinda", "outside hotel", "outside the hotel", "dışarıda", "disarida",
+]
 HOTEL_INFO_WORDS = [
     # Fixed / strong location & service keywords (avoid very generic tokens like "where" alone).
     "spa saat",
@@ -182,6 +243,14 @@ HOTEL_INFO_WORDS = [
     "спа и велнес",
     "animasyon",
     "animasyon ve etkinlikler",
+    "akşam aktivitesi",
+    "aksam aktivitesi",
+    "yetişkin aktivitesi",
+    "yetiskin aktivitesi",
+    "eğlenmek istiyoruz",
+    "eglenmek istiyoruz",
+    "yetişkin etkinliği",
+    "yetiskin etkinligi",
     "animation & events",
     "animation and events",
     "animation & veranstaltungen",
@@ -228,6 +297,10 @@ DEVICE_HINTS = {
     "keycard": ["kart", "kapı kartı", "key card", "karte", "карта"],
     "hvac": ["klima", "ac", "air conditioner", "klimaanlage", "кондиционер"],
     "lighting": ["ışık", "isik", "lamba", "light", "lampe", "свет"],
+    "internet": ["internet", "wifi", "wi-fi", "kablosuz", "wlan", "интернет", "вайфай"],
+    "kettle": ["kettle", "su ısıtıcısı", "su isiticisi", "wasserkocher", "чайник"],
+    "minibar": ["minibar", "mini bar"],
+    "cabinet": ["dolap", "wardrobe", "schrank", "шкаф"],
     "phone": ["telefon", "phone", "telefon"],
     "towel": ["havlu", "towel", "handtuch", "полотенце"],
     "blanket": ["battaniye", "blanket", "decke", "одеяло"],
@@ -312,7 +385,15 @@ def _dl(a: str, b: str) -> int:
 
 
 def _fuzzy_has(text: str, word: str) -> bool:
-    if word in text:
+    text_l = (text or "").lower()
+    word_l = (word or "").lower().strip()
+    if not word_l:
+        return False
+    # For very short single-token keys ("su", "et"), require whole-token match
+    # to prevent false positives from substring collisions.
+    if " " not in word_l and len(word_l) <= 3:
+        return word_l in _norm_tokens(text_l)
+    if word_l in text_l:
         return True
     wt = [w for w in _norm_tokens(word) if w]
     if not wt:
@@ -328,6 +409,15 @@ def _fuzzy_has(text: str, word: str) -> bool:
             if _dl(w, t) <= 1:
                 return True
     return False
+
+
+def _has_any_phrase(text: str, phrases: list[str]) -> bool:
+    return any(_fuzzy_has(text, p) for p in phrases)
+
+
+def _has_any_phrase_strict(text: str, phrases: list[str]) -> bool:
+    lowered = (text or "").lower()
+    return any(str(p).lower() in lowered for p in phrases)
 
 
 class RuleEngine:
@@ -352,6 +442,176 @@ class RuleEngine:
                 needs_rag=False,
                 response_mode="fixed",
                 confidence=1.0,
+                source="rule",
+            )
+
+        # Safety first: health/special-diet signals must override restaurant recommendation.
+        if any(_fuzzy_has(normalized_text, w) for w in SPECIAL_WORDS):
+            entity = self._extract_entity(normalized_text)
+            sub = self._special_sub_intent(entity)
+            logger.info("RULE MATCH: special_need (%s)", sub)
+            return IntentResult(
+                intent="special_need",
+                sub_intent=sub,
+                entity=entity,
+                department="guest_relations",
+                needs_rag=False,
+                response_mode="guided",
+                confidence=1.0,
+                source="rule",
+            )
+
+        if any(_fuzzy_has(normalized_text, w) for w in URGENT_CONTACT_WORDS):
+            logger.info("RULE MATCH: request (urgent_reception_contact)")
+            return IntentResult(
+                intent="request",
+                sub_intent="reception_contact_request",
+                entity="reception_contact",
+                department="reception",
+                needs_rag=False,
+                response_mode="guided",
+                confidence=1.0,
+                source="rule",
+            )
+
+        if self._is_night_food_query(normalized_text):
+            logger.info("RULE MATCH: hotel_info (night_food)")
+            return IntentResult(
+                intent="hotel_info",
+                sub_intent="service_information",
+                entity="fixed_restaurant_info",
+                department=None,
+                needs_rag=False,
+                response_mode="answer",
+                confidence=0.98,
+                source="rule",
+            )
+
+        if self._is_relaxation_query(normalized_text):
+            logger.info("RULE MATCH: hotel_info (relaxation_suggestion)")
+            return IntentResult(
+                intent="hotel_info",
+                sub_intent="service_information",
+                entity="fixed_spa_info",
+                department=None,
+                needs_rag=False,
+                response_mode="answer",
+                confidence=0.95,
+                source="rule",
+            )
+
+        if self._is_early_departure_query(normalized_text):
+            logger.info("RULE MATCH: request (early_departure_lunchbox)")
+            return IntentResult(
+                intent="request",
+                sub_intent="lunch_box_request",
+                entity="lunch_box_request",
+                department="reception",
+                needs_rag=False,
+                response_mode="guided",
+                confidence=0.98,
+                source="rule",
+            )
+
+        if _has_any_phrase_strict(normalized_text, OUTSIDE_HOTEL_WORDS):
+            logger.info("RULE MATCH: hotel_info (outside_hotel)")
+            return IntentResult(
+                intent="hotel_info",
+                sub_intent="service_information",
+                entity="fixed_outside_hotel_info",
+                department=None,
+                needs_rag=False,
+                response_mode="answer",
+                confidence=0.9,
+                source="rule",
+            )
+
+        # Recommendation block (separate from routing and knowledge flows).
+        rec_entity = self._recommendation_entity(normalized_text)
+        if rec_entity and any(_fuzzy_has(normalized_text, w) for w in RECOMMENDATION_WORDS):
+            logger.info("RULE MATCH: recommendation (%s)", rec_entity)
+            return IntentResult(
+                intent="recommendation",
+                sub_intent="activity_recommendation" if rec_entity == "kids_activity_pref" else "venue_recommendation",
+                entity=rec_entity,
+                department=None,
+                needs_rag=False,
+                response_mode="guided",
+                confidence=0.95,
+                source="rule",
+            )
+
+        # Routing block: keep operations/routing separate from recommendation/knowledge.
+        if _has_any_phrase_strict(normalized_text, ROUTING_HOUSEKEEPING_WORDS):
+            logger.info("RULE MATCH: request (housekeeping_request)")
+            return IntentResult(
+                intent="request",
+                sub_intent="housekeeping_request",
+                entity="housekeeping_service",
+                department="reception",
+                needs_rag=False,
+                response_mode="guided",
+                confidence=1.0,
+                source="rule",
+            )
+        if _has_any_phrase_strict(normalized_text, ROUTING_RECEPTION_WORDS):
+            logger.info("RULE MATCH: request (reception_contact)")
+            return IntentResult(
+                intent="request",
+                sub_intent="reception_contact_request",
+                entity="reception_contact",
+                department="reception",
+                needs_rag=False,
+                response_mode="guided",
+                confidence=1.0,
+                source="rule",
+            )
+        if _has_any_phrase_strict(normalized_text, ROUTING_GUEST_RELATIONS_WORDS):
+            logger.info("RULE MATCH: request (guest_relations_contact)")
+            return IntentResult(
+                intent="request",
+                sub_intent="guest_relations_contact_request",
+                entity="guest_relations_contact",
+                department="guest_relations",
+                needs_rag=False,
+                response_mode="guided",
+                confidence=1.0,
+                source="rule",
+            )
+        if _has_any_phrase_strict(normalized_text, ROUTING_TRANSFER_WORDS):
+            logger.info("RULE MATCH: request (transfer_request)")
+            return IntentResult(
+                intent="request",
+                sub_intent="transfer_request",
+                entity="transfer_request",
+                department="reception",
+                needs_rag=False,
+                response_mode="guided",
+                confidence=1.0,
+                source="rule",
+            )
+        if _has_any_phrase_strict(normalized_text, ROUTING_LUNCHBOX_WORDS):
+            logger.info("RULE MATCH: request (lunch_box_request)")
+            return IntentResult(
+                intent="request",
+                sub_intent="lunch_box_request",
+                entity="lunch_box_request",
+                department="reception",
+                needs_rag=False,
+                response_mode="guided",
+                confidence=1.0,
+                source="rule",
+            )
+        if _has_any_phrase_strict(normalized_text, ROUTING_GENERIC_COMPLAINT_WORDS):
+            logger.info("RULE MATCH: complaint (generic_problem)")
+            return IntentResult(
+                intent="complaint",
+                sub_intent="service_complaint",
+                entity=None,
+                department="guest_relations",
+                needs_rag=False,
+                response_mode="guided",
+                confidence=0.95,
                 source="rule",
             )
 
@@ -423,7 +683,7 @@ class RuleEngine:
                 intent="complaint",
                 sub_intent=sub,
                 entity=entity,
-                department="reception",
+                department="guest_relations",
                 needs_rag=False,
                 response_mode="guided",
                 confidence=1.0,
@@ -454,21 +714,6 @@ class RuleEngine:
                 sub_intent=sub,
                 entity=entity,
                 department="reception",
-                needs_rag=False,
-                response_mode="guided",
-                confidence=1.0,
-                source="rule",
-            )
-
-        if any(_fuzzy_has(normalized_text, w) for w in SPECIAL_WORDS):
-            entity = self._extract_entity(normalized_text)
-            sub = self._special_sub_intent(entity)
-            logger.info("RULE MATCH: special_need (%s)", sub)
-            return IntentResult(
-                intent="special_need",
-                sub_intent=sub,
-                entity=entity,
-                department="guest_relations",
                 needs_rag=False,
                 response_mode="guided",
                 confidence=1.0,
@@ -525,6 +770,8 @@ class RuleEngine:
             "lütfen ingilizce": "en",
             "lutfen ingilizce": "en",
             "please speak english": "en",
+            "please speaking english": "en",
+            "please speakig english": "en",
             "speak english": "en",
             "in english": "en",
             "english please": "en",
@@ -708,7 +955,7 @@ class RuleEngine:
             },
             "thanks": {
                 "teşekkürler", "teşekkür ederim", "çok teşekkürler",
-                "tesekkurler", "tesekkur ederim", "cok tesekkurler",
+                "teşekkür", "tesekkur", "tesekkurler", "tesekkur ederim", "cok tesekkurler",
                 "sağ ol", "sag ol", "sağ olun", "sag olun",
                 "thanks", "thank you", "thanks a lot", "appreciate it",
                 "danke", "danke schön", "dankeschön", "vielen dank",
@@ -791,6 +1038,12 @@ class RuleEngine:
                 "animation & veranstaltungen",
                 "animation veranstaltungen",
                 "анимация и мероприятия",
+                "akşam aktivitesi",
+                "aksam aktivitesi",
+                "yetişkin aktivitesi",
+                "yetiskin aktivitesi",
+                "eğlenmek istiyoruz",
+                "eglenmek istiyoruz",
                 # boredom -> suggest animations & events
                 "canım sıkıldı",
                 "canim sikildi",
@@ -834,6 +1087,46 @@ class RuleEngine:
         return any(k in t for k in info_terms)
 
     @staticmethod
+    def _recommendation_entity(text: str) -> str | None:
+        t = (text or "").lower()
+        if any(k in t for k in ["romantik", "romantic"]):
+            return "romantic_dinner_pref"
+        if any(k in t for k in ["ne yesem", "karar veremedim", "what should i eat"]):
+            return "general_dining_pref"
+        if any(k in t for k in ["çok açım", "cok acim", "hızlı bir şey", "hizli bir sey", "quick bite", "quick food"]):
+            return "pizza_snack_pref"
+        if any(k in t for k in ["deniz ürünü sevmiyor", "deniz urunu sevmiyor", "seafood sevmiyor", "doesn't like seafood"]):
+            return "meat_bbq_pref"
+        if any(k in t for k in ["balık", "balik", "fish"]):
+            return "fish_pref"
+        if any(k in t for k in ["bbq", "barbeku", "barbecue", "et severim", "meat"]) or re.search(r"(?<![a-zçğıöşü])et(?![a-zçğıöşü])", t):
+            return "meat_bbq_pref"
+        if any(k in t for k in ["pizza", "snack", "atıştırmalık", "atistirmalik"]):
+            return "pizza_snack_pref"
+        if any(k in t for k in ["kahve", "coffee", "tatlı", "tatli", "dessert"]):
+            return "coffee_dessert_pref"
+        if any(k in t for k in ["çocuk", "cocuk", "çocuğum", "cocugum", "kids", "mini club", "mini disco", "5 yaş", "5 yas"]):
+            return "kids_activity_pref"
+        return None
+
+    @staticmethod
+    def _is_night_food_query(text: str) -> bool:
+        t = (text or "").lower()
+        has_night = any(k in t for k in ["gece 12", "gece 12'de", "12 de", "12'de", "midnight"])
+        has_food = any(k in t for k in ["yemek", "büfe", "bufe", "food", "eat"])
+        return has_night and has_food
+
+    @staticmethod
+    def _is_early_departure_query(text: str) -> bool:
+        t = (text or "").lower()
+        return any(k in t for k in ["yarın sabah erken çık", "yarin sabah erken cik", "early departure", "leave early"])
+
+    @staticmethod
+    def _is_relaxation_query(text: str) -> bool:
+        t = (text or "").lower()
+        return any(k in t for k in ["çok yorgun", "cok yorgun", "yorgunum", "relax", "dinlenmek istiyorum", "rahatlamak istiyorum"])
+
+    @staticmethod
     def _is_checkin_checkout_time_query(text: str) -> bool:
         """
         Detect questions like:
@@ -875,6 +1168,8 @@ class RuleEngine:
             return "hvac_fault"
         if entity == "lighting":
             return "lighting_fault"
+        if entity in ("internet", "kettle", "minibar", "cabinet"):
+            return "room_equipment_fault"
         return "room_equipment_fault"
 
     @staticmethod
@@ -893,6 +1188,16 @@ class RuleEngine:
     def _request_sub_intent(entity: str | None) -> str:
         if entity in ("towel", "blanket", "pillow", "water"):
             return "extra_item_request"
+        if entity == "housekeeping_service":
+            return "housekeeping_request"
+        if entity == "reception_contact":
+            return "reception_contact_request"
+        if entity == "guest_relations_contact":
+            return "guest_relations_contact_request"
+        if entity == "transfer_request":
+            return "transfer_request"
+        if entity == "lunch_box_request":
+            return "lunch_box_request"
         return "room_supply_request"
 
     @staticmethod

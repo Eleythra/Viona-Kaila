@@ -11,7 +11,12 @@
   "name": "Guest Name",
   "room": "1203",
   "nationality": "DE",
-  "description": "free text",
+  "description": "free text (optional for request, required for others)",
+  "category": "towel | bedding | room_cleaning | minibar | baby_equipment | room_equipment | other",
+  "details": {
+    "itemType": "bath_towel",
+    "quantity": 2
+  },
   "categories": ["extraTowels", "other"],
   "otherCategoryNote": "optional",
   "reservation": {

@@ -57,6 +57,7 @@ class IntentService:
                 sub_intent=data.get("sub_intent"),
                 entity=data.get("entity"),
                 department=department,
+                reason=None,
                 needs_rag=bool(data.get("needs_rag", False)),
                 response_mode=response_mode,
                 confidence=float(data.get("confidence", 0.0)),
@@ -69,12 +70,21 @@ class IntentService:
                 reason = "missing_api_key"
             elif "openai_401" in exc_text:
                 reason = "openai_401"
+            elif "openai_429" in exc_text:
+                reason = "openai_429"
+            elif "openai_timeout" in exc_text:
+                reason = "openai_timeout"
+            elif "openai_bad_response" in exc_text:
+                reason = "openai_bad_response"
+            elif "intent_json_parse_failed" in exc_text:
+                reason = "openai_bad_response"
             logger.warning("intent_classification_failed reason=%s error=%s", reason, exc)
             return IntentResult(
                 intent="unknown",
                 sub_intent=None,
                 entity=None,
                 department=None,
+                reason=reason,
                 needs_rag=False,
                 response_mode="fallback",
                 confidence=0.0,

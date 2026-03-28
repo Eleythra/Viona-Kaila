@@ -14,7 +14,13 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload || {}),
     });
-    var data = await response.json();
+    var text = await response.text();
+    var data = null;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch (_e) {
+      data = null;
+    }
 
     if (!response.ok || !data || data.ok !== true || !data.id) {
       throw new Error((data && data.error) || "survey_submit_failed");

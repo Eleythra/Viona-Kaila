@@ -11,6 +11,7 @@
     de: "",
     ru: "",
   };
+  var HOME_VISIBLE_MAX_FRAMES = 12;
 
   function getLang() {
     try {
@@ -20,8 +21,14 @@
     }
   }
 
+  function normalizePromoLang(code) {
+    var c = String(code || "tr").toLowerCase();
+    if (c === "en" || c === "de" || c === "ru") return c;
+    return "tr";
+  }
+
   function seenKeyForLang(lang) {
-    return POPUP_SEEN_KEY_PREFIX + String(lang || "tr");
+    return POPUP_SEEN_KEY_PREFIX + normalizePromoLang(lang);
   }
 
   function isClosedForSession(version, lang) {
@@ -33,7 +40,7 @@
   }
 
   function markClosedForSession(version) {
-    var lang = getLang();
+    var lang = normalizePromoLang(getLang());
     try {
       localStorage.setItem(seenKeyForLang(lang), String(version || "v0"));
     } catch (e) {
@@ -41,29 +48,79 @@
     }
   }
 
-  function closePopup() {
+  function hidePromoPopup(markSeen) {
     var popup = document.getElementById(POPUP_ID);
     if (!popup) return;
     popup.classList.remove("is-open");
     popup.setAttribute("aria-hidden", "true");
-    markClosedForSession(currentPopupVersion);
+    if (markSeen) markClosedForSession(currentPopupVersion);
   }
 
-  function imageForLang(code) {
-    return IMAGE_BY_LANG[code] || "";
+  function closePopup() {
+    hidePromoPopup(true);
   }
+
+  function normalizePromoConfig(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    return {
+      key: raw.key,
+      enabled: raw.enabled !== false,
+      image_tr: String(raw.image_tr || "").trim(),
+      image_en: String(raw.image_en || "").trim(),
+      image_de: String(raw.image_de || "").trim(),
+      image_ru: String(raw.image_ru || "").trim(),
+      updated_at: raw.updated_at != null && String(raw.updated_at).trim() !== "" ? raw.updated_at : null,
+    };
+  }
+
+  function configVersion(cfg) {
+    if (!cfg || cfg.updated_at == null || String(cfg.updated_at).trim() === "") return "v0";
+    return String(cfg.updated_at);
+  }
+
+  /** Yalnızca seçili dilin görseli; diğer dillere düşme yok. */
+  function imageSrcForLangOnly(cfg, lang) {
+    if (!cfg || typeof cfg !== "object") return "";
+    var code = normalizePromoLang(lang);
+    return String(cfg["image_" + code] || "").trim();
+  }
+
+  var promoConfigFetchPromise = null;
 
   async function loadPromoConfig() {
-    var cfg = window.VIONA_API_CONFIG || {};
-    var endpoint = cfg.adminPromoConfigEndpoint || "/api/admin/promo-config";
+    var api = window.VIONA_API_CONFIG || {};
+    var endpoint = api.adminPromoConfigEndpoint || "/api/admin/promo-config";
     try {
-      var res = await fetch(endpoint, { method: "GET" });
-      var data = await res.json();
-      if (!res.ok || !data || !data.ok || !data.config) return null;
-      return data.config;
+      var res = await fetch(endpoint, { method: "GET", headers: { Accept: "application/json" } });
+      var text = await res.text();
+      var data = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch (_parse) {
+        return null;
+      }
+      if (!res.ok || !data || typeof data !== "object" || !data.ok || !data.config) return null;
+      return normalizePromoConfig(data.config);
     } catch (e) {
       return null;
     }
+  }
+
+  function fetchPromoConfigOnce() {
+    if (!promoConfigFetchPromise) {
+      promoConfigFetchPromise = loadPromoConfig()
+        .then(function (cfg) {
+          if (cfg) writeCachedPromoConfig(cfg);
+          return cfg;
+        })
+        .catch(function () {
+          return null;
+        })
+        .finally(function () {
+          promoConfigFetchPromise = null;
+        });
+    }
+    return promoConfigFetchPromise;
   }
 
   function readCachedPromoConfig() {
@@ -71,26 +128,28 @@
       var raw = localStorage.getItem(PROMO_CACHE_KEY);
       if (!raw) return null;
       var parsed = JSON.parse(raw);
-      return parsed && typeof parsed === "object" ? parsed : null;
+      return normalizePromoConfig(parsed);
     } catch (e) {
       return null;
     }
   }
 
   function writeCachedPromoConfig(cfg) {
+    var n = normalizePromoConfig(cfg);
+    if (!n) return;
     try {
-      localStorage.setItem(PROMO_CACHE_KEY, JSON.stringify(cfg || {}));
+      localStorage.setItem(PROMO_CACHE_KEY, JSON.stringify(n));
     } catch (e) {
-      /* no-op */
+      /* quota / private mode */
     }
   }
 
   function applyConfig(cfg) {
     if (!cfg || typeof cfg !== "object") return;
-    IMAGE_BY_LANG.tr = cfg.image_tr || "";
-    IMAGE_BY_LANG.en = cfg.image_en || "";
-    IMAGE_BY_LANG.de = cfg.image_de || "";
-    IMAGE_BY_LANG.ru = cfg.image_ru || "";
+    IMAGE_BY_LANG.tr = String(cfg.image_tr || "").trim();
+    IMAGE_BY_LANG.en = String(cfg.image_en || "").trim();
+    IMAGE_BY_LANG.de = String(cfg.image_de || "").trim();
+    IMAGE_BY_LANG.ru = String(cfg.image_ru || "").trim();
   }
 
   function ensurePopup() {
@@ -119,45 +178,65 @@
     return root;
   }
 
-  async function showDiscountPopup() {
+  function isHomeVisible() {
     var home = document.getElementById("view-home");
-    if (!home || home.classList.contains("hidden")) return;
+    return Boolean(home && !home.classList.contains("hidden"));
+  }
 
-    var lang = getLang();
-    var cached = readCachedPromoConfig();
-    var cachedVersion = (cached && cached.updated_at) || "v0";
-    if (cached && cached.enabled === false) return;
-    if (cached) applyConfig(cached);
-    if (isClosedForSession(cachedVersion, lang)) return;
+  function waitFrame() {
+    return new Promise(function (resolve) {
+      requestAnimationFrame(function () {
+        resolve();
+      });
+    });
+  }
 
-    var src = imageForLang(lang);
-    var popup = null;
-    var img = null;
-    if (src) {
-      currentPopupVersion = cachedVersion;
-      popup = ensurePopup();
-      img = popup.querySelector(".promo-popup__image");
+  async function showDiscountPopup() {
+    for (var f = 0; f < HOME_VISIBLE_MAX_FRAMES && !isHomeVisible(); f++) {
+      await waitFrame();
+    }
+    if (!isHomeVisible()) return;
+
+    var lang = normalizePromoLang(getLang());
+    var ver = configVersion;
+
+    function showPopupForConfig(cfg, version) {
+      if (!cfg || typeof cfg !== "object") return false;
+      if (cfg.enabled === false) {
+        hidePromoPopup(false);
+        return false;
+      }
+      applyConfig(cfg);
+      if (isClosedForSession(version, lang)) {
+        hidePromoPopup(false);
+        return false;
+      }
+      var src = imageSrcForLangOnly(cfg, lang);
+      if (!src) {
+        hidePromoPopup(false);
+        return false;
+      }
+      currentPopupVersion = version;
+      var popup = ensurePopup();
+      var img = popup.querySelector(".promo-popup__image");
       img.src = src;
       popup.classList.add("is-open");
       popup.setAttribute("aria-hidden", "false");
+      return true;
     }
 
-    var remoteCfg = await loadPromoConfig();
-    if (!remoteCfg) return;
-    writeCachedPromoConfig(remoteCfg);
-    var remoteVersion = remoteCfg.updated_at || "v0";
-    if (remoteCfg.enabled === false) return closePopup();
-    if (isClosedForSession(remoteVersion, lang)) return closePopup();
-    applyConfig(remoteCfg);
-    src = imageForLang(lang);
-    if (!src) return;
-    currentPopupVersion = remoteVersion;
-    var popup = ensurePopup();
-    var img = popup.querySelector(".promo-popup__image");
-    img.src = src;
-    popup.classList.add("is-open");
-    popup.setAttribute("aria-hidden", "false");
+    var cached = readCachedPromoConfig();
+    if (cached) showPopupForConfig(cached, ver(cached));
+
+    var remoteCfg = await fetchPromoConfigOnce();
+    if (remoteCfg) {
+      showPopupForConfig(remoteCfg, ver(remoteCfg));
+    } else {
+      var again = readCachedPromoConfig();
+      if (again) showPopupForConfig(again, ver(again));
+    }
   }
 
   window.showDiscountPopup = showDiscountPopup;
+  fetchPromoConfigOnce();
 })();
