@@ -2,6 +2,12 @@
  * Genel API endpoint yapılandırması.
  * Localde backend 3001, prod ortamda /api altı kullanılır.
  *
+ * Vercel statik deploy: /api için edge proxy her projede çalışmayabilir (Root Directory, 404).
+ * *.vercel.app üzerinde API doğrudan Render backend'e gider (CORS sunucuda açık olmalı).
+ *
+ * İsteğe bağlı: sayfada bu scriptten önce
+ *   window.__VIONA_API_BASE__ = "https://backend.example.com/api";
+ *
  * Admin panel veri eşlemesi (özet):
  * - Ana sayfa raporu: adminDashboardReportEndpoint → varsayılan son ~30 gün (tarih parametresi yoksa).
  * - Operasyon özetleri: adminRequestsEndpoint sayfalı GET (birleştirme admin/js/app.js).
@@ -16,8 +22,22 @@
   var isLocalhost =
     window.location.hostname === "localhost" ||
     window.location.hostname === "127.0.0.1";
-  /** file:// veya localhost: admin ayrı origin; API 3001. Aynı origin prod'da /api yeterli. */
-  var base = isLocalhost || isFile ? "http://127.0.0.1:3001/api" : "/api";
+  var host = String(window.location.hostname || "");
+  var isVercelPreviewOrApp = host.indexOf("vercel.app") !== -1;
+  /** Canlı Node API (Render); Vercel statik sitede /api yoksa buna düşülür. */
+  var RENDER_API_BASE = "https://viona-kaila.onrender.com/api";
+
+  var custom = window.__VIONA_API_BASE__;
+  var base;
+  if (typeof custom === "string" && custom.trim()) {
+    base = custom.trim().replace(/\/+$/, "");
+  } else if (isLocalhost || isFile) {
+    base = "http://127.0.0.1:3001/api";
+  } else if (isVercelPreviewOrApp) {
+    base = RENDER_API_BASE;
+  } else {
+    base = "/api";
+  }
 
   window.VIONA_API_CONFIG = {
     baseUrl: base,
