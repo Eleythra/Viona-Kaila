@@ -19,7 +19,10 @@
    */
   window.submitGuestRequest = async function (payload) {
     var cfg = window.VIONA_API_CONFIG || {};
-    var endpoint = cfg.guestRequestsEndpoint || "/api/guest-requests";
+    var endpoint =
+      typeof window.vionaGetApiBase === "function"
+        ? window.vionaGetApiBase() + "/guest-requests"
+        : cfg.guestRequestsEndpoint || "/api/guest-requests";
 
     var response = await fetch(endpoint, {
       method: "POST",

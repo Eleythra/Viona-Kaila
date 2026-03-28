@@ -88,8 +88,10 @@
   var promoConfigFetchPromise = null;
 
   async function loadPromoConfig() {
-    var api = window.VIONA_API_CONFIG || {};
-    var endpoint = api.adminPromoConfigEndpoint || "/api/admin/promo-config";
+    var endpoint =
+      typeof window.vionaGetApiBase === "function"
+        ? window.vionaGetApiBase() + "/admin/promo-config"
+        : (window.VIONA_API_CONFIG || {}).adminPromoConfigEndpoint || "/api/admin/promo-config";
     try {
       var res = await fetch(endpoint, { method: "GET", headers: { Accept: "application/json" } });
       var text = await res.text();

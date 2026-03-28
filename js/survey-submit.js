@@ -8,7 +8,10 @@
     }
 
     var cfg = window.VIONA_API_CONFIG || {};
-    var endpoint = cfg.surveysEndpoint || "/api/surveys";
+    var endpoint =
+      typeof window.vionaGetApiBase === "function"
+        ? window.vionaGetApiBase() + "/surveys"
+        : cfg.surveysEndpoint || "/api/surveys";
     var response = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
