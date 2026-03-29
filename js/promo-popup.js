@@ -1,9 +1,8 @@
 (function () {
   "use strict";
 
+  /** Kapatıldı bayrağı: sessionStorage + dil ekranına dönünce sıfırlanır (her dil seçiminde tekrar gösterim). */
   var POPUP_SEEN_KEY_PREFIX = "viona_discount_popup_seen_";
-  /** Aynı sekmede aynı dil + kampanya sürümü için popup yalnızca bir kez (önbellek+sunucu çift çağrısı dahil). */
-  var POPUP_ONCE_TAB_PREFIX = "viona_discount_popup_tab_once_";
   var PROMO_CACHE_KEY = "viona_discount_popup_cache_v1";
   var currentPopupVersion = "v0";
   var POPUP_ID = "discount-promo-popup";
@@ -33,29 +32,9 @@
     return POPUP_SEEN_KEY_PREFIX + normalizePromoLang(lang);
   }
 
-  function tabOnceKeyForLang(lang) {
-    return POPUP_ONCE_TAB_PREFIX + normalizePromoLang(lang);
-  }
-
-  function wasPromoShownThisTabForVersion(lang, versionStr) {
-    try {
-      return sessionStorage.getItem(tabOnceKeyForLang(lang)) === versionStr;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function markPromoShownThisTabForVersion(lang, versionStr) {
-    try {
-      sessionStorage.setItem(tabOnceKeyForLang(lang), versionStr);
-    } catch (e) {
-      /* private mode */
-    }
-  }
-
   function isClosedForSession(version, lang) {
     try {
-      return localStorage.getItem(seenKeyForLang(lang)) === String(version || "v0");
+      return sessionStorage.getItem(seenKeyForLang(lang)) === String(version || "v0");
     } catch (e) {
       return false;
     }
@@ -64,11 +43,25 @@
   function markClosedForSession(version) {
     var lang = normalizePromoLang(getLang());
     try {
-      localStorage.setItem(seenKeyForLang(lang), String(version || "v0"));
+      sessionStorage.setItem(seenKeyForLang(lang), String(version || "v0"));
     } catch (e) {
       /* no-op */
     }
   }
+
+  /** Dil seçim ekranına her dönüşte çağrılır: kapatıldı + eski tab-kilidi anahtarlarını temizler. */
+  function resetPromoDismissForLangScreen() {
+    try {
+      ["tr", "en", "de", "ru"].forEach(function (code) {
+        sessionStorage.removeItem(POPUP_SEEN_KEY_PREFIX + code);
+        sessionStorage.removeItem("viona_discount_popup_tab_once_" + code);
+      });
+    } catch (e) {
+      /* no-op */
+    }
+  }
+
+  window.resetVionaPromoDismissForLangScreen = resetPromoDismissForLangScreen;
 
   function hidePromoPopup(markSeen) {
     var popup = document.getElementById(POPUP_ID);
@@ -105,6 +98,19 @@
     if (!cfg || typeof cfg !== "object") return "";
     var code = normalizePromoLang(lang);
     return String(cfg["image_" + code] || "").trim();
+  }
+
+  /** Seçilen dilde görseli olan config (eski önbellekte yalnız EN dolu iken TR gecikmesini azaltır). */
+  function pickBestInitialConfig(forLang) {
+    var code = normalizePromoLang(forLang);
+    function hasImageForLang(cfg) {
+      return Boolean(cfg && String(cfg["image_" + code] || "").trim());
+    }
+    var s = sessionPromoConfig;
+    var c = readCachedPromoConfig();
+    if (hasImageForLang(s)) return s;
+    if (hasImageForLang(c)) return c;
+    return s || c;
   }
 
   /**
@@ -275,6 +281,7 @@
 
     var lang = normalizePromoLang(getLang());
     var ver = configVersion;
+    var openedInThisInvocation = false;
 
     function showPopupForConfig(cfg, version) {
       if (!cfg || typeof cfg !== "object") return false;
@@ -287,26 +294,23 @@
         hidePromoPopup(false);
         return false;
       }
-      var versionStr = String(version || "v0");
-      if (wasPromoShownThisTabForVersion(lang, versionStr)) {
-        return false;
-      }
       var src = imageSrcForLangOnly(cfg, lang);
       if (!src) {
         hidePromoPopup(false);
         return false;
       }
+      if (openedInThisInvocation) return false;
+      openedInThisInvocation = true;
       currentPopupVersion = version;
       var popup = ensurePopup();
       var img = popup.querySelector(".promo-popup__image");
       img.src = src;
       popup.classList.add("is-open");
       popup.setAttribute("aria-hidden", "false");
-      markPromoShownThisTabForVersion(lang, versionStr);
       return true;
     }
 
-    var tryFirst = sessionPromoConfig || readCachedPromoConfig();
+    var tryFirst = pickBestInitialConfig(lang);
     var popupOpened = Boolean(tryFirst && showPopupForConfig(tryFirst, ver(tryFirst)));
 
     if (!sessionPromoConfig) {

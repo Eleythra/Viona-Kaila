@@ -108,6 +108,9 @@
     const modView = el("view-module");
     [langView, homeView, modView].forEach((v) => v.classList.add("hidden"));
     if (name === "lang") {
+      if (typeof window.resetVionaPromoDismissForLangScreen === "function") {
+        window.resetVionaPromoDismissForLangScreen();
+      }
       if (typeof window._vionaClearActivitiesCarousel === "function") {
         window._vionaClearActivitiesCarousel();
       }
