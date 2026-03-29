@@ -51,5 +51,11 @@ export function getEnv() {
         String(this.supabaseUrl || "").trim() && String(this.supabaseServiceRoleKey || "").trim(),
       );
     },
+    /** Misafir arıza kaydı → Teknik Telegram grubu (boşsa bildirim atlanır). */
+    telegramTeknikBotToken: optional("TELEGRAM_TEKNIK_BOT_TOKEN", ""),
+    telegramTeknikChatId: optional("TELEGRAM_TEKNIK_CHAT_ID", ""),
+    /** Misafir istek kaydı → HK Telegram grubu (boşsa bildirim atlanır). */
+    telegramHkBotToken: optional("TELEGRAM_HK_BOT_TOKEN", ""),
+    telegramHkChatId: optional("TELEGRAM_HK_CHAT_ID", ""),
   };
 }

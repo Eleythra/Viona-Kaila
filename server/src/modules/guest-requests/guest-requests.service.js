@@ -1,4 +1,5 @@
 import { getSupabase } from "../../lib/supabase.js";
+import { scheduleGuestRecordTelegram } from "../../lib/telegram.service.js";
 
 const SIMPLE_TYPES = new Set(["request", "complaint", "fault"]);
 const RESERVATION_TYPES = new Set(["reservation_alacarte", "reservation_spa"]);
@@ -400,6 +401,7 @@ export async function createGuestRequest(payload) {
 
   if (normalized.type === "request") {
     const id = await insertSimple("guest_requests", normalized);
+    scheduleGuestRecordTelegram(normalized, "request");
     return { id, bucket: "request" };
   }
   if (normalized.type === "complaint") {
@@ -408,6 +410,7 @@ export async function createGuestRequest(payload) {
   }
   if (normalized.type === "fault") {
     const id = await insertSimple("guest_faults", normalized);
+    scheduleGuestRecordTelegram(normalized, "fault");
     return { id, bucket: "fault" };
   }
   const id = await insertReservation(normalized);
