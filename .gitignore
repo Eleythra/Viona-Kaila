@@ -4,8 +4,8 @@ Thumbs.db
 *~
 node_modules/
 server/node_modules/
-# server/.cache bilinçli olarak ignore edilmiyor: Render slug’ına Puppeteer Chromium girmesi için.
-# Bu klasörü git’e ekleme (yüzlerce MB); yalnızca sunucu build çıktısı olarak kalsın.
+# Puppeteer indirme önbelleği — GitHub 100 MB dosya sınırı; Render’da build sırasında indirilir.
+server/.cache/
 .env
 .env.*
 !.env.example
