@@ -129,6 +129,19 @@
     return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
   }
 
+  /** YYYY-MM-DD + gün (yerel takvim). */
+  function addCalendarDaysIso(isoYmd, deltaDays) {
+    var s = String(isoYmd || "").slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return "";
+    var p = s.split("-");
+    var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    d.setDate(d.getDate() + (Number(deltaDays) || 0));
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, "0");
+    var day = String(d.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + day;
+  }
+
   function shortText(v, maxLen) {
     var s = String(v == null ? "" : v).replace(/\s+/g, " ").trim();
     if (!s) return "-";
@@ -380,6 +393,26 @@
       return m[3] + "/" + m[2] + "/" + m[1] + (s.length > 10 ? " " + s.slice(11, 16).replace("T", " ") : "");
     }
     return s.length >= 16 ? s.slice(0, 16).replace("T", " ") : s;
+  }
+
+  /** submitted_at → gg/aa ss:dd (tablo için kısa). */
+  function formatSubmittedAtShortTr(iso) {
+    var s = String(iso || "");
+    if (!s) return "—";
+    var d = new Date(s);
+    if (!Number.isNaN(d.getTime())) {
+      var dd = String(d.getDate()).padStart(2, "0");
+      var mm = String(d.getMonth() + 1).padStart(2, "0");
+      var hh = String(d.getHours()).padStart(2, "0");
+      var mi = String(d.getMinutes()).padStart(2, "0");
+      return dd + "/" + mm + " " + hh + ":" + mi;
+    }
+    var m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) {
+      var tail = s.length > 10 ? String(s.slice(11, 16)).replace("T", " ").trim() : "";
+      return m[3] + "/" + m[2] + (tail ? " " + tail : "");
+    }
+    return s.length >= 16 ? s.slice(8, 10) + "/" + s.slice(5, 7) + " " + s.slice(11, 16) : "—";
   }
 
   /** submitted_at → yerel takvim günü YYYY-MM-DD (filtre için). */
@@ -794,6 +827,15 @@
     return p[2] + "/" + p[1] + "/" + p[0];
   }
 
+  /** YYYY-MM-DD → gg/aa (şerit etiketi) */
+  function formatIsoDateShortDisplay(iso) {
+    var s = String(iso || "").slice(0, 10);
+    if (s.length < 10) return "—";
+    var p = s.split("-");
+    if (p.length !== 3) return "—";
+    return p[2] + "/" + p[1];
+  }
+
   function syncReservationDateComboNativeDisplay(nativeEl, displayEl) {
     if (!displayEl) return;
     var v = String((nativeEl && nativeEl.value) || "").slice(0, 10);
@@ -823,7 +865,9 @@
       s === "tamamlandi" ||
       s === "tamamlandı" ||
       s === "yapildi" ||
-      s === "yapıldı"
+      s === "yapıldı" ||
+      s === "onaylandi" ||
+      s === "onaylandı"
     ) {
       return "done";
     }
@@ -960,6 +1004,31 @@
       .replace(/Ç/g, "C");
   }
 
+  /** PDF icin ASCII durum etiketi (Helvetica uyumlu). */
+  function reservationStatusLabelPdf(row) {
+    var s = reservationNormalizeStatusKey(row && row.status);
+    if (s === "cancelled") return "Iptal";
+    if (reservationIsWaitStatus(s)) return "Beklemede";
+    if (s === "done") return "Onaylandi";
+    if (s === "rejected") return "Onaylanmadi";
+    return pdfLatinize(String((row && row.status) || "Yeni"));
+  }
+
+  /** PDF tablosu: mekan/hizmet tek satirda, kirilma minimum (mutfak ciktisi). */
+  function reservationTypeLabelPdf(row) {
+    var t = String((row && row.reservation_type) || "").toLowerCase();
+    if (t === "reservation_spa") {
+      return pdfLatinize(reservationTypeLabel(row) || "Spa");
+    }
+    if (t === "reservation_alacarte") {
+      var vk = reservationVenueKeyFromRow(row);
+      if (vk === "laTerrace") return "La Terrace A La Carte";
+      if (vk === "mare") return "Mare Restaurant";
+      if (vk === "sinton") return "Sinton BBQ Restaurant";
+    }
+    return pdfLatinize(reservationTypeLabel(row) || "-");
+  }
+
   function pdfReportFilenamePart(ovFilterKey) {
     var map = {
       all: "Tum-Mekanlar",
@@ -983,32 +1052,76 @@
       return;
     }
     var doc = new JSPDF({ orientation: "landscape", unit: "pt", format: "a4" });
-    var venueLine =
-      ovFilterKey === "all"
-        ? pdfLatinize("Mekan: Tum mekanlar")
-        : pdfLatinize("Mekan: " + String(fkLabel || ""));
-    var dateLine = pdfLatinize("Tarih: " + formatIsoDateDisplayTr(iso));
-    var filterLine = pdfLatinize("Filtre: " + String(fkLabel || ""));
-    var statLine = pdfLatinize(
-      String(list.length) + " kayit, toplam " + String(guestSum) + " kisi"
-    );
+    var M = 40;
+    var pageW = doc.internal.pageSize.getWidth();
+    var pageH = doc.internal.pageSize.getHeight();
+    var contentW = pageW - M * 2;
+    var cnt = reservationStatusOverviewCounts(list);
+    var mekanAdi = ovFilterKey === "all" ? "Tum mekanlar" : String(fkLabel || "");
+
+    var y = 34;
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(15);
-    doc.text(pdfLatinize("Gunluk rezervasyon raporu"), 40, 36);
+    doc.setFontSize(17);
+    doc.setTextColor(28, 58, 98);
+    doc.text(pdfLatinize("Gunluk rezervasyon raporu"), M, y);
+    y += 20;
+    doc.setDrawColor(46, 120, 170);
+    doc.setLineWidth(0.9);
+    doc.line(M, y, pageW - M, y);
+    y += 16;
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9);
+    doc.setTextColor(72, 88, 108);
+    doc.text(pdfLatinize("Mutfak ve operasyon icin yazdirilabilir gunluk liste"), M, y);
+    y += 16;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.text(venueLine, 40, 50);
-    doc.text(dateLine, 40, 62);
-    doc.text(filterLine, 40, 74);
-    doc.text(statLine, 40, 86);
+    doc.setTextColor(35, 40, 45);
+    var blok = [
+      pdfLatinize(
+        "Rezervasyon gunu (tablo): " +
+          formatIsoDateDisplayTr(iso) +
+          "   |   Cikti mekani: " +
+          mekanAdi
+      ),
+      pdfLatinize(
+        "Ozet: " +
+          String(list.length) +
+          " kayit, toplam " +
+          String(guestSum) +
+          " kisi  |  Beklemede: " +
+          String(cnt.wait) +
+          "  |  Onaylandi: " +
+          String(cnt.approved) +
+          "  |  Onaylanmadi: " +
+          String(cnt.rejected) +
+          (cnt.cancelled ? "  |  Iptal: " + String(cnt.cancelled) : "")
+      ),
+      pdfLatinize(
+        "Aciklama: Satirlar rezervasyon tarihine goredir. Talep zamani sutunu, talebin sisteme dususunu gosterir (yerel saat, gg/aa ss:dd)."
+      ),
+    ];
+    doc.setFontSize(9.5);
+    blok.forEach(function (par) {
+      doc.splitTextToSize(par, contentW).forEach(function (ln) {
+        doc.text(ln, M, y);
+        y += 12;
+      });
+      y += 5;
+    });
+    y += 4;
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+
     var head = [
       [
         pdfLatinize("Saat"),
-        pdfLatinize("Mekan"),
+        pdfLatinize("Mekan / hizmet"),
         pdfLatinize("Misafir"),
         pdfLatinize("Oda"),
-        pdfLatinize("Milliyet"),
+        pdfLatinize("Uyruk"),
         pdfLatinize("Kisi"),
+        pdfLatinize("Talep zamani"),
         pdfLatinize("Durum"),
         pdfLatinize("Not"),
       ],
@@ -1016,68 +1129,95 @@
     var body = list.map(function (r) {
       return [
         pdfLatinize(reservationTimeValue(r) || "-"),
-        pdfLatinize(reservationTypeLabel(r) || ""),
+        reservationTypeLabelPdf(r),
         pdfLatinize(r.guest_name || ""),
         pdfLatinize(r.room_number || ""),
         pdfLatinize(r.nationality || ""),
         pdfLatinize(String(reservationGuestCountValue(r))),
-        pdfLatinize(reservationStatusLabel(r.status)),
-        pdfLatinize(String(r.note || "").trim()).slice(0, 200),
+        pdfLatinize(formatSubmittedAtShortTr(r.submitted_at)),
+        reservationStatusLabelPdf(r),
+        pdfLatinize(String(r.note || "").trim()).slice(0, 220),
       ];
     });
     try {
       if (typeof doc.autoTable === "function") {
         doc.autoTable({
-          startY: 98,
+          startY: y,
           head: head,
           body: body,
-          theme: "grid",
+          theme: "striped",
+          showHead: "everyPage",
           styles: {
             font: "helvetica",
-            fontSize: 8,
-            cellPadding: 3,
+            fontSize: 9,
+            cellPadding: { top: 5, bottom: 5, left: 5, right: 5 },
             overflow: "linebreak",
-            minCellHeight: 10,
+            valign: "middle",
+            minCellHeight: 12,
+            textColor: [35, 40, 45],
           },
           headStyles: {
-            fillColor: [41, 128, 185],
+            fillColor: [36, 112, 163],
             textColor: 255,
             fontStyle: "bold",
+            fontSize: 9,
             halign: "center",
+            valign: "middle",
           },
+          alternateRowStyles: { fillColor: [248, 251, 254] },
           columnStyles: {
-            0: { cellWidth: 40 },
-            1: { cellWidth: 95 },
-            2: { cellWidth: 85 },
-            3: { cellWidth: 36 },
-            4: { cellWidth: 40 },
-            5: { cellWidth: 40 },
-            6: { cellWidth: 72 },
-            7: { cellWidth: "auto" },
+            0: { cellWidth: 36, halign: "center" },
+            1: { cellWidth: 112 },
+            2: { cellWidth: 76 },
+            3: { cellWidth: 34, halign: "center" },
+            4: { cellWidth: 30, halign: "center" },
+            5: { cellWidth: 28, halign: "center" },
+            6: { cellWidth: 64, halign: "center", fontSize: 8 },
+            7: { cellWidth: 58, halign: "center", fontStyle: "bold" },
+            8: { cellWidth: "auto" },
           },
-          margin: { left: 40, right: 40 },
+          margin: { left: M, right: M },
+          tableLineColor: [200, 210, 222],
+          tableLineWidth: 0.35,
+          didDrawPage: function (data) {
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8);
+            doc.setTextColor(95, 105, 120);
+            var foot = pdfLatinize(
+              "Viona Kaila Beach  |  Olusturma: " + formatSubmittedAtShortTr(new Date().toISOString())
+            );
+            doc.text(foot, M, pageH - 22);
+            doc.text(
+              pdfLatinize("Sayfa ") + data.pageNumber,
+              pageW - M,
+              pageH - 22,
+              { align: "right" }
+            );
+            doc.setTextColor(0, 0, 0);
+          },
         });
       } else {
         throw new Error("autoTable missing");
       }
     } catch (_e) {
       doc.setFontSize(8);
-      var y = 102;
+      var yF = y + 8;
       list.forEach(function (r) {
-        if (y > 520) {
+        if (yF > pageH - 50) {
           doc.addPage();
-          y = 40;
+          yF = M + 10;
         }
         var line = pdfLatinize(
           [
             reservationTimeValue(r) || "-",
-            reservationTypeLabel(r),
+            reservationTypeLabelPdf(r),
             r.guest_name,
             r.room_number,
+            reservationStatusLabelPdf(r),
           ].join(" | ")
         );
-        doc.text(line.slice(0, 160), 40, y);
-        y += 12;
+        doc.text(line.slice(0, 175), M, yF);
+        yF += 12;
       });
     }
     doc.save(pdfReportFilenamePart(ovFilterKey) + "_" + iso + ".pdf");
@@ -1095,18 +1235,183 @@
     return k;
   }
 
-  function reservationOverviewDefaultDate(rows) {
+  /** Genel bakış + mekân şeridi: bugünden itibaren gün sayısı. */
+  var RESERVATION_UPCOMING_STRIP_DAYS = 21;
+
+  function reservationDatesInScopeSorted(rows, scopeKey) {
+    var set = {};
+    rows.forEach(function (r) {
+      if (!reservationServiceMatches(r, scopeKey)) return;
+      var d = String(reservationDateValue(r) || "").slice(0, 10);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(d)) set[d] = true;
+    });
+    return Object.keys(set).sort();
+  }
+
+  function reservationListForScopeAndDate(rows, scopeKey, iso, overviewListFilterKey) {
+    if (scopeKey === "overview") {
+      return reservationOverviewListFor(iso, overviewListFilterKey || "all", rows);
+    }
+    return rows.filter(function (r) {
+      return reservationServiceMatches(r, scopeKey) && reservationDateValue(r) === iso;
+    });
+  }
+
+  /**
+   * Varsayılan takvim günü: bugün (kayıt varsa); değilse önümüzdeki 21 günde beklemede kaydı olan en yakın gün;
+   * yoksa bugünden sonraki en yakın kayıtlı gün; o da yoksa en erken kayıt veya bugün.
+   */
+  function reservationSmartDefaultIso(rows, scopeKey, overviewListFilterKey) {
     var today = todayIsoLocal();
-    var dates = rows
-      .filter(function (r) {
-        return reservationServiceMatches(r, "overview");
-      })
-      .map(reservationDateValue)
-      .filter(function (d) {
-        return d && String(d).length >= 10;
-      });
+    var dates = reservationDatesInScopeSorted(rows, scopeKey);
     if (dates.indexOf(today) >= 0) return today;
-    return dates.sort()[0] || today;
+    var FWD = 21;
+    var i;
+    for (i = 1; i <= FWD; i++) {
+      var iso = addCalendarDaysIso(today, i);
+      if (dates.indexOf(iso) < 0) continue;
+      var list = reservationListForScopeAndDate(rows, scopeKey, iso, overviewListFilterKey);
+      var j;
+      for (j = 0; j < list.length; j++) {
+        if (reservationIsWaitStatus(reservationNormalizeStatusKey(list[j].status))) {
+          return iso;
+        }
+      }
+    }
+    var fut = dates.filter(function (d) {
+      return d >= today;
+    });
+    if (fut.length) return fut[0];
+    return dates[0] || today;
+  }
+
+  function reservationOverviewDefaultDate(rows) {
+    return reservationSmartDefaultIso(rows, "overview", "all");
+  }
+
+  /** Şerit: o rezervasyon günü + bağlam (genel bakış filtresi veya tek mekân) için toplam ve beklemede sayısı. */
+  function reservationUpcomingStripStats(rows, dayIso, ctx) {
+    var list;
+    if (ctx.mode === "overview") {
+      list = reservationOverviewListFor(dayIso, ctx.filterKey || "all", rows);
+    } else {
+      list = rows.filter(function (r) {
+        return reservationServiceMatches(r, ctx.tabKey) && reservationDateValue(r) === dayIso;
+      });
+    }
+    var wait = 0;
+    list.forEach(function (r) {
+      if (reservationIsWaitStatus(reservationNormalizeStatusKey(r && r.status))) wait += 1;
+    });
+    return { total: list.length, wait: wait };
+  }
+
+  function buildReservationUpcomingStripHtml(rows, ctx, selectedIso) {
+    var today = todayIsoLocal();
+    var sel = String(selectedIso || "").slice(0, 10);
+    var parts = [];
+    var d;
+    for (d = 0; d < RESERVATION_UPCOMING_STRIP_DAYS; d++) {
+      var iso = addCalendarDaysIso(today, d);
+      if (!iso) continue;
+      var st = reservationUpcomingStripStats(rows, iso, ctx);
+      var isSel = iso === sel;
+      var isToday = iso === today;
+      var cls = "reservation-upcoming-day";
+      if (isSel) cls += " is-selected";
+      if (isToday) cls += " is-today";
+      var waitPart =
+        st.wait > 0
+          ? '<span class="reservation-upcoming-day__wait">' + esc(String(st.wait)) + " bkl</span>"
+          : "";
+      parts.push(
+        '<button type="button" role="listitem" class="' +
+          cls +
+          '" data-iso="' +
+          esc(iso) +
+          '" aria-pressed="' +
+          (isSel ? "true" : "false") +
+          '" title="' +
+          esc(formatIsoDateDisplayTr(iso) + " — " + st.total + " kayıt") +
+          '">' +
+          '<span class="reservation-upcoming-day__date">' +
+          esc(formatIsoDateShortDisplay(iso)) +
+          "</span>" +
+          '<span class="reservation-upcoming-day__counts">' +
+          '<span class="reservation-upcoming-day__total">' +
+          esc(String(st.total)) +
+          "</span>" +
+          waitPart +
+          "</span></button>"
+      );
+    }
+    return (
+      '<div class="reservation-upcoming-strip__inner" role="list">' +
+      parts.join("") +
+      "</div>"
+    );
+  }
+
+  function paintReservationUpcomingStrip(el, rows, ctx, selectedIso) {
+    if (!el) return;
+    el.innerHTML = buildReservationUpcomingStripHtml(rows, ctx, selectedIso);
+  }
+
+  /** Takvim bugünü + bağlam: bugüne düşen kayıt ve beklemede sayısı (uyarı bandı). */
+  function reservationCountsForCalendarToday(rows, ctx) {
+    var today = todayIsoLocal();
+    var list;
+    if (ctx.mode === "overview") {
+      list = reservationOverviewListFor(today, ctx.filterKey || "all", rows);
+    } else {
+      list = rows.filter(function (r) {
+        return reservationServiceMatches(r, ctx.tabKey) && reservationDateValue(r) === today;
+      });
+    }
+    var wait = 0;
+    list.forEach(function (r) {
+      if (reservationIsWaitStatus(reservationNormalizeStatusKey(r && r.status))) wait += 1;
+    });
+    return { total: list.length, wait: wait, todayIso: today };
+  }
+
+  function paintReservationTodayAlert(el, rows, ctx) {
+    if (!el) return;
+    var c = reservationCountsForCalendarToday(rows, ctx);
+    if (c.total === 0) {
+      el.textContent = "";
+      el.className = "reservation-today-alert is-hidden";
+      el.setAttribute("aria-hidden", "true");
+      return;
+    }
+    el.setAttribute("aria-hidden", "false");
+    if (c.wait > 0) {
+      el.className = "reservation-today-alert reservation-today-alert--wait";
+      el.textContent = "Bugüne " + c.wait + " bekleyen rezervasyon talebi var.";
+    } else {
+      el.className = "reservation-today-alert reservation-today-alert--info";
+      el.textContent = "Bugüne " + c.total + " rezervasyon kaydı var (bekleyen yok).";
+    }
+  }
+
+  function clearReservationDayTicker(mountEl) {
+    if (mountEl._vionaDayTicker) {
+      clearInterval(mountEl._vionaDayTicker);
+      mountEl._vionaDayTicker = null;
+    }
+    mountEl._vionaLastCalendarIso = undefined;
+  }
+
+  /** Yerel gün değişince: seçili tarih dünkü “bugün” ise yeni bugüne taşınır; tablo/şerit yenilenir. */
+  function startReservationDayTicker(mountEl, onCalendarDayChange) {
+    clearReservationDayTicker(mountEl);
+    mountEl._vionaLastCalendarIso = todayIsoLocal();
+    mountEl._vionaDayTicker = setInterval(function () {
+      var nowDay = todayIsoLocal();
+      if (nowDay === mountEl._vionaLastCalendarIso) return;
+      mountEl._vionaLastCalendarIso = nowDay;
+      onCalendarDayChange(mountEl._vionaLastCalendarIso);
+    }, 30000);
   }
 
   function reservationOverviewListFor(iso, filterKey, rows) {
@@ -1147,17 +1452,7 @@
 
   function reservationDefaultViewDate(rows, venueKey) {
     if (!reservationIsVenueKey(venueKey)) return todayIsoLocal();
-    var today = todayIsoLocal();
-    var dates = rows
-      .filter(function (r) {
-        return reservationServiceMatches(r, venueKey);
-      })
-      .map(reservationDateValue)
-      .filter(function (d) {
-        return d && String(d).length >= 10;
-      });
-    if (dates.indexOf(today) >= 0) return today;
-    return dates.sort()[0] || today;
+    return reservationSmartDefaultIso(rows, venueKey, "all");
   }
 
   function reservationManualFormHtml(activeTab, rows) {
@@ -1200,6 +1495,21 @@
   function renderReservationBoard(mountEl, type, rows, handlers) {
     if (!Array.isArray(rows)) rows = [];
 
+    /* Her yeniden çizimde mountEl üzerindeki rezervasyon dinleyicilerini kaldır (aksi halde birikir; eski closure ile kopuk DOM güncellenir). */
+    if (typeof AbortController !== "undefined") {
+      if (mountEl._vionaResAbc) {
+        try {
+          mountEl._vionaResAbc.abort();
+        } catch (_e) {}
+      }
+      mountEl._vionaResAbc = new AbortController();
+    } else {
+      mountEl._vionaResAbc = null;
+    }
+    var resMountOpts = mountEl._vionaResAbc ? { signal: mountEl._vionaResAbc.signal } : undefined;
+
+    clearReservationDayTicker(mountEl);
+
     var initialRaw = reservationNormalizeInitialSubtab(
       handlers && handlers.initialReservationSubtab != null ? handlers.initialReservationSubtab : "overview"
     );
@@ -1241,7 +1551,7 @@
         '<header class="reservation-hero reservation-hero--overview">' +
         '<div class="reservation-hero__intro">' +
         "<h3>Günlük rezervasyon takibi</h3>" +
-        "<p>Seçilen güne göre tüm mekânların özeti ve listesi. Durum değişikliği için soldan ilgili mekân sekmesine geçin. Üstteki chip’ler yalnızca tabloyu filtreler.</p>" +
+        "<p>Özet, <strong>rezervasyonun yapıldığı güne</strong> göredir; <strong>Gönderim</strong> sütunu talebin ne zaman geldiğini gösterir. Seçilen güne göre tüm mekânların listesi. Durum değişikliği için soldan ilgili mekân sekmesine geçin. Üstteki chip’ler yalnızca tabloyu filtreler.</p>" +
         "</div>" +
         '<div class="reservation-venue-summary-grid">' +
         venueCardInner("laTerrace", "La Terrace A La Carte") +
@@ -1271,14 +1581,21 @@
         "</span>" +
         "</div></label>" +
         '<div class="reservation-overview-actions">' +
-        '<button type="button" class="btn-small reservation-report-pdf">PDF indir</button>' +
+        '<span class="reservation-pdf-hint">' +
+        esc("Mutfak / operasyon için yazdırılabilir özet") +
+        "</span>" +
+        '<button type="button" class="btn-small reservation-report-pdf" title="Günlük liste PDF — mutfak ve operasyon için">' +
+        "PDF indir" +
+        "</button>" +
         "</div>" +
         "</div>" +
+        '<p class="reservation-today-alert is-hidden" role="status" aria-live="polite" aria-hidden="true"></p>' +
+        '<div class="reservation-upcoming-strip" role="group" aria-label="Önümüzdeki günler (rezervasyon tarihi)"></div>' +
         '<p class="reservation-overview-summary"></p>' +
         '<div class="bucket-table-wrap">' +
         '<table class="admin-table reservation-overview-table">' +
         "<thead><tr>" +
-        "<th>Saat</th><th>Mekân</th><th>Misafir</th><th>Oda</th><th>Milliyet</th><th>Kişi</th><th>Durum</th><th>Not</th>" +
+        "<th>Saat</th><th>Mekân</th><th>Misafir</th><th>Oda</th><th>Milliyet</th><th>Kişi</th><th>Gönderim</th><th>Durum</th><th>Not</th>" +
         "</tr></thead>" +
         '<tbody class="reservation-overview-tbody"></tbody>' +
         "</table>" +
@@ -1292,6 +1609,8 @@
       var tbodyOv = mountEl.querySelector(".reservation-overview-tbody");
       var summaryEl = mountEl.querySelector(".reservation-overview-summary");
       var filterChips = mountEl.querySelectorAll(".reservation-filter-chip");
+      var stripOv = mountEl.querySelector(".reservation-upcoming-strip");
+      var alertTodayOv = mountEl.querySelector(".reservation-today-alert");
 
       function renderOverviewTable() {
         if (!tbodyOv) return;
@@ -1330,9 +1649,11 @@
             " kişi — filtre: " +
             fkLabel;
         }
+        paintReservationUpcomingStrip(stripOv, rows, { mode: "overview", filterKey: ovFilterKey }, iso);
+        paintReservationTodayAlert(alertTodayOv, rows, { mode: "overview", filterKey: ovFilterKey });
         if (!list.length) {
           tbodyOv.innerHTML =
-            '<tr><td colspan="8" class="admin-table__empty">Bu tarih ve filtre için rezervasyon yok.</td></tr>';
+            '<tr><td colspan="9" class="admin-table__empty">Bu tarih ve filtre için rezervasyon yok.</td></tr>';
           return;
         }
         var out = "";
@@ -1359,6 +1680,9 @@
             "<td>" +
             esc(reservationGuestCountValue(r)) +
             "</td>" +
+            "<td>" +
+            esc(formatSubmittedAtShortTr(r.submitted_at)) +
+            "</td>" +
             '<td><span class="status-badge status-' +
             esc(rowStNormOv) +
             (reservationIsWaitStatus(rowStNormOv) ? " status-badge--wait" : "") +
@@ -1374,6 +1698,17 @@
       }
 
       var btnPdf = mountEl.querySelector(".reservation-report-pdf");
+      if (stripOv) {
+        stripOv.addEventListener("click", function (ev) {
+          var btn = ev.target.closest(".reservation-upcoming-day");
+          if (!btn || !stripOv.contains(btn)) return;
+          var pick = String(btn.getAttribute("data-iso") || "").slice(0, 10);
+          if (!pick || pick.length !== 10) return;
+          if (dateOv) dateOv.value = pick;
+          syncReservationDateComboNativeDisplay(dateOv, dateOvDisplay);
+          renderOverviewTable();
+        });
+      }
       if (dateOv) {
         dateOv.addEventListener("change", renderOverviewTable);
         dateOv.addEventListener("input", function () {
@@ -1412,9 +1747,23 @@
       }
 
       renderOverviewTable();
-      mountEl.addEventListener("reservation:setSubtab", function () {
+      startReservationDayTicker(mountEl, function (newToday) {
+        var ymd = String(newToday || "").slice(0, 10) || todayIsoLocal();
+        var cur = String((dateOv && dateOv.value) || "").slice(0, 10);
+        var prev = addCalendarDaysIso(ymd, -1);
+        if (cur === prev) {
+          if (dateOv) dateOv.value = ymd;
+          syncReservationDateComboNativeDisplay(dateOv, dateOvDisplay);
+        }
         renderOverviewTable();
       });
+      mountEl.addEventListener(
+        "reservation:setSubtab",
+        function () {
+          renderOverviewTable();
+        },
+        resMountOpts
+      );
       return;
     }
 
@@ -1483,6 +1832,8 @@
       "</div></label>" +
       '<p class="reservation-day-summary"></p>' +
       "</div>" +
+      '<p class="reservation-today-alert is-hidden" role="status" aria-live="polite" aria-hidden="true"></p>' +
+      '<div class="reservation-upcoming-strip" role="group" aria-label="Önümüzdeki günler (rezervasyon tarihi)"></div>' +
       '<div class="reservation-day-filters">' +
       '<input type="search" class="bucket-search reservation-day-search" placeholder="Bu gün içinde ara (misafir, oda, not)..." />' +
       '<select class="bucket-filter-status reservation-day-status">' +
@@ -1524,6 +1875,8 @@
     var elVRej = mountEl.querySelector(".js-vvenue-rej");
     var elVDayTot = mountEl.querySelector(".js-vvenue-daytotal");
     var elVDayDisp = mountEl.querySelector(".js-vvenue-day-display");
+    var stripVenue = mountEl.querySelector(".reservation-upcoming-strip");
+    var alertTodayVenue = mountEl.querySelector(".reservation-today-alert");
 
     function renderDayTable() {
       if (!tbody) return;
@@ -1552,6 +1905,9 @@
       if (daySummary) {
         daySummary.textContent = formatIsoDateDisplayTr(iso) + " — " + list.length + " kayıt";
       }
+
+      paintReservationUpcomingStrip(stripVenue, rows, { mode: "venue", tabKey: activeTab }, iso);
+      paintReservationTodayAlert(alertTodayVenue, rows, { mode: "venue", tabKey: activeTab });
 
       var q = String((daySearch && daySearch.value) || "").trim().toLowerCase();
       var statusSel = String((dayStatus && dayStatus.value) || "all");
@@ -1649,6 +2005,17 @@
       renderDayTable();
     }
 
+    if (stripVenue) {
+      stripVenue.addEventListener("click", function (ev) {
+        var btn = ev.target.closest(".reservation-upcoming-day");
+        if (!btn || !stripVenue.contains(btn)) return;
+        var pick = String(btn.getAttribute("data-iso") || "").slice(0, 10);
+        if (!pick || pick.length !== 10) return;
+        if (dateInput) dateInput.value = pick;
+        syncReservationDateComboNativeDisplay(dateInput, dateInputDisplay);
+        renderDayTable();
+      });
+    }
     if (dateInput) {
       dateInput.addEventListener("change", renderDayTable);
       dateInput.addEventListener("input", function () {
@@ -1659,21 +2026,25 @@
     if (daySearch) daySearch.addEventListener("input", renderDayTable);
     if (dayStatus) dayStatus.addEventListener("change", renderDayTable);
 
-    mountEl.addEventListener("click", function (ev) {
-      var stBtn = ev.target.closest(".js-status");
-      if (stBtn && tbody && tbody.contains(stBtn)) {
-        if (handlers && typeof handlers.onStatus === "function") {
-          handlers.onStatus(stBtn.getAttribute("data-type"), stBtn.getAttribute("data-id"), stBtn.getAttribute("data-status"));
+    mountEl.addEventListener(
+      "click",
+      function (ev) {
+        var stBtn = ev.target.closest(".js-status");
+        if (stBtn && tbody && tbody.contains(stBtn)) {
+          if (handlers && typeof handlers.onStatus === "function") {
+            handlers.onStatus(stBtn.getAttribute("data-type"), stBtn.getAttribute("data-id"), stBtn.getAttribute("data-status"));
+          }
+          return;
         }
-        return;
-      }
-      var delBtn = ev.target.closest(".js-delete");
-      if (delBtn && tbody && tbody.contains(delBtn)) {
-        if (handlers && typeof handlers.onDelete === "function") {
-          handlers.onDelete(delBtn.getAttribute("data-type"), delBtn.getAttribute("data-id"));
+        var delBtn = ev.target.closest(".js-delete");
+        if (delBtn && tbody && tbody.contains(delBtn)) {
+          if (handlers && typeof handlers.onDelete === "function") {
+            handlers.onDelete(delBtn.getAttribute("data-type"), delBtn.getAttribute("data-id"));
+          }
         }
-      }
-    });
+      },
+      resMountOpts
+    );
 
     function refreshManualTimeSlots() {
       var manDateNat = manualForm && manualForm.querySelector(".reservation-manual-date-native");
@@ -1820,10 +2191,25 @@
       });
     }
 
-    mountEl.addEventListener("reservation:setSubtab", function (ev) {
-      var key = ev && ev.detail && ev.detail.key ? String(ev.detail.key) : "overview";
-      if (!reservationIsVenueKey(reservationNormalizeInitialSubtab(key))) return;
-      setActiveTab(key);
+    mountEl.addEventListener(
+      "reservation:setSubtab",
+      function (ev) {
+        var key = ev && ev.detail && ev.detail.key ? String(ev.detail.key) : "overview";
+        if (!reservationIsVenueKey(reservationNormalizeInitialSubtab(key))) return;
+        setActiveTab(key);
+      },
+      resMountOpts
+    );
+
+    startReservationDayTicker(mountEl, function (newToday) {
+      var ymd = String(newToday || "").slice(0, 10) || todayIsoLocal();
+      var cur = String((dateInput && dateInput.value) || "").slice(0, 10);
+      var prev = addCalendarDaysIso(ymd, -1);
+      if (cur === prev) {
+        if (dateInput) dateInput.value = ymd;
+        syncReservationDateComboNativeDisplay(dateInput, dateInputDisplay);
+      }
+      renderDayTable();
     });
 
     setActiveTab(initialRaw);

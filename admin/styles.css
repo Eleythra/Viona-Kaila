@@ -1746,11 +1746,115 @@
   border: 1px solid rgba(87, 125, 224, 0.25);
   background: rgba(12, 20, 35, 0.55);
 }
+.reservation-today-alert {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  font-weight: 600;
+}
+.reservation-today-alert.is-hidden {
+  display: none;
+}
+.reservation-today-alert--wait {
+  border: 1px solid rgba(232, 185, 80, 0.55);
+  background: rgba(232, 185, 80, 0.12);
+  color: #f5d9a4;
+}
+.reservation-today-alert--info {
+  border: 1px solid rgba(87, 125, 224, 0.4);
+  background: rgba(46, 184, 199, 0.08);
+  color: #a8d8e0;
+}
+.reservation-upcoming-strip {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(87, 125, 224, 0.22);
+  background: rgba(10, 16, 28, 0.5);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.reservation-upcoming-strip__inner {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  align-items: stretch;
+  min-height: 54px;
+}
+.reservation-upcoming-day {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 54px;
+  padding: 8px 9px;
+  border-radius: 10px;
+  border: 1px solid #334860;
+  background: rgba(13, 20, 33, 0.85);
+  color: #c8d7f1;
+  font: inherit;
+  font-size: 0.78rem;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.reservation-upcoming-day:hover {
+  border-color: rgba(126, 224, 235, 0.4);
+}
+.reservation-upcoming-day.is-today {
+  box-shadow: 0 0 0 1px rgba(126, 224, 235, 0.35);
+}
+.reservation-upcoming-day.is-selected {
+  border-color: rgba(46, 184, 199, 0.7);
+  background: rgba(46, 184, 199, 0.14);
+  color: #e8f8fb;
+}
+.reservation-upcoming-day__date {
+  font-weight: 600;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+}
+.reservation-upcoming-day__counts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.reservation-upcoming-day__total {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #7ee0eb;
+}
+.reservation-upcoming-day__wait {
+  font-size: 0.66rem;
+  color: #e8c96b;
+}
+.reservation-upcoming-day.is-selected .reservation-upcoming-day__total {
+  color: #b8f5fc;
+}
 .reservation-overview-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px 14px;
   align-items: center;
+  justify-content: flex-end;
+}
+.reservation-pdf-hint {
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: #8fa8cc;
+  max-width: 220px;
+  text-align: right;
+}
+@media (max-width: 720px) {
+  .reservation-pdf-hint {
+    max-width: none;
+    text-align: left;
+    width: 100%;
+  }
 }
 .reservation-overview-summary {
   margin: 0;
