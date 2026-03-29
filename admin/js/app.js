@@ -896,9 +896,12 @@
       } catch (e) {
         var msg = String((e && e.message) || "");
         if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
-          if (statusEl) statusEl.textContent = "PDF rapor oluşturulamadı: Sunucuya ulaşılamıyor. Backend'in çalıştığını kontrol edin (http://127.0.0.1:3001).";
-        } else {
-          if (statusEl) statusEl.textContent = "PDF rapor oluşturulamadı. Lütfen tekrar deneyin.";
+          if (statusEl)
+            statusEl.textContent =
+              "PDF rapor oluşturulamadı: Sunucuya ulaşılamıyor veya istek zaman aşımı (Render’da PDF + AI uzun sürebilir). Ağı ve API adresini kontrol edin.";
+        } else if (statusEl) {
+          statusEl.textContent =
+            "PDF rapor oluşturulamadı: " + (msg.length > 220 ? msg.slice(0, 217) + "…" : msg || "Bilinmeyen hata.");
         }
       } finally {
         downloadBtn.disabled = false;

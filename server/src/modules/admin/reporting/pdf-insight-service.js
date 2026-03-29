@@ -699,7 +699,14 @@ export async function fetchPdfInsights(payload) {
   if (hit) return { ...hit };
 
   const prompt = buildPrompt(payload);
-  const gen = await generateGeminiJsonText(prompt, { temperature: 0 });
+  const geminiTimeoutMs = Math.min(
+    120_000,
+    Math.max(8_000, Number(process.env.PDF_GEMINI_TIMEOUT_MS) || 45_000),
+  );
+  const gen = await generateGeminiJsonText(prompt, {
+    temperature: 0,
+    timeoutMs: geminiTimeoutMs,
+  });
   if (!gen.ok || !gen.text) {
     const reason = gen.error === "missing_api_key" ? "missing_key" : "api_error";
     return buildFallbackInsight(payload, reason);
