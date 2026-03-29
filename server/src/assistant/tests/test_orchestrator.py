@@ -788,3 +788,43 @@ def test_short_thanks_does_not_fall_back_to_greeting():
     assert "merhaba" not in res.message.lower()
     assert intent.calls == 0
 
+
+def test_ice_cream_phrases_use_fixed_hotel_info_without_llm_or_rag():
+    orch, rag, intent = build_orchestrator()
+    for msg in (
+        "canım dondurma çekti",
+        "dondurma",
+        "dondurma var mı otelde",
+    ):
+        res = orch.handle(ChatRequest(message=msg, ui_language="tr", locale="tr"))
+        assert res.meta.intent == "hotel_info"
+        assert res.type == "answer"
+        assert "15:00" in res.message and "17:00" in res.message
+        assert "Havuz Bar" in res.message or "havuz bar" in res.message.lower()
+        assert intent.calls == 0
+    assert rag.called is False
+
+
+def test_ice_cream_german_eis_token_uses_fixed_info():
+    orch, _, intent = build_orchestrator()
+    res = orch.handle(
+        ChatRequest(
+            message="ich möchte eis",
+            ui_language="de",
+            locale="de",
+            conversation_language="de",
+        )
+    )
+    assert res.meta.intent == "hotel_info"
+    assert res.type == "answer"
+    assert "15:00" in res.message and "17:00" in res.message
+    assert intent.calls == 0
+
+
+def test_sweet_craving_phrase_routes_to_dessert_recommendation():
+    orch, _, intent = build_orchestrator()
+    res = orch.handle(ChatRequest(message="canım tatlı çekti", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "recommendation"
+    assert res.type == "answer"
+    assert intent.calls == 0
+

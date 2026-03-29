@@ -209,6 +209,7 @@ RECOMMENDATION_WORDS = [
     "et", "meat", "bbq", "barbeku", "barbecue",
     "pizza", "snack", "atıştırmalık", "atistirmalik",
     "kahve", "coffee", "tatlı", "tatli", "dessert",
+    "çikolata", "cikolata", "chocolate",
     "çocuk", "cocuk", "çocuğum", "cocugum", "kids", "mini club", "mini disco", "5 yaş", "5 yas", "aktivite", "activity",
 ]
 URGENT_CONTACT_WORDS = [
@@ -523,6 +524,20 @@ class RuleEngine:
                 needs_rag=False,
                 response_mode="answer",
                 confidence=0.9,
+                source="rule",
+            )
+
+        # Ice cream / frozen treat availability: fixed answer before recommendation/LLM drift.
+        if self._is_ice_cream_hotel_info_query(normalized_text):
+            logger.info("RULE MATCH: hotel_info (ice_cream)")
+            return IntentResult(
+                intent="hotel_info",
+                sub_intent="service_information",
+                entity="fixed_ice_cream_info",
+                department=None,
+                needs_rag=False,
+                response_mode="answer",
+                confidence=0.97,
                 source="rule",
             )
 
@@ -1060,6 +1075,26 @@ class RuleEngine:
         return None
 
     @staticmethod
+    def _is_ice_cream_hotel_info_query(text: str) -> bool:
+        t = (text or "").lower()
+        if any(
+            p in t
+            for p in (
+                "dondurma",
+                "ice cream",
+                "ice-cream",
+                "icecream",
+                "gelato",
+                "мороженое",
+                "мороженого",
+                "eiscreme",
+                "eis am stiel",
+            )
+        ):
+            return True
+        return "eis" in _norm_tokens(t)
+
+    @staticmethod
     def _is_service_info_query(text: str) -> bool:
         t = text.lower()
         info_terms = [
@@ -1089,6 +1124,22 @@ class RuleEngine:
     @staticmethod
     def _recommendation_entity(text: str) -> str | None:
         t = (text or "").lower()
+        if any(
+            k in t
+            for k in [
+                "canım tatlı",
+                "canim tatli",
+                "tatlı çekti",
+                "tatli cekti",
+                "canım çikolata",
+                "canim cikolata",
+                "çikolata çekti",
+                "cikolata cekti",
+                "craving something sweet",
+                "something sweet",
+            ]
+        ):
+            return "coffee_dessert_pref"
         if any(k in t for k in ["romantik", "romantic"]):
             return "romantic_dinner_pref"
         if any(k in t for k in ["ne yesem", "karar veremedim", "what should i eat"]):

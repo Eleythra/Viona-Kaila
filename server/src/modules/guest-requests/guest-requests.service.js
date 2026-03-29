@@ -310,6 +310,16 @@ function validate(normalized) {
   }
 }
 
+/** PostgREST / Supabase: hem "column … category" hem "Could not find the 'category' column …" eşlensin. */
+function isMissingCategoryOrDetailsColumnError(message) {
+  const s = String(message || "");
+  return (
+    /\bcolumn\b.*\bcategory\b|\bcategory\b.*\bcolumn\b|\bcolumn\b.*\bdetails\b|\bdetails\b.*\bcolumn\b/i.test(
+      s,
+    ) || /\bschema cache\b/i.test(s) && /\bcategory\b|\bdetails\b/i.test(s)
+  );
+}
+
 async function insertSimple(table, normalized) {
   const row = {
     guest_name: normalized.name,
@@ -331,7 +341,7 @@ async function insertSimple(table, normalized) {
   if (
     error &&
     (table === "guest_requests" || table === "guest_faults" || table === "guest_complaints") &&
-    /column .*category|column .*details/i.test(String(error.message || ""))
+    isMissingCategoryOrDetailsColumnError(error.message)
   ) {
     delete row.category;
     delete row.details;

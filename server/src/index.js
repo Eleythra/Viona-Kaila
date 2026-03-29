@@ -94,6 +94,34 @@ function guessMultiIntent(message = "") {
   return /\s(ama|ayrıca|ayrica|fakat|but|also)\s/.test(t);
 }
 
+/** Supabase chat_observations.chat_obs_response_type_chk */
+const CHAT_OBS_RESPONSE_TYPES = new Set(["answer", "redirect", "inform", "fallback"]);
+/** Supabase chat_observations.chat_obs_layer_used_chk */
+const CHAT_OBS_LAYER_USED = new Set(["rule", "rag", "llm", "fallback"]);
+
+function normalizeChatObsResponseType(type) {
+  const s = String(type || "").toLowerCase().trim();
+  if (CHAT_OBS_RESPONSE_TYPES.has(s)) return s;
+  if (s === "error" || s === "exception") return "fallback";
+  return "inform";
+}
+
+function normalizeChatObsLayerUsed(source) {
+  const s = String(source || "").toLowerCase().trim();
+  if (CHAT_OBS_LAYER_USED.has(s)) return s;
+  if (s === "openai" || s === "assistant" || s === "upstream" || s === "proxy" || s === "llm_pipeline") {
+    return "llm";
+  }
+  return null;
+}
+
+/** numeric(5,4): en fazla 9.9999 */
+function normalizeChatObsConfidence(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  return Math.min(9.9999, Math.max(0, n));
+}
+
 async function writeChatObservation({
   sessionId,
   userId,
@@ -105,9 +133,12 @@ async function writeChatObservation({
 }) {
   try {
     if (!isSupabaseConfigured()) return;
+    const userMessage = String(message || "").trim();
+    if (!userMessage) return;
+
     const intent = String(response?.meta?.intent || "unknown");
-    const source = String(response?.meta?.source || "fallback");
-    const responseType = String(response?.type || "fallback");
+    const responseType = normalizeChatObsResponseType(response?.type);
+    const layerUsed = normalizeChatObsLayerUsed(response?.meta?.source);
     const action = response?.meta?.action || null;
     const recommendationMade = intent === "recommendation" || action?.kind === "suggest_venue";
     const routeTarget = routeTargetForResponse(response);
@@ -116,27 +147,27 @@ async function writeChatObservation({
     const row = {
       session_id: sessionId || null,
       user_id: userId || null,
-      user_message: String(message || ""),
+      user_message: userMessage,
       ui_language: uiLanguage || null,
       detected_language: response?.meta?.language || null,
       intent,
       domain: domainForIntent(intent),
       sub_intent: action?.sub_intent || null,
       entity: action?.entity || null,
-      confidence: Number(response?.meta?.confidence || 0),
+      confidence: normalizeChatObsConfidence(response?.meta?.confidence),
       multi_intent:
         typeof response?.meta?.multi_intent === "boolean"
           ? response.meta.multi_intent
-          : guessMultiIntent(message),
+          : guessMultiIntent(userMessage),
       response_type: responseType,
       route_target: routeValue,
       recommendation_made: Boolean(recommendationMade),
-      layer_used: source,
+      layer_used: layerUsed,
       fallback_reason: fallbackReason || null,
       decision_path: decisionPath || null,
-      assistant_response: String(response?.message || ""),
+      assistant_response: String(response?.message || "").trim() || " ",
       raw_payload: {
-        message,
+        message: userMessage,
         response,
       },
     };
@@ -188,15 +219,6 @@ app.post("/api/chat", async (req, res) => {
 
   if (!message) {
     const fb = safeFallback(locale, "validation_error");
-    await writeChatObservation({
-      sessionId,
-      userId,
-      message,
-      uiLanguage,
-      response: fb,
-      fallbackReason: "validation_error",
-      decisionPath: "proxy:validation_error",
-    });
     return res.status(200).json(fb);
   }
 

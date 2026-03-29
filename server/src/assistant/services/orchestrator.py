@@ -444,6 +444,7 @@ class ChatOrchestrator:
             fixed_entity_key = (entity or "").strip()
             if fixed_entity_key in (
                 "fixed_restaurant_info",
+                "fixed_ice_cream_info",
                 "fixed_pool_beach_info",
                 "fixed_spa_info",
                 "fixed_animation_info",

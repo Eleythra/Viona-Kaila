@@ -58,6 +58,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fixed_spa_info": "- La Serenite Spa kullanım saatleri: 09:00-19:00.\nÜcretsiz alanlar:\n- Sauna\n- Türk hamamı\n- Buhar odası\n- Kapalı havuz\nÜcretli hizmetler:\n- Masaj\n- Peeling\n- Cilt bakımı\n- Diğer bakım hizmetleri\nNot: Temel ıslak alan kullanımı ücretsiz, profesyonel bakım ve terapi hizmetleri ücretlidir.",
         "fixed_animation_info": "- Akşam akrobatik dans şovları, temalı geceler, canlı müzik, DJ performansları.\n- Günlük program 10:00'da başlar; aqua gym, dart, su topu gibi aktiviteler içerir.\nÇocuk aktiviteleri:\n- Jammies Kids Club / Mini Club: 10:00-12:30 ve 14:30-17:00 (4-12 yaş)\n- Mini Disco: 20:45-21:00 (4-12 yaş)\n- Çocuk oyun parkı: 07:00-21:00\nNot: Programlar sezon ve operasyon takvimine göre değişebilir.",
         "fixed_outside_hotel_info": "Otel dışı öneriler için en güncel ve güvenli bilgi resepsiyondadır. Alanya merkez yaklaşık 3 km mesafededir; taksi ve toplu taşıma seçenekleri mevcuttur.",
+        "fixed_ice_cream_info": "Evet, otelde dondurma servisi vardır. Dondurma servisi Havuz Bar'da 15:00-17:00 saatleri arasında ücretsiz sunulmaktadır. (Sezon ve operasyon takvimine göre değişiklik olabilir.)",
     },
     "en": {
         "chitchat_greeting": "Hello, I'm Viona, your digital assistant at Kaila Beach Hotel. How can I help you?",
@@ -115,6 +116,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fixed_spa_info": "- La Serenite Spa hours: 09:00-19:00.\nFree areas:\n- Sauna\n- Turkish bath\n- Steam room\n- Indoor pool\nPaid services:\n- Massage\n- Peeling\n- Skin care\n- Other treatment services\nNote: Basic wet-area use is free; professional care and therapy services are paid.",
         "fixed_animation_info": "- Evening acrobatic dance shows, themed nights, live music, and DJ performances.\n- Daily program starts at 10:00 and includes aqua gym, darts, and water polo.\nChildren’s activities:\n- Jammies Kids Club / Mini Club: 10:00-12:30 and 14:30-17:00 (ages 4-12)\n- Mini Disco: 20:45-21:00 (ages 4-12)\n- Children’s playground: 07:00-21:00\nNote: Programs may vary based on seasonal and operational schedules.",
         "fixed_outside_hotel_info": "For outside-hotel suggestions, reception provides the most up-to-date and safe guidance. Alanya city center is about 3 km away, and taxi/public transport options are available.",
+        "fixed_ice_cream_info": "Yes, the hotel offers an ice cream service. It is served complimentary at the Pool Bar between 15:00 and 17:00. (Hours may vary by season and operations.)",
     },
     "de": {
         "chitchat_greeting": "Hallo, ich bin Viona, Ihre digitale Assistentin im Kaila Beach Hotel. Wie kann ich Ihnen helfen?",
@@ -172,6 +174,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fixed_spa_info": "- Öffnungszeiten La Serenite Spa: 09:00-19:00.\nKostenlose Bereiche:\n- Sauna\n- Türkisches Bad\n- Dampfbad\n- Hallenbad\nKostenpflichtige Leistungen:\n- Massage\n- Peeling\n- Hautpflege\n- Weitere Behandlungen\nHinweis: Grundnutzung der Nassbereiche ist kostenlos; professionelle Pflege- und Therapieleistungen sind kostenpflichtig.",
         "fixed_animation_info": "- Abendliche Akrobatik-Tanzshows, Themenabende, Live-Musik und DJ-Performances.\n- Tagesprogramm startet um 10:00 mit Aqua Gym, Dart und Wasserball.\nKinderaktivitäten:\n- Jammies Kids Club / Mini Club: 10:00-12:30 und 14:30-17:00 (4-12 Jahre)\n- Mini Disco: 20:45-21:00 (4-12 Jahre)\n- Kinderspielplatz: 07:00-21:00\nHinweis: Programme können je nach Saison- und Betriebsplan variieren.",
         "fixed_outside_hotel_info": "Für Empfehlungen außerhalb des Hotels wenden Sie sich bitte an die Rezeption; dort erhalten Sie die aktuellsten und sichersten Informationen. Das Zentrum von Alanya ist etwa 3 km entfernt; Taxi- und ÖPNV-Optionen sind verfügbar.",
+        "fixed_ice_cream_info": "Ja, im Hotel gibt es einen Eis-Service. Er wird kostenlos an der Pool Bar zwischen 15:00 und 17:00 Uhr angeboten. (Zeiten können je nach Saison und Betrieb variieren.)",
     },
     "ru": {
         "chitchat_greeting": "Здравствуйте! Я Виона, ваш цифровой ассистент в отеле Kaila Beach. Чем могу помочь?",
@@ -229,6 +232,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "fixed_spa_info": "- La Serenite Spa работает с 09:00 до 19:00.\nБесплатные зоны:\n- Сауна\n- Турецкий хаммам\n- Паровая комната\n- Крытый бассейн\nПлатные услуги:\n- Массаж\n- Пилинг\n- Уход за кожей\n- Другие процедуры\nПримечание: Базовое использование влажных зон бесплатно; профессиональные процедуры и терапия — платные.",
         "fixed_animation_info": "- Вечерние акробатические танцевальные шоу, тематические вечера, живая музыка и DJ-выступления.\n- Дневная программа стартует в 10:00 и включает aqua gym, дартс и водное поло.\nДетские активности:\n- Jammies Kids Club / Mini Club: 10:00-12:30 и 14:30-17:00 (4-12 лет)\n- Mini Disco: 20:45-21:00 (4-12 лет)\n- Детская площадка: 07:00-21:00\nПримечание: Программы могут меняться в зависимости от сезона и операционного графика.",
         "fixed_outside_hotel_info": "Для рекомендаций вне отеля лучше обратиться на ресепшн — там подскажут самые актуальные и безопасные варианты. Центр Аланьи находится примерно в 3 км, доступны такси и общественный транспорт.",
+        "fixed_ice_cream_info": "Да, в отеле есть сервис мороженого. Он бесплатно подаётся в Pool Bar с 15:00 до 17:00. (Время может меняться в зависимости от сезона и операционного графика.)",
     },
 }
 

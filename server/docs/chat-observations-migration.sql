@@ -1,0 +1,3 @@
+-- Bu dosya yerine güncel tek parça betik kullanın:
+--   server/docs/supabase-paste-viona.sql
+-- (Supabase SQL Editor’a yapıştırın; chat_observations + view’lar + guest kolonları.)

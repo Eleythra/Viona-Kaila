@@ -158,6 +158,7 @@
       promoConfigFetchPromise = loadPromoConfig()
         .then(function (cfg) {
           if (cfg) {
+            prewarmPromoImages(cfg);
             writeCachedPromoConfig(cfg);
             sessionPromoConfig = cfg;
           }
@@ -184,14 +185,39 @@
     }
   }
 
+  /** ~5 MB üstü data URL gövdeleri quota / yarım önbellek riski; yazmayı atla. */
+  var PROMO_CACHE_MAX_CHARS = 4500000;
+
   function writeCachedPromoConfig(cfg) {
     var n = normalizePromoConfig(cfg);
     if (!n) return;
     try {
-      localStorage.setItem(PROMO_CACHE_KEY, JSON.stringify(n));
+      var s = JSON.stringify(n);
+      if (s.length > PROMO_CACHE_MAX_CHARS) return;
+      localStorage.setItem(PROMO_CACHE_KEY, s);
     } catch (e) {
-      /* quota / private mode */
+      try {
+        localStorage.removeItem(PROMO_CACHE_KEY);
+      } catch (_ignore) {
+        /* no-op */
+      }
     }
+  }
+
+  /** Ağ cevabı gelince decode önceden başlasın (özellikle büyük data URL). */
+  function prewarmPromoImages(cfg) {
+    if (!cfg || typeof cfg !== "object") return;
+    ["tr", "en", "de", "ru"].forEach(function (code) {
+      var src = String(cfg["image_" + code] || "").trim();
+      if (!src) return;
+      try {
+        var im = new Image();
+        im.decoding = "async";
+        im.src = src;
+      } catch (e) {
+        /* no-op */
+      }
+    });
   }
 
   function applyConfig(cfg) {
@@ -216,7 +242,7 @@
       '<div class="promo-popup__backdrop"></div>' +
       '<div class="promo-popup__panel">' +
       '<button type="button" class="promo-popup__close" aria-label="Close">×</button>' +
-      '<img class="promo-popup__image" alt="Discount campaign" />' +
+      '<img class="promo-popup__image" alt="Discount campaign" decoding="async" loading="eager" />' +
       "</div>";
 
     root.querySelector(".promo-popup__close").addEventListener("click", closePopup);
@@ -281,14 +307,20 @@
     }
 
     var tryFirst = sessionPromoConfig || readCachedPromoConfig();
-    if (tryFirst) showPopupForConfig(tryFirst, ver(tryFirst));
+    var popupOpened = Boolean(tryFirst && showPopupForConfig(tryFirst, ver(tryFirst)));
 
-    var remoteCfg = await fetchPromoConfigOnce();
-    if (remoteCfg) {
-      showPopupForConfig(remoteCfg, ver(remoteCfg));
-    } else if (!tryFirst) {
-      var again = readCachedPromoConfig();
-      if (again) showPopupForConfig(again, ver(again));
+    if (!sessionPromoConfig) {
+      if (!popupOpened) {
+        var remoteCfg = await fetchPromoConfigOnce();
+        if (remoteCfg) {
+          showPopupForConfig(remoteCfg, ver(remoteCfg));
+        } else if (!tryFirst) {
+          var again = readCachedPromoConfig();
+          if (again) showPopupForConfig(again, ver(again));
+        }
+      } else {
+        void fetchPromoConfigOnce();
+      }
     }
   }
 
