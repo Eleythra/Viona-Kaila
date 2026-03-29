@@ -9,6 +9,8 @@
 # Zorunlu env (Render Dashboard → Environment):
 #   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 #   ASSISTANT_CHAT_ENDPOINT = Python asistanın tam chat URL’si (aşağıdaki varsayılan)
+# Opsiyonel (misafir istek/arıza Telegram):
+#   TELEGRAM_TEKNIK_BOT_TOKEN, TELEGRAM_TEKNIK_CHAT_ID, TELEGRAM_HK_BOT_TOKEN, TELEGRAM_HK_CHAT_ID
 #
 services:
   - type: web
@@ -32,4 +34,12 @@ services:
       - key: OPENAI_VECTOR_STORE_ID
         sync: false
       - key: GEMINI_API_KEY
+        sync: false
+      - key: TELEGRAM_TEKNIK_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_TEKNIK_CHAT_ID
+        sync: false
+      - key: TELEGRAM_HK_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_HK_CHAT_ID
         sync: false

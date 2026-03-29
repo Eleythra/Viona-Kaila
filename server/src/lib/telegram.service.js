@@ -141,11 +141,26 @@ async function sendTelegramMessage(botToken, chatId, text) {
   return { skipped: false };
 }
 
+function warnSkipTeknik() {
+  console.warn(
+    "[telegram] Teknik arıza bildirimi atlandı: TELEGRAM_TEKNIK_BOT_TOKEN ve TELEGRAM_TEKNIK_CHAT_ID ikisi de dolu olmalı (Render Environment / server/.env).",
+  );
+}
+
+function warnSkipHk() {
+  console.warn(
+    "[telegram] HK istek bildirimi atlandı: TELEGRAM_HK_BOT_TOKEN ve TELEGRAM_HK_CHAT_ID ikisi de dolu olmalı.",
+  );
+}
+
 export async function notifyTechnicalFaultRecord(normalized) {
   const env = getEnv();
   const token = env.telegramTeknikBotToken;
   const chatId = env.telegramTeknikChatId;
-  if (!token || !chatId) return;
+  if (!token || !chatId) {
+    warnSkipTeknik();
+    return;
+  }
 
   const text = buildFaultTelegramText(normalized);
   await sendTelegramMessage(token, chatId, text);
@@ -155,7 +170,10 @@ export async function notifyHkRequestRecord(normalized) {
   const env = getEnv();
   const token = env.telegramHkBotToken;
   const chatId = env.telegramHkChatId;
-  if (!token || !chatId) return;
+  if (!token || !chatId) {
+    warnSkipHk();
+    return;
+  }
 
   const text = buildRequestTelegramText(normalized);
   await sendTelegramMessage(token, chatId, text);

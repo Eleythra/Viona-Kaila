@@ -157,6 +157,13 @@ app.get("/api/health", (_req, res) => {
     hasVectorStoreId: !!env.openAiVectorStoreId,
     hasSupabase: env.hasSupabase,
     assistantEndpoint: ASSISTANT_CHAT_ENDPOINT,
+    /** Token/chat değerlerini sızdırmaz; yalnızca ikisi de tanımlı mı. */
+    telegramTeknikConfigured: Boolean(
+      String(env.telegramTeknikBotToken || "").trim() && String(env.telegramTeknikChatId || "").trim(),
+    ),
+    telegramHkConfigured: Boolean(
+      String(env.telegramHkBotToken || "").trim() && String(env.telegramHkChatId || "").trim(),
+    ),
   });
 });
 
