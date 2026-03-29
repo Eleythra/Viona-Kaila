@@ -5,7 +5,9 @@
  * Render’da bu Web Service için zorunlu ortam değişkenleri:
  *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ASSISTANT_CHAT_ENDPOINT (Python /api/chat tam URL)
  *
- * Sağlık kontrolü: https://BU-HOST/api/health → JSON, hasSupabase:true ve assistantEndpoint dolu olmalı.
+ * Sağlık kontrolü yalnızca bu Node servisinde: https://BU-HOST/api/health
+ *   (Python/asistan URL’si değil; örn. viona-kaila…/api/health farklı uygulama dönebilir.)
+ * JSON’da hasSupabase:true ve (yeni sürümde) telegramTeknikConfigured görmelisiniz.
  * Servis adın farklıysa yalnızca aşağıdaki satırı güncelle.
  */
 (function () {
