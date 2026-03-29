@@ -11,8 +11,9 @@
 #   ASSISTANT_CHAT_ENDPOINT = Python asistanın tam chat URL’si (aşağıdaki varsayılan)
 # Opsiyonel (misafir istek/arıza Telegram):
 #   TELEGRAM_TEKNIK_BOT_TOKEN, TELEGRAM_TEKNIK_CHAT_ID, TELEGRAM_HK_BOT_TOKEN, TELEGRAM_HK_CHAT_ID
-# PDF raporu (admin): GEMINI_API_KEY önerilir; Puppeteer Chromium bazen Render’da bellek/zaman aşımı verir.
-#   PUPPETEER_EXECUTABLE_PATH (sistem Chromium), PDF_GEMINI_TIMEOUT_MS (varsayılan 45000), PDF_SET_CONTENT_TIMEOUT_MS
+# PDF raporu (admin): GEMINI_API_KEY önerilir. Chromium proje içi önbek + build’de kurulum (aşağıda).
+#   PUPPETEER_CACHE_DIR=.cache/puppeteer, buildCommand içinde browsers install chrome zorunlu.
+#   İsteğe bağlı: PUPPETEER_EXECUTABLE_PATH, PDF_GEMINI_TIMEOUT_MS, PDF_SET_CONTENT_TIMEOUT_MS
 #
 services:
   - type: web
@@ -20,11 +21,14 @@ services:
     runtime: node
     plan: free
     rootDir: server
-    buildCommand: npm install
+    # Chromium ~/.cache’e inerse deploy paketine girmez; önbellek proje içinde + açık kurulum şart.
+    buildCommand: npm install && npx puppeteer browsers install chrome
     startCommand: node src/index.js
     envVars:
       - key: NODE_VERSION
         value: "20.18.0"
+      - key: PUPPETEER_CACHE_DIR
+        value: .cache/puppeteer
       - key: ASSISTANT_CHAT_ENDPOINT
         value: https://viona-kaila.onrender.com/api/chat
       - key: SUPABASE_URL

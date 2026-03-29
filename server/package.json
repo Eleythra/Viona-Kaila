@@ -10,6 +10,7 @@
     "test": "node --test src/modules/admin/reporting/*.test.mjs src/modules/admin/*.test.mjs",
     "test:assistant": "PYTHONPATH=src .venv/bin/python -m pytest src/assistant/tests -q --tb=line",
     "dev": "node src/index.js",
+    "puppeteer:install-chrome": "npx puppeteer browsers install chrome",
     "seed:surveys-test": "node scripts/seed-survey-evaluations-test.mjs",
     "seed:surveys-test:clean": "node scripts/delete-survey-evaluations-seed.mjs",
     "verify:surveys-report": "node scripts/verify-survey-evaluations-report.mjs"

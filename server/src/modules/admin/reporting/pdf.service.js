@@ -1,10 +1,28 @@
-import puppeteer from "puppeteer";
+import path from "node:path";
+import puppeteer, { executablePath as puppeteerExecutablePath } from "puppeteer";
 import { buildReportHtml } from "./report-template.js";
 
 let browserPromise = null;
 
+function toAbsoluteIfNeeded(p) {
+  const s = String(p || "").trim();
+  if (!s) return "";
+  return path.isAbsolute(s) ? s : path.resolve(process.cwd(), s);
+}
+
+function resolveChromeExecutable() {
+  const fromEnv = String(process.env.PUPPETEER_EXECUTABLE_PATH || "").trim();
+  if (fromEnv) return toAbsoluteIfNeeded(fromEnv);
+  try {
+    return toAbsoluteIfNeeded(puppeteerExecutablePath());
+  } catch (e) {
+    console.warn("[pdf] puppeteer.executablePath unavailable:", e?.message || e);
+    return "";
+  }
+}
+
 function launchOptions() {
-  const execPath = String(process.env.PUPPETEER_EXECUTABLE_PATH || "").trim();
+  const execPath = resolveChromeExecutable();
   const args = [
     "--no-sandbox",
     "--disable-setuid-sandbox",

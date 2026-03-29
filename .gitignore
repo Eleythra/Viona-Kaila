@@ -4,6 +4,7 @@ Thumbs.db
 *~
 node_modules/
 server/node_modules/
+server/.cache/
 .env
 .env.*
 .vercel/
