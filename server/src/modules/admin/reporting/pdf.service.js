@@ -15,16 +15,21 @@ function ensurePuppeteerChromeOnDisk() {
   const exe = resolveChromeExecutable();
   if (exe && existsSync(exe)) return;
   if (chromeInstallAttempted) return;
-  chromeInstallAttempted = true;
   console.warn(
     "[pdf] Chromium binary yok; npx puppeteer browsers install chrome çalıştırılıyor (ilk istek uzun sürebilir)...",
   );
-  execSync("npx puppeteer browsers install chrome", {
-    stdio: "inherit",
-    env: process.env,
-    cwd: process.cwd(),
-    timeout: 300_000,
-  });
+  chromeInstallAttempted = true;
+  try {
+    execSync("npx puppeteer browsers install chrome", {
+      stdio: "inherit",
+      env: process.env,
+      cwd: process.cwd(),
+      timeout: 300_000,
+    });
+  } catch (err) {
+    chromeInstallAttempted = false;
+    throw err;
+  }
 }
 
 function toAbsoluteIfNeeded(p) {
