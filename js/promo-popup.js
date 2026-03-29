@@ -2,6 +2,8 @@
   "use strict";
 
   var POPUP_SEEN_KEY_PREFIX = "viona_discount_popup_seen_";
+  /** Aynı sekmede aynı dil + kampanya sürümü için popup yalnızca bir kez (önbellek+sunucu çift çağrısı dahil). */
+  var POPUP_ONCE_TAB_PREFIX = "viona_discount_popup_tab_once_";
   var PROMO_CACHE_KEY = "viona_discount_popup_cache_v1";
   var currentPopupVersion = "v0";
   var POPUP_ID = "discount-promo-popup";
@@ -29,6 +31,26 @@
 
   function seenKeyForLang(lang) {
     return POPUP_SEEN_KEY_PREFIX + normalizePromoLang(lang);
+  }
+
+  function tabOnceKeyForLang(lang) {
+    return POPUP_ONCE_TAB_PREFIX + normalizePromoLang(lang);
+  }
+
+  function wasPromoShownThisTabForVersion(lang, versionStr) {
+    try {
+      return sessionStorage.getItem(tabOnceKeyForLang(lang)) === versionStr;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function markPromoShownThisTabForVersion(lang, versionStr) {
+    try {
+      sessionStorage.setItem(tabOnceKeyForLang(lang), versionStr);
+    } catch (e) {
+      /* private mode */
+    }
   }
 
   function isClosedForSession(version, lang) {
@@ -85,6 +107,12 @@
     return String(cfg["image_" + code] || "").trim();
   }
 
+  /**
+   * Bu sayfa yüklemesinde başarıyla alınan son config. fetchPromoConfigOnce tamamlanınca dolar.
+   * Amaç: dil seçiminden sonra showDiscountPopup içinde await ile ikinci bir GET beklenmesin
+   * (önceki kodda promise finally ile sıfırlandığı için her seferinde yeni istek açılıyordu).
+   */
+  var sessionPromoConfig = null;
   var promoConfigFetchPromise = null;
 
   function resolvePromoConfigEndpoint() {
@@ -103,7 +131,11 @@
   async function loadPromoConfig() {
     var endpoint = resolvePromoConfigEndpoint();
     try {
-      var res = await fetch(endpoint, { method: "GET", headers: { Accept: "application/json" } });
+      var res = await fetch(endpoint, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
       var text = await res.text();
       var data = null;
       try {
@@ -119,10 +151,16 @@
   }
 
   function fetchPromoConfigOnce() {
+    if (sessionPromoConfig) {
+      return Promise.resolve(sessionPromoConfig);
+    }
     if (!promoConfigFetchPromise) {
       promoConfigFetchPromise = loadPromoConfig()
         .then(function (cfg) {
-          if (cfg) writeCachedPromoConfig(cfg);
+          if (cfg) {
+            writeCachedPromoConfig(cfg);
+            sessionPromoConfig = cfg;
+          }
           return cfg;
         })
         .catch(function () {
@@ -223,6 +261,10 @@
         hidePromoPopup(false);
         return false;
       }
+      var versionStr = String(version || "v0");
+      if (wasPromoShownThisTabForVersion(lang, versionStr)) {
+        return false;
+      }
       var src = imageSrcForLangOnly(cfg, lang);
       if (!src) {
         hidePromoPopup(false);
@@ -234,16 +276,17 @@
       img.src = src;
       popup.classList.add("is-open");
       popup.setAttribute("aria-hidden", "false");
+      markPromoShownThisTabForVersion(lang, versionStr);
       return true;
     }
 
-    var cached = readCachedPromoConfig();
-    if (cached) showPopupForConfig(cached, ver(cached));
+    var tryFirst = sessionPromoConfig || readCachedPromoConfig();
+    if (tryFirst) showPopupForConfig(tryFirst, ver(tryFirst));
 
     var remoteCfg = await fetchPromoConfigOnce();
     if (remoteCfg) {
       showPopupForConfig(remoteCfg, ver(remoteCfg));
-    } else {
+    } else if (!tryFirst) {
       var again = readCachedPromoConfig();
       if (again) showPopupForConfig(again, ver(again));
     }

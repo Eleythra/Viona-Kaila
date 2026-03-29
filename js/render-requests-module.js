@@ -5,6 +5,8 @@
   "use strict";
 
   var RES_TAB_KEY = "viona_req_res_tab";
+  /** Anket modülü (survey-render.js) ile aynı süre: teşekkür kısa görünsün, sonra ana sayfa. */
+  var REQ_SUCCESS_THEN_HOME_MS = 2600;
 
   var HUB_ICONS = {
     request:
@@ -515,7 +517,7 @@
     return details;
   }
 
-  function buildRequestForm(t) {
+  function buildRequestForm(t, onSuccessGoHome) {
     var form = document.createElement("form");
     form.className = "req-form";
     form.noValidate = true;
@@ -602,12 +604,12 @@
         description: description,
         categories: [category],
       };
-      runSubmit(payload, form, err, success, submit, t);
+      runSubmit(payload, form, err, success, submit, t, { onSuccessGoHome: onSuccessGoHome });
     });
     return { form: form, success: success };
   }
 
-  function buildComplaintForm(t) {
+  function buildComplaintForm(t, onSuccessGoHome) {
     var form = document.createElement("form");
     form.className = "req-form";
     form.noValidate = true;
@@ -682,13 +684,13 @@
       if (category === "other") {
         payload.otherCategoryNote = description;
       }
-      runSubmit(payload, form, err, success, submit, t);
+      runSubmit(payload, form, err, success, submit, t, { onSuccessGoHome: onSuccessGoHome });
     });
 
     return { form: form, success: success };
   }
 
-  function buildFaultForm(t) {
+  function buildFaultForm(t, onSuccessGoHome) {
     var form = document.createElement("form");
     form.className = "req-form";
     form.noValidate = true;
@@ -807,7 +809,7 @@
       if (category === "other") {
         payload.otherCategoryNote = description;
       }
-      runSubmit(payload, form, err, success, submit, t);
+      runSubmit(payload, form, err, success, submit, t, { onSuccessGoHome: onSuccessGoHome });
     });
 
     return { form: form, success: success };
@@ -836,7 +838,7 @@
     return true;
   }
 
-  function wireSimpleSubmit(form, err, success, submitBtn, typeKey, t) {
+  function wireSimpleSubmit(form, err, success, submitBtn, typeKey, t, onSuccessGoHome) {
     form.addEventListener("submit", function (ev) {
       ev.preventDefault();
       err.hidden = true;
@@ -858,7 +860,7 @@
       if (catIds.indexOf("other") >= 0) {
         payload.otherCategoryNote = fd.get("otherCategoryNote") || "";
       }
-      runSubmit(payload, form, err, success, submitBtn, t);
+      runSubmit(payload, form, err, success, submitBtn, t, { onSuccessGoHome: onSuccessGoHome });
     });
   }
 
@@ -881,6 +883,16 @@
         success.querySelector(".req-success__title").textContent = t("reqSuccessTitle");
         success.querySelector(".req-success__body").textContent =
           t(options.successBodyKey || "reqSuccessBody");
+        var goHome = options.onSuccessGoHome;
+        if (typeof goHome === "function") {
+          var ms =
+            typeof options.successThenHomeMs === "number" && options.successThenHomeMs >= 0
+              ? options.successThenHomeMs
+              : REQ_SUCCESS_THEN_HOME_MS;
+          setTimeout(function () {
+            goHome();
+          }, ms);
+        }
       })
       .catch(function () {
         err.textContent = t("reqErrSend");
@@ -892,7 +904,7 @@
       });
   }
 
-  function buildSimpleTypeForm(typeKey, group, t) {
+  function buildSimpleTypeForm(typeKey, group, t, onSuccessGoHome) {
     var form = document.createElement("form");
     form.className = "req-form";
     form.noValidate = true;
@@ -918,11 +930,11 @@
     success.hidden = true;
     success.innerHTML = '<h3 class="req-success__title"></h3><p class="req-success__body"></p>';
 
-    wireSimpleSubmit(form, err, success, submit, typeKey, t);
+    wireSimpleSubmit(form, err, success, submit, typeKey, t, onSuccessGoHome);
     return { form: form, success: success };
   }
 
-  function buildReservationBlock(t, minIso, minMonth) {
+  function buildReservationBlock(t, minIso, minMonth, onSuccessGoHome) {
     var cfg = getCfg();
     var calMinMonth = minIso.slice(0, 7);
 
@@ -1205,6 +1217,7 @@
         };
         runSubmit(payload, form, errAl, okAl, subAl, t, {
           successBodyKey: "reqSuccessBodyReservation",
+          onSuccessGoHome: onSuccessGoHome,
         });
       });
 
@@ -1355,6 +1368,7 @@
         };
         runSubmit(payload, form, errSp, okSp, subSp, t, {
           successBodyKey: "reqSuccessBodyReservation",
+          onSuccessGoHome: onSuccessGoHome,
         });
       });
 
@@ -1415,6 +1429,8 @@
     var setSub = api.setSub || function () {};
     var moduleTitleKey = api.moduleTitleKey || "modRequests";
     var subDefs = api.subDefs || [];
+    var onSuccessGoHome =
+      typeof api.onRequestSuccessGoHome === "function" ? api.onRequestSuccessGoHome : null;
 
     var minIso = (window.getCalendarMinDateISO || function () {
       return "2026-03-01";
@@ -1475,19 +1491,19 @@
     wrap.appendChild(backHub);
 
     if (subId === "request") {
-      var b = buildRequestForm(t);
+      var b = buildRequestForm(t, onSuccessGoHome);
       wrap.appendChild(b.form);
       wrap.appendChild(b.success);
     } else if (subId === "complaint") {
-      var bc = buildComplaintForm(t);
+      var bc = buildComplaintForm(t, onSuccessGoHome);
       wrap.appendChild(bc.form);
       wrap.appendChild(bc.success);
     } else if (subId === "fault") {
-      var bf = buildFaultForm(t);
+      var bf = buildFaultForm(t, onSuccessGoHome);
       wrap.appendChild(bf.form);
       wrap.appendChild(bf.success);
     } else if (subId === "res") {
-      wrap.appendChild(buildReservationBlock(t, minIso, minMonth));
+      wrap.appendChild(buildReservationBlock(t, minIso, minMonth, onSuccessGoHome));
     } else {
       var p = document.createElement("p");
       p.className = "placeholder";

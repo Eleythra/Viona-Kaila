@@ -316,6 +316,12 @@
           },
           moduleTitleKey: def.i18nKey,
           subDefs: REQUEST_SUBS,
+          onRequestSuccessGoHome: () => {
+            inner.innerHTML = "";
+            requestSub = null;
+            moduleId = null;
+            showView("home");
+          },
         });
       } else {
         const p = document.createElement("p");
@@ -430,6 +436,7 @@
     document.body.style.overflow = "";
   }
 
+  /** Yalnızca dil onayı veya oturumda dil atlanınca (ilk ana sayfa girişi); modülden dönüşte çağrılmaz. */
   function scheduleDiscountPopup() {
     if (typeof window.showDiscountPopup !== "function") return;
     requestAnimationFrame(() => {
