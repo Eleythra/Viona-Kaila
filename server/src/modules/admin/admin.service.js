@@ -331,21 +331,84 @@ function tableForType(type) {
   return t;
 }
 
-const VALID_STATUS = new Set(["new", "pending", "in_progress", "done", "cancelled"]);
+const VALID_STATUS = new Set(["new", "pending", "in_progress", "done", "cancelled", "rejected"]);
+
+function normalizeIncomingAdminStatus(status) {
+  const s = String(status ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_");
+  const aliases = {
+    inprogress: "in_progress",
+    denied: "rejected",
+    declined: "rejected",
+    onaylanmadi: "rejected",
+    onaylanmadı: "rejected",
+    not_approved: "rejected",
+    yapilamadi: "rejected",
+    yapılamadı: "rejected",
+    dikkate_alinmadi: "rejected",
+    dikkate_alınmadı: "rejected",
+    yapildi: "done",
+    yapıldı: "done",
+    tamamlandi: "done",
+    tamamlandı: "done",
+    completed: "done",
+    fulfilled: "done",
+    resolved: "done",
+    dikkate_alindi: "done",
+    dikkate_alındı: "done",
+  };
+  return aliases[s] || s;
+}
+
+function formatStatusUpdateFailureMessage(type, normalized, supabaseError) {
+  const parts = [
+    supabaseError?.message,
+    supabaseError?.details,
+    supabaseError?.hint,
+  ]
+    .filter(Boolean)
+    .map((x) => String(x));
+  const raw = parts.join(" ");
+  if (/check constraint|23514|violates check constraint/i.test(raw)) {
+    const bucketHint =
+      type === "reservation"
+        ? " Rezervasyon: supabase-paste-viona.sql bölüm 9 sonunu (status CHECK) veya guest-reservations-status-rejected.sql çalıştırın; geçersiz status değerleri varsa betikteki OPSİYONEL UPDATE ile temizleyin."
+        : " İstek/şikâyet/arıza: supabase-paste-viona.sql bölüm 8b veya guest-buckets-status-rejected.sql çalıştırın.";
+    return `Veritabanı bu durumu kabul etmiyor (CHECK kısıtı).${bucketHint} Teknik: ${raw || "bilinmiyor"}`;
+  }
+  return raw || supabaseError?.message || "status_update_failed";
+}
 
 export async function updateAdminItemStatus(type, id, status) {
-  if (!id) throw new Error("id is required");
-  if (!VALID_STATUS.has(String(status || ""))) throw new Error("invalid status");
+  const idStr = String(id ?? "").trim();
+  if (!idStr) throw new Error("id is required");
+  const normalized = normalizeIncomingAdminStatus(status);
+  if (!VALID_STATUS.has(normalized)) throw new Error("invalid status");
   const table = tableForType(type);
-  const { data, error } = await getSupabase().from(table).update({ status }).eq("id", id).select("id,status").single();
-  if (error) throw error;
+  const { data, error } = await getSupabase()
+    .from(table)
+    .update({ status: normalized })
+    .eq("id", idStr)
+    .select("id,status")
+    .maybeSingle();
+  if (error) throw new Error(formatStatusUpdateFailureMessage(type, normalized, error));
+  if (!data) {
+    const hint =
+      normalized === "rejected"
+        ? " Supabase: status CHECK ‘rejected’ içermiyor olabilir (bölüm 8b / guest-buckets-status-rejected.sql) veya kayıt id eşleşmiyor."
+        : " Kayıt bulunamadı veya güncelleme sonrası satır dönmedi (id / RLS).";
+    throw new Error(`status_update_no_row.${hint}`);
+  }
   return data;
 }
 
 export async function deleteAdminItem(type, id) {
-  if (!id) throw new Error("id is required");
+  const idStr = String(id ?? "").trim();
+  if (!idStr) throw new Error("id is required");
   const table = tableForType(type);
-  const { error } = await getSupabase().from(table).delete().eq("id", id);
+  const { error } = await getSupabase().from(table).delete().eq("id", idStr);
   if (error) throw error;
   return { id };
 }

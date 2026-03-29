@@ -1,13 +1,13 @@
 -- =============================================================================
 -- VIONA / KAILA — Supabase SQL Editor’a TEK SEFERDE yapıştırın
 -- Sıra: uzantı → chat_observations → CHECK’ler → indeksler → chat_logs backfill
---       → özet view’lar → şikâyet/arıza kolonları → guest_reservations revizyonu
+--       → özet view’lar → şikâyet/arıza kolonları → 8b kova status CHECK → guest_reservations revizyonu
 --       → rezervasyon status (rejected = admin “Onaylanmadı”)
 --
 -- NOT: CHECK eklenirken "violates check constraint" alırsanız, aşağıdaki
 --      "OPSİYONEL: CHECK öncesi veri temizliği" bölümünü sırayla çalıştırın.
--- Rezervasyonda status CHECK zaten varsa ve rejected yoksa: bölüm 9’daki OPSİYONEL
--- satırları kullanın (önce drop, sonra add).
+-- Rezervasyon status: bölüm 9 sonunda CHECK her çalıştırmada drop+add ile güncellenir
+-- (eski ‘rejected’siz kısıt kalmaz). CHECK eklenemezse aşağıdaki OPSİYONEL veri notuna bakın.
 -- Node (service_role) RLS’i baypas eder; yalnızca anon key ile doğrudan yazım
 -- yapacaksanız RLS politikalarını ayrıca tanımlamanız gerekir.
 -- Dağıtım, Render, Telegram, PDF: server/docs/deploy-and-operations-report.md
@@ -295,9 +295,15 @@ group by 1
 order by 1 desc;
 
 -- -----------------------------------------------------------------------------
--- 8) Şikâyet / arıza tabloları — category + details (misafir formları + admin)
+-- 8) İstek / şikâyet / arıza — category + details (guest API ile uyumlu)
 --     Tablo yoksa PostgreSQL "skipping" NOTICE verir, hata vermez (IF EXISTS).
 -- -----------------------------------------------------------------------------
+alter table if exists public.guest_requests
+  add column if not exists category text;
+
+alter table if exists public.guest_requests
+  add column if not exists details jsonb not null default '{}'::jsonb;
+
 alter table if exists public.guest_complaints
   add column if not exists category text;
 
@@ -309,6 +315,67 @@ alter table if exists public.guest_faults
 
 alter table if exists public.guest_faults
   add column if not exists details jsonb not null default '{}'::jsonb;
+
+-- -----------------------------------------------------------------------------
+-- 8b) İstek / şikâyet / arıza — status CHECK içinde 'rejected' (Yapılamadı / Dikkate alınmadı)
+--      Ana betikle birlikte çalıştırın; ayrı dosya: guest-buckets-status-rejected.sql
+--      Eski CHECK 'rejected' veya 'done' içermiyorsa admin PATCH başarısız olur.
+-- -----------------------------------------------------------------------------
+alter table if exists public.guest_requests drop constraint if exists guest_requests_status_check;
+alter table if exists public.guest_requests drop constraint if exists guest_requests_status_chk;
+
+alter table if exists public.guest_requests
+  add constraint guest_requests_status_check
+  check (
+    status is null
+    or lower(trim((status)::text)) in (
+      'new',
+      'pending',
+      'in_progress',
+      'done',
+      'cancelled',
+      'rejected'
+    )
+  );
+
+alter table if exists public.guest_complaints drop constraint if exists guest_complaints_status_check;
+alter table if exists public.guest_complaints drop constraint if exists guest_complaints_status_chk;
+
+alter table if exists public.guest_complaints
+  add constraint guest_complaints_status_check
+  check (
+    status is null
+    or lower(trim((status)::text)) in (
+      'new',
+      'pending',
+      'in_progress',
+      'done',
+      'cancelled',
+      'rejected'
+    )
+  );
+
+alter table if exists public.guest_faults drop constraint if exists guest_faults_status_check;
+alter table if exists public.guest_faults drop constraint if exists guest_faults_status_chk;
+
+alter table if exists public.guest_faults
+  add constraint guest_faults_status_check
+  check (
+    status is null
+    or lower(trim((status)::text)) in (
+      'new',
+      'pending',
+      'in_progress',
+      'done',
+      'cancelled',
+      'rejected'
+    )
+  );
+
+-- OPSİYONEL: 8b "violates check constraint" verirse (istek/şikâyet/arıza) geçersiz status’ları düzeltin:
+-- update public.guest_requests set status = 'new' where status is not null and lower(trim((status)::text)) not in ('new','pending','in_progress','done','cancelled','rejected');
+-- update public.guest_complaints set status = 'new' where status is not null and lower(trim((status)::text)) not in ('new','pending','in_progress','done','cancelled','rejected');
+-- update public.guest_faults set status = 'new' where status is not null and lower(trim((status)::text)) not in ('new','pending','in_progress','done','cancelled','rejected');
 
 -- -----------------------------------------------------------------------------
 -- 9) guest_reservations — operasyon kolonları + indeksler + status (rejected)
@@ -394,6 +461,29 @@ begin
   if to_regclass('public.guest_reservations') is null then
     return;
   end if;
+  if not exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'guest_reservations'
+      and column_name = 'reservation_data'
+  ) then
+    if exists (
+      select 1
+      from information_schema.columns
+      where table_schema = 'public'
+        and table_name = 'guest_reservations'
+        and column_name = 'raw_payload'
+    ) then
+      update public.guest_reservations
+      set
+        language = coalesce(language, nullif(raw_payload->>'language', '')),
+        updated_at = coalesce(updated_at, submitted_at, now())
+      where true;
+    end if;
+    return;
+  end if;
+
   -- note sütunu yoksa (eski şema) açıklama birleştirmesi atlanır
   if exists (
     select 1
@@ -455,48 +545,32 @@ begin
   end if;
 end $$;
 
--- Status CHECK: yalnızca guest_reservations üzerinde bu adda kısıt yoksa (rejected dahil).
-do $$
-begin
-  if to_regclass('public.guest_reservations') is null then
-    return;
-  end if;
-  if not exists (
-    select 1
-    from pg_constraint c
-    join pg_class t on t.oid = c.conrelid
-    join pg_namespace n on n.oid = t.relnamespace
-    where n.nspname = 'public'
-      and t.relname = 'guest_reservations'
-      and c.conname = 'guest_reservations_status_chk'
-  ) then
-    alter table public.guest_reservations
-      add constraint guest_reservations_status_chk
-      check (
-        status is null
-        or status in (
-          'new',
-          'pending',
-          'in_progress',
-          'done',
-          'cancelled',
-          'rejected'
-        )
-      );
-  end if;
-end $$;
+-- Status CHECK: kovalar (8b) ile aynı mantık — lower(trim), rejected dahil; tekrar yapıştırınca güncellenir.
+alter table if exists public.guest_reservations drop constraint if exists guest_reservations_status_chk;
+alter table if exists public.guest_reservations drop constraint if exists guest_reservations_status_check;
 
--- OPSİYONEL: Daha önce guest_reservations_status_chk eklendi ama rejected yoksa,
---            önce kaldırın, sonra üstteki DO bloğunu tekrar çalıştırmak yerine
---            doğrudan aşağıdaki iki satırı çalıştırın:
--- alter table public.guest_reservations drop constraint if exists guest_reservations_status_chk;
--- alter table public.guest_reservations
---   add constraint guest_reservations_status_chk
---   check (
---     status is null
---     or status in ('new','pending','in_progress','done','cancelled','rejected')
+alter table if exists public.guest_reservations
+  add constraint guest_reservations_status_chk
+  check (
+    status is null
+    or lower(trim((status)::text)) in (
+      'new',
+      'pending',
+      'in_progress',
+      'done',
+      'cancelled',
+      'rejected'
+    )
+  );
+
+-- OPSİYONEL: "violates check constraint" (guest_reservations.status) — geçersiz değerleri önce düzeltin:
+-- update public.guest_reservations set status = 'new'
+-- where status is not null
+--   and lower(trim((status)::text)) not in (
+--     'new','pending','in_progress','done','cancelled','rejected'
 --   );
 
 -- =============================================================================
--- Bitti. chat_observations, view’lar; şikâyet/arıza kolonları; guest_reservations.
+-- Bitti. chat_observations, view’lar; istek/şikâyet/arıza kolonları + 8b CHECK;
+-- guest_reservations kolonları, backfill, status CHECK (rejected).
 -- =============================================================================

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Viona Admin Panel</title>
     <link rel="stylesheet" href="../css/styles.css" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=4" />
   </head>
   <body class="admin-body">
     <section id="admin-login" class="admin-login">
@@ -51,7 +51,7 @@
             <header class="home-panel__head">
               <p class="home-panel__eyebrow">Özet</p>
               <h2 id="home-live-heading" class="home-panel__title">Anlık durum</h2>
-              <p class="home-panel__desc">Rapor ve operasyon kayıtlarından türetilir; veri yenilendiğinde sağdaki zaman güncellenir.</p>
+              <p class="home-panel__desc">Rapor ve kayıtlardan özet; yenileme zamanı altta güncellenir.</p>
             </header>
             <div class="home-panel__body home-panel__body--flush">
               <p id="dashboard-api-warning" class="dashboard-api-warning hidden" role="status" aria-hidden="true"></p>
@@ -74,9 +74,7 @@
             <header class="home-panel__head">
               <p class="home-panel__eyebrow">İş akışı</p>
               <h2 id="home-ops-heading" class="home-panel__title">Operasyon</h2>
-              <p class="home-panel__desc">
-                İstek, şikayet, arıza ve rezervasyonda bekleyen kayıtlar. Özet için sunucudan sayfalar birleştirilir (çok yüksek hacimde üst sınır olabilir; tam liste ilgili sekmededir).
-              </p>
+              <p class="home-panel__desc">Bekleyen kayıtların kısa özeti. Tam liste ilgili sekmede.</p>
             </header>
             <div class="home-panel__body home-panel__body--alerts">
               <div id="dashboard-alerts"></div>
@@ -88,8 +86,7 @@
               <p class="home-panel__eyebrow">Detay</p>
               <h2 id="home-analytics-heading" class="home-panel__title">Analitik</h2>
               <p class="home-panel__desc">
-                Kırılımlı metrikler. Veriler <strong>tüm zaman</strong> için toplanır (tarih filtresi yok); ana sayfa açıkken yaklaşık her dakika yenilenir. Yazdırılabilir özet için
-                <strong class="home-panel__kbd">Rapor</strong> sekmesi.
+                Tüm zaman için kırılımlar; ana sayfa açıkken periyodik yenilenir. Yazdırılabilir özet: <strong class="home-panel__kbd">Rapor</strong>.
               </p>
             </header>
             <div class="home-panel__body">
@@ -127,7 +124,7 @@
             <h2>İstekler</h2>
             <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
           </div>
-          <p class="section-lead">Misafir taleplerini öncelik sırasına göre takip edin, açık kayıtları hızlıca güncelleyin.</p>
+          <p class="section-lead">Misafir isteklerini listeler; durum ve notları buradan güncelleyin.</p>
           <div id="list-requests"></div>
         </section>
         <section id="tab-complaints" class="admin-tab hidden">
@@ -135,7 +132,7 @@
             <h2>Şikayetler</h2>
             <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
           </div>
-          <p class="section-lead">Şikayet kayıtlarını hızla sınıflandırın, çözüm sürecini görünür şekilde yönetin.</p>
+          <p class="section-lead">Şikayet kayıtları ve personel notları.</p>
           <div id="list-complaints"></div>
         </section>
         <section id="tab-faults" class="admin-tab hidden">
@@ -143,7 +140,7 @@
             <h2>Arızalar</h2>
             <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
           </div>
-          <p class="section-lead">Teknik arızaları açık/işlemde/tamamlandı durumlarında izleyerek operasyonu aksatmadan yönetin.</p>
+          <p class="section-lead">Arıza kayıtları; kategori, lokasyon ve aciliyet bilgisi.</p>
           <div id="list-faults"></div>
         </section>
         <section id="tab-reservations" class="admin-tab hidden">
@@ -151,7 +148,7 @@
             <h2>Rezervasyonlar</h2>
             <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
           </div>
-          <p class="section-lead"><strong>Rezervasyonlar:</strong> seçilen güne göre tüm restoran ve Spa rezervasyonlarını listeler; üstte özet, altta tablo ve rapor. <strong>Alt dört sekme:</strong> ilgili mekânda onay, bekleme ve durum yönetimi. <span class="admin-sync-hint">Genel görünüm ve liste, acikken periyodik olarak sunucudan cekilir.</span></p>
+          <p class="section-lead">Genel görünüm: günlük özet ve tablo. Alt menüdeki sekmeler: tek mekân yönetimi. <span class="admin-sync-hint">Sekme açıkken liste periyodik yenilenir.</span></p>
           <p id="reservation-nav-status" class="reservation-nav-status">Aktif görünüm: Rezervasyonlar</p>
           <div id="list-reservations"></div>
         </section>
@@ -161,7 +158,7 @@
             <h2>Değerlendirmeler</h2>
             <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
           </div>
-          <p class="section-lead">Puanlar 1–5 ortalamasıdır. Başlık başına ayrı kayıt oluşabilir. Tarih ile dönem seçin.</p>
+          <p class="section-lead">Anket ortalamaları (1–5). Dönem için tarih seçin.</p>
           <div class="eval-toolbar glass-block">
             <label class="eval-toolbar__field">Başlangıç <input type="date" id="eval-date-from" /></label>
             <label class="eval-toolbar__field">Bitiş <input type="date" id="eval-date-to" /></label>
@@ -177,7 +174,7 @@
             <h2>Reklamlar</h2>
             <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
           </div>
-          <p class="section-lead">Dil başına yalnızca bir aktif görsel tanımlanır. Yeni görsel yüklemeden önce ilgili dildeki mevcut görseli kaldırın; ardından değişiklikleri kaydedin. <strong>Performans:</strong> ~500 KB altı sıkıştırılmış görsel veya (tercihen) Supabase Storage / CDN URL kullanın; çok büyük data URL canlıda gecikme ve tarayıcı önbellek kotasına takılabilir.</p>
+          <p class="section-lead">Dil başına tek görsel. Yenisini yüklemeden önce mevcut görseli silin. Mümkünse küçük dosya veya CDN URL kullanın; çok büyük data URL yavaşlatır.</p>
           <form id="promo-form" class="glass-block promo-form">
             <label><input type="checkbox" id="promo-enabled" /> Popup aktif</label>
             <div class="promo-row">
@@ -215,17 +212,15 @@
             <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
           </div>
           <p class="section-lead">
-            <strong>Varsayılan PDF</strong>, pano ile aynı <strong>güncel özet penceresini</strong> kullanır (oluşturma anına kadar son 30 gün). İndirme sırasında veri bir kez sabitlenir (snapshot). <strong>Tarih filtresi</strong> yalnızca aşağıdaki kutuyu işaretleyip aralık seçtiğinizde uygulanır.
+            Varsayılan indirme, pano ile uyumlu son 30 günlük özeti kullanır; PDF oluşunca rakamlar sabitlenir. Farklı aralık için aşağıdaki tarih kutusunu kullanın.
           </p>
           <article class="glass-block pdf-report-panel">
             <h3>Viona AI otel performans raporu</h3>
-            <p class="pdf-report-panel__desc">
-              <strong>PDF indir</strong> varsayılanda panodakiyle aynı dönemi kullanır. Belirli bir aralık istiyorsanız kutuyu işaretleyip başlangıç ve bitiş seçin.
-            </p>
+            <p class="pdf-report-panel__desc">Varsayılan: pano dönemi. İsterseniz tarih aralığını açıp seçin.</p>
             <div class="pdf-report-default-banner" role="region" aria-label="Varsayılan indirme">
               <span class="pdf-report-default-banner__tag">Varsayılan</span>
               <p class="pdf-report-default-banner__text">
-                Tarih kutusu <strong>kapalıyken</strong>: güncel özet penceresi (son 30 gün, pano ile uyumlu). <strong>Açıkken</strong>: seçtiğiniz aralık. PDF kapakta oluşturulma zamanı ve veri özeti kimliği yer alır; canlı ekranlar daha sonra değişebilir.
+                Tarih kapalı: son 30 gün (pano ile aynı). Tarih açık: seçtiğiniz aralık. PDF, indirme anındaki veriyi yansıtır.
               </p>
             </div>
             <div class="pdf-pro-grid">
@@ -333,7 +328,7 @@
             <header class="logs-section__head">
               <p class="logs-section__eyebrow">Özet</p>
               <h3 class="logs-section__title">Performans göstergeleri</h3>
-              <p class="logs-section__desc">Aşağıdaki değerler, üstteki tarih ve filtrelerle aynı veri kümesinden hesaplanır (sayfa numarası hariç).</p>
+              <p class="logs-section__desc">Özet, üstteki tarih ve filtrelerle uyumludur; tablodaki sayfa değiştikçe değişmez.</p>
             </header>
             <div id="logs-summary" class="logs-summary-mount"></div>
           </article>
@@ -405,7 +400,7 @@
     <script src="../js/api-config.js?v=11"></script>
     <script src="../js/requests/config.js?v=11"></script>
     <script src="js/data-adapter.js?v=11"></script>
-    <script src="js/ui.js?v=11"></script>
-    <script src="js/app.js?v=11"></script>
+    <script src="js/ui.js?v=21"></script>
+    <script src="js/app.js?v=22"></script>
   </body>
 </html>

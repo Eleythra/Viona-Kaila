@@ -102,6 +102,20 @@
     document.title = t("metaTitle");
   }
 
+  /**
+   * Ana sayfa uzun olduğunda window.scrollY korunur; modül tam ekran olsa da görünüm ortada kalır.
+   * html { scroll-behavior: smooth } programatik kaydırmayı yumuşatacağı için geçici olarak auto kullanılır.
+   */
+  function scrollMainViewportToTop() {
+    const root = document.documentElement;
+    const prev = root.style.scrollBehavior;
+    root.style.scrollBehavior = "auto";
+    window.scrollTo(0, 0);
+    root.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+    root.style.scrollBehavior = prev;
+  }
+
   function showView(name) {
     const langView = el("view-lang");
     const homeView = el("view-home");
@@ -122,6 +136,7 @@
       homeView.setAttribute("aria-hidden", "true");
       modView.setAttribute("aria-hidden", "true");
       stopCarousel();
+      scrollMainViewportToTop();
     } else if (name === "home") {
       if (typeof window._vionaClearActivitiesCarousel === "function") {
         window._vionaClearActivitiesCarousel();
@@ -134,12 +149,14 @@
       homeView.setAttribute("aria-hidden", "false");
       modView.setAttribute("aria-hidden", "true");
       startCarousel();
+      scrollMainViewportToTop();
     } else if (name === "module") {
       modView.classList.remove("hidden");
       langView.setAttribute("aria-hidden", "true");
       homeView.setAttribute("aria-hidden", "true");
       modView.setAttribute("aria-hidden", "false");
       stopCarousel();
+      scrollMainViewportToTop();
     }
   }
 
@@ -290,8 +307,8 @@
     moduleId = id;
     requestSub = null;
     surveySub = null;
-    renderModuleContent();
     showView("module");
+    renderModuleContent();
   }
 
   function renderModuleContent() {
@@ -308,88 +325,95 @@
       window._vionaClearDiscountCarousel();
     }
     const def = MODULE_DEFS.find((d) => d.id === moduleId);
-    if (!def) return;
+    try {
+      if (!def) return;
 
-    if (def.isRequests) {
-      if (typeof window.renderGuestRequestsModule === "function") {
-        window.renderGuestRequestsModule(inner, t, requestSub, {
-          setSub: (id) => {
-            requestSub = id;
-            renderModuleContent();
-          },
-          moduleTitleKey: def.i18nKey,
-          subDefs: REQUEST_SUBS,
-          onRequestSuccessGoHome: () => {
-            inner.innerHTML = "";
-            requestSub = null;
-            moduleId = null;
-            showView("home");
-          },
-        });
-      } else {
-        const p = document.createElement("p");
-        p.className = "placeholder";
-        p.textContent = t("reqErrApi");
-        inner.appendChild(p);
+      if (def.isRequests) {
+        if (typeof window.renderGuestRequestsModule === "function") {
+          window.renderGuestRequestsModule(inner, t, requestSub, {
+            setSub: (id) => {
+              requestSub = id;
+              renderModuleContent();
+            },
+            moduleTitleKey: def.i18nKey,
+            subDefs: REQUEST_SUBS,
+            onRequestSuccessGoHome: () => {
+              inner.innerHTML = "";
+              requestSub = null;
+              moduleId = null;
+              showView("home");
+            },
+          });
+        } else {
+          const p = document.createElement("p");
+          p.className = "placeholder";
+          p.textContent = t("reqErrApi");
+          inner.appendChild(p);
+        }
+        return;
       }
-      return;
-    }
 
-    if (def.isSurvey) {
-      if (typeof window.renderSurveyModule === "function") {
-        window.renderSurveyModule(inner, surveySub, {
-          setSub: (id) => {
-            surveySub = id;
-            renderModuleContent();
-          },
-          moduleTitle: surveyTitleText(),
-          onSurveySuccessGoHome: () => {
-            inner.innerHTML = "";
-            moduleId = null;
-            surveySub = null;
-            showView("home");
-          },
-        });
-      } else {
-        const p = document.createElement("p");
-        p.className = "placeholder";
-        p.textContent = t("placeholderBody");
-        inner.appendChild(p);
+      if (def.isSurvey) {
+        if (typeof window.renderSurveyModule === "function") {
+          window.renderSurveyModule(inner, surveySub, {
+            setSub: (id) => {
+              surveySub = id;
+              renderModuleContent();
+            },
+            moduleTitle: surveyTitleText(),
+            onSurveySuccessGoHome: () => {
+              inner.innerHTML = "";
+              moduleId = null;
+              surveySub = null;
+              showView("home");
+            },
+          });
+        } else {
+          const p = document.createElement("p");
+          p.className = "placeholder";
+          p.textContent = t("placeholderBody");
+          inner.appendChild(p);
+        }
+        return;
       }
-      return;
+
+      const h2 = document.createElement("h2");
+      h2.textContent = t(def.i18nKey);
+      inner.appendChild(h2);
+
+      if (moduleId === "where" && typeof window.renderWhereModule === "function") {
+        window.renderWhereModule(inner, t);
+        return;
+      }
+
+      const MODULE_RENDERERS = {
+        general: "renderGeneralModule",
+        restaurant: "renderRestaurantModule",
+        alacarte: "renderAlacarteModule",
+        beach: "renderBeachModule",
+        spa: "renderSpaModule",
+        discount: "renderDiscountModule",
+        animation: "renderActivitiesModule",
+        miniclub: "renderMiniclubModule",
+        meeting: "renderMeetingModule",
+        alanya: "renderAlanyaModule",
+      };
+      const rName = MODULE_RENDERERS[moduleId];
+      if (rName && typeof window[rName] === "function") {
+        window[rName](inner, t);
+        return;
+      }
+
+      const p = document.createElement("p");
+      p.className = "placeholder";
+      p.textContent = t("placeholderBody");
+      inner.appendChild(p);
+    } finally {
+      if (moduleId) {
+        scrollMainViewportToTop();
+        requestAnimationFrame(() => scrollMainViewportToTop());
+      }
     }
-
-    const h2 = document.createElement("h2");
-    h2.textContent = t(def.i18nKey);
-    inner.appendChild(h2);
-
-    if (moduleId === "where" && typeof window.renderWhereModule === "function") {
-      window.renderWhereModule(inner, t);
-      return;
-    }
-
-    const MODULE_RENDERERS = {
-      general: "renderGeneralModule",
-      restaurant: "renderRestaurantModule",
-      alacarte: "renderAlacarteModule",
-      beach: "renderBeachModule",
-      spa: "renderSpaModule",
-      discount: "renderDiscountModule",
-      animation: "renderActivitiesModule",
-      miniclub: "renderMiniclubModule",
-      meeting: "renderMeetingModule",
-      alanya: "renderAlanyaModule",
-    };
-    const rName = MODULE_RENDERERS[moduleId];
-    if (rName && typeof window[rName] === "function") {
-      window[rName](inner, t);
-      return;
-    }
-
-    const p = document.createElement("p");
-    p.className = "placeholder";
-    p.textContent = t("placeholderBody");
-    inner.appendChild(p);
   }
 
   function onBack() {

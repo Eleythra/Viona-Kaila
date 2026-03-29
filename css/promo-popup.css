@@ -15,18 +15,19 @@
 .promo-popup__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(8, 12, 20, 0.42);
-  backdrop-filter: blur(2px);
+  background: var(--backdrop-scrim);
+  backdrop-filter: blur(6px);
 }
 
 .promo-popup__panel {
   position: relative;
   width: min(980px, 96vw);
   max-height: 92vh;
-  border-radius: 18px;
+  border-radius: var(--radius);
   overflow: hidden;
   background: #fff;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.36);
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .promo-popup__close {
@@ -36,7 +37,7 @@
   width: 38px;
   height: 38px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: rgba(0, 0, 0, 0.72);
   color: #fff;
   font-size: 1.35rem;

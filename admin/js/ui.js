@@ -7,6 +7,42 @@
     return d.innerHTML;
   }
 
+  /** API / DB farklı yazımları için; rozet sınıfı, filtre ve buton mantığı tek tip. */
+  function normalizeBucketStatus(raw) {
+    var s = String(raw == null ? "new" : raw)
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "_");
+    if (s === "inprogress") s = "in_progress";
+    if (
+      s === "denied" ||
+      s === "declined" ||
+      s === "onaylanmadi" ||
+      s === "onaylanmadı" ||
+      s === "not_approved" ||
+      s === "yapilamadi" ||
+      s === "yapılamadı" ||
+      s === "dikkate_alinmadi" ||
+      s === "dikkate_alınmadı"
+    ) {
+      s = "rejected";
+    }
+    if (
+      s === "yapildi" ||
+      s === "yapıldı" ||
+      s === "tamamlandi" ||
+      s === "tamamlandı" ||
+      s === "completed" ||
+      s === "fulfilled" ||
+      s === "resolved" ||
+      s === "dikkate_alindi" ||
+      s === "dikkate_alındı"
+    ) {
+      s = "done";
+    }
+    return s;
+  }
+
   /** Misafir anketi başlık / soru etiketleri (uygulamadaki TR metinlerle uyumlu). */
   var SURVEY_EVAL_SECTIONS = [
     {
@@ -100,13 +136,67 @@
     return s.slice(0, Math.max(0, maxLen - 1)) + "…";
   }
 
-  function statusLabel(status) {
-    var s = String(status || "new");
-    if (s === "done") return "Yapıldı";
-    if (s === "pending") return "Beklemede";
-    if (s === "in_progress") return "İşlemde";
+  function issueIsWaitStatus(st) {
+    var s = normalizeBucketStatus(st);
+    return s === "new" || s === "pending" || s === "in_progress";
+  }
+
+  /** İstek/arıza: Yapıldı · Yapılamadı · Şikayet: Dikkate alındı · alınmadı — beklemede sarı, olumlu yeşil, olumsuz kırmızı. */
+  function issueStatusLabel(issueType, status) {
+    var s = normalizeBucketStatus(status);
     if (s === "cancelled") return "İptal";
-    return "Yapılmadı";
+    if (issueIsWaitStatus(s)) return "Beklemede";
+    if (s === "done") return issueType === "complaint" ? "Dikkate alındı" : "Yapıldı";
+    if (s === "rejected") return issueType === "complaint" ? "Dikkate alınmadı" : "Yapılamadı";
+    return s;
+  }
+
+  function statusLabel(status) {
+    return issueStatusLabel("request", status);
+  }
+
+  function rowMatchesStatusFilter(rowStatus, filterVal) {
+    var st = normalizeBucketStatus(rowStatus);
+    var f = String(filterVal || "all");
+    if (f === "all") return true;
+    if (f === "new_pending") return st === "new" || st === "pending" || st === "in_progress";
+    if (f === "rejected") return st === "rejected";
+    return st === f;
+  }
+
+  function issueRowActionsHtml(issueType, id, st) {
+    st = normalizeBucketStatus(st);
+    var type = issueType;
+    var posLabel = type === "complaint" ? "Dikkate alındı" : "Yapıldı";
+    var negLabel = type === "complaint" ? "Dikkate alınmadı" : "Yapılamadı";
+    var h = "";
+    function stBtn(stat, label) {
+      return (
+        '<button class="btn-small js-status" data-id="' +
+        esc(id) +
+        '" data-type="' +
+        esc(type) +
+        '" data-status="' +
+        esc(stat) +
+        '">' +
+        esc(label) +
+        "</button>"
+      );
+    }
+    if (issueIsWaitStatus(st)) {
+      h += stBtn("done", posLabel);
+      h += stBtn("rejected", negLabel);
+    } else if (st === "done") {
+      h += stBtn("new", "Beklemede");
+      h += stBtn("rejected", negLabel);
+    } else if (st === "rejected") {
+      h += stBtn("new", "Beklemede");
+      h += stBtn("done", posLabel);
+    } else {
+      h += stBtn("new", "Beklemede");
+    }
+    h += '<button class="btn-small js-delete" data-id="' + esc(id) + '" data-type="' + esc(type) + '">Sil</button>';
+    return h;
   }
 
   function typeLabel(type) {
@@ -546,12 +636,12 @@
   }
 
   function reservationStatusLabel(status) {
-    var s = String(status || "new");
-    if (s === "new" || s === "pending") return "Beklemede";
-    if (s === "in_progress") return "Onaylandı";
-    if (s === "done") return "Gerçekleşti";
+    var s = reservationNormalizeStatusKey(status);
     if (s === "cancelled") return "İptal";
-    return s;
+    if (reservationIsWaitStatus(s)) return "Beklemede";
+    if (s === "done") return "Onaylandı";
+    if (s === "rejected") return "Onaylanmadı";
+    return String(status || "new");
   }
 
   function reservationDateValue(row) {
@@ -572,25 +662,37 @@
     return String(row.reservation_time || data.time || "").trim();
   }
 
-  function reservationActionButtons(type, rowId) {
-    return (
-      '<button class="btn-small js-status" data-id="' +
-      esc(rowId) +
-      '" data-type="' +
-      esc(type) +
-      '" data-status="pending">Beklemede</button>' +
-      '<button class="btn-small js-status" data-id="' +
-      esc(rowId) +
-      '" data-type="' +
-      esc(type) +
-      '" data-status="in_progress">Onaylandı</button>' +
-      '<button class="btn-small js-status" data-id="' +
-      esc(rowId) +
-      '" data-type="' +
-      esc(type) +
-      '" data-status="cancelled">İptal Et</button>' +
-      '<button class="btn-small js-delete" data-id="' + esc(rowId) + '" data-type="' + esc(type) + '">Sil</button>'
-    );
+  function reservationActionButtons(type, row, rowId) {
+    var id = rowId != null ? rowId : row && row.id;
+    var st = reservationNormalizeStatusKey(row && row.status);
+    var h = "";
+    function stBtn(status, label) {
+      return (
+        '<button class="btn-small js-status" data-id="' +
+        esc(id) +
+        '" data-type="' +
+        esc(type) +
+        '" data-status="' +
+        esc(status) +
+        '">' +
+        esc(label) +
+        "</button>"
+      );
+    }
+    if (reservationIsWaitStatus(st)) {
+      h += stBtn("done", "Onaylandı");
+      h += stBtn("rejected", "Onaylanmadı");
+    } else if (st === "done") {
+      h += stBtn("new", "Beklemede");
+      h += stBtn("rejected", "Onaylanmadı");
+    } else if (st === "rejected") {
+      h += stBtn("new", "Beklemede");
+      h += stBtn("done", "Onaylandı");
+    } else if (st === "cancelled") {
+      h += stBtn("new", "Beklemede");
+    }
+    h += '<button class="btn-small js-delete" data-id="' + esc(id) + '" data-type="' + esc(type) + '">Sil</button>';
+    return h;
   }
 
   function reservationTabOptions() {
@@ -712,7 +814,26 @@
       .replace(/\s+/g, "_");
     if (s === "inprogress") return "in_progress";
     if (s === "approved" || s === "confirmed") return "in_progress";
+    if (s === "denied" || s === "declined" || s === "onaylanmadi" || s === "onaylanmadı" || s === "not_approved") {
+      return "rejected";
+    }
+    if (
+      s === "completed" ||
+      s === "fulfilled" ||
+      s === "tamamlandi" ||
+      s === "tamamlandı" ||
+      s === "yapildi" ||
+      s === "yapıldı"
+    ) {
+      return "done";
+    }
+    if (!s) return "new";
     return s;
+  }
+
+  function reservationIsWaitStatus(st) {
+    var s = reservationNormalizeStatusKey(st);
+    return s === "new" || s === "pending" || s === "in_progress";
   }
 
   function reservationTimeHHMM(t) {
@@ -731,7 +852,7 @@
       if (reservationDateValue(r) !== iso) return false;
       if (reservationTimeHHMM(reservationTimeValue(r)) !== target) return false;
       var s = reservationNormalizeStatusKey(r.status);
-      return s === "in_progress" || s === "done";
+      return s === "done";
     });
   }
 
@@ -1005,14 +1126,16 @@
   function reservationStatusOverviewCounts(list) {
     var wait = 0;
     var appr = 0;
+    var rej = 0;
     var can = 0;
     list.forEach(function (r) {
       var s = reservationNormalizeStatusKey(r && r.status);
-      if (s === "new" || s === "pending") wait += 1;
-      else if (s === "in_progress" || s === "done") appr += 1;
+      if (s === "new" || s === "pending" || s === "in_progress") wait += 1;
+      else if (s === "done") appr += 1;
+      else if (s === "rejected") rej += 1;
       else if (s === "cancelled") can += 1;
     });
-    return { wait: wait, approved: appr, cancelled: can };
+    return { wait: wait, approved: appr, rejected: rej, cancelled: can };
   }
 
   function reservationGuestCountNumber(row) {
@@ -1067,7 +1190,7 @@
       '" step="1" value="1" required /></label>' +
       '<label class="reservation-manual-note-label">Özel not <input name="note" type="text" placeholder="İsteğe bağlı" autocomplete="off" /></label>' +
       "</div>" +
-      '<p class="reservation-manual-help">Saat listesi bu mekânın çalışma aralığına göredir; <strong>onaylı / gerçekleşmiş</strong> rezervasyon olan saatler seçimde görünmez. Oda numarası yalnızca rakam.</p>' +
+      '<p class="reservation-manual-help">Dolu saatler listede yok. Oda alanı yalnızca rakam.</p>' +
       '<button type="submit" class="btn-small">Manuel rezervasyon ekle</button>' +
       '<p class="reservation-manual-status"></p>' +
       "</form>"
@@ -1099,15 +1222,15 @@
           '">' +
           esc(c.wait) +
           "</dd></div>" +
-          '<div class="reservation-venue-summary-card__row"><dt>Onaylı</dt><dd class="js-vsum-appr" data-venue="' +
+          '<div class="reservation-venue-summary-card__row"><dt>Onaylandı</dt><dd class="js-vsum-appr" data-venue="' +
           esc(key) +
           '">' +
           esc(c.approved) +
           "</dd></div>" +
-          '<div class="reservation-venue-summary-card__row"><dt>İptal</dt><dd class="js-vsum-can" data-venue="' +
+          '<div class="reservation-venue-summary-card__row"><dt>Onaylanmadı</dt><dd class="js-vsum-rej" data-venue="' +
           esc(key) +
           '">' +
-          esc(c.cancelled) +
+          esc(c.rejected) +
           "</dd></div>" +
           "</dl></article>"
         );
@@ -1118,7 +1241,7 @@
         '<header class="reservation-hero reservation-hero--overview">' +
         '<div class="reservation-hero__intro">' +
         "<h3>Günlük rezervasyon takibi</h3>" +
-        "<p>Bu ana sekme <strong>tüm restoran ve Spa</strong> rezervasyonlarını seçtiğiniz güne göre listeler; onay veya durum değişikliği için sol menüden ilgili mekân sekmesini kullanın. Aşağıdaki özet, seçilen güne göre dört mekân için durum sayılarıdır; chip filtreleri yalnızca tabloyu daraltır.</p>" +
+        "<p>Seçilen güne göre tüm mekânların özeti ve listesi. Durum değişikliği için soldan ilgili mekân sekmesine geçin. Üstteki chip’ler yalnızca tabloyu filtreler.</p>" +
         "</div>" +
         '<div class="reservation-venue-summary-grid">' +
         venueCardInner("laTerrace", "La Terrace A La Carte") +
@@ -1182,10 +1305,10 @@
           var c = reservationVenueCountsForDate(iso, vk, rows);
           var w = mountEl.querySelector('.js-vsum-wait[data-venue="' + vk + '"]');
           var a = mountEl.querySelector('.js-vsum-appr[data-venue="' + vk + '"]');
-          var k = mountEl.querySelector('.js-vsum-can[data-venue="' + vk + '"]');
+          var j = mountEl.querySelector('.js-vsum-rej[data-venue="' + vk + '"]');
           if (w) w.textContent = String(c.wait);
           if (a) a.textContent = String(c.approved);
-          if (k) k.textContent = String(c.cancelled);
+          if (j) j.textContent = String(c.rejected);
         });
         var list = reservationOverviewListFor(iso, ovFilterKey, rows);
         var guestSum = 0;
@@ -1215,6 +1338,7 @@
         var out = "";
         list.forEach(function (r) {
           var rowSt = String(r.status || "new");
+          var rowStNormOv = reservationNormalizeStatusKey(rowSt);
           out +=
             "<tr>" +
             "<td>" +
@@ -1236,7 +1360,8 @@
             esc(reservationGuestCountValue(r)) +
             "</td>" +
             '<td><span class="status-badge status-' +
-            esc(rowSt) +
+            esc(rowStNormOv) +
+            (reservationIsWaitStatus(rowStNormOv) ? " status-badge--wait" : "") +
             '">' +
             esc(reservationStatusLabel(rowSt)) +
             "</span></td>" +
@@ -1310,7 +1435,7 @@
 
     var isoVenueDefault = reservationDefaultViewDate(rows, activeTab);
     var vcHero = reservationVenueCountsForDate(isoVenueDefault, activeTab, rows);
-    var vcHeroTotal = vcHero.wait + vcHero.approved + vcHero.cancelled;
+    var vcHeroTotal = vcHero.wait + vcHero.approved + vcHero.rejected + vcHero.cancelled;
     var venueAllTimeCount = countVenue(activeTab);
 
     var html =
@@ -1320,25 +1445,25 @@
       "<h3>" +
       esc(venueTitle) +
       "</h3>" +
-      "<p>Bu sekmede <strong>onay, bekleme ve durum</strong> yönetilir. Aşağıdaki sayılar <strong>seçili güne</strong> ve <strong>bu mekâna</strong> özeldir. Tüm mekânların günlük listesi için <strong>Rezervasyonlar</strong> ana görünümünü kullanın.</p>" +
+      "<p>Bu mekân ve seçili gün için sayılar aşağıda. Hepsini bir arada görmek için üst menüden <strong>Rezervasyonlar</strong> genel görünümünü açın.</p>" +
       "</div>" +
       '<div class="reservation-hero__stats reservation-hero__stats--venue-only">' +
-      '<div class="reservation-mini-stat"><span>Beklemede (bu gün)</span><strong class="js-vvenue-wait">' +
+      '<div class="reservation-mini-stat reservation-mini-stat--wait"><span>Beklemede (bu gün)</span><strong class="js-vvenue-wait">' +
       esc(vcHero.wait) +
       "</strong></div>" +
-      '<div class="reservation-mini-stat"><span>Onaylı (bu gün)</span><strong class="js-vvenue-appr">' +
+      '<div class="reservation-mini-stat"><span>Onaylandı (bu gün)</span><strong class="js-vvenue-appr">' +
       esc(vcHero.approved) +
       "</strong></div>" +
-      '<div class="reservation-mini-stat"><span>İptal (bu gün)</span><strong class="js-vvenue-can">' +
-      esc(vcHero.cancelled) +
+      '<div class="reservation-mini-stat"><span>Onaylanmadı (bu gün)</span><strong class="js-vvenue-rej">' +
+      esc(vcHero.rejected) +
       "</strong></div>" +
       '<div class="reservation-mini-stat"><span>Toplam (bu gün)</span><strong class="js-vvenue-daytotal">' +
       esc(vcHeroTotal) +
       "</strong></div>" +
       "</div>" +
-      '<p class="reservation-hero__venue-footnote">Seçilen gün: <strong class="js-vvenue-day-display">' +
+      '<p class="reservation-hero__venue-footnote">Gün: <strong class="js-vvenue-day-display">' +
       esc(formatIsoDateDisplayTr(isoVenueDefault)) +
-      "</strong> · Bu mekânda kayıt (tüm tarihler): <strong class=\"js-vvenue-alltime\">" +
+      "</strong> · Bu mekânda toplam kayıt: <strong class=\"js-vvenue-alltime\">" +
       esc(venueAllTimeCount) +
       "</strong></p>" +
       "</header>" +
@@ -1361,10 +1486,11 @@
       '<div class="reservation-day-filters">' +
       '<input type="search" class="bucket-search reservation-day-search" placeholder="Bu gün içinde ara (misafir, oda, not)..." />' +
       '<select class="bucket-filter-status reservation-day-status">' +
-      '<option value="all">Tüm Durumlar</option>' +
+      '<option value="all">Tüm durumlar</option>' +
       '<option value="wait">Beklemede</option>' +
-      '<option value="in_progress">Onaylandı</option>' +
-      '<option value="cancelled">İptal</option>' +
+      '<option value="done">Onaylandı</option>' +
+      '<option value="rejected">Onaylanmadı</option>' +
+      '<option value="cancelled">İptal (eski kayıt)</option>' +
       "</select>" +
       "</div>" +
       '<div class="bucket-table-wrap reservation-table-wrap">' +
@@ -1378,7 +1504,7 @@
       "</div>" +
       '<details class="reservation-ops-advanced glass-block">' +
       "<summary>Operasyon: manuel kayıt</summary>" +
-      '<p class="bucket-help">Manuel ekleme bu mekân için geçerlidir.</p>' +
+      '<p class="bucket-help">Manuel kayıt yalnızca bu mekân içindir.</p>' +
       reservationManualFormHtml(activeTab, rows) +
       "</details>" +
       "</div>";
@@ -1395,7 +1521,7 @@
     var manualForm = mountEl.querySelector(".reservation-manual-form");
     var elVWait = mountEl.querySelector(".js-vvenue-wait");
     var elVAppr = mountEl.querySelector(".js-vvenue-appr");
-    var elVCan = mountEl.querySelector(".js-vvenue-can");
+    var elVRej = mountEl.querySelector(".js-vvenue-rej");
     var elVDayTot = mountEl.querySelector(".js-vvenue-daytotal");
     var elVDayDisp = mountEl.querySelector(".js-vvenue-day-display");
 
@@ -1416,10 +1542,10 @@
         });
 
       var vcDay = reservationStatusOverviewCounts(list);
-      var daySum = vcDay.wait + vcDay.approved + vcDay.cancelled;
+      var daySum = vcDay.wait + vcDay.approved + vcDay.rejected + vcDay.cancelled;
       if (elVWait) elVWait.textContent = String(vcDay.wait);
       if (elVAppr) elVAppr.textContent = String(vcDay.approved);
-      if (elVCan) elVCan.textContent = String(vcDay.cancelled);
+      if (elVRej) elVRej.textContent = String(vcDay.rejected);
       if (elVDayTot) elVDayTot.textContent = String(daySum);
       if (elVDayDisp) elVDayDisp.textContent = formatIsoDateDisplayTr(iso);
 
@@ -1442,7 +1568,7 @@
         var rowSt = String(r.status || "new");
         var rowStNorm = reservationNormalizeStatusKey(rowSt);
         if (statusSel === "wait") {
-          if (rowStNorm !== "new" && rowStNorm !== "pending") return;
+          if (!reservationIsWaitStatus(rowStNorm)) return;
         } else if (statusSel !== "all" && rowStNorm !== statusSel) return;
         var serviceName = reservationTypeLabel(r);
         var time = String(reservationTimeValue(r) || "—");
@@ -1462,10 +1588,10 @@
           .toLowerCase();
         if (q && rowSearchText.indexOf(q) < 0) return;
         any += 1;
-        var actions = '<div class="row-actions">' + reservationActionButtons(type, r.id) + "</div>";
+        var actions = '<div class="row-actions">' + reservationActionButtons(type, r, r.id) + "</div>";
         out +=
           '<tr class="bucket-row reservation-row" data-status="' +
-          esc(rowSt) +
+          esc(rowStNorm) +
           '" data-search="' +
           esc(rowSearchText) +
           '">' +
@@ -1491,7 +1617,8 @@
           esc(noteCell) +
           "</td>" +
           '<td><span class="status-badge status-' +
-          esc(rowSt) +
+          esc(rowStNorm) +
+          (reservationIsWaitStatus(rowStNorm) ? " status-badge--wait" : "") +
           '">' +
           esc(reservationStatusLabel(rowSt)) +
           "</span></td>" +
@@ -1748,26 +1875,32 @@
     if (!Array.isArray(rows)) rows = [];
     var pag = handlers && handlers.pagination;
     var totalCount = bucketTopStatsTotal(pag, rows);
-    var openLabel = pag ? "Açık (sayfa)" : "Açık";
-    var doneLabel = pag ? "Tamamlanan (sayfa)" : "Tamamlanan";
+    var topstatsTitle = pag
+      ? ' title="Özet sayıları yalnızca bu sayfadaki satırlara göredir."'
+      : "";
     var open = rows.filter(function (r) {
-      var s = String(r.status || "new");
+      var s = normalizeBucketStatus(r.status);
       return s === "new" || s === "pending" || s === "in_progress";
     }).length;
     var done = rows.filter(function (r) {
-      return String(r.status || "") === "done";
+      return normalizeBucketStatus(r.status) === "done";
+    }).length;
+    var rejected = rows.filter(function (r) {
+      return normalizeBucketStatus(r.status) === "rejected";
     }).length;
 
     var html =
       '<div class="bucket-shell bucket-shell--requests">' +
-      '<div class="bucket-topstats">' +
+      '<div class="bucket-topstats bucket-topstats--quad"' +
+      topstatsTitle +
+      ">" +
       '<div class="bucket-stat"><span>Toplam</span><strong>' + esc(totalCount) + "</strong></div>" +
-      '<div class="bucket-stat"><span>' + esc(openLabel) + "</span><strong>" + esc(open) + "</strong></div>" +
-      '<div class="bucket-stat"><span>' + esc(doneLabel) + "</span><strong>" + esc(done) + "</strong></div>" +
+      '<div class="bucket-stat"><span>Beklemede</span><strong>' + esc(open) + "</strong></div>" +
+      '<div class="bucket-stat"><span>Yapıldı</span><strong>' + esc(done) + "</strong></div>" +
+      '<div class="bucket-stat"><span>Yapılamadı</span><strong>' + esc(rejected) + "</strong></div>" +
       "</div>" +
       '<p class="bucket-help bucket-help--requests">' +
-      "<strong>Kategori</strong> talep sınıfıdır. <strong>Tür</strong> ve <strong>Adet</strong> formdaki seçimlerdir (adet yoksa çizgi). " +
-      "<strong>Açıklama</strong> misafirin formda yazdığı metin; <strong>Personel notu</strong> ekibin bu istek için tuttuğu dahili nottur.</p>" +
+      "Kategori = talep türü. Tür ve Adet = form seçimleri (yoksa çizgi). Açıklama = misafir notu. Personel notu = dahili.</p>" +
       '<div class="bucket-toolbar bucket-toolbar--requests">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
       '<div class="reservation-date-combo bucket-toolbar-date-combo">' +
@@ -1778,10 +1911,9 @@
       '<input class="bucket-search" type="search" placeholder="Oda, misafir, kategori veya not ara..." />' +
       '<select class="bucket-filter-status">' +
       '<option value="all">Tüm Durumlar</option>' +
-      '<option value="new">Yapılmadı</option>' +
-      '<option value="pending">Beklemede</option>' +
-      '<option value="in_progress">İşlemde</option>' +
+      '<option value="new_pending">Beklemede</option>' +
       '<option value="done">Yapıldı</option>' +
+      '<option value="rejected">Yapılamadı</option>' +
       "</select>" +
       "</div>" +
       '<div class="bucket-table-wrap">' +
@@ -1794,7 +1926,7 @@
       html += '<tr><td colspan="11" class="admin-table__empty">Henüz istek kaydı yok.</td></tr>';
     } else {
       rows.forEach(function (r) {
-        var st = String(r.status || "new");
+        var st = normalizeBucketStatus(r.status);
         var catLabel = categoryText("request", r.categories, r.category);
         var typeLabel = requestFormTypeLabel(r);
         var qtyDisp = requestFormQuantityDisplay(r);
@@ -1836,11 +1968,9 @@
           '" placeholder="İç not">' +
           esc(staffNote) +
           "</textarea></td>";
-        html += '<td><span class="status-badge status-' + esc(st) + '">' + esc(statusLabel(st)) + "</span></td>";
+        html += '<td><span class="status-badge status-' + esc(st) + '">' + esc(issueStatusLabel("request", st)) + "</span></td>";
         html += '<td><div class="row-actions">';
-        html += '<button class="btn-small js-status" data-id="' + esc(r.id) + '" data-type="request" data-status="pending">Beklemeye Al</button>';
-        html += '<button class="btn-small js-status" data-id="' + esc(r.id) + '" data-type="request" data-status="done">Yapıldı</button>';
-        html += '<button class="btn-small js-delete" data-id="' + esc(r.id) + '" data-type="request">Sil</button>';
+        html += issueRowActionsHtml("request", r.id, st);
         html += "</div></td>";
         html += "</tr>";
       });
@@ -1863,7 +1993,7 @@
       var st = String((statusFilter && statusFilter.value) || "all");
       var dateIso = String((dateNat && dateNat.value) || "").slice(0, 10);
       mountEl.querySelectorAll(".request-row").forEach(function (row) {
-        var okStatus = st === "all" || row.getAttribute("data-status") === st;
+        var okStatus = rowMatchesStatusFilter(row.getAttribute("data-status"), st);
         var okSearch = !q || String(row.getAttribute("data-search") || "").indexOf(q) >= 0;
         var cal = row.getAttribute("data-cal-date") || "";
         var okDate = !dateIso || dateIso.length !== 10 || cal === dateIso;
@@ -1950,26 +2080,32 @@
     if (!Array.isArray(rows)) rows = [];
     var pag = handlers && handlers.pagination;
     var totalCount = bucketTopStatsTotal(pag, rows);
-    var openLabel = pag ? "Açık (sayfa)" : "Açık";
-    var doneLabel = pag ? "Tamamlanan (sayfa)" : "Tamamlanan";
+    var topstatsTitle = pag
+      ? ' title="Özet sayıları yalnızca bu sayfadaki satırlara göredir."'
+      : "";
     var open = rows.filter(function (r) {
-      var s = String(r.status || "new");
+      var s = normalizeBucketStatus(r.status);
       return s === "new" || s === "pending" || s === "in_progress";
     }).length;
     var done = rows.filter(function (r) {
-      return String(r.status || "") === "done";
+      return normalizeBucketStatus(r.status) === "done";
+    }).length;
+    var rejected = rows.filter(function (r) {
+      return normalizeBucketStatus(r.status) === "rejected";
     }).length;
 
     var html =
       '<div class="bucket-shell bucket-shell--complaints">' +
-      '<div class="bucket-topstats">' +
+      '<div class="bucket-topstats bucket-topstats--quad"' +
+      topstatsTitle +
+      ">" +
       '<div class="bucket-stat"><span>Toplam</span><strong>' + esc(totalCount) + "</strong></div>" +
-      '<div class="bucket-stat"><span>' + esc(openLabel) + "</span><strong>" + esc(open) + "</strong></div>" +
-      '<div class="bucket-stat"><span>' + esc(doneLabel) + "</span><strong>" + esc(done) + "</strong></div>" +
+      '<div class="bucket-stat"><span>Beklemede</span><strong>' + esc(open) + "</strong></div>" +
+      '<div class="bucket-stat"><span>Dikkate alındı</span><strong>' + esc(done) + "</strong></div>" +
+      '<div class="bucket-stat"><span>Dikkate alınmadı</span><strong>' + esc(rejected) + "</strong></div>" +
       "</div>" +
       '<p class="bucket-help bucket-help--complaints">' +
-      "Misafir formunda <strong>şikayet kategorisi</strong> (tek seçim) ve isteğe bağlı / zorunlu <strong>açıklama</strong> alanı vardır. " +
-      "<strong>Personel notu</strong> ekibin bu kayıt için tuttuğu dahili nottur.</p>" +
+      "Kategori ve açıklama misafir formundan. Personel notu dahilidir.</p>" +
       '<div class="bucket-toolbar bucket-toolbar--complaints">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
       '<div class="reservation-date-combo bucket-toolbar-date-combo">' +
@@ -1980,10 +2116,9 @@
       '<input class="bucket-search" type="search" placeholder="Oda, misafir, kategori, açıklama veya not ara..." />' +
       '<select class="bucket-filter-status">' +
       '<option value="all">Tüm Durumlar</option>' +
-      '<option value="new">Yapılmadı</option>' +
-      '<option value="pending">Beklemede</option>' +
-      '<option value="in_progress">İşlemde</option>' +
-      '<option value="done">Yapıldı</option>' +
+      '<option value="new_pending">Beklemede</option>' +
+      '<option value="done">Dikkate alındı</option>' +
+      '<option value="rejected">Dikkate alınmadı</option>' +
       "</select>" +
       "</div>" +
       '<div class="bucket-table-wrap">' +
@@ -1996,7 +2131,7 @@
       html += '<tr><td colspan="9" class="admin-table__empty">Henüz şikayet kaydı yok.</td></tr>';
     } else {
       rows.forEach(function (r) {
-        var st = String(r.status || "new");
+        var st = normalizeBucketStatus(r.status);
         var catLabel = categoryText("complaint", r.categories, r.category);
         var descFull = complaintFormDescription(r);
         var staffNote = getComplaintStaffNote(r.id);
@@ -2032,11 +2167,9 @@
           '" placeholder="İç not">' +
           esc(staffNote) +
           "</textarea></td>";
-        html += '<td><span class="status-badge status-' + esc(st) + '">' + esc(statusLabel(st)) + "</span></td>";
+        html += '<td><span class="status-badge status-' + esc(st) + '">' + esc(issueStatusLabel("complaint", st)) + "</span></td>";
         html += '<td><div class="row-actions">';
-        html += '<button class="btn-small js-status" data-id="' + esc(r.id) + '" data-type="complaint" data-status="pending">Beklemeye Al</button>';
-        html += '<button class="btn-small js-status" data-id="' + esc(r.id) + '" data-type="complaint" data-status="done">Yapıldı</button>';
-        html += '<button class="btn-small js-delete" data-id="' + esc(r.id) + '" data-type="complaint">Sil</button>';
+        html += issueRowActionsHtml("complaint", r.id, st);
         html += "</div></td>";
         html += "</tr>";
       });
@@ -2059,7 +2192,7 @@
       var st = String((statusFilter && statusFilter.value) || "all");
       var dateIso = String((dateNat && dateNat.value) || "").slice(0, 10);
       mountEl.querySelectorAll(".complaint-row").forEach(function (row) {
-        var okStatus = st === "all" || row.getAttribute("data-status") === st;
+        var okStatus = rowMatchesStatusFilter(row.getAttribute("data-status"), st);
         var okSearch = !q || String(row.getAttribute("data-search") || "").indexOf(q) >= 0;
         var cal = row.getAttribute("data-cal-date") || "";
         var okDate = !dateIso || dateIso.length !== 10 || cal === dateIso;
@@ -2142,26 +2275,32 @@
     if (!Array.isArray(rows)) rows = [];
     var pag = handlers && handlers.pagination;
     var totalCount = bucketTopStatsTotal(pag, rows);
-    var openLabel = pag ? "Açık (sayfa)" : "Açık";
-    var doneLabel = pag ? "Tamamlanan (sayfa)" : "Tamamlanan";
+    var topstatsTitle = pag
+      ? ' title="Özet sayıları yalnızca bu sayfadaki satırlara göredir."'
+      : "";
     var open = rows.filter(function (r) {
-      var s = String(r.status || "new");
+      var s = normalizeBucketStatus(r.status);
       return s === "new" || s === "pending" || s === "in_progress";
     }).length;
     var done = rows.filter(function (r) {
-      return String(r.status || "") === "done";
+      return normalizeBucketStatus(r.status) === "done";
+    }).length;
+    var rejected = rows.filter(function (r) {
+      return normalizeBucketStatus(r.status) === "rejected";
     }).length;
 
     var html =
       '<div class="bucket-shell bucket-shell--faults">' +
-      '<div class="bucket-topstats">' +
+      '<div class="bucket-topstats bucket-topstats--quad"' +
+      topstatsTitle +
+      ">" +
       '<div class="bucket-stat"><span>Toplam</span><strong>' + esc(totalCount) + "</strong></div>" +
-      '<div class="bucket-stat"><span>' + esc(openLabel) + "</span><strong>" + esc(open) + "</strong></div>" +
-      '<div class="bucket-stat"><span>' + esc(doneLabel) + "</span><strong>" + esc(done) + "</strong></div>" +
+      '<div class="bucket-stat"><span>Beklemede</span><strong>' + esc(open) + "</strong></div>" +
+      '<div class="bucket-stat"><span>Yapıldı</span><strong>' + esc(done) + "</strong></div>" +
+      '<div class="bucket-stat"><span>Yapılamadı</span><strong>' + esc(rejected) + "</strong></div>" +
       "</div>" +
       '<p class="bucket-help bucket-help--faults">' +
-      "Misafir formunda <strong>arıza kategorisi</strong>, zorunlu <strong>lokasyon</strong> ve <strong>aciliyet</strong>, isteğe bağlı (bazı durumlarda zorunlu) <strong>açıklama</strong> alanları vardır. " +
-      "<strong>Personel notu</strong> ekibin bu kayıt için tuttuğu dahili nottur.</p>" +
+      "Kategori, lokasyon, aciliyet ve açıklama formdan. Personel notu dahilidir.</p>" +
       '<div class="bucket-toolbar bucket-toolbar--faults">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
       '<div class="reservation-date-combo bucket-toolbar-date-combo">' +
@@ -2172,10 +2311,9 @@
       '<input class="bucket-search" type="search" placeholder="Oda, misafir, kategori, lokasyon, aciliyet, açıklama veya not ara..." />' +
       '<select class="bucket-filter-status">' +
       '<option value="all">Tüm Durumlar</option>' +
-      '<option value="new">Yapılmadı</option>' +
-      '<option value="pending">Beklemede</option>' +
-      '<option value="in_progress">İşlemde</option>' +
+      '<option value="new_pending">Beklemede</option>' +
       '<option value="done">Yapıldı</option>' +
+      '<option value="rejected">Yapılamadı</option>' +
       "</select>" +
       "</div>" +
       '<div class="bucket-table-wrap">' +
@@ -2188,7 +2326,7 @@
       html += '<tr><td colspan="11" class="admin-table__empty">Henüz arıza kaydı yok.</td></tr>';
     } else {
       rows.forEach(function (r) {
-        var st = String(r.status || "new");
+        var st = normalizeBucketStatus(r.status);
         var catLabel = categoryText("fault", r.categories, r.category);
         var locLabel = faultLocationLabel(r);
         var urgLabel = faultUrgencyLabel(r);
@@ -2230,11 +2368,9 @@
           '" placeholder="İç not">' +
           esc(staffNote) +
           "</textarea></td>";
-        html += '<td><span class="status-badge status-' + esc(st) + '">' + esc(statusLabel(st)) + "</span></td>";
+        html += '<td><span class="status-badge status-' + esc(st) + '">' + esc(issueStatusLabel("fault", st)) + "</span></td>";
         html += '<td><div class="row-actions">';
-        html += '<button class="btn-small js-status" data-id="' + esc(r.id) + '" data-type="fault" data-status="pending">Beklemeye Al</button>';
-        html += '<button class="btn-small js-status" data-id="' + esc(r.id) + '" data-type="fault" data-status="done">Yapıldı</button>';
-        html += '<button class="btn-small js-delete" data-id="' + esc(r.id) + '" data-type="fault">Sil</button>';
+        html += issueRowActionsHtml("fault", r.id, st);
         html += "</div></td>";
         html += "</tr>";
       });
@@ -2257,7 +2393,7 @@
       var st = String((statusFilter && statusFilter.value) || "all");
       var dateIso = String((dateNat && dateNat.value) || "").slice(0, 10);
       mountEl.querySelectorAll(".fault-row").forEach(function (row) {
-        var okStatus = st === "all" || row.getAttribute("data-status") === st;
+        var okStatus = rowMatchesStatusFilter(row.getAttribute("data-status"), st);
         var okSearch = !q || String(row.getAttribute("data-search") || "").indexOf(q) >= 0;
         var cal = row.getAttribute("data-cal-date") || "";
         var okDate = !dateIso || dateIso.length !== 10 || cal === dateIso;
@@ -2350,22 +2486,22 @@
         {
           title: "Toplam Sohbet",
           value: kpis.totalChats != null ? kpis.totalChats : "—",
-          hint: "Misafirlerin bot ile toplam mesaj etkileşimi",
+          hint: "Kayıtlı bot sohbet adedi",
         },
         {
           title: "Fallback Oranı",
           value: fb,
-          hint: "Botun yanıt üretemediği durum yüzdesi",
+          hint: "Yanıt üretilemeyen mesajların payı",
         },
         {
           title: "Genel Memnuniyet",
           value: kpis.overallSatisfaction != null ? kpis.overallSatisfaction : "—",
-          hint: "Otel deneyimi için ortalama memnuniyet skoru",
+          hint: "Otel anketi ortalaması (1–5)",
         },
         {
           title: "Viona Memnuniyet",
           value: kpis.vionaSatisfaction != null ? kpis.vionaSatisfaction : "—",
-          hint: "Asistan deneyimi için ortalama memnuniyet skoru",
+          hint: "Viona anketi ortalaması (1–5)",
         },
       ];
       cards.forEach(function (c) {
@@ -2601,33 +2737,53 @@
         return;
       }
       var totalCount = bucketTopStatsTotal(pagGeneric, rows);
-      var openLabel = pagGeneric ? "Açık (sayfa)" : "Açık";
-      var doneLabel = pagGeneric ? "Tamamlanan (sayfa)" : "Tamamlanan";
+      var topstatsTitleGen = pagGeneric
+        ? ' title="Özet sayıları yalnızca bu sayfadaki satırlara göredir."'
+        : "";
       var open = rows.filter(function (r) {
-        var s = String(r.status || "new");
+        var s = normalizeBucketStatus(r.status);
         return s === "new" || s === "pending" || s === "in_progress";
       }).length;
       var done = rows.filter(function (r) {
-        return String(r.status || "") === "done";
+        return normalizeBucketStatus(r.status) === "done";
       }).length;
+      var rejected = rows.filter(function (r) {
+        return normalizeBucketStatus(r.status) === "rejected";
+      }).length;
+      var negLabel = type === "complaint" ? "Dikkate alınmadı" : "Yapılamadı";
+      var posLabel = type === "complaint" ? "Dikkate alındı" : "Yapıldı";
       var html =
         '<div class="bucket-shell">' +
-        '<div class="bucket-topstats">' +
+        '<div class="bucket-topstats bucket-topstats--quad"' +
+        topstatsTitleGen +
+        ">" +
         '<div class="bucket-stat"><span>Toplam</span><strong>' + esc(totalCount) + "</strong></div>" +
-        '<div class="bucket-stat"><span>' + esc(openLabel) + "</span><strong>" + esc(open) + "</strong></div>" +
-        '<div class="bucket-stat"><span>' + esc(doneLabel) + "</span><strong>" + esc(done) + "</strong></div>" +
+        '<div class="bucket-stat"><span>Beklemede</span><strong>' + esc(open) + "</strong></div>" +
+        '<div class="bucket-stat"><span>' +
+        esc(posLabel) +
+        '</span><strong>' +
+        esc(done) +
+        "</strong></div>" +
+        '<div class="bucket-stat"><span>' +
+        esc(negLabel) +
+        '</span><strong>' +
+        esc(rejected) +
+        "</strong></div>" +
         "</div>" +
         '<p class="bucket-help">' +
         esc(typeLabel(type)) +
-        " kayıtları operasyon ekibi tarafından takip edilir. Önce Beklemede, tamamlanınca Yapıldı durumuna alın.</p>" +
+        ": ilk kayıt beklemede. Olumlu / olumsuz durumlar birbirine çevrilebilir; şikayetlerde dikkate alındı / alınmadı.</p>" +
         '<div class="bucket-toolbar">' +
         '<input class="bucket-search" type="search" placeholder="Oda, misafir veya detay ara..." />' +
         '<select class="bucket-filter-status">' +
         '<option value=\"all\">Tüm Durumlar</option>' +
-        '<option value=\"new\">Yapılmadı</option>' +
-        '<option value=\"pending\">Beklemede</option>' +
-        '<option value=\"in_progress\">İşlemde</option>' +
-        '<option value=\"done\">Yapıldı</option>' +
+        '<option value=\"new_pending\">Beklemede</option>' +
+        '<option value=\"done\">' +
+        esc(type === "complaint" ? "Dikkate alındı" : "Yapıldı") +
+        '</option>' +
+        '<option value=\"rejected\">' +
+        esc(type === "complaint" ? "Dikkate alınmadı" : "Yapılamadı") +
+        "</option>" +
         "</select>" +
         "</div>" +
         '<div class="bucket-table-wrap"><table class="admin-table"><thead><tr><th>Tarih</th><th>Tip</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Kategori</th><th>Detay</th><th>Durum</th><th>İşlemler</th></tr></thead><tbody>';
@@ -2635,7 +2791,7 @@
         html += '<tr><td colspan="9" class="admin-table__empty">Bu sayfada kayıt yok.</td></tr>';
       } else {
         rows.forEach(function (r) {
-          var st = String(r.status || "new");
+          var st = normalizeBucketStatus(r.status);
           var typeText = typeLabel(type);
           var detailText = issueDetailText(r, type);
           var rowSearchText = [
@@ -2653,11 +2809,9 @@
           html += "<td>" + esc(r.nationality || "-") + "</td>";
           html += "<td>" + esc(categoryText(type, r.categories, r.category)) + "</td>";
           html += "<td>" + esc(detailText) + "</td>";
-          html += '<td><span class="status-badge status-' + esc(st) + '">' + esc(statusLabel(st)) + "</span></td>";
+          html += '<td><span class="status-badge status-' + esc(st) + '">' + esc(issueStatusLabel(type, st)) + "</span></td>";
           html += '<td><div class="row-actions">';
-          html += '<button class="btn-small js-status" data-id="' + esc(r.id) + '" data-type="' + esc(type) + '" data-status="pending">Beklemeye Al</button>';
-          html += '<button class="btn-small js-status" data-id="' + esc(r.id) + '" data-type="' + esc(type) + '" data-status="done">Yapıldı</button>';
-          html += '<button class="btn-small js-delete" data-id="' + esc(r.id) + '" data-type="' + esc(type) + '">Sil</button>';
+          html += issueRowActionsHtml(type, r.id, st);
           html += "</div></td>";
           html += "</tr>";
         });
@@ -2685,7 +2839,7 @@
         var q = String((search && search.value) || "").trim().toLowerCase();
         var st = String((statusFilter && statusFilter.value) || "all");
         mountEl.querySelectorAll(".bucket-row").forEach(function (row) {
-          var okStatus = st === "all" || row.getAttribute("data-status") === st;
+          var okStatus = rowMatchesStatusFilter(row.getAttribute("data-status"), st);
           var okSearch = !q || String(row.getAttribute("data-search") || "").indexOf(q) >= 0;
           row.classList.toggle("hidden", !(okStatus && okSearch));
         });
@@ -2716,9 +2870,9 @@
       }
       mountEl.innerHTML =
         '<div class="logs-kpi-grid logs-kpi-grid--three" role="list">' +
-        card("logs-kpi-card--total", "Toplam kayıt", String(total), "Geçerli tarih ve filtrelerle eşleşen mesaj adedi") +
-        card("logs-kpi-card--fallback", "Fallback oranı", String(s.fallbackRate || 0) + "%", "Katmanı fallback olan kayıtların payı") +
-        card("logs-kpi-card--multi", "Çoklu niyet", String(s.multiIntentRate || 0) + "%", "Birden fazla konu içeren mesaj oranı") +
+        card("logs-kpi-card--total", "Toplam kayıt", String(total), "Seçili tarih ve filtrelerle eşleşen mesaj") +
+        card("logs-kpi-card--fallback", "Fallback oranı", String(s.fallbackRate || 0) + "%", "Fallback katmanına düşenlerin payı") +
+        card("logs-kpi-card--multi", "Çoklu niyet", String(s.multiIntentRate || 0) + "%", "Birden fazla konu işaretli mesajların payı") +
         "</div>";
     },
     renderLogsTable: function (mountEl, rows, handlers) {
@@ -2772,5 +2926,11 @@
     formatDateOnlyDisplayTr: function (iso) {
       return formatIsoDateDisplayTr(iso);
     },
+    /** Rezervasyon satırı → laTerrace | mare | sinton | spa | null (ana sayfa özet sayımı). */
+    reservationVenueKeyFromRow: reservationVenueKeyFromRow,
+    /** Rezervasyon günü YYYY-MM-DD (günlük özet filtresi). */
+    reservationDateValue: reservationDateValue,
+    /** Rezervasyon durumu normalizasyonu (sayım / etiket tek kaynak). */
+    reservationNormalizeStatusKey: reservationNormalizeStatusKey,
   };
 })();

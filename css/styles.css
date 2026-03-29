@@ -1,4 +1,5 @@
-/* Viona — Kaila Beach · premium mobil öncelikli arayüz */
+/* Viona — Kaila Beach · premium mobil öncelikli arayüz
+   Köşe, gölge, blur ve scrim değerleri :root jetonlarından türetilir; yeni UI buraya bağlanır. */
 
 :root {
   --bg-deep: #070a0f;
@@ -13,10 +14,26 @@
   --cyan: #2eb8c7;
   --cyan-dim: rgba(46, 184, 199, 0.2);
   --shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  --shadow-tile: 0 14px 40px rgba(0, 0, 0, 0.42);
+  --shadow-card-soft: 0 12px 34px rgba(0, 0, 0, 0.22);
+  --shadow-hover: 0 10px 28px rgba(0, 0, 0, 0.28);
   --radius: 18px;
   --radius-sm: 14px;
+  --radius-md: 16px;
+  --radius-inner: 12px;
+  --radius-tight: 10px;
+  --radius-panel: 22px;
+  --radius-pill: 999px;
   --tap: 48px;
   --font: "DM Sans", system-ui, -apple-system, sans-serif;
+  --ink: #0a0e14;
+  /* Native <select> seçenekleri (OS tema) */
+  --surface-select: #0f1724;
+  --blur-glass: 16px;
+  --blur-glass-strong: 22px;
+  --backdrop-scrim: rgba(5, 8, 14, 0.72);
+  --stroke-chip: rgba(255, 255, 255, 0.14);
+  --error-text: #f87171;
 }
 
 *,
@@ -100,11 +117,11 @@ body {
   width: min(440px, 100%);
   text-align: center;
   padding: 28px 18px 26px;
-  border-radius: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--stroke-chip);
   background: linear-gradient(155deg, rgba(18, 26, 42, 0.95) 0%, rgba(7, 10, 18, 0.88) 100%);
-  backdrop-filter: blur(22px) saturate(1.35);
-  -webkit-backdrop-filter: blur(22px) saturate(1.35);
+  backdrop-filter: blur(var(--blur-glass-strong)) saturate(1.35);
+  -webkit-backdrop-filter: blur(var(--blur-glass-strong)) saturate(1.35);
   box-shadow:
     0 4px 0 rgba(255, 255, 255, 0.06) inset,
     0 0 0 1px rgba(212, 168, 83, 0.12),
@@ -119,7 +136,7 @@ body {
   right: 0;
   top: 0;
   height: 3px;
-  border-radius: 22px 22px 0 0;
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
   background: linear-gradient(90deg, transparent, rgba(212, 168, 83, 0.95), rgba(46, 184, 199, 0.85), transparent);
   opacity: 0.95;
 }
@@ -170,7 +187,7 @@ body {
 .lang-chip {
   min-height: var(--tap);
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--stroke-chip);
   background: rgba(255, 255, 255, 0.07);
   color: var(--text);
   font: inherit;
@@ -206,7 +223,7 @@ body {
   font: inherit;
   font-weight: 700;
   cursor: pointer;
-  color: #0a0e14;
+  color: var(--ink);
   background: linear-gradient(135deg, #e8c56c, #c99a3e);
   box-shadow: var(--shadow);
   transition: transform 0.2s, filter 0.2s;
@@ -425,8 +442,8 @@ body {
   border: 1px solid var(--stroke);
   border-radius: var(--radius);
   padding: 18px 18px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(var(--blur-glass));
+  -webkit-backdrop-filter: blur(var(--blur-glass));
   box-shadow: var(--shadow);
 }
 
@@ -589,13 +606,13 @@ body {
 .action-tile--gold {
   background: linear-gradient(145deg, rgba(212, 168, 83, 0.42), rgba(16, 22, 34, 0.96));
   border-color: rgba(212, 168, 83, 0.55);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(212, 168, 83, 0.25) inset;
+  box-shadow: var(--shadow-tile), 0 0 0 1px rgba(212, 168, 83, 0.25) inset;
 }
 
 .action-tile--cyan {
   background: linear-gradient(145deg, rgba(46, 184, 199, 0.38), rgba(16, 22, 34, 0.96));
   border-color: rgba(46, 184, 199, 0.5);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(46, 184, 199, 0.2) inset;
+  box-shadow: var(--shadow-tile), 0 0 0 1px rgba(46, 184, 199, 0.2) inset;
 }
 
 .action-tile--gold::before,
@@ -809,7 +826,7 @@ body {
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   background: var(--pool-dim);
   border: 1px solid rgba(30, 139, 195, 0.28);
 }
@@ -872,12 +889,12 @@ body {
   position: relative;
   margin-top: 8px;
   border: 1px solid var(--stroke);
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   padding: 14px 12px;
   background: linear-gradient(155deg, rgba(30, 139, 195, 0.08) 0%, rgba(18, 24, 36, 0.88) 50%, rgba(12, 18, 30, 0.94) 100%);
   box-shadow:
     0 0 0 1px rgba(46, 184, 199, 0.1) inset,
-    0 12px 34px rgba(0, 0, 0, 0.22);
+    var(--shadow-card-soft);
 }
 
 .survey-card__title {
@@ -907,8 +924,8 @@ body {
   flex: 0 0 auto;
   min-height: 44px;
   padding: 10px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-inner);
+  border: 1px solid var(--stroke-chip);
   background: rgba(255, 255, 255, 0.06);
   color: var(--text);
   font: inherit;
@@ -938,7 +955,7 @@ body {
 .survey-panel {
   margin-top: 10px;
   padding: 14px 12px;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   border: 1px solid rgba(255, 255, 255, 0.11);
   background: rgba(0, 0, 0, 0.18);
 }
@@ -951,7 +968,7 @@ body {
 
 .survey-q-row {
   padding: 10px 10px 11px;
-  border-radius: 12px;
+  border-radius: var(--radius-inner);
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.03);
 }
@@ -1094,8 +1111,8 @@ body {
   padding: 0;
   border: none;
   border-radius: inherit;
-  background: rgba(5, 8, 14, 0.78);
-  backdrop-filter: blur(5px);
+  background: var(--backdrop-scrim);
+  backdrop-filter: blur(6px);
   cursor: pointer;
 }
 
@@ -1103,7 +1120,7 @@ body {
   position: relative;
   z-index: 1;
   padding: 16px 14px max(16px, env(safe-area-inset-bottom));
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--stroke);
   background: rgba(18, 24, 36, 0.97);
   box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.35);
@@ -1142,7 +1159,7 @@ body {
 
 .survey-confirm__btn {
   min-height: 48px;
-  border-radius: 12px;
+  border-radius: var(--radius-inner);
   font: inherit;
   font-weight: 600;
   font-size: 0.95rem;
@@ -1176,7 +1193,7 @@ body {
   min-height: 44px;
   padding: 0 14px 0 10px;
   margin-bottom: 14px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 1px solid var(--stroke);
   background: rgba(255, 255, 255, 0.06);
   color: var(--text);
@@ -1278,7 +1295,7 @@ body {
 .modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(5, 8, 14, 0.72);
+  background: var(--backdrop-scrim);
   backdrop-filter: blur(6px);
 }
 
@@ -1336,7 +1353,7 @@ body {
   color: var(--text);
   width: 40px;
   height: 40px;
-  border-radius: 12px;
+  border-radius: var(--radius-inner);
   font-size: 1.4rem;
   line-height: 1;
   cursor: pointer;
@@ -1395,7 +1412,7 @@ body {
 
 .rate-link:hover {
   border-color: rgba(212, 168, 83, 0.45);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+  box-shadow: var(--shadow-hover);
 }
 
 .rate-link:active {
@@ -1423,7 +1440,7 @@ body {
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  border-radius: 12px;
+  border-radius: var(--radius-inner);
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -1559,7 +1576,7 @@ body {
   font-weight: 600;
   color: rgba(242, 244, 248, 0.75);
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--stroke-chip);
   border-radius: var(--radius-sm);
   padding: 8px 12px;
   cursor: pointer;
@@ -1606,7 +1623,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   background: linear-gradient(145deg, rgba(212, 168, 83, 0.2), rgba(46, 184, 199, 0.12));
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--cyan);
@@ -1671,7 +1688,7 @@ body {
 .viona-chat__bubble {
   max-width: min(100%, 340px);
   padding: 10px 14px;
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   font-size: 0.92rem;
   line-height: 1.5;
   word-wrap: break-word;
@@ -2680,7 +2697,7 @@ body {
 .req-intro {
   margin: 0 0 14px;
   padding: 12px 14px;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   border: 1px solid rgba(46, 184, 199, 0.22);
   background: linear-gradient(135deg, rgba(46, 184, 199, 0.08) 0%, rgba(0, 0, 0, 0.15) 100%);
   font-size: 0.88rem;
@@ -2713,7 +2730,7 @@ body {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  border-radius: 10px;
+  border-radius: var(--radius-tight);
   border: 1px solid var(--stroke);
   background: rgba(0, 0, 0, 0.25);
   color: var(--text);
@@ -2762,8 +2779,8 @@ select.req-input:required:invalid {
 }
 
 select.req-input option {
-  color: #f2f4f8;
-  background: #0f1724;
+  color: var(--text);
+  background: var(--surface-select);
 }
 
 /* iOS: 16px altında odakta sayfa yakınlaştırmasını önler */
@@ -2790,7 +2807,7 @@ select.req-input option {
   flex: 1;
   min-width: 120px;
   padding: 8px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-inner);
   border: 1px solid var(--stroke);
   background: rgba(0, 0, 0, 0.2);
   color: var(--text);
@@ -2817,7 +2834,7 @@ select.req-input option {
 
 .req-err {
   margin: 0;
-  color: #f87171;
+  color: var(--error-text);
   font-size: 0.88rem;
 }
 
@@ -2828,7 +2845,7 @@ select.req-input option {
 
 .req-success {
   padding: 16px;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   border: 1px solid rgba(46, 184, 199, 0.45);
   background: rgba(46, 184, 199, 0.1);
 }
@@ -2855,7 +2872,7 @@ select.req-input option {
   margin: 0 0 16px;
   padding: 9px 14px;
   border: 1px solid rgba(46, 184, 199, 0.35);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: linear-gradient(135deg, rgba(46, 184, 199, 0.14), rgba(12, 18, 30, 0.72));
   color: rgba(230, 248, 250, 0.96);
   font: inherit;
@@ -2885,7 +2902,7 @@ select.req-input option {
   border-color: rgba(46, 184, 199, 0.6);
   background: linear-gradient(135deg, rgba(46, 184, 199, 0.2), rgba(12, 18, 30, 0.84));
   box-shadow:
-    0 10px 24px rgba(0, 0, 0, 0.28),
+    var(--shadow-hover),
     0 0 0 1px rgba(46, 184, 199, 0.2) inset;
 }
 
@@ -2907,7 +2924,7 @@ select.req-input option {
   gap: 14px;
   width: 100%;
   padding: 16px 18px;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--stroke);
   background: rgba(0, 0, 0, 0.22);
   color: var(--text);
@@ -2931,7 +2948,7 @@ select.req-input option {
   height: 40px;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: var(--radius-inner);
   background: rgba(46, 184, 199, 0.12);
   color: rgba(46, 184, 199, 0.95);
   flex-shrink: 0;
@@ -2959,7 +2976,7 @@ select.req-input option {
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 1px solid var(--stroke);
   background: rgba(0, 0, 0, 0.2);
   font-size: 0.88rem;
@@ -3136,10 +3153,10 @@ select.req-input option {
 .req-res-section {
   margin-bottom: 14px;
   padding: 16px 16px 18px;
-  border-radius: 18px;
+  border-radius: var(--radius);
   border: 1px solid rgba(255, 255, 255, 0.07);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.14) 100%);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--shadow-card-soft);
 }
 
 .req-res-section__title {
@@ -3164,7 +3181,7 @@ select.req-input option {
 .req-form--res .req-input,
 .req-form--res .req-textarea {
   padding: 14px 14px;
-  border-radius: 12px;
+  border-radius: var(--radius-inner);
   font-size: 1rem;
 }
 
@@ -3172,7 +3189,7 @@ select.req-input option {
   width: 100%;
   margin-top: 6px;
   padding: 15px 20px;
-  border-radius: 12px;
+  border-radius: var(--radius-inner);
   font-size: 1.02rem;
   font-weight: 600;
 }
@@ -3190,7 +3207,7 @@ select.req-input option {
 .req-res-info-note {
   margin: 2px 0 0;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-tight);
   border: 1px solid rgba(212, 168, 83, 0.26);
   background: rgba(212, 168, 83, 0.08);
   font-size: 0.82rem;
@@ -3204,7 +3221,7 @@ select.req-input option {
   gap: 12px;
   margin: 0;
   padding: 14px 16px;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(0, 0, 0, 0.2);
   cursor: pointer;

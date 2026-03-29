@@ -1048,13 +1048,20 @@
         fillSlotButtons(slotWrap, slots, timeHidden, t, "reqPickRestaurantFirst");
         var rest = cfg.restaurants.filter(function (x) { return x.id === rid; })[0];
         ruleInfo.textContent = rest && rest.infoKey ? t(rest.infoKey) : "";
+        var isSinton = rid === "sinton";
+        s3.section.classList.toggle("hidden", isSinton);
+        s3.section.setAttribute("aria-hidden", isSinton ? "true" : "false");
+        if (isSinton) {
+          hIn.value = "";
+          hOut.value = "";
+          refreshStay();
+        }
       }
 
       restGrid.addEventListener("change", function () {
         var sel = form.querySelector('input[name="restaurant"]:checked');
         refreshSlotsFromRestaurant(sel ? sel.value : "");
       });
-      refreshSlotsFromRestaurant("");
 
       form.appendChild(s2.section);
 
@@ -1099,7 +1106,7 @@
           return;
         }
         staySub.textContent = t("reqStayNightsCount").replace(/\{n\}/g, String(n));
-        if (n >= 7) {
+        if (n >= 5) {
           stayLine.textContent = t("reqStayPromo7");
           stayBanner.classList.add("req-stay-banner--promo");
         } else {
@@ -1111,6 +1118,7 @@
       hOut.addEventListener("change", refreshStay);
 
       form.appendChild(s3.section);
+      refreshSlotsFromRestaurant("");
 
       var noteAl = fieldDesc(t, "al", "note", false);
       noteAl.querySelector("label").textContent = t("reqLabelNote");
@@ -1162,15 +1170,19 @@
           errAl.hidden = false;
           return;
         }
-        if (!hIn.value || !hOut.value) {
-          errAl.textContent = t("reqErrStayDates");
-          errAl.hidden = false;
-          return;
-        }
-        if (nightsBetween(hIn.value, hOut.value) <= 0) {
-          errAl.textContent = t("reqErrStayRange");
-          errAl.hidden = false;
-          return;
+        var ridEarly = String((new FormData(form)).get("restaurant") || "");
+        var skipStay = ridEarly === "sinton";
+        if (!skipStay) {
+          if (!hIn.value || !hOut.value) {
+            errAl.textContent = t("reqErrStayDates");
+            errAl.hidden = false;
+            return;
+          }
+          if (nightsBetween(hIn.value, hOut.value) <= 0) {
+            errAl.textContent = t("reqErrStayRange");
+            errAl.hidden = false;
+            return;
+          }
         }
         if (!form.reportValidity()) return;
         if (!validateGuestFields(form, errAl, t)) return;
@@ -1187,12 +1199,29 @@
           errAl.hidden = false;
           return;
         }
-        var nts = nightsBetween(fd.get("stayCheckIn"), fd.get("stayCheckOut"));
+        var isSintonRes = rid === "sinton";
+        var nts = isSintonRes
+          ? 0
+          : nightsBetween(fd.get("stayCheckIn"), fd.get("stayCheckOut"));
         var guestCount = parseInt(String(fd.get("guestCount") || "0"), 10);
         if (!Number.isFinite(guestCount) || guestCount < 1) {
           errAl.textContent = t("reqErrGuestCount");
           errAl.hidden = false;
           return;
+        }
+        var resObj = {
+          restaurantId: rid,
+          restaurantCode: restCfg && restCfg.code ? restCfg.code : rid,
+          serviceLabel: restCfg ? t(restCfg.key) : rid,
+          reservationDate: fd.get("reservationDate"),
+          time: fd.get("time"),
+          guestCount: guestCount,
+        };
+        if (!isSintonRes) {
+          resObj.stayCheckIn = fd.get("stayCheckIn");
+          resObj.stayCheckOut = fd.get("stayCheckOut");
+          resObj.nights = nts;
+          resObj.stayPromoApplies = nts >= 5;
         }
         var payload = {
           type: "reservation_alacarte",
@@ -1202,18 +1231,7 @@
           description: fd.get("note"),
           language: currentUiLanguage(),
           guestCount: guestCount,
-          reservation: {
-            restaurantId: rid,
-            restaurantCode: restCfg && restCfg.code ? restCfg.code : rid,
-            serviceLabel: restCfg ? t(restCfg.key) : rid,
-            reservationDate: fd.get("reservationDate"),
-            time: fd.get("time"),
-            stayCheckIn: fd.get("stayCheckIn"),
-            stayCheckOut: fd.get("stayCheckOut"),
-            nights: nts,
-            stayPromoApplies: nts >= 7,
-            guestCount: guestCount,
-          },
+          reservation: resObj,
         };
         runSubmit(payload, form, errAl, okAl, subAl, t, {
           successBodyKey: "reqSuccessBodyReservation",

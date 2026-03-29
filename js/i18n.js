@@ -48,7 +48,7 @@ const I18N = {
     btnRate: "Bizi değerlendirin",
     btnRateHint: "Yorumlar, sosyal medya ve rezervasyon",
     btnViona: "Viona otel asistanı",
-    btnVionaHint: "Metin sohbet — otel bilgisi",
+    btnVionaHint: "Viona: otelinizin dijital asistanı.",
     rateModalTitle: "Deneyiminizi paylaşın",
     rateModalLead:
       "Birkaç dakikanızı ayırarak görüşlerinizi yazın; sosyal medya ve doğrudan rezervasyon için ayrı bölümlere göz atın.",
@@ -241,7 +241,8 @@ const I18N = {
     reqPickRestaurantFirst: "Önce restoran seçin; saat listesi restorana göre güncellenir.",
     reqResInfoLaTerrace: "Rezervasyon gereklidir. 5 gece ve üzeri konaklamalarda 1 kez ücretsiz kullanım hakkı olabilir.",
     reqResInfoMare: "Rezervasyon gereklidir.",
-    reqResInfoSinton: "Pazartesi kapalıdır. Ücretlidir.",
+    reqResInfoSinton:
+      "Pazartesi kapalıdır; ücretlidir. Dışarıdan gelen misafirler de kabul edilir; otelde konaklayan misafirlere %10 indirim uygulanır. Bu restoran için konaklama tarihi sorulmaz.",
     reqErrTime: "Saat seçin.",
     reqErrGuestCount: "Kişi sayısı en az 1 olmalıdır.",
     reqErrRestaurantClosedDay: "Seçilen restoran bu gün kapalıdır.",
@@ -392,7 +393,7 @@ const I18N = {
     btnRate: "Rate us",
     btnRateHint: "Reviews, social & booking",
     btnViona: "Viona hotel assistant",
-    btnVionaHint: "Text chat — hotel info",
+    btnVionaHint: "Viona: your hotel's digital assistant.",
     rateModalTitle: "Share your experience",
     rateModalLead:
       "Leave a review in a few minutes; social media and direct booking are grouped below.",
@@ -585,7 +586,8 @@ const I18N = {
     reqPickRestaurantFirst: "Select a restaurant first; time slots update by venue.",
     reqResInfoLaTerrace: "Reservation is required. For stays of 5 nights or more, one complimentary use may apply.",
     reqResInfoMare: "Reservation is required.",
-    reqResInfoSinton: "Closed on Mondays. Paid service.",
+    reqResInfoSinton:
+      "Closed on Mondays; paid venue. Outside guests are welcome; hotel guests receive 10% off. Stay dates are not required for this restaurant.",
     reqErrTime: "Please select a time.",
     reqErrGuestCount: "Guest count must be at least 1.",
     reqErrRestaurantClosedDay: "Selected restaurant is closed on this day.",
@@ -736,7 +738,7 @@ const I18N = {
     btnRate: "Bewerten Sie uns",
     btnRateHint: "Bewertungen, Social & Buchung",
     btnViona: "Viona Hotel-Assistent",
-    btnVionaHint: "Text-Chat — Hotelinfos",
+    btnVionaHint: "Viona: Ihr digitaler Hotelassistent.",
     rateModalTitle: "Teilen Sie Ihre Erfahrung",
     rateModalLead:
       "Hinterlassen Sie eine Bewertung; Social Media und direkte Buchung finden Sie unten getrennt.",
@@ -930,7 +932,8 @@ const I18N = {
     reqPickRestaurantFirst: "Zuerst Restaurant wählen; Zeiten hängen vom Restaurant ab.",
     reqResInfoLaTerrace: "Reservierung erforderlich. Ab 5 Nächten kann eine einmalige kostenlose Nutzung gelten.",
     reqResInfoMare: "Reservierung erforderlich.",
-    reqResInfoSinton: "Montags geschlossen. Kostenpflichtig.",
+    reqResInfoSinton:
+      "Montags geschlossen; kostenpflichtig. Externe Gäste sind willkommen; Hotelgäste erhalten 10 % Rabatt. Für dieses Restaurant werden keine Aufenthaltsdaten abgefragt.",
     reqErrTime: "Bitte Uhrzeit wählen.",
     reqErrGuestCount: "Personenzahl muss mindestens 1 sein.",
     reqErrRestaurantClosedDay: "Das gewählte Restaurant ist an diesem Tag geschlossen.",
@@ -1081,7 +1084,7 @@ const I18N = {
     btnRate: "Оцените нас",
     btnRateHint: "Отзывы, соцсети и бронь",
     btnViona: "Ассистент Viona",
-    btnVionaHint: "Текстовый чат — информация об отеле",
+    btnVionaHint: "Viona: цифровой ассистент отеля.",
     rateModalTitle: "Поделитесь впечатлениями",
     rateModalLead:
       "Оставьте отзыв за пару минут; соцсети и прямое бронирование — в отдельных блоках ниже.",
@@ -1275,7 +1278,8 @@ const I18N = {
     reqPickRestaurantFirst: "Сначала выберите ресторан — часы зависят от ресторана.",
     reqResInfoLaTerrace: "Требуется бронирование. При проживании от 5 ночей может действовать 1 бесплатное посещение.",
     reqResInfoMare: "Требуется бронирование.",
-    reqResInfoSinton: "По понедельникам закрыт. Платно.",
+    reqResInfoSinton:
+      "По понедельникам закрыто; платно. Принимаются и внешние гости; проживающим в отеле — скидка 10 %. Для этого ресторана даты проживания не указываются.",
     reqErrTime: "Выберите время.",
     reqErrGuestCount: "Количество гостей должно быть не меньше 1.",
     reqErrRestaurantClosedDay: "Выбранный ресторан в этот день закрыт.",
