@@ -10,6 +10,15 @@ function optional(name, fallback = "") {
   return String(value).trim();
 }
 
+/** İlk dolu anahtarı kullanır (Render’da yanlış isimle eklenmiş değişkenler için). */
+function optionalAny(names, fallback = "") {
+  for (const name of names) {
+    const v = optional(name, "");
+    if (v) return v;
+  }
+  return fallback;
+}
+
 function optionalInt(name, fallback) {
   const raw = optional(name, String(fallback));
   const n = Number(raw);
@@ -52,10 +61,16 @@ export function getEnv() {
       );
     },
     /** Misafir arıza kaydı → Teknik Telegram grubu (boşsa bildirim atlanır). */
-    telegramTeknikBotToken: optional("TELEGRAM_TEKNIK_BOT_TOKEN", ""),
-    telegramTeknikChatId: optional("TELEGRAM_TEKNIK_CHAT_ID", ""),
+    telegramTeknikBotToken: optionalAny([
+      "TELEGRAM_TEKNIK_BOT_TOKEN",
+      "TELEGRAM_TECHNICAL_BOT_TOKEN",
+    ]),
+    telegramTeknikChatId: optionalAny([
+      "TELEGRAM_TEKNIK_CHAT_ID",
+      "TELEGRAM_TECHNICAL_CHAT_ID",
+    ]),
     /** Misafir istek kaydı → HK Telegram grubu (boşsa bildirim atlanır). */
-    telegramHkBotToken: optional("TELEGRAM_HK_BOT_TOKEN", ""),
-    telegramHkChatId: optional("TELEGRAM_HK_CHAT_ID", ""),
+    telegramHkBotToken: optionalAny(["TELEGRAM_HK_BOT_TOKEN", "TELEGRAM_HOUSEKEEPING_BOT_TOKEN"]),
+    telegramHkChatId: optionalAny(["TELEGRAM_HK_CHAT_ID", "TELEGRAM_HOUSEKEEPING_CHAT_ID"]),
   };
 }
