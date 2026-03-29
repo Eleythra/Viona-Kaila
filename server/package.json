@@ -11,6 +11,7 @@
     "test:assistant": "PYTHONPATH=src .venv/bin/python -m pytest src/assistant/tests -q --tb=line",
     "dev": "node src/index.js",
     "puppeteer:install-chrome": "PUPPETEER_CACHE_DIR=.cache/puppeteer npx puppeteer browsers install chrome",
+    "puppeteer:verify-chrome": "node scripts/verify-puppeteer-chrome.mjs",
     "seed:surveys-test": "node scripts/seed-survey-evaluations-test.mjs",
     "seed:surveys-test:clean": "node scripts/delete-survey-evaluations-seed.mjs",
     "verify:surveys-report": "node scripts/verify-survey-evaluations-report.mjs"

@@ -4,7 +4,8 @@ Thumbs.db
 *~
 node_modules/
 server/node_modules/
-server/.cache/
+# server/.cache bilinçli olarak ignore edilmiyor: Render slug’ına Puppeteer Chromium girmesi için.
+# Bu klasörü git’e ekleme (yüzlerce MB); yalnızca sunucu build çıktısı olarak kalsın.
 .env
 .env.*
 .vercel/

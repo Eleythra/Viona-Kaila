@@ -22,7 +22,7 @@ services:
     plan: free
     rootDir: server
     # Chromium ~/.cache’e inerse deploy slug’ına girmez; build sırasında da proje .cache’e yazılmalı.
-    buildCommand: npm install && PUPPETEER_CACHE_DIR=.cache/puppeteer npx puppeteer browsers install chrome
+    buildCommand: npm install && PUPPETEER_CACHE_DIR=.cache/puppeteer npx puppeteer browsers install chrome && node scripts/verify-puppeteer-chrome.mjs
     startCommand: node src/index.js
     envVars:
       - key: NODE_VERSION

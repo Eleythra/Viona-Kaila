@@ -1,9 +1,31 @@
 import "./puppeteer-pdf-env.js";
+import { execSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import path from "node:path";
 import puppeteer, { executablePath as puppeteerExecutablePath } from "puppeteer";
 import { buildReportHtml } from "./report-template.js";
 
 let browserPromise = null;
+let chromeInstallAttempted = false;
+
+/**
+ * Slug’da Chromium yoksa (veya .gitignore yüzünden düşmediyse) ilk PDF’te bir kez indirmeyi dener.
+ */
+function ensurePuppeteerChromeOnDisk() {
+  const exe = resolveChromeExecutable();
+  if (exe && existsSync(exe)) return;
+  if (chromeInstallAttempted) return;
+  chromeInstallAttempted = true;
+  console.warn(
+    "[pdf] Chromium binary yok; npx puppeteer browsers install chrome çalıştırılıyor (ilk istek uzun sürebilir)...",
+  );
+  execSync("npx puppeteer browsers install chrome", {
+    stdio: "inherit",
+    env: process.env,
+    cwd: process.cwd(),
+    timeout: 300_000,
+  });
+}
 
 function toAbsoluteIfNeeded(p) {
   const s = String(p || "").trim();
@@ -41,6 +63,7 @@ function launchOptions() {
 }
 
 async function getBrowser() {
+  ensurePuppeteerChromeOnDisk();
   if (!browserPromise) {
     browserPromise = puppeteer.launch(launchOptions()).catch((err) => {
       browserPromise = null;
