@@ -21,8 +21,8 @@ services:
     runtime: node
     plan: free
     rootDir: server
-    # Chromium ~/.cache’e inerse deploy paketine girmez; önbellek proje içinde + açık kurulum şart.
-    buildCommand: npm install && npx puppeteer browsers install chrome
+    # Chromium ~/.cache’e inerse deploy slug’ına girmez; build sırasında da proje .cache’e yazılmalı.
+    buildCommand: npm install && PUPPETEER_CACHE_DIR=.cache/puppeteer npx puppeteer browsers install chrome
     startCommand: node src/index.js
     envVars:
       - key: NODE_VERSION

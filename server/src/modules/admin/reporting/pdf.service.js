@@ -1,3 +1,4 @@
+import "./puppeteer-pdf-env.js";
 import path from "node:path";
 import puppeteer, { executablePath as puppeteerExecutablePath } from "puppeteer";
 import { buildReportHtml } from "./report-template.js";
