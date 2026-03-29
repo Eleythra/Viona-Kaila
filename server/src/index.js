@@ -4,6 +4,7 @@ import { getEnv } from "./config/env.js";
 import guestRequestsRouter from "./modules/guest-requests/guest-requests.router.js";
 import surveysRouter from "./modules/surveys/surveys.router.js";
 import adminRouter from "./modules/admin/admin.router.js";
+import { createSpeechRouter, createSttRawMiddleware, handleStt } from "./modules/speech/speech.router.js";
 import { getSupabase, isSupabaseConfigured } from "./lib/supabase.js";
 
 const env = getEnv();
@@ -195,12 +196,15 @@ app.get("/api/health", (_req, res) => {
     telegramHkConfigured: Boolean(
       String(env.telegramHkBotToken || "").trim() && String(env.telegramHkChatId || "").trim(),
     ),
+    azureSpeechConfigured: Boolean(String(env.azureSpeechKey || "").trim() && String(env.azureSpeechRegion || "").trim()),
   });
 });
 
 app.use("/api/guest-requests", guestRequestsRouter);
 app.use("/api/surveys", surveysRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api", createSpeechRouter());
+app.post("/api/stt", createSttRawMiddleware(), handleStt);
 
 // Single chatbot entrypoint: proxy only, no business logic.
 app.post("/api/chat", async (req, res) => {

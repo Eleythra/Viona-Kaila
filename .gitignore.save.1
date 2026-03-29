@@ -1,0 +1,15 @@
+.DS_Store
+Thumbs.db
+*.swp
+*~
+node_modules/
+server/node_modules/
+# server/.cache bilinçli olarak ignore edilmiyor: Render slug’ına Puppeteer Chromium girmesi için.
+# Bu klasörü git’e ekleme (yüzlerce MB); yalnızca sunucu build çıktısı olarak kalsın.
+.env
+.env.*
+!.env.example
+!**/.env.example
+.vercel/
+server/.cache/
+.cache/

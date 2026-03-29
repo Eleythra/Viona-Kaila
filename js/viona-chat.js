@@ -149,6 +149,7 @@
   }
 
   function resendLastUser() {
+    if (typeof window.vionaVoiceIsBusy === "function" && window.vionaVoiceIsBusy()) return;
     if (state.pending) return;
     var last = state.messages[state.messages.length - 1];
     if (!last || !last.error) return;
@@ -244,7 +245,14 @@
     if (conv) body.conversation_language = conv;
     var timeoutMs = Number(cfg.timeoutMs || 15000);
     if (!Number.isFinite(timeoutMs) || timeoutMs < 3000) timeoutMs = 15000;
-    if (timeoutMs > 60000) timeoutMs = 60000;
+    var maxCap = 60000;
+    if (typeof window.vionaVoiceIsBusy === "function" && window.vionaVoiceIsBusy()) {
+      var vUp = Number(cfg.voiceUpstreamTimeoutMs || 35000);
+      if (Number.isFinite(vUp) && vUp >= 3000) timeoutMs = Math.max(timeoutMs, vUp);
+      var vMax = Number(cfg.voiceUpstreamMaxCapMs || 90000);
+      if (Number.isFinite(vMax) && vMax >= timeoutMs) maxCap = Math.min(vMax, 120000);
+    }
+    if (timeoutMs > maxCap) timeoutMs = maxCap;
     var abortController = new AbortController();
     var timer = setTimeout(function () {
       abortController.abort();
@@ -281,6 +289,7 @@
   }
 
   function sendPipeline(text) {
+    if (typeof window.vionaVoiceIsBusy === "function" && window.vionaVoiceIsBusy()) return;
     var clean = text.replace(/\r/g, "").trim();
     if (!clean || state.pending) return;
 
@@ -328,6 +337,7 @@
   }
 
   function onSubmit() {
+    if (typeof window.vionaVoiceIsBusy === "function" && window.vionaVoiceIsBusy()) return;
     if (!els.input) return;
     var v = els.input.value;
     if (v.length > MAX_INPUT) {
@@ -349,6 +359,7 @@
   }
 
   function clearChat() {
+    if (typeof window.vionaVoiceIsBusy === "function" && window.vionaVoiceIsBusy()) return;
     if (!window.confirm(t("chatClearConfirm"))) return;
     state.messages = [];
     state.pending = false;
@@ -375,6 +386,7 @@
       btn.textContent = t(key);
       btn.addEventListener("click", function () {
         if (state.pending) return;
+        if (typeof window.vionaVoiceIsBusy === "function" && window.vionaVoiceIsBusy()) return;
         var msg = t(key);
         sendPipeline(msg);
       });
@@ -423,10 +435,47 @@
     renderMessages();
   }
 
+  /** Sesli tur: metin sohbetiyle aynı API ve geçmiş; tek seferlik asistan yanıtı döner. */
+  window.vionaChatRunAssistantTurn = async function (userText) {
+    var clean = String(userText || "").replace(/\r/g, "").trim();
+    if (!clean) throw new Error("empty");
+    if (state.pending) throw new Error("busy");
+    state.pending = true;
+    state.messages.push({ role: "user", content: clean });
+    trimHistory();
+    renderMessages();
+    setTyping(true);
+    try {
+      var result = await askViona(clean, getLang());
+      state.messages.push({ role: "assistant", content: result.reply });
+      trimHistory();
+      renderMessages();
+      return result.reply;
+    } catch (e) {
+      state.messages.push({
+        role: "assistant",
+        content: getClientErrorReply(),
+        error: true,
+      });
+      trimHistory();
+      renderMessages();
+      throw e;
+    } finally {
+      state.pending = false;
+      setTyping(false);
+    }
+  };
+
+  window.vionaChatIsPending = function () {
+    return state.pending;
+  };
+
   window.vionaChatOnOpen = function () {
     cacheEls();
     wireQuick();
     applyStaticI18n();
+    if (typeof window.vionaVoiceOnModalOpen === "function") window.vionaVoiceOnModalOpen();
+    if (typeof window.vionaVoiceRefreshI18n === "function") window.vionaVoiceRefreshI18n();
     if (els.input) {
       els.input.focus();
       autosizeTextarea();

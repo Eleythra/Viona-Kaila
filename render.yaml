@@ -12,6 +12,8 @@
 #   ASSISTANT_CHAT_ENDPOINT = Python asistanın tam chat URL’si (aşağıdaki varsayılan)
 # Opsiyonel (misafir istek/arıza Telegram):
 #   TELEGRAM_TEKNIK_BOT_TOKEN, TELEGRAM_TEKNIK_CHAT_ID, TELEGRAM_HK_BOT_TOKEN, TELEGRAM_HK_CHAT_ID
+# Sesli Viona (TTS/STT, Azure — Dashboard’dan ekleyin; aşağıdaki sync: false satırları hatırlatıcı):
+#   AZURE_SPEECH_KEY, AZURE_SPEECH_REGION, AZURE_SPEECH_FETCH_TIMEOUT_MS (isteğe bağlı)
 # PDF raporu (admin): GEMINI_API_KEY önerilir. Chromium proje içi önbellek + build’de kurulum (aşağıda).
 #   PUPPETEER_CACHE_DIR=.cache/puppeteer, buildCommand içinde browsers install chrome zorunlu.
 #   İsteğe bağlı: PUPPETEER_EXECUTABLE_PATH, PDF_GEMINI_TIMEOUT_MS, PDF_SET_CONTENT_TIMEOUT_MS
@@ -49,4 +51,8 @@ services:
       - key: TELEGRAM_HK_BOT_TOKEN
         sync: false
       - key: TELEGRAM_HK_CHAT_ID
+        sync: false
+      - key: AZURE_SPEECH_KEY
+        sync: false
+      - key: AZURE_SPEECH_REGION
         sync: false

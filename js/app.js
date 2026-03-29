@@ -443,6 +443,7 @@
     localStorage.setItem(LANG_STORAGE_KEY, code);
     applyI18n(document);
     if (typeof window.vionaChatRefreshI18n === "function") window.vionaChatRefreshI18n();
+    if (typeof window.vionaVoiceRefreshI18n === "function") window.vionaVoiceRefreshI18n();
     renderModuleGrid();
     renderRateLinks();
     if (moduleId) {

@@ -72,5 +72,10 @@ export function getEnv() {
     /** Misafir istek kaydı → HK Telegram grubu (boşsa bildirim atlanır). */
     telegramHkBotToken: optionalAny(["TELEGRAM_HK_BOT_TOKEN", "TELEGRAM_HOUSEKEEPING_BOT_TOKEN"]),
     telegramHkChatId: optionalAny(["TELEGRAM_HK_CHAT_ID", "TELEGRAM_HOUSEKEEPING_CHAT_ID"]),
+    /** Azure Speech (TTS/STT) — yalnızca sunucu; boşsa /api/tts ve /api/stt 503 döner */
+    azureSpeechKey: optional("AZURE_SPEECH_KEY", ""),
+    azureSpeechRegion: optional("AZURE_SPEECH_REGION", "westeurope"),
+    /** Azure REST çağrıları için ms; 0 = zaman sınırı yok (STT iki deneme yapabilir, süre ikiye katlanabilir). */
+    azureSpeechFetchTimeoutMs: optionalNonNegativeMs("AZURE_SPEECH_FETCH_TIMEOUT_MS", 25_000),
   };
 }

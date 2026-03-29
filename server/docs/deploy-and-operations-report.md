@@ -25,6 +25,7 @@ API kökü: `js/viona-backend-url.js` → `https://viona-node-api.onrender.com/a
 - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
 - `ASSISTANT_CHAT_ENDPOINT` (Python `/api/chat` tam URL)
 - İsteğe bağlı: `OPENAI_*`, `GEMINI_*` (PDF metin katmanı), `TELEGRAM_*` (bildirimler)
+- Sesli asistan: `AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION` (boşsa `/api/tts` ve `/api/stt` 503 döner)
 
 Ayrıntılı şablon: `server/.env.example`.
 
