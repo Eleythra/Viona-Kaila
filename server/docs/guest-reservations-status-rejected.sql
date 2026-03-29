@@ -1,0 +1,5 @@
+-- Rezervasyon `rejected` (admin: Onaylanmadı) durumu artık tek parça betikte:
+--   server/docs/supabase-paste-viona.sql — bölüm 9
+--
+-- Eski kurulumda `guest_reservations_status_chk` rejected içermiyorsa, o dosyadaki
+-- OPSİYONEL drop + add yorum satırlarını kullanın.

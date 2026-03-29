@@ -1,12 +1,16 @@
 -- =============================================================================
 -- VIONA / KAILA — Supabase SQL Editor’a TEK SEFERDE yapıştırın
--- Sıra: uzantı → tablo → eksik kolonlar (eski kurulumlar) → CHECK’ler → indeksler
---       → isteğe bağlı chat_logs backfill → özet view’lar → şikâyet/arıza kolonları
+-- Sıra: uzantı → chat_observations → CHECK’ler → indeksler → chat_logs backfill
+--       → özet view’lar → şikâyet/arıza kolonları → guest_reservations revizyonu
+--       → rezervasyon status (rejected = admin “Onaylanmadı”)
 --
 -- NOT: CHECK eklenirken "violates check constraint" alırsanız, aşağıdaki
 --      "OPSİYONEL: CHECK öncesi veri temizliği" bölümünü sırayla çalıştırın.
+-- Rezervasyonda status CHECK zaten varsa ve rejected yoksa: bölüm 9’daki OPSİYONEL
+-- satırları kullanın (önce drop, sonra add).
 -- Node (service_role) RLS’i baypas eder; yalnızca anon key ile doğrudan yazım
 -- yapacaksanız RLS politikalarını ayrıca tanımlamanız gerekir.
+-- Dağıtım, Render, Telegram, PDF: server/docs/deploy-and-operations-report.md
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -116,23 +120,47 @@ alter table public.chat_observations alter column raw_payload set not null;
 --   where trim(coalesce(user_message, '')) = '';
 
 -- -----------------------------------------------------------------------------
--- 4) CHECK kısıtları (yoksa ekler)
+-- 4) CHECK kısıtları (yoksa ekler) — yalnızca public.chat_observations üzerinde
 -- -----------------------------------------------------------------------------
 do $$
 begin
-  if not exists (select 1 from pg_constraint where conname = 'chat_obs_response_type_chk') then
+  if not exists (
+    select 1
+    from pg_constraint c
+    join pg_class t on t.oid = c.conrelid
+    join pg_namespace n on n.oid = t.relnamespace
+    where n.nspname = 'public'
+      and t.relname = 'chat_observations'
+      and c.conname = 'chat_obs_response_type_chk'
+  ) then
     alter table public.chat_observations
       add constraint chat_obs_response_type_chk
       check (response_type in ('answer','redirect','inform','fallback') or response_type is null);
   end if;
 
-  if not exists (select 1 from pg_constraint where conname = 'chat_obs_layer_used_chk') then
+  if not exists (
+    select 1
+    from pg_constraint c
+    join pg_class t on t.oid = c.conrelid
+    join pg_namespace n on n.oid = t.relnamespace
+    where n.nspname = 'public'
+      and t.relname = 'chat_observations'
+      and c.conname = 'chat_obs_layer_used_chk'
+  ) then
     alter table public.chat_observations
       add constraint chat_obs_layer_used_chk
       check (layer_used in ('rule','rag','llm','fallback') or layer_used is null);
   end if;
 
-  if not exists (select 1 from pg_constraint where conname = 'chat_obs_message_not_empty_chk') then
+  if not exists (
+    select 1
+    from pg_constraint c
+    join pg_class t on t.oid = c.conrelid
+    join pg_namespace n on n.oid = t.relnamespace
+    where n.nspname = 'public'
+      and t.relname = 'chat_observations'
+      and c.conname = 'chat_obs_message_not_empty_chk'
+  ) then
     alter table public.chat_observations
       add constraint chat_obs_message_not_empty_chk
       check (length(trim(user_message)) > 0);
@@ -282,6 +310,193 @@ alter table if exists public.guest_faults
 alter table if exists public.guest_faults
   add column if not exists details jsonb not null default '{}'::jsonb;
 
+-- -----------------------------------------------------------------------------
+-- 9) guest_reservations — operasyon kolonları + indeksler + status (rejected)
+--     Tablo yoksa ALTER’lar atlanır. Admin API: new, pending, in_progress, done,
+--     cancelled, rejected (rejected = “Onaylanmadı”).
+-- -----------------------------------------------------------------------------
+alter table if exists public.guest_reservations
+  add column if not exists language text;
+
+alter table if exists public.guest_reservations
+  add column if not exists service_code text;
+
+alter table if exists public.guest_reservations
+  add column if not exists service_label text;
+
+alter table if exists public.guest_reservations
+  add column if not exists reservation_date date;
+
+alter table if exists public.guest_reservations
+  add column if not exists reservation_time text;
+
+alter table if exists public.guest_reservations
+  add column if not exists guest_count integer;
+
+alter table if exists public.guest_reservations
+  add column if not exists description text;
+
+alter table if exists public.guest_reservations
+  add column if not exists updated_at timestamptz;
+
+do $$
+begin
+  if to_regclass('public.guest_reservations') is null then
+    return;
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint c
+    join pg_class t on t.oid = c.conrelid
+    join pg_namespace n on n.oid = t.relnamespace
+    where n.nspname = 'public'
+      and t.relname = 'guest_reservations'
+      and c.conname = 'guest_reservations_type_chk'
+  ) then
+    alter table public.guest_reservations
+      add constraint guest_reservations_type_chk
+      check (reservation_type in ('reservation_alacarte', 'reservation_spa'));
+  end if;
+
+  if not exists (
+    select 1
+    from pg_constraint c
+    join pg_class t on t.oid = c.conrelid
+    join pg_namespace n on n.oid = t.relnamespace
+    where n.nspname = 'public'
+      and t.relname = 'guest_reservations'
+      and c.conname = 'guest_reservations_guest_count_chk'
+  ) then
+    alter table public.guest_reservations
+      add constraint guest_reservations_guest_count_chk
+      check (guest_count is null or guest_count >= 1);
+  end if;
+end $$;
+
+do $$
+begin
+  if to_regclass('public.guest_reservations') is null then
+    return;
+  end if;
+  execute
+    'create index if not exists idx_guest_reservations_type_date_time on public.guest_reservations (reservation_type, reservation_date, reservation_time)';
+  execute
+    'create index if not exists idx_guest_reservations_status_submitted on public.guest_reservations (status, submitted_at desc)';
+  execute
+    'create index if not exists idx_guest_reservations_service_code on public.guest_reservations (service_code)';
+  execute
+    'create index if not exists idx_guest_reservations_room_number on public.guest_reservations (room_number)';
+end $$;
+
+do $$
+begin
+  if to_regclass('public.guest_reservations') is null then
+    return;
+  end if;
+  -- note sütunu yoksa (eski şema) açıklama birleştirmesi atlanır
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'guest_reservations'
+      and column_name = 'note'
+  ) then
+    update public.guest_reservations
+    set
+      language = coalesce(language, nullif(raw_payload->>'language', '')),
+      service_code = coalesce(
+        service_code,
+        nullif(reservation_data->>'serviceCode', ''),
+        nullif(reservation_data->>'restaurantCode', ''),
+        nullif(reservation_data->>'restaurantId', ''),
+        nullif(reservation_data->>'spaServiceId', '')
+      ),
+      service_label = coalesce(service_label, nullif(reservation_data->>'serviceLabel', '')),
+      reservation_date = coalesce(
+        reservation_date,
+        nullif(reservation_data->>'reservationDate', '')::date,
+        nullif(reservation_data->>'date', '')::date
+      ),
+      reservation_time = coalesce(reservation_time, nullif(reservation_data->>'time', '')),
+      guest_count = coalesce(
+        guest_count,
+        nullif(reservation_data->>'guestCount', '')::integer,
+        nullif(raw_payload->>'guestCount', '')::integer
+      ),
+      description = coalesce(description, note),
+      updated_at = coalesce(updated_at, submitted_at, now())
+    where true;
+  else
+    update public.guest_reservations
+    set
+      language = coalesce(language, nullif(raw_payload->>'language', '')),
+      service_code = coalesce(
+        service_code,
+        nullif(reservation_data->>'serviceCode', ''),
+        nullif(reservation_data->>'restaurantCode', ''),
+        nullif(reservation_data->>'restaurantId', ''),
+        nullif(reservation_data->>'spaServiceId', '')
+      ),
+      service_label = coalesce(service_label, nullif(reservation_data->>'serviceLabel', '')),
+      reservation_date = coalesce(
+        reservation_date,
+        nullif(reservation_data->>'reservationDate', '')::date,
+        nullif(reservation_data->>'date', '')::date
+      ),
+      reservation_time = coalesce(reservation_time, nullif(reservation_data->>'time', '')),
+      guest_count = coalesce(
+        guest_count,
+        nullif(reservation_data->>'guestCount', '')::integer,
+        nullif(raw_payload->>'guestCount', '')::integer
+      ),
+      updated_at = coalesce(updated_at, submitted_at, now())
+    where true;
+  end if;
+end $$;
+
+-- Status CHECK: yalnızca guest_reservations üzerinde bu adda kısıt yoksa (rejected dahil).
+do $$
+begin
+  if to_regclass('public.guest_reservations') is null then
+    return;
+  end if;
+  if not exists (
+    select 1
+    from pg_constraint c
+    join pg_class t on t.oid = c.conrelid
+    join pg_namespace n on n.oid = t.relnamespace
+    where n.nspname = 'public'
+      and t.relname = 'guest_reservations'
+      and c.conname = 'guest_reservations_status_chk'
+  ) then
+    alter table public.guest_reservations
+      add constraint guest_reservations_status_chk
+      check (
+        status is null
+        or status in (
+          'new',
+          'pending',
+          'in_progress',
+          'done',
+          'cancelled',
+          'rejected'
+        )
+      );
+  end if;
+end $$;
+
+-- OPSİYONEL: Daha önce guest_reservations_status_chk eklendi ama rejected yoksa,
+--            önce kaldırın, sonra üstteki DO bloğunu tekrar çalıştırmak yerine
+--            doğrudan aşağıdaki iki satırı çalıştırın:
+-- alter table public.guest_reservations drop constraint if exists guest_reservations_status_chk;
+-- alter table public.guest_reservations
+--   add constraint guest_reservations_status_chk
+--   check (
+--     status is null
+--     or status in ('new','pending','in_progress','done','cancelled','rejected')
+--   );
+
 -- =============================================================================
--- Bitti. Hata yoksa: Table Editor’da chat_observations satırı ve view’ları görmelisiniz.
+-- Bitti. chat_observations, view’lar; şikâyet/arıza kolonları; guest_reservations.
 -- =============================================================================

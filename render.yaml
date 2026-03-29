@@ -5,6 +5,7 @@
 # Panel: New → Blueprint → bu repo. Oluşan URL, servis adıyla biter:
 #   name: viona-node-api  →  https://viona-node-api.onrender.com
 # Frontend (viona-backend-url.js + vercel.json) bu host ile uyumludur.
+# Operasyon özeti (PDF indirilebilir): server/docs/deploy-and-operations-report.md
 #
 # Zorunlu env (Render Dashboard → Environment):
 #   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY

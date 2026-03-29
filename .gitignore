@@ -8,4 +8,6 @@ server/node_modules/
 # Bu klasörü git’e ekleme (yüzlerce MB); yalnızca sunucu build çıktısı olarak kalsın.
 .env
 .env.*
+!.env.example
+!**/.env.example
 .vercel/
