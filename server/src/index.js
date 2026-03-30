@@ -261,6 +261,8 @@ app.get("/api/health", (_req, res) => {
     service: "viona-node-api",
     adminAuthConfigured: Boolean(env.adminApiToken),
     hasSupabase: env.hasSupabase,
+    /** TTS/STT için Azure anahtarı yüklü mü (Render’da AZURE_SPEECH_KEY kontrolü). */
+    azureSpeechConfigured: Boolean(String(env.azureSpeechKey || "").trim()),
   });
 });
 
