@@ -103,20 +103,23 @@ function normalizeOrigin(value = "") {
   return s.toLowerCase();
 }
 
+/** Ortamdan gelen origin’ler + yerel/statik test için sabitler (birleşim).
+ * CORS_ALLOWED_ORIGINS dolu olsa bile önceden sadece boşken localhost ekleniyordu;
+ * bu yüzden .env’de yalnızca üretim domain’leri varken lokal 5500 reddediliyordu. */
 const corsAllowlist = new Set(
   (env.corsAllowedOrigins || []).map((x) => normalizeOrigin(x)).filter(Boolean),
 );
-if (!corsAllowlist.size) {
-  [
-    "https://viona-kaila.onrender.com",
-    "https://viona-node-api.onrender.com",
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:5500",
-  ]
-    .map(normalizeOrigin)
-    .forEach((x) => corsAllowlist.add(x));
-}
+[
+  "https://viona-kaila.onrender.com",
+  "https://viona-node-api.onrender.com",
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://localhost:5500",
+  "http://127.0.0.1:5500",
+  "http://127.0.0.1:3000",
+]
+  .map(normalizeOrigin)
+  .forEach((x) => corsAllowlist.add(x));
 
 function isAllowedOrigin(origin = "") {
   const normalized = normalizeOrigin(origin);
