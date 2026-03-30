@@ -1552,10 +1552,6 @@ body {
   align-items: flex-start;
 }
 
-.modal-lead--viona {
-  margin-top: 6px;
-}
-
 .viona-chat {
   display: flex;
   flex-direction: column;
@@ -1569,6 +1565,10 @@ body {
 .viona-chat--voice-drawer-open .viona-chat__quick,
 .viona-chat--voice-drawer-open .viona-chat__scroll,
 .viona-chat--voice-drawer-open .viona-chat__composer {
+  display: none !important;
+}
+
+.viona-chat--voice-drawer-open .viona-chat__bar-btn--clear {
   display: none !important;
 }
 
@@ -1595,7 +1595,7 @@ body {
     inset 0 -1px 0 rgba(0, 0, 0, 0.35),
     0 0 0 1px rgba(0, 0, 0, 0.2),
     0 20px 48px rgba(0, 0, 0, 0.42);
-  padding: 24px 18px 28px;
+  padding: 28px 22px 32px;
 }
 
 /* Kapalı / metin modunda: idle iken durum satırı yok */
@@ -1628,18 +1628,72 @@ body {
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  gap: 10px;
+  gap: 14px;
   min-height: 200px;
+}
+
+/* Sol geri + sağda araçlar */
+.viona-chat__topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  padding: 4px 0 4px;
+  min-height: 48px;
+}
+
+.viona-chat__nav-back {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(165deg, rgba(22, 32, 52, 0.9) 0%, rgba(8, 12, 22, 0.95) 100%);
+  color: rgba(242, 244, 248, 0.94);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    box-shadow 0.2s,
+    opacity 0.2s;
+}
+
+.viona-chat__nav-back:hover:not(:disabled) {
+  border-color: rgba(46, 184, 199, 0.4);
+  background: linear-gradient(165deg, rgba(28, 48, 78, 0.95) 0%, rgba(12, 20, 36, 0.98) 100%);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.32);
+}
+
+.viona-chat__nav-back:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.viona-chat__nav-back:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.viona-chat__nav-back-ico {
+  width: 22px;
+  height: 22px;
 }
 
 /* Sohbet üst çubuğu — lacivert cam, sohbet odaklı */
 .viona-chat__bar {
   display: flex;
+  flex: 1;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 10px;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .viona-chat__bar-btn {
@@ -1684,15 +1738,50 @@ body {
 }
 
 .viona-chat__bar-btn--clear {
-  border-color: rgba(255, 255, 255, 0.12);
-  background: linear-gradient(165deg, #141c2e 0%, #0a101f 100%);
-  color: rgba(242, 244, 248, 0.78);
-  font-weight: 600;
+  min-height: 40px;
+  padding: 0 14px;
+  border-color: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(165deg, rgba(18, 26, 40, 0.88) 0%, rgba(8, 12, 20, 0.94) 100%);
+  color: rgba(242, 244, 248, 0.72);
+  font-size: 0.8rem;
+  font-weight: 500;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.22);
 }
 
 .viona-chat__bar-btn--clear:hover {
-  border-color: rgba(255, 255, 255, 0.2);
-  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: rgba(242, 244, 248, 0.9);
+}
+
+/* Sesli mod kapalıyken: bar altı kısa yönergeler (i18n: voiceSectionTap*) */
+.viona-chat__voice-hints {
+  margin: 0;
+  padding: 2px 6px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+  text-align: center;
+}
+
+.viona-chat__voice-hints p {
+  margin: 0;
+  max-width: 320px;
+  font-size: 0.76rem;
+  font-weight: 500;
+  line-height: 1.38;
+  letter-spacing: 0.01em;
+  color: rgba(242, 244, 248, 0.55);
+}
+
+.viona-chat__voice-avatar-hint {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: rgba(242, 244, 248, 0.45);
+}
+
+.viona-chat--voice-drawer-open .viona-chat__voice-hints {
+  display: none !important;
 }
 
 .viona-chat__bar-btn--voice {

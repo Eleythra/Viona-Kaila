@@ -82,6 +82,22 @@
     return voiceState !== STATE_IDLE;
   };
 
+  /** Sol üst geri: metin modunda modal kapanır; ses modunda (boşta) metin sohbetine döner */
+  function syncChatNavBack() {
+    var nav = document.getElementById("viona-chat-nav-back");
+    if (!nav) return;
+    if (panelExpanded) {
+      nav.setAttribute("aria-label", t("voiceBackToChatAria"));
+      nav.setAttribute("title", t("voiceBackToChat"));
+    } else {
+      nav.setAttribute("aria-label", t("chatNavBackAria"));
+      nav.setAttribute("title", t("chatNavBackAria"));
+    }
+    var busy = voiceState !== STATE_IDLE;
+    nav.disabled = panelExpanded && busy;
+    nav.setAttribute("aria-disabled", nav.disabled ? "true" : "false");
+  }
+
   function syncPanelUi() {
     if (!els.panel || !els.openBtn) return;
     els.panel.hidden = !panelExpanded;
@@ -92,6 +108,7 @@
     if (chatRoot) chatRoot.classList.toggle("viona-chat--voice-drawer-open", panelExpanded);
     var primary = document.querySelector(".viona-chat-primary");
     if (primary) primary.classList.toggle("viona-chat-primary--voice-mode", panelExpanded);
+    syncChatNavBack();
   }
 
   function setPanelExpanded(on) {
@@ -235,6 +252,7 @@
     );
     setStatusText();
     setAvatarInteractivity();
+    syncChatNavBack();
   }
 
   function goIdle() {
@@ -605,6 +623,19 @@
       startListeningFromIdle();
     });
 
+    var navBack = document.getElementById("viona-chat-nav-back");
+    if (navBack) {
+      navBack.addEventListener("click", function () {
+        if (panelExpanded) {
+          if (voiceState !== STATE_IDLE) return;
+          setPanelExpanded(false);
+          return;
+        }
+        var bd = document.querySelector("#modal-viona .modal-backdrop");
+        if (bd) bd.click();
+      });
+    }
+
     applyVoiceState(STATE_IDLE);
     panelExpanded = false;
     syncPanelUi();
@@ -616,6 +647,14 @@
     setStatusText();
     syncPanelUi();
     if (els.hit) els.hit.setAttribute("aria-label", t("voiceAvatarAria"));
+    var hints = document.getElementById("viona-voice-hints");
+    if (hints) {
+      hints.querySelectorAll("[data-i18n]").forEach(function (node) {
+        var k = node.getAttribute("data-i18n");
+        if (k) node.textContent = t(k);
+      });
+    }
+    syncChatNavBack();
     var open = document.getElementById("viona-voice-open");
     if (open) {
       var lab = open.querySelector("[data-i18n]");

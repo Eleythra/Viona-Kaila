@@ -4,8 +4,6 @@
   var adapter = window.AdminDataAdapter;
   var ui = window.AdminUI;
   if (!adapter || !ui) return;
-  var LOGIN_USER = "Kaila-Vİona";
-  var LOGIN_PASS = "Viona.2026";
   var LOGIN_OK_KEY = "viona_admin_login_ok";
   var reservationSubtab = "overview";
   /** null = dashboard; operasyon listeleri için otomatik yenileme hedefi */
@@ -1508,20 +1506,24 @@
     if (login) login.classList.remove("hidden");
   }
 
+  function wireLogout() {
+    var btn = document.getElementById("admin-logout");
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      try {
+        sessionStorage.removeItem(LOGIN_OK_KEY);
+      } catch (_e) {}
+      adapter.clearAdminToken();
+      showLogin();
+    });
+  }
+
   function wireLogin() {
     var form = document.getElementById("admin-login-form");
     var err = document.getElementById("admin-login-error");
     var pw = document.getElementById("admin-password");
     var pwToggle = document.getElementById("admin-password-toggle");
     if (!form) return;
-    function normalizeLoginUser(v) {
-      return String(v || "")
-        .normalize("NFKD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[İIı]/g, "i")
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, "");
-    }
     if (pw && pwToggle) {
       pwToggle.addEventListener("click", function () {
         var show = pw.type === "password";
@@ -1531,29 +1533,35 @@
     }
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
-      var u = (document.getElementById("admin-username").value || "").trim();
-      var p = document.getElementById("admin-password").value || "";
-      var okUser = normalizeLoginUser(u) === normalizeLoginUser(LOGIN_USER);
-      if (okUser && p === LOGIN_PASS) {
+      var p = (document.getElementById("admin-password").value || "").trim();
+      if (p) {
         try {
+          adapter.setAdminToken(p);
+          await adapter.validateAdminToken();
           sessionStorage.setItem(LOGIN_OK_KEY, "1");
         } catch (_e) {}
+        if (sessionStorage.getItem(LOGIN_OK_KEY) !== "1") {
+          adapter.clearAdminToken();
+          if (err) err.textContent = "Geçersiz veya yetkisiz admin token.";
+          return;
+        }
         if (err) err.textContent = "";
         showPanel();
         await init();
         return;
       }
-      if (err) err.textContent = "Kullanıcı adı veya şifre hatalı.";
+      if (err) err.textContent = "Admin token zorunludur.";
     });
   }
 
-  function bootstrap() {
+  async function bootstrap() {
     wireLogin();
+    wireLogout();
     wirePromoFileInputs();
     wirePromoClearButtons();
     var ok = false;
     try {
-      ok = sessionStorage.getItem(LOGIN_OK_KEY) === "1";
+      ok = sessionStorage.getItem(LOGIN_OK_KEY) === "1" && adapter.hasAdminToken();
     } catch (_e) {
       ok = false;
     }
@@ -1561,8 +1569,18 @@
       showLogin();
       return;
     }
+    try {
+      await adapter.validateAdminToken();
+    } catch (_e) {
+      try {
+        sessionStorage.removeItem(LOGIN_OK_KEY);
+      } catch (_x) {}
+      adapter.clearAdminToken();
+      showLogin();
+      return;
+    }
     showPanel();
-    init();
+    await init();
   }
 
   bootstrap();

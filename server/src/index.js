@@ -1,5 +1,7 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { getEnv } from "./config/env.js";
 import guestRequestsRouter from "./modules/guest-requests/guest-requests.router.js";
 import surveysRouter from "./modules/surveys/surveys.router.js";
@@ -95,6 +97,34 @@ function guessMultiIntent(message = "") {
   return /\s(ama|ayrıca|ayrica|fakat|but|also)\s/.test(t);
 }
 
+function normalizeOrigin(value = "") {
+  const s = String(value || "").trim().replace(/\/+$/, "");
+  if (!s) return "";
+  return s.toLowerCase();
+}
+
+const corsAllowlist = new Set(
+  (env.corsAllowedOrigins || []).map((x) => normalizeOrigin(x)).filter(Boolean),
+);
+if (!corsAllowlist.size) {
+  [
+    "https://viona-kaila.onrender.com",
+    "https://viona-node-api.onrender.com",
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5500",
+  ]
+    .map(normalizeOrigin)
+    .forEach((x) => corsAllowlist.add(x));
+}
+
+function isAllowedOrigin(origin = "") {
+  const normalized = normalizeOrigin(origin);
+  if (!normalized) return false;
+  if (corsAllowlist.has(normalized)) return true;
+  return false;
+}
+
 /** Supabase chat_observations.chat_obs_response_type_chk */
 const CHAT_OBS_RESPONSE_TYPES = new Set(["answer", "redirect", "inform", "fallback"]);
 /** Supabase chat_observations.chat_obs_layer_used_chk */
@@ -178,25 +208,56 @@ async function writeChatObservation({
   }
 }
 
-app.use(cors());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    contentSecurityPolicy: false,
+  }),
+);
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Server-to-server / curl / health-check requests may have no Origin.
+      if (!origin) return callback(null, true);
+      if (isAllowedOrigin(origin)) return callback(null, true);
+      return callback(new Error("cors_not_allowed"));
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Admin-Token"],
+    credentials: false,
+  }),
+);
+
+app.use(
+  "/api",
+  rateLimit({
+    windowMs: env.rateLimitWindowMs,
+    max: env.rateLimitMax,
+    standardHeaders: true,
+    legacyHeaders: false,
+  }),
+);
+
+app.use(
+  "/api/admin",
+  rateLimit({
+    windowMs: env.rateLimitWindowMs,
+    max: env.adminRateLimitMax,
+    standardHeaders: true,
+    legacyHeaders: false,
+  }),
+);
+
 app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
 app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
-    hasApiKey: !!env.openAiApiKey,
-    hasVectorStoreId: !!env.openAiVectorStoreId,
+    service: "viona-node-api",
+    adminAuthConfigured: Boolean(env.adminApiToken),
     hasSupabase: env.hasSupabase,
-    assistantEndpoint: ASSISTANT_CHAT_ENDPOINT,
-    /** Token/chat değerlerini sızdırmaz; yalnızca ikisi de tanımlı mı. */
-    telegramTeknikConfigured: Boolean(
-      String(env.telegramTeknikBotToken || "").trim() && String(env.telegramTeknikChatId || "").trim(),
-    ),
-    telegramHkConfigured: Boolean(
-      String(env.telegramHkBotToken || "").trim() && String(env.telegramHkChatId || "").trim(),
-    ),
-    azureSpeechConfigured: Boolean(String(env.azureSpeechKey || "").trim() && String(env.azureSpeechRegion || "").trim()),
   });
 });
 
@@ -317,6 +378,13 @@ app.post("/api/chat", async (req, res) => {
     });
     return res.status(200).json(fb);
   }
+});
+
+app.use((err, _req, res, next) => {
+  if (err && err.message === "cors_not_allowed") {
+    return res.status(403).json({ ok: false, error: "cors_not_allowed" });
+  }
+  return next(err);
 });
 
 app.listen(env.port, () => {

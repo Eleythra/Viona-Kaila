@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https: data:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" />
     <title>Viona Admin Panel</title>
     <link rel="stylesheet" href="../css/styles.css" />
     <link rel="stylesheet" href="styles.css?v=7" />
@@ -11,9 +12,9 @@
     <section id="admin-login" class="admin-login">
       <form id="admin-login-form" class="glass-block admin-login__card">
         <h1>Viona Admin Giriş</h1>
-        <p>Devam etmek için kullanıcı adı ve şifre girin.</p>
-        <label>Kullanıcı Adı <input id="admin-username" type="text" autocomplete="username" required /></label>
-        <label>Şifre</label>
+        <p>Devam etmek için sunucuda tanımlı admin API token girin.</p>
+        <label>Kullanıcı Adı (opsiyonel) <input id="admin-username" type="text" autocomplete="username" /></label>
+        <label>Admin API Token</label>
         <div class="admin-password-row">
           <input id="admin-password" type="password" autocomplete="current-password" required />
           <button id="admin-password-toggle" type="button" class="btn-small">Göster</button>
@@ -43,6 +44,9 @@
           <button type="button" data-tab="logs" title="Sohbet günlükleri ve kalite incelemesi">Loglar</button>
           <button type="button" data-tab="pdf-report" title="PDF rapor oluşturma ekranını açar">Rapor</button>
         </nav>
+        <button type="button" id="admin-logout" class="btn-small admin-logout" title="Oturumu kapat">
+          Çıkış
+        </button>
       </aside>
 
       <main class="admin-main">
@@ -399,8 +403,8 @@
     <script src="../js/viona-api-resolve.js?v=11"></script>
     <script src="../js/api-config.js?v=11"></script>
     <script src="../js/requests/config.js?v=11"></script>
-    <script src="js/data-adapter.js?v=11"></script>
+    <script src="js/data-adapter.js?v=12"></script>
     <script src="js/ui.js?v=26"></script>
-    <script src="js/app.js?v=22"></script>
+    <script src="js/app.js?v=23"></script>
   </body>
 </html>

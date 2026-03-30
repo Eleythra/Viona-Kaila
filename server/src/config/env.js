@@ -26,6 +26,15 @@ function optionalInt(name, fallback) {
   return Math.floor(n);
 }
 
+function optionalCsv(name, fallback = []) {
+  const raw = optional(name, "");
+  if (!raw) return fallback;
+  return raw
+    .split(",")
+    .map((x) => String(x || "").trim())
+    .filter(Boolean);
+}
+
 /** 0 = özellik kapalı; boş = varsayılan (ms). */
 function optionalNonNegativeMs(name, fallbackMs) {
   const v = process.env[name];
@@ -77,5 +86,13 @@ export function getEnv() {
     azureSpeechRegion: optional("AZURE_SPEECH_REGION", "westeurope"),
     /** Azure REST çağrıları için ms; 0 = zaman sınırı yok (STT iki deneme yapabilir, süre ikiye katlanabilir). */
     azureSpeechFetchTimeoutMs: optionalNonNegativeMs("AZURE_SPEECH_FETCH_TIMEOUT_MS", 25_000),
+    /** Admin API auth token (zorunlu). */
+    adminApiToken: optional("ADMIN_API_TOKEN", ""),
+    /** CORS allowlist (virgülle ayrılmış origin listesi). */
+    corsAllowedOrigins: optionalCsv("CORS_ALLOWED_ORIGINS", []),
+    /** Basit rate-limit. */
+    rateLimitWindowMs: optionalInt("RATE_LIMIT_WINDOW_MS", 60_000),
+    rateLimitMax: optionalInt("RATE_LIMIT_MAX", 180),
+    adminRateLimitMax: optionalInt("ADMIN_RATE_LIMIT_MAX", 80),
   };
 }

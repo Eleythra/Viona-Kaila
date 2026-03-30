@@ -1,5 +1,6 @@
 (function () {
   "use strict";
+  var ADMIN_TOKEN_KEY = "viona_admin_api_token";
 
   function getApiBase() {
     if (typeof document !== "undefined" && document.documentElement) {
@@ -27,8 +28,17 @@
     return getApiBase() + "/admin/requests";
   }
 
+  /** Tüm admin API çağrılarında yalnızca Authorization (proxy loglarında gereksiz tekrar yok). */
+  function mergeAuthHeaders(base) {
+    var h = Object.assign({}, base || {});
+    var token = getAdminToken();
+    if (token) h.Authorization = "Bearer " + token;
+    return h;
+  }
+
   function jfetch(url, options) {
     var opts = options ? Object.assign({}, options) : {};
+    opts.headers = mergeAuthHeaders(opts.headers);
     var m = String(opts.method || "GET").toUpperCase();
     if (m === "GET" && !opts.cache) {
       opts.cache = "no-store";
@@ -49,6 +59,28 @@
     });
   }
 
+  function getAdminToken() {
+    try {
+      return String(sessionStorage.getItem(ADMIN_TOKEN_KEY) || "").trim();
+    } catch (_e) {
+      return "";
+    }
+  }
+
+  function setAdminToken(token) {
+    var value = String(token || "").trim();
+    if (!value) return;
+    try {
+      sessionStorage.setItem(ADMIN_TOKEN_KEY, value);
+    } catch (_e) {}
+  }
+
+  function clearAdminToken() {
+    try {
+      sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+    } catch (_e) {}
+  }
+
   function buildQuery(params) {
     var q = new URLSearchParams();
     Object.keys(params || {}).forEach(function (k) {
@@ -60,6 +92,16 @@
   }
 
   window.AdminDataAdapter = {
+    setAdminToken: setAdminToken,
+    clearAdminToken: clearAdminToken,
+    hasAdminToken: function () {
+      return Boolean(getAdminToken());
+    },
+    validateAdminToken: function () {
+      return jfetch(getApiBase() + "/admin/auth/validate").then(function () {
+        return true;
+      });
+    },
     getDashboardReport: async function () {
       var data = await jfetch(getApiBase() + "/admin/reports/dashboard");
       return data.report;
@@ -147,7 +189,7 @@
     downloadPdfReport: async function (params) {
       var query = buildQuery(params || {});
       var url = getApiBase() + "/admin/reports/pdf" + (query ? "?" + query : "");
-      var response = await fetch(url, { cache: "no-store" });
+      var response = await fetch(url, { cache: "no-store", headers: mergeAuthHeaders() });
       if (!response.ok) {
         var msg = "pdf_report_failed";
         try {
@@ -195,14 +237,14 @@
     downloadLogsCsv: async function (params) {
       var query = buildQuery(params || {});
       var url = getApiBase() + "/admin/logs/export.csv" + (query ? "?" + query : "");
-      var r = await fetch(url, { cache: "no-store" });
+      var r = await fetch(url, { cache: "no-store", headers: mergeAuthHeaders() });
       if (!r.ok) throw new Error("logs_csv_export_failed");
       return r.blob();
     },
     downloadLogsJson: async function (params) {
       var query = buildQuery(params || {});
       var url = getApiBase() + "/admin/logs/export.json" + (query ? "?" + query : "");
-      var r = await fetch(url, { cache: "no-store" });
+      var r = await fetch(url, { cache: "no-store", headers: mergeAuthHeaders() });
       if (!r.ok) throw new Error("logs_json_export_failed");
       return r.blob();
     },
