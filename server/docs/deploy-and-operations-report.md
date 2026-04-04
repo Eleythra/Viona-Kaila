@@ -89,9 +89,10 @@ Sunucu `updateAdminItemStatus` için geçerli durumlar:
 | `type: fault` | `WHATSAPP_TECH_RECIPIENTS` |
 | `type: request` | `WHATSAPP_HK_RECIPIENTS` |
 | `type: complaint` | `WHATSAPP_FRONT_RECIPIENTS` |
+| `type: guest_notification` / `late_checkout` | `WHATSAPP_FRONT_RECIPIENTS` (ve isteğe bağlı `WHATSAPP_RECEPTION_RECIPIENTS`, `WHATSAPP_GUEST_RELATIONS_RECIPIENTS`, `WHATSAPP_HK_RECIPIENTS` birleşik) |
 
 Virgül / noktalı virgül / satır sonu ile sıralı çoklu numara; ayrıntı: `server/.env.example`.
 
-Kayıt oluşunca Node `createGuestRequest` içinde önce Supabase insert, sonra `sendOperationalWhatsappNotification` ile Meta API **template** mesajı (türe göre 8 veya 6 gövde parametresi) her alıcıya ayrı gönderilir. Şablon adları kodda sabittir (yukarıdaki üç ad). Supabase’e elle satır eklemek bildirim göndermez.
+Kayıt oluşunca Node `createGuestRequest` içinde önce Supabase insert, sonra `sendOperationalWhatsappNotification` ile Meta API **template** mesajı gönderilir: arıza/istek için 8, şikâyet için 6, misafir bildirimi ve geç çıkış için **7** gövde parametresi. Misafir ilişkileri şablonunun varsayılan adı `viona_guest_relation_notification`; override: `WHATSAPP_GUEST_RELATION_TEMPLATE_NAME`. Üretimde Render loglarında `[whatsapp_ops]` önekiyle Meta hataları görülebilir. Supabase’e elle satır eklemek bildirim göndermez.
 
 **Telegram** (ayrı `TELEGRAM_*` varsa): eski akış; WhatsApp ile birlikte veya yerine kullanılabilir.

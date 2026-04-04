@@ -46,6 +46,15 @@ from assistant.services.form_labels import category_label, field_label, value_la
 
 logger = get_logger("assistant.orchestrator")
 
+# RuleEngine sub_intent → sohbet formu notif_group (kategori adımında konu değişiminde kullanılır).
+_GUEST_NOTIF_SUB_TO_GROUP: dict[str, str | None] = {
+    "notif_group_celebration": "celebration",
+    "notif_group_health": "health",
+    "notif_group_diet": "diet",
+    "notif_group_reception": "reception",
+    "notif_group_all": None,
+}
+
 GUEST_NOTIF_DESC_REQUIRED = frozenset(
     {"food_sensitivity_general", "other_health", "other_celebration"},
 )
@@ -914,10 +923,14 @@ class ChatOrchestrator:
                 nm = normalize_text(message)
                 rq_soft = self.rule_engine.extract_request_category(nm)
                 if rq_soft and not self.rule_engine.is_strong_service_item_request(nm):
-                    _soft_key = "hotel_info_soft_item_followup"
+                    _soft_key = f"hotel_info_soft_followup_{rq_soft}"
                     suffix = self.localization_service.get(_soft_key, reply_language).strip()
-                    # get() eksik anahtarda anahtar adını döndürür; kullanıcıya gösterme.
-                    if suffix and suffix != _soft_key:
+                    if not suffix or suffix == _soft_key:
+                        _gen = "hotel_info_soft_followup_generic"
+                        suffix = self.localization_service.get(_gen, reply_language).strip()
+                        if suffix == _gen:
+                            suffix = ""
+                    if suffix:
                         rag_answer = rag_answer.rstrip() + "\n\n" + suffix
                 return self.response_service.build(
                     "answer",
@@ -1186,6 +1199,25 @@ class ChatOrchestrator:
         ):
             re_intent = self.rule_engine.match(normalized)
             if re_intent:
+                # Aynı misafir bildirimi akışında konu değişti (ör. alerjen → kutlama): grubu güncelle.
+                if (
+                    state.operation == "guest_notification"
+                    and state.step == "category"
+                    and re_intent.intent == "guest_notification"
+                ):
+                    sub = re_intent.sub_intent or ""
+                    if sub in _GUEST_NOTIF_SUB_TO_GROUP:
+                        ng_new = _GUEST_NOTIF_SUB_TO_GROUP[sub]
+                        if state.notif_group != ng_new:
+                            self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+                            return self._start_form_flow(
+                                payload=payload,
+                                intent="guest_notification",
+                                reply_language=reply_language,
+                                ui_language=ui_language,
+                                notif_group=ng_new,
+                                initial_request_category=None,
+                            )
                 if (
                     re_intent.intent in ("request", "fault_report", "complaint", "guest_notification")
                     and re_intent.intent != intent

@@ -2,18 +2,21 @@
  * Operasyon kayıtları (arıza / istek / şikayet) Supabase’e yazıldıktan sonra tetiklenen
  * WhatsApp Cloud API template bildirim katmanı. Rezervasyon göndermez.
  *
- * Şablon adları sabit: viona_issue_notification | viona_request_notification | viona_complaint_notification | viona_guest_notification
- * Misafir bildirimi (viona_guest_notification) gövdesi 7 metin parametresi: ad, oda, kategori (üst), alt kategori, tarih, saat, açıklama.
- * Geç çıkış (late_checkout) aynı şablonu kullanır; kategori/alt kategori sabit metin, tarih-saat istenen çıkıştır.
- * Env: WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_BUSINESS_ACCOUNT_ID (opsiyonel, dokümantasyon),
+ * Şablon adları: arıza/istek/şikâyet sabit; misafir bildirimi + geç çıkış için varsayılan
+ * `viona_guest_relation_notification` (7 gövde parametresi: ad, oda, üst kategori, alt kategori, tarih, saat, açıklama).
+ * Geç çıkış aynı şablonu kullanır; üst/alt kategori sabit metin, tarih-saat istenen çıkış.
+ * Şablon adı önceliği: WHATSAPP_GUEST_RELATION_TEMPLATE_NAME → WHATSAPP_GUEST_NOTIFICATION_TEMPLATE → viona_guest_relation_notification.
+ * Eski Manager adı: viona_guest_notification → env ile geçici bağlanabilir.
+ * Env: WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID,
  * WHATSAPP_TECH_RECIPIENTS | WHATSAPP_HK_RECIPIENTS | WHATSAPP_FRONT_RECIPIENTS |
- * WHATSAPP_RECEPTION_RECIPIENTS | WHATSAPP_GUEST_RELATIONS_RECIPIENTS (misafir bildirimi; boşsa FRONT yedek)
+ * WHATSAPP_RECEPTION_RECIPIENTS | WHATSAPP_GUEST_RELATIONS_RECIPIENTS
+ * (misafir bildirimi / geç çıkış: hepsi birleştirilir; en az biri dolu olmalı — genelde WHATSAPP_FRONT_RECIPIENTS)
  */
 
 const TEMPLATE_FAULT = "viona_issue_notification";
 const TEMPLATE_REQUEST = "viona_request_notification";
 const TEMPLATE_COMPLAINT = "viona_complaint_notification";
-const TEMPLATE_GUEST_NOTIFICATION = "viona_guest_notification";
+const DEFAULT_TEMPLATE_GUEST_RELATION = "viona_guest_relation_notification";
 
 const PARAM_MAX = 900;
 
@@ -182,6 +185,7 @@ function normalizeGuestType(payload, intentFallback) {
   if (i === "request") return "request";
   if (i === "complaint") return "complaint";
   if (i === "guest_notification") return "guest_notification";
+  if (i === "late_checkout") return "late_checkout";
   return raw || "unknown";
 }
 
@@ -231,12 +235,12 @@ export function recipientsForGuestPayload(payload, intentFallback = "unknown") {
   if (pt === "request") return parseOperationalRecipients(process.env.WHATSAPP_HK_RECIPIENTS || "");
   if (pt === "complaint") return parseOperationalRecipients(process.env.WHATSAPP_FRONT_RECIPIENTS || "");
   if (pt === "guest_notification" || pt === "late_checkout") {
+    const front = parseOperationalRecipients(process.env.WHATSAPP_FRONT_RECIPIENTS || "");
     const reception = parseOperationalRecipients(process.env.WHATSAPP_RECEPTION_RECIPIENTS || "");
     const gr = parseOperationalRecipients(process.env.WHATSAPP_GUEST_RELATIONS_RECIPIENTS || "");
-    const front = parseOperationalRecipients(process.env.WHATSAPP_FRONT_RECIPIENTS || "");
     const hk = parseOperationalRecipients(process.env.WHATSAPP_HK_RECIPIENTS || "");
-    // Hepsi birleşik: sadece şikâyet (FRONT) veya sadece HK tanımlı ortamlarda da misafir bildirimi / geç çıkış gitsin.
-    const merged = mergeRecipientLists(reception, gr, front, hk);
+    // Önce ön büro (WHATSAPP_FRONT_RECIPIENTS), sonra resepsiyon / misafir ilişkileri / HK.
+    const merged = mergeRecipientLists(front, reception, gr, hk);
     if (merged.length) return merged;
     return [];
   }
@@ -245,11 +249,11 @@ export function recipientsForGuestPayload(payload, intentFallback = "unknown") {
   if (t === "request") return parseOperationalRecipients(process.env.WHATSAPP_HK_RECIPIENTS || "");
   if (t === "complaint") return parseOperationalRecipients(process.env.WHATSAPP_FRONT_RECIPIENTS || "");
   if (t === "guest_notification" || t === "late_checkout") {
+    const front = parseOperationalRecipients(process.env.WHATSAPP_FRONT_RECIPIENTS || "");
     const reception = parseOperationalRecipients(process.env.WHATSAPP_RECEPTION_RECIPIENTS || "");
     const gr = parseOperationalRecipients(process.env.WHATSAPP_GUEST_RELATIONS_RECIPIENTS || "");
-    const front = parseOperationalRecipients(process.env.WHATSAPP_FRONT_RECIPIENTS || "");
     const hk = parseOperationalRecipients(process.env.WHATSAPP_HK_RECIPIENTS || "");
-    const merged = mergeRecipientLists(reception, gr, front, hk);
+    const merged = mergeRecipientLists(front, reception, gr, hk);
     if (merged.length) return merged;
     return [];
   }
@@ -395,6 +399,16 @@ function templateLanguageCode() {
   );
 }
 
+/** Meta Business’ta onaylı şablon adı (misafir bildirimi + geç çıkış, 7 parametre). */
+function resolveGuestRelationTemplateName() {
+  const raw = String(
+    process.env.WHATSAPP_GUEST_RELATION_TEMPLATE_NAME ||
+      process.env.WHATSAPP_GUEST_NOTIFICATION_TEMPLATE ||
+      "",
+  ).trim();
+  return raw || DEFAULT_TEMPLATE_GUEST_RELATION;
+}
+
 /** .env’de tırnak / boşluk / yanlış satır sonu token’ı bozmasın; iki anahtar adı desteklenir. */
 function normalizeSecretEnv(raw) {
   let s = String(raw ?? "").trim();
@@ -407,7 +421,7 @@ function normalizeSecretEnv(raw) {
 /**
  * @returns {{ token: string, envKey: string }}
  */
-function resolveWhatsappAccessToken() {
+export function resolveWhatsappAccessToken() {
   const keys = ["WHATSAPP_ACCESS_TOKEN", "WHATSAPP_CLOUD_ACCESS_TOKEN"];
   for (const k of keys) {
     const t = normalizeSecretEnv(process.env[k]);
@@ -416,10 +430,19 @@ function resolveWhatsappAccessToken() {
   return { token: "", envKey: "" };
 }
 
-function resolveWhatsappPhoneNumberId() {
+export function resolveWhatsappPhoneNumberId() {
   return String(process.env.WHATSAPP_PHONE_NUMBER_ID ?? "")
     .trim()
     .replace(/\s+/g, "");
+}
+
+/** Cloud API `POST .../messages` tam URL; phone ID yoksa boş. */
+export function buildWhatsappGraphMessagesUrl() {
+  const phoneNumberId = resolveWhatsappPhoneNumberId();
+  if (!phoneNumberId) return "";
+  const rawGraphVer = String(process.env.WHATSAPP_GRAPH_API_VERSION || "v21.0").trim();
+  const graphVer = rawGraphVer.startsWith("v") ? rawGraphVer : `v${rawGraphVer}`;
+  return `https://graph.facebook.com/${graphVer}/${phoneNumberId}/messages`;
 }
 
 function parseMetaError(raw) {
@@ -496,7 +519,7 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
   if (recordType === "fault") templateName = TEMPLATE_FAULT;
   else if (recordType === "request") templateName = TEMPLATE_REQUEST;
   else if (recordType === "complaint") templateName = TEMPLATE_COMPLAINT;
-  else templateName = TEMPLATE_GUEST_NOTIFICATION;
+  else templateName = resolveGuestRelationTemplateName();
 
   const recipients = recipientsForGuestPayload(payload, intentFallback);
   if (!recipients.length) {
@@ -507,7 +530,7 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
           ? "WHATSAPP_HK_RECIPIENTS"
           : recordType === "complaint"
             ? "WHATSAPP_FRONT_RECIPIENTS"
-            : "WHATSAPP_RECEPTION_RECIPIENTS, WHATSAPP_GUEST_RELATIONS_RECIPIENTS, WHATSAPP_FRONT_RECIPIENTS, WHATSAPP_HK_RECIPIENTS (en az biri dolu olmalı)";
+            : "WHATSAPP_FRONT_RECIPIENTS veya RECEPTION / GUEST_RELATIONS / HK (en az biri dolu olmalı)";
     console.warn(
       "[whatsapp_ops] notify_skipped reason=empty_recipient_list record_type=%s template=%s env_list=%s (virgülle numara ekleyin)",
       recordType,
@@ -525,9 +548,7 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
   else if (recordType === "late_checkout") bodyParams = buildLateCheckoutBodyParams(payload);
   else bodyParams = buildGuestNotificationBodyParams(payload, now);
 
-  const rawGraphVer = String(process.env.WHATSAPP_GRAPH_API_VERSION || "v21.0").trim();
-  const graphVer = rawGraphVer.startsWith("v") ? rawGraphVer : `v${rawGraphVer}`;
-  const graphUrl = `https://graph.facebook.com/${graphVer}/${phoneNumberId}/messages`;
+  const graphUrl = buildWhatsappGraphMessagesUrl();
   const lang = templateLanguageCode();
 
   console.info(

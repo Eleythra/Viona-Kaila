@@ -9,6 +9,10 @@ import adminRouter from "./modules/admin/admin.router.js";
 import { createSpeechRouter, createSttRawMiddleware, handleStt } from "./modules/speech/speech.router.js";
 import { getSupabase, isSupabaseConfigured } from "./lib/supabase.js";
 import { createGuestRequest } from "./modules/guest-requests/guest-requests.service.js";
+import {
+  buildWhatsappGraphMessagesUrl,
+  resolveWhatsappAccessToken,
+} from "./services/whatsapp-operational-notification.service.js";
 
 const env = getEnv();
 const app = express();
@@ -278,7 +282,7 @@ async function processCreateGuestRequestAction(data) {
         },
       };
     }
-    // Operasyon WhatsApp: yalnızca type request / complaint / fault iken createGuestRequest içinde tetiklenir.
+    // Operasyon WhatsApp: createGuestRequest içinde türe göre (arıza/istek/şikâyet/misafir bildirimi/geç çıkış) tetiklenir.
     return data;
   } catch (err) {
     console.warn("chat_form_create_guest_request_failed error=%s", err?.message || err);
@@ -426,16 +430,16 @@ app.post("/api/webhooks/whatsapp", async (req, res) => {
       return res.status(200).json({ ok: false, reason: "upstream_invalid_payload" });
     }
 
-    // Web ile aynı: kayıt createGuestRequest içinde; istek/şikayet/arızada operasyon WhatsApp orada tetiklenir.
+    // Web ile aynı: kayıt createGuestRequest içinde; türe göre operasyon WhatsApp orada tetiklenir.
     await processCreateGuestRequestAction(data);
 
     // Asistan cevabını WhatsApp üzerinden kullanıcıya geri gönder.
-    // WHATSAPP_ACCESS_TOKEN: Meta System User kalıcı token (geçici Graph token değil).
+    // Token: WHATSAPP_ACCESS_TOKEN veya WHATSAPP_CLOUD_ACCESS_TOKEN (operasyon bildirimleri ile aynı).
     try {
-      const token = process.env.WHATSAPP_ACCESS_TOKEN;
-      const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-      if (token && phoneNumberId) {
-        await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}/messages`, {
+      const { token } = resolveWhatsappAccessToken();
+      const graphUrl = buildWhatsappGraphMessagesUrl();
+      if (token && graphUrl) {
+        await fetch(graphUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -599,7 +603,7 @@ app.post("/api/chat", async (req, res) => {
       fallbackReason: null,
       decisionPath: `proxy:${String(data?.meta?.source || "unknown")}`,
     });
-    // Kayıt createGuestRequest içinde; operasyon WhatsApp yalnızca istek/şikayet/arıza için (.env numara listeleri).
+    // Kayıt createGuestRequest içinde; operasyon WhatsApp türe göre (.env alıcı listeleri).
     data = await processCreateGuestRequestAction(data);
     return res.status(200).json(data);
   } catch (error) {

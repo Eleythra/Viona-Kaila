@@ -116,6 +116,27 @@ def test_soft_havlu_appends_room_request_hint_after_rag():
     assert res.meta.intent == "hotel_info"
     assert res.type == "answer"
     assert "talep" in res.message.lower()
+    assert "havlu" in res.message.lower()
+
+
+def test_soft_minibar_hint_is_not_towel_wording():
+    orch, rag, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="minibar", ui_language="tr", locale="tr"))
+    assert rag.called is True
+    assert "minibar" in res.message.lower()
+    assert "havlu talep" not in res.message.lower()
+
+
+def test_guest_notification_switch_from_diet_to_kutlama_at_category_step():
+    orch, _, _ = build_orchestrator()
+    uid, sid = "u-switch-1", "s-switch-1"
+    r1 = orch.handle(ChatRequest(message="alerjen", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    assert r1.meta.intent == "guest_notification"
+    assert "alerjen bildirimi" in r1.message.lower() or "gluten" in r1.message.lower()
+    r2 = orch.handle(ChatRequest(message="kutlama", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    assert r2.meta.intent == "guest_notification"
+    assert "doğum" in r2.message.lower()
+    assert "alerjen bildirimi" not in r2.message.lower()
 
 
 def test_special_need_multilang_examples():

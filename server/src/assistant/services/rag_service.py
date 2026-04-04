@@ -45,6 +45,7 @@ class RagService:
                 model=self.settings.openai_model_rag,
                 input=message,
                 instructions=f"{self.prompt}\nRespond in language: {language}",
+                temperature=0,
                 tools=[
                     {
                         "type": "file_search",
@@ -135,6 +136,7 @@ class RagService:
                 model=self.settings.openai_model_rag,
                 input=message,
                 instructions=f"{self.prompt}\nRespond in language: {language}{_RAG_JSON_RETRY_SUFFIX}",
+                temperature=0,
                 tools=[
                     {
                         "type": "file_search",
