@@ -463,6 +463,15 @@
     closeModals();
   };
 
+  window.vionaChatOpenAlanya = function () {
+    moduleId = "alanya";
+    requestSub = null;
+    surveySub = null;
+    showView("module");
+    renderModuleContent();
+    closeModals();
+  };
+
   /** Sohbet formu kaydı tamamlandıktan sonra: modal kapanır, modül sıfırlanır, ana sayfa (istek/anket ile aynı mantık). */
   window.vionaExitChatToHome = function () {
     closeModals();

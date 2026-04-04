@@ -496,6 +496,9 @@ app.post("/api/chat", async (req, res) => {
   }
 
   const timeoutMs = safeTimeoutMs(process.env.ASSISTANT_TIMEOUT_MS, 12000);
+  /** Tarayıcıdan yalnızca sesli tur için "voice"; aksi halde web (WhatsApp ayrı webhook). */
+  const rawClientChannel = String(req.body?.client_channel || "").toLowerCase().trim();
+  const channel = rawClientChannel === "voice" ? "voice" : "web";
   try {
     const payload = {
       message,
@@ -503,7 +506,7 @@ app.post("/api/chat", async (req, res) => {
       ui_language: uiLanguage,
       user_id: userId,
       session_id: sessionId,
-      channel: "web",
+      channel,
     };
     if (conversationLanguage) payload.conversation_language = conversationLanguage;
     const abortController = new AbortController();

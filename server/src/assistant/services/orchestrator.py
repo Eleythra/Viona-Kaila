@@ -17,6 +17,7 @@ from assistant.core.logger import get_logger
 import re
 
 from assistant.services.chat_form_state import ChatFormState, InMemoryChatFormStore, OperationType
+from assistant.services.voice_channel_layer import VOICE_RESERVATION_HINT
 from assistant.services.hotel_room_numbers import is_valid_hotel_room_number
 
 
@@ -317,6 +318,22 @@ class ChatOrchestrator:
         self.response_composer = response_composer
         self.form_store = form_store or InMemoryChatFormStore(settings.chat_form_ttl_seconds)
 
+    def _voice_operational_redirect(self, reply_lang: str, ui_language: str):
+        """Sesli kanal: form / kayıt yok; yazılı kanala yönlendirme metni."""
+        from assistant.services.voice_channel_layer import VOICE_OPERATIONAL_USE_TEXT
+
+        text = VOICE_OPERATIONAL_USE_TEXT.get(reply_lang, VOICE_OPERATIONAL_USE_TEXT["tr"])
+        return self.response_service.build(
+            "inform",
+            text,
+            "hotel_info",
+            1.0,
+            reply_lang,
+            ui_language,
+            "rule",
+            action=None,
+        )
+
     def handle(self, payload: ChatRequest) -> ChatResponse:
         decision_path: list[str] = ["request_context", "normalization", "language_context"]
         openai_path_used = False
@@ -377,6 +394,18 @@ class ChatOrchestrator:
                 "a la carte reservation",
             )
         ):
+            if payload.channel == "voice":
+                vtext = VOICE_RESERVATION_HINT.get(reply_base, VOICE_RESERVATION_HINT["tr"])
+                return self.response_service.build(
+                    "inform",
+                    vtext,
+                    "reservation",
+                    1.0,
+                    reply_base,
+                    ui_language,
+                    "rule",
+                    action=None,
+                )
             text = _RESERVATION_REDIRECT_TEXT.get(reply_base, _RESERVATION_REDIRECT_TEXT["tr"])
             action = self._action_for_intent("reservation", None, None)
             return self.response_service.build(
@@ -391,7 +420,12 @@ class ChatOrchestrator:
             )
 
         # If there is an ongoing chat form flow for this user/channel, continue it first.
-        form_state = self.form_store.get(payload.channel, payload.user_id, payload.session_id)
+        # Sesli kanal ayrı anahtar (voice); yazılı form yarım kalsa bile sesli turda devam ettirilmez.
+        form_state = (
+            None
+            if payload.channel == "voice"
+            else self.form_store.get(payload.channel, payload.user_id, payload.session_id)
+        )
         if form_state is not None:
             decision_path.append("chat_form_continue")
             response = self._continue_form_flow(
@@ -458,6 +492,14 @@ class ChatOrchestrator:
             language_switch_applied = reply_lang != reply_base
             # Operasyonel niyetler: chat formu (istek / arıza / şikayet / misafir bildirimi).
             if rule_intent.intent in ("request", "fault_report", "complaint", "guest_notification"):
+                if payload.channel == "voice":
+                    exempt_voice = (
+                        rule_intent.intent == "request"
+                        and rule_intent.sub_intent in _REQUEST_CHAT_FORM_EXEMPT_SUBINTENTS
+                    )
+                    if not exempt_voice:
+                        decision_path.append("voice_info_layer_operational")
+                        return self._voice_operational_redirect(reply_lang, ui_language)
                 if (
                     rule_intent.intent == "request"
                     and rule_intent.sub_intent in _REQUEST_CHAT_FORM_EXEMPT_SUBINTENTS
@@ -622,6 +664,9 @@ class ChatOrchestrator:
 
         # LLM sınıflandırıcısı da operasyonel intent bulursa chat form akışını kullan.
         if llm_intent.intent in ("request", "fault_report", "complaint", "guest_notification"):
+            if payload.channel == "voice":
+                decision_path.append("voice_info_layer_operational_llm")
+                return self._voice_operational_redirect(reply_base, ui_language)
             decision_path.append("chat_form_start_llm")
             init_req_cat = None
             llm_notif_group: str | None = None
@@ -881,6 +926,18 @@ class ChatOrchestrator:
 
         if policy == "answer_hotel_info":
             fixed_entity_key = (entity or "").strip()
+            if fixed_entity_key == "fixed_alanya_discover_intro":
+                fixed_text = self.localization_service.get(fixed_entity_key, reply_language)
+                return self.response_service.build(
+                    "answer",
+                    fixed_text,
+                    intent,
+                    confidence,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "open_alanya_module"},
+                )
             if fixed_entity_key in (
                 "fixed_restaurant_info",
                 "fixed_ice_cream_info",

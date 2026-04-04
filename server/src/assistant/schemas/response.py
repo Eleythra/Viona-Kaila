@@ -15,6 +15,7 @@ class ChatMeta(BaseModel):
             "chat_form",
             "open_reservation_form",
             "open_guest_notifications_form",
+            "open_alanya_module",
         ]
         target_department: Literal["reception", "guest_relations"] | None = None
         priority: Literal["low", "medium", "high"] | None = None

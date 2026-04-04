@@ -7,6 +7,7 @@ from assistant.services.orchestrator import ChatOrchestrator
 from assistant.services.localization_service import LocalizationService
 from assistant.bootstrap import get_orchestrator
 from assistant.core.logger import get_logger
+from assistant.services.voice_channel_layer import finalize_voice_channel_response
 
 logger = get_logger("assistant.api.chat")
 
@@ -25,7 +26,16 @@ def _resolve_chat_lang(payload: ChatRequest) -> str:
 @router.post("/chat", response_model=ChatResponse)
 def chat(payload: ChatRequest, orchestrator: ChatOrchestrator = Depends(get_orchestrator)) -> ChatResponse:
     try:
-        return orchestrator.handle(payload)
+        response = orchestrator.handle(payload)
+        if payload.channel == "voice":
+            lang = _resolve_chat_lang(payload)
+            reply_lang = (
+                response.meta.language
+                if response.meta.language in ("tr", "en", "de", "ru")
+                else lang
+            )
+            response = finalize_voice_channel_response(response, reply_lang)
+        return response
     except Exception as exc:
         logger.exception("chat_endpoint_failed: %s", exc)
         lang = _resolve_chat_lang(payload)

@@ -521,6 +521,77 @@ URGENT_CONTACT_WORDS = [
 OUTSIDE_HOTEL_WORDS = [
     "otel dışında", "otel disinda", "outside hotel", "outside the hotel", "dışarıda", "disarida",
 ]
+
+
+def _matches_alanya_discover_intent(normalized_text: str) -> bool:
+    """Alanya'da gezi / turistik yer soruları → sabit metin + uygulama modülü."""
+    tl = (normalized_text or "").lower()
+    has_alanya = "alanya" in tl or "аланья" in tl
+    has_en_de_ru_place = any(
+        x in tl
+        for x in (
+            "visit alanya",
+            "in alanya",
+            "around alanya",
+            "alanya sightseeing",
+            "things to do in alanya",
+            "what to see in alanya",
+            "places in alanya",
+            "alanya sehen",
+            "sehenswürdigkeiten alanya",
+            "was kann man in alanya",
+            "alanya entdecken",
+            "аланья что посмотреть",
+            "куда сходить в аланье",
+            "в аланье",
+            "достопримечательности аланьи",
+        )
+    )
+    tour_markers = (
+        "gez",
+        "gezeyim",
+        "gezilecek",
+        "gezelim",
+        "gideyim",
+        "gidelim",
+        "görüle",
+        "gorule",
+        "görül",
+        "gorul",
+        "turist",
+        "meşhur",
+        "meshur",
+        "keşfet",
+        "kesfet",
+        "nereler",
+        "nereye",
+        "nereyi",
+        "ne var",
+        "neler",
+        "sightseeing",
+        "attraction",
+        "worth seeing",
+        "famous",
+        "popular",
+        "discover",
+        "visit ",
+        "places to",
+        "things to",
+        "sehensw",
+        "besicht",
+        "unternehm",
+        "что посмотреть",
+        "куда сходить",
+        "достопримечатель",
+        "погулять",
+        "экскурс",
+    )
+    has_tour = any(m in tl for m in tour_markers)
+    if has_alanya and has_tour:
+        return True
+    if has_en_de_ru_place and (has_tour or "see" in tl or "places" in tl or "things" in tl):
+        return True
+    return False
 HOTEL_INFO_WORDS = [
     # Fixed / strong location & service keywords (avoid very generic tokens like "where" alone).
     "spa saat",
@@ -885,6 +956,19 @@ class RuleEngine:
                 needs_rag=False,
                 response_mode="guided",
                 confidence=0.98,
+                source="rule",
+            )
+
+        if _matches_alanya_discover_intent(normalized_text):
+            logger.info("RULE MATCH: hotel_info (alanya_discover)")
+            return IntentResult(
+                intent="hotel_info",
+                sub_intent="service_information",
+                entity="fixed_alanya_discover_intro",
+                department=None,
+                needs_rag=False,
+                response_mode="answer",
+                confidence=0.94,
                 source="rule",
             )
 

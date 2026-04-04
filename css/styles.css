@@ -2215,7 +2215,9 @@ body {
 }
 
 /* Rezervasyon formu — belirgin CTA; ikon metinle aynı satırda, kompakt */
-.viona-chat__option-btn--reservation {
+.viona-chat__option-btn--reservation,
+.viona-chat__option-btn--cta-guest,
+.viona-chat__option-btn--cta-discover {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -2234,7 +2236,9 @@ body {
   overflow: hidden;
 }
 
-.viona-chat__option-btn--reservation::before {
+.viona-chat__option-btn--reservation::before,
+.viona-chat__option-btn--cta-guest::before,
+.viona-chat__option-btn--cta-discover::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -2286,7 +2290,9 @@ body {
   color: var(--text);
 }
 
-.viona-chat__option-btn--reservation:hover {
+.viona-chat__option-btn--reservation:hover,
+.viona-chat__option-btn--cta-guest:hover,
+.viona-chat__option-btn--cta-discover:hover {
   border-color: rgba(212, 168, 83, 0.62);
   background:
     linear-gradient(145deg, rgba(212, 168, 83, 0.26) 0%, rgba(30, 139, 195, 0.2) 48%, rgba(18, 24, 36, 0.55) 100%);
@@ -2297,24 +2303,32 @@ body {
   transform: translateY(-2px);
 }
 
-.viona-chat__option-btn--reservation:hover .viona-chat__option-btn-res-ico {
+.viona-chat__option-btn--reservation:hover .viona-chat__option-btn-res-ico,
+.viona-chat__option-btn--cta-guest:hover .viona-chat__option-btn-res-ico,
+.viona-chat__option-btn--cta-discover:hover .viona-chat__option-btn-res-ico {
   color: #e8c878;
 }
 
-.viona-chat__option-btn--reservation:focus-visible {
+.viona-chat__option-btn--reservation:focus-visible,
+.viona-chat__option-btn--cta-guest:focus-visible,
+.viona-chat__option-btn--cta-discover:focus-visible {
   outline: 2px solid var(--gold);
   outline-offset: 3px;
   border-color: rgba(212, 168, 83, 0.75);
 }
 
 @media (hover: none) {
-  .viona-chat__option-btn--reservation:active {
+  .viona-chat__option-btn--reservation:active,
+  .viona-chat__option-btn--cta-guest:active,
+  .viona-chat__option-btn--cta-discover:active {
     transform: translateY(0) scale(0.99);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .viona-chat__option-btn--reservation::before {
+  .viona-chat__option-btn--reservation::before,
+  .viona-chat__option-btn--cta-guest::before,
+  .viona-chat__option-btn--cta-discover::before {
     animation: none;
     opacity: 0.4;
   }
@@ -2360,7 +2374,9 @@ body {
 }
 
 /* Genel .viona-chat__option-btn width:100% / display:block üzerine — rezervasyon satır içi kompakt */
-.viona-chat__option-btn.viona-chat__option-btn--reservation {
+.viona-chat__option-btn.viona-chat__option-btn--reservation,
+.viona-chat__option-btn.viona-chat__option-btn--cta-guest,
+.viona-chat__option-btn.viona-chat__option-btn--cta-discover {
   display: inline-flex;
   width: auto;
   max-width: 100%;

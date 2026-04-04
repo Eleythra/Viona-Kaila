@@ -183,6 +183,20 @@ def test_bare_cikis_is_hotel_info_not_reservation():
     assert rag.called is True
 
 
+def test_alanya_where_to_visit_opens_discover_module():
+    orch, _, _ = build_orchestrator()
+    res = orch.handle(
+        ChatRequest(message="alanyada nereleri gezeyim", ui_language="tr", locale="tr")
+    )
+    assert res.meta.intent == "hotel_info"
+    assert res.type == "answer"
+    assert res.meta.source == "rule"
+    assert res.meta.action is not None
+    assert res.meta.action.kind == "open_alanya_module"
+    low = res.message.lower()
+    assert "kleopatra" in low or "kale" in low or "alanya" in low
+
+
 def test_reservation_and_hotel_info_multilang():
     orch, rag, _ = build_orchestrator()
 

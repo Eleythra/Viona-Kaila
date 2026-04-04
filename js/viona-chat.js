@@ -95,6 +95,48 @@
     return L[key] !== undefined ? L[key] : I18N.tr[key] || key;
   }
 
+  var SVG_CHAT_CTA_CAL =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/><rect x="3" y="6" width="18" height="16" rx="2.5" stroke="currentColor" stroke-width="1.75"/><path d="M3 11h18M8 15h.02M12 15h.02M16 15h.02M8 19h.02M12 19h.02" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>';
+  var SVG_CHAT_CTA_BELL =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 20a2 2 0 01-4 0M6 8a6 6 0 1112 0c0 5 2 5 2 5H4s2 0 2-5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var SVG_CHAT_CTA_COMPASS =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.75"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/><path d="m14.5 9.5-3 5-1.5-1.5 3-5 1.5 1.5z" fill="currentColor" opacity="0.9"/></svg>';
+
+  function appendChatCtaButton(optWrap, opt, ctaClass, svgInner) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "viona-chat__option-btn " + ctaClass;
+    var ico = document.createElement("span");
+    ico.className = "viona-chat__option-btn-res-ico";
+    ico.setAttribute("aria-hidden", "true");
+    ico.innerHTML = svgInner;
+    var lab = document.createElement("span");
+    lab.className = "viona-chat__option-btn-res-label";
+    lab.textContent = opt.label;
+    btn.appendChild(ico);
+    btn.appendChild(lab);
+    btn.addEventListener("click", function () {
+      if (state.pending) return;
+      if (typeof window.vionaVoiceIsBusy === "function" && window.vionaVoiceIsBusy()) return;
+      if (opt.value === "__open_reservation_form__") {
+        if (typeof window.vionaChatOpenReservations === "function") window.vionaChatOpenReservations();
+        return;
+      }
+      if (opt.value === "__open_guest_notifications_form__") {
+        if (typeof window.vionaChatOpenGuestNotifications === "function") window.vionaChatOpenGuestNotifications();
+        return;
+      }
+      if (opt.value === "__open_alanya_module__") {
+        if (typeof window.vionaChatOpenAlanya === "function") window.vionaChatOpenAlanya();
+        return;
+      }
+      if (!els.input || !els.send) return;
+      els.input.value = String(opt.value || "").trim();
+      els.send.click();
+    });
+    optWrap.appendChild(btn);
+  }
+
   function escapeHtml(s) {
     var d = document.createElement("div");
     d.textContent = s;
@@ -156,40 +198,25 @@
         var optWrap = document.createElement("div");
         optWrap.className = "viona-chat__options";
         m.options.forEach(function (opt) {
+          if (opt.value === "__open_reservation_form__") {
+            appendChatCtaButton(optWrap, opt, "viona-chat__option-btn--reservation", SVG_CHAT_CTA_CAL);
+            return;
+          }
+          if (opt.value === "__open_guest_notifications_form__") {
+            appendChatCtaButton(optWrap, opt, "viona-chat__option-btn--cta-guest", SVG_CHAT_CTA_BELL);
+            return;
+          }
+          if (opt.value === "__open_alanya_module__") {
+            appendChatCtaButton(optWrap, opt, "viona-chat__option-btn--cta-discover", SVG_CHAT_CTA_COMPASS);
+            return;
+          }
           var btn = document.createElement("button");
           btn.type = "button";
           btn.className = "viona-chat__option-btn";
-          if (opt.value === "__open_reservation_form__") {
-            btn.classList.add("viona-chat__option-btn--reservation");
-            var ico = document.createElement("span");
-            ico.className = "viona-chat__option-btn-res-ico";
-            ico.setAttribute("aria-hidden", "true");
-            ico.innerHTML =
-              '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/><rect x="3" y="6" width="18" height="16" rx="2.5" stroke="currentColor" stroke-width="1.75"/><path d="M3 11h18M8 15h.02M12 15h.02M16 15h.02M8 19h.02M12 19h.02" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>';
-            var lab = document.createElement("span");
-            lab.className = "viona-chat__option-btn-res-label";
-            lab.textContent = opt.label;
-            btn.appendChild(ico);
-            btn.appendChild(lab);
-          } else {
-            btn.textContent = opt.label;
-          }
+          btn.textContent = opt.label;
           btn.addEventListener("click", function () {
             if (state.pending) return;
             if (typeof window.vionaVoiceIsBusy === "function" && window.vionaVoiceIsBusy()) return;
-            // Rezervasyon modülünü açan özel seçenek
-            if (opt.value === "__open_reservation_form__") {
-              if (typeof window.vionaChatOpenReservations === "function") {
-                window.vionaChatOpenReservations();
-              }
-              return;
-            }
-            if (opt.value === "__open_guest_notifications_form__") {
-              if (typeof window.vionaChatOpenGuestNotifications === "function") {
-                window.vionaChatOpenGuestNotifications();
-              }
-              return;
-            }
             if (!els.input || !els.send) return;
             els.input.value = String(opt.value || "").trim();
             els.send.click();
@@ -330,12 +357,13 @@
     }, Math.round(n));
   }
 
-  async function askViona(message, locale) {
+  async function askViona(message, locale, requestOpts) {
     var cfg = window.VIONA_CHAT_CONFIG || {};
     var endpoint =
       typeof cfg.endpoint === "string" && cfg.endpoint.trim()
         ? cfg.endpoint.trim()
         : "http://localhost:3001/api/chat";
+    var reqOpts = requestOpts && typeof requestOpts === "object" ? requestOpts : {};
     var conv = getConversationLang();
     var body = {
       message: message,
@@ -345,6 +373,7 @@
     };
     body.session_id = getOrCreateSessionId();
     if (conv) body.conversation_language = conv;
+    if (reqOpts.clientChannel === "voice") body.client_channel = "voice";
     var timeoutMs = Number(cfg.timeoutMs || 15000);
     if (!Number.isFinite(timeoutMs) || timeoutMs < 3000) timeoutMs = 15000;
     var maxCap = 60000;
@@ -404,6 +433,13 @@
         {
           value: "__open_guest_notifications_form__",
           label: t("chatOpenGuestNotifications") || "Geç çıkış formunu aç",
+        },
+      ];
+    } else if (action && action.kind === "open_alanya_module") {
+      options = [
+        {
+          value: "__open_alanya_module__",
+          label: t("chatOpenDiscoverAlanya") || "Alanya'yı keşfedin",
         },
       ];
     } else if (action && action.kind === "chat_form" && action.step) {
@@ -624,7 +660,7 @@
     renderMessages();
     setTyping(true);
     try {
-      var result = await askViona(clean, getLang());
+      var result = await askViona(clean, getLang(), { clientChannel: "voice" });
       state.messages.push({
         role: "assistant",
         content: result.reply,
