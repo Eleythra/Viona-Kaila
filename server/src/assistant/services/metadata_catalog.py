@@ -163,13 +163,13 @@ DEPARTMENT_METADATA: dict[str, DepartmentMetadata] = {
 
 
 VENUE_METADATA: dict[str, VenueMetadata] = {
-    "mare_restaurant": {
-        "venue_id": "mare_restaurant",
-        "name": "Mare Restaurant",
+    "la_terrace_a_la_carte": {
+        "venue_id": "la_terrace_a_la_carte",
+        "name": "La Terrace A La Carte",
         "category": "a_la_carte_restaurant",
-        "cuisine_or_service_type": "fish",
-        "tags": ("fish", "seafood", "a_la_carte"),
-        "synonyms": ("mare", "fish restaurant"),
+        "cuisine_or_service_type": "a_la_carte",
+        "tags": ("a_la_carte", "dinner", "terrace"),
+        "synonyms": ("la terrace", "terrace", "la terrace a la carte"),
         "recommendation_weight": 100,
         "reservation_required": True,
         "paid_status": "paid",

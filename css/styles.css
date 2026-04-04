@@ -252,6 +252,7 @@ body {
 
 .carousel {
   position: relative;
+  z-index: 0;
   width: 100%;
   aspect-ratio: 16 / 10;
   max-height: min(52vh, 420px);
@@ -291,6 +292,7 @@ body {
 .carousel-shine {
   position: absolute;
   inset: 0;
+  z-index: 1;
   pointer-events: none;
   background: linear-gradient(
     180deg,
@@ -301,10 +303,15 @@ body {
 }
 
 .home-hero {
-  margin: -30px 16px 0;
+  margin-top: clamp(-28px, -5.5vw, -22px);
+  margin-right: max(16px, env(safe-area-inset-right, 0px));
+  margin-bottom: 0;
+  margin-left: max(16px, env(safe-area-inset-left, 0px));
   position: relative;
   z-index: 2;
-  padding: 22px 20px 24px;
+  isolation: isolate;
+  padding: 22px max(16px, env(safe-area-inset-left, 0px)) 24px
+    max(16px, env(safe-area-inset-right, 0px));
   text-align: center;
   overflow: hidden;
   border: 1px solid transparent;
@@ -357,6 +364,8 @@ body {
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.2;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
   background: linear-gradient(100deg, #f8fafc 0%, #e8d8a8 38%, #b8e4ea 72%, #f2f4f8 100%);
   background-size: 180% 100%;
   -webkit-background-clip: text;
@@ -412,6 +421,7 @@ body {
   letter-spacing: 0.01em;
   color: rgba(248, 250, 252, 0.94);
   text-wrap: balance;
+  overflow-wrap: break-word;
   border-top: 1px solid rgba(212, 168, 83, 0.28);
   animation: homeHeroSloganIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.12s backwards;
 }
@@ -428,7 +438,8 @@ body {
 }
 
 .home-body {
-  padding: 14px 16px 0;
+  padding: 10px max(16px, env(safe-area-inset-left, 0px)) 0
+    max(16px, env(safe-area-inset-right, 0px));
   max-width: 640px;
   margin: 0 auto;
 }
@@ -457,6 +468,7 @@ body {
 
 #module-inner.glass-block {
   overflow-x: hidden;
+  min-width: 0;
 }
 
 @keyframes homeReveal {
@@ -729,6 +741,7 @@ body {
   grid-template-columns: 1fr;
   gap: 13px;
   margin-bottom: 24px;
+  min-width: 0;
 }
 
 @media (min-width: 520px) {
@@ -784,6 +797,7 @@ body {
   align-items: center;
   gap: 16px;
   min-height: 84px;
+  min-width: 0;
   padding: 16px 18px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--stroke);
@@ -1181,9 +1195,12 @@ body {
 
 .view--module {
   min-height: 100dvh;
-  padding: max(12px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+  padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-left, 0px))
+    max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-right, 0px));
   max-width: 640px;
   margin: 0 auto;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .btn-back {
@@ -1220,6 +1237,13 @@ body {
   max-width: 100%;
   box-sizing: border-box;
   overflow-x: hidden;
+  word-break: break-word;
+}
+
+.module-inner img,
+.module-inner video {
+  max-width: 100%;
+  height: auto;
 }
 
 .module-inner h2 {
@@ -2907,7 +2931,7 @@ body {
 .venue-stack {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
   margin-top: 8px;
 }
 
@@ -2933,12 +2957,15 @@ body {
 
 .venue-card__body {
   padding: 14px 16px 16px;
+  min-width: 0;
 }
 
 .venue-card__title {
   margin: 0 0 4px;
   font-size: 1.05rem;
   font-weight: 600;
+  text-wrap: balance;
+  overflow-wrap: break-word;
 }
 
 .venue-card__sub {
@@ -2955,12 +2982,20 @@ body {
 }
 
 .rest-section-title {
-  margin: 6px 0 2px;
+  margin: 12px 0 8px;
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgba(46, 184, 199, 0.92);
+}
+
+.viona-mod > .rest-section-title:first-child {
+  margin-top: 4px;
+}
+
+.viona-mod-lead + .rest-section-title {
+  margin-top: 10px;
 }
 
 .viona-mod--rest .venue-card__loc {
@@ -3071,6 +3106,73 @@ body {
 
 .venue-card__cta:active {
   transform: translateY(0);
+}
+
+.venue-card__cta--icon {
+  gap: 10px;
+}
+
+.venue-card__cta-icon {
+  flex-shrink: 0;
+  opacity: 0.92;
+}
+
+.venue-card__cta-label {
+  line-height: 1.25;
+  text-align: left;
+}
+
+.rest-bar-extras {
+  margin: 2px 0 16px;
+  padding: 14px 16px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(46, 184, 199, 0.22);
+  background: linear-gradient(155deg, rgba(46, 184, 199, 0.1) 0%, rgba(8, 14, 24, 0.92) 55%, rgba(12, 18, 28, 0.88) 100%);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+}
+
+.rest-bar-extras__intro {
+  margin: 0 0 12px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: rgba(220, 232, 240, 0.88);
+  letter-spacing: 0.02em;
+}
+
+.rest-bar-extras__pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 11px 16px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-size: 0.87rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: rgba(248, 252, 253, 0.98);
+  border: 1px solid rgba(212, 168, 83, 0.42);
+  background: linear-gradient(145deg, rgba(212, 168, 83, 0.22) 0%, rgba(46, 184, 199, 0.14) 100%);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.rest-bar-extras__pdf-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(212, 168, 83, 0.65);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.3);
+}
+
+.rest-bar-extras__pdf-btn:active {
+  transform: translateY(0);
+}
+
+.rest-bar-extras__pdf-btn .venue-card__cta-icon {
+  opacity: 1;
+  color: rgba(255, 248, 230, 0.95);
 }
 
 .venue-card--rest .venue-card__media {
@@ -3266,8 +3368,20 @@ body {
   box-shadow: 0 8px 32px rgba(91, 33, 182, 0.12);
 }
 
+/* Ücretli masaj kartı: soğuk turkuaz / lacivert ton (VIP altın-mor ile karışmasın) */
 .venue-card--spa-paid {
-  border-color: rgba(212, 168, 83, 0.3);
+  border-color: rgba(56, 189, 199, 0.42);
+  background: linear-gradient(
+    175deg,
+    rgba(30, 90, 110, 0.35) 0%,
+    rgba(18, 42, 58, 0.55) 42%,
+    rgba(0, 0, 0, 0.32) 100%
+  );
+  box-shadow: 0 8px 26px rgba(46, 184, 199, 0.08);
+}
+
+.venue-card--spa-paid .venue-card__loc {
+  color: rgba(186, 230, 240, 0.75);
 }
 
 .venue-card__text--spa-note {
@@ -3340,6 +3454,464 @@ body {
   color: rgba(212, 168, 83, 0.75);
 }
 
+.spa-split--compact .spa-split__col {
+  padding: 10px 12px 8px;
+}
+
+.spa-split--compact .spa-split__title {
+  margin-bottom: 6px;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+}
+
+.spa-split--compact .spa-split__list {
+  font-size: 0.78rem;
+  line-height: 1.42;
+}
+
+.spa-split--compact .spa-split__list li {
+  margin-bottom: 3px;
+}
+
+/* Spa — PDF şeridi: mor paketlerden ayrı okyanus / derin teal paleti */
+.spa-intro + .spa-pdf-strip {
+  margin-top: 4px;
+}
+
+.spa-pdf-strip {
+  margin: 0 0 16px;
+  padding: 15px 16px 17px;
+  border-radius: 16px;
+  border: 1px solid rgba(45, 212, 191, 0.38);
+  background: linear-gradient(
+    152deg,
+    rgba(13, 148, 136, 0.28) 0%,
+    rgba(15, 118, 110, 0.2) 38%,
+    rgba(8, 47, 52, 0.75) 72%,
+    rgba(10, 20, 28, 0.96) 100%
+  );
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.spa-pdf-strip__intro {
+  margin: 0 0 12px;
+  font-size: 0.83rem;
+  line-height: 1.52;
+  color: rgba(204, 251, 241, 0.94);
+  letter-spacing: 0.02em;
+}
+
+.spa-pdf-strip__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 11px 16px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-size: 0.87rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: rgba(6, 28, 32, 0.96);
+  border: 1px solid rgba(153, 246, 228, 0.55);
+  background: linear-gradient(145deg, rgba(204, 251, 241, 0.98) 0%, rgba(45, 212, 191, 0.88) 48%, rgba(20, 184, 166, 0.92) 100%);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.spa-pdf-strip__btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(236, 253, 245, 0.85);
+  box-shadow: 0 10px 26px rgba(45, 212, 191, 0.25);
+}
+
+.spa-pdf-strip__btn:active {
+  transform: translateY(0);
+}
+
+.spa-pdf-strip__icon {
+  flex-shrink: 0;
+  opacity: 0.92;
+  color: rgba(15, 80, 85, 0.92);
+}
+
+/* Spa — menü: kategorili accordion (ad · süre · fiyat) */
+.spa-menu-accordion {
+  margin: 0 0 20px;
+}
+
+.spa-menu-accordion__h {
+  margin-bottom: 12px;
+}
+
+.spa-menu-accordion__fallback {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.2);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: rgba(242, 244, 248, 0.78);
+}
+
+.spa-menu-accordion__cat {
+  margin: 0 0 8px;
+  border-radius: 14px;
+  border: 1px solid rgba(45, 212, 191, 0.22);
+  background: linear-gradient(
+    165deg,
+    rgba(13, 148, 136, 0.12) 0%,
+    rgba(8, 47, 52, 0.35) 55%,
+    rgba(10, 18, 26, 0.88) 100%
+  );
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2);
+}
+
+.spa-menu-accordion__cat:last-child {
+  margin-bottom: 0;
+}
+
+.spa-menu-accordion__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px 12px 16px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: rgba(204, 251, 241, 0.95);
+  cursor: pointer;
+  list-style: none;
+  transition: background 0.15s ease;
+}
+
+.spa-menu-accordion__summary::-webkit-details-marker {
+  display: none;
+}
+
+.spa-menu-accordion__summary::after {
+  content: "";
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid rgba(153, 246, 228, 0.75);
+  border-bottom: 2px solid rgba(153, 246, 228, 0.75);
+  transform: rotate(45deg);
+  margin-top: -4px;
+  transition: transform 0.2s ease;
+}
+
+.spa-menu-accordion__cat[open] .spa-menu-accordion__summary {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.spa-menu-accordion__cat[open] .spa-menu-accordion__summary::after {
+  transform: rotate(-135deg);
+  margin-top: 2px;
+}
+
+.spa-menu-accordion__list {
+  margin: 0;
+  padding: 0 14px 12px 18px;
+  list-style: none;
+}
+
+.spa-menu-accordion__item {
+  position: relative;
+  padding: 7px 0 7px 14px;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: rgba(242, 244, 248, 0.9);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.spa-menu-accordion__item:last-child {
+  border-bottom: 0;
+  padding-bottom: 4px;
+}
+
+.spa-menu-accordion__item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.95em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(45, 212, 191, 0.65);
+}
+
+.spa-menu-accordion__item-name {
+  display: block;
+  font-weight: 600;
+}
+
+.spa-menu-accordion__item-dur {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(153, 246, 228, 0.72);
+}
+
+.spa-menu-accordion__item-price {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: rgba(212, 168, 83, 0.95);
+}
+
+/* Spa — program paketleri (kart ızgarası) */
+.spa-program-section {
+  margin: 0 0 28px;
+}
+
+.spa-program-section__h {
+  margin-bottom: 14px;
+}
+
+.spa-program-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+@media (min-width: 640px) {
+  .spa-program-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .spa-program-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.spa-program-card {
+  border-radius: 16px;
+  border: 1px solid rgba(167, 139, 250, 0.24);
+  background: linear-gradient(
+    168deg,
+    rgba(88, 28, 135, 0.16) 0%,
+    rgba(49, 27, 88, 0.22) 42%,
+    rgba(12, 18, 28, 0.96) 100%
+  );
+  padding: 16px 16px 14px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.24);
+  min-width: 0;
+}
+
+.spa-program-card__title {
+  margin: 0 0 12px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  color: rgba(245, 240, 255, 0.98);
+}
+
+.spa-program-card__list {
+  margin: 0;
+  padding: 0 0 0 1.05rem;
+  font-size: 0.81rem;
+  line-height: 1.48;
+  color: rgba(242, 244, 248, 0.88);
+}
+
+.spa-program-card__li {
+  margin-bottom: 6px;
+}
+
+.spa-program-card__li::marker {
+  color: rgba(196, 181, 253, 0.8);
+}
+
+.spa-program-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.spa-program-card__dur {
+  color: rgba(204, 251, 241, 0.88);
+  letter-spacing: 0.03em;
+}
+
+.spa-program-card__dot {
+  color: rgba(255, 255, 255, 0.28);
+  font-weight: 400;
+}
+
+.spa-program-card__price {
+  color: rgba(212, 168, 83, 0.98);
+  letter-spacing: 0.04em;
+}
+
+.spa-packages {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin: 8px 0 18px;
+}
+
+@media (min-width: 640px) {
+  .spa-packages {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .spa-packages .spa-package-card--vip {
+    grid-column: 1 / -1;
+  }
+}
+
+.spa-package-card {
+  padding: 14px 14px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(167, 139, 250, 0.24);
+  background: linear-gradient(168deg, rgba(139, 92, 246, 0.08) 0%, rgba(12, 18, 28, 0.93) 100%);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+
+/* VIP: derin mor / mücevher tonu — ücretli kartın turkuazından net ayrışır */
+.spa-package-card--vip {
+  border-color: rgba(167, 139, 250, 0.5);
+  background: linear-gradient(
+    168deg,
+    rgba(88, 28, 135, 0.32) 0%,
+    rgba(49, 27, 88, 0.55) 38%,
+    rgba(12, 18, 28, 0.95) 100%
+  );
+  box-shadow: 0 10px 30px rgba(91, 33, 182, 0.18);
+}
+
+.spa-package-card--vip .spa-package-card__title {
+  color: rgba(245, 240, 255, 0.98);
+}
+
+.spa-package-card__headrow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.spa-package-card__sparkle {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: rgba(196, 181, 253, 0.95);
+}
+
+.spa-package-card--vip .spa-package-card__sparkle {
+  color: rgba(233, 213, 255, 0.98);
+}
+
+.spa-package-card__title {
+  margin: 0;
+  flex: 1;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  line-height: 1.35;
+  text-transform: uppercase;
+  color: rgba(237, 233, 254, 0.96);
+}
+
+.spa-package-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.spa-package-card__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: rgba(224, 231, 255, 0.92);
+  border: 1px solid rgba(167, 139, 250, 0.28);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.spa-package-card__chip--price {
+  border-color: rgba(212, 168, 83, 0.35);
+  color: rgba(254, 240, 200, 0.96);
+  background: rgba(212, 168, 83, 0.1);
+}
+
+.spa-package-card__glyph {
+  flex-shrink: 0;
+  color: rgba(167, 211, 232, 0.9);
+}
+
+.spa-package-card__chip--price .spa-package-card__price-value {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.spa-package-card__bullets {
+  margin: 0;
+  padding-left: 1.05rem;
+  font-size: 0.8rem;
+  line-height: 1.48;
+  color: rgba(242, 244, 248, 0.86);
+}
+
+.spa-package-card__bullets li {
+  margin-bottom: 5px;
+}
+
+.spa-package-card__bullets li::marker {
+  color: rgba(167, 139, 250, 0.55);
+}
+
+.spa-package-card--vip .spa-package-card__bullets li::marker {
+  color: rgba(196, 181, 253, 0.75);
+}
+
+.spa-package-card--vip .spa-package-card__chip--price {
+  border-color: rgba(196, 181, 253, 0.45);
+  color: rgba(250, 245, 255, 0.98);
+  background: rgba(124, 58, 237, 0.2);
+}
+
+.rest-section-title--spa-packages {
+  margin-top: 18px;
+  padding-top: 4px;
+}
+
+.rest-section-title--spa-summary {
+  margin-top: 10px;
+  font-size: 0.92rem;
+  opacity: 0.9;
+}
+
+/* Ücretli bakım başlığı ile kart arası nefes */
+.viona-mod--spa .rest-section-title--spa-paid-lead {
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+
 .venue-article {
   padding: 16px 18px;
   margin-bottom: 12px;
@@ -3360,6 +3932,7 @@ body {
 /* Talepler formu */
 .req-wrap {
   margin-top: 8px;
+  min-width: 0;
 }
 
 .req-intro {
@@ -4379,6 +4952,35 @@ select.req-input option {
   color: rgba(242, 244, 248, 0.95);
 }
 
+.req-spa-service-mount {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.req-spa-cat-title {
+  margin: 4px 0 2px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(45, 212, 191, 0.78);
+}
+
+.req-res-rest-grid--spa {
+  gap: 8px;
+}
+
+.req-res-rest-card--spa-line {
+  padding: 11px 14px;
+}
+
+.req-res-rest-card--spa-line .req-res-rest-card__text {
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.38;
+}
+
 .req-res-cal {
   display: flex;
   flex-direction: column;
@@ -4644,6 +5246,7 @@ select.req-input option {
 .viona-mod {
   margin-top: 4px;
   max-width: 100%;
+  min-width: 0;
 }
 
 .viona-mod-lead {
@@ -4657,19 +5260,16 @@ select.req-input option {
   color: rgba(242, 244, 248, 0.9);
 }
 
-.viona-mod--activities .rest-section-title {
-  margin-bottom: 6px;
+.viona-mod-lead--tight {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
 }
 
-.viona-mod--activities .activities-location {
-  margin: -2px 0 14px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(46, 184, 199, 0.24);
-  background: rgba(46, 184, 199, 0.08);
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: rgba(210, 245, 248, 0.94);
+.viona-mod--activities .rest-section-title {
+  margin-bottom: 6px;
 }
 
 .activities-table-wrap {
@@ -4678,6 +5278,9 @@ select.req-input option {
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(0, 0, 0, 0.22);
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .activities-block-title {
@@ -4718,24 +5321,6 @@ select.req-input option {
 .activities-table__activity {
   font-size: 0.86rem;
   color: rgba(242, 244, 248, 0.9);
-}
-
-.activities-summary {
-  margin: 0 0 14px;
-  padding: 14px 14px 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(212, 168, 83, 0.24);
-  background: linear-gradient(145deg, rgba(212, 168, 83, 0.08) 0%, rgba(12, 18, 28, 0.86) 100%);
-}
-
-.activities-summary__list {
-  margin: 0;
-  padding-left: 1rem;
-  display: grid;
-  gap: 8px;
-  font-size: 0.86rem;
-  line-height: 1.45;
-  color: rgba(242, 244, 248, 0.88);
 }
 
 .activities-cards {

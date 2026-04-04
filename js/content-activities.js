@@ -21,70 +21,54 @@
       ru: "Анимация и активности",
     },
     lead: {
-      tr:
-        "Bu program, otelin günlük eğlence ve aktivite planını gösterir. Etkinlikler sabah havuz aktiviteleri ile başlar, öğlen mola verir ve öğleden sonra tekrar devam eder.",
-      en:
-        "This schedule shows the hotel’s daily entertainment and activity flow. Pool activities start in the morning, pause at midday, and continue in the afternoon.",
-      de:
-        "Dieser Plan zeigt das tägliche Unterhaltungs- und Aktivitätsprogramm des Hotels. Die Poolaktivitäten starten morgens, pausieren mittags und laufen am Nachmittag weiter.",
-      ru:
-        "Эта программа показывает ежедневный план развлечений и активностей в отеле. Утром начинаются активности у бассейна, в полдень перерыв, затем продолжение после обеда.",
-    },
-    location: {
-      tr: "Yer: Aqua Pool – Aqua Havuzda",
-      en: "Location: Aqua Pool",
-      de: "Ort: Aqua Pool",
-      ru: "Место: Aqua Pool",
+      tr: "Aqua havuzda gün boyu animasyon ve su aktiviteleri. Katılım ücretsiz; güncel saatler tabloda.",
+      en: "Poolside animation and aqua activities all day at Aqua Pool. Free to join — times below.",
+      de: "Den ganzen Tag Animation und Wasseraktivitäten am Aqua Pool. Teilnahme kostenlos — Zeiten in der Tabelle.",
+      ru: "Целый день анимация и активности у бассейна Aqua. Участие бесплатно — расписание в таблице.",
     },
     scheduleTitle: {
-      tr: "Günlük aktivite programı",
-      en: "Daily activity schedule",
-      de: "Tägliches Aktivitätsprogramm",
-      ru: "Ежедневная программа активностей",
+      tr: "Günlük program",
+      en: "Daily programme",
+      de: "Tagesprogramm",
+      ru: "Программа дня",
     },
     colTime: { tr: "Saat", en: "Time", de: "Uhrzeit", ru: "Время" },
     colActivity: { tr: "Etkinlik", en: "Activity", de: "Aktivität", ru: "Активность" },
-    summaryTitle: {
-      tr: "Genel akış",
-      en: "General flow",
-      de: "Allgemeiner Ablauf",
-      ru: "Общий формат",
-    },
   };
 
   var SCHEDULE = [
     {
       time: "10:00",
       activity: {
-        tr: "Radyo açılışı",
-        en: "Radio opening",
-        de: "Radio-Eröffnung",
-        ru: "Открытие радио",
+        tr: "Müzik ve Animasyon Başlangıcı",
+        en: "Music & Animation Start",
+        de: "Musik- & Animationsbeginn",
+        ru: "Начало музыки и анимации",
       },
     },
     {
       time: "10:30",
       activity: {
-        tr: "Su jimnastiği",
-        en: "Water aerobics",
+        tr: "Su Jimnastiği",
+        en: "Aqua Gym",
         de: "Wassergymnastik",
-        ru: "Аквагимнастика",
+        ru: "Аквааэробика",
       },
     },
     {
       time: "11:00",
       activity: {
-        tr: "Dart oyunu",
-        en: "Darts game",
-        de: "Dartspiel",
-        ru: "Игра в дартс",
+        tr: "Dart Oyunu",
+        en: "Darts",
+        de: "Dart",
+        ru: "Дартс",
       },
     },
     {
       time: "11:30",
       activity: {
-        tr: "Su topu",
-        en: "Water polo",
+        tr: "Su Topu",
+        en: "Water Polo",
         de: "Wasserball",
         ru: "Водное поло",
       },
@@ -92,35 +76,35 @@
     {
       time: "12:30 – 14:00",
       activity: {
-        tr: "Mola",
-        en: "Break time",
-        de: "Pause",
-        ru: "Перерыв",
+        tr: "Serbest Aktivite Zamanı",
+        en: "Free Activity Time",
+        de: "Freie Aktivitätszeit",
+        ru: "Свободное время для активностей",
       },
     },
     {
       time: "14:45",
       activity: {
-        tr: "Su jimnastiği",
-        en: "Water aerobics",
+        tr: "Su Jimnastiği",
+        en: "Aqua Gym",
         de: "Wassergymnastik",
-        ru: "Аквагимнастика",
+        ru: "Аквааэробика",
       },
     },
     {
       time: "15:00",
       activity: {
-        tr: "Dart oyunu",
-        en: "Darts game",
-        de: "Dartspiel",
-        ru: "Игра в дартс",
+        tr: "Dart Oyunu",
+        en: "Darts",
+        de: "Dart",
+        ru: "Дартс",
       },
     },
     {
       time: "16:00",
       activity: {
-        tr: "Su topu",
-        en: "Water polo",
+        tr: "Su Topu",
+        en: "Water Polo",
         de: "Wasserball",
         ru: "Водное поло",
       },
@@ -128,10 +112,10 @@
     {
       time: "17:00",
       activity: {
-        tr: "Mola",
-        en: "Break",
-        de: "Pause",
-        ru: "Перерыв",
+        tr: "Animasyon Programı Kapanışı",
+        en: "Animation Program End",
+        de: "Animationsprogramm Ende",
+        ru: "Окончание анимационной программы",
       },
     },
   ];
@@ -213,35 +197,6 @@
       },
     },
   ];
-
-  var SUMMARY = {
-    bullets: [
-      {
-        tr: "Su jimnastiği -> Hafif spor ve eğlence",
-        en: "Water aerobics -> Light exercise and fun",
-        de: "Wassergymnastik -> Leichte Bewegung und Spaß",
-        ru: "Аквагимнастика -> Лёгкая активность и удовольствие",
-      },
-      {
-        tr: "Dart oyunu -> Sosyal oyun",
-        en: "Darts game -> Social game",
-        de: "Dartspiel -> Soziales Spiel",
-        ru: "Дартс -> Социальная игра",
-      },
-      {
-        tr: "Su topu -> Grup aktivitesi ve eğlence",
-        en: "Water polo -> Group activity and entertainment",
-        de: "Wasserball -> Gruppenaktivität und Unterhaltung",
-        ru: "Водное поло -> Групповая активность и развлечение",
-      },
-      {
-        tr: "Mola -> Dinlenme arası",
-        en: "Break -> Rest period",
-        de: "Pause -> Erholungszeit",
-        ru: "Перерыв -> Время отдыха",
-      },
-    ],
-  };
 
   var LEGACY_CARDS = [
     {
@@ -385,17 +340,6 @@
     return wrap;
   }
 
-  function renderSummary() {
-    var box = el("div", "activities-summary");
-    box.appendChild(el("h3", "activities-block-title", T(MODULE_TEXT.summaryTitle)));
-    var ul = el("ul", "activities-summary__list");
-    SUMMARY.bullets.forEach(function (b) {
-      ul.appendChild(el("li", null, T(b)));
-    });
-    box.appendChild(ul);
-    return box;
-  }
-
   function renderActivityCards() {
     var grid = el("div", "activities-cards");
     ACTIVITY_CARDS.forEach(function (c) {
@@ -502,10 +446,8 @@
   function renderActivitiesModule(container) {
     var root = el("div", "viona-mod viona-mod--activities");
     root.appendChild(el("p", "rest-section-title", T(MODULE_TEXT.sectionTitle)));
-    root.appendChild(el("p", "viona-mod-lead", T(MODULE_TEXT.lead)));
-    root.appendChild(el("p", "activities-location", T(MODULE_TEXT.location)));
+    root.appendChild(el("p", "viona-mod-lead viona-mod-lead--tight", T(MODULE_TEXT.lead)));
     root.appendChild(renderScheduleTable());
-    root.appendChild(renderSummary());
     root.appendChild(renderActivityCards());
     root.appendChild(renderLegacySection());
     container.appendChild(root);

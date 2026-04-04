@@ -14,10 +14,10 @@
   }
 
   var INTRO = {
-    tr: "Bu bölümde à la carte restoranlarımız (La Terrace, Mare, Sinton) tanıtılır. Her işletmenin ücreti ve rezervasyon kuralı farklıdır; özet bilgiler aşağıdadır.",
-    en: "Our à la carte restaurants (La Terrace, Mare, Sinton) — each has its own pricing and reservation rules; summaries below.",
-    de: "À-la-carte-Restaurants (La Terrace, Mare, Sinton) — Preise und Reservierungsregeln pro Betrieb; unten zusammengefasst.",
-    ru: "Рестораны à la carte (La Terrace, Mare, Sinton) — у каждого свои цены и правила брони; кратко ниже.",
+    tr: "Bu bölümde à la carte restoranlarımız (La Terrace, Sinton) tanıtılır. Her işletmenin ücreti ve rezervasyon kuralı farklıdır; özet bilgiler aşağıdadır.",
+    en: "Our à la carte restaurants (La Terrace, Sinton) — each has its own pricing and reservation rules; summaries below.",
+    de: "À-la-carte-Restaurants (La Terrace, Sinton) — Preise und Reservierungsregeln pro Betrieb; unten zusammengefasst.",
+    ru: "Рестораны à la carte (La Terrace, Sinton) — у каждого свои цены и правила брони; кратко ниже.",
   };
 
   var BADGE_PAID = {
@@ -32,13 +32,6 @@
     en: "Reservation required",
     de: "Reservierung erforderlich",
     ru: "Нужна бронь",
-  };
-
-  var BADGE_RES = {
-    tr: "Rezervasyonlu",
-    en: "By reservation",
-    de: "Mit Reservierung",
-    ru: "По брони",
   };
 
   function renderSlot(slot) {
@@ -96,7 +89,7 @@
             de: "La Terrace A La Carte Restaurant",
             ru: "La Terrace A La Carte Restaurant",
           },
-          time: "18:30 – 21:00",
+          time: "18:30 – 20:30",
           format: {
             tr: "A La Carte restoran · Menü servisi",
             en: "À la carte restaurant · Table service",
@@ -106,45 +99,10 @@
           charge: BADGE_PAID,
           res: BADGE_RES_REQUIRED,
           detail: {
-            tr: "5 gece ve üzeri konaklamalarda 1 kez ücretsiz. 18:30 – 21:00 arası hizmet verir.",
-            en: "One complimentary visit for stays of 5 nights or more. Service hours: 18:30 – 21:00.",
-            de: "Bei Aufenthalten ab 5 Nächten einmal kostenfrei. Servicezeit: 18:30 – 21:00.",
-            ru: "При проживании от 5 ночей — один раз бесплатно. Часы работы: 18:30 – 21:00.",
-          },
-        },
-      ],
-    },
-    {
-      img: "assets/images/rest/marerestaurant-576906dc-4e84-4cdc-89fa-7398b487eca7.png",
-      alt: {
-        tr: "Mare balık restoranı",
-        en: "Mare fish restaurant",
-        de: "Fischrestaurant Mare",
-        ru: "Рыбный ресторан Mare",
-      },
-      title: { tr: "Mare Restaurant", en: "Mare Restaurant", de: "Mare Restaurant", ru: "Mare Restaurant" },
-      sub: {
-        tr: "Balık A La Carte",
-        en: "Fish à la carte",
-        de: "Fisch À la carte",
-        ru: "Рыба à la carte",
-      },
-      slots: [
-        {
-          name: { tr: "Mare Restaurant", en: "Mare Restaurant", de: "Mare Restaurant", ru: "Mare Restaurant" },
-          format: {
-            tr: "Balık A La Carte restoran · Menü servisi",
-            en: "Fish à la carte restaurant · Table service",
-            de: "Fisch-À-la-carte-Restaurant · Menüservice",
-            ru: "Рыбный ресторан à la carte · обслуживание",
-          },
-          charge: BADGE_PAID,
-          res: BADGE_RES,
-          detail: {
-            tr: "Balık a la carte menüsü; taze deniz ürünleri.",
-            en: "Fish à la carte with fresh seafood.",
-            de: "Fisch-À-la-carte mit frischen Meeresfrüchten.",
-            ru: "Рыба à la carte, свежие морепродукты.",
+            tr: "5 gece ve üzeri konaklamalarda 1 kez ücretsiz. 18:30 – 20:30 arası hizmet verir.",
+            en: "One complimentary visit for stays of 5 nights or more. Service hours: 18:30 – 20:30.",
+            de: "Bei Aufenthalten ab 5 Nächten einmal kostenfrei. Servicezeit: 18:30 – 20:30.",
+            ru: "При проживании от 5 ночей — один раз бесплатно. Часы работы: 18:30 – 20:30.",
           },
         },
       ],

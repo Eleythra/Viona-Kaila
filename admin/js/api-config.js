@@ -10,7 +10,6 @@
  * - Operasyon özetleri: adminRequestsEndpoint sayfalı GET (birleştirme admin/js/app.js).
  * - Değerlendirmeler: adminSurveyReportEndpoint + isteğe bağlı ?from=&to=.
  * - Loglar / dışa aktarma: adminLogs* uçları.
- * - Reklamlar: adminPromoConfigEndpoint.
  */
 (function () {
   "use strict";
@@ -43,7 +42,6 @@
     adminSurveyReportEndpoint: base + "/admin/surveys/report",
     adminDashboardReportEndpoint: base + "/admin/reports/dashboard",
     adminPdfReportEndpoint: base + "/admin/reports/pdf",
-    adminPromoConfigEndpoint: base + "/admin/promo-config",
     adminLogsEndpoint: base + "/admin/logs",
     adminLogsSummaryEndpoint: base + "/admin/logs/summary",
     adminLogsExportCsvEndpoint: base + "/admin/logs/export.csv",

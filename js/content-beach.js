@@ -30,13 +30,13 @@
   var INTRO_PARAS = [
     {
       tr:
-        "Kaila Beach Hotel’de misafirler, farklı beklenti ve tatil tercihlerine hitap eden dört ayrı havuzun keyfini çıkarabilirler. Üçü açık havuzdur: Gün boyu aktiviteler ve müzik eşliğinde hareketli anlar sunan eğlence havuzu, aquaparkıyla öne çıkan aquapark havuzu, sakin atmosferiyle dinlenmek isteyenler için ideal olan dinlenme havuzu.",
+        "Kaila Beach Hotel’de üç açık havuz bulunmaktadır: gün boyu aktiviteler ve müzik eşliğinde hareketli anlar sunan eğlence havuzu, aquaparkıyla öne çıkan aquapark havuzu ve sakin atmosferiyle dinlenmek isteyenler için ideal dinlenme havuzu. Aquapark ve açık alanlarda çocuklara uygun sığ su bölgeleri de yer alır; ayrıntılar aşağıdaki görsellerde.",
       en:
-        "Guests can enjoy four distinct pools for different moods. Three are outdoor: an activity pool with music and animation, an aquapark pool with slides, and a calm relaxation pool.",
+        "There are three outdoor pools: an activity pool with music and animation, an aquapark pool with slides, and a calm relaxation pool. Shallow areas for children are part of the outdoor / aquapark zone — see the cards below.",
       de:
-        "Vier verschiedene Pools: drei Außenbecken — Aktivitätsbecken mit Musik, Aquapark-Becken und ruhiges Relax-Becken.",
+        "Drei Außenbecken: Aktivitätsbecken mit Musik, Aquapark mit Rutschen und ruhiges Relax-Becken. Flache Bereiche für Kinder gehören zum Außen- und Aquaparkbereich — siehe die Karten unten.",
       ru:
-        "Четыре бассейна на выбор: три открытых — активный с музыкой, с аквапарком и спокойный для отдыха.",
+        "Три открытых бассейна: активный с музыкой и анимацией, с аквапарком и спокойный для отдыха. Мелководье для детей — в зоне аквапарка и открытых бассейнов; подробности на карточках ниже.",
     },
     {
       tr:
@@ -180,22 +180,18 @@
     tr: [
       { k: "Açık havuz", v: "3" },
       { k: "Kapalı havuz", v: "1" },
-      { k: "Çocuk havuzu", v: "1" },
     ],
     en: [
       { k: "Outdoor pools", v: "3" },
       { k: "Indoor pool", v: "1" },
-      { k: "Kids’ pool", v: "1" },
     ],
     de: [
       { k: "Außenbecken", v: "3" },
       { k: "Hallenbad", v: "1" },
-      { k: "Kinderbecken", v: "1" },
     ],
     ru: [
       { k: "Открытых бассейнов", v: "3" },
       { k: "Крытый бассейн", v: "1" },
-      { k: "Детский бассейн", v: "1" },
     ],
   };
 

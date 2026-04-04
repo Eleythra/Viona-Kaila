@@ -2,18 +2,27 @@
 <html lang="tr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https: data:; connect-src 'self' http://127.0.0.1:3001 http://localhost:3001 https:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b1017" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com https: data:; connect-src 'self' http://127.0.0.1:3001 http://localhost:3001 https:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" />
     <title>Viona Admin Panel</title>
-    <link rel="stylesheet" href="../css/styles.css" />
-    <link rel="stylesheet" href="styles.css?v=7" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/styles.css?v=18" />
+    <link rel="stylesheet" href="styles.css?v=13" />
   </head>
   <body class="admin-body">
     <section id="admin-login" class="admin-login">
       <form id="admin-login-form" class="glass-block admin-login__card">
         <h1>Viona Admin Giriş</h1>
-        <p>Devam etmek için sunucuda tanımlı admin API token girin.</p>
-        <label>Kullanıcı Adı (opsiyonel) <input id="admin-username" type="text" autocomplete="username" /></label>
+        <p>Devam etmek için admin API token girin.</p>
+        <p class="admin-login__field-label" id="admin-username-label">Kullanıcı adı</p>
+        <div class="admin-login__fixed-user" role="status" aria-labelledby="admin-username-label">Viona-Kaila</div>
+        <input type="hidden" id="admin-username" value="Viona-Kaila" autocomplete="username" />
         <label>Admin API Token</label>
         <div class="admin-password-row">
           <input id="admin-password" type="password" autocomplete="current-password" required />
@@ -26,27 +35,28 @@
 
     <div id="admin-layout" class="admin-layout hidden">
       <aside class="admin-sidebar glass-block">
-        <h1>Viona Admin</h1>
-        <nav class="admin-nav" aria-label="Ana menü">
-          <button type="button" data-tab="home" title="Giriş özeti ve raporlar">Ana sayfa</button>
-          <button type="button" data-tab="requests" title="İstek kayıtlarını açar">İstekler</button>
-          <button type="button" data-tab="complaints" title="Şikayet kayıtlarını açar">Şikayetler</button>
-          <button type="button" data-tab="faults" title="Arıza kayıtlarını açar">Arızalar</button>
-          <button type="button" data-tab="guest_notifications" title="Misafir bildirim kayıtlarını açar">Misafir bildirimleri</button>
-          <button type="button" data-tab="reservations" data-res-subtab="overview" title="Tüm rezervasyonların günlük listesi ve raporu">Rezervasyonlar</button>
-          <div class="admin-nav-sub" aria-label="Rezervasyon alt sekmeleri">
-            <button type="button" data-tab="reservations" data-res-subtab="laTerrace" title="La Terrace rezervasyonlarını filtreler">La Terrace A La Carte</button>
-            <button type="button" data-tab="reservations" data-res-subtab="sinton" title="Sinton rezervasyonlarını filtreler">Sinton BBQ Restaurant</button>
-            <button type="button" data-tab="reservations" data-res-subtab="spa" title="Spa rezervasyonlarını filtreler">Spa</button>
-          </div>
-          <button type="button" data-tab="evaluations" title="Misafir anket özeti">Değerlendirmeler</button>
-          <button type="button" data-tab="promo" title="Reklam popup görsellerini yönetir">Reklamlar</button>
-          <button type="button" data-tab="logs" title="Sohbet günlükleri ve kalite incelemesi">Loglar</button>
-          <button type="button" data-tab="pdf-report" title="PDF rapor oluşturma ekranını açar">Rapor</button>
-        </nav>
-        <button type="button" id="admin-logout" class="btn-small admin-logout" title="Oturumu kapat">
-          Çıkış
-        </button>
+        <div class="admin-sidebar__body">
+          <h1>Viona Admin</h1>
+          <nav class="admin-nav" aria-label="Ana menü">
+            <button type="button" data-tab="home" title="Giriş özeti ve raporlar">Ana sayfa</button>
+            <button type="button" data-tab="requests" title="İstek kayıtlarını açar">İstekler</button>
+            <button type="button" data-tab="complaints" title="Şikayet kayıtlarını açar">Şikayetler</button>
+            <button type="button" data-tab="faults" title="Arıza kayıtlarını açar">Arızalar</button>
+            <button type="button" data-tab="guest_notifications" title="Misafir bildirim kayıtlarını açar">Misafir bildirimleri</button>
+            <button type="button" data-tab="reservations" data-res-subtab="overview" title="Tüm rezervasyonların günlük listesi ve raporu">Rezervasyonlar</button>
+            <div class="admin-nav-sub" aria-label="Rezervasyon alt sekmeleri">
+              <button type="button" data-tab="reservations" data-res-subtab="laTerrace" title="La Terrace rezervasyonlarını filtreler">La Terrace A La Carte</button>
+              <button type="button" data-tab="reservations" data-res-subtab="sinton" title="Sinton rezervasyonlarını filtreler">Sinton BBQ Restaurant</button>
+              <button type="button" data-tab="reservations" data-res-subtab="spa" title="Spa & wellness rezervasyonlarını filtreler">Spa & wellness</button>
+            </div>
+            <button type="button" data-tab="evaluations" title="Misafir anket özeti">Değerlendirmeler</button>
+            <button type="button" data-tab="logs" title="Sohbet günlükleri ve kalite incelemesi">Loglar</button>
+            <button type="button" data-tab="pdf-report" title="PDF rapor oluşturma ekranını açar">Rapor</button>
+          </nav>
+        </div>
+        <footer class="admin-sidebar__footer">
+          <button type="button" id="admin-logout" class="btn-small admin-logout" title="Oturumu kapat">Çıkış</button>
+        </footer>
       </aside>
 
       <main class="admin-main">
@@ -191,43 +201,6 @@
           </div>
           <p id="evaluations-status" class="eval-status" role="status"></p>
           <div id="evaluations-mount" class="eval-mount"></div>
-        </section>
-
-        <section id="tab-promo" class="admin-tab hidden">
-          <div class="section-head">
-            <h2>Reklamlar</h2>
-            <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
-          </div>
-          <p class="section-lead">Dil başına tek görsel. Yenisini yüklemeden önce mevcut görseli silin. Mümkünse küçük dosya veya CDN URL kullanın; çok büyük data URL yavaşlatır.</p>
-          <form id="promo-form" class="glass-block promo-form">
-            <label><input type="checkbox" id="promo-enabled" /> Popup aktif</label>
-            <div class="promo-row">
-              <label>TR görsel URL <input id="promo-tr" type="text" /></label>
-              <label>TR görsel yükle <input id="promo-tr-file" type="file" accept="image/*" /></label>
-              <button type="button" class="btn-small promo-clear-btn" data-promo-lang="tr">TR görseli sil</button>
-              <img id="promo-tr-preview" class="promo-preview" alt="TR önizleme" />
-            </div>
-            <div class="promo-row">
-              <label>EN görsel URL <input id="promo-en" type="text" /></label>
-              <label>EN görsel yükle <input id="promo-en-file" type="file" accept="image/*" /></label>
-              <button type="button" class="btn-small promo-clear-btn" data-promo-lang="en">EN görseli sil</button>
-              <img id="promo-en-preview" class="promo-preview" alt="EN önizleme" />
-            </div>
-            <div class="promo-row">
-              <label>DE görsel URL <input id="promo-de" type="text" /></label>
-              <label>DE görsel yükle <input id="promo-de-file" type="file" accept="image/*" /></label>
-              <button type="button" class="btn-small promo-clear-btn" data-promo-lang="de">DE görseli sil</button>
-              <img id="promo-de-preview" class="promo-preview" alt="DE önizleme" />
-            </div>
-            <div class="promo-row">
-              <label>RU görsel URL <input id="promo-ru" type="text" /></label>
-              <label>RU görsel yükle <input id="promo-ru-file" type="file" accept="image/*" /></label>
-              <button type="button" class="btn-small promo-clear-btn" data-promo-lang="ru">RU görseli sil</button>
-              <img id="promo-ru-preview" class="promo-preview" alt="RU önizleme" />
-            </div>
-            <button class="btn-primary" type="submit">Kaydet</button>
-            <p id="promo-status"></p>
-          </form>
         </section>
 
         <section id="tab-pdf-report" class="admin-tab hidden">
@@ -409,7 +382,7 @@
             <header class="logs-section__head">
               <p class="logs-section__eyebrow">Kayıtlar</p>
               <h3 class="logs-section__title">Ham log tablosu</h3>
-              <p class="logs-section__desc">Sayfa başına 70 kayıt; önceki ve sonraki ile sayfalar arasında gezinin. Geniş tabloda yatay kaydırma kullanın.</p>
+              <p class="logs-section__desc">Sayfa başına 70 kayıt; önceki ve sonraki ile sayfalar arasında gezinin. Geniş tabloda yatay kaydırma kullanın. Uzun kullanıcı mesajı ve tam cevap, hücre içinde aşağı kaydırılarak okunur.</p>
             </header>
             <div id="logs-table" class="logs-table-mount"></div>
           </article>
@@ -421,11 +394,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" crossorigin="anonymous"></script>
     <script src="../js/viona-backend-url.js?v=11"></script>
     <script src="../js/viona-api-resolve.js?v=11"></script>
-    <script src="../js/api-config.js?v=11"></script>
+    <script src="../js/api-config.js?v=12"></script>
     <script src="../js/requests/config.js?v=11"></script>
     <script src="../js/hotel-room-numbers.js?v=1"></script>
-    <script src="js/data-adapter.js?v=12"></script>
-    <script src="js/ui.js?v=26"></script>
-    <script src="js/app.js?v=24"></script>
+    <script src="js/data-adapter.js?v=13"></script>
+    <script src="js/ui.js?v=29"></script>
+    <script src="js/app.js?v=27"></script>
   </body>
 </html>

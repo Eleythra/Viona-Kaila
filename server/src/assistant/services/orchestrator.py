@@ -2632,12 +2632,12 @@ class ChatOrchestrator:
             }
         if intent == "recommendation":
             venue_map = {
-                "fish_pref": "mare_restaurant",
+                "fish_pref": "la_terrace_a_la_carte",
                 "meat_bbq_pref": "sinton_bbq",
                 "pizza_snack_pref": "snack_restaurant",
                 "coffee_dessert_pref": "libum_cafe",
                 "kids_activity_pref": "kids_club",
-                "romantic_dinner_pref": "mare_restaurant",
+                "romantic_dinner_pref": "la_terrace_a_la_carte",
                 "general_dining_pref": "sinton_bbq",
             }
             return {

@@ -66,13 +66,77 @@
       },
       html: {
         tr:
-          "<p>Kaila Beach Hotel, Antalya’nın Alanya bölgesinde, denize sıfır konumda yer alan modern ve konfor odaklı bir tatil otelidir. Misafirlerine hem dinlenme hem de eğlenceyi bir arada sunan tesis, aileler, çiftler ve bireysel tatilciler için uygun konsepti ile hizmet vermektedir. Her Şey Dahil konsepti ile gün boyu yeme-içme, aktivite ve dinlenme imkanlarını bir arada sunmaktadır.</p><p>Tesis, modern mimarisi, geniş sosyal alanları, havuzları, aquaparkı, spa merkezi ve çeşitli restoran/bar seçenekleri ile dikkat çekmektedir. Hem şehir merkezine yakınlığı hem de sahil erişimi sayesinde konforlu ve erişilebilir bir tatil deneyimi sunar.</p>",
+          "<p>Kaila Beach Hotel, Antalya’nın Alanya bölgesinde, denize sıfır konumda yer alan modern ve konfor odaklı bir tatil otelidir. Misafirlerine hem dinlenme hem de eğlenceyi bir arada sunan tesis, aileler, çiftler ve bireysel tatilciler için uygun konsepti ile hizmet vermektedir. Her Şey Dahil konsepti ile gün boyu yeme-içme, aktivite ve dinlenme imkanlarını bir arada sunmaktadır.</p><p>Havuz alanında üç açık yüzme havuzu ve spa bölümünde bir kapalı ısıtmalı havuz bulunmaktadır; aquaparkta kaydıraklar ve çocuklara uygun sığ su bölgeleri yer alır. Tesis, modern mimarisi, geniş sosyal alanları, aquaparkı, spa merkezi ve çeşitli restoran/bar seçenekleri ile dikkat çekmektedir. Hem şehir merkezine yakınlığı hem de sahil erişimi sayesinde konforlu ve erişilebilir bir tatil deneyimi sunar.</p>",
         en:
-          "<p>Kaila Beach Hotel is a modern comfort-focused resort in Alanya, Antalya, directly on the sea. It combines relaxation and entertainment for families, couples and individual travellers. All Inclusive brings dining, activities and leisure together throughout the day.</p><p>The resort features contemporary architecture, generous social areas, pools, aquapark, spa and several restaurant/bar options. Proximity to the town centre and direct beach access ensure a comfortable stay.</p>",
+          "<p>Kaila Beach Hotel is a modern comfort-focused resort in Alanya, Antalya, directly on the sea. It combines relaxation and entertainment for families, couples and individual travellers. All Inclusive brings dining, activities and leisure together throughout the day.</p><p>The pool area offers three outdoor pools and one heated indoor pool in the spa; the aquapark includes slides and shallow zones for children. Contemporary architecture, generous social areas, aquapark, spa and several restaurant/bar options stand out. Proximity to the town centre and direct beach access ensure a comfortable stay.</p>",
         de:
-          "<p>Das Kaila Beach Hotel in Alanya, Antalya, liegt direkt am Meer und bietet modernen Komfort für Familien, Paare und Einzelreisende. All Inclusive vereint Verpflegung, Aktivitäten und Erholung über den Tag.</p><p>Moderne Architektur, großzügige Bereiche, Pools, Aquapark, Spa sowie Restaurants und Bars; zudem Nähe zum Zentrum und Strandzugang.</p>",
+          "<p>Das Kaila Beach Hotel in Alanya, Antalya, liegt direkt am Meer und bietet modernen Komfort für Familien, Paare und Einzelreisende. All Inclusive vereint Verpflegung, Aktivitäten und Erholung über den Tag.</p><p>Am Pool gibt es drei Außenbecken und im Spa ein beheiztes Hallenbad; im Aquapark Rutschen und flache Bereiche für Kinder. Moderne Architektur, großzügige Bereiche, Aquapark, Spa sowie Restaurants und Bars; zudem Nähe zum Zentrum und Strandzugang.</p>",
         ru:
-          "<p>Kaila Beach Hotel в Аланье (Анталья) на первой линии моря — современный комфортный курорт для семей, пар и индивидуальных гостей. All Inclusive объединяет питание, активности и отдых.</p><p>Современная архитектура, зоны отдыха, бассейны, аквапарк, спа, рестораны и бары; близко к центру и к пляжу.</p>",
+          "<p>Kaila Beach Hotel в Аланье (Анталья) на первой линии моря — современный комфортный курорт для семей, пар и индивидуальных гостей. All Inclusive объединяет питание, активности и отдых.</p><p>Три открытых бассейна и один крытый подогреваемый в спа; в аквапарке горки и мелководье для детей. Современная архитектура, зоны отдыха, аквапарк, спа, рестораны и бары; близко к центру и к пляжу.</p>",
+      },
+    },
+    {
+      icon: IC.list,
+      defaultOpen: true,
+      title: {
+        tr: "Genel operasyon",
+        en: "General operations",
+        de: "Allgemeiner Betrieb",
+        ru: "Общая эксплуатация",
+      },
+      html: {
+        tr:
+          '<p><strong>Erken check-in / geç check-out</strong></p><ul class="viona-list"><li>Check-in: 14:00</li><li>Check-out: 12:00</li><li>Erken giriş ve geç çıkış oda müsaitliği ve operasyonel duruma bağlıdır; ücret ve onay için resepsiyona danışınız.</li></ul>' +
+          '<p><strong>Otopark</strong></p><ul class="viona-list"><li>Otopark mevcuttur.</li></ul>' +
+          '<p><strong>Transfer</strong></p><ul class="viona-list"><li>Mevcut — ek ücretlidir.</li></ul>' +
+          '<p><strong>Kayıp eşya (lost &amp; found)</strong></p><ul class="viona-list"><li>Değerli eşyalar en fazla 1 yıl, diğer eşyalar en fazla 6 ay saklanır.</li></ul>' +
+          '<p><strong>Bileklik / kart sistemi</strong></p><ul class="viona-list"><li>Bileklik kullanımı: zorunludur.</li><li>Renk / segment (Her Şey Dahil): yetişkin — siyah; 18 yaş altı — beyaz.</li><li>Kayıp durumunda işlem: tanımlı yedekleme prosedürü bulunmamaktadır (resepsiyona bilgi veriniz).</li></ul>' +
+          '<p><strong>Bagaj hizmeti</strong></p><ul class="viona-list"><li>Bellboy: mevcuttur.</li><li>Bagaj taşıma: check-in sırasında.</li></ul>' +
+          '<p><strong>Kasa (oda içi)</strong></p><ul class="viona-list"><li>Kullanım: şifreli kasa.</li><li>Ücret: gün başına 2 €.</li></ul>' +
+          '<p><strong>Havlu kartı / depozito</strong></p><ul class="viona-list"><li>Havlu kart sistemi: mevcuttur.</li><li>Depozito: alınmaz.</li><li>Kayıp halinde: 10 € ücret.</li></ul>' +
+          '<p><strong>Telefon</strong></p><ul class="viona-list"><li>Oda içi telefon: dahili aramalar (otel içi).</li></ul>' +
+          '<p><strong>TV / yayın</strong></p><ul class="viona-list"><li>Uluslararası kanallar mevcuttur; Almanya, İngiltere, Rusya ve İskandinav ülkeleri kanalları izlenebilir.</li></ul>' +
+          '<p><strong>Enerji / elektrik kesintisi</strong></p><ul class="viona-list"><li>Jeneratör kapasitesi: 1400 kW.</li><li>Olası kesintilerde jeneratör otomatik devreye girer.</li></ul>' +
+          '<p><strong>Havuz ve plaj güvenliği</strong></p><ul class="viona-list"><li>Can kurtaran: havuzlarda ve denizde mevcuttur.</li></ul>',
+        en:
+          '<p><strong>Early check-in / late check-out</strong></p><ul class="viona-list"><li>Check-in: 14:00</li><li>Check-out: 12:00</li><li>Early check-in and late check-out depend on availability and operations; please ask reception about fees and approval.</li></ul>' +
+          '<p><strong>Parking</strong></p><ul class="viona-list"><li>On-site parking is available.</li></ul>' +
+          '<p><strong>Transfer</strong></p><ul class="viona-list"><li>Available — extra charge applies.</li></ul>' +
+          '<p><strong>Lost &amp; found</strong></p><ul class="viona-list"><li>Valuables are kept for up to 1 year; other items for up to 6 months.</li></ul>' +
+          '<p><strong>Wristband / card system</strong></p><ul class="viona-list"><li>Wearing a wristband is mandatory.</li><li>All Inclusive colour coding: adults — black; under 18 — white.</li><li>If lost: no standard replacement process (please inform reception).</li></ul>' +
+          '<p><strong>Luggage</strong></p><ul class="viona-list"><li>Bellboy service: yes.</li><li>Luggage handling: at check-in.</li></ul>' +
+          '<p><strong>In-room safe</strong></p><ul class="viona-list"><li>Type: code lock.</li><li>Fee: €2 per day.</li></ul>' +
+          '<p><strong>Towel card / deposit</strong></p><ul class="viona-list"><li>Towel card system: yes.</li><li>Deposit: none.</li><li>If lost: €10 charge.</li></ul>' +
+          '<p><strong>Phone</strong></p><ul class="viona-list"><li>In-room phone: internal (in-hotel) calls.</li></ul>' +
+          '<p><strong>TV</strong></p><ul class="viona-list"><li>International channels available, including Germany, UK, Russia and Scandinavia.</li></ul>' +
+          '<p><strong>Power backup</strong></p><ul class="viona-list"><li>Generator capacity: 1400 kW.</li><li>In case of outage, the generator starts automatically.</li></ul>' +
+          '<p><strong>Pool &amp; beach safety</strong></p><ul class="viona-list"><li>Lifeguards are present at the pools and on the sea.</li></ul>',
+        de:
+          '<p><strong>Früher Check-in / später Check-out</strong></p><ul class="viona-list"><li>Check-in: 14:00</li><li>Check-out: 12:00</li><li>Früher Check-in und später Check-out abhängig von Verfügbarkeit und Betrieb; bitte an der Rezeption nach Gebühren und Freigabe fragen.</li></ul>' +
+          '<p><strong>Parken</strong></p><ul class="viona-list"><li>Parkplätze vorhanden.</li></ul>' +
+          '<p><strong>Transfer</strong></p><ul class="viona-list"><li>Verfügbar — gegen Aufpreis.</li></ul>' +
+          '<p><strong>Fundsachen (Lost &amp; Found)</strong></p><ul class="viona-list"><li>Wertgegenstände bis zu 1 Jahr, übrige Gegenstände bis zu 6 Monate.</li></ul>' +
+          '<p><strong>Armband / Kartensystem</strong></p><ul class="viona-list"><li>Armbandpflicht: ja.</li><li>All-inclusive-Kennzeichnung: Erwachsene — schwarz; unter 18 — weiß.</li><li>Bei Verlust: kein festes Ersatzverfahren (bitte Rezeption informieren).</li></ul>' +
+          '<p><strong>Gepäck</strong></p><ul class="viona-list"><li>Porter/Bellboy: ja.</li><li>Gepäckservice: bei Check-in.</li></ul>' +
+          '<p><strong>Safe (Zimmer)</strong></p><ul class="viona-list"><li>Art: Zahlenschloss.</li><li>Gebühr: 2 € pro Tag.</li></ul>' +
+          '<p><strong>Handtuchkarte / Kaution</strong></p><ul class="viona-list"><li>Handtuchkartensystem: ja.</li><li>Kaution: nein.</li><li>Bei Verlust: 10 €.</li></ul>' +
+          '<p><strong>Telefon</strong></p><ul class="viona-list"><li>Zimmertelefon: interne (hotelinterne) Gespräche.</li></ul>' +
+          '<p><strong>TV</strong></p><ul class="viona-list"><li>Internationale Sender u. a. aus Deutschland, UK, Russland und Skandinavien.</li></ul>' +
+          '<p><strong>Strom / Notstrom</strong></p><ul class="viona-list"><li>Generatorleistung: 1400 kW.</li><li>Bei Ausfall schaltet der Generator automatisch ein.</li></ul>' +
+          '<p><strong>Sicherheit Pool &amp; Strand</strong></p><ul class="viona-list"><li>Rettungsschwimmer an Pools und am Meer vorhanden.</li></ul>',
+        ru:
+          '<p><strong>Ранний заезд / поздний выезд</strong></p><ul class="viona-list"><li>Заезд: 14:00</li><li>Выезд: 12:00</li><li>Ранний заезд и поздний выезд зависят от загрузки и операции; уточняйте условия и оплату на ресепшене.</li></ul>' +
+          '<p><strong>Парковка</strong></p><ul class="viona-list"><li>Парковка на территории отеля есть.</li></ul>' +
+          '<p><strong>Трансфер</strong></p><ul class="viona-list"><li>Есть — за дополнительную плату.</li></ul>' +
+          '<p><strong>Бюро находок</strong></p><ul class="viona-list"><li>Ценные вещи хранятся до 1 года, прочие — до 6 месяцев.</li></ul>' +
+          '<p><strong>Браслеты / карты</strong></p><ul class="viona-list"><li>Ношение браслета обязательно.</li><li>All Inclusive: взрослые — чёрный; до 18 лет — белый.</li><li>При утере: отдельной процедуры замены нет (сообщите на ресепшен).</li></ul>' +
+          '<p><strong>Багаж</strong></p><ul class="viona-list"><li>Портье: есть.</li><li>Перевозка багажа: при заезде.</li></ul>' +
+          '<p><strong>Сейф в номере</strong></p><ul class="viona-list"><li>Тип: кодовый замок.</li><li>Оплата: 2 € в сутки.</li></ul>' +
+          '<p><strong>Карта полотенец / залог</strong></p><ul class="viona-list"><li>Система карт на полотенца: да.</li><li>Залог: не взимается.</li><li>При утере: штраф 10 €.</li></ul>' +
+          '<p><strong>Телефон</strong></p><ul class="viona-list"><li>Номерной телефон: внутренние звонки по отелю.</li></ul>' +
+          '<p><strong>ТВ</strong></p><ul class="viona-list"><li>Международные каналы, в т. ч. Германия, Великобритания, Россия и Скандинавия.</li></ul>' +
+          '<p><strong>Электроснабжение</strong></p><ul class="viona-list"><li>Мощность генератора: 1400 кВт.</li><li>При отключении электричества генератор включается автоматически.</li></ul>' +
+          '<p><strong>Безопасность у бассейнов и на пляже</strong></p><ul class="viona-list"><li>Спасатели у бассейнов и на море.</li></ul>',
       },
     },
     {
@@ -156,13 +220,13 @@
       },
       html: {
         tr:
-          '<ul class="viona-list"><li>Açık yüzme havuzu: Mevcut</li><li>Kapalı havuz: Mevcut</li><li>Çocuk havuzu: Mevcut</li><li>Aquapark: Mevcut</li></ul><p>Havuz alanlarında şezlong ve şemsiye ücretsiz olarak sunulmaktadır. Aquapark kullanım saatleri operasyonel programa göre değişiklik gösterebilir.</p>',
+          '<ul class="viona-list"><li>Açık havuz: 3 adet</li><li>Kapalı havuz: 1 adet (spa, ısıtmalı)</li><li>Aquapark: Mevcut (kaydıraklar; çocuklara uygun sığ bölümler aquapark / açık alanda)</li></ul><p>Havuz alanlarında şezlong ve şemsiye ücretsiz olarak sunulmaktadır. Aquapark kullanım saatleri operasyonel programa göre değişiklik gösterebilir.</p>',
         en:
-          '<ul class="viona-list"><li>Outdoor pool: yes</li><li>Indoor pool: yes</li><li>Kids’ pool: yes</li><li>Aquapark: yes</li></ul><p>Loungers and parasols are free at the pool areas. Aquapark hours may vary according to operations.</p>',
+          '<ul class="viona-list"><li>Outdoor pools: 3</li><li>Indoor pool: 1 (spa, heated)</li><li>Aquapark: yes (slides; shallow areas for children in the outdoor / aquapark zone)</li></ul><p>Loungers and parasols are free at the pool areas. Aquapark hours may vary according to operations.</p>',
         de:
-          '<ul class="viona-list"><li>Außenpool: ja</li><li>Hallenbad: ja</li><li>Kinderbecken: ja</li><li>Aquapark: ja</li></ul><p>Liegen und Schirme kostenlos. Aquapark-Zeiten können betriebsbedingt variieren.</p>',
+          '<ul class="viona-list"><li>Außenbecken: 3</li><li>Hallenbad: 1 (Spa, beheizt)</li><li>Aquapark: ja (Rutschen; flache Kinderbereiche im Außen- und Aquaparkbereich)</li></ul><p>Liegen und Schirme kostenlos. Aquapark-Zeiten können betriebsbedingt variieren.</p>',
         ru:
-          '<ul class="viona-list"><li>Открытый бассейн: да</li><li>Крытый бассейн: да</li><li>Детский бассейн: да</li><li>Аквапарк: да</li></ul><p>Шезлонги и зонты бесплатно. Часы аквапарка могут меняться.</p>',
+          '<ul class="viona-list"><li>Открытых бассейнов: 3</li><li>Крытый бассейн: 1 (спа, с подогревом)</li><li>Аквапарк: да (горки; мелководье для детей в зоне аквапарка / открытых бассейнов)</li></ul><p>Шезлонги и зонты бесплатно. Часы аквапарка могут меняться.</p>',
       },
     },
     {
@@ -303,13 +367,13 @@
       },
       html: {
         tr:
-          '<ul class="viona-list"><li>Güvenlik personeli: Mevcut</li><li>Oda kasası: Ücretli</li></ul>',
+          '<ul class="viona-list"><li>Güvenlik personeli: Mevcut</li><li>Oda kasası: Ücretli (ayrıntılar için «Genel operasyon» bölümüne bakınız)</li></ul>',
         en:
-          '<ul class="viona-list"><li>Security staff: available</li><li>In-room safe: paid</li></ul>',
+          '<ul class="viona-list"><li>Security staff: available</li><li>In-room safe: paid (see «General operations» for details)</li></ul>',
         de:
-          '<ul class="viona-list"><li>Sicherheitspersonal: vorhanden</li><li>Tresor im Zimmer: kostenpflichtig</li></ul>',
+          '<ul class="viona-list"><li>Sicherheitspersonal: vorhanden</li><li>Tresor im Zimmer: kostenpflichtig (Details unter «Allgemeiner Betrieb»)</li></ul>',
         ru:
-          '<ul class="viona-list"><li>Охрана: есть</li><li>Сейф в номере: платно</li></ul>',
+          '<ul class="viona-list"><li>Охрана: есть</li><li>Сейф в номере: платно (подробности — в «Общая эксплуатация»)</li></ul>',
       },
     },
     {

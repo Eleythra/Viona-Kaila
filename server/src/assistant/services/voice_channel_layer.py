@@ -11,32 +11,35 @@ import re
 
 from assistant.schemas.response import ChatResponse
 
-# Talep / şikâyet / arıza / misafir bildirimi — sesli kanalda form açılmaz.
+# Talep / şikâyet / arıza / misafir bildirimi — sesli kanalda form yok; zarif yönlendirme (premium ton).
 VOICE_OPERATIONAL_USE_TEXT: dict[str, str] = {
     "tr": (
-        "Bu tür talepler için lütfen yazılı sohbeti veya ana menüdeki İstekler bölümünü kullanın. "
-        "Sesli asistan yalnızca genel otel bilgisi verir."
+        "Bu konuda kaydınızın eksiksiz iletilmesi için ana menüden İstekler bölümüne veya yazılı "
+        "sohbetimize geçmenizi rica ederim; ekibimiz böylece her ayrıntıyı anında görebilir. "
+        "Otel, hizmetler ve konaklamanızla ilgili sorularınızda sesli olarak yanınızda olmaya devam ederim."
     ),
     "en": (
-        "For this kind of request, please use text chat or the Requests section in the main menu. "
-        "The voice assistant only shares general hotel information."
+        "So our team receives every detail, please continue through Requests or text chat from the main menu. "
+        "I'm happy to keep answering by voice anything about the hotel, our services, and your stay."
     ),
     "de": (
-        "Für solche Anliegen nutzen Sie bitte den Text-Chat oder den Bereich „Anfragen“ im Hauptmenü. "
-        "Die Sprachassistentin gibt nur allgemeine Hotelinformationen."
+        "Damit Ihr Anliegen vollständig bei unserem Team ankommt, wählen Sie bitte im Hauptmenü „Anfragen“ "
+        "oder den Textchat. Über die Sprachassistentin beantworte ich Ihre Fragen zum Hotel, zu den Services "
+        "und Ihrem Aufenthalt weiterhin gern."
     ),
     "ru": (
-        "Для таких обращений используйте текстовый чат или раздел «Запросы» в главном меню. "
-        "Голосовой ассистент сообщает только общую информацию об отеле."
+        "Чтобы обращение дошло до команды со всеми деталями, продолжите, пожалуйста, в разделе «Запросы» "
+        "или в текстовом чате главного меню. По голосу с удовольствием отвечу на вопросы об отеле, услугах "
+        "и вашем отдыхе."
     ),
 }
 
-# Rezervasyon anahtar kelimesi — sesli kanalda buton yok, kısa sözlü yönlendirme.
+# Rezervasyon anahtar kelimesi — kısa, premium yönlendirme.
 VOICE_RESERVATION_HINT: dict[str, str] = {
-    "tr": "Rezervasyonlar için ana ekrandaki Rezervasyonlar bölümünü kullanabilirsiniz.",
-    "en": "For reservations, please use the Reservations section on the main screen.",
-    "de": "Für Reservierungen nutzen Sie bitte den Bereich „Reservierungen“ auf dem Hauptbildschirm.",
-    "ru": "Для бронирования откройте раздел «Бронирования» на главном экране.",
+    "tr": "Rezervasyonlarınız için ana ekrandaki Rezervasyonlar bölümü size özel adımlarla en uygun yolu sunar.",
+    "en": "For reservations, open Reservations on the main screen — it guides you smoothly through each step.",
+    "de": "Für Reservierungen öffnen Sie „Reservierungen“ auf dem Hauptbildschirm — dort führt Sie der Ablauf Schritt für Schritt.",
+    "ru": "Для бронирования откройте на главном экране раздел «Бронирования» — вас проведут по шагам с заботой.",
 }
 
 # TTS için buton / UI ifadelerini kırpmak (metin sohbetinde kalan uzun yönlendirmeler).
@@ -62,10 +65,10 @@ _VOICE_STRIP_BY_LANG: dict[str, list[str]] = {
 
 # Sadeleştirme tüm metni sildiyse TTS boş kalmasın.
 VOICE_EMPTY_FALLBACK: dict[str, str] = {
-    "tr": "Şu an kısa bir yanıt oluşturamadım. Lütfen yazılı sohbetten tekrar deneyin.",
-    "en": "I could not produce a short reply just now. Please try again in text chat.",
-    "de": "Gerade konnte ich keine kurze Antwort erzeugen. Bitte versuchen Sie es im Textchat erneut.",
-    "ru": "Сейчас не удалось сформировать короткий ответ. Пожалуйста, повторите в текстовом чате.",
+    "tr": "Kısa bir kesinti oldu; yazılı sohbetten tekrar dener misiniz? Size yardımcı olmaktan memnuniyet duyarım.",
+    "en": "A brief hiccup occurred — please try once more in text chat. I'm glad to assist you.",
+    "de": "Kurze Unterbrechung — bitte versuchen Sie es im Textchat erneut. Ich helfe Ihnen gern weiter.",
+    "ru": "Случился короткий сбой — повторите, пожалуйста, в текстовом чате. Буду рада помочь.",
 }
 
 

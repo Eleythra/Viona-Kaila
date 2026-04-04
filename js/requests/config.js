@@ -21,7 +21,7 @@
   }
 
   /**
-   * Kapalı aralık [start, end], 15 dakika adımları (örn. 18:45–21:00).
+   * Kapalı aralık [start, end], 15 dakika adımları (örn. 18:45–20:30).
    * @param {string} startHHMM
    * @param {string} endHHMM
    * @returns {string[]}
@@ -46,13 +46,11 @@
 
   /** La Terrace A La Carte: 18:30 – 20:30 */
   var LA_TERRACE = slots15("18:30", "20:30");
-  /** Mare (balık a la carte): 18:00 – 21:30 */
-  var MARE = slots15("18:00", "21:30");
   /** Sinton BBQ: 13:00 – 21:15 (Pazartesi kapalı) */
   var SINTON = slots15("13:00", "21:15");
 
-  /** Spa: La Serenite 08:30–19:00 arası 15 dk (ücretli hizmet randevusu) */
-  var SPA_SLOTS = slots15("08:30", "19:00");
+  /** Spa: La Serenite 09:00–19:00 arası 15 dk (ücretli hizmet randevusu) */
+  var SPA_SLOTS = slots15("09:00", "19:00");
 
   window.REQUESTS_CONFIG = {
     floorCalendarDate: "2026-03-01",
@@ -148,8 +146,8 @@
       { id: "skin_care", code: "skin_care", key: "reqSpaSkin" },
       { id: "other_care", code: "other_care", key: "reqSpaOtherCare" },
     ],
+    spaServiceCategories: [],
     laTerraceSlots: LA_TERRACE,
-    mareSlots: MARE,
     sintonSlots: SINTON,
     spaTimeSlots: SPA_SLOTS,
     nationalities: [
@@ -187,4 +185,34 @@
   };
 
   window.generateTimeSlots15 = slots15;
+
+  (function mergeSpaWellnessCatalog() {
+    var C = window.VionaSpaWellnessCatalog;
+    if (!C || typeof C.getFlatServices !== "function") return;
+    var flat = C.getFlatServices();
+    if (!flat || !flat.length) return;
+    window.REQUESTS_CONFIG.spaServices = flat;
+    var cats = [];
+    var pkgs = C.programPackages;
+    var ptitle = C.programCategoryTitle;
+    if (Array.isArray(pkgs) && pkgs.length && ptitle) {
+      cats.push({
+        title: ptitle,
+        items: pkgs.map(function (p) {
+          return {
+            id: p.id,
+            code: p.code,
+            label: p.label,
+            price: p.price,
+            durationLine: p.durationLine,
+          };
+        }),
+      });
+    }
+    (C.categories || []).forEach(function (c) {
+      cats.push(c);
+    });
+    window.REQUESTS_CONFIG.spaServiceCategories = cats;
+  })();
 })();
+

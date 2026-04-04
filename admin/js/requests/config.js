@@ -25,7 +25,7 @@
   }
 
   /**
-   * Kapalı aralık [start, end], 15 dakika adımları (örn. 18:45–21:00).
+   * Kapalı aralık [start, end], 15 dakika adımları (örn. 18:45–20:30).
    * @param {string} startHHMM
    * @param {string} endHHMM
    * @returns {string[]}

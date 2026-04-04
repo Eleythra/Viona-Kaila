@@ -87,7 +87,7 @@ def test_recommendation_has_suggest_venue_action():
     assert res.meta.intent == "recommendation"
     assert res.meta.action is not None
     assert res.meta.action.kind == "suggest_venue"
-    assert res.meta.action.venue_id == "mare_restaurant"
+    assert res.meta.action.venue_id == "la_terrace_a_la_carte"
 
 
 def test_fallback_has_no_action():

@@ -21,9 +21,14 @@
 
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-x: clip;
   background: var(--admin-bg);
   color: var(--admin-text);
   font-family: "DM Sans", system-ui, -apple-system, Segoe UI, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color-scheme: dark;
 }
 
 .admin-body .btn-primary {
@@ -64,9 +69,12 @@
 }
 .admin-login {
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
-  padding: 16px;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px))
+    max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  box-sizing: border-box;
 }
 .admin-login__card {
   width: min(420px, 92vw);
@@ -82,6 +90,23 @@
   color: #eaf0ff;
   padding: 8px;
 }
+.admin-login__field-label {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #c5d4ec;
+}
+.admin-login__fixed-user {
+  margin: 0;
+  border-radius: 8px;
+  border: 1px solid #2a3a50;
+  background: #121a28;
+  color: #dce8ff;
+  padding: 10px 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
 .admin-password-row {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -93,13 +118,64 @@
   color: #ff9d9d;
   margin: 0;
 }
+.admin-login__hint {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #a3b6d4;
+}
+.admin-login__hint strong {
+  color: #dce8ff;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* Oturum açık: tek ekran kabuğu — taşma ana içerikte kayar, sekmeler üst üste binmez */
+.admin-body.admin-body--app {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  margin: 0;
+}
+.admin-body.admin-body--app .admin-layout {
+  height: 100%;
+  max-height: 100vh;
+  max-height: 100dvh;
+  box-sizing: border-box;
+  overflow: hidden;
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  grid-template-columns: minmax(200px, 260px) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  align-content: stretch;
+}
+.admin-body.admin-body--app .admin-sidebar {
+  position: relative;
+  top: auto;
+  height: auto;
+  max-height: none;
+  min-height: 0;
+  overflow: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+.admin-body.admin-body--app .admin-main {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  align-self: stretch;
+}
+
 .admin-layout {
   display: grid;
   grid-template-columns: 260px 1fr;
   gap: 20px;
-  padding: 18px;
+  padding: max(18px, env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px))
+    max(18px, env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
   max-width: 1680px;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 .admin-layout .glass-block {
   border-radius: var(--admin-radius-lg);
@@ -111,12 +187,28 @@
 }
 .admin-sidebar {
   position: sticky;
-  top: 18px;
+  top: max(18px, env(safe-area-inset-top, 0px));
   height: calc(100vh - 36px);
+  max-height: calc(100dvh - 36px);
   align-self: start;
   padding: 18px 16px;
   display: flex;
   flex-direction: column;
+  gap: 0;
+  min-height: 0;
+}
+.admin-sidebar__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.admin-sidebar__footer {
+  flex-shrink: 0;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--admin-border-subtle);
 }
 .admin-sidebar h1 {
   margin: 0 0 16px;
@@ -129,9 +221,10 @@
   line-height: 1.3;
 }
 .admin-sidebar .admin-logout {
-  margin-top: auto;
-  align-self: stretch;
-  margin-bottom: 0;
+  width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+  min-height: 42px;
   border-color: rgba(239, 68, 68, 0.35);
   color: #fecaca;
 }
@@ -143,6 +236,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  padding-bottom: 4px;
 }
 .admin-nav button {
   border: 1px solid rgba(42, 51, 69, 0.9);
@@ -199,8 +293,17 @@
 }
 .admin-main {
   display: grid;
-  gap: 18px;
+  gap: 22px;
   min-width: 0;
+  /* Varsayılan stretch, tek sekme satırını viewport yüksekliğine uzatıp overflow:hidden ile içeriği kesiyordu */
+  align-items: start;
+  justify-items: stretch;
+  padding-bottom: 24px;
+}
+.admin-main > .admin-tab {
+  width: 100%;
+  min-width: 0;
+  grid-column: 1;
 }
 
 /* İçerik sekmeleri: ana sayfa panelleriyle aynı kart dili */
@@ -212,17 +315,27 @@
   overflow: hidden;
 }
 .admin-main > .admin-tab:not(.admin-tab--home) > .section-head {
-  padding: 16px 20px 14px;
+  padding: 16px 20px 16px;
   border-bottom: 1px solid var(--admin-border-subtle);
   background: linear-gradient(180deg, var(--admin-accent-glow) 0%, transparent 100%);
+  align-items: flex-start;
+  gap: 12px 16px;
 }
 .admin-main > .admin-tab:not(.admin-tab--home) > .section-head h2 {
   margin: 0;
+  flex: 1 1 auto;
+  min-width: min(100%, 12rem);
   font-size: 1.14rem;
   font-weight: 700;
   letter-spacing: -0.03em;
   color: var(--admin-text-title);
   line-height: 1.25;
+}
+.admin-main > .admin-tab:not(.admin-tab--home) > .section-head .btn-small,
+.admin-main > .admin-tab:not(.admin-tab--home) > .section-head .btn-primary {
+  flex-shrink: 0;
+  align-self: center;
+  margin-top: 2px;
 }
 .admin-main > .admin-tab:not(.admin-tab--home) > .section-lead {
   margin: 0;
@@ -263,8 +376,8 @@
 
 /* —— Ana sayfa (panele ayrılmış düzen) —— */
 .admin-tab--home {
-  gap: 22px;
-  padding-bottom: 12px;
+  gap: 24px;
+  padding-bottom: 16px;
 }
 @media (min-width: 960px) {
   .admin-tab--home {
@@ -790,9 +903,10 @@
 }
 .section-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px 14px;
 }
 .kpi-grid {
   display: grid;
@@ -947,21 +1061,39 @@
   line-height: 1.35;
 }
 .logs-cell--user {
-  min-width: 300px;
+  min-width: min(280px, 40vw);
+  vertical-align: top;
 }
 .logs-cell--assistant {
-  min-width: 420px;
+  min-width: min(320px, 42vw);
+  vertical-align: top;
+}
+.logs-cell__body {
+  max-height: 14rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+  font-size: 0.86rem;
+  color: #dce4f0;
+  padding-right: 4px;
+}
+.logs-cell--assistant .logs-cell__body {
+  max-height: 18rem;
 }
 .bucket-table-wrap--logs {
   overflow-x: auto;
   overflow-y: hidden;
+  max-width: 100%;
 }
 .admin-table--logs {
   table-layout: auto;
-  min-width: 1480px;
+  min-width: 1080px;
 }
 .admin-table--logs th:nth-child(1) { min-width: 120px; }
-.admin-table--logs th:nth-child(2) { min-width: 320px; }
+.admin-table--logs th:nth-child(2) { min-width: 200px; }
 .admin-table--logs th:nth-child(3) { min-width: 110px; }
 .admin-table--logs th:nth-child(4) { min-width: 150px; }
 .admin-table--logs th:nth-child(5) { min-width: 70px; }
@@ -969,7 +1101,7 @@
 .admin-table--logs th:nth-child(7) { min-width: 100px; }
 .admin-table--logs th:nth-child(8) { min-width: 80px; }
 .admin-table--logs th:nth-child(9) { min-width: 90px; }
-.admin-table--logs th:nth-child(10) { min-width: 460px; }
+.admin-table--logs th:nth-child(10) { min-width: 220px; }
 .admin-table--logs th:nth-child(11) { min-width: 80px; }
 
 /* Ana sayfa — rapor API uyarısı */
@@ -995,6 +1127,12 @@
 }
 #tab-logs .section-head {
   align-items: flex-start;
+  gap: 12px 16px;
+}
+#tab-logs .section-head .btn-small {
+  flex-shrink: 0;
+  align-self: center;
+  margin-top: 2px;
 }
 #tab-logs .logs-page-title {
   flex: 1;
@@ -1440,7 +1578,7 @@
   border: 1px solid var(--admin-border);
   background: linear-gradient(178deg, #111a28 0%, #0d141f 100%);
   border-radius: 14px;
-  padding: 14px 16px;
+  padding: 16px 18px 18px;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.035) inset;
 }
 .bucket-topstats {
@@ -2740,8 +2878,23 @@
 }
 
 @media (max-width: 1020px) {
-  .admin-layout { grid-template-columns: 1fr; gap: 16px; padding: 14px; }
+  .admin-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: max(14px, env(safe-area-inset-top, 0px)) max(14px, env(safe-area-inset-right, 0px))
+      max(14px, env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px));
+  }
   .admin-sidebar { position: static; height: auto; }
+  .admin-body.admin-body--app .admin-layout {
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: hidden;
+  }
+  .admin-body.admin-body--app .admin-sidebar {
+    max-height: min(42vh, 320px);
+  }
+  .admin-body.admin-body--app .admin-main {
+    min-height: 0;
+  }
   .admin-main > .admin-tab:not(.admin-tab--home):not(.admin-tab--logs) > *:nth-child(n + 3) {
     margin-left: 14px;
     margin-right: 14px;

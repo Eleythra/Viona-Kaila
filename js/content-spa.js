@@ -13,18 +13,85 @@
     return n;
   }
 
-  function renderKv(pairs) {
-    var dl = el("dl", "beach-kv spa-kv");
-    pairs.forEach(function (pair) {
-      var dt = document.createElement("dt");
-      dt.textContent = T(pair.label);
-      var dd = document.createElement("dd");
-      dd.textContent = typeof pair.value === "string" ? pair.value : T(pair.value);
-      dl.appendChild(dt);
-      dl.appendChild(dd);
-    });
-    return dl;
+  function currentUiLang() {
+    try {
+      var c = String(localStorage.getItem("viona_lang") || "tr").toLowerCase();
+      if (c === "en" || c === "de" || c === "ru") return c;
+      return "tr";
+    } catch (e) {
+      return "tr";
+    }
   }
+
+  function pickByLang(row) {
+    if (!row || typeof row !== "object") return "";
+    var lang = currentUiLang();
+    if (row[lang] != null && String(row[lang]).trim() !== "") return String(row[lang]);
+    if (row.tr != null && String(row.tr).trim() !== "") return String(row.tr);
+    if (row.en != null && String(row.en).trim() !== "") return String(row.en);
+    return "";
+  }
+
+  function resolveAssetUrl(relPath) {
+    if (!relPath) return "";
+    try {
+      return new URL(relPath, window.location.href).href;
+    } catch (e) {
+      return relPath;
+    }
+  }
+
+  function createPdfCtaIcon() {
+    var ns = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("class", "spa-pdf-strip__icon");
+    svg.setAttribute("width", "20");
+    svg.setAttribute("height", "20");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("aria-hidden", "true");
+    var p = document.createElementNS(ns, "path");
+    p.setAttribute("fill", "currentColor");
+    p.setAttribute(
+      "d",
+      "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2 5 5h-5V4zM8 17h8v-2H8v2zm0-4h8v-2H8v2zm0-4h5V6H8v2z",
+    );
+    svg.appendChild(p);
+    return svg;
+  }
+
+  var SPA_PRICE_STRIP = {
+    intro: {
+      tr: "Güncel spa fiyatları ve hizmet detayları PDF dosyasındadır. İndirmek için düğmeye dokunun.",
+      en: "Current spa prices and service details are in the PDF. Tap the button to download.",
+      de: "Aktuelle Spa-Preise und Leistungen finden Sie in der PDF. Zum Herunterladen tippen.",
+      ru: "Актуальные цены и услуги спа — в PDF. Нажмите кнопку для загрузки.",
+    },
+    btnLabel: {
+      tr: "Spa fiyat listesi (PDF)",
+      en: "Spa price list (PDF)",
+      de: "Spa-Preisliste (PDF)",
+      ru: "Прайс-лист спа (PDF)",
+    },
+    href: {
+      tr: "assets/docs/spa-price-list-tr.pdf",
+      en: "assets/docs/spa-price-list-en.pdf",
+      de: "assets/docs/spa-price-list-de.pdf",
+      ru: "assets/docs/spa-price-list-ru.pdf",
+    },
+    download: {
+      tr: "kaila-spa-fiyat-listesi-tr.pdf",
+      en: "kaila-spa-price-list-en.pdf",
+      de: "kaila-spa-preisliste-de.pdf",
+      ru: "kaila-spa-prajs-ru.pdf",
+    },
+  };
+
+  var SPA_MENU_ACCORDION_TITLE = {
+    tr: "Ücretli bakım menüsü",
+    en: "Paid treatment menu",
+    de: "Kostenpflichtiges Angebotsmenü",
+    ru: "Платное меню процедур",
+  };
 
   var INTRO_PARAS = [
     {
@@ -210,6 +277,164 @@
     },
   };
 
+  function renderKv(pairs) {
+    var dl = el("dl", "beach-kv spa-kv");
+    pairs.forEach(function (pair) {
+      var dt = document.createElement("dt");
+      dt.textContent = T(pair.label);
+      var dd = document.createElement("dd");
+      dd.textContent = typeof pair.value === "string" ? pair.value : T(pair.value);
+      dl.appendChild(dt);
+      dl.appendChild(dd);
+    });
+    return dl;
+  }
+
+  function wireSpaPdfButton(btn, relHref, dlName, absHref) {
+    btn.addEventListener("click", function (ev) {
+      if (!relHref) return;
+      var proto = "";
+      try {
+        proto = String(window.location.protocol || "");
+      } catch (e) {}
+      if (proto === "file:" || typeof fetch !== "function") return;
+      ev.preventDefault();
+      fetch(absHref || relHref, { credentials: "same-origin", cache: "no-store" })
+        .then(function (res) {
+          if (!res.ok) throw new Error("pdf");
+          return res.blob();
+        })
+        .then(function (blob) {
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          a.href = url;
+          a.download = dlName;
+          a.style.display = "none";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.setTimeout(function () {
+            URL.revokeObjectURL(url);
+          }, 3000);
+        })
+        .catch(function () {
+          window.open(absHref || relHref, "_blank", "noopener");
+        });
+    });
+  }
+
+  function renderSpaPriceStrip() {
+    var wrap = el("div", "spa-pdf-strip");
+    var intro = el("p", "spa-pdf-strip__intro");
+    intro.textContent = T(SPA_PRICE_STRIP.intro);
+    var relHref = pickByLang(SPA_PRICE_STRIP.href);
+    var dlName = pickByLang(SPA_PRICE_STRIP.download) || "kaila-spa-price-list.pdf";
+    var absHref = resolveAssetUrl(relHref);
+    var btn = document.createElement("a");
+    btn.className = "spa-pdf-strip__btn";
+    btn.href = absHref || relHref;
+    btn.setAttribute("download", dlName);
+    btn.setAttribute("rel", "noopener");
+    wireSpaPdfButton(btn, relHref, dlName, absHref);
+    var lbl = T(SPA_PRICE_STRIP.btnLabel);
+    btn.setAttribute("aria-label", lbl);
+    btn.appendChild(createPdfCtaIcon());
+    var span = document.createElement("span");
+    span.textContent = lbl;
+    btn.appendChild(span);
+    wrap.appendChild(intro);
+    wrap.appendChild(btn);
+    return wrap;
+  }
+
+  function renderSpaMenuAccordion() {
+    var wrap = el("div", "spa-menu-accordion");
+    wrap.appendChild(
+      el("h2", "rest-section-title rest-section-title--spa spa-menu-accordion__h", T(SPA_MENU_ACCORDION_TITLE)),
+    );
+    var C = window.VionaSpaWellnessCatalog;
+    if (!C || !Array.isArray(C.categories) || !C.categories.length) {
+      wrap.appendChild(
+        el(
+          "p",
+          "spa-menu-accordion__fallback",
+          T({
+            tr: "Menü yüklenemedi. Lütfen sayfayı yenileyin.",
+            en: "Menu could not be loaded. Please refresh.",
+            de: "Menü konnte nicht geladen werden.",
+            ru: "Не удалось загрузить меню.",
+          }),
+        ),
+      );
+      return wrap;
+    }
+
+    C.categories.forEach(function (cat) {
+      var det = document.createElement("details");
+      det.className = "spa-menu-accordion__cat";
+      var sum = document.createElement("summary");
+      sum.className = "spa-menu-accordion__summary";
+      sum.textContent = pickByLang(cat.title);
+      det.appendChild(sum);
+
+      var ul = el("ul", "spa-menu-accordion__list");
+      (cat.items || []).forEach(function (item) {
+        var line = pickByLang(item.label);
+        var price = String(item.price || "").trim();
+        var dur =
+          item.durationLine && typeof item.durationLine === "object"
+            ? String(pickByLang(item.durationLine) || "").trim()
+            : "";
+        var li = el("li", "spa-menu-accordion__item");
+        if (line && price) {
+          li.appendChild(el("span", "spa-menu-accordion__item-name", line));
+          if (dur) li.appendChild(el("span", "spa-menu-accordion__item-dur", dur));
+          li.appendChild(el("span", "spa-menu-accordion__item-price", price));
+        } else {
+          li.textContent = line || price;
+        }
+        ul.appendChild(li);
+      });
+      det.appendChild(ul);
+      wrap.appendChild(det);
+    });
+
+    return wrap;
+  }
+
+  function renderSpaProgramPackages() {
+    var wrap = el("div", "spa-program-section");
+    var C = window.VionaSpaWellnessCatalog;
+    if (!C || !Array.isArray(C.programPackages) || !C.programPackages.length) return wrap;
+    var h2txt = pickByLang(C.programCategoryTitle);
+    if (h2txt) {
+      wrap.appendChild(
+        el("h2", "rest-section-title rest-section-title--spa spa-program-section__h", h2txt),
+      );
+    }
+    var grid = el("div", "spa-program-grid");
+    C.programPackages.forEach(function (pkg) {
+      var card = el("article", "spa-program-card");
+      card.appendChild(el("h3", "spa-program-card__title", pickByLang(pkg.label)));
+      var ul = el("ul", "spa-program-card__list");
+      (pkg.bullets || []).forEach(function (b) {
+        var txt = pickByLang(b);
+        if (txt) ul.appendChild(el("li", "spa-program-card__li", txt));
+      });
+      card.appendChild(ul);
+      var meta = el("div", "spa-program-card__meta");
+      var dur = pkg.durationLine && typeof pkg.durationLine === "object" ? pickByLang(pkg.durationLine) : "";
+      var price = String(pkg.price || "").trim();
+      meta.appendChild(el("span", "spa-program-card__dur", dur));
+      meta.appendChild(el("span", "spa-program-card__dot", "·"));
+      meta.appendChild(el("span", "spa-program-card__price", price));
+      card.appendChild(meta);
+      grid.appendChild(card);
+    });
+    wrap.appendChild(grid);
+    return wrap;
+  }
+
   function renderIntro() {
     var wrap = el("div", "spa-intro");
     INTRO_PARAS.forEach(function (para) {
@@ -282,8 +507,8 @@
     return card;
   }
 
-  function renderSplitList(spec) {
-    var box = el("div", "spa-split");
+  function renderSplitList(spec, compact) {
+    var box = el("div", "spa-split" + (compact ? " spa-split--compact" : ""));
     var colF = el("div", "spa-split__col spa-split__col--free");
     colF.appendChild(el("h4", "spa-split__title", T(spec.freeTitle)));
     var ulf = el("ul", "spa-split__list");
@@ -308,15 +533,10 @@
   function renderSpaModule(container) {
     var root = el("div", "viona-mod viona-mod--rest viona-mod--beach viona-mod--spa");
 
-    var lead = el("p", "viona-mod-lead");
-    lead.textContent = T({
-      tr: "Bu bölüm spa ve wellness alanını tanıtır: ücretsiz kullanım alanları ile ücretli bakımlar ayrı ayrı belirtilmiştir. Ücretli hizmetler için spa bölümündeki güncel listeyi kullanabilirsiniz.",
-      en: "Spa and wellness: complimentary areas and paid treatments are clearly separated. Paid services and prices are listed in the spa area.",
-      de: "Spa-Bereich: kostenlose Wellness-Flächen und kostenpflichtige Anwendungen sind getrennt beschrieben. Kostenpflichtige Leistungen sind im Spa-Bereich ausgewiesen.",
-      ru: "Спа-зона: бесплатные зоны и платные процедуры указаны отдельно. Платные услуги и цены — в зоне спа.",
-    });
-    root.appendChild(lead);
     root.appendChild(renderIntro());
+    root.appendChild(renderSpaPriceStrip());
+    root.appendChild(renderSpaMenuAccordion());
+    root.appendChild(renderSpaProgramPackages());
 
     var h1 = el(
       "h2",
@@ -343,7 +563,7 @@
 
     var hPaid = el(
       "h2",
-      "rest-section-title rest-section-title--spa",
+      "rest-section-title rest-section-title--spa rest-section-title--spa-paid-lead",
       T({
         tr: "Ücretli bakım hizmetleri",
         en: "Paid treatments",
@@ -356,7 +576,7 @@
 
     var hSum = el(
       "h2",
-      "rest-section-title rest-section-title--spa",
+      "rest-section-title rest-section-title--spa rest-section-title--spa-summary",
       T({
         tr: "Özet: ne ücretsiz, ne ücretli?",
         en: "At a glance: what’s included vs paid",
@@ -366,12 +586,15 @@
     );
     root.appendChild(hSum);
     root.appendChild(
-      renderSplitList({
-        freeTitle: FREE_LIST.title,
-        freeItems: FREE_LIST.items,
-        paidTitle: PAID_LIST.title,
-        paidItems: PAID_LIST.items,
-      })
+      renderSplitList(
+        {
+          freeTitle: FREE_LIST.title,
+          freeItems: FREE_LIST.items,
+          paidTitle: PAID_LIST.title,
+          paidItems: PAID_LIST.items,
+        },
+        true
+      )
     );
 
     container.appendChild(root);

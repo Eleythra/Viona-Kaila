@@ -19,7 +19,7 @@ const I18N = {
 
     introAboutHeading: "Otel hakkında",
     introAbout1:
-      "Kaila Beach Hotel, Antalya'nın Alanya bölgesinde, denize sıfır konumda yer alan modern ve konfor odaklı bir tatil otelidir. Misafirlerine hem dinlenme hem de eğlenceyi bir arada sunan tesis, aileler, çiftler ve bireysel tatilciler için uygun konsepti ile hizmet vermektedir. Her Şey Dahil konsepti ile gün boyu yeme-içme, aktivite ve dinlenme imkanlarını bir arada sunmaktadır. Tesis, modern mimarisi, geniş sosyal alanları, havuzları, aquaparkı, spa merkezi ve çeşitli restoran/bar seçenekleri ile dikkat çekmektedir. Hem şehir merkezine yakınlığı hem de sahil erişimi sayesinde konforlu ve erişilebilir bir tatil deneyimi sunar.",
+      "Kaila Beach Hotel, Antalya'nın Alanya bölgesinde, denize sıfır konumda yer alan modern ve konfor odaklı bir tatil otelidir. Misafirlerine hem dinlenme hem de eğlenceyi bir arada sunan tesis, aileler, çiftler ve bireysel tatilciler için uygun konsepti ile hizmet vermektedir. Her Şey Dahil konsepti ile gün boyu yeme-içme, aktivite ve dinlenme imkanlarını bir arada sunmaktadır. Tesis, modern mimarisi, geniş sosyal alanları, üç açık ve spa bölümünde bir kapalı ısıtmalı havuzu, aquaparkı, spa merkezi ve çeşitli restoran/bar seçenekleri ile dikkat çekmektedir. Hem şehir merkezine yakınlığı hem de sahil erişimi sayesinde konforlu ve erişilebilir bir tatil deneyimi sunar.",
     introAbout2:
       "Konum: Antalya, Alanya, Obagöl Mevki. Alanya şehir merkezi yaklaşık 3 km, Gazipaşa Havalimanı yaklaşık 38 km, Antalya Havalimanı yaklaşık 25 km mesafededir. Tesis, Alanya şehir merkezine yakın olup toplu taşıma ve taksi ile kolay erişim sağlanabilir.",
     introAbout3:
@@ -28,7 +28,7 @@ const I18N = {
     intro1:
       "Kaila Beach Hotel, Antalya'nın Alanya bölgesinde, denize sıfır konumda yer alan modern ve konfor odaklı bir tatil otelidir. Misafirlerine hem dinlenme hem de eğlenceyi bir arada sunan tesis, aileler, çiftler ve bireysel tatilciler için uygun konsepti ile hizmet vermektedir. Her Şey Dahil konsepti ile gün boyu yeme-içme, aktivite ve dinlenme imkanlarını bir arada sunmaktadır.",
     intro2:
-      "Tesis, modern mimarisi, geniş sosyal alanları, havuzları, aquaparkı, spa merkezi ve çeşitli restoran/bar seçenekleri ile dikkat çekmektedir. Hem şehir merkezine yakınlığı hem de sahil erişimi sayesinde konforlu ve erişilebilir bir tatil deneyimi sunar.",
+      "Tesis, modern mimarisi, geniş sosyal alanları, üç açık ve spa’da bir kapalı ısıtmalı havuzu, aquaparkı, spa merkezi ve çeşitli restoran/bar seçenekleri ile dikkat çekmektedir. Hem şehir merkezine yakınlığı hem de sahil erişimi sayesinde konforlu ve erişilebilir bir tatil deneyimi sunar.",
 
     locHeading: "Konum bilgileri",
     locCity: "Şehir: Antalya",
@@ -255,7 +255,7 @@ const I18N = {
     reqSelectPlaceholder: "Seçin",
     reqTabRestaurant: "Restoran",
     reqTabAlacarte: "A La Carte",
-    reqTabSpa: "Spa",
+    reqTabSpa: "Spa & wellness",
     reqResLead: "Önce rezervasyon türünü seçin; yalnızca seçtiğiniz forma ait alanlar gösterilir.",
     reqResPickType: "Rezervasyon türü",
     reqResSectionGuest: "Misafir bilgileri",
@@ -267,7 +267,8 @@ const I18N = {
     reqResSectionSpa: "Hizmet seçimi",
     reqCalSelectedLabel: "Seçilen tarih:",
     reqPickRestaurantFirst: "Önce restoran seçin; saat listesi restorana göre güncellenir.",
-    reqResInfoLaTerrace: "Rezervasyon gereklidir. 5 gece ve üzeri konaklamalarda 1 kez ücretsiz kullanım hakkı olabilir.",
+    reqResInfoLaTerrace:
+      "Rezervasyon gereklidir. La Terrace A La Carte Restaurant 18:30 – 20:30 arası hizmet verir. 5 gece ve üzeri konaklamalarda 1 kez ücretsiz kullanım hakkı olabilir.",
     reqResInfoMare: "Rezervasyon gereklidir.",
     reqResInfoSinton:
       "Pazartesi kapalıdır; ücretlidir. Dışarıdan gelen misafirler de kabul edilir; otelde konaklayan misafirlere %10 indirim uygulanır. Bu restoran için konaklama tarihi sorulmaz.",
@@ -462,7 +463,7 @@ const I18N = {
 
     introAboutHeading: "About the hotel",
     introAbout1:
-      "Kaila Beach Hotel is a modern, comfort-focused resort in Alanya, Antalya, directly on the sea. It offers relaxation and entertainment for families, couples, and solo travellers. With All Inclusive, dining, activities, and leisure are combined throughout the day. The resort stands out for its contemporary architecture, generous social areas, pools, aquapark, spa, and diverse restaurant and bar options. Proximity to the town centre and direct beach access make for a comfortable, accessible stay.",
+      "Kaila Beach Hotel is a modern, comfort-focused resort in Alanya, Antalya, directly on the sea. It offers relaxation and entertainment for families, couples, and solo travellers. With All Inclusive, dining, activities, and leisure are combined throughout the day. The resort stands out for its contemporary architecture, generous social areas, three outdoor pools and a heated indoor pool in the spa, an aquapark, and diverse restaurant and bar options. Proximity to the town centre and direct beach access make for a comfortable, accessible stay.",
     introAbout2:
       "Location: Antalya, Alanya, Obagöl. Alanya city centre approx. 3 km, Gazipaşa Airport approx. 38 km, Antalya Airport approx. 25 km. The hotel is well placed for the centre of Alanya; public transport and taxis are readily available.",
     introAbout3:
@@ -471,7 +472,7 @@ const I18N = {
     intro1:
       "Kaila Beach Hotel is a modern, comfort-focused resort in Alanya, Antalya, directly on the sea. It offers relaxation and entertainment for families, couples, and solo travellers. With All Inclusive, dining, activities, and leisure are combined throughout the day.",
     intro2:
-      "The resort stands out for its contemporary architecture, generous social areas, pools, aquapark, spa, and diverse restaurant and bar options. Proximity to the town centre and direct beach access make for a comfortable, accessible stay.",
+      "The resort stands out for its contemporary architecture, generous social areas, three outdoor pools and a heated indoor pool in the spa, an aquapark, and diverse restaurant and bar options. Proximity to the town centre and direct beach access make for a comfortable, accessible stay.",
 
     locHeading: "Location",
     locCity: "City: Antalya",
@@ -698,7 +699,7 @@ const I18N = {
     reqSelectPlaceholder: "Select",
     reqTabRestaurant: "Restaurant",
     reqTabAlacarte: "A La Carte",
-    reqTabSpa: "Spa",
+    reqTabSpa: "Spa & wellness",
     reqResLead: "Choose the reservation type first; only the matching form is shown.",
     reqResPickType: "Reservation type",
     reqResSectionGuest: "Guest details",
@@ -707,10 +708,11 @@ const I18N = {
     reqResSectionRestaurant: "Restaurant",
     reqResSectionDateTime: "Date & time",
     reqResSectionStay: "Stay dates",
-    reqResSectionSpa: "Service",
+    reqResSectionSpa: "Service selection",
     reqCalSelectedLabel: "Selected date:",
     reqPickRestaurantFirst: "Select a restaurant first; time slots update by venue.",
-    reqResInfoLaTerrace: "Reservation is required. For stays of 5 nights or more, one complimentary use may apply.",
+    reqResInfoLaTerrace:
+      "Reservation is required. La Terrace A La Carte Restaurant is open 18:30 – 20:30. For stays of 5 nights or more, one complimentary use may apply.",
     reqResInfoMare: "Reservation is required.",
     reqResInfoSinton:
       "Closed on Mondays; paid venue. Outside guests are welcome; hotel guests receive 10% off. Stay dates are not required for this restaurant.",
@@ -905,7 +907,7 @@ const I18N = {
 
     introAboutHeading: "Über das Hotel",
     introAbout1:
-      "Das Kaila Beach Hotel liegt in Alanya, Antalya, direkt am Meer und bietet modernen Komfort. Es verbindet Erholung und Unterhaltung für Familien, Paare und Einzelreisende. Im All-inclusive sind Verpflegung, Aktivitäten und Entspannung über den Tag verteilt vereint. Die Anlage besticht durch moderne Architektur, großzügige Bereiche, Pools, Aquapark, Spa sowie vielfältige Restaurant- und Barangebote. Die Nähe zum Stadtzentrum und der direkte Strandzugang sorgen für einen komfortablen Aufenthalt.",
+      "Das Kaila Beach Hotel liegt in Alanya, Antalya, direkt am Meer und bietet modernen Komfort. Es verbindet Erholung und Unterhaltung für Familien, Paare und Einzelreisende. Im All-inclusive sind Verpflegung, Aktivitäten und Entspannung über den Tag verteilt vereint. Die Anlage besticht durch moderne Architektur, großzügige Bereiche, drei Außenbecken und ein beheiztes Hallenbad im Spa, einen Aquapark sowie vielfältige Restaurant- und Barangebote. Die Nähe zum Stadtzentrum und der direkte Strandzugang sorgen für einen komfortablen Aufenthalt.",
     introAbout2:
       "Lage: Antalya, Alanya, Obagöl. Zentrum Alanya ca. 3 km, Flughafen Gazipaşa ca. 38 km, Flughafen Antalya ca. 25 km. Das Hotel liegt günstig nahe dem Zentrum von Alanya. Öffentliche Verkehrsmittel und Taxis sind gut erreichbar.",
     introAbout3:
@@ -914,7 +916,7 @@ const I18N = {
     intro1:
       "Das Kaila Beach Hotel liegt in Alanya, Antalya, direkt am Meer und bietet modernen Komfort. Es verbindet Erholung und Unterhaltung für Familien, Paare und Einzelreisende. Im All-inclusive sind Verpflegung, Aktivitäten und Entspannung über den Tag verteilt vereint.",
     intro2:
-      "Die Anlage besticht durch moderne Architektur, großzügige Bereiche, Pools, Aquapark, Spa sowie vielfältige Restaurant- und Barangebote. Die Nähe zum Stadtzentrum und der direkte Strandzugang sorgen für einen komfortablen Aufenthalt.",
+      "Die Anlage besticht durch moderne Architektur, großzügige Bereiche, drei Außenbecken und ein beheiztes Hallenbad im Spa, einen Aquapark sowie vielfältige Restaurant- und Barangebote. Die Nähe zum Stadtzentrum und der direkte Strandzugang sorgen für einen komfortablen Aufenthalt.",
 
     locHeading: "Lage",
     locCity: "Stadt: Antalya",
@@ -1142,7 +1144,7 @@ const I18N = {
     reqSelectPlaceholder: "Wählen",
     reqTabRestaurant: "Restaurant",
     reqTabAlacarte: "A La Carte",
-    reqTabSpa: "Spa",
+    reqTabSpa: "Spa & Wellness",
     reqResLead: "Wählen Sie zuerst die Art; es wird nur das passende Formular angezeigt.",
     reqResPickType: "Reservierungsart",
     reqResSectionGuest: "Gästedaten",
@@ -1151,10 +1153,11 @@ const I18N = {
     reqResSectionRestaurant: "Restaurantwahl",
     reqResSectionDateTime: "Datum & Uhrzeit",
     reqResSectionStay: "Aufenthaltszeitraum",
-    reqResSectionSpa: "Leistung",
+    reqResSectionSpa: "Leistungsauswahl",
     reqCalSelectedLabel: "Gewähltes Datum:",
     reqPickRestaurantFirst: "Zuerst Restaurant wählen; Zeiten hängen vom Restaurant ab.",
-    reqResInfoLaTerrace: "Reservierung erforderlich. Ab 5 Nächten kann eine einmalige kostenlose Nutzung gelten.",
+    reqResInfoLaTerrace:
+      "Reservierung erforderlich. La Terrace A La Carte Restaurant hat Service 18:30 – 20:30 Uhr. Ab 5 Nächten kann eine einmalige kostenlose Nutzung gelten.",
     reqResInfoMare: "Reservierung erforderlich.",
     reqResInfoSinton:
       "Montags geschlossen; kostenpflichtig. Externe Gäste sind willkommen; Hotelgäste erhalten 10 % Rabatt. Für dieses Restaurant werden keine Aufenthaltsdaten abgefragt.",
@@ -1349,7 +1352,7 @@ const I18N = {
 
     introAboutHeading: "Об отеле",
     introAbout1:
-      "Kaila Beach Hotel — современный комфортный курортный отель в Аланье (Анталья), на первой линии моря. Подходит для семей, пар и индивидуальных путешественников. Концепция All Inclusive объединяет питание, развлечения и отдых в течение дня. Отель выделяется современной архитектурой, просторными зонами отдыха, бассейнами, аквапарком, спа и разнообразными ресторанами и барами. Близость к центру города и выход к пляжу обеспечивают удобный отдых.",
+      "Kaila Beach Hotel — современный комфортный курортный отель в Аланье (Анталья), на первой линии моря. Подходит для семей, пар и индивидуальных путешественников. Концепция All Inclusive объединяет питание, развлечения и отдых в течение дня. Отель выделяется современной архитектурой, просторными зонами отдыха, тремя открытыми бассейнами и крытым подогреваемым бассейном в спа, аквапарком и разнообразными ресторанами и барами. Близость к центру города и выход к пляжу обеспечивают удобный отдых.",
     introAbout2:
       "Расположение: Анталья, Аланья, Обагёль. Центр Аланьи около 3 км, аэропорт Газипаша около 38 км, аэропорт Антальи около 25 км. Отель удобно расположен относительно центра Аланьи; доступны общественный транспорт и такси.",
     introAbout3:
@@ -1358,7 +1361,7 @@ const I18N = {
     intro1:
       "Kaila Beach Hotel — современный комфортный курортный отель в Аланье (Анталья), на первой линии моря. Подходит для семей, пар и индивидуальных путешественников. Концепция All Inclusive объединяет питание, развлечения и отдых в течение дня.",
     intro2:
-      "Отель выделяется современной архитектурой, просторными зонами отдыха, бассейнами, аквапарком, спа и разнообразными ресторанами и барами. Близость к центру города и выход к пляжу обеспечивают удобный отдых.",
+      "Отель выделяется современной архитектурой, просторными зонами отдыха, тремя открытыми бассейнами и крытым подогреваемым бассейном в спа, аквапарком и разнообразными ресторанами и барами. Близость к центру города и выход к пляжу обеспечивают удобный отдых.",
 
     locHeading: "Расположение",
     locCity: "Город: Анталья",
@@ -1586,7 +1589,7 @@ const I18N = {
     reqSelectPlaceholder: "Выберите",
     reqTabRestaurant: "Ресторан",
     reqTabAlacarte: "A La Carte",
-    reqTabSpa: "Спа",
+    reqTabSpa: "Спа и велнес",
     reqResLead: "Сначала выберите тип — отображается только нужная форма.",
     reqResPickType: "Тип бронирования",
     reqResSectionGuest: "Данные гостя",
@@ -1595,10 +1598,11 @@ const I18N = {
     reqResSectionRestaurant: "Ресторан",
     reqResSectionDateTime: "Дата и время",
     reqResSectionStay: "Даты проживания",
-    reqResSectionSpa: "Услуга",
+    reqResSectionSpa: "Выбор услуги",
     reqCalSelectedLabel: "Выбрано:",
     reqPickRestaurantFirst: "Сначала выберите ресторан — часы зависят от ресторана.",
-    reqResInfoLaTerrace: "Требуется бронирование. При проживании от 5 ночей может действовать 1 бесплатное посещение.",
+    reqResInfoLaTerrace:
+      "Требуется бронирование. La Terrace A La Carte Restaurant работает с 18:30 до 20:30. При проживании от 5 ночей может действовать 1 бесплатное посещение.",
     reqResInfoMare: "Требуется бронирование.",
     reqResInfoSinton:
       "По понедельникам закрыто; платно. Принимаются и внешние гости; проживающим в отеле — скидка 10 %. Для этого ресторана даты проживания не указываются.",

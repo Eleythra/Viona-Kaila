@@ -663,7 +663,8 @@ def test_recommendation_short_food_inputs():
     assert fish.meta.intent == "recommendation"
     assert meat.meta.intent == "recommendation"
     assert coffee.meta.intent == "recommendation"
-    assert "Mare" in fish.message
+    assert "Mare" not in fish.message
+    assert "Moss" in fish.message or "La Terrace" in fish.message or "Terrace" in fish.message
     assert "Sinton" in meat.message
     assert ("Libum" in coffee.message) or ("Lobby Bar" in coffee.message)
     assert intent.calls == 0

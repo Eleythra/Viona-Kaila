@@ -108,6 +108,30 @@
     return v;
   }
 
+  function pickLangObj(row) {
+    if (!row || typeof row !== "object") return "";
+    var lang = currentUiLanguage();
+    if (row[lang] != null && String(row[lang]).trim() !== "") return String(row[lang]).trim();
+    if (row.tr != null && String(row.tr).trim() !== "") return String(row.tr).trim();
+    if (row.en != null && String(row.en).trim() !== "") return String(row.en).trim();
+    return "";
+  }
+
+  function spaServiceDisplayLine(svc, t) {
+    var name = "";
+    if (svc.label && typeof svc.label === "object") name = pickLangObj(svc.label);
+    else if (svc.key) name = t(svc.key);
+    var dur =
+      svc.durationLine && typeof svc.durationLine === "object" ? pickLangObj(svc.durationLine) : "";
+    dur = String(dur || "").trim();
+    var price = String(svc.price || "").trim();
+    var parts = [];
+    if (name) parts.push(name);
+    if (dur) parts.push(dur);
+    if (price) parts.push(price);
+    return parts.length ? parts.join(" · ") : "";
+  }
+
   function isRoomNumber(v) {
     var s = String(v || "").trim();
     if (typeof window !== "undefined" && typeof window.isValidVionaHotelRoomNumber === "function") {
@@ -2077,12 +2101,16 @@
       form.appendChild(s0.section);
 
       var s1 = resSection("reqResSectionSpa", t);
-      var svcGrid = document.createElement("div");
-      svcGrid.className = "req-res-rest-grid";
-      svcGrid.setAttribute("role", "radiogroup");
-      cfg.spaServices.forEach(function (s) {
+      var cats = Array.isArray(cfg.spaServiceCategories) ? cfg.spaServiceCategories : [];
+      var useCats = cats.length > 0;
+      var spaRadioGroup = document.createElement("div");
+      spaRadioGroup.className = "req-spa-service-mount";
+      spaRadioGroup.setAttribute("role", "radiogroup");
+      spaRadioGroup.setAttribute("aria-label", t("reqLabelSpaService"));
+
+      function appendServiceRadio(s, grid) {
         var lab = document.createElement("label");
-        lab.className = "req-res-rest-card";
+        lab.className = "req-res-rest-card req-res-rest-card--spa-line";
         var rad = document.createElement("input");
         rad.type = "radio";
         rad.name = "spaService";
@@ -2090,12 +2118,39 @@
         rad.required = true;
         var tx = document.createElement("span");
         tx.className = "req-res-rest-card__text";
-        tx.textContent = t(s.key);
+        tx.textContent = spaServiceDisplayLine(s, t);
         lab.appendChild(rad);
         lab.appendChild(tx);
-        svcGrid.appendChild(lab);
-      });
-      s1.inner.appendChild(svcGrid);
+        grid.appendChild(lab);
+      }
+
+      if (useCats) {
+        cats.forEach(function (cat) {
+          var catTitle = pickLangObj(cat.title);
+          if (catTitle) {
+            var h4 = document.createElement("h4");
+            h4.className = "req-spa-cat-title";
+            h4.textContent = catTitle;
+            spaRadioGroup.appendChild(h4);
+          }
+          var svcGrid = document.createElement("div");
+          svcGrid.className = "req-res-rest-grid req-res-rest-grid--spa";
+          svcGrid.setAttribute("role", "presentation");
+          (cat.items || []).forEach(function (s) {
+            appendServiceRadio(s, svcGrid);
+          });
+          spaRadioGroup.appendChild(svcGrid);
+        });
+      } else {
+        var svcGrid = document.createElement("div");
+        svcGrid.className = "req-res-rest-grid req-res-rest-grid--spa";
+        cfg.spaServices.forEach(function (s) {
+          appendServiceRadio(s, svcGrid);
+        });
+        spaRadioGroup.appendChild(svcGrid);
+      }
+
+      s1.inner.appendChild(spaRadioGroup);
       form.appendChild(s1.section);
 
       var s2 = resSection("reqResSectionDateTime", t);
@@ -2185,6 +2240,7 @@
         }
         var svcId = String(fd.get("spaService") || "");
         var svcCfg = cfg.spaServices.filter(function (x) { return x.id === svcId; })[0] || null;
+        var labelForAdmin = svcCfg ? spaServiceDisplayLine(svcCfg, t) : svcId;
         var payload = {
           type: "reservation_spa",
           name: fd.get("name"),
@@ -2196,7 +2252,7 @@
           reservation: {
             spaServiceId: svcId,
             serviceCode: svcCfg && svcCfg.code ? svcCfg.code : svcId,
-            serviceLabel: svcCfg ? t(svcCfg.key) : svcId,
+            serviceLabel: labelForAdmin,
             date: fd.get("spaDate"),
             time: fd.get("time"),
             guestCount: guestCount,

@@ -173,20 +173,6 @@
         adminRequestsCollectionUrl() + "/" + encodeURIComponent(type) + "/" + encodeURIComponent(id);
       return jfetch(endpoint, { method: "DELETE" });
     },
-    getPromoConfig: function () {
-      return jfetch(getApiBase() + "/admin/promo-config").then(function (d) {
-        return d.config;
-      });
-    },
-    savePromoConfig: function (payload) {
-      return jfetch(getApiBase() + "/admin/promo-config", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload || {}),
-      }).then(function (d) {
-        return d.config;
-      });
-    },
     downloadPdfReport: async function (params) {
       var query = buildQuery(params || {});
       var url = getApiBase() + "/admin/reports/pdf" + (query ? "?" + query : "");

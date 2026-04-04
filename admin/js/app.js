@@ -5,6 +5,9 @@
   var ui = window.AdminUI;
   if (!adapter || !ui) return;
   var LOGIN_OK_KEY = "viona_admin_login_ok";
+  var LOGIN_USER_KEY = "viona_admin_login_user";
+  /** Girişte zorunlu; büyük-küçük harf duyarlı tek değer */
+  var ADMIN_USERNAME_REQUIRED = "Viona-Kaila";
   var reservationSubtab = "overview";
   /** Misafir bildirimleri sekmesi: notifications | late_checkout */
   var guestNotifSubtab = "notifications";
@@ -60,7 +63,7 @@
     overview: "Günlük takip (tümü)",
     laTerrace: "La Terrace A La Carte",
     sinton: "Sinton BBQ Restaurant",
-    spa: "Spa",
+    spa: "Spa & wellness",
   };
 
   var tabMap = {
@@ -70,7 +73,6 @@
     guest_notifications: "tab-guest-notifications",
     reservations: "tab-reservations",
     evaluations: "tab-evaluations",
-    promo: "tab-promo",
     "pdf-report": "tab-pdf-report",
     logs: "tab-logs",
   };
@@ -346,8 +348,6 @@
         await loadBucket("reservation", "list-reservations");
       } else if (activeAdminTab === "evaluations") {
         await loadEvaluations();
-      } else if (activeAdminTab === "promo") {
-        await loadPromo();
       } else if (activeAdminTab === "logs") {
         await loadLogs();
       }
@@ -497,24 +497,6 @@
     }
   }
 
-  async function loadPromo() {
-    try {
-      var cfg = await adapter.getPromoConfig();
-      document.getElementById("promo-enabled").checked = cfg.enabled !== false;
-      document.getElementById("promo-tr").value = cfg.image_tr || "";
-      document.getElementById("promo-en").value = cfg.image_en || "";
-      document.getElementById("promo-de").value = cfg.image_de || "";
-      document.getElementById("promo-ru").value = cfg.image_ru || "";
-      syncPromoPreviews();
-    } catch (_e) {
-      var ps = document.getElementById("promo-status");
-      if (ps) {
-        ps.textContent = "Ayarlar yüklenemedi. Bağlantıyı kontrol edin.";
-        ps.className = "promo-status promo-status--error";
-      }
-    }
-  }
-
   async function loadLogs() {
     var sumEl = document.getElementById("logs-summary");
     var tableEl = document.getElementById("logs-table");
@@ -600,60 +582,6 @@
         downloadBlob(blob, "chat_observations.json");
       });
     }
-  }
-
-  function setPreview(lang, src) {
-    var img = document.getElementById("promo-" + lang + "-preview");
-    if (!img) return;
-    img.src = src || "";
-  }
-
-  function syncPromoPreviews() {
-    setPreview("tr", document.getElementById("promo-tr").value.trim());
-    setPreview("en", document.getElementById("promo-en").value.trim());
-    setPreview("de", document.getElementById("promo-de").value.trim());
-    setPreview("ru", document.getElementById("promo-ru").value.trim());
-  }
-
-  function wirePromoFileInputs() {
-    ["tr", "en", "de", "ru"].forEach(function (lang) {
-      var fileInput = document.getElementById("promo-" + lang + "-file");
-      var textInput = document.getElementById("promo-" + lang);
-      if (!fileInput || !textInput) return;
-      fileInput.addEventListener("change", function () {
-        var file = fileInput.files && fileInput.files[0];
-        if (!file) return;
-        var existing = String(textInput.value || "").trim();
-        if (existing) {
-          window.alert("Bu dilde aktif görsel var. Önce 'görseli sil' butonuyla kaldırın, sonra yeni görsel yükleyin.");
-          fileInput.value = "";
-          return;
-        }
-        var reader = new FileReader();
-        reader.onload = function () {
-          textInput.value = String(reader.result || "");
-          setPreview(lang, textInput.value);
-        };
-        reader.readAsDataURL(file);
-      });
-      textInput.addEventListener("input", function () {
-        syncPromoPreviews();
-      });
-    });
-  }
-
-  function wirePromoClearButtons() {
-    document.querySelectorAll(".promo-clear-btn").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        var lang = btn.getAttribute("data-promo-lang");
-        if (!lang) return;
-        var textInput = document.getElementById("promo-" + lang);
-        var fileInput = document.getElementById("promo-" + lang + "-file");
-        if (textInput) textInput.value = "";
-        if (fileInput) fileInput.value = "";
-        syncPromoPreviews();
-      });
-    });
   }
 
   function countPending(rows) {
@@ -1397,57 +1325,6 @@
     });
   }
 
-  function wirePromoForm() {
-    var form = document.getElementById("promo-form");
-    if (!form) return;
-    form.addEventListener("submit", async function (e) {
-      e.preventDefault();
-      var statusEl = document.getElementById("promo-status");
-      var payload = {
-        enabled: document.getElementById("promo-enabled").checked,
-        image_tr: document.getElementById("promo-tr").value.trim(),
-        image_en: document.getElementById("promo-en").value.trim(),
-        image_de: document.getElementById("promo-de").value.trim(),
-        image_ru: document.getElementById("promo-ru").value.trim(),
-      };
-      if (statusEl) {
-        statusEl.textContent = "Kaydediliyor...";
-        statusEl.className = "promo-status promo-status--info";
-      }
-      try {
-        var saved = await adapter.savePromoConfig(payload);
-        try {
-          localStorage.setItem("viona_discount_popup_cache_v1", JSON.stringify(saved || {}));
-          localStorage.removeItem("viona_discount_popup_seen");
-          ["tr", "en", "de", "ru"].forEach(function (lng) {
-            localStorage.removeItem("viona_discount_popup_seen_" + lng);
-          });
-        } catch (_cacheErr) {}
-        document.getElementById("promo-tr").value = saved.image_tr || payload.image_tr || "";
-        document.getElementById("promo-en").value = saved.image_en || payload.image_en || "";
-        document.getElementById("promo-de").value = saved.image_de || payload.image_de || "";
-        document.getElementById("promo-ru").value = saved.image_ru || payload.image_ru || "";
-        syncPromoPreviews();
-        if (statusEl) {
-          statusEl.textContent = "Kaydedildi. Görseller aktif edildi.";
-          statusEl.className = "promo-status promo-status--ok";
-        }
-      } catch (e) {
-        var msg = String((e && e.message) || "");
-        if (statusEl) {
-          if (msg === "http_413") {
-            statusEl.textContent = "Görsel boyutu çok büyük. Daha küçük bir görsel yükleyip tekrar deneyin.";
-          } else if (msg) {
-            statusEl.textContent = "Kaydetme hatası: " + msg;
-          } else {
-            statusEl.textContent = "Kaydetme sırasında hata oluştu. Lütfen tekrar deneyin.";
-          }
-          statusEl.className = "promo-status promo-status--error";
-        }
-      }
-    });
-  }
-
   function pdfToLocalDateInputValue(d) {
     var dt = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
     return dt.toISOString().slice(0, 10);
@@ -1599,7 +1476,6 @@
         }
         if (tab === "reservations") await loadBucket("reservation", "list-reservations");
         if (tab === "evaluations") await loadEvaluations();
-        if (tab === "promo") await loadPromo();
         if (tab === "pdf-report") setPdfCustomRangeUi(Boolean(document.getElementById("pdf-custom-range") && document.getElementById("pdf-custom-range").checked));
         if (tab === "logs") await loadLogs();
         updateReservationNavStatus();
@@ -1647,7 +1523,6 @@
     wireTabs();
     wireGuestNotifSubtabs();
     wireEvaluationsToolbar();
-    wirePromoForm();
     wirePdfReportPanel();
     wireLogsControls();
     wireBackHomeButtons();
@@ -1663,6 +1538,7 @@
     var layout = document.getElementById("admin-layout");
     if (login) login.classList.add("hidden");
     if (layout) layout.classList.remove("hidden");
+    document.body.classList.add("admin-body--app");
   }
 
   function showLogin() {
@@ -1670,6 +1546,7 @@
     var layout = document.getElementById("admin-layout");
     if (layout) layout.classList.add("hidden");
     if (login) login.classList.remove("hidden");
+    document.body.classList.remove("admin-body--app");
   }
 
   function wireLogout() {
@@ -1678,6 +1555,7 @@
     btn.addEventListener("click", function () {
       try {
         sessionStorage.removeItem(LOGIN_OK_KEY);
+        sessionStorage.removeItem(LOGIN_USER_KEY);
       } catch (_e) {}
       adapter.clearAdminToken();
       showLogin();
@@ -1699,15 +1577,28 @@
     }
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
+      var usernameEl = document.getElementById("admin-username");
+      var u = String((usernameEl && usernameEl.value) || "");
+      if (u !== ADMIN_USERNAME_REQUIRED) {
+        if (err) {
+          err.textContent =
+            "Kullanıcı adı zorunludur ve tam olarak «Viona-Kaila» yazılmalıdır (büyük-küçük harf aynı olmalı).";
+        }
+        return;
+      }
       var p = (document.getElementById("admin-password").value || "").trim();
       if (p) {
         try {
           adapter.setAdminToken(p);
           await adapter.validateAdminToken();
           sessionStorage.setItem(LOGIN_OK_KEY, "1");
+          sessionStorage.setItem(LOGIN_USER_KEY, ADMIN_USERNAME_REQUIRED);
         } catch (_e) {}
         if (sessionStorage.getItem(LOGIN_OK_KEY) !== "1") {
           adapter.clearAdminToken();
+          try {
+            sessionStorage.removeItem(LOGIN_USER_KEY);
+          } catch (_x) {}
           if (err) err.textContent = "Geçersiz veya yetkisiz admin token.";
           return;
         }
@@ -1723,11 +1614,12 @@
   async function bootstrap() {
     wireLogin();
     wireLogout();
-    wirePromoFileInputs();
-    wirePromoClearButtons();
     var ok = false;
     try {
-      ok = sessionStorage.getItem(LOGIN_OK_KEY) === "1" && adapter.hasAdminToken();
+      ok =
+        sessionStorage.getItem(LOGIN_OK_KEY) === "1" &&
+        sessionStorage.getItem(LOGIN_USER_KEY) === ADMIN_USERNAME_REQUIRED &&
+        adapter.hasAdminToken();
     } catch (_e) {
       ok = false;
     }
@@ -1740,6 +1632,7 @@
     } catch (_e) {
       try {
         sessionStorage.removeItem(LOGIN_OK_KEY);
+        sessionStorage.removeItem(LOGIN_USER_KEY);
       } catch (_x) {}
       adapter.clearAdminToken();
       showLogin();

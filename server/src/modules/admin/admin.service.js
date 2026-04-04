@@ -425,64 +425,6 @@ export async function deleteAdminItem(type, id) {
   return { id };
 }
 
-export async function getPromoConfig() {
-  const { data, error } = await getSupabase()
-    .from("promo_configs")
-    .select("*")
-    .eq("key", "discount_popup")
-    .maybeSingle();
-  if (error) {
-    if (String(error.message || "").includes("promo_configs")) {
-      return {
-        key: "discount_popup",
-        enabled: true,
-        image_tr: "",
-        image_en: "",
-        image_de: "",
-        image_ru: "",
-        updated_at: null,
-      };
-    }
-    throw error;
-  }
-  if (!data) {
-    return {
-      key: "discount_popup",
-      enabled: true,
-      image_tr: "",
-      image_en: "",
-      image_de: "",
-      image_ru: "",
-      updated_at: null,
-    };
-  }
-  return data;
-}
-
-export async function upsertPromoConfig(payload = {}) {
-  const row = {
-    key: "discount_popup",
-    enabled: payload.enabled !== false,
-    image_tr: String(payload.image_tr || "").trim(),
-    image_en: String(payload.image_en || "").trim(),
-    image_de: String(payload.image_de || "").trim(),
-    image_ru: String(payload.image_ru || "").trim(),
-    updated_at: new Date().toISOString(),
-  };
-  const { data, error } = await getSupabase()
-    .from("promo_configs")
-    .upsert(row, { onConflict: "key" })
-    .select("*")
-    .single();
-  if (error) {
-    if (String(error.message || "").includes("promo_configs")) {
-      throw new Error("promo_configs table is missing; create the table first");
-    }
-    throw error;
-  }
-  return data;
-}
-
 function groupTop(items, keyName, top = 10) {
   const map = {};
   items.forEach((it) => {

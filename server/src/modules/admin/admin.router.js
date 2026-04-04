@@ -4,7 +4,6 @@ import {
   deleteChatObservation,
   deleteAdminItem,
   getDashboardReports,
-  getPromoConfig,
   getPdfReportPackage,
   getChatObservationSummary,
   exportChatObservations,
@@ -14,7 +13,6 @@ import {
   listSurveySubmissions,
   updateChatObservationReview,
   updateAdminItemStatus,
-  upsertPromoConfig,
 } from "./admin.service.js";
 
 const router = Router();
@@ -108,24 +106,6 @@ router.delete("/requests/:type/:id", async (req, res) => {
     return res.status(200).json({ ok: true, ...data });
   } catch (error) {
     return adminErr(res, error, "admin_item_delete_failed");
-  }
-});
-
-router.get("/promo-config", async (req, res) => {
-  try {
-    const config = await getPromoConfig();
-    return res.status(200).json({ ok: true, config });
-  } catch (error) {
-    return adminErr(res, error, "promo_config_fetch_failed");
-  }
-});
-
-router.put("/promo-config", async (req, res) => {
-  try {
-    const config = await upsertPromoConfig(req.body || {});
-    return res.status(200).json({ ok: true, config });
-  } catch (error) {
-    return adminErr(res, error, "promo_config_update_failed");
   }
 });
 

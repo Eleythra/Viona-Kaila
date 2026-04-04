@@ -723,7 +723,7 @@
     if (t === "reservation_alacarte" && rid === "laTerrace") return "La Terrace A La Carte";
     if (t === "reservation_alacarte" && rid === "sinton") return "Sinton BBQ Restaurant";
     if (t === "reservation_alacarte") return "A la carte";
-    if (t === "reservation_spa") return "Spa";
+    if (t === "reservation_spa") return "Spa & wellness";
     return "Rezervasyon";
   }
 
@@ -732,8 +732,8 @@
     var data = reservationDataObject(row);
     var out = [];
     if (row.service_label) out.push("Hizmet: " + String(row.service_label));
+    else if (data.spaServiceId) out.push("Spa hizmeti: " + String(data.spaServiceId));
     if (data.restaurantId) out.push("Restoran: " + reservationSubtabLabel(String(data.restaurantId)));
-    if (data.spaServiceId) out.push("Spa hizmeti: " + String(data.spaServiceId));
     if (data.stayCheckIn) out.push("Giriş: " + String(data.stayCheckIn));
     if (data.stayCheckOut) out.push("Çıkış: " + String(data.stayCheckOut));
     if (row.note) out.push("Özel not: " + String(row.note));
@@ -819,7 +819,7 @@
       { key: "overview", label: "Günlük takip (tümü)" },
       { key: "laTerrace", label: "La Terrace A La Carte" },
       { key: "sinton", label: "Sinton BBQ Restaurant" },
-      { key: "spa", label: "Spa" },
+      { key: "spa", label: "Spa & wellness" },
     ];
   }
 
@@ -1101,7 +1101,7 @@
   function reservationTypeLabelPdf(row) {
     var t = String((row && row.reservation_type) || "").toLowerCase();
     if (t === "reservation_spa") {
-      return pdfLatinize(reservationTypeLabel(row) || "Spa");
+      return pdfLatinize(reservationTypeLabel(row) || "Spa & wellness");
     }
     if (t === "reservation_alacarte") {
       var vk = reservationVenueKeyFromRow(row);
@@ -1116,7 +1116,7 @@
       all: "Tum-Mekanlar",
       laTerrace: "La-Terrace-A-La-Carte",
       sinton: "Sinton-BBQ-Restaurant",
-      spa: "Spa",
+      spa: "Spa-Wellness",
     };
     return map[String(ovFilterKey || "all")] || "Rezervasyon";
   }
@@ -1637,7 +1637,7 @@
         '<div class="reservation-venue-summary-grid">' +
         venueCardInner("laTerrace", "La Terrace A La Carte") +
         venueCardInner("sinton", "Sinton BBQ Restaurant") +
-        venueCardInner("spa", "Spa") +
+        venueCardInner("spa", "Spa & wellness") +
         "</div>" +
         "</header>" +
         '<p class="reservation-active-line">Aktif: <strong>' +
@@ -1647,7 +1647,7 @@
         '<button type="button" class="reservation-filter-chip is-active" data-filter="all">Tümü</button>' +
         '<button type="button" class="reservation-filter-chip" data-filter="laTerrace">La Terrace</button>' +
         '<button type="button" class="reservation-filter-chip" data-filter="sinton">Sinton</button>' +
-        '<button type="button" class="reservation-filter-chip" data-filter="spa">Spa</button>' +
+        '<button type="button" class="reservation-filter-chip" data-filter="spa">Spa & wellness</button>' +
         "</div>" +
         '<div class="reservation-overview-toolbar">' +
         '<label class="reservation-date-label reservation-date-label--combo">Rezervasyon tarihi' +
@@ -1857,7 +1857,7 @@
         ? "La Terrace A La Carte"
         : activeTab === "sinton"
           ? "Sinton BBQ Restaurant"
-          : "Spa";
+          : "Spa & wellness";
 
     var isoVenueDefault = reservationDefaultViewDate(rows, activeTab);
     var vcHero = reservationVenueCountsForDate(isoVenueDefault, activeTab, rows);
@@ -3779,7 +3779,12 @@
         var assistantMsg = String(r.assistant_response || "-");
         html += "<tr>";
         html += "<td>" + esc(formatSubmittedAtTr(r.created_at)) + "</td>";
-        html += '<td class="logs-cell logs-cell--user" title="' + esc(userMsg) + '">' + esc(shortText(userMsg, 180)) + "</td>";
+        html +=
+          '<td class="logs-cell logs-cell--user"><div class="logs-cell__body" title="' +
+          esc(userMsg) +
+          '">' +
+          esc(userMsg) +
+          "</div></td>";
         html += "<td>" + esc((r.ui_language || "-") + " / " + (r.detected_language || "-")) + "</td>";
         html += "<td>" + esc((r.intent || "-") + " / " + (r.domain || "-")) + "</td>";
         html += "<td>" + esc(r.multi_intent ? "Evet" : "Hayır") + "</td>";
@@ -3787,7 +3792,12 @@
         html += "<td>" + esc(r.route_target || "none") + "</td>";
         html += "<td>" + esc(r.recommendation_made ? "Evet" : "Hayır") + "</td>";
         html += "<td>" + esc(r.layer_used || "-") + "</td>";
-        html += '<td class="logs-cell logs-cell--assistant" title="' + esc(assistantMsg) + '">' + esc(shortText(assistantMsg, 220)) + "</td>";
+        html +=
+          '<td class="logs-cell logs-cell--assistant"><div class="logs-cell__body" title="' +
+          esc(assistantMsg) +
+          '">' +
+          esc(assistantMsg) +
+          "</div></td>";
         html +=
           '<td><div class="row-actions">' +
           '<button class="btn-small js-log-delete" data-id="' + esc(r.id) + '">Sil</button>' +

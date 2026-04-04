@@ -6,6 +6,43 @@
     return P(row || {});
   }
 
+  function currentUiLang() {
+    try {
+      var c = String(localStorage.getItem("viona_lang") || "tr").toLowerCase();
+      if (c === "en" || c === "de" || c === "ru") return c;
+      return "tr";
+    } catch (e) {
+      return "tr";
+    }
+  }
+
+  function pickByLang(row) {
+    if (!row || typeof row !== "object") return "";
+    var lang = currentUiLang();
+    if (row[lang] != null && String(row[lang]).trim() !== "") return String(row[lang]);
+    if (row.tr != null && String(row.tr).trim() !== "") return String(row.tr);
+    if (row.en != null && String(row.en).trim() !== "") return String(row.en);
+    return "";
+  }
+
+  function createPdfCtaIcon() {
+    var ns = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("class", "venue-card__cta-icon");
+    svg.setAttribute("width", "18");
+    svg.setAttribute("height", "18");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("aria-hidden", "true");
+    var p = document.createElementNS(ns, "path");
+    p.setAttribute("fill", "currentColor");
+    p.setAttribute(
+      "d",
+      "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2 5 5h-5V4zM8 17h8v-2H8v2zm0-4h8v-2H8v2zm0-4h5V6H8v2z",
+    );
+    svg.appendChild(p);
+    return svg;
+  }
+
   var SECTIONS = [
     {
       type: "card",
@@ -230,6 +267,7 @@
         },
         href: "assets/docs/moss-beach-menu.pdf",
         download: "moss-beach-menu.pdf",
+        icon: true,
       },
       slots: [
         {
@@ -254,6 +292,35 @@
         en: "Bars",
         de: "Bars",
         ru: "Бары",
+      },
+    },
+    {
+      type: "barExtras",
+      intro: {
+        tr: "İthal içeceklerin güncel fiyatları PDF listesindedir. İndirmek için aşağıdaki düğmeye dokunun.",
+        en: "Imported drinks are priced as in the PDF list. Tap the button below to download.",
+        de: "Aktuelle Preise für Importgetränke stehen in der PDF-Liste. Zum Herunterladen auf die Schaltfläche tippen.",
+        ru: "Актуальные цены на импортные напитки — в PDF. Нажмите кнопку ниже, чтобы скачать.",
+      },
+      drink: {
+        label: {
+          tr: "İçecek fiyat listesi (PDF)",
+          en: "Drinks price list (PDF)",
+          de: "Getränkepreisliste (PDF)",
+          ru: "Прайс-лист напитков (PDF)",
+        },
+        href: {
+          tr: "assets/docs/drinks-price-list-tr.pdf",
+          en: "assets/docs/drinks-price-list-en.pdf",
+          de: "assets/docs/drinks-price-list-de.pdf",
+          ru: "assets/docs/drinks-price-list-ru.pdf",
+        },
+        download: {
+          tr: "kaila-icecek-fiyat-listesi-tr.pdf",
+          en: "kaila-drinks-price-list-en.pdf",
+          de: "kaila-getraenkepreisliste-de.pdf",
+          ru: "kaila-prajs-napitki-ru.pdf",
+        },
       },
     },
     {
@@ -295,6 +362,27 @@
       img: "assets/images/rest/lobibar-8b3f3aac-f8ab-4421-84c5-e32fab6caab0.png",
       title: { tr: "Lobby Bar", en: "Lobby Bar", de: "Lobby Bar", ru: "Лобби-бар" },
       location: { tr: "Lobide", en: "In the lobby", de: "In der Lobby", ru: "В лобби" },
+      action: {
+        label: {
+          tr: "Lobby Bar menüsü (PDF)",
+          en: "Lobby Bar menu (PDF)",
+          de: "Lobby Bar Menü (PDF)",
+          ru: "Меню Lobby Bar (PDF)",
+        },
+        hrefByLang: {
+          tr: "assets/docs/lobby-bar-menu-tr.pdf",
+          en: "assets/docs/lobby-bar-menu-en.pdf",
+          de: "assets/docs/lobby-bar-menu-de.pdf",
+          ru: "assets/docs/lobby-bar-menu-ru.pdf",
+        },
+        downloadByLang: {
+          tr: "lobby-bar-menu-tr.pdf",
+          en: "lobby-bar-menu-en.pdf",
+          de: "lobby-bar-menu-de.pdf",
+          ru: "lobby-bar-menu-ru.pdf",
+        },
+        icon: true,
+      },
       slots: [
         {
           name: { tr: "Bar servisi", en: "Bar service", de: "Bar", ru: "Бар" },
@@ -471,22 +559,65 @@
       slotsWrap.appendChild(renderSlot(slot));
     });
     body.appendChild(slotsWrap);
-    if (item.action && item.action.href) {
-      var actions = document.createElement("div");
-      actions.className = "venue-card__actions";
-      var cta = document.createElement("a");
-      cta.className = "venue-card__cta";
-      cta.href = item.action.href;
-      cta.setAttribute("download", item.action.download || "");
-      cta.setAttribute("target", "_blank");
-      cta.setAttribute("rel", "noopener");
-      cta.textContent = T(item.action.label || {});
-      actions.appendChild(cta);
-      body.appendChild(actions);
+    if (item.action && (item.action.href || item.action.hrefByLang)) {
+      var href = item.action.hrefByLang ? pickByLang(item.action.hrefByLang) : item.action.href;
+      var dl = item.action.downloadByLang ? pickByLang(item.action.downloadByLang) : item.action.download || "";
+      if (href) {
+        var actions = document.createElement("div");
+        actions.className = "venue-card__actions";
+        var cta = document.createElement("a");
+        cta.className = "venue-card__cta" + (item.action.icon ? " venue-card__cta--icon" : "");
+        cta.href = href;
+        if (dl) cta.setAttribute("download", dl);
+        cta.setAttribute("target", "_blank");
+        cta.setAttribute("rel", "noopener");
+        var lbl = T(item.action.label || {});
+        cta.setAttribute("aria-label", lbl);
+        if (item.action.icon) {
+          cta.appendChild(createPdfCtaIcon());
+          var span = document.createElement("span");
+          span.className = "venue-card__cta-label";
+          span.textContent = lbl;
+          cta.appendChild(span);
+        } else {
+          cta.textContent = lbl;
+        }
+        actions.appendChild(cta);
+        body.appendChild(actions);
+      }
     }
     card.appendChild(fig);
     card.appendChild(body);
     return card;
+  }
+
+  function renderBarExtras(item) {
+    var wrap = document.createElement("div");
+    wrap.className = "rest-bar-extras";
+    var intro = document.createElement("p");
+    intro.className = "rest-bar-extras__intro";
+    intro.textContent = T(item.intro || {});
+    var href = pickByLang(item.drink && item.drink.href);
+    var dl = pickByLang(item.drink && item.drink.download);
+    if (href) {
+      var btn = document.createElement("a");
+      btn.className = "rest-bar-extras__pdf-btn";
+      btn.href = href;
+      if (dl) btn.setAttribute("download", dl);
+      btn.setAttribute("target", "_blank");
+      btn.setAttribute("rel", "noopener");
+      var btnLabel = T((item.drink && item.drink.label) || {});
+      btn.setAttribute("aria-label", btnLabel);
+      btn.appendChild(createPdfCtaIcon());
+      var span = document.createElement("span");
+      span.textContent = btnLabel;
+      btn.appendChild(span);
+      wrap.appendChild(intro);
+      wrap.appendChild(btn);
+    } else {
+      wrap.appendChild(intro);
+    }
+    return wrap;
   }
 
   function renderRules(item) {
@@ -528,6 +659,8 @@
         h2.className = "rest-section-title";
         h2.textContent = T(item.key);
         stack.appendChild(h2);
+      } else if (item.type === "barExtras") {
+        stack.appendChild(renderBarExtras(item));
       } else if (item.type === "card") {
         stack.appendChild(renderCard(item));
       } else if (item.type === "rules") {

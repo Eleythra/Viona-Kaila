@@ -47,8 +47,8 @@ def test_department_metadata_contains_operational_units():
 
 
 def test_venue_metadata_contains_key_recommendation_venues():
-    assert "mare_restaurant" in VENUE_METADATA
-    assert VENUE_METADATA["mare_restaurant"]["reservation_required"] is True
+    assert "la_terrace_a_la_carte" in VENUE_METADATA
+    assert VENUE_METADATA["la_terrace_a_la_carte"]["reservation_required"] is True
     assert "sinton_bbq" in VENUE_METADATA
 
 
