@@ -334,6 +334,19 @@ function isIsoDateYmd(s) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
 }
 
+/** Geç çıkışta “geçmiş tarih” eşiği; otel saat dilimi (varsayılan Europe/Istanbul). */
+function hotelTodayIsoYmd() {
+  const raw = String(process.env.HOTEL_TIMEZONE || process.env.HOTEL_TZ || "Europe/Istanbul").trim();
+  const tz = raw || "Europe/Istanbul";
+  try {
+    const s = new Date().toLocaleDateString("en-CA", { timeZone: tz });
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  } catch {
+    /* geçersiz IANA bölgesi */
+  }
+  return new Date().toISOString().slice(0, 10);
+}
+
 /** HTML time input veya "HH:MM" / "HH:MM:SS" → "HH:MM". */
 function normalizeCheckoutTime(raw) {
   const s = String(raw ?? "").trim();
@@ -355,7 +368,7 @@ function validateLateCheckoutPayload(normalized) {
   if (!ti) throw new Error("checkout time is required (HH:MM)");
   const desc = String(normalized.description || "").trim();
   if (!desc) throw new Error("description is required for late checkout");
-  const today = new Date().toISOString().slice(0, 10);
+  const today = hotelTodayIsoYmd();
   if (d < today) throw new Error("checkout date cannot be in the past");
   normalized.checkoutDate = d;
   normalized.checkoutTime = ti;

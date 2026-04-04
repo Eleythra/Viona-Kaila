@@ -112,8 +112,18 @@
     el.textContent = "Aktif görünüm: " + label;
   }
 
-  function emptyBucket() {
-    return [];
+  function emptyMergeResult() {
+    return { items: [], truncated: false };
+  }
+
+  function normalizeMergeResult(raw) {
+    if (raw && typeof raw === "object" && !Array.isArray(raw) && Array.isArray(raw.items)) {
+      return { items: raw.items, truncated: Boolean(raw.truncated) };
+    }
+    if (Array.isArray(raw)) {
+      return { items: raw, truncated: false };
+    }
+    return emptyMergeResult();
   }
 
   function syncGuestNotifSubtabUi() {
@@ -155,13 +165,17 @@
         dashReportErr = e && e.message ? String(e.message) : "";
       }
       var buckets = await Promise.all([
-        adapter.getBucketMergeAll("request", BUCKET_MERGE_MAX_PAGES).catch(emptyBucket),
-        adapter.getBucketMergeAll("complaint", BUCKET_MERGE_MAX_PAGES).catch(emptyBucket),
-        adapter.getBucketMergeAll("fault", BUCKET_MERGE_MAX_PAGES).catch(emptyBucket),
-        adapter.getBucketMergeAll("guest_notification", BUCKET_MERGE_MAX_PAGES).catch(emptyBucket),
-        adapter.getBucketMergeAll("late_checkout", BUCKET_MERGE_MAX_PAGES).catch(emptyBucket),
-        adapter.getBucketMergeAll("reservation", BUCKET_MERGE_MAX_PAGES).catch(emptyBucket),
+        adapter.getBucketMergeAll("request", BUCKET_MERGE_MAX_PAGES).catch(emptyMergeResult),
+        adapter.getBucketMergeAll("complaint", BUCKET_MERGE_MAX_PAGES).catch(emptyMergeResult),
+        adapter.getBucketMergeAll("fault", BUCKET_MERGE_MAX_PAGES).catch(emptyMergeResult),
+        adapter.getBucketMergeAll("guest_notification", BUCKET_MERGE_MAX_PAGES).catch(emptyMergeResult),
+        adapter.getBucketMergeAll("late_checkout", BUCKET_MERGE_MAX_PAGES).catch(emptyMergeResult),
+        adapter.getBucketMergeAll("reservation", BUCKET_MERGE_MAX_PAGES).catch(emptyMergeResult),
       ]);
+      var br = buckets.map(normalizeMergeResult);
+      var dashTruncated = br.some(function (x) {
+        return x.truncated;
+      });
       var warnEl = document.getElementById("dashboard-api-warning");
       if (warnEl) {
         if (!dashReportOk) {
@@ -177,6 +191,21 @@
           warnEl.setAttribute("aria-hidden", "true");
         }
       }
+      var mergeWarnEl = document.getElementById("dashboard-merge-warning");
+      if (mergeWarnEl) {
+        if (dashTruncated) {
+          mergeWarnEl.textContent =
+            "Pano özetinde bazı listeler " +
+            BUCKET_MERGE_MAX_PAGES +
+            " sayfa üst sınırına ulaştı; toplam kayıt sayıları eksik olabilir. Tam liste için ilgili sekmeleri açın.";
+          mergeWarnEl.classList.remove("hidden");
+          mergeWarnEl.removeAttribute("aria-hidden");
+        } else {
+          mergeWarnEl.textContent = "";
+          mergeWarnEl.classList.add("hidden");
+          mergeWarnEl.setAttribute("aria-hidden", "true");
+        }
+      }
       if (!report || typeof report !== "object") {
         report = {};
       }
@@ -189,13 +218,13 @@
       if (!Array.isArray(uq.topFallbackQuestions)) uq.topFallbackQuestions = [];
       if (!Array.isArray(uq.repeatedUnanswered)) uq.repeatedUnanswered = [];
 
-      var gnMerge = (buckets[3] || []).concat(buckets[4] || []);
+      var gnMerge = br[3].items.concat(br[4].items);
       var dashData = {
-        request: buckets[0] || [],
-        complaint: buckets[1] || [],
-        fault: buckets[2] || [],
+        request: br[0].items,
+        complaint: br[1].items,
+        fault: br[2].items,
         guest_notification: gnMerge,
-        reservation: buckets[5] || [],
+        reservation: br[5].items,
       };
       renderHomeTopStrip(dashData, report);
       renderDashboardAlerts(dashData);
@@ -361,7 +390,8 @@
       var rows;
       var pagination = null;
       if (type === "reservation") {
-        rows = await adapter.getBucketMergeAll("reservation", BUCKET_MERGE_MAX_PAGES);
+        var resMerged = await adapter.getBucketMergeAll("reservation", BUCKET_MERGE_MAX_PAGES);
+        rows = normalizeMergeResult(resMerged).items;
       } else {
         var pageNum = page != null ? page : bucketListPage[type] || 1;
         bucketListPage[type] = pageNum;
@@ -906,7 +936,7 @@
       '<div class="home-top-strip__bar home-top-strip__bar--global">' +
       '<div class="home-global-grid">' +
       '<div class="home-global-card">' +
-      '<span class="home-global-card__k">İstek · Şikayet · Arıza · Misafir bildirimi (tüm zamanlar)</span>' +
+      '<span class="home-global-card__k">İstek · Şikayet · Arıza · Misafir bildirimi + geç çıkış (tüm zamanlar)</span>' +
       '<p class="home-global-card__body">Beklemede: <strong>' +
       opsAll.open +
       "</strong> · Tamamlanan: <strong>" +
@@ -1005,8 +1035,8 @@
       faultSp.rej +
       "</span></span></div></li>" +
       '<li class="home-res-venue">' +
-      '<span class="home-res-venue__name">Misafir bildirimleri</span>' +
-      '<div class="home-res-venue__split" role="group" aria-label="Misafir bildirimleri bugün">' +
+      '<span class="home-res-venue__name">Bildirim + geç çıkış</span>' +
+      '<div class="home-res-venue__split" role="group" aria-label="Misafir bildirimi ve geç çıkış bugün">' +
       '<span class="home-res-venue__leg"><span class="home-res-venue__leg-k">Beklemede</span> ' +
       '<span class="home-res-venue__leg-v">' +
       notifSp.wait +
@@ -1114,7 +1144,7 @@
       globalBar +
       '<div class="home-top-strip__bar home-top-strip__bar--metrics">' +
       '<ul class="home-top-strip__stats" role="list">' +
-      '<li class="home-stat" title="İstek, şikayet, arıza, misafir bildirimi ve rezervasyon satırlarının toplamı">' +
+      '<li class="home-stat" title="İstek, şikayet, arıza, misafir bildirimi, geç çıkış ve rezervasyon satırlarının toplamı">' +
       '<span class="home-stat__label">Kayıt (toplam)</span>' +
       '<span class="home-stat__value">' +
       totalRecords +
@@ -1156,12 +1186,15 @@
     wireOpsOpen(".js-home-open-requests", "requests", "request", "list-requests");
     wireOpsOpen(".js-home-open-complaints", "complaints", "complaint", "list-complaints");
     wireOpsOpen(".js-home-open-faults", "faults", "fault", "list-faults");
-    wireOpsOpen(
-      ".js-home-open-guest-notifications",
-      "guest_notifications",
-      "guest_notification",
-      "list-guest-notifications",
-    );
+    var bGnHome = el.querySelector(".js-home-open-guest-notifications");
+    if (bGnHome) {
+      bGnHome.addEventListener("click", async function () {
+        guestNotifSubtab = "notifications";
+        openTab("guest_notifications");
+        await loadGuestNotifVisible();
+        scheduleAutoRefresh();
+      });
+    }
   }
 
   function oldestOpenText(rows) {
@@ -1303,14 +1336,19 @@
         tab: "faults",
       }) +
       renderReminderCard({
-        title: "Misafir bildirimleri",
+        title: "Misafir bildirimleri + geç çıkış",
         openKpiLabel: "Beklemede (kuyruk)",
         openCount: notif,
         newCount: notifN,
         pendingCount: notifP,
         inProgressCount: notifI,
         statusMetaLine:
-          "Yeni: " + notifN + " · Kuyruk: " + notifP + (notifI > 0 ? " · Eski işlemde: " + notifI : ""),
+          "Yeni: " +
+          notifN +
+          " · Kuyruk: " +
+          notifP +
+          (notifI > 0 ? " · Eski işlemde: " + notifI : "") +
+          " (birleşik liste; sekmede alt görünümler ayrı)",
         oldestOpen: oldestOpenText(notifRows),
         tab: "guest_notifications",
       }) +

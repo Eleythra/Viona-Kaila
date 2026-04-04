@@ -132,6 +132,7 @@
         };
       });
     },
+    /** @returns {{ items: array, truncated: boolean }} truncated: sunucudaki toplam sayfa sayısı maxPages üstündeyse. */
     getBucketMergeAll: async function (type, maxPages) {
       var pageSize = 500;
       var cap = typeof maxPages === "number" && maxPages > 0 ? maxPages : 100;
@@ -144,7 +145,7 @@
         totalPages = (d.pagination && d.pagination.totalPages) || 1;
         page++;
       } while (page <= totalPages && page <= cap);
-      return all;
+      return { items: all, truncated: totalPages > cap };
     },
     createGuestRequest: function (payload) {
       return jfetch(getApiBase() + "/guest-requests", {

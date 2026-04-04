@@ -445,6 +445,23 @@ export function buildWhatsappGraphMessagesUrl() {
   return `https://graph.facebook.com/${graphVer}/${phoneNumberId}/messages`;
 }
 
+/** /api/health: anahtar sızdırmaz; misafir bildirimi + geç çıkış şablonu alıcı sayısı. */
+export function getWhatsappOperationalHealthSummary() {
+  const { token } = resolveWhatsappAccessToken();
+  const phoneId = resolveWhatsappPhoneNumberId();
+  const front = parseOperationalRecipients(process.env.WHATSAPP_FRONT_RECIPIENTS || "");
+  const reception = parseOperationalRecipients(process.env.WHATSAPP_RECEPTION_RECIPIENTS || "");
+  const gr = parseOperationalRecipients(process.env.WHATSAPP_GUEST_RELATIONS_RECIPIENTS || "");
+  const hk = parseOperationalRecipients(process.env.WHATSAPP_HK_RECIPIENTS || "");
+  const mergedGuest = mergeRecipientLists(front, reception, gr, hk);
+  return {
+    accessTokenConfigured: Boolean(token),
+    phoneNumberIdConfigured: Boolean(phoneId),
+    cloudApiSendReady: Boolean(token && phoneId),
+    guestRelationRecipientCount: mergedGuest.length,
+  };
+}
+
 function parseMetaError(raw) {
   let detail = String(raw || "").slice(0, 1200);
   let code = "";

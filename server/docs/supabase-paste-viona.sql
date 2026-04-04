@@ -674,5 +674,6 @@ alter table if exists public.guest_late_checkouts enable row level security;
 --     other_category_note, category, details (jsonb), source, submitted_at, status, raw_payload
 --   guest_late_checkouts: guest_name, room_number, nationality, checkout_date (date),
 --     checkout_time (text, HH:MM), description, details (jsonb), source, submitted_at, status, raw_payload
+-- Admin API listeleri: GET …/admin/requests?type=guest_notification ve ?type=late_checkout (ayrı tablolar; panoda özet birleşik).
 -- Service role anahtarı RLS’i baypas eder; yalnızca anon/authenticated ile yazacaksanız POLICY ekleyin.
 -- =============================================================================

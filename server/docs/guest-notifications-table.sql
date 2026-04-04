@@ -1,6 +1,7 @@
 -- Misafir bildirimleri (beslenme / sağlık / kutlama) — guest-requests.service type: guest_notification
 -- Supabase SQL Editor’de bir kez çalıştırın.
 -- Ana tek betik: server/docs/supabase-paste-viona.sql bölüm 10 (CHECK ve RLS aynı mantık).
+-- Geç çıkış ayrı tablo: bölüm 11 — server/docs/guest-late-checkouts-table.sql
 
 create table if not exists public.guest_notifications (
   id uuid primary key default gen_random_uuid(),

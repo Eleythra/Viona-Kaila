@@ -1,5 +1,6 @@
 -- Geç çıkış talepleri — guest-requests type: late_checkout (yalnızca web formu)
 -- Ana betik: server/docs/supabase-paste-viona.sql bölüm 11
+-- Misafir genel bildirim tablosu: bölüm 10 — server/docs/guest-notifications-table.sql
 
 create table if not exists public.guest_late_checkouts (
   id uuid primary key default gen_random_uuid(),
@@ -36,6 +37,7 @@ alter table if exists public.guest_late_checkouts
     )
   );
 
+-- RLS: Node API SUPABASE_SERVICE_ROLE_KEY ile yazım RLS’i baypas eder.
 alter table if exists public.guest_late_checkouts enable row level security;
 
 -- Node guest-requests.service insertLateCheckout: guest_name, room_number, nationality, checkout_date,

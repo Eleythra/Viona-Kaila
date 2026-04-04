@@ -11,6 +11,7 @@ import { getSupabase, isSupabaseConfigured } from "./lib/supabase.js";
 import { createGuestRequest } from "./modules/guest-requests/guest-requests.service.js";
 import {
   buildWhatsappGraphMessagesUrl,
+  getWhatsappOperationalHealthSummary,
   resolveWhatsappAccessToken,
 } from "./services/whatsapp-operational-notification.service.js";
 
@@ -335,6 +336,7 @@ app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
 app.get("/api/health", (_req, res) => {
+  const hotelTz = String(process.env.HOTEL_TIMEZONE || process.env.HOTEL_TZ || "Europe/Istanbul").trim();
   res.json({
     ok: true,
     service: "viona-node-api",
@@ -342,6 +344,10 @@ app.get("/api/health", (_req, res) => {
     hasSupabase: env.hasSupabase,
     /** TTS/STT için Azure anahtarı yüklü mü (Render’da AZURE_SPEECH_KEY kontrolü). */
     azureSpeechConfigured: Boolean(String(env.azureSpeechKey || "").trim()),
+    /** Geç çıkış “bugün” eşiği için kullanılan IANA dilimi (varsayılan Europe/Istanbul). */
+    hotelTimezone: hotelTz || "Europe/Istanbul",
+    /** WhatsApp operasyon: token/phone id ve misafir ilişkileri alıcı adedi (numara listelenmez). */
+    whatsappOperational: getWhatsappOperationalHealthSummary(),
   });
 });
 
