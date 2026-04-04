@@ -56,7 +56,16 @@ _VOICE_STRIP_BY_LANG: dict[str, list[str]] = {
     "ru": [
         "Вы можете открыть его с помощью кнопки ниже.",
         "Кнопка ниже открывает эту форму напрямую.",
+        "Кнопка ниже открывает эту форму сразу.",
     ],
+}
+
+# Sadeleştirme tüm metni sildiyse TTS boş kalmasın.
+VOICE_EMPTY_FALLBACK: dict[str, str] = {
+    "tr": "Şu an kısa bir yanıt oluşturamadım. Lütfen yazılı sohbetten tekrar deneyin.",
+    "en": "I could not produce a short reply just now. Please try again in text chat.",
+    "de": "Gerade konnte ich keine kurze Antwort erzeugen. Bitte versuchen Sie es im Textchat erneut.",
+    "ru": "Сейчас не удалось сформировать короткий ответ. Пожалуйста, повторите в текстовом чате.",
 }
 
 
@@ -73,6 +82,9 @@ def sanitize_message_for_voice(text: str, lang: str) -> str:
 
 def finalize_voice_channel_response(response: ChatResponse, reply_lang: str) -> ChatResponse:
     """Sesli kanal çıkışı: söylenebilir metin, UI aksiyonları kaldırılır."""
-    msg = sanitize_message_for_voice(response.message, reply_lang)
+    lg = (reply_lang or "tr").lower() if (reply_lang or "").lower() in ("tr", "en", "de", "ru") else "tr"
+    msg = sanitize_message_for_voice(response.message, lg)
+    if not msg.strip():
+        msg = VOICE_EMPTY_FALLBACK.get(lg, VOICE_EMPTY_FALLBACK["tr"])
     meta = response.meta.model_copy(update={"action": None, "exit_chat_after_ms": None})
     return response.model_copy(update={"message": msg, "meta": meta})

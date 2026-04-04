@@ -649,7 +649,9 @@
     if (els.send) els.send.disabled = false;
   };
 
-  /** Sesli tur: metin sohbetiyle aynı API ve geçmiş; tek seferlik asistan yanıtı döner. */
+  /**
+   * Sesli tur: `client_channel=voice` ile bilgi katmanı (sunucu); metin sohbetindeki buton seçenekleri burada gösterilmez.
+   */
   window.vionaChatRunAssistantTurn = async function (userText) {
     var clean = String(userText || "").replace(/\r/g, "").trim();
     if (!clean) throw new Error("empty");
@@ -664,13 +666,10 @@
       state.messages.push({
         role: "assistant",
         content: result.reply,
-        options: result.options || null,
+        options: null,
       });
       trimHistory();
       renderMessages();
-      if (result.exitChatAfterMs) {
-        scheduleExitToHomeAfterMs(result.exitChatAfterMs);
-      }
       return result.reply;
     } catch (e) {
       state.messages.push({

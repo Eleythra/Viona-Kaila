@@ -17,7 +17,7 @@ from assistant.core.logger import get_logger
 import re
 
 from assistant.services.chat_form_state import ChatFormState, InMemoryChatFormStore, OperationType
-from assistant.services.voice_channel_layer import VOICE_RESERVATION_HINT
+from assistant.services.voice_channel_layer import VOICE_OPERATIONAL_USE_TEXT, VOICE_RESERVATION_HINT
 from assistant.services.hotel_room_numbers import is_valid_hotel_room_number
 
 
@@ -320,8 +320,6 @@ class ChatOrchestrator:
 
     def _voice_operational_redirect(self, reply_lang: str, ui_language: str):
         """Sesli kanal: form / kayıt yok; yazılı kanala yönlendirme metni."""
-        from assistant.services.voice_channel_layer import VOICE_OPERATIONAL_USE_TEXT
-
         text = VOICE_OPERATIONAL_USE_TEXT.get(reply_lang, VOICE_OPERATIONAL_USE_TEXT["tr"])
         return self.response_service.build(
             "inform",

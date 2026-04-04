@@ -13,6 +13,20 @@ def test_sanitize_removes_markdown_bold():
     assert "Kalın" in out
 
 
+def test_finalize_empty_message_uses_fallback():
+    meta = ChatMeta(
+        intent="hotel_info",
+        confidence=1.0,
+        language="tr",
+        ui_language="tr",
+        source="rule",
+    )
+    resp = ChatResponse(type="inform", message="", meta=meta)
+    fin = finalize_voice_channel_response(resp, "tr")
+    assert fin.message.strip()
+    assert "yazılı" in fin.message or "sohbet" in fin.message
+
+
 def test_finalize_clears_action_and_exit_timer():
     meta = ChatMeta(
         intent="reservation",

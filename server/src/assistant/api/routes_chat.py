@@ -52,5 +52,7 @@ def chat(payload: ChatRequest, orchestrator: ChatOrchestrator = Depends(get_orch
                 source="fallback",
             ),
         )
+        if payload.channel == "voice":
+            safe = finalize_voice_channel_response(safe, lang)
         return JSONResponse(status_code=200, content=safe.model_dump())
 
