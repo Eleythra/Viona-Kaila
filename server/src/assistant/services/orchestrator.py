@@ -911,6 +911,14 @@ class ChatOrchestrator:
             )
             rag_answer = self.rag_service.answer(message, reply_language)
             if rag_answer:
+                nm = normalize_text(message)
+                rq_soft = self.rule_engine.extract_request_category(nm)
+                if rq_soft and not self.rule_engine.is_strong_service_item_request(nm):
+                    _soft_key = "hotel_info_soft_item_followup"
+                    suffix = self.localization_service.get(_soft_key, reply_language).strip()
+                    # get() eksik anahtarda anahtar adını döndürür; kullanıcıya gösterme.
+                    if suffix and suffix != _soft_key:
+                        rag_answer = rag_answer.rstrip() + "\n\n" + suffix
                 return self.response_service.build(
                     "answer",
                     rag_answer,

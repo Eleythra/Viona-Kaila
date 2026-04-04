@@ -233,9 +233,12 @@ export function recipientsForGuestPayload(payload, intentFallback = "unknown") {
   if (pt === "guest_notification" || pt === "late_checkout") {
     const reception = parseOperationalRecipients(process.env.WHATSAPP_RECEPTION_RECIPIENTS || "");
     const gr = parseOperationalRecipients(process.env.WHATSAPP_GUEST_RELATIONS_RECIPIENTS || "");
-    const merged = mergeRecipientLists(reception, gr);
+    const front = parseOperationalRecipients(process.env.WHATSAPP_FRONT_RECIPIENTS || "");
+    const hk = parseOperationalRecipients(process.env.WHATSAPP_HK_RECIPIENTS || "");
+    // Hepsi birleşik: sadece şikâyet (FRONT) veya sadece HK tanımlı ortamlarda da misafir bildirimi / geç çıkış gitsin.
+    const merged = mergeRecipientLists(reception, gr, front, hk);
     if (merged.length) return merged;
-    return parseOperationalRecipients(process.env.WHATSAPP_FRONT_RECIPIENTS || "");
+    return [];
   }
   const t = normalizeGuestType(payload, intentFallback);
   if (t === "fault") return parseOperationalRecipients(process.env.WHATSAPP_TECH_RECIPIENTS || "");
@@ -244,9 +247,11 @@ export function recipientsForGuestPayload(payload, intentFallback = "unknown") {
   if (t === "guest_notification" || t === "late_checkout") {
     const reception = parseOperationalRecipients(process.env.WHATSAPP_RECEPTION_RECIPIENTS || "");
     const gr = parseOperationalRecipients(process.env.WHATSAPP_GUEST_RELATIONS_RECIPIENTS || "");
-    const merged = mergeRecipientLists(reception, gr);
+    const front = parseOperationalRecipients(process.env.WHATSAPP_FRONT_RECIPIENTS || "");
+    const hk = parseOperationalRecipients(process.env.WHATSAPP_HK_RECIPIENTS || "");
+    const merged = mergeRecipientLists(reception, gr, front, hk);
     if (merged.length) return merged;
-    return parseOperationalRecipients(process.env.WHATSAPP_FRONT_RECIPIENTS || "");
+    return [];
   }
   return [];
 }
@@ -502,7 +507,7 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
           ? "WHATSAPP_HK_RECIPIENTS"
           : recordType === "complaint"
             ? "WHATSAPP_FRONT_RECIPIENTS"
-            : "WHATSAPP_RECEPTION_RECIPIENTS+WHATSAPP_GUEST_RELATIONS_RECIPIENTS (veya WHATSAPP_FRONT_RECIPIENTS)";
+            : "WHATSAPP_RECEPTION_RECIPIENTS, WHATSAPP_GUEST_RELATIONS_RECIPIENTS, WHATSAPP_FRONT_RECIPIENTS, WHATSAPP_HK_RECIPIENTS (en az biri dolu olmalı)";
     console.warn(
       "[whatsapp_ops] notify_skipped reason=empty_recipient_list record_type=%s template=%s env_list=%s (virgülle numara ekleyin)",
       recordType,

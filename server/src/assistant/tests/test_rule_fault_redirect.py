@@ -24,7 +24,8 @@ def test_fault_rule_redirect_cases():
         )
         assert response.status_code == 200
         data = response.json()
-        assert data["type"] == "redirect"
+        assert data["type"] == "inform"
         assert data["meta"]["intent"] == "fault_report"
-        assert "action" in data["meta"]
+        assert data["meta"].get("action", {}).get("kind") == "chat_form"
+        assert data["meta"]["action"].get("operation") == "fault"
 

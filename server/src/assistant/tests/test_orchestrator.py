@@ -98,6 +98,26 @@ def test_special_need_cases():
         assert res.meta.action and res.meta.action.kind == "chat_form"
 
 
+def test_kutlama_and_kkutlama_are_celebration_not_diet():
+    """Yazım hatası veya kısaltma ile beslenme listesi yerine kutlama kategorileri gelmeli."""
+    orch, _, _ = build_orchestrator()
+    for msg in ["kutlama", "kkutlama"]:
+        res = orch.handle(ChatRequest(message=msg, ui_language="tr", locale="tr"))
+        assert res.meta.intent == "guest_notification"
+        assert res.type == "inform"
+        assert "doğum" in res.message.lower()
+        assert "alerjen bildirimi" not in res.message.lower()
+
+
+def test_soft_havlu_appends_room_request_hint_after_rag():
+    orch, rag, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="havlu", ui_language="tr", locale="tr"))
+    assert rag.called is True
+    assert res.meta.intent == "hotel_info"
+    assert res.type == "answer"
+    assert "talep" in res.message.lower()
+
+
 def test_special_need_multilang_examples():
     orch, _, _ = build_orchestrator()
     examples = [
@@ -120,7 +140,7 @@ def test_special_need_multilang_examples():
 def test_request_and_complaint_cases():
     orch, _, _ = build_orchestrator()
     req = orch.handle(
-        ChatRequest(message="havlu", ui_language="tr", locale="tr", user_id="u-req", session_id="s-req")
+        ChatRequest(message="havlu talep ediyorum", ui_language="tr", locale="tr", user_id="u-req", session_id="s-req")
     )
     cmp_ = orch.handle(
         ChatRequest(message="çok kötü", ui_language="tr", locale="tr", user_id="u-cmp", session_id="s-cmp")
@@ -132,6 +152,14 @@ def test_request_and_complaint_cases():
     assert cmp_.meta.intent == "complaint"
     assert cmp_.type == "inform"
     assert cmp_.meta.action and cmp_.meta.action.kind == "chat_form"
+
+
+def test_bare_cikis_is_hotel_info_not_reservation():
+    orch, rag, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="çıkış", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "hotel_info"
+    assert res.type == "answer"
+    assert rag.called is True
 
 
 def test_reservation_and_hotel_info_multilang():
@@ -344,7 +372,7 @@ def test_conversation_language_persists_reply_after_switch():
     assert r1.meta.language == "en"
     r2 = orch.handle(
         ChatRequest(
-            message="havlu",
+            message="havlu talep ediyorum",
             ui_language="tr",
             locale="tr",
             conversation_language="en",

@@ -192,6 +192,7 @@ def _matches_late_checkout_guest_notif(normalized_text: str) -> bool:
 # Eski SPECIAL_WORDS parçalandı: kutlama / sağlık / beslenme → chat’te misafir bildirimi formu.
 CELEBRATION_NOTIF_WORDS = [
     "kutlama",
+    "kkutlama",
     "kutlaması",
     "kutlamak",
     "doğum günü",
@@ -451,6 +452,55 @@ def extract_request_category_from_text(normalized_text: str) -> str | None:
     return None
 
 
+def _text_suggests_celebration_notif(text: str) -> bool:
+    """Kutlama grubu: fuzzy liste + 'kutlam' kökü (LLM yanlışlıkla diyet seçmesin)."""
+    if any(_fuzzy_has(text, w) for w in CELEBRATION_NOTIF_WORDS):
+        return True
+    t = (text or "").lower()
+    if "kutlam" in t:
+        return True
+    return False
+
+
+def _has_strong_service_request_intent(text: str) -> bool:
+    """Açık talep dili → sohbet istek formu; yalnızca eşya anahtar kelimesi → bilgi (RAG)."""
+    t = (text or "").lower()
+    markers = (
+        "talep",
+        "istiyorum",
+        "isterim",
+        "gönder",
+        "gonder",
+        "gönderin",
+        "gonderin",
+        "getirin",
+        "gelsin",
+        "yolla",
+        "sipariş",
+        "siparis",
+        "lütfen",
+        "lutfen",
+        "rica ederim",
+        "rica ",
+        "formu",
+        "doldur",
+        "ekstra",
+        "extra ",
+        "another ",
+        "bring ",
+        "please send",
+        "can you bring",
+        "can i get",
+        "order ",
+        "мне нужно",
+        "нужен ",
+        "bitte bring",
+        "bitte schick",
+        "bestellen",
+    )
+    return any(m in t for m in markers)
+
+
 RECOMMENDATION_WORDS = [
     "öner", "oner", "öneri", "oneri",
     "ne yesem", "karar veremedim",
@@ -683,13 +733,18 @@ class RuleEngine:
         return _matches_late_checkout_guest_notif(normalized_text)
 
     def extract_request_category(self, text: str) -> str | None:
+        """text: `normalize_text` çıktısı veya en azından küçük harf / tutarlı boşluk."""
         return extract_request_category_from_text(text)
+
+    @staticmethod
+    def is_strong_service_item_request(normalized_text: str) -> bool:
+        return _has_strong_service_request_intent(normalized_text)
 
     def infer_guest_notification_group(self, normalized_text: str) -> str | None:
         """Sınıflandırıcı misafir bildirimi dediğinde metinden grup çıkarır (tam liste önce diyet göstermesin)."""
         if _matches_late_checkout_guest_notif(normalized_text):
             return "reception"
-        if any(_fuzzy_has(normalized_text, w) for w in CELEBRATION_NOTIF_WORDS):
+        if _text_suggests_celebration_notif(normalized_text):
             return "celebration"
         if any(_fuzzy_has(normalized_text, w) for w in HEALTH_NOTIF_WORDS):
             return "health"
@@ -732,7 +787,7 @@ class RuleEngine:
             )
 
         # Misafir bildirimi (web modülüyle aynı kategori grupları): önce kutlama, sonra sağlık, sonra beslenme/alerji.
-        if any(_fuzzy_has(normalized_text, w) for w in CELEBRATION_NOTIF_WORDS):
+        if _text_suggests_celebration_notif(normalized_text):
             logger.info("RULE MATCH: guest_notification (celebration group)")
             return IntentResult(
                 intent="guest_notification",
@@ -964,6 +1019,20 @@ class RuleEngine:
                 source="rule",
             )
 
+        # Yalnız "çıkış" / "giriş" → bilgi (RAG); LLM rezervasyon veya yanlış modüle düşmesin.
+        if self._is_bare_checkin_or_checkout_keyword(normalized_text):
+            logger.info("RULE MATCH: hotel_info (bare_checkin_checkout_keyword)")
+            return IntentResult(
+                intent="hotel_info",
+                sub_intent="opening_hours",
+                entity=None,
+                department=None,
+                needs_rag=True,
+                response_mode="answer",
+                confidence=0.96,
+                source="rule",
+            )
+
         # Current time question (not hotel check-in/out)
         if self._is_current_time_query(normalized_text):
             logger.info("RULE MATCH: current_time")
@@ -1021,6 +1090,20 @@ class RuleEngine:
                 needs_rag=False,
                 response_mode="guided",
                 confidence=1.0,
+                source="rule",
+            )
+
+        rq_cat = extract_request_category_from_text(normalized_text)
+        if rq_cat is not None and not _has_strong_service_request_intent(normalized_text):
+            logger.info("RULE MATCH: hotel_info (soft_service_item) inferred_category=%s", rq_cat)
+            return IntentResult(
+                intent="hotel_info",
+                sub_intent="service_information",
+                entity=None,
+                department=None,
+                needs_rag=True,
+                response_mode="answer",
+                confidence=0.92,
                 source="rule",
             )
 
@@ -1495,6 +1578,34 @@ class RuleEngine:
     def _is_relaxation_query(text: str) -> bool:
         t = (text or "").lower()
         return any(k in t for k in ["çok yorgun", "cok yorgun", "yorgunum", "relax", "dinlenmek istiyorum", "rahatlamak istiyorum"])
+
+    @staticmethod
+    def _is_bare_checkin_or_checkout_keyword(text: str) -> bool:
+        """Tek kelime / kısa ifade; 'geç çıkış' kuralı zaten üstte ayrı eşlenir."""
+        raw = (text or "").strip().lower()
+        raw = raw.strip(".,!? ")
+        if not raw or len(raw) > 36:
+            return False
+        if "geç çıkış" in raw or "gec cikis" in raw:
+            return False
+        multiword_ok = frozenset({"check in", "check out", "check-in", "check-out"})
+        if " " in raw and raw not in multiword_ok:
+            return False
+        singles = frozenset(
+            {
+                "çıkış",
+                "cikis",
+                "giriş",
+                "giris",
+                "checkout",
+                "checkin",
+                "abreise",
+                "anreise",
+                "выезд",
+                "заезд",
+            }
+        ) | multiword_ok
+        return raw in singles
 
     @staticmethod
     def _is_checkin_checkout_time_query(text: str) -> bool:
