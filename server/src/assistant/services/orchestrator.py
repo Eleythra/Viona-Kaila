@@ -98,6 +98,30 @@ _RESERVATION_REDIRECT_TEXT: dict[str, str] = {
     "ru": "Для запросов по бронированию, пожалуйста, перейдите в раздел «Резервации» на главном экране. Вы можете открыть его с помощью кнопки ниже.",
 }
 
+# Geç çıkış: rezervasyon değil — Talepler → Misafir bildirimleri (ön büro / resepsiyon).
+_LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_TEXT: dict[str, str] = {
+    "tr": (
+        "Geç çıkış talebiniz ön büro / resepsiyon tarafından değerlendirilir. "
+        "Ana sayfada İstekler → Misafir bildirimleri içindeki geç çıkış formunu kullanın. "
+        "Aşağıdaki buton bu formu doğrudan açar."
+    ),
+    "en": (
+        "Late check-out is arranged by the front desk. "
+        "Use the late check-out form inside Requests → Guest notices on the main screen. "
+        "The button below opens that form directly."
+    ),
+    "de": (
+        "Ein späterer Check-out wird an der Rezeption geklärt. "
+        "Nutzen Sie das Formular für den späten Check-out unter Anfragen → Gästemeldungen. "
+        "Die Schaltfläche unten öffnet dieses Formular direkt."
+    ),
+    "ru": (
+        "Поздний выезд согласуется на ресепшене. "
+        "Заполните форму позднего выезда в разделе «Запросы» → «Уведомления гостя». "
+        "Кнопка ниже открывает эту форму сразу."
+    ),
+}
+
 
 def _guest_notification_category_prompt(notif_group: str | None, reply_language: str) -> str:
     if reply_language == "en":
@@ -105,6 +129,7 @@ def _guest_notification_category_prompt(notif_group: str | None, reply_language:
             "diet": "Diet / sensitivity:",
             "health": "Health / special situation:",
             "celebration": "Celebration / special occasion:",
+            "reception": "Front desk / reception:",
         }
         lead = "Please choose a category (reply with the number):\n"
     elif reply_language == "de":
@@ -112,6 +137,7 @@ def _guest_notification_category_prompt(notif_group: str | None, reply_language:
             "diet": "Ernährung / Unverträglichkeit:",
             "health": "Gesundheit / besondere Situation:",
             "celebration": "Feier / besonderer Anlass:",
+            "reception": "Rezeption:",
         }
         lead = "Bitte wählen Sie eine Kategorie (Antwort mit Nummer):\n"
     elif reply_language == "ru":
@@ -119,6 +145,7 @@ def _guest_notification_category_prompt(notif_group: str | None, reply_language:
             "diet": "Питание / чувствительность:",
             "health": "Здоровье / особая ситуация:",
             "celebration": "Праздник / особый случай:",
+            "reception": "Ресепшен:",
         }
         lead = "Выберите категорию (ответьте номером):\n"
     else:
@@ -126,6 +153,7 @@ def _guest_notification_category_prompt(notif_group: str | None, reply_language:
             "diet": "Beslenme / hassasiyet:",
             "health": "Sağlık / özel durum:",
             "celebration": "Kutlama / özel gün:",
+            "reception": "Ön büro / resepsiyon:",
         }
         lead = "Lütfen bir kategori seçiniz (numara ile yanıtlayın):\n"
 
@@ -182,6 +210,73 @@ def _request_field_kind(category: str, field: str) -> str | None:
 def _request_enum_values(category: str, field: str) -> list[str]:
     """İlgili kategori + alan için seçilebilir enum değerlerini döndür."""
     return list((_REQUEST_ENUM_OPTIONS.get(category) or {}).get(field) or [])
+
+
+def _enum_options_for_detail(
+    state: ChatFormState,
+    category: str,
+    field_name: str,
+    reply_language: str,
+) -> list[tuple[int, str, str]]:
+    raw_values: list[str] = []
+    if state.operation == "fault" and field_name == "location":
+        raw_values = list(FAULT_LOCATIONS)
+    elif state.operation == "fault" and field_name == "urgency":
+        raw_values = list(FAULT_URGENCIES)
+    elif state.operation == "request":
+        raw_values = _request_enum_values(category, field_name)
+    options: list[tuple[int, str, str]] = []
+    for idx, v in enumerate(raw_values, start=1):
+        lbl = value_label(field_name, v, reply_language)
+        if not lbl or lbl == v:
+            fld = field_label(field_name, reply_language)
+            lbl = f"{fld}: {v}" if fld != field_name else v
+        options.append((idx, v, lbl))
+    return options
+
+
+# Bu alt niyetler chat formu yerine ResponseComposer yönlendirme metni kullanır (öğle paketi, transfer, …).
+_REQUEST_CHAT_FORM_EXEMPT_SUBINTENTS = frozenset(
+    {
+        "lunch_box_request",
+        "reception_contact_request",
+        "guest_relations_contact_request",
+        "transfer_request",
+    }
+)
+
+
+def _form_record_type_label(kind: str, reply_language: str) -> str:
+    k = (kind or "").strip()
+    if reply_language == "en":
+        m = {
+            "fault": "Fault report",
+            "request": "Room request",
+            "complaint": "Complaint",
+            "guest_notification": "Guest notice",
+        }
+    elif reply_language == "de":
+        m = {
+            "fault": "Störmeldung",
+            "request": "Zimmeranfrage",
+            "complaint": "Beschwerde",
+            "guest_notification": "Gästemeldung",
+        }
+    elif reply_language == "ru":
+        m = {
+            "fault": "Неисправность",
+            "request": "Запрос в номер",
+            "complaint": "Жалоба",
+            "guest_notification": "Уведомление для отеля",
+        }
+    else:
+        m = {
+            "fault": "Arıza bildirimi",
+            "request": "Oda talebi",
+            "complaint": "Şikayet",
+            "guest_notification": "Misafir bildirimi",
+        }
+    return m.get(k, k)
 
 
 class ChatOrchestrator:
@@ -354,6 +449,37 @@ class ChatOrchestrator:
             language_switch_applied = reply_lang != reply_base
             # Operasyonel niyetler: chat formu (istek / arıza / şikayet / misafir bildirimi).
             if rule_intent.intent in ("request", "fault_report", "complaint", "guest_notification"):
+                if (
+                    rule_intent.intent == "request"
+                    and rule_intent.sub_intent in _REQUEST_CHAT_FORM_EXEMPT_SUBINTENTS
+                ):
+                    decision_path.append("compose_request_redirect")
+                    response = self._apply_policy(
+                        intent=rule_intent.intent,
+                        sub_intent=rule_intent.sub_intent,
+                        entity=rule_intent.entity,
+                        confidence=rule_intent.confidence,
+                        source=rule_intent.source,
+                        message=payload.message,
+                        reply_language=reply_lang,
+                        ui_language=ui_language,
+                        needs_rag=rule_intent.needs_rag,
+                        response_mode=rule_intent.response_mode,
+                    )
+                    response = self._attach_action(
+                        response=response,
+                        intent=rule_intent.intent,
+                        sub_intent=rule_intent.sub_intent,
+                        entity=rule_intent.entity,
+                    )
+                    logger.info(
+                        "chat_request compose_request_redirect input=%r sub_intent=%s decision_path=%s",
+                        payload.message,
+                        rule_intent.sub_intent,
+                        " > ".join(decision_path),
+                    )
+                    return response
+
                 decision_path.append("chat_form_start")
                 notif_group_param: str | None = None
                 if rule_intent.intent == "guest_notification":
@@ -361,14 +487,19 @@ class ChatOrchestrator:
                         "notif_group_celebration": "celebration",
                         "notif_group_health": "health",
                         "notif_group_diet": "diet",
+                        "notif_group_reception": "reception",
                         "notif_group_all": None,
                     }.get(rule_intent.sub_intent or "")
+                init_req_cat = None
+                if rule_intent.intent == "request":
+                    init_req_cat = self.rule_engine.extract_request_category(normalized)
                 response = self._start_form_flow(
                     payload=payload,
                     intent=rule_intent.intent,
                     reply_language=reply_lang,
                     ui_language=ui_language,
                     notif_group=notif_group_param,
+                    initial_request_category=init_req_cat,
                 )
                 logger.info(
                     "chat_request chat_form_start input=%r intent=%s reply_lang=%s ui_lang=%s decision_path=%s",
@@ -483,12 +614,19 @@ class ChatOrchestrator:
         # LLM sınıflandırıcısı da operasyonel intent bulursa chat form akışını kullan.
         if llm_intent.intent in ("request", "fault_report", "complaint", "guest_notification"):
             decision_path.append("chat_form_start_llm")
+            init_req_cat = None
+            llm_notif_group: str | None = None
+            if llm_intent.intent == "request":
+                init_req_cat = self.rule_engine.extract_request_category(normalized)
+            elif llm_intent.intent == "guest_notification":
+                llm_notif_group = self.rule_engine.infer_guest_notification_group(normalized)
             response = self._start_form_flow(
                 payload=payload,
                 intent=llm_intent.intent,
                 reply_language=reply_base,
                 ui_language=ui_language,
-                notif_group=None,
+                notif_group=llm_notif_group,
+                initial_request_category=init_req_cat,
             )
             logger.info(
                 "chat_request chat_form_start_llm input=%r intent=%s reply_lang=%s ui_lang=%s decision_path=%s",
@@ -672,6 +810,20 @@ class ChatOrchestrator:
             )
 
         if policy == "compose_guest_notification":
+            if self.rule_engine.matches_late_checkout_guest_notif(normalize_text(message)):
+                text = _LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_TEXT.get(
+                    reply_language, _LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_TEXT["tr"]
+                )
+                return self.response_service.build(
+                    "inform",
+                    text,
+                    "guest_notification",
+                    confidence,
+                    reply_language,
+                    ui_language,
+                    source or "rule",
+                    action={"kind": "open_guest_notifications_form"},
+                )
             hint = self.localization_service.get("guest_notification_policy_hint", reply_language)
             return self.response_service.build(
                 "inform",
@@ -780,6 +932,109 @@ class ChatOrchestrator:
 
         return self._fallback_response(intent, confidence, reply_language, ui_language, fallback_reason="rag_no_result")
 
+    def _emit_after_category_selected(
+        self,
+        *,
+        payload: ChatRequest,
+        state: ChatFormState,
+        chosen_category: str,
+        reply_language: str,
+        ui_language: str,
+        intent: str,
+    ) -> ChatResponse:
+        state.category = chosen_category
+        self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+
+        if state.operation == "fault":
+            state.step = "location"
+            self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+            opts = _enum_options_for_detail(state, chosen_category, "location", reply_language)
+            lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts] or []
+            if reply_language == "en":
+                msg = "Where is the fault located?\n" + "\n".join(lines)
+            elif reply_language == "de":
+                msg = "Wo befindet sich die Störung?\n" + "\n".join(lines)
+            elif reply_language == "ru":
+                msg = "Где находится неисправность?\n" + "\n".join(lines)
+            else:
+                msg = "Arızanın bulunduğu yeri seçiniz:\n" + "\n".join(lines)
+            return self.response_service.build(
+                "inform",
+                msg,
+                intent,
+                1.0,
+                reply_language,
+                ui_language,
+                "rule",
+                action={"kind": "chat_form", "operation": state.operation, "step": "location"},
+            )
+
+        if state.operation == "request" and state.pending_detail_fields:
+            next_field = state.pending_detail_fields.pop(0)
+            state.current_detail_field = next_field
+            kind = _request_field_kind(chosen_category, next_field) or "enum"
+            state.step = "detail_int" if kind == "int" else "detail_enum"
+            self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+            if state.step == "detail_enum":
+                opts = _enum_options_for_detail(state, chosen_category, next_field, reply_language)
+                lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts] or []
+                fld_label = field_label(next_field, reply_language)
+                if reply_language == "en":
+                    msg = f"Please choose an option for {fld_label}:\n" + "\n".join(lines)
+                elif reply_language == "de":
+                    msg = f"Bitte wählen Sie eine Option für {fld_label}:\n" + "\n".join(lines)
+                elif reply_language == "ru":
+                    msg = f"Пожалуйста, выберите вариант для {fld_label}:\n" + "\n".join(lines)
+                else:
+                    msg = f"Lütfen {fld_label} için bir seçim yapınız:\n" + "\n".join(lines)
+            else:
+                fld_label = field_label(next_field, reply_language)
+                if reply_language == "en":
+                    msg = f"Please enter a number for {fld_label}."
+                elif reply_language == "de":
+                    msg = f"Bitte geben Sie eine Zahl für {fld_label} ein."
+                elif reply_language == "ru":
+                    msg = f"Пожалуйста, введите число для поля {fld_label}."
+                else:
+                    msg = f"Lütfen {fld_label} için bir sayı giriniz."
+            return self.response_service.build(
+                "inform",
+                msg,
+                intent,
+                1.0,
+                reply_language,
+                ui_language,
+                "rule",
+                action={
+                    "kind": "chat_form",
+                    "operation": state.operation,
+                    "step": state.step,
+                },
+            )
+
+        state.step = "description"
+        self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+        if state.operation == "guest_notification":
+            msg = _guest_notification_description_lead(chosen_category, reply_language)
+        elif reply_language == "en":
+            msg = "Please briefly describe your request/issue."
+        elif reply_language == "de":
+            msg = "Bitte beschreiben Sie Ihr Anliegen kurz."
+        elif reply_language == "ru":
+            msg = "Пожалуйста, кратко опишите вашу просьбу или проблему."
+        else:
+            msg = "Lütfen talebinizi veya sorununuzu kısaca açıklayın."
+        return self.response_service.build(
+            "inform",
+            msg,
+            intent,
+            1.0,
+            reply_language,
+            ui_language,
+            "rule",
+            action={"kind": "chat_form", "operation": state.operation, "step": "description"},
+        )
+
     def _start_form_flow(
         self,
         *,
@@ -788,6 +1043,7 @@ class ChatOrchestrator:
         reply_language: str,
         ui_language: str,
         notif_group: str | None = None,
+        initial_request_category: str | None = None,
     ) -> ChatResponse:
         if intent == "request":
             op: OperationType = "request"
@@ -798,6 +1054,21 @@ class ChatOrchestrator:
         else:
             op = "complaint"
 
+        if op == "guest_notification" and notif_group == "reception":
+            text = _LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_TEXT.get(
+                reply_language, _LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_TEXT["tr"]
+            )
+            return self.response_service.build(
+                "inform",
+                text,
+                "guest_notification",
+                1.0,
+                reply_language,
+                ui_language,
+                "rule",
+                action={"kind": "open_guest_notifications_form"},
+            )
+
         state = ChatFormState(
             operation=op,
             language=reply_language,
@@ -806,6 +1077,26 @@ class ChatOrchestrator:
             step="category",
             initial_message=payload.message,
         )
+        if (
+            op == "request"
+            and initial_request_category
+            and initial_request_category in REQUEST_CATEGORIES
+        ):
+            ic = initial_request_category.strip()
+            fields = REQUEST_DETAIL_FIELDS.get(ic) or ()
+            state.category = ic
+            state.pending_detail_fields = [f.name for f in fields]
+            state.current_detail_field = None
+            self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+            return self._emit_after_category_selected(
+                payload=payload,
+                state=state,
+                chosen_category=ic,
+                reply_language=reply_language,
+                ui_language=ui_language,
+                intent="request",
+            )
+
         self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
 
         if op == "guest_notification":
@@ -893,11 +1184,47 @@ class ChatOrchestrator:
                 ):
                     # Farklı operasyonel intent: mevcut formu bırak, yeni formu başlat.
                     self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+                    if (
+                        re_intent.intent == "request"
+                        and re_intent.sub_intent in _REQUEST_CHAT_FORM_EXEMPT_SUBINTENTS
+                    ):
+                        response = self._apply_policy(
+                            intent=re_intent.intent,
+                            sub_intent=re_intent.sub_intent,
+                            entity=re_intent.entity,
+                            confidence=re_intent.confidence,
+                            source=re_intent.source,
+                            message=payload.message,
+                            reply_language=reply_language,
+                            ui_language=ui_language,
+                            needs_rag=re_intent.needs_rag,
+                            response_mode=re_intent.response_mode,
+                        )
+                        return self._attach_action(
+                            response=response,
+                            intent=re_intent.intent,
+                            sub_intent=re_intent.sub_intent,
+                            entity=re_intent.entity,
+                        )
+                    ng_switch: str | None = None
+                    if re_intent.intent == "guest_notification":
+                        ng_switch = {
+                            "notif_group_celebration": "celebration",
+                            "notif_group_health": "health",
+                            "notif_group_diet": "diet",
+                            "notif_group_reception": "reception",
+                            "notif_group_all": None,
+                        }.get(re_intent.sub_intent or "")
+                    init_sw = None
+                    if re_intent.intent == "request":
+                        init_sw = self.rule_engine.extract_request_category(normalized)
                     return self._start_form_flow(
                         payload=payload,
                         intent=re_intent.intent,
                         reply_language=reply_language,
                         ui_language=ui_language,
+                        notif_group=ng_switch,
+                        initial_request_category=init_sw,
                     )
                 if re_intent.intent == "chitchat":
                     # Selamlaşma / sohbet: formu iptal et ve sıcak karşılama yanıtı ver.
@@ -946,27 +1273,6 @@ class ChatOrchestrator:
                 return FAULT_CATEGORIES
             return COMPLAINT_CATEGORIES
 
-        # Yardımcı: bir enum alanı için seçenekleri label’larla üretir.
-        def _enum_options_for_field(category: str, field_name: str) -> list[tuple[int, str, str]]:
-            raw_values: list[str] = []
-            if state.operation == "fault" and field_name == "location":
-                raw_values = list(FAULT_LOCATIONS)
-            elif state.operation == "fault" and field_name == "urgency":
-                raw_values = list(FAULT_URGENCIES)
-            elif state.operation == "request":
-                raw_values = _request_enum_values(category, field_name)
-            # Şikayet için şu an ek enum alan yok.
-            options: list[tuple[int, str, str]] = []
-            for idx, v in enumerate(raw_values, start=1):
-                # Önce value_label, yoksa ham değeri kullan.
-                lbl = value_label(field_name, v, reply_language)
-                if not lbl or lbl == v:
-                    # field_label + ham değer fallback (örn: "Request type: refill")
-                    fld = field_label(field_name, reply_language)
-                    lbl = f"{fld}: {v}" if fld != field_name else v
-                options.append((idx, v, lbl))
-            return options
-
         # Kategori adımı: kullanıcı bir kategori seçer ve detay akışı hazırlanır.
         if state.step == "category":
             categories = list(_current_categories(state.operation))
@@ -1004,113 +1310,27 @@ class ChatOrchestrator:
                     action={"kind": "chat_form", "operation": state.operation, "step": "category"},
                 )
 
-            state.category = chosen_category
+            picked = chosen_category
             state.pending_detail_fields = []
             state.current_detail_field = None
-
             if state.operation == "request":
-                fields = REQUEST_DETAIL_FIELDS.get(chosen_category) or ()
+                fields = REQUEST_DETAIL_FIELDS.get(picked) or ()
                 state.pending_detail_fields = [f.name for f in fields]
-
-            # Sonraki adımı belirle.
-            if state.operation == "fault":
-                # Arıza için önce lokasyon sonra aciliyet sorulacak.
-                state.step = "location"
-                self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
-                opts = _enum_options_for_field(chosen_category, "location")
-                lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts] or []
-                if reply_language == "en":
-                    msg = "Where is the fault located?\n" + "\n".join(lines)
-                elif reply_language == "de":
-                    msg = "Wo befindet sich die Störung?\n" + "\n".join(lines)
-                elif reply_language == "ru":
-                    msg = "Где находится неисправность?\n" + "\n".join(lines)
-                else:
-                    msg = "Arızanın bulunduğu yeri seçiniz:\n" + "\n".join(lines)
-                return self.response_service.build(
-                    "inform",
-                    msg,
-                    intent,
-                    1.0,
-                    reply_language,
-                    ui_language,
-                    "rule",
-                    action={"kind": "chat_form", "operation": state.operation, "step": "location"},
-                )
-
-            # İstek için varsa detay alanlarına, yoksa açıklamaya geç.
-            if state.operation == "request" and state.pending_detail_fields:
-                next_field = state.pending_detail_fields.pop(0)
-                state.current_detail_field = next_field
-                kind = _request_field_kind(chosen_category, next_field) or "enum"
-                state.step = "detail_int" if kind == "int" else "detail_enum"
-                self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
-                if state.step == "detail_enum":
-                    opts = _enum_options_for_field(chosen_category, next_field)
-                    lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts] or []
-                    fld_label = field_label(next_field, reply_language)
-                    if reply_language == "en":
-                        msg = f"Please choose an option for {fld_label}:\n" + "\n".join(lines)
-                    elif reply_language == "de":
-                        msg = f"Bitte wählen Sie eine Option für {fld_label}:\n" + "\n".join(lines)
-                    elif reply_language == "ru":
-                        msg = f"Пожалуйста, выберите вариант для {fld_label}:\n" + "\n".join(lines)
-                    else:
-                        msg = f"Lütfen {fld_label} için bir seçim yapınız:\n" + "\n".join(lines)
-                else:
-                    fld_label = field_label(next_field, reply_language)
-                    if reply_language == "en":
-                        msg = f"Please enter a number for {fld_label}."
-                    elif reply_language == "de":
-                        msg = f"Bitte geben Sie eine Zahl für {fld_label} ein."
-                    elif reply_language == "ru":
-                        msg = f"Пожалуйста, введите число для поля {fld_label}."
-                    else:
-                        msg = f"Lütfen {fld_label} için bir sayı giriniz."
-                return self.response_service.build(
-                    "inform",
-                    msg,
-                    intent,
-                    1.0,
-                    reply_language,
-                    ui_language,
-                    "rule",
-                    action={
-                        "kind": "chat_form",
-                        "operation": state.operation,
-                        "step": state.step,
-                    },
-                )
-
-            # Şikayet, misafir bildirimi veya detaysız istek: açıklama adımına geç.
-            state.step = "description"
             self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
-            if state.operation == "guest_notification":
-                msg = _guest_notification_description_lead(chosen_category, reply_language)
-            elif reply_language == "en":
-                msg = "Please briefly describe your request/issue."
-            elif reply_language == "de":
-                msg = "Bitte beschreiben Sie Ihr Anliegen kurz."
-            elif reply_language == "ru":
-                msg = "Пожалуйста, кратко опишите вашу просьбу или проблему."
-            else:
-                msg = "Lütfen talebinizi veya sorununuzu kısaca açıklayın."
-            return self.response_service.build(
-                "inform",
-                msg,
-                intent,
-                1.0,
-                reply_language,
-                ui_language,
-                "rule",
-                action={"kind": "chat_form", "operation": state.operation, "step": "description"},
+            return self._emit_after_category_selected(
+                payload=payload,
+                state=state,
+                chosen_category=picked,
+                reply_language=reply_language,
+                ui_language=ui_language,
+                intent=intent,
             )
 
         # Enum detay alanı: kullanıcı listeden bir seçenek seçer.
         if state.step == "detail_enum":
             category = state.category or ""
             field_name = state.current_detail_field or ""
-            options = _enum_options_for_field(category, field_name)
+            options = _enum_options_for_detail(state, category, field_name, reply_language)
             if not options:
                 # Beklenmedik durum: detay alanı tanımlı değil; açıklamaya atla.
                 state.step = "description"
@@ -1198,7 +1418,7 @@ class ChatOrchestrator:
                 state.step = "detail_int" if kind == "int" else "detail_enum"
                 self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
                 if state.step == "detail_enum":
-                    opts = _enum_options_for_field(state.category or "", next_field)
+                    opts = _enum_options_for_detail(state, state.category or "", next_field, reply_language)
                     lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts] or []
                     fld_label = field_label(next_field, reply_language)
                     if reply_language == "en":
@@ -1234,7 +1454,7 @@ class ChatOrchestrator:
             if state.operation == "fault":
                 state.step = "location"
                 self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
-                opts = _enum_options_for_field(state.category or "", "location")
+                opts = _enum_options_for_detail(state, state.category or "", "location", reply_language)
                 lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts] or []
                 if reply_language == "en":
                     msg = "Where is the fault located?\n" + "\n".join(lines)
@@ -1335,7 +1555,7 @@ class ChatOrchestrator:
                 state.step = "detail_int" if kind == "int" else "detail_enum"
                 self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
                 if state.step == "detail_enum":
-                    opts = _enum_options_for_field(state.category or "", next_field)
+                    opts = _enum_options_for_detail(state, state.category or "", next_field, reply_language)
                     lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts] or []
                     fld_label = field_label(next_field, reply_language)
                     if reply_language == "en":
@@ -1370,7 +1590,7 @@ class ChatOrchestrator:
             if state.operation == "fault":
                 state.step = "location"
                 self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
-                opts = _enum_options_for_field(state.category or "", "location")
+                opts = _enum_options_for_detail(state, state.category or "", "location", reply_language)
                 lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts] or []
                 if reply_language == "en":
                     msg = "Where is the fault located?\n" + "\n".join(lines)
@@ -1414,7 +1634,7 @@ class ChatOrchestrator:
 
         # Arıza için lokasyon adımı.
         if state.step == "location":
-            opts = _enum_options_for_field(state.category or "", "location")
+            opts = _enum_options_for_detail(state, state.category or "", "location", reply_language)
             if not opts:
                 state.step = "description"
                 self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
@@ -1489,7 +1709,7 @@ class ChatOrchestrator:
             state.details["location"] = chosen
             state.step = "urgency"
             self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
-            uopts = _enum_options_for_field(state.category or "", "urgency")
+            uopts = _enum_options_for_detail(state, state.category or "", "urgency", reply_language)
             lines = [f"{idx}. {lbl}" for idx, _val, lbl in uopts] or []
             if reply_language == "en":
                 msg = "How urgent is the fault?\n" + "\n".join(lines)
@@ -1512,7 +1732,7 @@ class ChatOrchestrator:
 
         # Arıza için aciliyet adımı.
         if state.step == "urgency":
-            opts = _enum_options_for_field(state.category or "", "urgency")
+            opts = _enum_options_for_detail(state, state.category or "", "urgency", reply_language)
             if not opts:
                 state.step = "description"
                 self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
@@ -1814,6 +2034,17 @@ class ChatOrchestrator:
             details = dict(state.details or {})
             location = details.get("location") if guest_type == "fault" else None
             urgency = details.get("urgency") if guest_type == "fault" else None
+            cat_intent = (
+                "guest_notification"
+                if guest_type == "guest_notification"
+                else (
+                    "request"
+                    if guest_type == "request"
+                    else ("fault" if guest_type == "fault" else "complaint")
+                )
+            )
+            category_display = category_label(cat_intent, category, reply_language)
+            type_display = _form_record_type_label(guest_type, reply_language)
 
             # Özet metni (kayıt açılmadan önce).
             if reply_language == "en":
@@ -1858,12 +2089,14 @@ class ChatOrchestrator:
                 confirm_line = "\nLütfen seçin:\n1. Onayla ve kayıt aç\n2. İptal et"
 
             lines = [header.rstrip()]
-            lines.append(f"- {type_label}: {guest_type}")
-            lines.append(f"- {cat_label}: {category}")
+            lines.append(f"- {type_label}: {type_display}")
+            lines.append(f"- {cat_label}: {category_display}")
             if location:
-                lines.append(f"- {loc_label}: {location}")
+                loc_disp = value_label("location", location, reply_language) or location
+                lines.append(f"- {loc_label}: {loc_disp}")
             if urgency:
-                lines.append(f"- {urg_label}: {urgency}")
+                urg_disp = value_label("urgency", urgency, reply_language) or urgency
+                lines.append(f"- {urg_label}: {urg_disp}")
             lines.append(f"- {desc_label}: {state.description or state.initial_message or ''}")
             lines.append(f"- {name_label}: {state.full_name or ''}")
             lines.append(f"- {room_label}: {state.room or ''}")
@@ -2338,8 +2571,6 @@ class ChatOrchestrator:
         t = (message or "").lower()
         if "erken giriş" in t or "erken giris" in t or "early checkin" in t:
             return "early_checkin_request"
-        if "geç çıkış" in t or "gec cikis" in t or "late checkout" in t:
-            return "late_checkout_request"
         if "oda değiş" in t or "oda degis" in t or "room change" in t:
             return "room_change_request"
         if "görünmüyor" in t or "gorunmuyor" in t or "not found" in t:

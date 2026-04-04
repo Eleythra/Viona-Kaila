@@ -148,8 +148,12 @@ GUEST_NOTIFICATION_BY_GROUP: dict[str, tuple[str, ...]] = {
         "room_decoration",
         "other_celebration",
     ),
+    # Ön büro / resepsiyon (geç çıkış vb.) — rezervasyon modülü değil, misafir bildirimi kaydı.
+    "reception": ("late_checkout",),
 }
 
+# Web’deki radyo grupları (diet/health/celebration) ile aynı. Geç çıkış ayrı type=late_checkout formu;
+# sohbet tam listesine eklenmez — seçilse bile Node GUEST_NOTIFICATION_CATEGORIES reddederdi.
 GUEST_NOTIFICATION_ALL: tuple[str, ...] = (
     *GUEST_NOTIFICATION_BY_GROUP["diet"],
     *GUEST_NOTIFICATION_BY_GROUP["health"],
@@ -164,5 +168,7 @@ def guest_notification_categories_for_group(group: str | None) -> list[str]:
         return list(GUEST_NOTIFICATION_BY_GROUP["health"])
     if group == "celebration":
         return list(GUEST_NOTIFICATION_BY_GROUP["celebration"])
+    if group == "reception":
+        return list(GUEST_NOTIFICATION_BY_GROUP["reception"])
     return list(GUEST_NOTIFICATION_ALL)
 

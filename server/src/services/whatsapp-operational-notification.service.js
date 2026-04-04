@@ -3,6 +3,8 @@
  * WhatsApp Cloud API template bildirim katmanı. Rezervasyon göndermez.
  *
  * Şablon adları sabit: viona_issue_notification | viona_request_notification | viona_complaint_notification | viona_guest_notification
+ * Misafir bildirimi (viona_guest_notification) gövdesi 7 metin parametresi: ad, oda, kategori (üst), alt kategori, tarih, saat, açıklama.
+ * Geç çıkış (late_checkout) aynı şablonu kullanır; kategori/alt kategori sabit metin, tarih-saat istenen çıkıştır.
  * Env: WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_BUSINESS_ACCOUNT_ID (opsiyonel, dokümantasyon),
  * WHATSAPP_TECH_RECIPIENTS | WHATSAPP_HK_RECIPIENTS | WHATSAPP_FRONT_RECIPIENTS |
  * WHATSAPP_RECEPTION_RECIPIENTS | WHATSAPP_GUEST_RELATIONS_RECIPIENTS (misafir bildirimi; boşsa FRONT yedek)
@@ -52,6 +54,23 @@ const WH_CATEGORY_LABELS = {
     surprise_organization: "Sürpriz organizasyon",
     room_decoration: "Oda süsleme",
     other_celebration: "Diğer (kutlama)",
+  },
+  guest_notification_main: {
+    allergen_notice: "Beslenme",
+    gluten_sensitivity: "Beslenme",
+    lactose_sensitivity: "Beslenme",
+    vegan_vegetarian: "Beslenme",
+    food_sensitivity_general: "Beslenme",
+    chronic_condition: "Sağlık",
+    accessibility_special_needs: "Sağlık",
+    pregnancy: "Sağlık",
+    medication_health_sensitivity: "Sağlık",
+    other_health: "Sağlık",
+    birthday_celebration: "Kutlama",
+    honeymoon_anniversary: "Kutlama",
+    surprise_organization: "Kutlama",
+    room_decoration: "Kutlama",
+    other_celebration: "Kutlama",
   },
   complaint: {
     room_cleaning: "Oda temizliği",
@@ -129,6 +148,12 @@ function categoryLabel(kind, cat) {
   return clip(dash(WH_CATEGORY_LABELS?.[k]?.[c] || c));
 }
 
+function guestNotificationMainCategoryLabel(catId) {
+  const c = String(catId || "").trim();
+  const m = WH_CATEGORY_LABELS?.guest_notification_main?.[c];
+  return clip(dash(m || "Misafir bildirimi"));
+}
+
 function formatDateDDMMYYYY(d) {
   const day = String(d.getDate()).padStart(2, "0");
   const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -144,7 +169,14 @@ function formatTimeHHmm(d) {
 
 function normalizeGuestType(payload, intentFallback) {
   const raw = String(payload?.type || "").toLowerCase();
-  if (raw === "fault" || raw === "request" || raw === "complaint" || raw === "guest_notification") return raw;
+  if (
+    raw === "fault" ||
+    raw === "request" ||
+    raw === "complaint" ||
+    raw === "guest_notification" ||
+    raw === "late_checkout"
+  )
+    return raw;
   const i = String(intentFallback || "").toLowerCase();
   if (i === "fault_report") return "fault";
   if (i === "request") return "request";
@@ -198,7 +230,7 @@ export function recipientsForGuestPayload(payload, intentFallback = "unknown") {
   if (pt === "fault") return parseOperationalRecipients(process.env.WHATSAPP_TECH_RECIPIENTS || "");
   if (pt === "request") return parseOperationalRecipients(process.env.WHATSAPP_HK_RECIPIENTS || "");
   if (pt === "complaint") return parseOperationalRecipients(process.env.WHATSAPP_FRONT_RECIPIENTS || "");
-  if (pt === "guest_notification") {
+  if (pt === "guest_notification" || pt === "late_checkout") {
     const reception = parseOperationalRecipients(process.env.WHATSAPP_RECEPTION_RECIPIENTS || "");
     const gr = parseOperationalRecipients(process.env.WHATSAPP_GUEST_RELATIONS_RECIPIENTS || "");
     const merged = mergeRecipientLists(reception, gr);
@@ -209,7 +241,7 @@ export function recipientsForGuestPayload(payload, intentFallback = "unknown") {
   if (t === "fault") return parseOperationalRecipients(process.env.WHATSAPP_TECH_RECIPIENTS || "");
   if (t === "request") return parseOperationalRecipients(process.env.WHATSAPP_HK_RECIPIENTS || "");
   if (t === "complaint") return parseOperationalRecipients(process.env.WHATSAPP_FRONT_RECIPIENTS || "");
-  if (t === "guest_notification") {
+  if (t === "guest_notification" || t === "late_checkout") {
     const reception = parseOperationalRecipients(process.env.WHATSAPP_RECEPTION_RECIPIENTS || "");
     const gr = parseOperationalRecipients(process.env.WHATSAPP_GUEST_RELATIONS_RECIPIENTS || "");
     const merged = mergeRecipientLists(reception, gr);
@@ -306,14 +338,47 @@ function buildComplaintBodyParams(payload, now) {
   ];
 }
 
-/** Şikayet şablonu ile aynı 6 gövde parametresi; Meta’da viona_guest_notification şablonunu bu sırayla tanımlayın. */
+/**
+ * Meta şablon sırası: {{1}} ad, {{2}} oda, {{3}} üst kategori, {{4}} alt kategori, {{5}} tarih, {{6}} saat, {{7}} açıklama.
+ * Genel bildirimlerde {{5}}/{{6}} kayıt anı; geç çıkışta istenen çıkış tarihi/saati.
+ */
 function buildGuestNotificationBodyParams(payload, now) {
+  const cat = String(payload.category || "").trim();
   return [
     clip(dash(payload.name)),
     clip(dash(payload.room)),
-    categoryLabel("guest_notification", payload.category),
+    guestNotificationMainCategoryLabel(cat),
+    categoryLabel("guest_notification", cat),
     dash(formatDateDDMMYYYY(now)),
     dash(formatTimeHHmm(now)),
+    clip(dash(payload.description)),
+  ];
+}
+
+function parseIsoDateToLocalDate(isoYmd) {
+  const s = String(isoYmd || "").trim();
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]) - 1;
+  const d = Number(m[3]);
+  const dt = new Date(y, mo, d);
+  if (dt.getFullYear() !== y || dt.getMonth() !== mo || dt.getDate() !== d) return null;
+  return dt;
+}
+
+function buildLateCheckoutBodyParams(payload) {
+  const rawD = String(payload.checkoutDate || payload.details?.checkoutDate || "").trim();
+  const rawT = String(payload.checkoutTime || payload.details?.checkoutTime || "").trim();
+  const dt = parseIsoDateToLocalDate(rawD);
+  const dateStr = dt ? formatDateDDMMYYYY(dt) : dash(rawD);
+  return [
+    clip(dash(payload.name)),
+    clip(dash(payload.room)),
+    clip("Geç çıkış"),
+    clip("Talep edilen çıkış"),
+    dash(dateStr),
+    dash(rawT || "-"),
     clip(dash(payload.description)),
   ];
 }
@@ -415,7 +480,8 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
     recordType !== "fault" &&
     recordType !== "request" &&
     recordType !== "complaint" &&
-    recordType !== "guest_notification"
+    recordType !== "guest_notification" &&
+    recordType !== "late_checkout"
   ) {
     console.info("[whatsapp_ops] notify_skipped reason=not_operational_type record_type=%s", recordType);
     return;
@@ -451,6 +517,7 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
   if (recordType === "fault") bodyParams = buildFaultBodyParams(payload, now);
   else if (recordType === "request") bodyParams = buildRequestBodyParams(payload, now);
   else if (recordType === "complaint") bodyParams = buildComplaintBodyParams(payload, now);
+  else if (recordType === "late_checkout") bodyParams = buildLateCheckoutBodyParams(payload);
   else bodyParams = buildGuestNotificationBodyParams(payload, now);
 
   const rawGraphVer = String(process.env.WHATSAPP_GRAPH_API_VERSION || "v21.0").trim();

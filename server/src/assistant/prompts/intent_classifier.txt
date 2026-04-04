@@ -21,3 +21,4 @@ Rules:
 - Only hotel_info may set needs_rag=true.
 - For non-hotel_info intents, needs_rag=false.
 - Use guest_notification when the user informs the hotel about diet/allergies, health or accessibility needs, or celebrations/special occasions (any language), not for room faults or complaints.
+- Late check-out / geç çıkış / späterer Check-out / поздний выезд is guest_notification (front desk), not reservation.

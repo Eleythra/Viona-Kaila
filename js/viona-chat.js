@@ -184,6 +184,12 @@
               }
               return;
             }
+            if (opt.value === "__open_guest_notifications_form__") {
+              if (typeof window.vionaChatOpenGuestNotifications === "function") {
+                window.vionaChatOpenGuestNotifications();
+              }
+              return;
+            }
             if (!els.input || !els.send) return;
             els.input.value = String(opt.value || "").trim();
             els.send.click();
@@ -391,6 +397,13 @@
         {
           value: "__open_reservation_form__",
           label: t("chatOpenReservation") || "Rezervasyon formunu aç",
+        },
+      ];
+    } else if (action && action.kind === "open_guest_notifications_form") {
+      options = [
+        {
+          value: "__open_guest_notifications_form__",
+          label: t("chatOpenGuestNotifications") || "Geç çıkış formunu aç",
         },
       ];
     } else if (action && action.kind === "chat_form" && action.step) {

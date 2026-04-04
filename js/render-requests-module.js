@@ -8,6 +8,57 @@
   /** Anket modülü (survey-render.js) ile aynı süre: teşekkür kısa görünsün, sonra ana sayfa. */
   var REQ_SUCCESS_THEN_HOME_MS = 2600;
 
+  /** Sunucu `error` metinleri → i18n anahtarı (bilinen İngilizce mesajlar). */
+  var GUEST_REQUEST_API_ERR_I18N = {
+    "invalid type": "reqApiErrInvalidType",
+    "type is required": "reqApiErrTypeRequired",
+    "name is required": "reqApiErrNameRequired",
+    "room is required": "reqApiErrRoomRequired",
+    "nationality is required": "reqApiErrNationalityRequired",
+    "name must contain letters only": "reqErrNameInvalid",
+    "invalid hotel room number": "reqErrRoomDigits",
+    "nationality must contain letters only": "reqErrNationalityInvalid",
+    "description is required": "reqApiErrDescriptionRequired",
+    "description is required for late checkout": "reqErrLateCheckoutNote",
+    "checkout date is required (YYYY-MM-DD)": "reqErrLateCheckoutDate",
+    "checkout time is required (HH:MM)": "reqErrLateCheckoutTime",
+    "checkout date cannot be in the past": "reqApiErrCheckoutPast",
+    "guest notification category is required": "reqErrGuestNotificationCategoryRequired",
+    "description is required for selected notification category": "reqErrGuestNotificationDescriptionRequired",
+    "guest_request_submit_failed": "reqErrSend",
+    "guest_request_create_failed": "reqErrSend",
+    "guest_request_bad_response": "reqApiErrBadResponse",
+    SUPABASE_NOT_CONFIGURED: "reqApiErrSupabase",
+  };
+
+  function translateGuestRequestApiError(raw, t) {
+    var s = String(raw || "").trim();
+    if (!s) return t("reqErrSend");
+    var key = GUEST_REQUEST_API_ERR_I18N[s];
+    if (key) {
+      var out = t(key);
+      if (out && out !== key) return out;
+    }
+    if (/^http_\d+$/.test(s)) {
+      return t("reqApiErrHttpStatus").replace(/\{code\}/g, s.replace(/^http_/, ""));
+    }
+    if (s === "Failed to fetch" || s.indexOf("NetworkError") === 0) {
+      return t("reqApiErrNetwork");
+    }
+    if (s === "guest_request_submit_failed") return t("reqErrSend");
+    var sl = s.toLowerCase();
+    if (
+      sl.indexOf("violates check constraint") >= 0 ||
+      sl.indexOf("permission denied") >= 0 ||
+      sl.indexOf("row-level security") >= 0 ||
+      (sl.indexOf("could not find the") >= 0 && sl.indexOf("column") >= 0)
+    ) {
+      return t("reqApiErrDbGeneric");
+    }
+    if (sl.indexOf("database_insert_failed") >= 0) return t("reqApiErrDbGeneric");
+    return s;
+  }
+
   var HUB_ICONS = {
     request:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M21 15a4 4 0 01-4 4H8l-5 3v-3H5a4 4 0 01-4-4V7a4 4 0 014-4h14a4 4 0 014 4v8z"/><path d="M8 10h.01M12 10h.01M16 10h.01"/></svg>',
@@ -96,6 +147,184 @@
       return false;
     }
     return true;
+  }
+
+  /** HTML time veya metin → HH:MM (sunucu ile aynı mantık). */
+  function normalizeLateCheckoutTimeForPayload(raw) {
+    var s = String(raw || "").trim();
+    if (!s) return "";
+    var m = /^(\d{1,2}):(\d{2})(?::\d{2})?/.exec(s);
+    if (!m) return "";
+    var h = Math.min(23, Math.max(0, parseInt(m[1], 10)));
+    var mi = Math.min(59, Math.max(0, parseInt(m[2], 10)));
+    return String(h).padStart(2, "0") + ":" + String(mi).padStart(2, "0");
+  }
+
+  /**
+   * Geç çıkış saati: tetikleyiciye basınca panel açılır; saat + dakika seçilir, dakikada panel kapanır ve saat alanında HH:MM görünür.
+   */
+  function buildLateCheckoutDropdownTimePicker(pid, t) {
+    var root = document.createElement("div");
+    root.className = "req-time-dropdown";
+
+    var hidden = document.createElement("input");
+    hidden.type = "hidden";
+    hidden.name = "checkoutTime";
+    hidden.id = pid + "-checkoutTime";
+
+    var trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.id = pid + "-checkoutTime-trigger";
+    trigger.className = "req-time-dropdown__trigger";
+    trigger.setAttribute("aria-haspopup", "dialog");
+    trigger.setAttribute("aria-expanded", "false");
+    trigger.setAttribute("aria-controls", pid + "-time-dropdown-panel");
+
+    var valSpan = document.createElement("span");
+    valSpan.className = "req-time-dropdown__value";
+    var chev = document.createElement("span");
+    chev.className = "req-time-dropdown__chev";
+    chev.setAttribute("aria-hidden", "true");
+    chev.innerHTML =
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+    trigger.appendChild(valSpan);
+    trigger.appendChild(chev);
+
+    var panel = document.createElement("div");
+    panel.id = pid + "-time-dropdown-panel";
+    panel.className = "req-time-dropdown__panel";
+    panel.hidden = true;
+    panel.setAttribute("role", "dialog");
+    panel.setAttribute("aria-label", t("reqLabelCheckoutTime"));
+
+    var hint = document.createElement("p");
+    hint.className = "req-time-dropdown__hint";
+    hint.textContent = t("reqTimeDropdownHint");
+
+    var columns = document.createElement("div");
+    columns.className = "req-time-dropdown__columns";
+
+    function makeColumn(labelKey, count, dataKey) {
+      var block = document.createElement("div");
+      block.className = "req-time-dropdown__block";
+      var cap = document.createElement("span");
+      cap.className = "req-time-dropdown__caption";
+      cap.textContent = t(labelKey);
+      var col = document.createElement("div");
+      col.className = "req-time-dropdown__col";
+      var inner = document.createElement("div");
+      inner.className = "req-time-dropdown__col-inner";
+      for (var i = 0; i < count; i++) {
+        var v = String(i).padStart(2, "0");
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "req-time-dropdown__opt";
+        btn.setAttribute("data-" + dataKey, v);
+        btn.textContent = v;
+        inner.appendChild(btn);
+      }
+      col.appendChild(inner);
+      block.appendChild(cap);
+      block.appendChild(col);
+      return { block: block, col: col };
+    }
+
+    var hoursBlk = makeColumn("reqTimeScrollHours", 24, "hour");
+    var minsBlk = makeColumn("reqTimeScrollMinutes", 60, "min");
+    var sep = document.createElement("span");
+    sep.className = "req-time-dropdown__colon";
+    sep.setAttribute("aria-hidden", "true");
+    sep.textContent = ":";
+
+    columns.appendChild(hoursBlk.block);
+    columns.appendChild(sep);
+    columns.appendChild(minsBlk.block);
+    panel.appendChild(hint);
+    panel.appendChild(columns);
+
+    root.appendChild(trigger);
+    root.appendChild(panel);
+    root.appendChild(hidden);
+
+    var selH = "12";
+    var selM = "00";
+
+    function displayStr() {
+      return selH + ":" + selM;
+    }
+
+    function syncHidden() {
+      hidden.value = displayStr();
+      valSpan.textContent = displayStr();
+    }
+
+    function setOpen(open) {
+      panel.hidden = !open;
+      trigger.setAttribute("aria-expanded", open ? "true" : "false");
+      root.classList.toggle("req-time-dropdown--open", open);
+      if (open) {
+        requestAnimationFrame(function () {
+          scrollActiveIntoView(hoursBlk.col);
+          scrollActiveIntoView(minsBlk.col);
+        });
+      }
+    }
+
+    function setActive(colEl, dataKey, val) {
+      colEl.querySelectorAll(".req-time-dropdown__opt").forEach(function (b) {
+        b.classList.toggle("req-time-dropdown__opt--active", b.getAttribute("data-" + dataKey) === val);
+      });
+    }
+
+    function scrollActiveIntoView(colEl) {
+      var a = colEl.querySelector(".req-time-dropdown__opt--active");
+      if (a && typeof a.scrollIntoView === "function") {
+        a.scrollIntoView({ block: "nearest" });
+      }
+    }
+
+    function applySelection(scrollHour, scrollMin, closeAfter) {
+      selH = scrollHour;
+      selM = scrollMin;
+      setActive(hoursBlk.col, "hour", selH);
+      setActive(minsBlk.col, "min", selM);
+      syncHidden();
+      if (closeAfter) setOpen(false);
+    }
+
+    trigger.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      setOpen(panel.hidden);
+    });
+
+    hoursBlk.col.addEventListener("click", function (ev) {
+      var btn = ev.target.closest(".req-time-dropdown__opt");
+      if (!btn || !hoursBlk.col.contains(btn)) return;
+      applySelection(btn.getAttribute("data-hour"), selM, false);
+      scrollActiveIntoView(hoursBlk.col);
+    });
+    minsBlk.col.addEventListener("click", function (ev) {
+      var btn = ev.target.closest(".req-time-dropdown__opt");
+      if (!btn || !minsBlk.col.contains(btn)) return;
+      applySelection(selH, btn.getAttribute("data-min"), true);
+    });
+
+    function onDocDown(ev) {
+      if (!root.contains(ev.target)) setOpen(false);
+    }
+    function onKey(ev) {
+      if (ev.key === "Escape" && !panel.hidden) {
+        setOpen(false);
+        trigger.focus();
+      }
+    }
+    document.addEventListener("mousedown", onDocDown);
+    document.addEventListener("keydown", onKey);
+
+    applySelection(selH, selM, false);
+    syncHidden();
+
+    return root;
   }
 
   function mountCalendar(host, hidden, minIso, minMonth) {
@@ -1019,6 +1248,277 @@
     other_celebration: true,
   };
 
+  /**
+   * Tek ekran: üstte geç çıkış (şerit veya tam ekran form), altta misafir bildirimi formu.
+   * opts.openLateCheckout: sohbetten gelince geç çıkış formunu doğrudan aç (Misafir bildirimleri sekmesi içinde).
+   */
+  function buildGuestNotificationUnifiedFlow(t, onSuccessGoHome, minIso, opts) {
+    opts = opts || {};
+    var root = document.createElement("div");
+    root.className = "req-gn-unified";
+
+    var strip = document.createElement("div");
+    strip.className = "req-gn-late-card";
+    strip.setAttribute("role", "region");
+    strip.setAttribute("aria-label", t("reqLateCheckoutStripTitle"));
+
+    var stripAccent = document.createElement("div");
+    stripAccent.className = "req-gn-late-card__accent";
+    stripAccent.setAttribute("aria-hidden", "true");
+
+    var stripInner = document.createElement("div");
+    stripInner.className = "req-gn-late-card__inner";
+
+    var iconWrap = document.createElement("div");
+    iconWrap.className = "req-gn-late-card__icon";
+    iconWrap.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+
+    var stripText = document.createElement("div");
+    stripText.className = "req-gn-late-card__body";
+    var stripTitle = document.createElement("h3");
+    stripTitle.className = "req-gn-late-card__title";
+    stripTitle.id = "req-gn-late-strip-heading";
+    stripTitle.textContent = t("reqLateCheckoutStripTitle");
+    var stripLead = document.createElement("p");
+    stripLead.className = "req-gn-late-card__lead";
+    stripLead.textContent = t("reqLateCheckoutCardLead");
+    stripText.appendChild(stripTitle);
+    stripText.appendChild(stripLead);
+
+    var stripActions = document.createElement("div");
+    stripActions.className = "req-gn-late-card__cta";
+    var openLateBtn = document.createElement("button");
+    openLateBtn.type = "button";
+    openLateBtn.className = "btn-primary req-gn-late-open";
+    openLateBtn.textContent = t("reqLateCheckoutOpenForm");
+
+    var latePanel = document.createElement("div");
+    latePanel.id = "req-gn-late-panel";
+    latePanel.className = "req-gn-late-panel";
+    latePanel.hidden = true;
+    latePanel.setAttribute("role", "region");
+    latePanel.setAttribute("aria-labelledby", "req-gn-late-panel-title");
+
+    var lateHead = document.createElement("div");
+    lateHead.className = "req-gn-late-panel__head";
+    var backLateBtn = document.createElement("button");
+    backLateBtn.type = "button";
+    backLateBtn.className = "req-back-hub req-gn-late-back";
+    backLateBtn.textContent = t("reqBackFromLateCheckout");
+    var lateHeadText = document.createElement("div");
+    lateHeadText.className = "req-gn-late-panel__head-text";
+    var lateHeadTitle = document.createElement("span");
+    lateHeadTitle.className = "req-gn-late-panel__title";
+    lateHeadTitle.id = "req-gn-late-panel-title";
+    lateHeadTitle.textContent = t("reqLateCheckoutStripTitle");
+    var lateHeadHint = document.createElement("span");
+    lateHeadHint.className = "req-gn-late-panel__hint";
+    lateHeadHint.textContent = t("reqLateCheckoutPanelHint");
+    lateHeadText.appendChild(lateHeadTitle);
+    lateHeadText.appendChild(lateHeadHint);
+    lateHead.appendChild(backLateBtn);
+    lateHead.appendChild(lateHeadText);
+
+    var lateBody = document.createElement("div");
+    lateBody.className = "req-gn-late-panel__body";
+
+    latePanel.appendChild(lateHead);
+    latePanel.appendChild(lateBody);
+
+    var divider = document.createElement("div");
+    divider.className = "req-gn-divider";
+    divider.setAttribute("aria-hidden", "true");
+
+    var mainHeading = document.createElement("h3");
+    mainHeading.className = "req-gn-main-heading";
+    mainHeading.textContent = t("reqGuestNotifMainHeading");
+
+    var mainIntro = document.createElement("p");
+    mainIntro.className = "req-intro req-intro--tight";
+    mainIntro.textContent = t("reqNotifIntro");
+
+    var bn = buildGuestNotificationForm(t, onSuccessGoHome);
+
+    var mainBlock = document.createElement("div");
+    mainBlock.className = "req-gn-main-block";
+    var mainCard = document.createElement("div");
+    mainCard.className = "req-gn-main-card";
+    mainCard.appendChild(divider);
+    mainCard.appendChild(mainHeading);
+    mainCard.appendChild(mainIntro);
+    mainCard.appendChild(bn.form);
+    mainCard.appendChild(bn.success);
+    mainBlock.appendChild(mainCard);
+
+    function setLateScreen(open) {
+      latePanel.hidden = !open;
+      strip.hidden = open;
+      mainBlock.hidden = open;
+      if (open && !lateBody.dataset.mounted) {
+        var bl = buildLateCheckoutForm(t, onSuccessGoHome, minIso);
+        lateBody.appendChild(bl.form);
+        lateBody.appendChild(bl.success);
+        lateBody.dataset.mounted = "1";
+      }
+    }
+
+    openLateBtn.addEventListener("click", function () {
+      setLateScreen(true);
+    });
+    backLateBtn.addEventListener("click", function () {
+      setLateScreen(false);
+    });
+
+    stripActions.appendChild(openLateBtn);
+    stripInner.appendChild(iconWrap);
+    stripInner.appendChild(stripText);
+    stripInner.appendChild(stripActions);
+    strip.appendChild(stripAccent);
+    strip.appendChild(stripInner);
+
+    root.appendChild(strip);
+    root.appendChild(latePanel);
+    root.appendChild(mainBlock);
+
+    if (opts.openLateCheckout) {
+      setLateScreen(true);
+      requestAnimationFrame(function () {
+        try {
+          latePanel.scrollIntoView({ behavior: "smooth", block: "start" });
+        } catch (eScroll) {}
+        try {
+          var first = latePanel.querySelector(
+            "input:not([type='hidden']), select, textarea, button.btn-primary"
+          );
+          if (first && typeof first.focus === "function") first.focus();
+        } catch (eFocus) {}
+      });
+    }
+
+    return root;
+  }
+
+  function buildLateCheckoutForm(t, onSuccessGoHome, minIso) {
+    var form = document.createElement("form");
+    form.className = "req-form req-form--late-checkout";
+    form.noValidate = true;
+    var pid = "lc";
+
+    var guestSection = resSection("reqResSectionGuest", t);
+    guestSection.inner.appendChild(fieldText("name", "reqLabelName", t, true, pid));
+    guestSection.inner.appendChild(fieldText("room", "reqLabelRoom", t, true, pid));
+    guestSection.inner.appendChild(fieldNationality(t, pid));
+    form.appendChild(guestSection.section);
+
+    var planSec = resSection("reqLateCheckoutSection", t);
+    var intro = document.createElement("p");
+    intro.className = "req-intro req-intro--inline";
+    intro.textContent = t("reqLateCheckoutIntro");
+    planSec.inner.appendChild(intro);
+
+    var fd = document.createElement("div");
+    fd.className = "req-field";
+    var lDate = document.createElement("label");
+    lDate.className = "req-label";
+    lDate.htmlFor = pid + "-checkoutDate";
+    lDate.textContent = t("reqLabelCheckoutDate");
+    var inDate = document.createElement("input");
+    inDate.type = "date";
+    inDate.id = pid + "-checkoutDate";
+    inDate.name = "checkoutDate";
+    inDate.className = "req-input";
+    inDate.required = true;
+    inDate.min = minIso || (window.getCalendarMinDateISO && window.getCalendarMinDateISO()) || "";
+    fd.appendChild(lDate);
+    fd.appendChild(inDate);
+    planSec.inner.appendChild(fd);
+
+    var ft = document.createElement("div");
+    ft.className = "req-field req-field--time-dropdown";
+    var lTime = document.createElement("label");
+    lTime.className = "req-label";
+    lTime.setAttribute("for", pid + "-checkoutTime-trigger");
+    lTime.textContent = t("reqLabelCheckoutTime");
+    ft.appendChild(lTime);
+    ft.appendChild(buildLateCheckoutDropdownTimePicker(pid, t));
+    planSec.inner.appendChild(ft);
+    form.appendChild(planSec.section);
+
+    var noteSec = resSection("reqSectionExtraNote", t);
+    var noteField = fieldDesc(t, pid, "description", true);
+    noteField.querySelector("label").textContent = t("reqLabelLateCheckoutNote");
+    var nh = document.createElement("p");
+    nh.className = "req-notif-note-hint";
+    nh.textContent = t("reqLateCheckoutNoteHint");
+    noteSec.inner.appendChild(nh);
+    noteSec.inner.appendChild(noteField);
+    form.appendChild(noteSec.section);
+
+    var err = document.createElement("p");
+    err.className = "req-err";
+    err.hidden = true;
+    form.appendChild(err);
+
+    var submit = document.createElement("button");
+    submit.type = "submit";
+    submit.className = "btn-primary req-submit";
+    submit.textContent = t("reqSubmit");
+    form.appendChild(submit);
+
+    var success = document.createElement("div");
+    success.className = "req-success";
+    success.hidden = true;
+    success.innerHTML = '<h3 class="req-success__title"></h3><p class="req-success__body"></p>';
+
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      err.hidden = true;
+      if (!form.reportValidity()) return;
+      if (!validateGuestFields(form, err, t)) return;
+      var dVal = String((form.querySelector('[name="checkoutDate"]') || {}).value || "").trim();
+      var tVal = String((form.querySelector('[name="checkoutTime"]') || {}).value || "").trim();
+      if (!dVal) {
+        err.textContent = t("reqErrLateCheckoutDate");
+        err.hidden = false;
+        return;
+      }
+      if (!tVal) {
+        err.textContent = t("reqErrLateCheckoutTime");
+        err.hidden = false;
+        return;
+      }
+      var timeNorm = normalizeLateCheckoutTimeForPayload(tVal);
+      if (!timeNorm) {
+        err.textContent = t("reqErrLateCheckoutTime");
+        err.hidden = false;
+        return;
+      }
+      var noteVal = String((form.querySelector('[name="description"]') || {}).value || "").trim();
+      if (!noteVal) {
+        err.textContent = t("reqErrLateCheckoutNote");
+        err.hidden = false;
+        return;
+      }
+      var payload = {
+        type: "late_checkout",
+        name: (form.querySelector('[name="name"]') || {}).value,
+        room: (form.querySelector('[name="room"]') || {}).value,
+        nationality: (form.querySelector('[name="nationality"]') || {}).value,
+        checkoutDate: dVal,
+        checkoutTime: timeNorm,
+        description: noteVal,
+        details: { checkoutDate: dVal, checkoutTime: timeNorm },
+      };
+      runSubmit(payload, form, err, success, submit, t, {
+        onSuccessGoHome: onSuccessGoHome,
+        successBodyKey: "reqSuccessBodyLateCheckout",
+      });
+    });
+
+    return { form: form, success: success };
+  }
+
   function buildGuestNotificationForm(t, onSuccessGoHome) {
     var form = document.createElement("form");
     form.className = "req-form";
@@ -1211,8 +1711,9 @@
           }, ms);
         }
       })
-      .catch(function () {
-        err.textContent = t("reqErrSend");
+      .catch(function (e) {
+        var raw = e && e.message ? String(e.message).trim() : "";
+        err.textContent = translateGuestRequestApiError(raw, t);
         err.hidden = false;
       })
       .finally(function () {
@@ -1822,8 +2323,24 @@
       setSub(null);
     });
 
-    wrap.appendChild(h2f);
-    wrap.appendChild(backHub);
+    if (subId === "guest_notification") {
+      wrap.classList.add("req-wrap--guest-notif");
+      var gnHead = document.createElement("div");
+      gnHead.className = "req-gn-module-head";
+      gnHead.appendChild(backHub);
+      var gnHeadText = document.createElement("div");
+      gnHeadText.className = "req-gn-module-head__text";
+      gnHeadText.appendChild(h2f);
+      var gnHeadSub = document.createElement("p");
+      gnHeadSub.className = "req-gn-module-head__sub";
+      gnHeadSub.textContent = t("reqGuestNotifModuleSub");
+      gnHeadText.appendChild(gnHeadSub);
+      gnHead.appendChild(gnHeadText);
+      wrap.appendChild(gnHead);
+    } else {
+      wrap.appendChild(h2f);
+      wrap.appendChild(backHub);
+    }
 
     if (subId === "request") {
       var b = buildRequestForm(t, onSuccessGoHome);
@@ -1838,13 +2355,14 @@
       wrap.appendChild(bf.form);
       wrap.appendChild(bf.success);
     } else if (subId === "guest_notification") {
-      var leadN = document.createElement("p");
-      leadN.className = "req-intro";
-      leadN.textContent = t("reqNotifIntro");
-      wrap.appendChild(leadN);
-      var bn = buildGuestNotificationForm(t, onSuccessGoHome);
-      wrap.appendChild(bn.form);
-      wrap.appendChild(bn.success);
+      var gnOpts = {};
+      try {
+        if (window.__vionaOpenLateCheckoutOnGuestNotif) {
+          gnOpts.openLateCheckout = true;
+          window.__vionaOpenLateCheckoutOnGuestNotif = false;
+        }
+      } catch (eGn) {}
+      wrap.appendChild(buildGuestNotificationUnifiedFlow(t, onSuccessGoHome, minIso, gnOpts));
     } else if (subId === "res") {
       wrap.appendChild(buildReservationBlock(t, minIso, minMonth, onSuccessGoHome));
     } else {

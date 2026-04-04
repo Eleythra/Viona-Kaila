@@ -450,6 +450,19 @@
     closeModals();
   };
 
+  // Chatbot: geç çıkış → İstekler hub / Misafir bildirimleri; geç çıkış formu doğrudan açılır.
+  window.vionaChatOpenGuestNotifications = function () {
+    try {
+      window.__vionaOpenLateCheckoutOnGuestNotif = true;
+    } catch (e) {}
+    moduleId = "requests";
+    requestSub = "guest_notification";
+    surveySub = null;
+    showView("module");
+    renderModuleContent();
+    closeModals();
+  };
+
   /** Sohbet formu kaydı tamamlandıktan sonra: modal kapanır, modül sıfırlanır, ana sayfa (istek/anket ile aynı mantık). */
   window.vionaExitChatToHome = function () {
     closeModals();

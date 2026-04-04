@@ -41,3 +41,6 @@ alter table if exists public.guest_notifications
 -- RLS: Node API SUPABASE_SERVICE_ROLE_KEY ile yazıldığı için satırlar servis rolüyle yönetilir (RLS atlanır).
 -- Doğrudan anon/authenticated istemci kullanacaksanız bu tablo için ayrıca POLICY tanımlanmalıdır.
 alter table public.guest_notifications enable row level security;
+
+-- Node guest-requests.service insertSimple(guest_notifications): guest_name, room_number, nationality,
+-- description, categories, other_category_note, category, details, source, submitted_at, status, raw_payload

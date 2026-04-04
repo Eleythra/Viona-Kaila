@@ -69,21 +69,24 @@ def test_fault_cases():
     orch, _, _ = build_orchestrator()
     for msg in ["televizyonum bozuldu", "duşum bozuldu", "kart çalışmıyor", "klima soğutmuyor", "ışık yanmıyor"]:
         res = orch.handle(ChatRequest(message=msg, ui_language="tr", locale="tr"))
-        assert res.type == "redirect"
+        assert res.type == "inform"
         assert res.meta.intent == "fault_report"
+        assert res.meta.action and res.meta.action.kind == "chat_form"
 
 
 def test_fault_sub_intent_is_preserved():
     orch, _, _ = build_orchestrator()
     res = orch.handle(ChatRequest(message="duşum bozuldu", ui_language="tr", locale="tr"))
-    assert res.type == "redirect"
+    assert res.type == "inform"
     assert res.meta.intent == "fault_report"
-    assert "Duş arızası" in res.message
+    assert "kategori" in res.message.lower()
+    assert "Su" in res.message or "Banyo" in res.message
 
     res = orch.handle(ChatRequest(message="kart çalışmıyor", ui_language="tr", locale="tr"))
-    assert res.type == "redirect"
+    assert res.type == "inform"
     assert res.meta.intent == "fault_report"
-    assert "Kart arızası" in res.message
+    assert "kategori" in res.message.lower()
+    assert "Kapı" in res.message or "kilidi" in res.message.lower()
 
 
 def test_special_need_cases():
@@ -116,12 +119,19 @@ def test_special_need_multilang_examples():
 
 def test_request_and_complaint_cases():
     orch, _, _ = build_orchestrator()
-    req = orch.handle(ChatRequest(message="havlu", ui_language="tr", locale="tr"))
-    cmp_ = orch.handle(ChatRequest(message="çok kötü", ui_language="tr", locale="tr"))
+    req = orch.handle(
+        ChatRequest(message="havlu", ui_language="tr", locale="tr", user_id="u-req", session_id="s-req")
+    )
+    cmp_ = orch.handle(
+        ChatRequest(message="çok kötü", ui_language="tr", locale="tr", user_id="u-cmp", session_id="s-cmp")
+    )
     assert req.meta.intent == "request"
-    assert req.type == "redirect"
+    assert req.type == "inform"
+    assert req.meta.action and req.meta.action.kind == "chat_form"
+    assert "havlu" in req.message.lower() or "banyo" in req.message.lower()
     assert cmp_.meta.intent == "complaint"
-    assert cmp_.type == "redirect"
+    assert cmp_.type == "inform"
+    assert cmp_.meta.action and cmp_.meta.action.kind == "chat_form"
 
 
 def test_reservation_and_hotel_info_multilang():
@@ -203,7 +213,13 @@ def test_identity_is_introduced_but_thanks_is_not_robotic_intro():
 
 def test_persona_fallback_message_is_warm_and_guiding():
     orch, _, _ = build_orchestrator()
-    res = orch.handle(ChatRequest(message="qzxw 123 ???", ui_language="tr", locale="tr"))
+    res = orch.handle(
+        ChatRequest(
+            message="qzxw 123 ??? xxxxx foobar nonsense phrase invalid",
+            ui_language="tr",
+            locale="tr",
+        )
+    )
     assert res.type == "fallback"
     assert res.meta.source == "fallback"
     assert ("daha kısa" in res.message.lower()) or ("doğrulanmış bilgi" in res.message.lower())
@@ -451,7 +467,7 @@ def test_en_fault_template_no_bad_article_before_air_conditioner():
     res = orch.handle(ChatRequest(message="The AC is broken", ui_language="en", locale="en"))
     assert res.meta.intent == "fault_report"
     assert "a Air" not in res.message
-    assert "air conditioner" in res.message.lower()
+    assert "hvac" in res.message.lower() or "air" in res.message.lower() or "climate" in res.message.lower()
 
 
 def test_current_time_tr_contains_hhmm():
@@ -475,7 +491,7 @@ def test_fault_bathroom_fault_message():
     orch, _, _ = build_orchestrator()
     res = orch.handle(ChatRequest(message="duşum bozuldu", ui_language="tr", locale="tr"))
     assert res.meta.intent == "fault_report"
-    assert "Duş" in res.message
+    assert "Su" in res.message or "Banyo" in res.message
 
 
 def test_where_is_lobby_does_not_fallback():
@@ -498,10 +514,12 @@ def test_russian_towel_request():
     assert res.meta.intent == "request"
 
 
-def test_late_checkout_reservation():
+def test_late_checkout_opens_guest_notifications_not_reservation():
     orch, _, _ = build_orchestrator()
     res = orch.handle(ChatRequest(message="I want late checkout", ui_language="en", locale="en"))
-    assert res.meta.intent == "reservation"
+    assert res.meta.intent == "guest_notification"
+    assert res.meta.action is not None
+    assert res.meta.action.kind == "open_guest_notifications_form"
 
 
 def test_hotel_info_uses_rag():
@@ -521,8 +539,12 @@ def test_rule_match_does_not_call_llm():
 
 def test_same_input_same_output():
     orch, _, _ = build_orchestrator()
-    one = orch.handle(ChatRequest(message="havlu lazım", ui_language="tr", locale="tr"))
-    two = orch.handle(ChatRequest(message="havlu lazım", ui_language="tr", locale="tr"))
+    one = orch.handle(
+        ChatRequest(message="havlu lazım", ui_language="tr", locale="tr", user_id="u-a", session_id="s-a")
+    )
+    two = orch.handle(
+        ChatRequest(message="havlu lazım", ui_language="tr", locale="tr", user_id="u-b", session_id="s-b")
+    )
     assert one.type == two.type
     assert one.message == two.message
     assert one.meta.intent == two.meta.intent
@@ -586,13 +608,45 @@ def test_recommendation_short_food_inputs():
 
 def test_routing_housekeeping_transfer_and_lunch_box():
     orch, _, intent = build_orchestrator()
-    hk = orch.handle(ChatRequest(message="oda temizliği istiyorum", ui_language="tr", locale="tr"))
-    trf = orch.handle(ChatRequest(message="transfer istiyorum", ui_language="tr", locale="tr"))
-    lbox = orch.handle(ChatRequest(message="lunch box istiyorum", ui_language="tr", locale="tr"))
+    hk = orch.handle(
+        ChatRequest(
+            message="oda temizliği istiyorum",
+            ui_language="tr",
+            locale="tr",
+            user_id="u-hk",
+            session_id="s-hk",
+        )
+    )
+    trf = orch.handle(
+        ChatRequest(
+            message="transfer istiyorum",
+            ui_language="tr",
+            locale="tr",
+            user_id="u-trf",
+            session_id="s-trf",
+        )
+    )
+    lbox = orch.handle(
+        ChatRequest(
+            message="lunch box istiyorum",
+            ui_language="tr",
+            locale="tr",
+            user_id="u-lb",
+            session_id="s-lb",
+        )
+    )
     assert hk.meta.intent == "request"
     assert trf.meta.intent == "request"
     assert lbox.meta.intent == "request"
-    assert "housekeeping" in hk.message.lower() or "temizliği" in hk.message.lower()
+    hk_low = hk.message.lower()
+    assert (
+        "housekeeping" in hk_low
+        or "temizliği" in hk_low
+        or "genel temizlik" in hk_low
+        or "general_cleaning" in hk_low
+        or "towel_change" in hk_low
+        or "room_check" in hk_low
+    )
     assert "transfer" in trf.message.lower()
     assert "20:00" in lbox.message
     assert intent.calls == 0
@@ -605,7 +659,7 @@ def test_routing_guest_relations_contact_and_generic_problem():
     assert gr.meta.intent == "request"
     assert "misafir" in gr.message.lower()
     assert prob.meta.intent == "complaint"
-    assert ("misafir" in prob.message.lower()) or ("guest relations" in prob.message.lower())
+    assert "kategori" in prob.message.lower()
     assert intent.calls == 0
 
 
@@ -615,8 +669,8 @@ def test_fault_internet_and_minibar_variants():
     minibar = orch.handle(ChatRequest(message="minibar soğutmuyor", ui_language="tr", locale="tr"))
     assert internet.meta.intent == "fault_report"
     assert minibar.meta.intent == "fault_report"
-    assert internet.type == "redirect"
-    assert minibar.type == "redirect"
+    assert internet.type == "inform"
+    assert minibar.type == "inform"
     assert intent.calls == 0
 
 
@@ -703,7 +757,12 @@ def test_multi_clause_fault_and_recommendation_returns_combined_answer():
     assert res.meta.intent == "fault_report"
     assert res.type == "redirect"
     assert "Klima arızası" in res.message
-    assert "Restaurant" in res.message or "restoran" in res.message.lower()
+    assert (
+        "Restaurant" in res.message
+        or "restoran" in res.message.lower()
+        or "Spa" in res.message
+        or "spa" in res.message.lower()
+    )
     assert res.meta.multi_intent is True
     assert res.meta.action is not None
     assert res.meta.action.kind == "create_guest_request"

@@ -152,8 +152,19 @@
             <h2>Misafir bildirimleri</h2>
             <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
           </div>
-          <p class="section-lead">Beslenme / alerjen, sağlık ve kutlama bildirimleri; şikayet akışıyla aynı durum seçenekleri.</p>
-          <div id="list-guest-notifications"></div>
+          <p class="section-lead">
+            Genel bildirimler (beslenme, sağlık, kutlama) ve ayrı listede <strong>geç çıkış</strong> talepleri. Durumlar şikâyet sekmesiyle uyumludur; geç çıkışta onay dili kullanılır.
+          </p>
+          <div class="admin-gn-subtabs" role="tablist" aria-label="Misafir bildirimleri alt görünüm">
+            <button type="button" role="tab" class="admin-subtab-btn is-active" data-gn-subtab="notifications" aria-selected="true">
+              Bildirimler
+            </button>
+            <button type="button" role="tab" class="admin-subtab-btn" data-gn-subtab="late_checkout" aria-selected="false">
+              Geç çıkış
+            </button>
+          </div>
+          <div id="list-guest-notifications" class="admin-gn-list-panel" role="tabpanel"></div>
+          <div id="list-late-checkouts" class="admin-gn-list-panel hidden" role="tabpanel"></div>
         </section>
         <section id="tab-reservations" class="admin-tab hidden">
           <div class="section-head">
@@ -414,6 +425,6 @@
     <script src="../js/hotel-room-numbers.js?v=1"></script>
     <script src="js/data-adapter.js?v=12"></script>
     <script src="js/ui.js?v=26"></script>
-    <script src="js/app.js?v=23"></script>
+    <script src="js/app.js?v=24"></script>
   </body>
 </html>

@@ -6,6 +6,8 @@
   if (!adapter || !ui) return;
   var LOGIN_OK_KEY = "viona_admin_login_ok";
   var reservationSubtab = "overview";
+  /** Misafir bildirimleri sekmesi: notifications | late_checkout */
+  var guestNotifSubtab = "notifications";
   /** null = dashboard; operasyon listeleri için otomatik yenileme hedefi */
   var activeAdminTab = null;
   var refreshTimer = null;
@@ -19,7 +21,7 @@
   var BUCKET_LIST_PAGE_SIZE = 100;
   /** Ana sayfa özetinde birleştirilen kayıt üst sınırı (sayfa × getBucketPage boyutu). */
   var BUCKET_MERGE_MAX_PAGES = 100;
-  var bucketListPage = { request: 1, complaint: 1, fault: 1, guest_notification: 1 };
+  var bucketListPage = { request: 1, complaint: 1, fault: 1, guest_notification: 1, late_checkout: 1 };
   /** Chatbot log tablosu sayfalama */
   var logsPage = 1;
   var LOGS_PAGE_SIZE = 70;
@@ -114,6 +116,29 @@
     return [];
   }
 
+  function syncGuestNotifSubtabUi() {
+    var isLate = guestNotifSubtab === "late_checkout";
+    var listGn = document.getElementById("list-guest-notifications");
+    var listLc = document.getElementById("list-late-checkouts");
+    if (listGn) listGn.classList.toggle("hidden", isLate);
+    if (listLc) listLc.classList.toggle("hidden", !isLate);
+    document.querySelectorAll("[data-gn-subtab]").forEach(function (b) {
+      var sub = b.getAttribute("data-gn-subtab") || "";
+      var on = sub === guestNotifSubtab;
+      b.classList.toggle("is-active", on);
+      b.setAttribute("aria-selected", on ? "true" : "false");
+    });
+  }
+
+  async function loadGuestNotifVisible() {
+    syncGuestNotifSubtabUi();
+    if (guestNotifSubtab === "late_checkout") {
+      await loadBucket("late_checkout", "list-late-checkouts");
+    } else {
+      await loadBucket("guest_notification", "list-guest-notifications");
+    }
+  }
+
   async function loadDashboard() {
     if (dashboardLoadPromise) {
       return await dashboardLoadPromise;
@@ -134,6 +159,7 @@
         adapter.getBucketMergeAll("complaint", BUCKET_MERGE_MAX_PAGES).catch(emptyBucket),
         adapter.getBucketMergeAll("fault", BUCKET_MERGE_MAX_PAGES).catch(emptyBucket),
         adapter.getBucketMergeAll("guest_notification", BUCKET_MERGE_MAX_PAGES).catch(emptyBucket),
+        adapter.getBucketMergeAll("late_checkout", BUCKET_MERGE_MAX_PAGES).catch(emptyBucket),
         adapter.getBucketMergeAll("reservation", BUCKET_MERGE_MAX_PAGES).catch(emptyBucket),
       ]);
       var warnEl = document.getElementById("dashboard-api-warning");
@@ -163,12 +189,13 @@
       if (!Array.isArray(uq.topFallbackQuestions)) uq.topFallbackQuestions = [];
       if (!Array.isArray(uq.repeatedUnanswered)) uq.repeatedUnanswered = [];
 
+      var gnMerge = (buckets[3] || []).concat(buckets[4] || []);
       var dashData = {
         request: buckets[0] || [],
         complaint: buckets[1] || [],
         fault: buckets[2] || [],
-        guest_notification: buckets[3] || [],
-        reservation: buckets[4] || [],
+        guest_notification: gnMerge,
+        reservation: buckets[5] || [],
       };
       renderHomeTopStrip(dashData, report);
       renderDashboardAlerts(dashData);
@@ -285,7 +312,7 @@
       } else if (activeAdminTab === "faults") {
         await loadBucket("fault", "list-faults");
       } else if (activeAdminTab === "guest_notifications") {
-        await loadBucket("guest_notification", "list-guest-notifications");
+        await loadGuestNotifVisible();
       } else if (activeAdminTab === "reservations") {
         await loadBucket("reservation", "list-reservations");
       } else if (activeAdminTab === "evaluations") {
@@ -299,6 +326,31 @@
     } finally {
       refreshInFlight = false;
     }
+  }
+
+  function formatAdminBucketLoadError(e) {
+    var m = e && e.message ? String(e.message) : "";
+    var tail = " Ağ bağlantısını, API tabanını (data-viona-live-api) ve panel girişini kontrol edin.";
+    if (!m) return "Veri yüklenemedi." + tail;
+    if (m === "unauthorized" || m === "http_401") {
+      return "Yetkisiz erişim (401). Oturum süresi dolmuş olabilir; panele yeniden giriş yapın.";
+    }
+    if (m === "admin_auth_not_configured") {
+      return "Sunucuda yönetici kimliği yapılandırılmamış (ADMIN_API_TOKEN).";
+    }
+    if (m === "SUPABASE_NOT_CONFIGURED") {
+      return "Sunucuda Supabase yapılandırılmamış; ortam değişkenlerini kontrol edin.";
+    }
+    if (m === "invalid admin bucket type") {
+      return "Geçersiz liste türü. Sunucu ile admin panel sürümü uyumsuz olabilir; ikisini güncelleyin.";
+    }
+    if (/^http_\d+$/.test(m)) {
+      return "API yanıtı HTTP " + m.replace(/^http_/, "") + "." + tail;
+    }
+    if (m.indexOf("Failed to fetch") === 0 || m.indexOf("NetworkError") === 0) {
+      return "İstek ağ üzerinden tamamlanamadı (CORS, HTTPS karışımı veya sunucu kapalı olabilir)." + tail;
+    }
+    return "Veri yüklenemedi: " + m + "." + tail;
   }
 
   async function loadBucket(type, mountId, page, opts) {
@@ -365,8 +417,11 @@
         );
       }
     } catch (e) {
-      mount.innerHTML =
-        '<p class="admin-load-error">Veri yüklenemedi. Ağ bağlantısını kontrol edip tekrar deneyin veya sekmeyi yeniden açın.</p>';
+      mount.textContent = "";
+      var errP = document.createElement("p");
+      errP.className = "admin-load-error";
+      errP.textContent = formatAdminBucketLoadError(e);
+      mount.appendChild(errP);
       if (rethrow) throw e;
     }
   }
@@ -1291,7 +1346,8 @@
         if (tab === "complaints") await loadBucket("complaint", "list-complaints");
         if (tab === "faults") await loadBucket("fault", "list-faults");
         if (tab === "guest_notifications") {
-          await loadBucket("guest_notification", "list-guest-notifications");
+          guestNotifSubtab = "notifications";
+          await loadGuestNotifVisible();
         }
         if (tab === "reservations") {
           reservationSubtab = "overview";
@@ -1500,7 +1556,8 @@
         if (tab === "complaints") await loadBucket("complaint", "list-complaints");
         if (tab === "faults") await loadBucket("fault", "list-faults");
         if (tab === "guest_notifications") {
-          await loadBucket("guest_notification", "list-guest-notifications");
+          guestNotifSubtab = "notifications";
+          await loadGuestNotifVisible();
         }
         if (tab === "reservations") await loadBucket("reservation", "list-reservations");
         if (tab === "evaluations") await loadEvaluations();
@@ -1508,6 +1565,18 @@
         if (tab === "pdf-report") setPdfCustomRangeUi(Boolean(document.getElementById("pdf-custom-range") && document.getElementById("pdf-custom-range").checked));
         if (tab === "logs") await loadLogs();
         updateReservationNavStatus();
+        scheduleAutoRefresh();
+      });
+    });
+  }
+
+  function wireGuestNotifSubtabs() {
+    document.querySelectorAll("[data-gn-subtab]").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        var sub = btn.getAttribute("data-gn-subtab");
+        if (!sub || sub === guestNotifSubtab) return;
+        guestNotifSubtab = sub;
+        await loadGuestNotifVisible();
         scheduleAutoRefresh();
       });
     });
@@ -1538,6 +1607,7 @@
 
   async function init() {
     wireTabs();
+    wireGuestNotifSubtabs();
     wireEvaluationsToolbar();
     wirePromoForm();
     wirePdfReportPanel();

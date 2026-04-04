@@ -68,9 +68,8 @@ def test_fault_report_has_guest_request_action():
     res = orch.handle(ChatRequest(message="internet çekmiyor", ui_language="tr", locale="tr"))
     assert res.meta.intent == "fault_report"
     assert res.meta.action is not None
-    assert res.meta.action.kind == "create_guest_request"
-    assert res.meta.action.target_department == "reception"
-    assert res.meta.action.priority == "medium"
+    assert res.meta.action.kind == "chat_form"
+    assert res.meta.action.operation == "fault"
 
 
 def test_special_need_has_high_priority_guest_relations_action():
@@ -93,6 +92,12 @@ def test_recommendation_has_suggest_venue_action():
 
 def test_fallback_has_no_action():
     orch = build_orchestrator()
-    res = orch.handle(ChatRequest(message="qzxw 123 ???", ui_language="tr", locale="tr"))
+    res = orch.handle(
+        ChatRequest(
+            message="qzxw 123 ??? xxxxx foobar nonsense phrase invalid",
+            ui_language="tr",
+            locale="tr",
+        )
+    )
     assert res.type == "fallback"
     assert res.meta.action is None

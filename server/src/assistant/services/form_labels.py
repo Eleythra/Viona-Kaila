@@ -265,6 +265,12 @@ CATEGORY_LABELS: Dict[str, Dict[str, Dict[Lang, str]]] = {
             "de": "Sonstiges (Feier)",
             "ru": "Другое (праздник)",
         },
+        "late_checkout": {
+            "tr": "Geç çıkış",
+            "en": "Late check-out",
+            "de": "Späterer Check-out",
+            "ru": "Поздний выезд",
+        },
     },
 }
 
@@ -287,7 +293,53 @@ VALUE_LABELS: Dict[str, Dict[str, Dict[Lang, str]]] = {
         "blanket": {"tr": "Battaniye", "en": "Blanket", "de": "Decke", "ru": "Одеяло"},
         "baby_bed": {"tr": "Bebek yatağı", "en": "Baby bed", "de": "Babybett", "ru": "Детская кроватка"},
         "high_chair": {"tr": "Mama sandalyesi", "en": "High chair", "de": "Kinderhochstuhl", "ru": "Детский стул"},
+        "bathrobe": {"tr": "Bornoz", "en": "Bathrobe", "de": "Bademantel", "ru": "Халат"},
+        "slippers": {"tr": "Terlik", "en": "Slippers", "de": "Hausschuhe", "ru": "Тапочки"},
+        "hanger": {"tr": "Askı", "en": "Hanger", "de": "Kleiderbügel", "ru": "Вешалка"},
+        "kettle": {"tr": "Kettle / su ısıtıcısı", "en": "Kettle", "de": "Wasserkocher", "ru": "Чайник"},
         "other": {"tr": "Diğer", "en": "Other", "de": "Sonstiges", "ru": "Другое"},
+    },
+    "requestType": {
+        "general_cleaning": {
+            "tr": "Genel temizlik",
+            "en": "General cleaning",
+            "de": "Allgemeine Reinigung",
+            "ru": "Генеральная уборка",
+        },
+        "towel_change": {
+            "tr": "Havlu değişimi",
+            "en": "Towel change",
+            "de": "Handtuchwechsel",
+            "ru": "Смена полотенец",
+        },
+        "room_check": {
+            "tr": "Oda kontrolü",
+            "en": "Room check",
+            "de": "Zimmerkontrolle",
+            "ru": "Проверка номера",
+        },
+        "refill": {
+            "tr": "Minibar yenileme",
+            "en": "Minibar refill",
+            "de": "Minibar auffüllen",
+            "ru": "Пополнение мини-бара",
+        },
+        "missing_item_report": {
+            "tr": "Eksik ürün bildirimi",
+            "en": "Missing item report",
+            "de": "Fehlenden Artikel melden",
+            "ru": "Сообщить о недостающем",
+        },
+        "check_request": {
+            "tr": "Minibar kontrol talebi",
+            "en": "Minibar check request",
+            "de": "Minibar-Prüfung anfordern",
+            "ru": "Запрос проверки мини-бара",
+        },
+    },
+    "timing": {
+        "now": {"tr": "Şimdi", "en": "Now", "de": "Jetzt", "ru": "Сейчас"},
+        "later": {"tr": "Sonra", "en": "Later", "de": "Später", "ru": "Позже"},
     },
     "location": {
         "room_inside": {"tr": "Oda içi", "en": "Inside room", "de": "Im Zimmer", "ru": "Внутри номера"},

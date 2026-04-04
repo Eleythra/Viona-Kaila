@@ -4,6 +4,8 @@ import { sendOperationalWhatsappNotification } from "../../services/whatsapp-ope
 
 const SIMPLE_TYPES = new Set(["request", "complaint", "fault", "guest_notification"]);
 const RESERVATION_TYPES = new Set(["reservation_alacarte", "reservation_spa"]);
+/** Yalnızca web formu; ayrı tablo guest_late_checkouts. */
+const LATE_CHECKOUT_TYPE = "late_checkout";
 const REQUEST_CATEGORIES = new Set([
   "towel",
   "bedding",
@@ -116,14 +118,37 @@ function toArray(value) {
   return value.map((x) => String(x || "").trim()).filter(Boolean);
 }
 
+/** Boşluk / tire / büyük harf farklarını giderir; yaygın yazım hatalarını tek tipe indirger. */
+function normalizeRequestTypeSlug(raw) {
+  let s = cleanText(raw, 64).toLowerCase();
+  s = s.replace(/[\s-]+/g, "_").replace(/_+/g, "_");
+  const aliases = {
+    latecheckout: LATE_CHECKOUT_TYPE,
+    guestnotification: "guest_notification",
+    reservationalacarte: "reservation_alacarte",
+    reservationspa: "reservation_spa",
+  };
+  return aliases[s] || s;
+}
+
 function normalizePayload(payload) {
-  const type = cleanText(payload?.type, 64);
+  const type = normalizeRequestTypeSlug(payload?.type);
+  const checkoutDate = cleanText(
+    payload?.checkoutDate ?? payload?.details?.checkoutDate,
+    32,
+  );
+  const checkoutTime = cleanText(
+    payload?.checkoutTime ?? payload?.details?.checkoutTime,
+    16,
+  );
   const base = {
     type,
     name: cleanText(payload?.name, 160),
     room: cleanText(payload?.room, 50),
     nationality: cleanText(payload?.nationality, 20),
     description: cleanText(payload?.description, 4000),
+    checkoutDate,
+    checkoutTime,
     category: cleanText(payload?.category, 64),
     details: payload?.details && typeof payload.details === "object" ? payload.details : {},
     location: cleanText(payload?.location, 64),
@@ -305,6 +330,43 @@ function validateGuestNotificationPayload(normalized) {
   }
 }
 
+function isIsoDateYmd(s) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+}
+
+/** HTML time input veya "HH:MM" / "HH:MM:SS" → "HH:MM". */
+function normalizeCheckoutTime(raw) {
+  const s = String(raw ?? "").trim();
+  if (!s) return "";
+  const m = /^(\d{1,2}):(\d{2})(?::\d{2})?/.exec(s);
+  if (!m) return "";
+  let h = parseInt(m[1], 10);
+  let min = parseInt(m[2], 10);
+  if (!Number.isFinite(h) || !Number.isFinite(min)) return "";
+  h = Math.min(23, Math.max(0, h));
+  min = Math.min(59, Math.max(0, min));
+  return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+}
+
+function validateLateCheckoutPayload(normalized) {
+  const d = String(normalized.checkoutDate || "").trim();
+  const ti = normalizeCheckoutTime(normalized.checkoutTime);
+  if (!isIsoDateYmd(d)) throw new Error("checkout date is required (YYYY-MM-DD)");
+  if (!ti) throw new Error("checkout time is required (HH:MM)");
+  const desc = String(normalized.description || "").trim();
+  if (!desc) throw new Error("description is required for late checkout");
+  const today = new Date().toISOString().slice(0, 10);
+  if (d < today) throw new Error("checkout date cannot be in the past");
+  normalized.checkoutDate = d;
+  normalized.checkoutTime = ti;
+  normalized.description = desc;
+  normalized.details = {
+    ...(normalized.details && typeof normalized.details === "object" ? normalized.details : {}),
+    checkoutDate: d,
+    checkoutTime: ti,
+  };
+}
+
 function validate(normalized) {
   if (!normalized.type) throw new Error("type is required");
   if (!normalized.name) throw new Error("name is required");
@@ -316,14 +378,22 @@ function validate(normalized) {
   if (normalized.source !== "viona_chat" && !looksLikeNationality(normalized.nationality)) {
     throw new Error("nationality must contain letters only");
   }
-  if (!SIMPLE_TYPES.has(normalized.type) && !RESERVATION_TYPES.has(normalized.type)) {
+  if (
+    !SIMPLE_TYPES.has(normalized.type) &&
+    !RESERVATION_TYPES.has(normalized.type) &&
+    normalized.type !== LATE_CHECKOUT_TYPE
+  ) {
     throw new Error("invalid type");
   }
   // İstekte açıklama şemada; şikayet / arıza / misafir bildirimi / rezervasyonda kurallar ayrı validate* içinde.
   if (normalized.type !== "request" && !normalized.description) {
     const t = normalized.type;
     const descriptionDeferred =
-      t === "complaint" || t === "fault" || t === "guest_notification" || RESERVATION_TYPES.has(t);
+      t === "complaint" ||
+      t === "fault" ||
+      t === "guest_notification" ||
+      t === LATE_CHECKOUT_TYPE ||
+      RESERVATION_TYPES.has(t);
     if (!descriptionDeferred) {
       throw new Error("description is required");
     }
@@ -336,6 +406,8 @@ function validate(normalized) {
     validateFaultPayload(normalized);
   } else if (normalized.type === "guest_notification") {
     validateGuestNotificationPayload(normalized);
+  } else if (normalized.type === LATE_CHECKOUT_TYPE) {
+    validateLateCheckoutPayload(normalized);
   } else if (RESERVATION_TYPES.has(normalized.type)) {
     if (!normalized.reservation || typeof normalized.reservation !== "object") {
       throw new Error("reservation is required");
@@ -354,6 +426,18 @@ function validate(normalized) {
     normalized.reservationTime = reservationTime;
     normalized.language = cleanText(normalized.language, 8) || "tr";
   }
+}
+
+function throwSupabaseInsertError(table, error) {
+  if (!error) return;
+  const parts = [error.message, error.details, error.hint].filter(Boolean).map((x) => String(x).trim());
+  const msg = parts.length ? parts.join(" — ") : "database_insert_failed";
+  const err = new Error(msg);
+  if (error.code) err.code = error.code;
+  err.table = table;
+  /** Şema / CHECK / kolon uyumsuzluğu → 400; istemci veya SQL güncellemesi gerekir. */
+  err.statusCode = 400;
+  throw err;
 }
 
 /** PostgREST / Supabase: hem "column … category" hem "Could not find the 'category' column …" eşlensin. */
@@ -403,7 +487,7 @@ async function insertSimple(table, normalized) {
     data = retry.data;
     error = retry.error;
   }
-  if (error) throw error;
+  if (error) throwSupabaseInsertError(table, error);
   return data.id;
 }
 
@@ -455,7 +539,26 @@ async function insertReservation(normalized) {
     data = retry.data;
     error = retry.error;
   }
-  if (error) throw error;
+  if (error) throwSupabaseInsertError("guest_reservations", error);
+  return data.id;
+}
+
+async function insertLateCheckout(normalized) {
+  const row = {
+    guest_name: normalized.name,
+    room_number: normalized.room,
+    nationality: normalized.nationality,
+    checkout_date: normalized.checkoutDate,
+    checkout_time: normalized.checkoutTime,
+    description: normalized.description || "",
+    details: normalized.details || {},
+    source: normalized.source,
+    submitted_at: normalized.submittedAt,
+    status: "new",
+    raw_payload: normalized,
+  };
+  const { data, error } = await getSupabase().from("guest_late_checkouts").insert(row).select("id").single();
+  if (error) throwSupabaseInsertError("guest_late_checkouts", error);
   return data.id;
 }
 
@@ -482,6 +585,11 @@ export async function createGuestRequest(payload) {
     const id = await insertSimple("guest_notifications", normalized);
     await sendOperationalWhatsappNotification(normalized, "unknown");
     return { id, bucket: "guest_notification" };
+  }
+  if (normalized.type === LATE_CHECKOUT_TYPE) {
+    const id = await insertLateCheckout(normalized);
+    await sendOperationalWhatsappNotification(normalized, "unknown");
+    return { id, bucket: "late_checkout" };
   }
   const id = await insertReservation(normalized);
   return { id, bucket: "reservation" };

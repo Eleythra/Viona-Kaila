@@ -160,9 +160,11 @@
     if (s === "cancelled") return "İptal";
     if (issueIsWaitStatus(s)) return "Beklemede";
     if (s === "done") {
+      if (issueType === "late_checkout") return "Onaylandı";
       return issueType === "complaint" || issueType === "guest_notification" ? "Dikkate alındı" : "Yapıldı";
     }
     if (s === "rejected") {
+      if (issueType === "late_checkout") return "Onaylanmadı";
       return issueType === "complaint" || issueType === "guest_notification" ? "Dikkate alınmadı" : "Yapılamadı";
     }
     return s;
@@ -184,8 +186,18 @@
   function issueRowActionsHtml(issueType, id, st) {
     st = normalizeBucketStatus(st);
     var type = issueType;
-    var posLabel = type === "complaint" || type === "guest_notification" ? "Dikkate alındı" : "Yapıldı";
-    var negLabel = type === "complaint" || type === "guest_notification" ? "Dikkate alınmadı" : "Yapılamadı";
+    var posLabel;
+    var negLabel;
+    if (type === "late_checkout") {
+      posLabel = "Onaylandı";
+      negLabel = "Onaylanmadı";
+    } else if (type === "complaint" || type === "guest_notification") {
+      posLabel = "Dikkate alındı";
+      negLabel = "Dikkate alınmadı";
+    } else {
+      posLabel = "Yapıldı";
+      negLabel = "Yapılamadı";
+    }
     var h = "";
     function stBtn(stat, label) {
       return (
@@ -220,6 +232,7 @@
     if (type === "request") return "İstek";
     if (type === "complaint") return "Şikayet";
     if (type === "guest_notification") return "Misafir bildirimi";
+    if (type === "late_checkout") return "Geç çıkış";
     if (type === "fault") return "Arıza";
     if (type === "reservation") return "Rezervasyon";
     return "Kayıt";
@@ -516,6 +529,29 @@
 
   function getGuestNotifStaffNote(id) {
     return String(loadGuestNotifStaffNotes()[String(id)] || "");
+  }
+
+  var LATE_CO_STAFF_NOTE_KEY = "viona_admin_late_checkout_staff_notes_v1";
+
+  function loadLateCheckoutStaffNotes() {
+    try {
+      var raw = localStorage.getItem(LATE_CO_STAFF_NOTE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (_e) {
+      return {};
+    }
+  }
+
+  function setLateCheckoutStaffNote(id, text) {
+    var all = loadLateCheckoutStaffNotes();
+    all[String(id)] = String(text || "");
+    try {
+      localStorage.setItem(LATE_CO_STAFF_NOTE_KEY, JSON.stringify(all));
+    } catch (_e) {}
+  }
+
+  function getLateCheckoutStaffNote(id) {
+    return String(loadLateCheckoutStaffNotes()[String(id)] || "");
   }
 
   var FAULT_STAFF_NOTE_KEY = "viona_admin_fault_staff_notes_v1";
@@ -2904,6 +2940,215 @@
     applyFilters();
   }
 
+  function renderLateCheckoutsPanel(mountEl, rows, handlers) {
+    if (!Array.isArray(rows)) rows = [];
+    var pag = handlers && handlers.pagination;
+    var totalCount = bucketTopStatsTotal(pag, rows);
+    var topstatsTitle = pag ? BUCKET_QUAD_STATS_TITLE_WHEN_PAGED : "";
+    var open = rows.filter(function (r) {
+      var s = normalizeBucketStatus(r.status);
+      return s === "new" || s === "pending" || s === "in_progress";
+    }).length;
+    var done = rows.filter(function (r) {
+      return normalizeBucketStatus(r.status) === "done";
+    }).length;
+    var rejected = rows.filter(function (r) {
+      return normalizeBucketStatus(r.status) === "rejected";
+    }).length;
+
+    var html =
+      '<div class="bucket-shell bucket-shell--late-checkout">' +
+      '<div class="bucket-topstats bucket-topstats--quad"' +
+      topstatsTitle +
+      ">" +
+      '<div class="bucket-stat"><span>Toplam</span><strong>' + esc(totalCount) + "</strong></div>" +
+      '<div class="bucket-stat"><span>Beklemede</span><strong>' + esc(open) + "</strong></div>" +
+      '<div class="bucket-stat"><span>Onaylandı</span><strong>' + esc(done) + "</strong></div>" +
+      '<div class="bucket-stat"><span>Onaylanmadı</span><strong>' + esc(rejected) + "</strong></div>" +
+      "</div>" +
+      '<p class="bucket-help bucket-help--late-checkout">' +
+      "Web formundan gelen geç çıkış talepleri; WhatsApp misafir bildirimi şablonu ile iletilir. Personel notu yerel tarayıcıda saklanır.</p>" +
+      '<div class="bucket-toolbar bucket-toolbar--complaints">' +
+      '<label class="bucket-filter-date-label">Kayıt tarihi' +
+      '<div class="reservation-date-combo bucket-toolbar-date-combo">' +
+      '<input type="date" class="bucket-filter-date-native" />' +
+      '<span class="reservation-date-combo__display">Tümü</span>' +
+      '<button type="button" class="btn-small bucket-filter-date-clear" title="Tüm tarihler">Temizle</button>' +
+      "</div></label>" +
+      '<input class="bucket-search" type="search" placeholder="Oda, misafir, çıkış tarihi/saati veya not ara..." />' +
+      '<select class="bucket-filter-status">' +
+      '<option value="all">Tüm Durumlar</option>' +
+      '<option value="new_pending">Beklemede</option>' +
+      '<option value="done">Onaylandı</option>' +
+      '<option value="rejected">Onaylanmadı</option>' +
+      "</select>" +
+      "</div>" +
+      '<div class="bucket-table-wrap">' +
+      '<table class="admin-table admin-table--late-checkout">' +
+      "<thead><tr>" +
+      "<th>Kayıt</th><th>Çıkış tarihi</th><th>Çıkış saati</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Misafir notu</th><th>Personel notu</th><th>Durum</th><th>İşlemler</th>" +
+      "</tr></thead><tbody>";
+
+    function checkoutDateDisp(r) {
+      var raw = String(r.checkout_date || "").slice(0, 10);
+      if (raw.length === 10) return formatIsoDateDisplayTr(raw);
+      return raw || "—";
+    }
+
+    if (!rows.length) {
+      html += '<tr><td colspan="10" class="admin-table__empty">Henüz geç çıkış talebi yok.</td></tr>';
+    } else {
+      rows.forEach(function (r) {
+        var st = normalizeBucketStatus(r.status);
+        var descFull = complaintFormDescription(r);
+        var staffNote = getLateCheckoutStaffNote(r.id);
+        var coDate = checkoutDateDisp(r);
+        var coTime = String(r.checkout_time || "").trim() || "—";
+        var rowSearchText = [
+          String(r.room_number || ""),
+          String(r.guest_name || ""),
+          String(r.nationality || ""),
+          coDate,
+          coTime,
+          descFull,
+          staffNote,
+        ]
+          .join(" ")
+          .toLowerCase();
+        html +=
+          '<tr class="bucket-row late-checkout-row" data-id="' +
+          esc(r.id) +
+          '" data-status="' +
+          esc(st) +
+          '" data-search="' +
+          esc(rowSearchText) +
+          '" data-cal-date="' +
+          esc(submittedAtCalendarIso(r.submitted_at)) +
+          '">';
+        html += "<td>" + esc(formatSubmittedAtTr(r.submitted_at)) + "</td>";
+        html += "<td>" + esc(coDate) + "</td>";
+        html += "<td>" + esc(coTime) + "</td>";
+        html += "<td>" + esc(r.room_number || "-") + "</td>";
+        html += "<td>" + esc(r.guest_name || "-") + "</td>";
+        html += "<td>" + esc(r.nationality || "-") + "</td>";
+        html += '<td class="complaint-cell-desc">' + esc(descFull) + "</td>";
+        html +=
+          '<td class="request-cell-staff"><textarea class="request-staff-note js-lc-staff-note" rows="2" data-id="' +
+          esc(r.id) +
+          '" placeholder="İç not">' +
+          esc(staffNote) +
+          "</textarea></td>";
+        html +=
+          '<td><span class="status-badge status-' +
+          esc(st) +
+          '">' +
+          esc(issueStatusLabel("late_checkout", st)) +
+          "</span></td>";
+        html += '<td><div class="row-actions">';
+        html += issueRowActionsHtml("late_checkout", r.id, st);
+        html += "</div></td>";
+        html += "</tr>";
+      });
+    }
+
+    html += "</tbody></table></div></div>";
+    mountEl.innerHTML = html;
+    if (handlers && handlers.pagination && handlers.onPage) {
+      attachAdminPager(mountEl, handlers.pagination, rows, handlers.onPage);
+    }
+
+    var search = mountEl.querySelector(".bucket-search");
+    var statusFilter = mountEl.querySelector(".bucket-filter-status");
+    var dateNat = mountEl.querySelector(".bucket-filter-date-native");
+    var dateDisp = mountEl.querySelector(".bucket-toolbar-date-combo .reservation-date-combo__display");
+    var dateClear = mountEl.querySelector(".bucket-filter-date-clear");
+
+    function applyFilters() {
+      var q = String((search && search.value) || "").trim().toLowerCase();
+      var st = String((statusFilter && statusFilter.value) || "all");
+      var dateIso = String((dateNat && dateNat.value) || "").slice(0, 10);
+      mountEl.querySelectorAll(".late-checkout-row").forEach(function (row) {
+        var okStatus = rowMatchesStatusFilter(row.getAttribute("data-status"), st);
+        var okSearch = !q || String(row.getAttribute("data-search") || "").indexOf(q) >= 0;
+        var cal = row.getAttribute("data-cal-date") || "";
+        var okDate = !dateIso || dateIso.length !== 10 || cal === dateIso;
+        row.classList.toggle("hidden", !(okStatus && okSearch && okDate));
+      });
+    }
+
+    function refreshLcRowSearch(ta) {
+      var tr = ta && ta.closest ? ta.closest("tr") : null;
+      if (!tr) return;
+      var id = String(ta.getAttribute("data-id") || "");
+      var row = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (String(rows[i].id) === id) {
+          row = rows[i];
+          break;
+        }
+      }
+      if (!row) return;
+      var descFull = complaintFormDescription(row);
+      var coDate = checkoutDateDisp(row);
+      var coTime = String(row.checkout_time || "").trim() || "—";
+      var staffNote = String(ta.value || "");
+      var rowSearchText = [
+        String(row.room_number || ""),
+        String(row.guest_name || ""),
+        String(row.nationality || ""),
+        coDate,
+        coTime,
+        descFull,
+        staffNote,
+      ]
+        .join(" ")
+        .toLowerCase();
+      tr.setAttribute("data-search", rowSearchText);
+    }
+
+    mountEl.querySelectorAll(".js-lc-staff-note").forEach(function (ta) {
+      ta.addEventListener("blur", function () {
+        var id = String(ta.getAttribute("data-id") || "");
+        setLateCheckoutStaffNote(id, ta.value);
+        refreshLcRowSearch(ta);
+        applyFilters();
+      });
+    });
+
+    mountEl.querySelectorAll(".js-status").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        handlers.onStatus(btn.getAttribute("data-type"), btn.getAttribute("data-id"), btn.getAttribute("data-status"));
+      });
+    });
+    mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+      });
+    });
+
+    if (search) search.addEventListener("input", applyFilters);
+    if (statusFilter) statusFilter.addEventListener("change", applyFilters);
+    if (dateNat) {
+      dateNat.addEventListener("change", function () {
+        syncBucketFilterDateDisplay(dateNat, dateDisp);
+        applyFilters();
+      });
+      dateNat.addEventListener("input", function () {
+        syncBucketFilterDateDisplay(dateNat, dateDisp);
+        applyFilters();
+      });
+    }
+    if (dateClear) {
+      dateClear.addEventListener("click", function () {
+        if (dateNat) dateNat.value = "";
+        syncBucketFilterDateDisplay(dateNat, dateDisp);
+        applyFilters();
+      });
+    }
+
+    applyFilters();
+  }
+
   function renderFaultsPanel(mountEl, rows, handlers) {
     if (!Array.isArray(rows)) rows = [];
     var pag = handlers && handlers.pagination;
@@ -3357,6 +3602,10 @@
       }
       if (type === "guest_notification") {
         renderGuestNotificationsPanel(mountEl, rows || [], handlers);
+        return;
+      }
+      if (type === "late_checkout") {
+        renderLateCheckoutsPanel(mountEl, rows || [], handlers);
         return;
       }
       if (type === "fault") {

@@ -169,6 +169,7 @@ export async function listAdminBucket(type, query = {}) {
     complaint: { table: "guest_complaints" },
     fault: { table: "guest_faults" },
     guest_notification: { table: "guest_notifications" },
+    late_checkout: { table: "guest_late_checkouts" },
     reservation: { table: "guest_reservations" },
   };
   const cfg = map[type];
@@ -326,6 +327,7 @@ function tableForType(type) {
     complaint: "guest_complaints",
     fault: "guest_faults",
     guest_notification: "guest_notifications",
+    late_checkout: "guest_late_checkouts",
     reservation: "guest_reservations",
   };
   const t = map[String(type || "")];
@@ -382,6 +384,9 @@ function formatStatusUpdateFailureMessage(type, normalized, supabaseError) {
     } else if (type === "guest_notification") {
       bucketHint =
         " Misafir bildirimleri: server/docs/supabase-paste-viona.sql bölüm 10 (veya guest-notifications-table.sql); status CHECK güncel olmalı (rejected dahil).";
+    } else if (type === "late_checkout") {
+      bucketHint =
+        " Geç çıkış: server/docs/supabase-paste-viona.sql bölüm 11 (guest_late_checkouts); status CHECK güncel olmalı.";
     }
     return `Veritabanı bu durumu kabul etmiyor (CHECK kısıtı).${bucketHint} Teknik: ${raw || "bilinmiyor"}`;
   }

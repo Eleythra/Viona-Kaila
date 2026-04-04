@@ -6,7 +6,7 @@ from time import time
 from typing import Literal, Optional, Dict, Tuple
 
 
-NotifGroupFilter = Literal["diet", "health", "celebration"]
+NotifGroupFilter = Literal["diet", "health", "celebration", "reception"]
 OperationType = Literal["request", "fault", "complaint", "guest_notification"]
 FormStep = Literal[
     "category",

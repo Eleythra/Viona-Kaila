@@ -1,6 +1,6 @@
 /**
  * @typedef {Object} GuestRequestPayload
- * @property {'request'|'complaint'|'fault'|'guest_notification'|'reservation_alacarte'|'reservation_spa'} type
+ * @property {'request'|'complaint'|'fault'|'guest_notification'|'late_checkout'|'reservation_alacarte'|'reservation_spa'} type
  * @property {string} name
  * @property {string} room
  * @property {string} nationality
@@ -29,10 +29,25 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload || {}),
     });
-    var data = await response.json();
+    var text = await response.text();
+    var data = null;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch (_parseErr) {
+      data = null;
+    }
 
     if (!response.ok || !data || data.ok !== true || !data.id) {
-      throw new Error((data && data.error) || "guest_request_submit_failed");
+      var serverErr =
+        data && typeof data.error === "string" && data.error.trim()
+          ? data.error.trim()
+          : null;
+      if (!serverErr && !text) {
+        serverErr = "http_" + response.status;
+      } else if (!serverErr) {
+        serverErr = "guest_request_bad_response";
+      }
+      throw new Error(serverErr);
     }
     return {
       ok: true,

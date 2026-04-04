@@ -784,6 +784,9 @@
   background: #1a1218;
   color: #f0b4b4;
   font-size: 0.95rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .section-head {
   display: flex;
@@ -3108,4 +3111,54 @@
 }
 .eval-question .eval-bar {
   margin-top: 0;
+}
+
+/* Misafir bildirimleri — bildirimler / geç çıkış alt sekmeleri */
+.admin-gn-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 16px 0 20px;
+  padding: 6px;
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface-2);
+  border: 1px solid var(--admin-border);
+}
+.admin-gn-subtabs .admin-subtab-btn {
+  flex: 1 1 auto;
+  min-width: 140px;
+}
+.admin-subtab-btn {
+  padding: 11px 20px;
+  border-radius: var(--admin-radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--admin-text-muted);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition:
+    background var(--admin-ease),
+    border-color var(--admin-ease),
+    color var(--admin-ease),
+    box-shadow var(--admin-ease);
+}
+.admin-subtab-btn:hover,
+.admin-subtab-btn:focus-visible {
+  color: var(--admin-text);
+  background: rgba(61, 108, 255, 0.08);
+  outline: none;
+}
+.admin-subtab-btn.is-active {
+  border-color: rgba(61, 108, 255, 0.4);
+  background: linear-gradient(180deg, rgba(61, 108, 255, 0.22) 0%, rgba(61, 108, 255, 0.08) 100%);
+  color: var(--admin-text-title);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+}
+.admin-gn-list-panel.hidden {
+  display: none;
+}
+.bucket-shell--late-checkout .bucket-help--late-checkout {
+  max-width: 52rem;
 }

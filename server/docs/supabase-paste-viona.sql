@@ -2,7 +2,7 @@
 -- VIONA / KAILA — Supabase SQL Editor’a TEK SEFERDE yapıştırın
 -- Sıra: uzantı → chat_observations → CHECK’ler → indeksler → chat_logs backfill
 --       → özet view’lar → şikâyet/arıza kolonları → 8b kova status CHECK → guest_reservations revizyonu
---       → rezervasyon status (rejected = admin “Onaylanmadı”) → guest_notifications (misafir bildirimleri)
+--       → rezervasyon status (rejected = admin “Onaylanmadı”) → guest_notifications → guest_late_checkouts (geç çıkış)
 --
 -- NOT: CHECK eklenirken "violates check constraint" alırsanız, aşağıdaki
 --      "OPSİYONEL: CHECK öncesi veri temizliği" bölümünü sırayla çalıştırın.
@@ -620,7 +620,59 @@ alter table if exists public.guest_notifications
 
 alter table if exists public.guest_notifications enable row level security;
 
+-- -----------------------------------------------------------------------------
+-- 11) guest_late_checkouts — geç çıkış (yalnızca web formu; type=late_checkout)
+--     WhatsApp: misafir bildirimi şablonu (7 parametre) ile aynı alıcı listesi.
+-- -----------------------------------------------------------------------------
+create table if not exists public.guest_late_checkouts (
+  id uuid primary key default gen_random_uuid(),
+  guest_name text not null,
+  room_number text not null,
+  nationality text not null,
+  checkout_date date not null,
+  checkout_time text not null,
+  description text not null default '',
+  details jsonb not null default '{}'::jsonb,
+  source text not null default 'viona_web',
+  submitted_at timestamptz not null default now(),
+  status text not null default 'new',
+  raw_payload jsonb
+);
+
+create index if not exists idx_guest_late_checkouts_submitted_at on public.guest_late_checkouts (submitted_at desc);
+create index if not exists idx_guest_late_checkouts_status on public.guest_late_checkouts (status);
+create index if not exists idx_guest_late_checkouts_checkout_date on public.guest_late_checkouts (checkout_date);
+
+alter table if exists public.guest_late_checkouts drop constraint if exists guest_late_checkouts_status_check;
+alter table if exists public.guest_late_checkouts drop constraint if exists guest_late_checkouts_status_chk;
+
+alter table if exists public.guest_late_checkouts
+  add constraint guest_late_checkouts_status_check
+  check (
+    lower(trim((status)::text)) in (
+      'new',
+      'pending',
+      'in_progress',
+      'done',
+      'cancelled',
+      'rejected'
+    )
+  );
+
+-- OPSİYONEL: CHECK hatası — geçersiz status:
+-- update public.guest_late_checkouts set status = 'new'
+-- where lower(trim((status)::text)) not in ('new','pending','in_progress','done','cancelled','rejected');
+
+alter table if exists public.guest_late_checkouts enable row level security;
+
 -- =============================================================================
--- Bitti. chat_observations, view’lar; istek/şikâyet/arıza kolonları + 8b CHECK;
--- guest_reservations kolonları, backfill, status CHECK (rejected); guest_notifications.
+-- Bitti. chat_observations, view’lar; istek/şikâyet/arıza + 8b CHECK; guest_reservations;
+-- guest_notifications (bölüm 10); guest_late_checkouts / geç çıkış (bölüm 11).
+--
+-- Node API (guest-requests.service.js) kolon eşlemesi — şema sapması insert hatası verir:
+--   guest_notifications: guest_name, room_number, nationality, description, categories (jsonb),
+--     other_category_note, category, details (jsonb), source, submitted_at, status, raw_payload
+--   guest_late_checkouts: guest_name, room_number, nationality, checkout_date (date),
+--     checkout_time (text, HH:MM), description, details (jsonb), source, submitted_at, status, raw_payload
+-- Service role anahtarı RLS’i baypas eder; yalnızca anon/authenticated ile yazacaksanız POLICY ekleyin.
 -- =============================================================================

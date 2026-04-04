@@ -162,24 +162,33 @@ ROUTING_GENERIC_COMPLAINT_WORDS = [
 RESERVATION_WORDS = [
     "erken giriş",
     "erken giris",
-    "geç çıkış",
-    "gec cikis",
     "rezervasyon",
     "rezrvasyon",
     "reservation",
     "oda değiş",
     "oda degis",
     "room change",
-    "late checkout",
     "early checkin",
     "extension",
     "reservierung",
     "früher check-in",
-    "später check-out",
     "ранний заезд",
-    "поздний выезд",
     "бронирование",
 ]
+def _matches_late_checkout_guest_notif(normalized_text: str) -> bool:
+    """Yalnızca tam ifadeler; 'çıkış saati' gibi hotel_info sorgularını yanlış yakalamaz."""
+    tl = normalized_text or ""
+    needles = (
+        "geç çıkış",
+        "gec cikis",
+        "late checkout",
+        "später check-out",
+        "spater check-out",
+        "поздний выезд",
+        "delayed checkout",
+        "checkout uzat",
+    )
+    return any(n in tl for n in needles)
 # Eski SPECIAL_WORDS parçalandı: kutlama / sağlık / beslenme → chat’te misafir bildirimi formu.
 CELEBRATION_NOTIF_WORDS = [
     "kutlama",
@@ -217,7 +226,13 @@ CELEBRATION_NOTIF_WORDS = [
     "room decoration",
     "zimmerdekoration",
     "evlenme teklifi",
-    "romantic surprise",
+    "özel gün",
+    "ozel gun",
+    "ozelgun",
+    "özel günler",
+    "ozel gunler",
+    "organizasyon",
+    "organizasyonu",
 ]
 HEALTH_NOTIF_WORDS = [
     "hamile",
@@ -338,6 +353,104 @@ SPECIAL_WORDS = [
     # DE baby
     "babynahrung",
 ]
+
+# Chat istek formu (web ile aynı kategori id’leri). Önce daha özgül ifadeler.
+REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
+    (
+        "room_cleaning",
+        [
+            "oda temizliği",
+            "oda temizligi",
+            "oda düzenle",
+            "oda duzenle",
+            "housekeeping",
+            "room cleaning",
+            "clean my room",
+            "zimmerreinigung",
+            "уборка номера",
+            "genel temizlik",
+        ],
+    ),
+    (
+        "baby_equipment",
+        [
+            "bebek ekipmanı",
+            "bebek ekipmani",
+            "bebek yatağı",
+            "bebek yatagi",
+            "mama sandalyesi",
+            "baby equipment",
+            "baby bed",
+            "high chair",
+            "beşik",
+            "besik",
+        ],
+    ),
+    ("minibar", ["minibar", "mini bar", "mini-bar"]),
+    (
+        "bedding",
+        [
+            "yastık",
+            "yastik",
+            "nevresim",
+            "yatak takımı",
+            "yatak takimi",
+            "battaniye",
+            "pillow",
+            "duvet cover",
+            "duvet",
+            "bedding",
+            "blanket",
+            "kissen",
+            "bettwäsche",
+            "bettwasche",
+            "decke",
+            "подушка",
+            "одеяло",
+        ],
+    ),
+    (
+        "towel",
+        [
+            "havlu",
+            "havlum",
+            "towel",
+            "handtuch",
+            "полотенце",
+            "ek havlu",
+            "extra towel",
+        ],
+    ),
+    (
+        "room_equipment",
+        [
+            "oda ekipmanı",
+            "oda ekipmani",
+            "room equipment",
+            "ütü",
+            "utu",
+            "iron",
+            "ironing",
+            "kettle",
+            "askı",
+            "aski",
+            "hanger",
+            "bornoz",
+            "bathrobe",
+            "terlik",
+            "slippers",
+        ],
+    ),
+]
+
+
+def extract_request_category_from_text(normalized_text: str) -> str | None:
+    for cat_id, phrases in REQUEST_ITEM_CATEGORY_PHRASES:
+        if any(_fuzzy_has(normalized_text, p) for p in phrases):
+            return cat_id
+    return None
+
+
 RECOMMENDATION_WORDS = [
     "öner", "oner", "öneri", "oneri",
     "ne yesem", "karar veremedim",
@@ -495,7 +608,6 @@ DEVICE_HINTS = {
 
     # Accessibility need
     "accessibility_need": ["accessibility", "erişilebilirlik", "wheelchair", "rollstuhl", "доступность", "доступ", "коляска"],
-    "late_checkout": ["geç çıkış", "gec cikis", "late checkout", "выезд позже"],
     "early_checkin": ["erken giriş", "erken giris", "early checkin"],
     "room_change": ["oda değiş", "oda degis", "room change"],
     "reservation_issue": ["rezervasyonum görünmüyor", "rezervasyon görünmüyor", "reservation not found", "reservation issue"],
@@ -565,6 +677,26 @@ class RuleEngine:
         with open(rules_path, "r", encoding="utf-8") as f:
             self.rules = yaml.safe_load(f) or {}
 
+    @staticmethod
+    def matches_late_checkout_guest_notif(normalized_text: str) -> bool:
+        """Policy / çoklu cümle yollarında kural ile aynı geç çıkış tespiti."""
+        return _matches_late_checkout_guest_notif(normalized_text)
+
+    def extract_request_category(self, text: str) -> str | None:
+        return extract_request_category_from_text(text)
+
+    def infer_guest_notification_group(self, normalized_text: str) -> str | None:
+        """Sınıflandırıcı misafir bildirimi dediğinde metinden grup çıkarır (tam liste önce diyet göstermesin)."""
+        if _matches_late_checkout_guest_notif(normalized_text):
+            return "reception"
+        if any(_fuzzy_has(normalized_text, w) for w in CELEBRATION_NOTIF_WORDS):
+            return "celebration"
+        if any(_fuzzy_has(normalized_text, w) for w in HEALTH_NOTIF_WORDS):
+            return "health"
+        if any(_fuzzy_has(normalized_text, w) for w in SPECIAL_WORDS):
+            return "diet"
+        return None
+
     def match(self, normalized_text: str) -> Optional[IntentResult]:
         lang_switch = self._match_language_switch(normalized_text)
         if lang_switch:
@@ -581,6 +713,20 @@ class RuleEngine:
                 department=None,
                 needs_rag=False,
                 response_mode="fixed",
+                confidence=1.0,
+                source="rule",
+            )
+
+        # Geç çıkış → Talepler / Misafir bildirimleri (resepsiyon); rezervasyon formu değil.
+        if _matches_late_checkout_guest_notif(normalized_text):
+            logger.info("RULE MATCH: guest_notification (reception / late checkout)")
+            return IntentResult(
+                intent="guest_notification",
+                sub_intent="notif_group_reception",
+                entity=None,
+                department="reception",
+                needs_rag=False,
+                response_mode="guided",
                 confidence=1.0,
                 source="rule",
             )
@@ -1426,8 +1572,6 @@ class RuleEngine:
 
     @staticmethod
     def _reservation_sub_intent(text: str, entity: str | None) -> str:
-        if entity == "late_checkout" or "geç çıkış" in text or "gec cikis" in text or "late checkout" in text:
-            return "late_checkout_request"
         if entity == "early_checkin" or "erken giriş" in text or "erken giris" in text or "early checkin" in text:
             return "early_checkin_request"
         if entity == "room_change" or "oda değiş" in text or "room change" in text:
