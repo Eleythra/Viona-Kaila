@@ -21,6 +21,7 @@
     { id: "request", i18nKey: "subRequest" },
     { id: "complaint", i18nKey: "subComplaint" },
     { id: "fault", i18nKey: "subFault" },
+    { id: "guest_notification", i18nKey: "subGuestNotification" },
     { id: "res", i18nKey: "subRes" },
   ];
 
@@ -438,6 +439,34 @@
     showView("home");
   }
 
+  // Chatbot'tan gelen rezervasyon yönlendirmesi için: İstekler modülünü
+  // Rezervasyonlar alt sekmesi (REQUEST_SUBS içindeki "res") ile aç.
+  window.vionaChatOpenReservations = function () {
+    moduleId = "requests";
+    requestSub = "res";
+    surveySub = null;
+    showView("module");
+    renderModuleContent();
+    closeModals();
+  };
+
+  /** Sohbet formu kaydı tamamlandıktan sonra: modal kapanır, modül sıfırlanır, ana sayfa (istek/anket ile aynı mantık). */
+  window.vionaExitChatToHome = function () {
+    closeModals();
+    const inner = el("module-inner");
+    if (inner) {
+      if (inner._whereCleanup && typeof inner._whereCleanup === "function") {
+        inner._whereCleanup();
+        delete inner._whereCleanup;
+      }
+      inner.innerHTML = "";
+    }
+    moduleId = null;
+    requestSub = null;
+    surveySub = null;
+    showView("home");
+  };
+
   function setLang(code) {
     lang = code;
     localStorage.setItem(LANG_STORAGE_KEY, code);
@@ -462,6 +491,10 @@
   function closeModals() {
     document.querySelectorAll(".modal-root").forEach((m) => m.classList.add("hidden"));
     document.body.style.overflow = "";
+    // Chatbot modal kapandığında sohbet ve form bağlamını da sıfırla.
+    if (typeof window.vionaChatHardReset === "function") {
+      window.vionaChatHardReset();
+    }
   }
 
   /** Yalnızca dil onayı veya oturumda dil atlanınca (ilk ana sayfa girişi); modülden dönüşte çağrılmaz. */

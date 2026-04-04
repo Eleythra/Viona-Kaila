@@ -1,4 +1,8 @@
 /**
+ * NOT: Admin arayüzü `admin/index.html` içinde `../js/requests/config.js` yükler; bu dosya şu an
+ * HTML’de referanslı değildir. Tek doğruluk kaynağı: depo kökündeki `js/requests/config.js`.
+ * Bu kopyayı değiştirirken kök dosyayı da eşitleyin veya sadece kökü düzenleyin.
+ *
  * Misafir talepleri — kategori ve demo seçenekleri (ileride API ile değiştirilebilir).
  * Rezervasyon saatleri: tüm restoranlar için 15 dakika adımları.
  */
@@ -56,7 +60,6 @@
 
   window.REQUESTS_CONFIG = {
     floorCalendarDate: "2026-03-01",
-    /** Misafir bildirimleri — hub alt sekmesi (gruplu radyo kategorileri). */
     guestNotificationGroups: [
       {
         sectionKey: "reqNotifGroupDiet",

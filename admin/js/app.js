@@ -19,7 +19,7 @@
   var BUCKET_LIST_PAGE_SIZE = 100;
   /** Ana sayfa özetinde birleştirilen kayıt üst sınırı (sayfa × getBucketPage boyutu). */
   var BUCKET_MERGE_MAX_PAGES = 100;
-  var bucketListPage = { request: 1, complaint: 1, fault: 1 };
+  var bucketListPage = { request: 1, complaint: 1, fault: 1, guest_notification: 1 };
   /** Chatbot log tablosu sayfalama */
   var logsPage = 1;
   var LOGS_PAGE_SIZE = 70;
@@ -57,7 +57,6 @@
   var reservationSubtabLabels = {
     overview: "Günlük takip (tümü)",
     laTerrace: "La Terrace A La Carte",
-    mare: "Mare Restaurant",
     sinton: "Sinton BBQ Restaurant",
     spa: "Spa",
   };
@@ -66,6 +65,7 @@
     requests: "tab-requests",
     complaints: "tab-complaints",
     faults: "tab-faults",
+    guest_notifications: "tab-guest-notifications",
     reservations: "tab-reservations",
     evaluations: "tab-evaluations",
     promo: "tab-promo",
@@ -133,6 +133,7 @@
         adapter.getBucketMergeAll("request", BUCKET_MERGE_MAX_PAGES).catch(emptyBucket),
         adapter.getBucketMergeAll("complaint", BUCKET_MERGE_MAX_PAGES).catch(emptyBucket),
         adapter.getBucketMergeAll("fault", BUCKET_MERGE_MAX_PAGES).catch(emptyBucket),
+        adapter.getBucketMergeAll("guest_notification", BUCKET_MERGE_MAX_PAGES).catch(emptyBucket),
         adapter.getBucketMergeAll("reservation", BUCKET_MERGE_MAX_PAGES).catch(emptyBucket),
       ]);
       var warnEl = document.getElementById("dashboard-api-warning");
@@ -166,7 +167,8 @@
         request: buckets[0] || [],
         complaint: buckets[1] || [],
         fault: buckets[2] || [],
-        reservation: buckets[3] || [],
+        guest_notification: buckets[3] || [],
+        reservation: buckets[4] || [],
       };
       renderHomeTopStrip(dashData, report);
       renderDashboardAlerts(dashData);
@@ -282,6 +284,8 @@
         await loadBucket("complaint", "list-complaints");
       } else if (activeAdminTab === "faults") {
         await loadBucket("fault", "list-faults");
+      } else if (activeAdminTab === "guest_notifications") {
+        await loadBucket("guest_notification", "list-guest-notifications");
       } else if (activeAdminTab === "reservations") {
         await loadBucket("reservation", "list-reservations");
       } else if (activeAdminTab === "evaluations") {
@@ -710,8 +714,11 @@
   }
 
   /** Tüm zamanlar: istek+şikayet+arıza birleşik (toplam = tüm durumların toplamı). */
-  function opsGlobalSnapshot(reqRows, comRows, faultRows) {
-    var merged = (reqRows || []).concat(comRows || []).concat(faultRows || []);
+  function opsGlobalSnapshot(reqRows, comRows, faultRows, notifRows) {
+    var merged = (reqRows || [])
+      .concat(comRows || [])
+      .concat(faultRows || [])
+      .concat(notifRows || []);
     var open = 0;
     var done = 0;
     var rej = 0;
@@ -786,29 +793,35 @@
     var reqRows = data.request || [];
     var comRows = data.complaint || [];
     var faultRows = data.fault || [];
+    var notifRows = data.guest_notification || [];
     var resRows = data.reservation || [];
-    var totalRecords = reqRows.length + comRows.length + faultRows.length + resRows.length;
+    var totalRecords =
+      reqRows.length + comRows.length + faultRows.length + notifRows.length + resRows.length;
     var todayIso = todayIsoLocal();
     var todayLabel =
       typeof ui.formatIsoDateDisplayTr === "function" ? ui.formatIsoDateDisplayTr(todayIso) : todayIso;
     var reqToday = filterRowsSubmittedOnDay(reqRows, todayIso);
     var comToday = filterRowsSubmittedOnDay(comRows, todayIso);
     var faultToday = filterRowsSubmittedOnDay(faultRows, todayIso);
+    var notifToday = filterRowsSubmittedOnDay(notifRows, todayIso);
     var reqSp = countOpsBeklemeYapildi(reqToday);
     var comSp = countOpsBeklemeYapildi(comToday);
     var faultSp = countOpsBeklemeYapildi(faultToday);
-    var opsAll = opsGlobalSnapshot(reqRows, comRows, faultRows);
+    var notifSp = countOpsBeklemeYapildi(notifToday);
+    var opsAll = opsGlobalSnapshot(reqRows, comRows, faultRows, notifRows);
     var resAll = resGlobalSnapshot(resRows);
-    var opsWaitTotal = reqSp.wait + comSp.wait + faultSp.wait;
-    var opsDoneTotal = reqSp.done + comSp.done + faultSp.done;
-    var opsRejTotal = reqSp.rej + comSp.rej + faultSp.rej;
+    var opsWaitTotal = reqSp.wait + comSp.wait + faultSp.wait + notifSp.wait;
+    var opsDoneTotal = reqSp.done + comSp.done + faultSp.done + notifSp.done;
+    var opsRejTotal = reqSp.rej + comSp.rej + faultSp.rej + notifSp.rej;
     var opsExtraToday =
       reqSp.cancelled +
       reqSp.other +
       comSp.cancelled +
       comSp.other +
       faultSp.cancelled +
-      faultSp.other;
+      faultSp.other +
+      notifSp.cancelled +
+      notifSp.other;
     var opsExtraAll = opsAll.cancelled + opsAll.other;
     var resExtraAll = resAll.can + resAll.other;
     var resToday = filterReservationsOnServiceDay(resRows, todayIso);
@@ -838,7 +851,7 @@
       '<div class="home-top-strip__bar home-top-strip__bar--global">' +
       '<div class="home-global-grid">' +
       '<div class="home-global-card">' +
-      '<span class="home-global-card__k">İstek · Şikayet · Arıza (tüm zamanlar)</span>' +
+      '<span class="home-global-card__k">İstek · Şikayet · Arıza · Misafir bildirimi (tüm zamanlar)</span>' +
       '<p class="home-global-card__body">Beklemede: <strong>' +
       opsAll.open +
       "</strong> · Tamamlanan: <strong>" +
@@ -888,7 +901,7 @@
       "</p>" +
       "</div>" +
       "</div>" +
-      '<p class="home-global-hint">Üst kartlar tüm zamanlar. Alt şerit: istek/şikayet/arıza için <strong>bugün gönderilen</strong> kayıtlar; rezervasyon için <strong>rezervasyon tarihi bugün</strong> olan kayıtlar.</p>' +
+      '<p class="home-global-hint">Üst kartlar tüm zamanlar. Alt şerit: istek/şikayet/arıza/bildirim için <strong>bugün gönderilen</strong> kayıtlar; rezervasyon için <strong>rezervasyon tarihi bugün</strong> olan kayıtlar.</p>' +
       "</div>";
     var opsTypeItems =
       '<li class="home-res-venue">' +
@@ -935,13 +948,28 @@
       '<span class="home-res-venue__leg"><span class="home-res-venue__leg-k">Olumsuz</span> ' +
       '<span class="home-res-venue__leg-v">' +
       faultSp.rej +
+      "</span></span></div></li>" +
+      '<li class="home-res-venue">' +
+      '<span class="home-res-venue__name">Misafir bildirimleri</span>' +
+      '<div class="home-res-venue__split" role="group" aria-label="Misafir bildirimleri bugün">' +
+      '<span class="home-res-venue__leg"><span class="home-res-venue__leg-k">Beklemede</span> ' +
+      '<span class="home-res-venue__leg-v">' +
+      notifSp.wait +
+      "</span></span>" +
+      '<span class="home-res-venue__leg"><span class="home-res-venue__leg-k">Dikkate alındı</span> ' +
+      '<span class="home-res-venue__leg-v">' +
+      notifSp.done +
+      "</span></span>" +
+      '<span class="home-res-venue__leg"><span class="home-res-venue__leg-k">Alınmadı</span> ' +
+      '<span class="home-res-venue__leg-v">' +
+      notifSp.rej +
       "</span></span></div></li>";
     var opsBar =
       '<div class="home-top-strip__bar home-top-strip__bar--operations">' +
       '<div class="home-res-strip">' +
       '<div class="home-res-strip__row">' +
       '<p class="home-res-strip__general">' +
-      "<strong>İstek · Şikayet · Arıza</strong> · Bugün (" +
+      "<strong>İstek · Şikayet · Arıza · Bildirim</strong> · Bugün (" +
       todayLabel +
       ") · Beklemede: <strong>" +
       opsWaitTotal +
@@ -956,6 +984,7 @@
       '<button type="button" class="home-ops-strip__mini js-home-open-requests">İstekler →</button>' +
       '<button type="button" class="home-ops-strip__mini js-home-open-complaints">Şikayetler →</button>' +
       '<button type="button" class="home-ops-strip__mini js-home-open-faults">Arızalar →</button>' +
+      '<button type="button" class="home-ops-strip__mini js-home-open-guest-notifications">Bildirimler →</button>' +
       "</div></div>" +
       '<p class="home-res-strip__hint">Bugün gönderilen kayıtlar (' +
       todayLabel +
@@ -1030,7 +1059,7 @@
       globalBar +
       '<div class="home-top-strip__bar home-top-strip__bar--metrics">' +
       '<ul class="home-top-strip__stats" role="list">' +
-      '<li class="home-stat" title="İstek, şikayet, arıza ve rezervasyon satırlarının toplamı">' +
+      '<li class="home-stat" title="İstek, şikayet, arıza, misafir bildirimi ve rezervasyon satırlarının toplamı">' +
       '<span class="home-stat__label">Kayıt (toplam)</span>' +
       '<span class="home-stat__value">' +
       totalRecords +
@@ -1072,6 +1101,12 @@
     wireOpsOpen(".js-home-open-requests", "requests", "request", "list-requests");
     wireOpsOpen(".js-home-open-complaints", "complaints", "complaint", "list-complaints");
     wireOpsOpen(".js-home-open-faults", "faults", "fault", "list-faults");
+    wireOpsOpen(
+      ".js-home-open-guest-notifications",
+      "guest_notifications",
+      "guest_notification",
+      "list-guest-notifications",
+    );
   }
 
   function oldestOpenText(rows) {
@@ -1147,11 +1182,13 @@
     var reqRows = data.request || [];
     var comRows = data.complaint || [];
     var faultRows = data.fault || [];
+    var notifRows = data.guest_notification || [];
     var resRows = data.reservation || [];
 
     var req = countPending(reqRows);
     var com = countPending(comRows);
     var fault = countPending(faultRows);
+    var notif = countPending(notifRows);
     var resAwaitCard = countAwaitingReservationApproval(resRows);
     var reqN = countByStatus(reqRows, "new");
     var reqP = countByStatus(reqRows, "pending");
@@ -1162,6 +1199,9 @@
     var faultN = countByStatus(faultRows, "new");
     var faultP = countByStatus(faultRows, "pending");
     var faultI = countByStatus(faultRows, "in_progress");
+    var notifN = countByStatus(notifRows, "new");
+    var notifP = countByStatus(notifRows, "pending");
+    var notifI = countByStatus(notifRows, "in_progress");
     var resN = countResByNorm(resRows, "new");
     var resP = countResByNorm(resRows, "pending");
     var resI = countResByNorm(resRows, "in_progress");
@@ -1208,6 +1248,18 @@
         tab: "faults",
       }) +
       renderReminderCard({
+        title: "Misafir bildirimleri",
+        openKpiLabel: "Beklemede (kuyruk)",
+        openCount: notif,
+        newCount: notifN,
+        pendingCount: notifP,
+        inProgressCount: notifI,
+        statusMetaLine:
+          "Yeni: " + notifN + " · Kuyruk: " + notifP + (notifI > 0 ? " · Eski işlemde: " + notifI : ""),
+        oldestOpen: oldestOpenText(notifRows),
+        tab: "guest_notifications",
+      }) +
+      renderReminderCard({
         title: "Rezervasyonlar",
         openKpiLabel: "Beklemede",
         openCount: resAwaitCard,
@@ -1238,6 +1290,9 @@
         if (tab === "requests") await loadBucket("request", "list-requests");
         if (tab === "complaints") await loadBucket("complaint", "list-complaints");
         if (tab === "faults") await loadBucket("fault", "list-faults");
+        if (tab === "guest_notifications") {
+          await loadBucket("guest_notification", "list-guest-notifications");
+        }
         if (tab === "reservations") {
           reservationSubtab = "overview";
           updateReservationNavStatus();
@@ -1444,6 +1499,9 @@
         if (tab === "requests") await loadBucket("request", "list-requests");
         if (tab === "complaints") await loadBucket("complaint", "list-complaints");
         if (tab === "faults") await loadBucket("fault", "list-faults");
+        if (tab === "guest_notifications") {
+          await loadBucket("guest_notification", "list-guest-notifications");
+        }
         if (tab === "reservations") await loadBucket("reservation", "list-reservations");
         if (tab === "evaluations") await loadEvaluations();
         if (tab === "promo") await loadPromo();

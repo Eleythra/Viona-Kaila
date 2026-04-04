@@ -1,7 +1,8 @@
 import { getSupabase } from "../../lib/supabase.js";
-import { scheduleGuestRecordTelegram } from "../../lib/telegram.service.js";
+import { isValidHotelRoomNumber } from "../../lib/hotel-room-numbers.js";
+import { sendOperationalWhatsappNotification } from "../../services/whatsapp-operational-notification.service.js";
 
-const SIMPLE_TYPES = new Set(["request", "complaint", "fault"]);
+const SIMPLE_TYPES = new Set(["request", "complaint", "fault", "guest_notification"]);
 const RESERVATION_TYPES = new Set(["reservation_alacarte", "reservation_spa"]);
 const REQUEST_CATEGORIES = new Set([
   "towel",
@@ -41,6 +42,28 @@ const COMPLAINT_CATEGORIES = new Set([
   "other",
 ]);
 const COMPLAINT_DESC_REQUIRED = new Set(["staff_behavior", "general_areas", "hygiene", "other"]);
+const GUEST_NOTIFICATION_CATEGORIES = new Set([
+  "allergen_notice",
+  "gluten_sensitivity",
+  "lactose_sensitivity",
+  "vegan_vegetarian",
+  "food_sensitivity_general",
+  "chronic_condition",
+  "accessibility_special_needs",
+  "pregnancy",
+  "medication_health_sensitivity",
+  "other_health",
+  "birthday_celebration",
+  "honeymoon_anniversary",
+  "surprise_organization",
+  "room_decoration",
+  "other_celebration",
+]);
+const GUEST_NOTIFICATION_DESC_REQUIRED = new Set([
+  "food_sensitivity_general",
+  "other_health",
+  "other_celebration",
+]);
 const FAULT_CATEGORIES = new Set([
   "hvac",
   "electric",
@@ -77,10 +100,6 @@ function cleanText(value, maxLen = 5000) {
   return String(value || "").trim().slice(0, maxLen);
 }
 
-function looksLikeRoomNumber(value) {
-  return /^\d+$/.test(String(value || "").trim());
-}
-
 function looksLikeNationality(value) {
   return /^[A-Za-z]{2,12}$/.test(String(value || "").trim());
 }
@@ -114,7 +133,7 @@ function normalizePayload(payload) {
     categories: toArray(payload?.categories),
     otherCategoryNote: cleanText(payload?.otherCategoryNote, 1000),
     reservation: payload?.reservation || null,
-    source: "viona_web",
+    source: cleanText(payload?.source || "viona_web", 64) || "viona_web",
     submittedAt: new Date().toISOString(),
   };
   return base;
@@ -268,19 +287,44 @@ function validateFaultPayload(normalized) {
   }
 }
 
+function validateGuestNotificationPayload(normalized) {
+  let category = normalized.category;
+  if (!category && Array.isArray(normalized.categories) && normalized.categories.length) {
+    category = String(normalized.categories[0] || "").trim();
+  }
+  if (!GUEST_NOTIFICATION_CATEGORIES.has(category)) {
+    throw new Error("guest notification category is required");
+  }
+  normalized.category = category;
+  normalized.categories = [category];
+  if (GUEST_NOTIFICATION_DESC_REQUIRED.has(category) && !normalized.description) {
+    throw new Error("description is required for selected notification category");
+  }
+  if (category === "other_celebration" || category === "other_health") {
+    normalized.otherCategoryNote = normalized.description || normalized.otherCategoryNote || null;
+  }
+}
+
 function validate(normalized) {
   if (!normalized.type) throw new Error("type is required");
   if (!normalized.name) throw new Error("name is required");
   if (!normalized.room) throw new Error("room is required");
   if (!normalized.nationality) throw new Error("nationality is required");
   if (!looksLikePersonName(normalized.name)) throw new Error("name must contain letters only");
-  if (!looksLikeRoomNumber(normalized.room)) throw new Error("room must be numeric");
-  if (!looksLikeNationality(normalized.nationality)) throw new Error("nationality must contain letters only");
+  if (!isValidHotelRoomNumber(normalized.room)) throw new Error("invalid hotel room number");
+  // Chatbot üzerinden gelen kayıtlarda milliyet alanı '-' olarak tutulabilir.
+  if (normalized.source !== "viona_chat" && !looksLikeNationality(normalized.nationality)) {
+    throw new Error("nationality must contain letters only");
+  }
   if (!SIMPLE_TYPES.has(normalized.type) && !RESERVATION_TYPES.has(normalized.type)) {
     throw new Error("invalid type");
   }
+  // İstekte açıklama şemada; şikayet / arıza / misafir bildirimi / rezervasyonda kurallar ayrı validate* içinde.
   if (normalized.type !== "request" && !normalized.description) {
-    if (normalized.type !== "complaint" && normalized.type !== "fault" && !RESERVATION_TYPES.has(normalized.type)) {
+    const t = normalized.type;
+    const descriptionDeferred =
+      t === "complaint" || t === "fault" || t === "guest_notification" || RESERVATION_TYPES.has(t);
+    if (!descriptionDeferred) {
       throw new Error("description is required");
     }
   }
@@ -290,6 +334,8 @@ function validate(normalized) {
     validateComplaintPayload(normalized);
   } else if (normalized.type === "fault") {
     validateFaultPayload(normalized);
+  } else if (normalized.type === "guest_notification") {
+    validateGuestNotificationPayload(normalized);
   } else if (RESERVATION_TYPES.has(normalized.type)) {
     if (!normalized.reservation || typeof normalized.reservation !== "object") {
       throw new Error("reservation is required");
@@ -333,14 +379,22 @@ async function insertSimple(table, normalized) {
     status: "new",
     raw_payload: normalized,
   };
-  if (table === "guest_requests" || table === "guest_faults" || table === "guest_complaints") {
+  if (
+    table === "guest_requests" ||
+    table === "guest_faults" ||
+    table === "guest_complaints" ||
+    table === "guest_notifications"
+  ) {
     row.category = normalized.category || null;
     row.details = normalized.details || {};
   }
   let { data, error } = await getSupabase().from(table).insert(row).select("id").single();
   if (
     error &&
-    (table === "guest_requests" || table === "guest_faults" || table === "guest_complaints") &&
+    (table === "guest_requests" ||
+      table === "guest_faults" ||
+      table === "guest_complaints" ||
+      table === "guest_notifications") &&
     isMissingCategoryOrDetailsColumnError(error.message)
   ) {
     delete row.category;
@@ -411,17 +465,23 @@ export async function createGuestRequest(payload) {
 
   if (normalized.type === "request") {
     const id = await insertSimple("guest_requests", normalized);
-    scheduleGuestRecordTelegram(normalized, "request");
+    await sendOperationalWhatsappNotification(normalized, "unknown");
     return { id, bucket: "request" };
   }
   if (normalized.type === "complaint") {
     const id = await insertSimple("guest_complaints", normalized);
+    await sendOperationalWhatsappNotification(normalized, "unknown");
     return { id, bucket: "complaint" };
   }
   if (normalized.type === "fault") {
     const id = await insertSimple("guest_faults", normalized);
-    scheduleGuestRecordTelegram(normalized, "fault");
+    await sendOperationalWhatsappNotification(normalized, "unknown");
     return { id, bucket: "fault" };
+  }
+  if (normalized.type === "guest_notification") {
+    const id = await insertSimple("guest_notifications", normalized);
+    await sendOperationalWhatsappNotification(normalized, "unknown");
+    return { id, bucket: "guest_notification" };
   }
   const id = await insertReservation(normalized);
   return { id, bucket: "reservation" };

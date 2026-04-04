@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 
 
 LangCode = Literal["tr", "en", "de", "ru"]
+ChannelName = Literal["web", "whatsapp", "unknown"]
 
 
 class ChatRequest(BaseModel):
@@ -18,4 +19,12 @@ class ChatRequest(BaseModel):
         ),
     )
     user_id: Optional[str] = None
+    session_id: Optional[str] = Field(
+        default=None,
+        description="İstemci tarafındaki oturum/cihaz kimliği; form akışı ve throttling için kullanılır.",
+    )
+    channel: ChannelName = Field(
+        default="web",
+        description="İstek kanalı: web chatbot, WhatsApp vb. için ayırt edici etiket.",
+    )
 

@@ -188,7 +188,7 @@ export function scheduleGuestRecordTelegram(normalized, bucket) {
   if (bucket === "fault") {
     void notifyTechnicalFaultRecord(normalized).catch((err) => {
       console.error(
-        "[telegram] Teknik grup arıza bildirimi başarısız:",
+        "[telegram] Teknik kanal arıza bildirimi başarısız:",
         err && err.message ? err.message : err,
       );
     });
@@ -197,7 +197,7 @@ export function scheduleGuestRecordTelegram(normalized, bucket) {
   if (bucket === "request") {
     void notifyHkRequestRecord(normalized).catch((err) => {
       console.error(
-        "[telegram] HK grup istek bildirimi başarısız:",
+        "[telegram] HK kanal istek bildirimi başarısız:",
         err && err.message ? err.message : err,
       );
     });

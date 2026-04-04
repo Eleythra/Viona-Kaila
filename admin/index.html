@@ -32,10 +32,10 @@
           <button type="button" data-tab="requests" title="İstek kayıtlarını açar">İstekler</button>
           <button type="button" data-tab="complaints" title="Şikayet kayıtlarını açar">Şikayetler</button>
           <button type="button" data-tab="faults" title="Arıza kayıtlarını açar">Arızalar</button>
+          <button type="button" data-tab="guest_notifications" title="Misafir bildirim kayıtlarını açar">Misafir bildirimleri</button>
           <button type="button" data-tab="reservations" data-res-subtab="overview" title="Tüm rezervasyonların günlük listesi ve raporu">Rezervasyonlar</button>
           <div class="admin-nav-sub" aria-label="Rezervasyon alt sekmeleri">
             <button type="button" data-tab="reservations" data-res-subtab="laTerrace" title="La Terrace rezervasyonlarını filtreler">La Terrace A La Carte</button>
-            <button type="button" data-tab="reservations" data-res-subtab="mare" title="Mare rezervasyonlarını filtreler">Mare Restaurant</button>
             <button type="button" data-tab="reservations" data-res-subtab="sinton" title="Sinton rezervasyonlarını filtreler">Sinton BBQ Restaurant</button>
             <button type="button" data-tab="reservations" data-res-subtab="spa" title="Spa rezervasyonlarını filtreler">Spa</button>
           </div>
@@ -146,6 +146,14 @@
           </div>
           <p class="section-lead">Arıza kayıtları; kategori, lokasyon ve aciliyet bilgisi.</p>
           <div id="list-faults"></div>
+        </section>
+        <section id="tab-guest-notifications" class="admin-tab hidden">
+          <div class="section-head">
+            <h2>Misafir bildirimleri</h2>
+            <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
+          </div>
+          <p class="section-lead">Beslenme / alerjen, sağlık ve kutlama bildirimleri; şikayet akışıyla aynı durum seçenekleri.</p>
+          <div id="list-guest-notifications"></div>
         </section>
         <section id="tab-reservations" class="admin-tab hidden">
           <div class="section-head">
@@ -403,6 +411,7 @@
     <script src="../js/viona-api-resolve.js?v=11"></script>
     <script src="../js/api-config.js?v=11"></script>
     <script src="../js/requests/config.js?v=11"></script>
+    <script src="../js/hotel-room-numbers.js?v=1"></script>
     <script src="js/data-adapter.js?v=12"></script>
     <script src="js/ui.js?v=26"></script>
     <script src="js/app.js?v=23"></script>

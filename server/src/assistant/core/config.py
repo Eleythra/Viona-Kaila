@@ -61,6 +61,7 @@ class Settings(BaseModel):
     )
     throttle_window_seconds: int = Field(default_factory=lambda: int(os.getenv("THROTTLE_WINDOW_SECONDS", "10")))
     throttle_max_messages: int = Field(default_factory=lambda: int(os.getenv("THROTTLE_MAX_MESSAGES", "12")))
+    chat_form_ttl_seconds: int = Field(default_factory=lambda: int(os.getenv("CHAT_FORM_TTL_SECONDS", "900")))
     allow_explicit_language_switch: bool = Field(
         default_factory=lambda: os.getenv("ALLOW_EXPLICIT_LANGUAGE_SWITCH", "true").strip().lower() in ("1", "true", "yes")
     )

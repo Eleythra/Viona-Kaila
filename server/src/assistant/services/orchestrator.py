@@ -16,7 +16,72 @@ from assistant.core.config import Settings
 from assistant.core.logger import get_logger
 import re
 
+from assistant.services.chat_form_state import ChatFormState, InMemoryChatFormStore, OperationType
+from assistant.services.hotel_room_numbers import is_valid_hotel_room_number
+
+
+def _reset_chat_form_to_category(state: ChatFormState) -> None:
+    """Serbest metin / oda hatası sonrası kategori seçimine dönmek için form alanlarını sıfırlar."""
+    state.step = "category"
+    state.category = None
+    state.subcategory = None
+    state.quantity = None
+    state.description = ""
+    state.full_name = None
+    state.room = None
+    state.details = {}
+    state.current_detail_field = None
+    state.pending_detail_fields = []
+from assistant.services.form_schema import (
+    REQUEST_CATEGORIES,
+    REQUEST_DETAIL_FIELDS,
+    COMPLAINT_CATEGORIES,
+    FAULT_CATEGORIES,
+    FAULT_LOCATIONS,
+    FAULT_URGENCIES,
+    GUEST_NOTIFICATION_BY_GROUP,
+    guest_notification_categories_for_group,
+)
+from assistant.services.form_labels import category_label, field_label, value_label
+
 logger = get_logger("assistant.orchestrator")
+
+GUEST_NOTIF_DESC_REQUIRED = frozenset(
+    {"food_sensitivity_general", "other_health", "other_celebration"},
+)
+
+
+def _guest_notification_description_lead(category: str, reply_language: str) -> str:
+    """Kategori seçiminden sonra açıklama adımı: zorunlu / isteğe bağlı (web formu ile aynı mantık)."""
+    need = (category or "") in GUEST_NOTIF_DESC_REQUIRED
+    if reply_language == "en":
+        if need:
+            return "Please write a short description for this notice category (required)."
+        return (
+            "Optional: add any details for the team. If you have nothing to add, reply with “-” or “no”; "
+            "your first message in this chat may also be kept as context."
+        )
+    if reply_language == "de":
+        if need:
+            return "Bitte eine kurze Beschreibung zu dieser Kategorie (erforderlich)."
+        return (
+            "Optional: ergänzen Sie Details. Wenn nichts hinzukommt, antworten Sie mit „-“ oder „nein“; "
+            "Ihre erste Nachricht in diesem Chat kann als Kontext dienen."
+        )
+    if reply_language == "ru":
+        if need:
+            return "Пожалуйста, кратко опишите выбранную категорию (обязательно)."
+        return (
+            "По желанию добавьте детали. Если добавить нечего, ответьте «-» или «нет»; "
+            "первое сообщение в этом чате также может использоваться как контекст."
+        )
+    if need:
+        return "Bu konu için kısa bir açıklama yazmanız gerekir (zorunlu)."
+    return (
+        "İsteğe bağlı: ekip için ek not ekleyebilirsiniz. Eklemeyecekseniz “-” veya “yok” yazın; "
+        "sohbetteki ilk mesajınız da bağlam olarak kullanılabilir."
+    )
+
 
 _VALID_LANG = frozenset({"tr", "en", "de", "ru"})
 def _valid_conversation_language(value: str | None) -> str | None:
@@ -24,6 +89,99 @@ def _valid_conversation_language(value: str | None) -> str | None:
         return None
     v = str(value).lower().strip()
     return v if v in _VALID_LANG else None
+
+
+_RESERVATION_REDIRECT_TEXT: dict[str, str] = {
+    "tr": "Rezervasyonunuzla ilgili işlemler için lütfen ana sayfadaki Rezervasyonlar bölümünden devam edin. Aşağıdaki butona dokunarak açabilirsiniz.",
+    "en": "For your reservation requests, please continue via the Reservations section on the main screen. You can open it using the button below.",
+    "de": "Für Ihre Reservierungsanfragen nutzen Sie bitte den Bereich „Reservierungen“ auf der Hauptseite. Sie können ihn über die Schaltfläche unten öffnen.",
+    "ru": "Для запросов по бронированию, пожалуйста, перейдите в раздел «Резервации» на главном экране. Вы можете открыть его с помощью кнопки ниже.",
+}
+
+
+def _guest_notification_category_prompt(notif_group: str | None, reply_language: str) -> str:
+    if reply_language == "en":
+        heads = {
+            "diet": "Diet / sensitivity:",
+            "health": "Health / special situation:",
+            "celebration": "Celebration / special occasion:",
+        }
+        lead = "Please choose a category (reply with the number):\n"
+    elif reply_language == "de":
+        heads = {
+            "diet": "Ernährung / Unverträglichkeit:",
+            "health": "Gesundheit / besondere Situation:",
+            "celebration": "Feier / besonderer Anlass:",
+        }
+        lead = "Bitte wählen Sie eine Kategorie (Antwort mit Nummer):\n"
+    elif reply_language == "ru":
+        heads = {
+            "diet": "Питание / чувствительность:",
+            "health": "Здоровье / особая ситуация:",
+            "celebration": "Праздник / особый случай:",
+        }
+        lead = "Выберите категорию (ответьте номером):\n"
+    else:
+        heads = {
+            "diet": "Beslenme / hassasiyet:",
+            "health": "Sağlık / özel durum:",
+            "celebration": "Kutlama / özel gün:",
+        }
+        lead = "Lütfen bir kategori seçiniz (numara ile yanıtlayın):\n"
+
+    if notif_group is None:
+        lines: list[str] = []
+        n = 1
+        for gkey in ("diet", "health", "celebration"):
+            lines.append(heads[gkey])
+            for c in GUEST_NOTIFICATION_BY_GROUP[gkey]:
+                lines.append(f"{n}. {category_label('guest_notification', c, reply_language)}")
+                n += 1
+        return lead + "\n".join(lines)
+
+    cats = guest_notification_categories_for_group(notif_group)
+    opts = [f"{i}. {category_label('guest_notification', c, reply_language)}" for i, c in enumerate(cats, 1)]
+    return lead + "\n".join(opts)
+
+
+# Python tarafında, JS `guest-requests.service.js` ile aynı enum değerlerini kullanarak
+# istek detayları için sabit seçenekleri tanımlıyoruz. Böylece oluşturulan payload
+# doğrudan Node tarafındaki validasyondan geçer.
+_REQUEST_ENUM_OPTIONS: dict[str, dict[str, list[str]]] = {
+    "towel": {
+        "itemType": ["bath_towel", "hand_towel"],
+    },
+    "bedding": {
+        "itemType": ["pillow", "duvet_cover", "blanket"],
+    },
+    "room_cleaning": {
+        "requestType": ["general_cleaning", "towel_change", "room_check"],
+        "timing": ["now", "later"],
+    },
+    "minibar": {
+        "requestType": ["refill", "missing_item_report", "check_request"],
+    },
+    "baby_equipment": {
+        "itemType": ["baby_bed", "high_chair", "other"],
+    },
+    "room_equipment": {
+        "itemType": ["bathrobe", "slippers", "hanger", "kettle", "other"],
+    },
+}
+
+
+def _request_field_kind(category: str, field: str) -> str | None:
+    """REQUEST_DETAIL_FIELDS şemasından ilgili alanın türünü ('enum' / 'int') döndür."""
+    fields = REQUEST_DETAIL_FIELDS.get(category) or ()
+    for fd in fields:
+        if fd.name == field:
+            return fd.kind
+    return None
+
+
+def _request_enum_values(category: str, field: str) -> list[str]:
+    """İlgili kategori + alan için seçilebilir enum değerlerini döndür."""
+    return list((_REQUEST_ENUM_OPTIONS.get(category) or {}).get(field) or [])
 
 
 class ChatOrchestrator:
@@ -40,6 +198,7 @@ class ChatOrchestrator:
         throttle_service: ThrottleService,
         device_extractor: DeviceExtractor,
         response_composer: ResponseComposer,
+        form_store: InMemoryChatFormStore | None = None,
     ):
         self.settings = settings
         self.language_service = language_service
@@ -52,6 +211,7 @@ class ChatOrchestrator:
         self.throttle_service = throttle_service
         self.device_extractor = device_extractor
         self.response_composer = response_composer
+        self.form_store = form_store or InMemoryChatFormStore(settings.chat_form_ttl_seconds)
 
     def handle(self, payload: ChatRequest) -> ChatResponse:
         decision_path: list[str] = ["request_context", "normalization", "language_context"]
@@ -99,6 +259,54 @@ class ChatOrchestrator:
             )
             return resp
 
+        # Rezervasyonla ilgili çok net kısa mesajlar için doğrudan Rezervasyonlar modülüne yönlendirme.
+        # Rule engine / LLM'e gitmeden deterministik davranır.
+        norm_lower = normalized.lower()
+        if any(
+            key in norm_lower
+            for key in (
+                "rezervasyon",
+                "rezrvasyon",
+                "reservation",
+                "a la carte rezervasyon",
+                "alacarte rezervasyon",
+                "a la carte reservation",
+            )
+        ):
+            text = _RESERVATION_REDIRECT_TEXT.get(reply_base, _RESERVATION_REDIRECT_TEXT["tr"])
+            action = self._action_for_intent("reservation", None, None)
+            return self.response_service.build(
+                "inform",
+                text,
+                "reservation",
+                1.0,
+                reply_base,
+                ui_language,
+                "rule",
+                action=action,
+            )
+
+        # If there is an ongoing chat form flow for this user/channel, continue it first.
+        form_state = self.form_store.get(payload.channel, payload.user_id, payload.session_id)
+        if form_state is not None:
+            decision_path.append("chat_form_continue")
+            response = self._continue_form_flow(
+                payload=payload,
+                state=form_state,
+                reply_language=reply_base,
+                ui_language=ui_language,
+            )
+            logger.info(
+                "chat_request chat_form_continue input=%r intent=%s op=%s reply_lang=%s ui_lang=%s decision_path=%s",
+                payload.message,
+                response.meta.intent,
+                getattr(response.meta.action, "operation", None) if response.meta.action else None,
+                response.meta.language,
+                response.meta.ui_language,
+                " > ".join(decision_path),
+            )
+            return response
+
         multi_clause_response = self._try_multi_clause_rule_path(
             normalized=normalized,
             original_message=payload.message,
@@ -144,6 +352,34 @@ class ChatOrchestrator:
                 effective_sub_intent = "greeting"
                 effective_entity = None
             language_switch_applied = reply_lang != reply_base
+            # Operasyonel niyetler: chat formu (istek / arıza / şikayet / misafir bildirimi).
+            if rule_intent.intent in ("request", "fault_report", "complaint", "guest_notification"):
+                decision_path.append("chat_form_start")
+                notif_group_param: str | None = None
+                if rule_intent.intent == "guest_notification":
+                    notif_group_param = {
+                        "notif_group_celebration": "celebration",
+                        "notif_group_health": "health",
+                        "notif_group_diet": "diet",
+                        "notif_group_all": None,
+                    }.get(rule_intent.sub_intent or "")
+                response = self._start_form_flow(
+                    payload=payload,
+                    intent=rule_intent.intent,
+                    reply_language=reply_lang,
+                    ui_language=ui_language,
+                    notif_group=notif_group_param,
+                )
+                logger.info(
+                    "chat_request chat_form_start input=%r intent=%s reply_lang=%s ui_lang=%s decision_path=%s",
+                    payload.message,
+                    rule_intent.intent,
+                    reply_lang,
+                    ui_language,
+                    " > ".join(decision_path),
+                )
+                return response
+
             response = self._apply_policy(
                 intent=rule_intent.intent,
                 sub_intent=effective_sub_intent,
@@ -202,13 +438,27 @@ class ChatOrchestrator:
         )
         if llm_intent.confidence < self.settings.low_confidence_fallback_threshold:
             low_confidence_reason = llm_intent.reason or "low_confidence"
-            resp = self._fallback_response(
-                llm_intent.intent,
-                llm_intent.confidence,
-                reply_base,
-                ui_language,
-                fallback_reason=low_confidence_reason,
-            )
+            # Çok kısa / belirsiz mesajlarda sert fallback yerine nazik karşılama dön.
+            short_norm = (normalized or "").strip()
+            if len(short_norm) <= 20:
+                greet = self.localization_service.get("chitchat_greeting", reply_base)
+                resp = self.response_service.build(
+                    "inform",
+                    greet,
+                    "chitchat",
+                    1.0,
+                    reply_base,
+                    ui_language,
+                    "fallback",
+                )
+            else:
+                resp = self._fallback_response(
+                    llm_intent.intent,
+                    llm_intent.confidence,
+                    reply_base,
+                    ui_language,
+                    fallback_reason=low_confidence_reason,
+                )
             logger.info(
                 "chat_request input=%r reply_lang=%s ui_lang=%s rule=%s intent=%s domain=%s route_type=%s action_type=%s needs_rag=%s response_mode=%s rag_used=%s openai_path_used=%s vector_store_used=%s decision_path=%s fallback_reason=%s final_type=%s",
                 payload.message,
@@ -229,6 +479,26 @@ class ChatOrchestrator:
                 resp.type,
             )
             return resp
+
+        # LLM sınıflandırıcısı da operasyonel intent bulursa chat form akışını kullan.
+        if llm_intent.intent in ("request", "fault_report", "complaint", "guest_notification"):
+            decision_path.append("chat_form_start_llm")
+            response = self._start_form_flow(
+                payload=payload,
+                intent=llm_intent.intent,
+                reply_language=reply_base,
+                ui_language=ui_language,
+                notif_group=None,
+            )
+            logger.info(
+                "chat_request chat_form_start_llm input=%r intent=%s reply_lang=%s ui_lang=%s decision_path=%s",
+                payload.message,
+                llm_intent.intent,
+                reply_base,
+                ui_language,
+                " > ".join(decision_path),
+            )
+            return response
 
         response = self._apply_policy(
             intent=llm_intent.intent,
@@ -370,21 +640,17 @@ class ChatOrchestrator:
             )
 
         if policy == "compose_reservation":
-            extracted_entity = entity or self.rule_engine.extract_entity(normalize_text(message))
-            composed = self.response_composer.compose(
-                intent,
-                sub_intent or self._guess_reservation_sub_intent(message),
-                extracted_entity,
-                reply_language,
-            )
+            # Rezervasyon taleplerinde misafiri web arayüzündeki Rezervasyonlar modülüne
+            # yönlendiriyoruz; resepsiyon fallback metnine gerek yok.
+            text = _RESERVATION_REDIRECT_TEXT.get(reply_language, _RESERVATION_REDIRECT_TEXT["tr"])
             return self.response_service.build(
-                "redirect",
-                composed,
+                "inform",
+                text,
                 intent,
-                confidence,
+                1.0,
                 reply_language,
                 ui_language,
-                source,
+                "rule",
             )
 
         if policy == "compose_special_need":
@@ -399,6 +665,18 @@ class ChatOrchestrator:
                 "inform",
                 composed,
                 intent,
+                confidence,
+                reply_language,
+                ui_language,
+                source,
+            )
+
+        if policy == "compose_guest_notification":
+            hint = self.localization_service.get("guest_notification_policy_hint", reply_language)
+            return self.response_service.build(
+                "inform",
+                hint,
+                "guest_notification",
                 confidence,
                 reply_language,
                 ui_language,
@@ -502,6 +780,1252 @@ class ChatOrchestrator:
 
         return self._fallback_response(intent, confidence, reply_language, ui_language, fallback_reason="rag_no_result")
 
+    def _start_form_flow(
+        self,
+        *,
+        payload: ChatRequest,
+        intent: str,
+        reply_language: str,
+        ui_language: str,
+        notif_group: str | None = None,
+    ) -> ChatResponse:
+        if intent == "request":
+            op: OperationType = "request"
+        elif intent == "fault_report":
+            op = "fault"
+        elif intent == "guest_notification":
+            op = "guest_notification"
+        else:
+            op = "complaint"
+
+        state = ChatFormState(
+            operation=op,
+            language=reply_language,
+            ui_language=ui_language,
+            notif_group=notif_group if op == "guest_notification" else None,
+            step="category",
+            initial_message=payload.message,
+        )
+        self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+
+        if op == "guest_notification":
+            prompt = _guest_notification_category_prompt(notif_group, reply_language)
+            meta_intent = "guest_notification"
+        else:
+            if op == "request":
+                categories = REQUEST_CATEGORIES
+            elif op == "fault":
+                categories = FAULT_CATEGORIES
+            else:
+                categories = COMPLAINT_CATEGORIES
+
+            options: list[str] = []
+            for idx, cat in enumerate(categories, start=1):
+                cat_intent = "request" if op == "request" else ("fault" if op == "fault" else "complaint")
+                label = category_label(cat_intent, cat, reply_language)
+                options.append(f"{idx}. {label}")
+
+            if reply_language == "en":
+                prompt = "Please choose a category:\n" + "\n".join(options)
+            elif reply_language == "de":
+                prompt = "Bitte wählen Sie eine Kategorie:\n" + "\n".join(options)
+            elif reply_language == "ru":
+                prompt = "Пожалуйста, выберите категорию:\n" + "\n".join(options)
+            else:
+                prompt = "Lütfen bir kategori seçiniz:\n" + "\n".join(options)
+            meta_intent = "request" if op == "request" else ("fault_report" if op == "fault" else "complaint")
+
+        return self.response_service.build(
+            "inform",
+            prompt,
+            meta_intent,
+            1.0,
+            reply_language,
+            ui_language,
+            "rule",
+            action={
+                "kind": "chat_form",
+                "operation": op,
+                "step": "category",
+            },
+        )
+
+    def _continue_form_flow(
+        self,
+        *,
+        payload: ChatRequest,
+        state: ChatFormState,
+        reply_language: str,
+        ui_language: str,
+    ) -> ChatResponse:
+        text = (payload.message or "").strip()
+        normalized = normalize_text(text)
+        intent = (
+            "fault_report"
+            if state.operation == "fault"
+            else (
+                "complaint"
+                if state.operation == "complaint"
+                else ("guest_notification" if state.operation == "guest_notification" else "request")
+            )
+        )
+
+        # Bağlamsal güncelleme: form ortasındayken kullanıcı güçlü bir şekilde
+        # yeni bir operasyonel niyet (ör. yeni arıza) veya sosyal selamlaşma
+        # yazarsa, mevcut formu kapatıp uygun akışa dön.
+        # "description" ve benzeri serbest metin adımlarında yeniden rule match yapma;
+        # aksi halde "su akmıyor" gibi metinler başka intent ile eşlenip kategori başa sarıyor.
+        if text and state.step not in (
+            "full_name",
+            "room",
+            "confirm",
+            "description",
+            "detail_enum",
+            "detail_int",
+            "location",
+            "urgency",
+        ):
+            re_intent = self.rule_engine.match(normalized)
+            if re_intent:
+                if (
+                    re_intent.intent in ("request", "fault_report", "complaint", "guest_notification")
+                    and re_intent.intent != intent
+                ):
+                    # Farklı operasyonel intent: mevcut formu bırak, yeni formu başlat.
+                    self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+                    return self._start_form_flow(
+                        payload=payload,
+                        intent=re_intent.intent,
+                        reply_language=reply_language,
+                        ui_language=ui_language,
+                    )
+                if re_intent.intent == "chitchat":
+                    # Selamlaşma / sohbet: formu iptal et ve sıcak karşılama yanıtı ver.
+                    self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+                    greet = self.localization_service.get("chitchat_greeting", reply_language)
+                    return self.response_service.build(
+                        "inform",
+                        greet,
+                        "chitchat",
+                        1.0,
+                        reply_language,
+                        ui_language,
+                        "rule",
+                    )
+
+        # Yardımcı: hatalı girişte kategori listesini tekrar göster.
+        def _category_prompt(op: OperationType) -> str:
+            if op == "guest_notification":
+                return _guest_notification_category_prompt(state.notif_group, reply_language)
+            if op == "request":
+                categories = REQUEST_CATEGORIES
+            elif op == "fault":
+                categories = FAULT_CATEGORIES
+            else:
+                categories = COMPLAINT_CATEGORIES
+            lines: list[str] = []
+            for idx, cat in enumerate(categories, start=1):
+                cat_intent = "request" if op == "request" else ("fault" if op == "fault" else "complaint")
+                lbl = category_label(cat_intent, cat, reply_language)
+                lines.append(f"{idx}. {lbl}")
+            if reply_language == "en":
+                return "Please choose a category:\n" + "\n".join(lines)
+            if reply_language == "de":
+                return "Bitte wählen Sie eine Kategorie:\n" + "\n".join(lines)
+            if reply_language == "ru":
+                return "Пожалуйста, выберите категорию:\n" + "\n".join(lines)
+            return "Lütfen bir kategori seçiniz:\n" + "\n".join(lines)
+
+        # Yardımcı: geçerli kategori listesini verir.
+        def _current_categories(op: OperationType):
+            if op == "guest_notification":
+                return guest_notification_categories_for_group(state.notif_group)
+            if op == "request":
+                return REQUEST_CATEGORIES
+            if op == "fault":
+                return FAULT_CATEGORIES
+            return COMPLAINT_CATEGORIES
+
+        # Yardımcı: bir enum alanı için seçenekleri label’larla üretir.
+        def _enum_options_for_field(category: str, field_name: str) -> list[tuple[int, str, str]]:
+            raw_values: list[str] = []
+            if state.operation == "fault" and field_name == "location":
+                raw_values = list(FAULT_LOCATIONS)
+            elif state.operation == "fault" and field_name == "urgency":
+                raw_values = list(FAULT_URGENCIES)
+            elif state.operation == "request":
+                raw_values = _request_enum_values(category, field_name)
+            # Şikayet için şu an ek enum alan yok.
+            options: list[tuple[int, str, str]] = []
+            for idx, v in enumerate(raw_values, start=1):
+                # Önce value_label, yoksa ham değeri kullan.
+                lbl = value_label(field_name, v, reply_language)
+                if not lbl or lbl == v:
+                    # field_label + ham değer fallback (örn: "Request type: refill")
+                    fld = field_label(field_name, reply_language)
+                    lbl = f"{fld}: {v}" if fld != field_name else v
+                options.append((idx, v, lbl))
+            return options
+
+        # Kategori adımı: kullanıcı bir kategori seçer ve detay akışı hazırlanır.
+        if state.step == "category":
+            categories = list(_current_categories(state.operation))
+            if not text:
+                msg = _category_prompt(state.operation)
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "category"},
+                )
+            chosen_category: str | None = None
+            # Önce sayı ile seçim (1,2,3,...)
+            try:
+                idx = int(text)
+                if 1 <= idx <= len(categories):
+                    chosen_category = categories[idx - 1]
+            except ValueError:
+                chosen_category = None
+            # İleride label üzerinden doğrudan metin eşleme eklenebilir; şimdilik sadece index.
+            if not chosen_category:
+                msg = _category_prompt(state.operation)
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "category"},
+                )
+
+            state.category = chosen_category
+            state.pending_detail_fields = []
+            state.current_detail_field = None
+
+            if state.operation == "request":
+                fields = REQUEST_DETAIL_FIELDS.get(chosen_category) or ()
+                state.pending_detail_fields = [f.name for f in fields]
+
+            # Sonraki adımı belirle.
+            if state.operation == "fault":
+                # Arıza için önce lokasyon sonra aciliyet sorulacak.
+                state.step = "location"
+                self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+                opts = _enum_options_for_field(chosen_category, "location")
+                lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts] or []
+                if reply_language == "en":
+                    msg = "Where is the fault located?\n" + "\n".join(lines)
+                elif reply_language == "de":
+                    msg = "Wo befindet sich die Störung?\n" + "\n".join(lines)
+                elif reply_language == "ru":
+                    msg = "Где находится неисправность?\n" + "\n".join(lines)
+                else:
+                    msg = "Arızanın bulunduğu yeri seçiniz:\n" + "\n".join(lines)
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "location"},
+                )
+
+            # İstek için varsa detay alanlarına, yoksa açıklamaya geç.
+            if state.operation == "request" and state.pending_detail_fields:
+                next_field = state.pending_detail_fields.pop(0)
+                state.current_detail_field = next_field
+                kind = _request_field_kind(chosen_category, next_field) or "enum"
+                state.step = "detail_int" if kind == "int" else "detail_enum"
+                self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+                if state.step == "detail_enum":
+                    opts = _enum_options_for_field(chosen_category, next_field)
+                    lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts] or []
+                    fld_label = field_label(next_field, reply_language)
+                    if reply_language == "en":
+                        msg = f"Please choose an option for {fld_label}:\n" + "\n".join(lines)
+                    elif reply_language == "de":
+                        msg = f"Bitte wählen Sie eine Option für {fld_label}:\n" + "\n".join(lines)
+                    elif reply_language == "ru":
+                        msg = f"Пожалуйста, выберите вариант для {fld_label}:\n" + "\n".join(lines)
+                    else:
+                        msg = f"Lütfen {fld_label} için bir seçim yapınız:\n" + "\n".join(lines)
+                else:
+                    fld_label = field_label(next_field, reply_language)
+                    if reply_language == "en":
+                        msg = f"Please enter a number for {fld_label}."
+                    elif reply_language == "de":
+                        msg = f"Bitte geben Sie eine Zahl für {fld_label} ein."
+                    elif reply_language == "ru":
+                        msg = f"Пожалуйста, введите число для поля {fld_label}."
+                    else:
+                        msg = f"Lütfen {fld_label} için bir sayı giriniz."
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={
+                        "kind": "chat_form",
+                        "operation": state.operation,
+                        "step": state.step,
+                    },
+                )
+
+            # Şikayet, misafir bildirimi veya detaysız istek: açıklama adımına geç.
+            state.step = "description"
+            self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+            if state.operation == "guest_notification":
+                msg = _guest_notification_description_lead(chosen_category, reply_language)
+            elif reply_language == "en":
+                msg = "Please briefly describe your request/issue."
+            elif reply_language == "de":
+                msg = "Bitte beschreiben Sie Ihr Anliegen kurz."
+            elif reply_language == "ru":
+                msg = "Пожалуйста, кратко опишите вашу просьбу или проблему."
+            else:
+                msg = "Lütfen talebinizi veya sorununuzu kısaca açıklayın."
+            return self.response_service.build(
+                "inform",
+                msg,
+                intent,
+                1.0,
+                reply_language,
+                ui_language,
+                "rule",
+                action={"kind": "chat_form", "operation": state.operation, "step": "description"},
+            )
+
+        # Enum detay alanı: kullanıcı listeden bir seçenek seçer.
+        if state.step == "detail_enum":
+            category = state.category or ""
+            field_name = state.current_detail_field or ""
+            options = _enum_options_for_field(category, field_name)
+            if not options:
+                # Beklenmedik durum: detay alanı tanımlı değil; açıklamaya atla.
+                state.step = "description"
+                self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+                if reply_language == "en":
+                    msg = "Please briefly describe your request/issue."
+                elif reply_language == "de":
+                    msg = "Bitte beschreiben Sie Ihr Anliegen kurz."
+                elif reply_language == "ru":
+                    msg = "Пожалуйста, кратко опишите вашу просьбу или проблему."
+                else:
+                    msg = "Lütfen talebinizi veya sorununuzu kısaca açıklayın."
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "description"},
+                )
+
+            if not text:
+                lines = [f"{idx}. {lbl}" for idx, _val, lbl in options]
+                fld_label = field_label(field_name, reply_language)
+                if reply_language == "en":
+                    msg = f"Please choose an option for {fld_label}:\n" + "\n".join(lines)
+                elif reply_language == "de":
+                    msg = f"Bitte wählen Sie eine Option für {fld_label}:\n" + "\n".join(lines)
+                elif reply_language == "ru":
+                    msg = f"Пожалуйста, выберите вариант для поля {fld_label}:\n" + "\n".join(lines)
+                else:
+                    msg = f"Lütfen {fld_label} için bir seçim yapınız:\n" + "\n".join(lines)
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "detail_enum"},
+                )
+
+            chosen_value: str | None = None
+            try:
+                idx = int(text)
+                for i, val, _lbl in options:
+                    if i == idx:
+                        chosen_value = val
+                        break
+            except ValueError:
+                chosen_value = None
+            if not chosen_value:
+                # Geçersiz seçim, aynı listeyi tekrar göster.
+                lines = [f"{idx}. {lbl}" for idx, _val, lbl in options]
+                fld_label = field_label(field_name, reply_language)
+                if reply_language == "en":
+                    msg = f"Please choose a valid option for {fld_label}:\n" + "\n".join(lines)
+                elif reply_language == "de":
+                    msg = f"Bitte wählen Sie eine gültige Option für {fld_label}:\n" + "\n".join(lines)
+                elif reply_language == "ru":
+                    msg = f"Пожалуйста, выберите допустимый вариант для поля {fld_label}:\n" + "\n".join(lines)
+                else:
+                    msg = f"Lütfen {fld_label} için geçerli bir seçim yapınız:\n" + "\n".join(lines)
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "detail_enum"},
+                )
+
+            state.details[field_name] = chosen_value
+
+            # Sıradaki detaya veya açıklamaya geç.
+            if state.pending_detail_fields:
+                next_field = state.pending_detail_fields.pop(0)
+                state.current_detail_field = next_field
+                kind = _request_field_kind(state.category or "", next_field) or "enum"
+                state.step = "detail_int" if kind == "int" else "detail_enum"
+                self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+                if state.step == "detail_enum":
+                    opts = _enum_options_for_field(state.category or "", next_field)
+                    lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts] or []
+                    fld_label = field_label(next_field, reply_language)
+                    if reply_language == "en":
+                        msg = f"Please choose an option for {fld_label}:\n" + "\n".join(lines)
+                    elif reply_language == "de":
+                        msg = f"Bitte wählen Sie eine Option für {fld_label}:\n" + "\n".join(lines)
+                    elif reply_language == "ru":
+                        msg = f"Пожалуйста, выберите вариант для поля {fld_label}:\n" + "\n".join(lines)
+                    else:
+                        msg = f"Lütfen {fld_label} için bir seçim yapınız:\n" + "\n".join(lines)
+                else:
+                    fld_label = field_label(next_field, reply_language)
+                    if reply_language == "en":
+                        msg = f"Please enter a number for {fld_label}."
+                    elif reply_language == "de":
+                        msg = f"Bitte geben Sie eine Zahl für {fld_label} ein."
+                    elif reply_language == "ru":
+                        msg = f"Пожалуйста, введите число для поля {fld_label}."
+                    else:
+                        msg = f"Lütfen {fld_label} için bir sayı giriniz."
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": state.step},
+                )
+
+            # Başka detay yok; arıza ise lokasyona, diğer durumlarda açıklamaya geç.
+            if state.operation == "fault":
+                state.step = "location"
+                self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+                opts = _enum_options_for_field(state.category or "", "location")
+                lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts] or []
+                if reply_language == "en":
+                    msg = "Where is the fault located?\n" + "\n".join(lines)
+                elif reply_language == "de":
+                    msg = "Wo befindet sich die Störung?\n" + "\n".join(lines)
+                elif reply_language == "ru":
+                    msg = "Где находится неисправность?\n" + "\n".join(lines)
+                else:
+                    msg = "Arızanın bulunduğu yeri seçiniz:\n" + "\n".join(lines)
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "location"},
+                )
+
+            state.step = "description"
+            self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+            if reply_language == "en":
+                msg = "Please briefly describe your request/issue."
+            elif reply_language == "de":
+                msg = "Bitte beschreiben Sie Ihr Anliegen kurz."
+            elif reply_language == "ru":
+                msg = "Пожалуйста, кратко опишите вашу просьбу или проблему."
+            else:
+                msg = "Lütfen talebinizi veya sorununuzu kısaca açıklayın."
+            return self.response_service.build(
+                "inform",
+                msg,
+                intent,
+                1.0,
+                reply_language,
+                ui_language,
+                "rule",
+                action={"kind": "chat_form", "operation": state.operation, "step": "description"},
+            )
+
+        # Sayısal detay alanı (quantity vb.).
+        if state.step == "detail_int":
+            field_name = state.current_detail_field or ""
+            if not text:
+                fld_label = field_label(field_name, reply_language)
+                if reply_language == "en":
+                    msg = f"Please enter a number for {fld_label}."
+                elif reply_language == "de":
+                    msg = f"Bitte geben Sie eine Zahl für {fld_label} ein."
+                elif reply_language == "ru":
+                    msg = f"Пожалуйста, введите число для поля {fld_label}."
+                else:
+                    msg = f"Lütfen {fld_label} için bir sayı giriniz."
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "detail_int"},
+                )
+            try:
+                qty = int(text)
+            except ValueError:
+                qty = 0
+            if qty <= 0:
+                fld_label = field_label(field_name, reply_language)
+                if reply_language == "en":
+                    msg = f"Please enter a positive number for {fld_label}."
+                elif reply_language == "de":
+                    msg = f"Bitte geben Sie eine positive Zahl für {fld_label} ein."
+                elif reply_language == "ru":
+                    msg = f"Пожалуйста, введите положительное число для поля {fld_label}."
+                else:
+                    msg = f"Lütfen {fld_label} için pozitif bir sayı giriniz."
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "detail_int"},
+                )
+
+            state.quantity = qty
+            state.details[field_name] = qty
+
+            # Sıradaki detaya veya açıklamaya geç.
+            if state.pending_detail_fields:
+                next_field = state.pending_detail_fields.pop(0)
+                state.current_detail_field = next_field
+                kind = _request_field_kind(state.category or "", next_field) or "enum"
+                state.step = "detail_int" if kind == "int" else "detail_enum"
+                self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+                if state.step == "detail_enum":
+                    opts = _enum_options_for_field(state.category or "", next_field)
+                    lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts] or []
+                    fld_label = field_label(next_field, reply_language)
+                    if reply_language == "en":
+                        msg = f"Please choose an option for {fld_label}:\n" + "\n".join(lines)
+                    elif reply_language == "de":
+                        msg = f"Bitte wählen Sie eine Option für {fld_label}:\n" + "\n".join(lines)
+                    elif reply_language == "ru":
+                        msg = f"Пожалуйста, выберите вариант для поля {fld_label}:\n" + "\n".join(lines)
+                    else:
+                        msg = f"Lütfen {fld_label} için bir seçim yapınız:\n" + "\n".join(lines)
+                else:
+                    fld_label = field_label(next_field, reply_language)
+                    if reply_language == "en":
+                        msg = f"Please enter a number for {fld_label}."
+                    elif reply_language == "de":
+                        msg = f"Bitte geben Sie eine Zahl für {fld_label} ein."
+                    elif reply_language == "ru":
+                        msg = f"Пожалуйста, введите число для поля {fld_label}."
+                    else:
+                        msg = f"Lütfen {fld_label} için bir sayı giriniz."
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": state.step},
+                )
+
+            if state.operation == "fault":
+                state.step = "location"
+                self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+                opts = _enum_options_for_field(state.category or "", "location")
+                lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts] or []
+                if reply_language == "en":
+                    msg = "Where is the fault located?\n" + "\n".join(lines)
+                elif reply_language == "de":
+                    msg = "Wo befindet sich die Störung?\n" + "\n".join(lines)
+                elif reply_language == "ru":
+                    msg = "Где находится неисправность?\n" + "\n".join(lines)
+                else:
+                    msg = "Arızanın bulunduğu yeri seçiniz:\n" + "\n".join(lines)
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "location"},
+                )
+
+            state.step = "description"
+            self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+            if reply_language == "en":
+                msg = "Please briefly describe your request/issue."
+            elif reply_language == "de":
+                msg = "Bitte beschreiben Sie Ihr Anliegen kurz."
+            elif reply_language == "ru":
+                msg = "Пожалуйста, кратко опишите вашу просьбу или проблему."
+            else:
+                msg = "Lütfen talebinizi veya sorununuzu kısaca açıklayın."
+            return self.response_service.build(
+                "inform",
+                msg,
+                intent,
+                1.0,
+                reply_language,
+                ui_language,
+                "rule",
+                action={"kind": "chat_form", "operation": state.operation, "step": "description"},
+            )
+
+        # Arıza için lokasyon adımı.
+        if state.step == "location":
+            opts = _enum_options_for_field(state.category or "", "location")
+            if not opts:
+                state.step = "description"
+                self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+                if reply_language == "en":
+                    msg = "Please briefly describe your request/issue."
+                elif reply_language == "de":
+                    msg = "Bitte beschreiben Sie Ihr Anliegen kurz."
+                elif reply_language == "ru":
+                    msg = "Пожалуйста, кратко опишите вашу просьбу или проблему."
+                else:
+                    msg = "Lütfen talebinizi veya sorununuzu kısaca açıklayın."
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "description"},
+                )
+            if not text:
+                lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts]
+                if reply_language == "en":
+                    msg = "Where is the fault located?\n" + "\n".join(lines)
+                elif reply_language == "de":
+                    msg = "Wo befindet sich die Störung?\n" + "\n".join(lines)
+                elif reply_language == "ru":
+                    msg = "Где находится неисправность?\n" + "\n".join(lines)
+                else:
+                    msg = "Arızanın bulunduğu yeri seçiniz:\n" + "\n".join(lines)
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "location"},
+                )
+            chosen: str | None = None
+            try:
+                idx = int(text)
+                for i, val, _lbl in opts:
+                    if i == idx:
+                        chosen = val
+                        break
+            except ValueError:
+                chosen = None
+            if not chosen:
+                lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts]
+                if reply_language == "en":
+                    msg = "Please choose a valid location:\n" + "\n".join(lines)
+                elif reply_language == "de":
+                    msg = "Bitte wählen Sie einen gültigen Ort:\n" + "\n".join(lines)
+                elif reply_language == "ru":
+                    msg = "Пожалуйста, выберите допустимую локацию:\n" + "\n".join(lines)
+                else:
+                    msg = "Lütfen geçerli bir lokasyon seçiniz:\n" + "\n".join(lines)
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "location"},
+                )
+
+            state.details["location"] = chosen
+            state.step = "urgency"
+            self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+            uopts = _enum_options_for_field(state.category or "", "urgency")
+            lines = [f"{idx}. {lbl}" for idx, _val, lbl in uopts] or []
+            if reply_language == "en":
+                msg = "How urgent is the fault?\n" + "\n".join(lines)
+            elif reply_language == "de":
+                msg = "Wie dringend ist die Störung?\n" + "\n".join(lines)
+            elif reply_language == "ru":
+                msg = "Насколько срочная эта неисправность?\n" + "\n".join(lines)
+            else:
+                msg = "Arızanın aciliyetini seçiniz:\n" + "\n".join(lines)
+            return self.response_service.build(
+                "inform",
+                msg,
+                intent,
+                1.0,
+                reply_language,
+                ui_language,
+                "rule",
+                action={"kind": "chat_form", "operation": state.operation, "step": "urgency"},
+            )
+
+        # Arıza için aciliyet adımı.
+        if state.step == "urgency":
+            opts = _enum_options_for_field(state.category or "", "urgency")
+            if not opts:
+                state.step = "description"
+                self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+                if reply_language == "en":
+                    msg = "Please briefly describe your request/issue."
+                elif reply_language == "de":
+                    msg = "Bitte beschreiben Sie Ihr Anliegen kurz."
+                elif reply_language == "ru":
+                    msg = "Пожалуйста, кратко опишите вашу просьбу или проблему."
+                else:
+                    msg = "Lütfen talebinizi veya sorununuzu kısaca açıklayın."
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "description"},
+                )
+            if not text:
+                lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts]
+                if reply_language == "en":
+                    msg = "How urgent is the fault?\n" + "\n".join(lines)
+                elif reply_language == "de":
+                    msg = "Wie dringend ist die Störung?\n" + "\n".join(lines)
+                elif reply_language == "ru":
+                    msg = "Насколько срочная эта неисправность?\n" + "\n".join(lines)
+                else:
+                    msg = "Arızanın aciliyetini seçiniz:\n" + "\n".join(lines)
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "urgency"},
+                )
+            chosen: str | None = None
+            try:
+                idx = int(text)
+                for i, val, _lbl in opts:
+                    if i == idx:
+                        chosen = val
+                        break
+            except ValueError:
+                chosen = None
+            if not chosen:
+                lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts]
+                if reply_language == "en":
+                    msg = "Please choose a valid urgency:\n" + "\n".join(lines)
+                elif reply_language == "de":
+                    msg = "Bitte wählen Sie eine gültige Dringlichkeit:\n" + "\n".join(lines)
+                elif reply_language == "ru":
+                    msg = "Пожалуйста, выберите допустимую срочность:\n" + "\n".join(lines)
+                else:
+                    msg = "Lütfen geçerli bir aciliyet seçiniz:\n" + "\n".join(lines)
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "urgency"},
+                )
+
+            state.details["urgency"] = chosen
+            state.step = "description"
+            self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+            if reply_language == "en":
+                msg = "Please briefly describe your request/issue."
+            elif reply_language == "de":
+                msg = "Bitte beschreiben Sie Ihr Anliegen kurz."
+            elif reply_language == "ru":
+                msg = "Пожалуйста, кратко опишите вашу просьбу или проблему."
+            else:
+                msg = "Lütfen talebinizi veya sorununuzu kısaca açıklayın."
+            return self.response_service.build(
+                "inform",
+                msg,
+                intent,
+                1.0,
+                reply_language,
+                ui_language,
+                "rule",
+                action={"kind": "chat_form", "operation": state.operation, "step": "description"},
+            )
+
+        # Açıklama → isim → oda adımları (ortak alanlar).
+        if state.step == "description":
+            cat = state.category or ""
+            if not text:
+                if (
+                    state.operation == "guest_notification"
+                    and cat
+                    and cat not in GUEST_NOTIF_DESC_REQUIRED
+                ):
+                    state.description = (state.initial_message or "").strip()
+                    state.step = "full_name"
+                    self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+                    if reply_language == "en":
+                        msg = "Thank you. May I have your full name?"
+                    elif reply_language == "de":
+                        msg = "Danke. Wie ist Ihr vollständiger Name?"
+                    elif reply_language == "ru":
+                        msg = "Спасибо. Напишите, пожалуйста, ваше имя и фамилию."
+                    else:
+                        msg = "Teşekkürler. Adınızı ve soyadınızı yazar mısınız?"
+                    return self.response_service.build(
+                        "inform",
+                        msg,
+                        intent,
+                        1.0,
+                        reply_language,
+                        ui_language,
+                        "rule",
+                        action={
+                            "kind": "chat_form",
+                            "operation": state.operation,
+                            "step": "full_name",
+                        },
+                    )
+                if state.operation == "guest_notification" and cat in GUEST_NOTIF_DESC_REQUIRED:
+                    msg = _guest_notification_description_lead(cat, reply_language)
+                elif reply_language == "en":
+                    msg = "Please write a short description so I can help you."
+                elif reply_language == "de":
+                    msg = "Bitte schreiben Sie eine kurze Beschreibung, damit ich Ihnen helfen kann."
+                elif reply_language == "ru":
+                    msg = "Пожалуйста, напишите короткое описание, чтобы я могла помочь."
+                else:
+                    msg = "Size yardımcı olabilmem için lütfen kısa bir açıklama yazın."
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={
+                        "kind": "chat_form",
+                        "operation": state.operation,
+                        "step": "description",
+                    },
+                )
+            state.description = text
+            state.step = "full_name"
+            self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+            if reply_language == "en":
+                msg = "Thank you. May I have your full name?"
+            elif reply_language == "de":
+                msg = "Danke. Wie ist Ihr vollständiger Name?"
+            elif reply_language == "ru":
+                msg = "Спасибо. Напишите, пожалуйста, ваше имя и фамилию."
+            else:
+                msg = "Teşekkürler. Adınızı ve soyadınızı yazar mısınız?"
+            return self.response_service.build(
+                "inform",
+                msg,
+                intent,
+                1.0,
+                reply_language,
+                ui_language,
+                "rule",
+                action={
+                    "kind": "chat_form",
+                    "operation": state.operation,
+                    "step": "full_name",
+                },
+            )
+
+        if state.step == "full_name":
+            if not text:
+                if reply_language == "en":
+                    msg = "Please write your full name."
+                elif reply_language == "de":
+                    msg = "Bitte schreiben Sie Ihren vollständigen Namen."
+                elif reply_language == "ru":
+                    msg = "Пожалуйста, напишите ваше имя и фамилию."
+                else:
+                    msg = "Lütfen adınızı ve soyadınızı yazın."
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={
+                        "kind": "chat_form",
+                        "operation": state.operation,
+                        "step": "full_name",
+                    },
+                )
+            state.full_name = text
+            state.step = "room"
+            self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+            if reply_language == "en":
+                msg = "Finally, could you share your room number?"
+            elif reply_language == "de":
+                msg = "Zum Schluss: Wie lautet Ihre Zimmernummer?"
+            elif reply_language == "ru":
+                msg = "И напоследок, напишите, пожалуйста, номер вашей комнаты."
+            else:
+                msg = "Son olarak oda numaranızı yazar mısınız?"
+            return self.response_service.build(
+                "inform",
+                msg,
+                intent,
+                1.0,
+                reply_language,
+                ui_language,
+                "rule",
+                action={
+                    "kind": "chat_form",
+                    "operation": state.operation,
+                    "step": "room",
+                },
+            )
+
+        if state.step == "room":
+            if not text:
+                if reply_language == "en":
+                    msg = "Please write your room number."
+                elif reply_language == "de":
+                    msg = "Bitte schreiben Sie Ihre Zimmernummer."
+                elif reply_language == "ru":
+                    msg = "Пожалуйста, напишите номер вашей комнаты."
+                else:
+                    msg = "Lütfen oda numaranızı yazın."
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={
+                        "kind": "chat_form",
+                        "operation": state.operation,
+                        "step": "room",
+                    },
+                )
+            room_clean = text.strip()
+            if not is_valid_hotel_room_number(room_clean):
+                _reset_chat_form_to_category(state)
+                self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+                if reply_language == "en":
+                    err = (
+                        "Please enter a valid room number for this hotel. "
+                        "Let's start again from category selection."
+                    )
+                elif reply_language == "de":
+                    err = (
+                        "Bitte geben Sie eine gültige Zimmernummer für dieses Hotel ein. "
+                        "Wir beginnen erneut mit der Kategorieauswahl."
+                    )
+                elif reply_language == "ru":
+                    err = (
+                        "Пожалуйста, введите действительный номер комнаты этого отеля. "
+                        "Начнём снова с выбора категории."
+                    )
+                else:
+                    err = "Lütfen geçerli bir oda numarası girin. Kategori seçiminden yeniden başlayalım."
+                msg = err + "\n\n" + _category_prompt(state.operation)
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "category"},
+                )
+            state.room = room_clean
+            # Oda alındı; şimdi özet + onay adımına geç.
+            state.step = "confirm"
+            self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+
+            guest_type = (
+                "fault"
+                if state.operation == "fault"
+                else (
+                    "complaint"
+                    if state.operation == "complaint"
+                    else ("guest_notification" if state.operation == "guest_notification" else "request")
+                )
+            )
+            category = state.category or "other"
+            details = dict(state.details or {})
+            location = details.get("location") if guest_type == "fault" else None
+            urgency = details.get("urgency") if guest_type == "fault" else None
+
+            # Özet metni (kayıt açılmadan önce).
+            if reply_language == "en":
+                header = "Please confirm the record details:\n"
+                type_label = "Type"
+                cat_label = "Category"
+                loc_label = "Location"
+                urg_label = "Urgency"
+                desc_label = "Description"
+                name_label = "Name"
+                room_label = "Room"
+                confirm_line = "\nPlease choose:\n1. Confirm and create record\n2. Cancel"
+            elif reply_language == "de":
+                header = "Bitte bestätigen Sie die folgenden Angaben:\n"
+                type_label = "Typ"
+                cat_label = "Kategorie"
+                loc_label = "Ort"
+                urg_label = "Dringlichkeit"
+                desc_label = "Beschreibung"
+                name_label = "Name"
+                room_label = "Zimmer"
+                confirm_line = "\nBitte wählen Sie:\n1. Bestätigen und Eintrag erstellen\n2. Abbrechen"
+            elif reply_language == "ru":
+                header = "Пожалуйста, подтвердите данные заявки:\n"
+                type_label = "Тип"
+                cat_label = "Категория"
+                loc_label = "Локация"
+                urg_label = "Срочность"
+                desc_label = "Описание"
+                name_label = "Имя"
+                room_label = "Номер"
+                confirm_line = "\nПожалуйста, выберите:\n1. Подтвердить и создать заявку\n2. Отменить"
+            else:
+                header = "Lütfen aşağıdaki kayıt özetini kontrol edin:\n"
+                type_label = "Tip"
+                cat_label = "Kategori"
+                loc_label = "Lokasyon"
+                urg_label = "Aciliyet"
+                desc_label = "Açıklama"
+                name_label = "Ad Soyad"
+                room_label = "Oda"
+                confirm_line = "\nLütfen seçin:\n1. Onayla ve kayıt aç\n2. İptal et"
+
+            lines = [header.rstrip()]
+            lines.append(f"- {type_label}: {guest_type}")
+            lines.append(f"- {cat_label}: {category}")
+            if location:
+                lines.append(f"- {loc_label}: {location}")
+            if urgency:
+                lines.append(f"- {urg_label}: {urgency}")
+            lines.append(f"- {desc_label}: {state.description or state.initial_message or ''}")
+            lines.append(f"- {name_label}: {state.full_name or ''}")
+            lines.append(f"- {room_label}: {state.room or ''}")
+            lines.append(confirm_line.strip())
+            msg = "\n".join(lines)
+
+            return self.response_service.build(
+                "inform",
+                msg,
+                intent,
+                1.0,
+                reply_language,
+                ui_language,
+                "rule",
+                action={
+                    "kind": "chat_form",
+                    "operation": state.operation,
+                    "step": "confirm",
+                },
+            )
+
+        if state.step == "confirm":
+            # Kullanıcının onayı: 1/Evet -> kayıt aç, 2/Hayır -> formu iptal et.
+            if not text:
+                if reply_language == "en":
+                    msg = "Please choose:\n1. Confirm and create record\n2. Cancel"
+                elif reply_language == "de":
+                    msg = "Bitte wählen Sie:\n1. Bestätigen und Eintrag erstellen\n2. Abbrechen"
+                elif reply_language == "ru":
+                    msg = "Пожалуйста, выберите:\n1. Подтвердить и создать заявку\n2. Отменить"
+                else:
+                    msg = "Lütfen seçin:\n1. Onayla ve kayıt aç\n2. İptal et"
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={
+                        "kind": "chat_form",
+                        "operation": state.operation,
+                        "step": "confirm",
+                    },
+                )
+
+            lowered = text.strip().lower()
+            is_yes = lowered in ("1", "evet", "onay", "onaylıyorum", "ok", "tamam")
+            is_no = lowered in ("2", "hayır", "hayir", "iptal", "vazgeç", "vazgec")
+
+            if not (is_yes or is_no):
+                # Sayı yerine serbest bir mesaj yazıldıysa formu güvenli şekilde iptal et
+                # ve normal sohbet akışına dön.
+                self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+                if reply_language == "en":
+                    msg = "Okay, I have cancelled this form. You can ask a new question or report another issue."
+                elif reply_language == "de":
+                    msg = "In Ordnung, ich habe dieses Formular storniert. Sie können eine neue Frage stellen oder eine weitere Störung melden."
+                elif reply_language == "ru":
+                    msg = "Хорошо, я отменила эту форму. Вы можете задать новый вопрос или сообщить о другой проблеме."
+                else:
+                    msg = "Tamam, bu formu iptal ettim. Yeni bir soru sorabilir veya farklı bir arıza/talep bildirebilirsiniz."
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                )
+
+            if is_no:
+                # Form iptal; state temizle.
+                self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+                if reply_language == "en":
+                    msg = "Okay, I have cancelled this record. You can start a new request or fault report anytime."
+                elif reply_language == "de":
+                    msg = "In Ordnung, ich habe diesen Eintrag storniert. Sie können jederzeit eine neue Anfrage oder Störungsmeldung starten."
+                elif reply_language == "ru":
+                    msg = "Хорошо, я отменила эту заявку. Вы можете в любое время начать новый запрос или сообщить о неисправности."
+                else:
+                    msg = "Tamam, bu kaydı iptal ettim. İstediğiniz zaman yeni bir talep veya arıza bildirimi yapabilirsiniz."
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                )
+
+            # Onaylandı: kayıt payload'unu üret ve misafir kaydını aç.
+            guest_type = (
+                "fault"
+                if state.operation == "fault"
+                else (
+                    "complaint"
+                    if state.operation == "complaint"
+                    else ("guest_notification" if state.operation == "guest_notification" else "request")
+                )
+            )
+            category = state.category or "other"
+            categories = [category]
+            details = dict(state.details or {})
+            location = details.get("location") if guest_type == "fault" else None
+            urgency = details.get("urgency") if guest_type == "fault" else None
+
+            action_payload = {
+                "type": guest_type,
+                "category": category,
+                "categories": categories,
+                "details": details,
+                "location": location,
+                "urgency": urgency,
+                "description": state.description or state.initial_message or "",
+                "name": state.full_name or "",
+                "room": state.room or "",
+                "nationality": "-",
+                "language": reply_language,
+            }
+
+            self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+
+            if reply_language == "en":
+                msg = "Thank you. I have recorded your request and will forward it to the relevant team."
+            elif reply_language == "de":
+                msg = "Vielen Dank. Ich habe Ihr Anliegen erfasst und leite es an das zuständige Team weiter."
+            elif reply_language == "ru":
+                msg = "Спасибо. Я зарегистрировала вашу просьбу и передам её соответствующей команде."
+            else:
+                msg = "Teşekkürler. Talebinizi kaydettim ve ilgili ekibe iletiyorum."
+
+            exit_after = 1800 if getattr(payload, "channel", None) == "web" else None
+            return self.response_service.build(
+                "inform",
+                msg,
+                intent,
+                1.0,
+                reply_language,
+                ui_language,
+                "rule",
+                action={
+                    "kind": "create_guest_request",
+                    "operation": state.operation,
+                    "payload": action_payload,
+                },
+                exit_chat_after_ms=exit_after,
+            )
+
+        # Beklenmeyen step durumunda formu sıfırla ve güvenli fallback üret.
+        self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+        return self._fallback_response(
+            intent,
+            0.0,
+            reply_language,
+            ui_language,
+            fallback_reason="chat_form_invalid_state",
+        )
+
     def _fallback_response(
         self,
         intent: str,
@@ -518,10 +2042,34 @@ class ChatOrchestrator:
             ui_language,
             fallback_reason,
         )
+        if intent == "reservation":
+            text = _RESERVATION_REDIRECT_TEXT.get(reply_language, _RESERVATION_REDIRECT_TEXT["tr"])
+            return self.response_service.build(
+                "inform",
+                text,
+                "reservation",
+                1.0,
+                reply_language,
+                ui_language,
+                "fallback",
+                action=self._action_for_intent("reservation", None, None),
+            )
         return self.response_service.build(
             "fallback",
             self.localization_service.canonical_fallback(reply_language, reason="safe"),
-            "unknown" if intent not in ("recommendation", "hotel_info", "fault_report", "complaint", "request", "reservation", "special_need") else intent,
+            "unknown"
+            if intent
+            not in (
+                "recommendation",
+                "hotel_info",
+                "fault_report",
+                "complaint",
+                "request",
+                "reservation",
+                "special_need",
+                "guest_notification",
+            )
+            else intent,
             confidence,
             reply_language,
             ui_language,
@@ -590,9 +2138,10 @@ class ChatOrchestrator:
         )
 
         primary, secondary = self._pick_primary_secondary(first_response, second_response)
-        if primary.meta.intent == "special_need" or secondary.meta.intent == "special_need":
-            # Safety rule: when special need/allergy exists, do not append venue/food recommendations.
-            chosen = primary if primary.meta.intent == "special_need" else secondary
+        _safety = frozenset({"special_need", "guest_notification"})
+        if primary.meta.intent in _safety or secondary.meta.intent in _safety:
+            # Güvenlik: özel diyet / misafir bildirimi varken restoran önerisi eklenmez.
+            chosen = primary if primary.meta.intent in _safety else secondary
             action_payload = None
             if chosen.meta.action:
                 action_payload = (
@@ -650,6 +2199,7 @@ class ChatOrchestrator:
         priority = {
             "fault_report": 100,
             "complaint": 90,
+            "guest_notification": 87,
             "special_need": 85,
             "request": 80,
             "reservation": 70,
@@ -721,12 +2271,22 @@ class ChatOrchestrator:
 
     @staticmethod
     def _action_for_intent(intent: str, sub_intent: str | None, entity: str | None) -> dict | None:
-        if intent in ("fault_report", "complaint", "request", "reservation", "special_need"):
+        # Chatbot üzerinden gelen istek/şikayet/arıza ve özel ihtiyaçlar Supabase üzerinde
+        # guest request/fault/complaint kaydına dönüşürken, rezervasyonlar için ayrı bir
+        # Rezervasyonlar modülü formuna yönlendirme tercih edilir.
+        if intent == "reservation":
+            # Frontend, bu action'ı alıp uygun Rezervasyonlar formunu açabilir.
+            return {
+                "kind": "open_reservation_form",
+                "sub_intent": sub_intent,
+                "entity": entity,
+            }
+        if intent in ("fault_report", "complaint", "request", "special_need"):
             department = "guest_relations" if intent in ("complaint", "special_need") else "reception"
             priority = "medium"
             if intent in ("complaint", "special_need"):
                 priority = "high"
-            elif intent in ("reservation", "request"):
+            elif intent == "request":
                 priority = "low"
             issue_type = None
             if intent == "fault_report":

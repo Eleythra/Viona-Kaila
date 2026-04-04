@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0e14" />
+    <meta
+      name="description"
+      content="Viona — Kaila Beach Hotel web uygulamasına giden QR kod. Okutarak https://viona.eleythra.com/ adresini açın."
+    />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https:; base-uri 'self'; form-action 'self'"
+    />
+    <title>Viona — Site QR kodu</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/qr-page.css?v=3" />
+  </head>
+  <body>
+    <div class="qr-page__glow" aria-hidden="true"></div>
+    <main class="qr-page">
+      <article class="qr-card">
+        <div class="qr-card__accent" aria-hidden="true"></div>
+        <p class="qr-brand">Viona</p>
+        <h1 class="qr-title">Kaila Beach Hotel</h1>
+        <p class="qr-lead" id="qr-lead-tr">
+          Bu kodu okutarak otelin dijital asistanına ve bilgilere anında ulaşın.
+        </p>
+        <p class="qr-lead hidden" id="qr-lead-en" lang="en" hidden>
+          Scan to open the hotel app and digital concierge instantly.
+        </p>
+
+        <div class="qr-frame">
+          <img
+            src="assets/qr/viona-site-qr.png?v=3"
+            width="1024"
+            height="1024"
+            alt="https://viona.eleythra.com/ adresine giden QR kod"
+            decoding="async"
+            class="qr-frame__img"
+          />
+        </div>
+
+        <a class="qr-url" href="https://viona.eleythra.com/" rel="noopener noreferrer" id="qr-link"
+          >https://viona.eleythra.com/</a
+        >
+
+        <div class="qr-actions">
+          <a
+            class="qr-btn qr-btn--primary"
+            href="assets/qr/viona-site-qr.png"
+            download="viona-kaila-beach-qr.png"
+            id="qr-download"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M12 3v12M8 11l4 4 4-4M5 21h14" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            PNG indir (baskı için)
+          </a>
+          <button type="button" class="qr-btn qr-btn--ghost" id="qr-lang" aria-pressed="false">
+            English
+          </button>
+        </div>
+
+        <p class="qr-hint" id="qr-hint-tr">
+          Köşelerdeki 3 bulucu hafif yuvarlak; içleri daire, diğer modüller kare. Yenilemek için: <code class="qr-code-path">npm run qr:png</code>
+        </p>
+        <p class="qr-hint hidden" id="qr-hint-en" hidden>
+          Three corner finders rounded with circular inner modules; data modules are square. Regenerate: <code class="qr-code-path">npm run qr:png</code>
+        </p>
+      </article>
+
+      <p class="qr-back">
+        <a href="index.html">← Ana uygulamaya dön</a>
+      </p>
+    </main>
+
+    <script src="js/qr-page.js?v=3"></script>
+  </body>
+</html>

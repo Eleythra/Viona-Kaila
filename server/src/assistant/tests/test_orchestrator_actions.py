@@ -76,11 +76,10 @@ def test_fault_report_has_guest_request_action():
 def test_special_need_has_high_priority_guest_relations_action():
     orch = build_orchestrator()
     res = orch.handle(ChatRequest(message="gluten alerjim var", ui_language="tr", locale="tr"))
-    assert res.meta.intent == "special_need"
+    assert res.meta.intent == "guest_notification"
     assert res.meta.action is not None
-    assert res.meta.action.kind == "create_guest_request"
-    assert res.meta.action.target_department == "guest_relations"
-    assert res.meta.action.priority == "high"
+    assert res.meta.action.kind == "chat_form"
+    assert res.meta.action.operation == "guest_notification"
 
 
 def test_recommendation_has_suggest_venue_action():

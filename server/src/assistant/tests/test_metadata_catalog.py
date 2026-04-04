@@ -27,7 +27,15 @@ def test_metadata_for_known_intent_contains_required_keys():
 
 
 def test_intent_metadata_has_minimum_core_intents():
-    for key in ("chitchat", "recommendation", "special_need", "fault_report", "hotel_info", "unknown"):
+    for key in (
+        "chitchat",
+        "recommendation",
+        "special_need",
+        "guest_notification",
+        "fault_report",
+        "hotel_info",
+        "unknown",
+    ):
         assert key in INTENT_METADATA
 
 

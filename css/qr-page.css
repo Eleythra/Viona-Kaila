@@ -1,0 +1,273 @@
+/* Viona — QR paylaşım sayfası (ana site tasarım jetonlarıyla uyumlu) */
+
+:root {
+  --bg-deep: #070a0f;
+  --gold: #d4a853;
+  --gold-dim: rgba(212, 168, 83, 0.22);
+  --navy: #1a2744;
+  --cyan: #2eb8c7;
+  --text: #f2f4f8;
+  --muted: rgba(242, 244, 248, 0.72);
+  --ink: #0a0e14;
+  --stroke: rgba(255, 255, 255, 0.1);
+  --radius-panel: 22px;
+  --font: "DM Sans", system-ui, -apple-system, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.hidden {
+  display: none !important;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: var(--font);
+  color: var(--text);
+  background: radial-gradient(120% 80% at 50% -10%, #152238 0%, var(--bg-deep) 55%);
+  -webkit-font-smoothing: antialiased;
+}
+
+.qr-page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: max(20px, env(safe-area-inset-top)) 20px max(28px, env(safe-area-inset-bottom));
+}
+
+.qr-page__glow {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(26, 39, 68, 0.35) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(46, 184, 199, 0.1) 0%, transparent 45%);
+  z-index: 0;
+}
+
+.qr-card {
+  position: relative;
+  z-index: 1;
+  width: min(420px, 100%);
+  padding: 28px 22px 26px;
+  border-radius: var(--radius-panel);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(155deg, rgba(18, 26, 42, 0.96) 0%, rgba(7, 10, 18, 0.92) 100%);
+  backdrop-filter: blur(20px) saturate(1.35);
+  -webkit-backdrop-filter: blur(20px) saturate(1.35);
+  box-shadow:
+    0 4px 0 rgba(255, 255, 255, 0.05) inset,
+    0 0 0 1px rgba(46, 184, 199, 0.12),
+    0 28px 80px rgba(0, 0, 0, 0.55),
+    0 0 100px rgba(30, 139, 195, 0.1);
+}
+
+.qr-card__accent {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+  background: linear-gradient(90deg, transparent, rgba(26, 39, 68, 0.95), rgba(46, 184, 199, 0.85), transparent);
+}
+
+.qr-brand {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: rgba(180, 210, 230, 0.95);
+  font-weight: 700;
+  text-align: center;
+  text-shadow: 0 0 20px rgba(46, 184, 199, 0.25);
+}
+
+.qr-title {
+  margin: 0 0 8px;
+  font-size: clamp(1.35rem, 4vw, 1.65rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-align: center;
+  line-height: 1.2;
+  background: linear-gradient(100deg, #f8fafc 0%, #c8d0e0 35%, #b8e4ea 72%, #f2f4f8 100%);
+  background-size: 160% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.qr-lead {
+  margin: 0 0 22px;
+  font-size: 0.94rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.45;
+}
+
+.qr-frame {
+  margin: 0 auto 20px;
+  padding: 14px;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid rgba(26, 39, 68, 0.12);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 12px 36px rgba(0, 0, 0, 0.45);
+  width: fit-content;
+  max-width: 100%;
+}
+
+.qr-frame img,
+.qr-frame canvas {
+  display: block;
+  width: min(300px, 78vw) !important;
+  height: auto !important;
+  border-radius: 14px;
+  vertical-align: top;
+}
+
+.qr-url {
+  display: block;
+  margin: 0 0 20px;
+  padding: 12px 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-align: center;
+  word-break: break-all;
+  color: var(--cyan);
+  background: rgba(46, 184, 199, 0.08);
+  border: 1px solid rgba(46, 184, 199, 0.25);
+  border-radius: 12px;
+  text-decoration: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.qr-url:hover {
+  border-color: rgba(26, 39, 68, 0.35);
+  background: rgba(26, 39, 68, 0.08);
+}
+
+.qr-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.qr-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 14px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.2s;
+}
+
+.qr-btn--primary {
+  color: #f0f4f8;
+  background: linear-gradient(135deg, #243a5c, #1a2744);
+  border: 1px solid rgba(46, 184, 199, 0.25);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) inset, 0 18px 50px rgba(0, 0, 0, 0.45);
+  text-decoration: none;
+}
+
+.qr-btn--primary:hover {
+  filter: brightness(1.08);
+}
+
+.qr-btn--primary:active {
+  transform: scale(0.98);
+}
+
+.qr-btn--ghost {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--stroke);
+}
+
+.qr-btn--ghost:hover {
+  border-color: rgba(46, 184, 199, 0.35);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.qr-back {
+  margin-top: 22px;
+  text-align: center;
+}
+
+.qr-back a {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(242, 244, 248, 0.25);
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.qr-back a:hover {
+  color: var(--cyan);
+  border-bottom-color: rgba(46, 184, 199, 0.45);
+}
+
+.qr-hint {
+  margin: 14px 0 0;
+  font-size: 0.78rem;
+  color: rgba(242, 244, 248, 0.5);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.qr-code-path {
+  font-size: 0.72em;
+  font-family: ui-monospace, monospace;
+  color: rgba(46, 184, 199, 0.85);
+  word-break: break-all;
+}
+
+@media print {
+  .qr-page__glow,
+  .qr-back,
+  .qr-btn--ghost,
+  .qr-hint {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .qr-card {
+    border: none;
+    box-shadow: none;
+    background: #fff;
+  }
+
+  .qr-title,
+  .qr-brand {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .qr-frame img,
+  .qr-frame canvas {
+    width: 260px !important;
+  }
+}

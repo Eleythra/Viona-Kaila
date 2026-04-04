@@ -8,6 +8,7 @@ import surveysRouter from "./modules/surveys/surveys.router.js";
 import adminRouter from "./modules/admin/admin.router.js";
 import { createSpeechRouter, createSttRawMiddleware, handleStt } from "./modules/speech/speech.router.js";
 import { getSupabase, isSupabaseConfigured } from "./lib/supabase.js";
+import { createGuestRequest } from "./modules/guest-requests/guest-requests.service.js";
 
 const env = getEnv();
 const app = express();
@@ -29,13 +30,56 @@ const UPSTREAM_UNAVAILABLE_BY_LANG = {
   ru: "Сейчас я временно недоступна. Пожалуйста, попробуйте снова через несколько секунд.",
 };
 
+const RESERVATION_REDIRECT_BY_LANG = {
+  tr: "Rezervasyonunuzla ilgili işlemler için lütfen ana sayfadaki Rezervasyonlar bölümünden devam edin. Aşağıdaki butona dokunarak açabilirsiniz.",
+  en: "For your reservation requests, please continue via the Reservations section on the main screen. You can open it using the button below.",
+  de: "Für Ihre Reservierungsanfragen nutzen Sie bitte den Bereich „Reservierungen“ auf der Hauptseite. Sie können ihn über die Schaltfläche unten öffnen.",
+  ru: "Для запросов по бронированию, пожалуйста, перейдите в раздел «Резервации» на главном экране. Вы можете открыть его с помощью кнопки ниже.",
+};
+
+function isReservationLikeMessage(msg = "") {
+  const t = String(msg || "").toLowerCase();
+  if (!t) return false;
+  return (
+    t.includes("rezervasyon") ||
+    t.includes("rezrvasyon") ||
+    t.includes("reservation") ||
+    t.includes("a la carte") ||
+    t.includes("alacarte")
+  );
+}
+
 function normalizeLocale(value = "") {
   const v = String(value || "").toLowerCase().trim();
   return v === "en" || v === "de" || v === "ru" ? v : "tr";
 }
 
-function safeFallback(locale = "tr", reason = "safe") {
+function safeFallback(locale = "tr", reason = "safe", userMessage = "") {
   const lang = normalizeLocale(locale);
+  const isReservationLike = isReservationLikeMessage(userMessage);
+
+  // Eğer upstream'de sorun var ama misafir net şekilde rezervasyon soruyorsa,
+  // doğrudan Rezervasyonlar modülüne yönlendiren güvenli yanıt döndür.
+  if (isReservationLike) {
+    const text = RESERVATION_REDIRECT_BY_LANG[lang] || RESERVATION_REDIRECT_BY_LANG.tr;
+    return {
+      type: "inform",
+      message: text,
+      meta: {
+        intent: "reservation",
+        confidence: 1.0,
+        language: lang,
+        ui_language: lang,
+        source: "fallback",
+        action: {
+          kind: "open_reservation_form",
+          sub_intent: null,
+          entity: null,
+        },
+      },
+    };
+  }
+
   const message =
     reason === "upstream_unavailable"
       ? UPSTREAM_UNAVAILABLE_BY_LANG[lang]
@@ -149,6 +193,7 @@ function normalizeChatObsLayerUsed(source) {
   return null;
 }
 
+
 /** numeric(5,4): en fazla 9.9999 */
 function normalizeChatObsConfidence(value) {
   const n = Number(value);
@@ -208,6 +253,36 @@ async function writeChatObservation({
     await getSupabase().from("chat_observations").insert(row);
   } catch (err) {
     console.warn("chat_observation_write_failed error=%s", err?.message || err);
+  }
+}
+
+
+async function processCreateGuestRequestAction(data) {
+  try {
+    const action = data?.meta?.action;
+    if (!action || action.kind !== "create_guest_request" || !action.payload) {
+      return data;
+    }
+    const payload = {
+      ...action.payload,
+      // Chatbot kaynaklı kayıtları backend validasyonunda ayrıştırmak için.
+      source: "viona_chat",
+    };
+    const result = await createGuestRequest(payload);
+    if (data?.meta) {
+      data.meta.action = {
+        ...action,
+        created_record: {
+          id: String(result.id),
+          bucket: result.bucket,
+        },
+      };
+    }
+    // Operasyon WhatsApp: yalnızca type request / complaint / fault iken createGuestRequest içinde tetiklenir.
+    return data;
+  } catch (err) {
+    console.warn("chat_form_create_guest_request_failed error=%s", err?.message || err);
+    return data;
   }
 }
 
@@ -272,6 +347,124 @@ app.use("/api/admin", adminRouter);
 app.use("/api", createSpeechRouter());
 app.post("/api/stt", createSttRawMiddleware(), handleStt);
 
+// WhatsApp webhook (Meta Cloud API).
+app.get("/api/webhooks/whatsapp", (req, res) => {
+  try {
+    const mode = req.query["hub.mode"];
+    const token = req.query["hub.verify_token"];
+    const challenge = req.query["hub.challenge"];
+    if (mode !== "subscribe") {
+      return res.status(400).send("invalid_mode");
+    }
+    if (!process.env.WHATSAPP_VERIFY_TOKEN) {
+      return res.status(503).send("verify_token_not_configured");
+    }
+    if (token !== process.env.WHATSAPP_VERIFY_TOKEN) {
+      return res.status(403).send("verification_failed");
+    }
+    return res.status(200).send(String(challenge || ""));
+  } catch (err) {
+    console.error("whatsapp_webhook_verify_failed error=%s", err?.message || err);
+    return res.status(500).send("error");
+  }
+});
+
+app.post("/api/webhooks/whatsapp", async (req, res) => {
+  // Meta Cloud API webhook yapısı: entry -> changes -> value -> messages
+  try {
+    const entry = Array.isArray(req.body?.entry) ? req.body.entry[0] : null;
+    const change = entry && Array.isArray(entry.changes) ? entry.changes[0] : null;
+    const value = change?.value || {};
+    const messages = Array.isArray(value.messages) ? value.messages : [];
+    if (!messages.length) {
+      return res.status(200).json({ ok: true, skipped: "no_messages" });
+    }
+    const msg = messages[0];
+    if (msg.type !== "text" || !msg.text?.body) {
+      return res.status(200).json({ ok: true, skipped: "non_text_message" });
+    }
+    const from = msg.from;
+    const text = String(msg.text.body || "").trim();
+    const sessionId = from;
+
+    const timeoutMs = safeTimeoutMs(process.env.ASSISTANT_TIMEOUT_MS, 12000);
+    const payload = {
+      message: text,
+      locale: "tr",
+      ui_language: "tr",
+      user_id: from,
+      session_id: sessionId,
+      channel: "whatsapp",
+    };
+    const abortController = new AbortController();
+    const timer = setTimeout(() => abortController.abort(), timeoutMs);
+    const upstream = await fetch(ASSISTANT_CHAT_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: abortController.signal,
+    });
+    clearTimeout(timer);
+
+    if (!upstream.ok) {
+      console.warn(
+        "whatsapp_chat_proxy_fallback proxy_reason=upstream_http_error status=%s",
+        upstream.status,
+      );
+      return res.status(200).json({ ok: false, reason: "upstream_http_error" });
+    }
+
+    let data = null;
+    try {
+      data = await upstream.json();
+    } catch (err) {
+      console.warn("whatsapp_chat_proxy_fallback proxy_reason=upstream_non_json");
+      return res.status(200).json({ ok: false, reason: "upstream_non_json" });
+    }
+    if (!isValidAssistantPayload(data)) {
+      console.warn("whatsapp_chat_proxy_fallback proxy_reason=upstream_invalid_payload");
+      return res.status(200).json({ ok: false, reason: "upstream_invalid_payload" });
+    }
+
+    // Web ile aynı: kayıt createGuestRequest içinde; istek/şikayet/arızada operasyon WhatsApp orada tetiklenir.
+    await processCreateGuestRequestAction(data);
+
+    // Asistan cevabını WhatsApp üzerinden kullanıcıya geri gönder.
+    // WHATSAPP_ACCESS_TOKEN: Meta System User kalıcı token (geçici Graph token değil).
+    try {
+      const token = process.env.WHATSAPP_ACCESS_TOKEN;
+      const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+      if (token && phoneNumberId) {
+        await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}/messages`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            messaging_product: "whatsapp",
+            to: from,
+            type: "text",
+            text: { body: String(data?.message || "").trim() || " " },
+          }),
+        });
+      } else {
+        console.warn("whatsapp_reply_skipped reason=missing_token_or_phone_id");
+      }
+    } catch (sendErr) {
+      console.warn(
+        "whatsapp_send_message_failed error=%s",
+        sendErr?.message || sendErr,
+      );
+    }
+
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error("whatsapp_webhook_handler_failed error=%s", err?.message || err);
+    return res.status(500).json({ ok: false, error: "internal_error" });
+  }
+});
+
 // Single chatbot entrypoint: proxy only, no business logic.
 app.post("/api/chat", async (req, res) => {
   const message = String(req.body?.message || "").trim();
@@ -288,7 +481,7 @@ app.post("/api/chat", async (req, res) => {
       : null;
 
   if (!message) {
-    const fb = safeFallback(locale, "validation_error");
+    const fb = safeFallback(locale, "validation_error", message);
     return res.status(200).json(fb);
   }
 
@@ -299,6 +492,8 @@ app.post("/api/chat", async (req, res) => {
       locale,
       ui_language: uiLanguage,
       user_id: userId,
+      session_id: sessionId,
+      channel: "web",
     };
     if (conversationLanguage) payload.conversation_language = conversationLanguage;
     const abortController = new AbortController();
@@ -313,7 +508,7 @@ app.post("/api/chat", async (req, res) => {
 
     if (!upstream.ok) {
       console.warn("chat_proxy_fallback proxy_reason=upstream_http_error status=%s", upstream.status);
-      const fb = safeFallback(locale, "upstream_unavailable");
+      const fb = safeFallback(locale, "upstream_unavailable", message);
       await writeChatObservation({
         sessionId,
         userId,
@@ -331,7 +526,7 @@ app.post("/api/chat", async (req, res) => {
       data = await upstream.json();
     } catch (_err) {
       console.warn("chat_proxy_fallback proxy_reason=upstream_non_json");
-      const fb = safeFallback(locale, "upstream_unavailable");
+      const fb = safeFallback(locale, "upstream_unavailable", message);
       await writeChatObservation({
         sessionId,
         userId,
@@ -345,7 +540,7 @@ app.post("/api/chat", async (req, res) => {
     }
     if (!isValidAssistantPayload(data)) {
       console.warn("chat_proxy_fallback proxy_reason=upstream_invalid_payload");
-      const fb = safeFallback(locale, "upstream_unavailable");
+      const fb = safeFallback(locale, "upstream_unavailable", message);
       await writeChatObservation({
         sessionId,
         userId,
@@ -357,6 +552,44 @@ app.post("/api/chat", async (req, res) => {
       });
       return res.status(200).json(fb);
     }
+    // Eğer asistan geçerli bir payload döndürdüyse ancak mesaj güvenli fallback metni ise
+    // ve misafir açıkça rezervasyon soruyorsa, yanıtı rezervasyon formuna yönlendiren
+    // butonlu forma dönüştür.
+    try {
+      const userText = String(message || "");
+      const isResLike = isReservationLikeMessage(userText);
+      const lang = locale || "tr";
+      const normalizedLang = normalizeLocale(lang);
+      const safeFallbackText = SAFE_FALLBACK_BY_LANG[normalizedLang] || SAFE_FALLBACK_BY_LANG.tr;
+      const rawMsg = String(data?.message || "").trim();
+      if (isResLike && rawMsg === safeFallbackText) {
+        const redirectText =
+          RESERVATION_REDIRECT_BY_LANG[normalizedLang] || RESERVATION_REDIRECT_BY_LANG.tr;
+        data = {
+          type: "inform",
+          message: redirectText,
+          meta: {
+            intent: "reservation",
+            confidence: 1.0,
+            language: normalizedLang,
+            ui_language: uiLanguage,
+            source: "fallback",
+            multi_intent: false,
+            action: {
+              kind: "open_reservation_form",
+              sub_intent: null,
+              entity: null,
+            },
+          },
+        };
+      }
+    } catch (patchErr) {
+      console.warn(
+        "chat_proxy_reservation_fallback_patch_failed error=%s",
+        patchErr?.message || patchErr,
+      );
+    }
+
     await writeChatObservation({
       sessionId,
       userId,
@@ -366,12 +599,14 @@ app.post("/api/chat", async (req, res) => {
       fallbackReason: null,
       decisionPath: `proxy:${String(data?.meta?.source || "unknown")}`,
     });
+    // Kayıt createGuestRequest içinde; operasyon WhatsApp yalnızca istek/şikayet/arıza için (.env numara listeleri).
+    data = await processCreateGuestRequestAction(data);
     return res.status(200).json(data);
   } catch (error) {
     const isAbort = error?.name === "AbortError";
     const proxyReason = isAbort ? "upstream_timeout" : "upstream_network_error";
     console.error("chat_proxy_fallback proxy_reason=%s error=%s", proxyReason, error?.message || error);
-    const fb = safeFallback(locale, "upstream_unavailable");
+    const fb = safeFallback(locale, "upstream_unavailable", message);
     await writeChatObservation({
       sessionId,
       userId,

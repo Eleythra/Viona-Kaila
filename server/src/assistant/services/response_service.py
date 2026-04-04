@@ -60,10 +60,19 @@ class ResponseService:
         source: str,
         action: dict | ChatMeta.ChatAction | None = None,
         multi_intent: bool = False,
+        exit_chat_after_ms: int | None = None,
     ) -> ChatResponse:
         action_payload = action
         if isinstance(action, dict):
             action_payload = ChatMeta.ChatAction.model_validate(action)
+        exit_ms = exit_chat_after_ms
+        if exit_ms is not None:
+            try:
+                exit_ms = int(exit_ms)
+            except (TypeError, ValueError):
+                exit_ms = None
+            if exit_ms is not None and (exit_ms < 500 or exit_ms > 120_000):
+                exit_ms = None
         meta = ChatMeta(
             intent=intent,
             confidence=confidence,
@@ -72,6 +81,7 @@ class ResponseService:
             source=source,
             multi_intent=bool(multi_intent),
             action=action_payload,
+            exit_chat_after_ms=exit_ms,
         )
         normalized = _normalize_message(message)
         if _contains_forbidden_tech_terms(normalized):

@@ -159,8 +159,12 @@
     var s = normalizeBucketStatus(status);
     if (s === "cancelled") return "İptal";
     if (issueIsWaitStatus(s)) return "Beklemede";
-    if (s === "done") return issueType === "complaint" ? "Dikkate alındı" : "Yapıldı";
-    if (s === "rejected") return issueType === "complaint" ? "Dikkate alınmadı" : "Yapılamadı";
+    if (s === "done") {
+      return issueType === "complaint" || issueType === "guest_notification" ? "Dikkate alındı" : "Yapıldı";
+    }
+    if (s === "rejected") {
+      return issueType === "complaint" || issueType === "guest_notification" ? "Dikkate alınmadı" : "Yapılamadı";
+    }
     return s;
   }
 
@@ -180,8 +184,8 @@
   function issueRowActionsHtml(issueType, id, st) {
     st = normalizeBucketStatus(st);
     var type = issueType;
-    var posLabel = type === "complaint" ? "Dikkate alındı" : "Yapıldı";
-    var negLabel = type === "complaint" ? "Dikkate alınmadı" : "Yapılamadı";
+    var posLabel = type === "complaint" || type === "guest_notification" ? "Dikkate alındı" : "Yapıldı";
+    var negLabel = type === "complaint" || type === "guest_notification" ? "Dikkate alınmadı" : "Yapılamadı";
     var h = "";
     function stBtn(stat, label) {
       return (
@@ -215,6 +219,7 @@
   function typeLabel(type) {
     if (type === "request") return "İstek";
     if (type === "complaint") return "Şikayet";
+    if (type === "guest_notification") return "Misafir bildirimi";
     if (type === "fault") return "Arıza";
     if (type === "reservation") return "Rezervasyon";
     return "Kayıt";
@@ -256,6 +261,23 @@
       internet_tv: "İnternet / TV",
       staff: "Personel davranışı",
       other: "Diğer",
+    },
+    guest_notification: {
+      allergen_notice: "Alerjen bildirimi",
+      gluten_sensitivity: "Gluten hassasiyeti",
+      lactose_sensitivity: "Laktoz hassasiyeti",
+      vegan_vegetarian: "Vegan / vejetaryen tercih",
+      food_sensitivity_general: "Gıda hassasiyeti (genel)",
+      chronic_condition: "Kronik rahatsızlık bildirimi",
+      accessibility_special_needs: "Engelli / özel ihtiyaç",
+      pregnancy: "Hamilelik durumu",
+      medication_health_sensitivity: "İlaç / sağlık hassasiyeti",
+      other_health: "Diğer sağlık bilgisi",
+      birthday_celebration: "Doğum günü kutlama",
+      honeymoon_anniversary: "Balayı / yıldönümü",
+      surprise_organization: "Sürpriz organizasyon",
+      room_decoration: "Odaya özel süsleme",
+      other_celebration: "Diğer kutlama talebi",
     },
     fault: {
       hvac: "Klima / ısıtma",
@@ -473,6 +495,29 @@
     return String(loadComplaintStaffNotes()[String(id)] || "");
   }
 
+  var GUEST_NOTIF_STAFF_NOTE_KEY = "viona_admin_guest_notif_staff_notes_v1";
+
+  function loadGuestNotifStaffNotes() {
+    try {
+      var raw = localStorage.getItem(GUEST_NOTIF_STAFF_NOTE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (_e) {
+      return {};
+    }
+  }
+
+  function setGuestNotifStaffNote(id, text) {
+    var all = loadGuestNotifStaffNotes();
+    all[String(id)] = String(text || "");
+    try {
+      localStorage.setItem(GUEST_NOTIF_STAFF_NOTE_KEY, JSON.stringify(all));
+    } catch (_e) {}
+  }
+
+  function getGuestNotifStaffNote(id) {
+    return String(loadGuestNotifStaffNotes()[String(id)] || "");
+  }
+
   var FAULT_STAFF_NOTE_KEY = "viona_admin_fault_staff_notes_v1";
 
   function loadFaultStaffNotes() {
@@ -587,6 +632,13 @@
       if (descCompl !== "—") outCompl.push("Açıklama: " + descCompl);
       return outCompl.join(" | ");
     }
+    if (type === "guest_notification") {
+      var outGn = [];
+      outGn.push("Konu: " + categoryText("guest_notification", row.categories, row.category));
+      var descGn = complaintFormDescription(row);
+      if (descGn !== "—") outGn.push("Açıklama: " + descGn);
+      return outGn.join(" | ");
+    }
     if (type === "fault") {
       var outFault = [];
       outFault.push("Kategori: " + categoryText("fault", row.categories, row.category));
@@ -630,11 +682,9 @@
     if (t === "reservation_spa" && code === "skin_care") return "Cilt bakımı";
     if (t === "reservation_spa" && code === "other_care") return "Diğer bakım hizmetleri";
     if (t === "reservation_alacarte" && code === "la_terrace") return "La Terrace A La Carte";
-    if (t === "reservation_alacarte" && code === "mare") return "Mare Restaurant";
     if (t === "reservation_alacarte" && code === "sinton_bbq") return "Sinton BBQ Restaurant";
     var rid = String(data.restaurantId || "");
     if (t === "reservation_alacarte" && rid === "laTerrace") return "La Terrace A La Carte";
-    if (t === "reservation_alacarte" && rid === "mare") return "Mare Restaurant";
     if (t === "reservation_alacarte" && rid === "sinton") return "Sinton BBQ Restaurant";
     if (t === "reservation_alacarte") return "A la carte";
     if (t === "reservation_spa") return "Spa";
@@ -732,7 +782,6 @@
     return [
       { key: "overview", label: "Günlük takip (tümü)" },
       { key: "laTerrace", label: "La Terrace A La Carte" },
-      { key: "mare", label: "Mare Restaurant" },
       { key: "sinton", label: "Sinton BBQ Restaurant" },
       { key: "spa", label: "Spa" },
     ];
@@ -752,14 +801,12 @@
       .toLowerCase();
     if (lblLc.indexOf("la terrace") >= 0) return "laTerrace";
     if (lblLc.indexOf("sinton") >= 0) return "sinton";
-    if (lblLc.indexOf("mare") >= 0 && lblLc.indexOf("nightmare") < 0) return "mare";
     var rid = String(data.restaurantId || "");
     var code = String((row && row.service_code) || data.restaurantCode || data.serviceCode || "");
     var codeLc = code.trim().toLowerCase();
     if (rid === "laTerrace" || codeLc === "la_terrace" || codeLc === "laterrace" || codeLc === "la-terrace") {
       return "laTerrace";
     }
-    if (rid === "mare" || codeLc === "mare") return "mare";
     if (rid === "sinton" || codeLc === "sinton_bbq" || codeLc === "sinton-bbq" || codeLc === "sintonbbq") {
       return "sinton";
     }
@@ -1023,7 +1070,6 @@
     if (t === "reservation_alacarte") {
       var vk = reservationVenueKeyFromRow(row);
       if (vk === "laTerrace") return "La Terrace A La Carte";
-      if (vk === "mare") return "Mare Restaurant";
       if (vk === "sinton") return "Sinton BBQ Restaurant";
     }
     return pdfLatinize(reservationTypeLabel(row) || "-");
@@ -1033,7 +1079,6 @@
     var map = {
       all: "Tum-Mekanlar",
       laTerrace: "La-Terrace-A-La-Carte",
-      mare: "Mare-Restaurant",
       sinton: "Sinton-BBQ-Restaurant",
       spa: "Spa",
     };
@@ -1223,7 +1268,7 @@
     doc.save(pdfReportFilenamePart(ovFilterKey) + "_" + iso + ".pdf");
   }
 
-  var RESERVATION_VENUE_KEYS = ["laTerrace", "mare", "sinton", "spa"];
+  var RESERVATION_VENUE_KEYS = ["laTerrace", "sinton", "spa"];
 
   function reservationIsVenueKey(k) {
     return RESERVATION_VENUE_KEYS.indexOf(String(k || "")) >= 0;
@@ -1485,7 +1530,7 @@
       '" step="1" value="1" required /></label>' +
       '<label class="reservation-manual-note-label">Özel not <input name="note" type="text" placeholder="İsteğe bağlı" autocomplete="off" /></label>' +
       "</div>" +
-      '<p class="reservation-manual-help">Dolu saatler listede yok. Oda alanı yalnızca rakam.</p>' +
+      '<p class="reservation-manual-help">Dolu saatler listede yok. Oda: otelin geçerli oda numarası (ör. 1205).</p>' +
       '<button type="submit" class="btn-small">Manuel rezervasyon ekle</button>' +
       '<p class="reservation-manual-status"></p>' +
       "</form>"
@@ -1555,7 +1600,6 @@
         "</div>" +
         '<div class="reservation-venue-summary-grid">' +
         venueCardInner("laTerrace", "La Terrace A La Carte") +
-        venueCardInner("mare", "Mare Restaurant") +
         venueCardInner("sinton", "Sinton BBQ Restaurant") +
         venueCardInner("spa", "Spa") +
         "</div>" +
@@ -1566,7 +1610,6 @@
         '<div class="reservation-overview-filters" role="group" aria-label="Mekân filtresi">' +
         '<button type="button" class="reservation-filter-chip is-active" data-filter="all">Tümü</button>' +
         '<button type="button" class="reservation-filter-chip" data-filter="laTerrace">La Terrace</button>' +
-        '<button type="button" class="reservation-filter-chip" data-filter="mare">Mare</button>' +
         '<button type="button" class="reservation-filter-chip" data-filter="sinton">Sinton</button>' +
         '<button type="button" class="reservation-filter-chip" data-filter="spa">Spa</button>' +
         "</div>" +
@@ -1776,11 +1819,9 @@
     var venueTitle =
       activeTab === "laTerrace"
         ? "La Terrace A La Carte"
-        : activeTab === "mare"
-          ? "Mare Restaurant"
-          : activeTab === "sinton"
-            ? "Sinton BBQ Restaurant"
-            : "Spa";
+        : activeTab === "sinton"
+          ? "Sinton BBQ Restaurant"
+          : "Spa";
 
     var isoVenueDefault = reservationDefaultViewDate(rows, activeTab);
     var vcHero = reservationVenueCountsForDate(isoVenueDefault, activeTab, rows);
@@ -2116,8 +2157,12 @@
           }
           return;
         }
-        if (!/^\d+$/.test(room)) {
-          if (statusEl) statusEl.textContent = "Oda numarası yalnızca rakam olmalıdır (örn. 1205).";
+        var roomValid =
+          typeof isValidVionaHotelRoomNumber === "function"
+            ? isValidVionaHotelRoomNumber(room)
+            : /^\d+$/.test(room);
+        if (!roomValid) {
+          if (statusEl) statusEl.textContent = "Lütfen geçerli bir oda numarası girin.";
           return;
         }
         var payload;
@@ -2140,11 +2185,10 @@
               guestCount: guestCount,
             },
           };
-        } else if (activeTab === "laTerrace" || activeTab === "mare" || activeTab === "sinton") {
-          var alCodeMap = { laTerrace: "la_terrace", mare: "mare", sinton: "sinton_bbq" };
+        } else if (activeTab === "laTerrace" || activeTab === "sinton") {
+          var alCodeMap = { laTerrace: "la_terrace", sinton: "sinton_bbq" };
           var alLabelMap = {
             laTerrace: "La Terrace A La Carte",
-            mare: "Mare Restaurant",
             sinton: "Sinton BBQ Restaurant",
           };
           payload = {
@@ -2217,6 +2261,9 @@
   function bucketTopStatsTotal(pagination, rows) {
     return pagination && pagination.total != null ? pagination.total : rows.length;
   }
+  /** Dört kutulu özet: ilk kutu sunucu toplamı; diğer üçü yalnızca geçerli sayfa satırları. */
+  var BUCKET_QUAD_STATS_TITLE_WHEN_PAGED =
+    ' title="Toplam: tüm kayıtlar (sunucu). Beklemede ve diğer durum özetleri yalnızca bu sayfadaki satırlara göredir."';
   function attachAdminPager(mountEl, pagination, rows, onPage) {
     if (!pagination || typeof onPage !== "function") return;
     var p = pagination;
@@ -2262,7 +2309,7 @@
     var pag = handlers && handlers.pagination;
     var totalCount = bucketTopStatsTotal(pag, rows);
     var topstatsTitle = pag
-      ? ' title="Özet sayıları yalnızca bu sayfadaki satırlara göredir."'
+      ? BUCKET_QUAD_STATS_TITLE_WHEN_PAGED
       : "";
     var open = rows.filter(function (r) {
       var s = normalizeBucketStatus(r.status);
@@ -2467,7 +2514,7 @@
     var pag = handlers && handlers.pagination;
     var totalCount = bucketTopStatsTotal(pag, rows);
     var topstatsTitle = pag
-      ? ' title="Özet sayıları yalnızca bu sayfadaki satırlara göredir."'
+      ? BUCKET_QUAD_STATS_TITLE_WHEN_PAGED
       : "";
     var open = rows.filter(function (r) {
       var s = normalizeBucketStatus(r.status);
@@ -2657,12 +2704,212 @@
     applyFilters();
   }
 
+  function renderGuestNotificationsPanel(mountEl, rows, handlers) {
+    if (!Array.isArray(rows)) rows = [];
+    var pag = handlers && handlers.pagination;
+    var totalCount = bucketTopStatsTotal(pag, rows);
+    var topstatsTitle = pag
+      ? BUCKET_QUAD_STATS_TITLE_WHEN_PAGED
+      : "";
+    var open = rows.filter(function (r) {
+      var s = normalizeBucketStatus(r.status);
+      return s === "new" || s === "pending" || s === "in_progress";
+    }).length;
+    var done = rows.filter(function (r) {
+      return normalizeBucketStatus(r.status) === "done";
+    }).length;
+    var rejected = rows.filter(function (r) {
+      return normalizeBucketStatus(r.status) === "rejected";
+    }).length;
+
+    var html =
+      '<div class="bucket-shell bucket-shell--complaints">' +
+      '<div class="bucket-topstats bucket-topstats--quad"' +
+      topstatsTitle +
+      ">" +
+      '<div class="bucket-stat"><span>Toplam</span><strong>' + esc(totalCount) + "</strong></div>" +
+      '<div class="bucket-stat"><span>Beklemede</span><strong>' + esc(open) + "</strong></div>" +
+      '<div class="bucket-stat"><span>Dikkate alındı</span><strong>' + esc(done) + "</strong></div>" +
+      '<div class="bucket-stat"><span>Dikkate alınmadı</span><strong>' + esc(rejected) + "</strong></div>" +
+      "</div>" +
+      '<p class="bucket-help bucket-help--complaints">' +
+      "Beslenme, sağlık ve kutlama bildirimleri; personel notu yerel olarak tarayıcıda saklanır.</p>" +
+      '<div class="bucket-toolbar bucket-toolbar--complaints">' +
+      '<label class="bucket-filter-date-label">Kayıt tarihi' +
+      '<div class="reservation-date-combo bucket-toolbar-date-combo">' +
+      '<input type="date" class="bucket-filter-date-native" />' +
+      '<span class="reservation-date-combo__display">Tümü</span>' +
+      '<button type="button" class="btn-small bucket-filter-date-clear" title="Tüm tarihler">Temizle</button>' +
+      "</div></label>" +
+      '<input class="bucket-search" type="search" placeholder="Oda, misafir, konu, açıklama veya not ara..." />' +
+      '<select class="bucket-filter-status">' +
+      '<option value="all">Tüm Durumlar</option>' +
+      '<option value="new_pending">Beklemede</option>' +
+      '<option value="done">Dikkate alındı</option>' +
+      '<option value="rejected">Dikkate alınmadı</option>' +
+      "</select>" +
+      "</div>" +
+      '<div class="bucket-table-wrap">' +
+      '<table class="admin-table admin-table--complaints">' +
+      "<thead><tr>" +
+      "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Bildirim konusu</th><th>Açıklama</th><th>Personel notu</th><th>Durum</th><th>İşlemler</th>" +
+      "</tr></thead><tbody>";
+
+    if (!rows.length) {
+      html += '<tr><td colspan="9" class="admin-table__empty">Henüz misafir bildirimi yok.</td></tr>';
+    } else {
+      rows.forEach(function (r) {
+        var st = normalizeBucketStatus(r.status);
+        var catLabel = categoryText("guest_notification", r.categories, r.category);
+        var descFull = complaintFormDescription(r);
+        var staffNote = getGuestNotifStaffNote(r.id);
+        var rowSearchText = [
+          String(r.room_number || ""),
+          String(r.guest_name || ""),
+          String(r.nationality || ""),
+          catLabel,
+          descFull,
+          staffNote,
+        ]
+          .join(" ")
+          .toLowerCase();
+        html +=
+          '<tr class="bucket-row guest-notif-row" data-id="' +
+          esc(r.id) +
+          '" data-status="' +
+          esc(st) +
+          '" data-search="' +
+          esc(rowSearchText) +
+          '" data-cal-date="' +
+          esc(submittedAtCalendarIso(r.submitted_at)) +
+          '">';
+        html += "<td>" + esc(formatSubmittedAtTr(r.submitted_at)) + "</td>";
+        html += "<td>" + esc(r.room_number || "-") + "</td>";
+        html += "<td>" + esc(r.guest_name || "-") + "</td>";
+        html += "<td>" + esc(r.nationality || "-") + "</td>";
+        html += '<td><span class="cat-badge cat-badge--complaint">' + esc(catLabel) + "</span></td>";
+        html += '<td class="complaint-cell-desc">' + esc(descFull) + "</td>";
+        html +=
+          '<td class="request-cell-staff"><textarea class="request-staff-note js-gn-staff-note" rows="2" data-id="' +
+          esc(r.id) +
+          '" placeholder="İç not">' +
+          esc(staffNote) +
+          "</textarea></td>";
+        html +=
+          '<td><span class="status-badge status-' +
+          esc(st) +
+          '">' +
+          esc(issueStatusLabel("guest_notification", st)) +
+          "</span></td>";
+        html += '<td><div class="row-actions">';
+        html += issueRowActionsHtml("guest_notification", r.id, st);
+        html += "</div></td>";
+        html += "</tr>";
+      });
+    }
+
+    html += "</tbody></table></div></div>";
+    mountEl.innerHTML = html;
+    if (handlers && handlers.pagination && handlers.onPage) {
+      attachAdminPager(mountEl, handlers.pagination, rows, handlers.onPage);
+    }
+
+    var search = mountEl.querySelector(".bucket-search");
+    var statusFilter = mountEl.querySelector(".bucket-filter-status");
+    var dateNat = mountEl.querySelector(".bucket-filter-date-native");
+    var dateDisp = mountEl.querySelector(".bucket-toolbar-date-combo .reservation-date-combo__display");
+    var dateClear = mountEl.querySelector(".bucket-filter-date-clear");
+
+    function applyFilters() {
+      var q = String((search && search.value) || "").trim().toLowerCase();
+      var st = String((statusFilter && statusFilter.value) || "all");
+      var dateIso = String((dateNat && dateNat.value) || "").slice(0, 10);
+      mountEl.querySelectorAll(".guest-notif-row").forEach(function (row) {
+        var okStatus = rowMatchesStatusFilter(row.getAttribute("data-status"), st);
+        var okSearch = !q || String(row.getAttribute("data-search") || "").indexOf(q) >= 0;
+        var cal = row.getAttribute("data-cal-date") || "";
+        var okDate = !dateIso || dateIso.length !== 10 || cal === dateIso;
+        row.classList.toggle("hidden", !(okStatus && okSearch && okDate));
+      });
+    }
+
+    function refreshGnRowSearch(ta) {
+      var tr = ta && ta.closest ? ta.closest("tr") : null;
+      if (!tr) return;
+      var id = String(ta.getAttribute("data-id") || "");
+      var row = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (String(rows[i].id) === id) {
+          row = rows[i];
+          break;
+        }
+      }
+      if (!row) return;
+      var catLabel = categoryText("guest_notification", row.categories, row.category);
+      var descFull = complaintFormDescription(row);
+      var staffNote = String(ta.value || "");
+      var rowSearchText = [
+        String(row.room_number || ""),
+        String(row.guest_name || ""),
+        String(row.nationality || ""),
+        catLabel,
+        descFull,
+        staffNote,
+      ]
+        .join(" ")
+        .toLowerCase();
+      tr.setAttribute("data-search", rowSearchText);
+    }
+
+    mountEl.querySelectorAll(".js-gn-staff-note").forEach(function (ta) {
+      ta.addEventListener("blur", function () {
+        var id = String(ta.getAttribute("data-id") || "");
+        setGuestNotifStaffNote(id, ta.value);
+        refreshGnRowSearch(ta);
+        applyFilters();
+      });
+    });
+
+    mountEl.querySelectorAll(".js-status").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        handlers.onStatus(btn.getAttribute("data-type"), btn.getAttribute("data-id"), btn.getAttribute("data-status"));
+      });
+    });
+    mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+      });
+    });
+
+    if (search) search.addEventListener("input", applyFilters);
+    if (statusFilter) statusFilter.addEventListener("change", applyFilters);
+    if (dateNat) {
+      dateNat.addEventListener("change", function () {
+        syncBucketFilterDateDisplay(dateNat, dateDisp);
+        applyFilters();
+      });
+      dateNat.addEventListener("input", function () {
+        syncBucketFilterDateDisplay(dateNat, dateDisp);
+        applyFilters();
+      });
+    }
+    if (dateClear) {
+      dateClear.addEventListener("click", function () {
+        if (dateNat) dateNat.value = "";
+        syncBucketFilterDateDisplay(dateNat, dateDisp);
+        applyFilters();
+      });
+    }
+
+    applyFilters();
+  }
+
   function renderFaultsPanel(mountEl, rows, handlers) {
     if (!Array.isArray(rows)) rows = [];
     var pag = handlers && handlers.pagination;
     var totalCount = bucketTopStatsTotal(pag, rows);
     var topstatsTitle = pag
-      ? ' title="Özet sayıları yalnızca bu sayfadaki satırlara göredir."'
+      ? BUCKET_QUAD_STATS_TITLE_WHEN_PAGED
       : "";
     var open = rows.filter(function (r) {
       var s = normalizeBucketStatus(r.status);
@@ -3108,6 +3355,10 @@
         renderComplaintsPanel(mountEl, rows || [], handlers);
         return;
       }
+      if (type === "guest_notification") {
+        renderGuestNotificationsPanel(mountEl, rows || [], handlers);
+        return;
+      }
       if (type === "fault") {
         renderFaultsPanel(mountEl, rows || [], handlers);
         return;
@@ -3124,7 +3375,7 @@
       }
       var totalCount = bucketTopStatsTotal(pagGeneric, rows);
       var topstatsTitleGen = pagGeneric
-        ? ' title="Özet sayıları yalnızca bu sayfadaki satırlara göredir."'
+        ? BUCKET_QUAD_STATS_TITLE_WHEN_PAGED
         : "";
       var open = rows.filter(function (r) {
         var s = normalizeBucketStatus(r.status);
@@ -3136,8 +3387,10 @@
       var rejected = rows.filter(function (r) {
         return normalizeBucketStatus(r.status) === "rejected";
       }).length;
-      var negLabel = type === "complaint" ? "Dikkate alınmadı" : "Yapılamadı";
-      var posLabel = type === "complaint" ? "Dikkate alındı" : "Yapıldı";
+      var negLabel =
+        type === "complaint" || type === "guest_notification" ? "Dikkate alınmadı" : "Yapılamadı";
+      var posLabel =
+        type === "complaint" || type === "guest_notification" ? "Dikkate alındı" : "Yapıldı";
       var html =
         '<div class="bucket-shell">' +
         '<div class="bucket-topstats bucket-topstats--quad"' +

@@ -90,8 +90,9 @@ def test_special_need_cases():
     orch, _, _ = build_orchestrator()
     for msg in ["veganım", "çölyağım", "gluten yiyemem", "süt dokunuyor", "alerjim var"]:
         res = orch.handle(ChatRequest(message=msg, ui_language="tr", locale="tr"))
-        assert res.meta.intent == "special_need"
+        assert res.meta.intent == "guest_notification"
         assert res.type == "inform"
+        assert res.meta.action and res.meta.action.kind == "chat_form"
 
 
 def test_special_need_multilang_examples():
@@ -108,8 +109,9 @@ def test_special_need_multilang_examples():
     ]
     for msg, loc in examples:
         res = orch.handle(ChatRequest(message=msg, ui_language=loc, locale=loc))
-        assert res.meta.intent == "special_need"
+        assert res.meta.intent == "guest_notification"
         assert res.meta.language == loc
+        assert res.meta.action and res.meta.action.kind == "chat_form"
 
 
 def test_request_and_complaint_cases():
@@ -487,7 +489,7 @@ def test_where_is_lobby_does_not_fallback():
 def test_zoliakie_is_special_need():
     orch, _, _ = build_orchestrator()
     res = orch.handle(ChatRequest(message="Ich habe Zöliakie", ui_language="de", locale="de"))
-    assert res.meta.intent == "special_need"
+    assert res.meta.intent == "guest_notification"
 
 
 def test_russian_towel_request():
@@ -544,9 +546,9 @@ def test_special_need_gluten_tr_even_when_ui_locale_is_english():
             locale="en",
         )
     )
-    assert res.meta.intent == "special_need"
+    assert res.meta.intent == "guest_notification"
     assert res.meta.language == "en"
-    assert "Guest Relations" in res.message
+    assert "category" in res.message.lower() or "Beslenme" in res.message or "Diet" in res.message
 
     res2 = orch.handle(
         ChatRequest(
@@ -555,16 +557,16 @@ def test_special_need_gluten_tr_even_when_ui_locale_is_english():
             locale="en",
         )
     )
-    assert res2.meta.intent == "special_need"
+    assert res2.meta.intent == "guest_notification"
     assert res2.meta.language == "en"
-    assert "Guest Relations" in res2.message
+    assert "category" in res2.message.lower() or "Beslenme" in res2.message
 
 
 def test_single_token_special_need_labels_in_tr():
     orch, _, _ = build_orchestrator()
     for msg in ["alerjen", "hassasiyet", "gluten"]:
         res = orch.handle(ChatRequest(message=msg, ui_language="tr", locale="tr"))
-        assert res.meta.intent == "special_need"
+        assert res.meta.intent == "guest_notification"
         assert res.meta.language == "tr"
 
 
@@ -621,7 +623,7 @@ def test_fault_internet_and_minibar_variants():
 def test_gluten_typo_guluten_maps_to_special_need():
     orch, _, intent = build_orchestrator()
     res = orch.handle(ChatRequest(message="guluten yiyemem", ui_language="tr", locale="tr"))
-    assert res.meta.intent == "special_need"
+    assert res.meta.intent == "guest_notification"
     assert res.type == "inform"
     assert intent.calls == 0
 
@@ -682,9 +684,9 @@ def test_operational_phrase_not_misrouted_as_recommendation():
 def test_allergy_phrase_not_misrouted_as_food_recommendation():
     orch, _, intent = build_orchestrator()
     res = orch.handle(ChatRequest(message="gluten alerjim var", ui_language="tr", locale="tr"))
-    assert res.meta.intent == "special_need"
+    assert res.meta.intent == "guest_notification"
     assert res.type == "inform"
-    assert "Misafir İlişkileri" in res.message or "Guest Relations" in res.message
+    assert "kategori" in res.message.lower() or "Beslenme" in res.message
     assert "Mare" not in res.message
     assert intent.calls == 0
 
@@ -749,16 +751,16 @@ def test_outside_hotel_tired_and_seafood_dislike_cases():
 def test_stomach_sensitive_routes_to_special_need():
     orch, _, intent = build_orchestrator()
     res = orch.handle(ChatRequest(message="midem hassas ne yemeliyim", ui_language="tr", locale="tr"))
-    assert res.meta.intent == "special_need"
-    assert ("Misafir İlişkileri" in res.message) or ("Guest Relations" in res.message)
+    assert res.meta.intent == "guest_notification"
+    assert "kategori" in res.message.lower() or "Beslenme" in res.message
     assert intent.calls == 0
 
 
 def test_gluten_plus_pizza_prioritizes_special_need_safety():
     orch, _, intent = build_orchestrator()
     res = orch.handle(ChatRequest(message="gluten hassasiyetim var ama pizza yemek istiyorum", ui_language="tr", locale="tr"))
-    assert res.meta.intent == "special_need"
-    assert "Misafir İlişkileri" in res.message or "Guest Relations" in res.message
+    assert res.meta.intent == "guest_notification"
+    assert "kategori" in res.message.lower() or "Beslenme" in res.message
     assert res.meta.multi_intent is True
     assert "Dolphin Snack" not in res.message
     assert intent.calls == 0

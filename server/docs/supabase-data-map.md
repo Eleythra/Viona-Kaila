@@ -9,6 +9,7 @@ Bu proje **tek bir Supabase projesi** (`SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_K
 | `guest_requests` | Misafir talepleri (havlu, minibar vb.) | `POST /api/guest-requests` | Admin İstekler |
 | `guest_complaints` | Şikâyet kayıtları | aynı endpoint, `type=complaint` | Admin Şikâyetler |
 | `guest_faults` | Oda/tesis arızası | aynı endpoint, `type=fault` | Admin Arızalar |
+| `guest_notifications` | Beslenme / sağlık / kutlama bildirimleri | aynı endpoint, `type=guest_notification` | Admin Misafir bildirimleri |
 | `guest_reservations` | Restoran / spa rezervasyon talepleri | aynı endpoint, rezervasyon tipleri | Admin Rezervasyonlar |
 | `survey_submissions` | Anket (otel + Viona puanları, JSON cevaplar) | `POST /api/surveys` | Admin Değerlendirmeler, dashboard raporu |
 | `chat_observations` | Sohbet mesajı + asistan yanıtı özeti (analitik) | `POST /api/chat` (Node veya serverless proxy) | Admin Loglar, dashboard |
@@ -26,9 +27,10 @@ Tek API: **`POST /api/guest-requests`**. Gövdedeki `type` alanı hedef tabloyu 
 - `request` → `guest_requests`
 - `complaint` → `guest_complaints`
 - `fault` → `guest_faults`
+- `guest_notification` → `guest_notifications`
 - `reservation_alacarte` / `reservation_spa` → `guest_reservations`
 
-Admin tarafta “bucket” isimleri API ile hizalıdır: `request`, `complaint`, `fault`, `reservation` → yukarıdaki tablolar.
+Admin tarafta “bucket” isimleri API ile hizalıdır: `request`, `complaint`, `fault`, `guest_notification`, `reservation` → yukarıdaki tablolar.
 
 ---
 

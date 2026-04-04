@@ -56,39 +56,6 @@
 
   window.REQUESTS_CONFIG = {
     floorCalendarDate: "2026-03-01",
-    /** Misafir bildirimleri — hub alt sekmesi (gruplu radyo kategorileri). */
-    guestNotificationGroups: [
-      {
-        sectionKey: "reqNotifGroupDiet",
-        items: [
-          { id: "allergen_notice", key: "reqNotifCatAllergen" },
-          { id: "gluten_sensitivity", key: "reqNotifCatGluten" },
-          { id: "lactose_sensitivity", key: "reqNotifCatLactose" },
-          { id: "vegan_vegetarian", key: "reqNotifCatVeganVeg" },
-          { id: "food_sensitivity_general", key: "reqNotifCatFoodGeneral" },
-        ],
-      },
-      {
-        sectionKey: "reqNotifGroupHealth",
-        items: [
-          { id: "chronic_condition", key: "reqNotifCatChronic" },
-          { id: "accessibility_special_needs", key: "reqNotifCatAccessibility" },
-          { id: "pregnancy", key: "reqNotifCatPregnancy" },
-          { id: "medication_health_sensitivity", key: "reqNotifCatMedication" },
-          { id: "other_health", key: "reqNotifCatOtherHealth" },
-        ],
-      },
-      {
-        sectionKey: "reqNotifGroupCelebration",
-        items: [
-          { id: "birthday_celebration", key: "reqNotifCatBirthday" },
-          { id: "honeymoon_anniversary", key: "reqNotifCatHoneymoon" },
-          { id: "surprise_organization", key: "reqNotifCatSurprise" },
-          { id: "room_decoration", key: "reqNotifCatRoomDecor" },
-          { id: "other_celebration", key: "reqNotifCatOtherCelebration" },
-        ],
-      },
-    ],
     categories: {
       request: [
         { id: "towel", key: "reqCatReqTowel" },
@@ -131,6 +98,14 @@
         key: "reqRestLaTerrace",
         slotProfile: "laTerrace",
         infoKey: "reqResInfoLaTerrace",
+        closedWeekdays: [],
+      },
+      {
+        id: "mare",
+        code: "mare",
+        key: "reqRestMare",
+        slotProfile: "mare",
+        infoKey: "reqResInfoMare",
         closedWeekdays: [],
       },
       {
@@ -179,10 +154,12 @@
     switch (r.slotProfile) {
       case "laTerrace":
         return cfg.laTerraceSlots.slice();
+      case "mare":
+        return cfg.mareSlots.slice();
       case "sinton":
         return cfg.sintonSlots.slice();
       default:
-        return [];
+        return cfg.mareSlots.slice();
     }
   };
 

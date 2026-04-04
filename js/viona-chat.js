@@ -8,12 +8,14 @@
   /** Session reply language for API (mirrors last assistant meta.language); separate from site UI. */
   var CONV_LANG_KEY = "viona_chat_conversation_lang";
   var USER_ID_KEY = "viona_chat_user_id";
+  var SESSION_ID_KEY = "viona_chat_session_id";
   var MAX_INPUT = 2000;
   var MAX_MESSAGES = 80;
 
   var state = {
     messages: [],
     pending: false,
+    exitTimer: null,
   };
 
   var els = {};
@@ -63,6 +65,29 @@
     } catch (e) {
       return _generateUserId();
     }
+  }
+
+  function _generateSessionId() {
+    var rnd = Math.random().toString(36).slice(2, 10);
+    return "viona_s_" + Date.now().toString(36) + "_" + rnd;
+  }
+
+  function getOrCreateSessionId() {
+    try {
+      var existing = sessionStorage.getItem(SESSION_ID_KEY);
+      if (existing && /^viona_s_[a-z0-9_]+$/i.test(existing)) return existing;
+      var created = _generateSessionId();
+      sessionStorage.setItem(SESSION_ID_KEY, created);
+      return created;
+    } catch (e) {
+      return _generateSessionId();
+    }
+  }
+
+  function resetSessionId() {
+    try {
+      sessionStorage.removeItem(SESSION_ID_KEY);
+    } catch (e) {}
   }
 
   function t(key) {
@@ -127,6 +152,46 @@
       bubble.className = "viona-chat__bubble";
       bubble.innerHTML = escapeHtml(m.content).replace(/\n/g, "<br />");
       row.appendChild(bubble);
+      if (m.role === "assistant" && m.options && Array.isArray(m.options) && m.options.length) {
+        var optWrap = document.createElement("div");
+        optWrap.className = "viona-chat__options";
+        m.options.forEach(function (opt) {
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "viona-chat__option-btn";
+          if (opt.value === "__open_reservation_form__") {
+            btn.classList.add("viona-chat__option-btn--reservation");
+            var ico = document.createElement("span");
+            ico.className = "viona-chat__option-btn-res-ico";
+            ico.setAttribute("aria-hidden", "true");
+            ico.innerHTML =
+              '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/><rect x="3" y="6" width="18" height="16" rx="2.5" stroke="currentColor" stroke-width="1.75"/><path d="M3 11h18M8 15h.02M12 15h.02M16 15h.02M8 19h.02M12 19h.02" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>';
+            var lab = document.createElement("span");
+            lab.className = "viona-chat__option-btn-res-label";
+            lab.textContent = opt.label;
+            btn.appendChild(ico);
+            btn.appendChild(lab);
+          } else {
+            btn.textContent = opt.label;
+          }
+          btn.addEventListener("click", function () {
+            if (state.pending) return;
+            if (typeof window.vionaVoiceIsBusy === "function" && window.vionaVoiceIsBusy()) return;
+            // Rezervasyon modülünü açan özel seçenek
+            if (opt.value === "__open_reservation_form__") {
+              if (typeof window.vionaChatOpenReservations === "function") {
+                window.vionaChatOpenReservations();
+              }
+              return;
+            }
+            if (!els.input || !els.send) return;
+            els.input.value = String(opt.value || "").trim();
+            els.send.click();
+          });
+          optWrap.appendChild(btn);
+        });
+        row.appendChild(optWrap);
+      }
       if (m.error) {
         row.classList.add("viona-chat__msg--error");
         var err = document.createElement("div");
@@ -174,9 +239,15 @@
       els.send.setAttribute("aria-busy", "true");
     }
 
+    var exitAfterRetry = null;
     askViona(lastUserText, getLang())
       .then(function (result) {
-        state.messages.push({ role: "assistant", content: result.reply });
+        exitAfterRetry = result.exitChatAfterMs;
+        state.messages.push({
+          role: "assistant",
+          content: result.reply,
+          options: result.options || null,
+        });
         trimHistory();
       })
       .catch(function () {
@@ -199,7 +270,11 @@
           els.send.disabled = false;
           els.send.removeAttribute("aria-busy");
         }
-        if (els.input) els.input.focus();
+        if (exitAfterRetry) {
+          scheduleExitToHomeAfterMs(exitAfterRetry);
+        } else if (els.input) {
+          els.input.focus();
+        }
       });
   }
 
@@ -229,6 +304,26 @@
     return t("chatError");
   }
 
+  function clearExitToHomeTimer() {
+    if (state.exitTimer) {
+      clearTimeout(state.exitTimer);
+      state.exitTimer = null;
+    }
+  }
+
+  /** Sunucu meta.exit_chat_after_ms (web kayıt onayı): kısa gecikmeyle ana arayüze dön. */
+  function scheduleExitToHomeAfterMs(ms) {
+    clearExitToHomeTimer();
+    var n = Number(ms);
+    if (!Number.isFinite(n) || n < 500 || n > 120000) return;
+    state.exitTimer = setTimeout(function () {
+      state.exitTimer = null;
+      if (typeof window.vionaExitChatToHome === "function") {
+        window.vionaExitChatToHome();
+      }
+    }, Math.round(n));
+  }
+
   async function askViona(message, locale) {
     var cfg = window.VIONA_CHAT_CONFIG || {};
     var endpoint =
@@ -242,6 +337,7 @@
       ui_language: locale || "tr",
       user_id: getOrCreateUserId(),
     };
+    body.session_id = getOrCreateSessionId();
     if (conv) body.conversation_language = conv;
     var timeoutMs = Number(cfg.timeoutMs || 15000);
     if (!Number.isFinite(timeoutMs) || timeoutMs < 3000) timeoutMs = 15000;
@@ -285,7 +381,47 @@
     if (!response.ok && !reply.trim()) throw new Error("http_" + response.status);
     if (!reply.trim()) throw new Error("empty_reply");
     if (resolvedLocale) setConversationLangFromMeta(resolvedLocale);
-    return { reply: reply, locale: resolvedLocale };
+
+    var options = null;
+    var meta = data && data.meta ? data.meta : {};
+    var action = meta && meta.action ? meta.action : null;
+    if (action && action.kind === "open_reservation_form") {
+      // Tek buton: Rezervasyonlar modülünü aç.
+      options = [
+        {
+          value: "__open_reservation_form__",
+          label: t("chatOpenReservation") || "Rezervasyon formunu aç",
+        },
+      ];
+    } else if (action && action.kind === "chat_form" && action.step) {
+      // Numara + label satırlarını butonlara dönüştür.
+      var lines = reply.split(/\r?\n/);
+      var newLines = [];
+      var opts = [];
+      lines.forEach(function (line) {
+        var m = line.match(/^\s*(\d+)\.\s+(.*)$/);
+        if (m) {
+          opts.push({ value: m[1], label: m[2] });
+        } else {
+          newLines.push(line);
+        }
+      });
+      if (opts.length) {
+        reply = newLines.join("\n");
+        options = opts;
+      }
+    }
+
+    var exitChatAfterMs = null;
+    if (meta && typeof meta.exit_chat_after_ms === "number" && Number.isFinite(meta.exit_chat_after_ms)) {
+      exitChatAfterMs = meta.exit_chat_after_ms;
+    }
+    return {
+      reply: reply,
+      locale: resolvedLocale,
+      options: options,
+      exitChatAfterMs: exitChatAfterMs,
+    };
   }
 
   function sendPipeline(text) {
@@ -307,9 +443,15 @@
       els.send.setAttribute("aria-busy", "true");
     }
 
+    var exitAfterMs = null;
     askViona(clean, getLang())
       .then(function (result) {
-        state.messages.push({ role: "assistant", content: result.reply });
+        exitAfterMs = result.exitChatAfterMs;
+        state.messages.push({
+          role: "assistant",
+          content: result.reply,
+          options: result.options || null,
+        });
         trimHistory();
       })
       .catch(function () {
@@ -332,7 +474,11 @@
           els.send.disabled = false;
           els.send.removeAttribute("aria-busy");
         }
-        if (els.input) els.input.focus();
+        if (exitAfterMs) {
+          scheduleExitToHomeAfterMs(exitAfterMs);
+        } else if (els.input) {
+          els.input.focus();
+        }
       });
   }
 
@@ -361,9 +507,11 @@
   function clearChat() {
     if (typeof window.vionaVoiceIsBusy === "function" && window.vionaVoiceIsBusy()) return;
     if (!window.confirm(t("chatClearConfirm"))) return;
+    clearExitToHomeTimer();
     state.messages = [];
     state.pending = false;
     clearConversationLang();
+    resetSessionId();
     setTyping(false);
     renderMessages();
     if (els.input) {
@@ -435,6 +583,23 @@
     renderMessages();
   }
 
+  // Harici çağrı için: sohbeti kullanıcı onayı sormadan tamamen sıfırlar
+  window.vionaChatHardReset = function () {
+    clearExitToHomeTimer();
+    state.messages = [];
+    state.pending = false;
+    clearConversationLang();
+    resetSessionId();
+    setTyping(false);
+    renderMessages();
+    if (els.input) {
+      els.input.value = "";
+      els.input.disabled = false;
+      autosizeTextarea();
+    }
+    if (els.send) els.send.disabled = false;
+  };
+
   /** Sesli tur: metin sohbetiyle aynı API ve geçmiş; tek seferlik asistan yanıtı döner. */
   window.vionaChatRunAssistantTurn = async function (userText) {
     var clean = String(userText || "").replace(/\r/g, "").trim();
@@ -447,9 +612,16 @@
     setTyping(true);
     try {
       var result = await askViona(clean, getLang());
-      state.messages.push({ role: "assistant", content: result.reply });
+      state.messages.push({
+        role: "assistant",
+        content: result.reply,
+        options: result.options || null,
+      });
       trimHistory();
       renderMessages();
+      if (result.exitChatAfterMs) {
+        scheduleExitToHomeAfterMs(result.exitChatAfterMs);
+      }
       return result.reply;
     } catch (e) {
       state.messages.push({

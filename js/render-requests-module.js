@@ -1,5 +1,5 @@
 /**
- * İstek / şikayet / arıza / rezervasyon — hub + formlar (mock API, ileride endpoint’e bağlanabilir).
+ * İstek / şikayet / arıza / misafir bildirimleri / rezervasyon — hub + formlar.
  */
 (function () {
   "use strict";
@@ -17,10 +17,20 @@
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>',
     res:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg>',
+    guest_notification:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>',
   };
 
   function getCfg() {
-    return window.REQUESTS_CONFIG || { categories: {}, restaurants: [], spaServices: [], nationalities: [] };
+    return (
+      window.REQUESTS_CONFIG || {
+        categories: {},
+        guestNotificationGroups: [],
+        restaurants: [],
+        spaServices: [],
+        nationalities: [],
+      }
+    );
   }
 
   function nightsBetween(inIso, outIso) {
@@ -48,7 +58,11 @@
   }
 
   function isRoomNumber(v) {
-    return /^\d+$/.test(String(v || "").trim());
+    var s = String(v || "").trim();
+    if (typeof window !== "undefined" && typeof window.isValidVionaHotelRoomNumber === "function") {
+      return window.isValidVionaHotelRoomNumber(s);
+    }
+    return /^\d+$/.test(s);
   }
 
   function isNationalityText(v) {
@@ -517,10 +531,137 @@
     return details;
   }
 
+  /** HK talep formu: “istiyorum / talep / var mı” vb. + kategori anahtar kelimesi → form; yalnızca kelime → netleştirme. */
+  function hasRequestIntentPhrase(raw) {
+    var n = raw.toLocaleLowerCase("tr-TR");
+    var e = raw.toLowerCase();
+    var blob = n + " | " + e;
+    var phrases = [
+      "talep ediyorum",
+      "talep",
+      "istiyorum",
+      "isterim",
+      "rica ediyorum",
+      "ricam",
+      "rica ",
+      " rica",
+      "var mı",
+      "var mi",
+      "varmı",
+      "lazım",
+      "lazim",
+      "gerekli",
+      " gerek",
+      "ihtiyacım",
+      "ihtiyacim",
+      "yollar mısınız",
+      "yollar misiniz",
+      "gönderebilir",
+      "gonder",
+      "getirebilir",
+      "ekleyebilir",
+      "doldur",
+      "yenile",
+      "yenileme",
+      "sipariş",
+      "siparis",
+      "ederim",
+      "olur mu",
+      "olmaz mı",
+      "sağ ol",
+      "sag ol",
+      "please",
+      "would like",
+      " i need",
+      "need ",
+      "request",
+      "can i get",
+      "could you",
+      "нужно",
+      "надо",
+      "пожалуйста",
+      "можно ли",
+      "прошу",
+      "заказать",
+      "bitte schicken",
+      "bräuchte",
+      "brauchte",
+      "gäbe es",
+      "gabe es",
+    ];
+    for (var i = 0; i < phrases.length; i++) {
+      if (blob.indexOf(phrases[i]) >= 0) return true;
+    }
+    return false;
+  }
+
+  function detectRequestCategoryFromText(raw) {
+    var n = raw.toLocaleLowerCase("tr-TR") + " " + raw.toLowerCase();
+    if (/\bminibar\b|mini\s*bar|mini bar/.test(n)) return "minibar";
+    if (
+      /oda\s*temiz|room\s*clean|temizlik|havlu\s*değiş|havlu\s*degis|towel\s*change|genel\s*temiz|room\s*check|süpür|supur|kirli/.test(
+        n
+      )
+    ) {
+      return "room_cleaning";
+    }
+    if (/bebek|mama\s*sandalyesi|bebek\s*yatağı|bebek\s*yatagi|baby\s*bed|high\s*chair/.test(n)) {
+      return "baby_equipment";
+    }
+    if (/nevresim|yastık|yastik|battaniye|yatak\s*takımı|yatak\s*takimi|duvet|pillow|blanket|bedding/.test(n)) {
+      return "bedding";
+    }
+    if (/\bhavlu\b|havlular|banyo\s*havlusu|el\s*havlusu|towel/.test(n)) return "towel";
+    if (/bornoz|terlik|askı|aski|kettle|ütü|utu|oda\s*ekipman|bathrobe|slippers|hanger/.test(n)) {
+      return "room_equipment";
+    }
+    if (/diğer|diger|başka|baska|other\b/.test(n)) return "other";
+    return null;
+  }
+
   function buildRequestForm(t, onSuccessGoHome) {
+    var bundle = document.createElement("div");
+    bundle.className = "req-request-bundle";
+
+    var intentPanel = document.createElement("div");
+    intentPanel.className = "req-intent-panel";
+    var intentLead = document.createElement("p");
+    intentLead.className = "req-intro req-intent-lead";
+    intentLead.textContent = t("reqIntentLead");
+    var taIntent = document.createElement("textarea");
+    taIntent.className = "req-input req-textarea req-intent-text";
+    taIntent.rows = 3;
+    taIntent.setAttribute("aria-label", t("reqIntentLead"));
+    taIntent.placeholder = t("reqIntentPlaceholder");
+    var intentErr = document.createElement("p");
+    intentErr.className = "req-err req-intent-err";
+    intentErr.hidden = true;
+    var intentHint = document.createElement("p");
+    intentHint.className = "req-intent-hint";
+    intentHint.hidden = true;
+    var intentActions = document.createElement("div");
+    intentActions.className = "req-intent-actions";
+    var btnIntent = document.createElement("button");
+    btnIntent.type = "button";
+    btnIntent.className = "btn-primary";
+    btnIntent.textContent = t("reqIntentContinue");
+    var btnSkip = document.createElement("button");
+    btnSkip.type = "button";
+    btnSkip.className = "req-intent-skip";
+    btnSkip.textContent = t("reqIntentSkip");
+    intentActions.appendChild(btnIntent);
+    intentActions.appendChild(btnSkip);
+    intentPanel.appendChild(intentLead);
+    intentPanel.appendChild(taIntent);
+    intentPanel.appendChild(intentErr);
+    intentPanel.appendChild(intentHint);
+    intentPanel.appendChild(intentActions);
+    bundle.appendChild(intentPanel);
+
     var form = document.createElement("form");
     form.className = "req-form";
     form.noValidate = true;
+    form.hidden = true;
 
     var guestSection = resSection("reqResSectionGuest", t);
     guestSection.inner.appendChild(fieldText("name", "reqLabelName", t, true));
@@ -553,18 +694,77 @@
     submit.textContent = t("reqSubmit");
     form.appendChild(submit);
 
+    bundle.appendChild(form);
+
     var success = document.createElement("div");
     success.className = "req-success";
     success.hidden = true;
     success.innerHTML = '<h3 class="req-success__title"></h3><p class="req-success__body"></p>';
+
+    var intentState = { mode: "gate", pendingCategory: null };
 
     function selectedCategory() {
       var c = form.querySelector('input[name="category"]:checked');
       return c ? c.value : "";
     }
 
+    function unlockRequestForm(preselectCat) {
+      intentState.mode = "unlocked";
+      intentState.pendingCategory = null;
+      intentErr.hidden = true;
+      intentHint.hidden = true;
+      form.hidden = false;
+      intentPanel.classList.add("req-intent-panel--done");
+      taIntent.setAttribute("readonly", "readonly");
+      if (preselectCat) {
+        var radio = form.querySelector('input[name="category"][value="' + preselectCat + '"]');
+        if (radio) radio.checked = true;
+        renderRequestDetailsFields(dynamicFields, preselectCat, t);
+      } else {
+        renderRequestDetailsFields(dynamicFields, selectedCategory(), t);
+      }
+    }
+
     categoryField.chips.addEventListener("change", function () {
       renderRequestDetailsFields(dynamicFields, selectedCategory(), t);
+    });
+
+    btnSkip.addEventListener("click", function () {
+      intentErr.hidden = true;
+      intentHint.hidden = true;
+      unlockRequestForm(null);
+    });
+
+    btnIntent.addEventListener("click", function () {
+      intentErr.hidden = true;
+      intentHint.hidden = true;
+      var raw = String(taIntent.value || "").trim();
+      if (raw.length < 2) {
+        intentErr.textContent = t("reqIntentTooShort");
+        intentErr.hidden = false;
+        return;
+      }
+      var cat = detectRequestCategoryFromText(raw);
+      var hasPhrase = hasRequestIntentPhrase(raw);
+
+      if (cat && hasPhrase) {
+        unlockRequestForm(cat);
+        return;
+      }
+      if (cat && !hasPhrase) {
+        if (intentState.mode === "clarify" && intentState.pendingCategory === cat) {
+          unlockRequestForm(cat);
+          return;
+        }
+        intentState.mode = "clarify";
+        intentState.pendingCategory = cat;
+        intentHint.textContent = t("reqIntentClarify");
+        intentHint.hidden = false;
+        return;
+      }
+      intentHint.textContent = t("reqIntentNoKeyword");
+      intentHint.hidden = false;
+      unlockRequestForm(null);
     });
 
     form.addEventListener("submit", function (ev) {
@@ -580,15 +780,13 @@
       if (!validateGuestFields(form, err, t)) return;
 
       var details = collectRequestDetails(form, category);
-      if ((details.quantity != null && (!Number.isFinite(details.quantity) || details.quantity < 1))) {
+      if (details.quantity != null && (!Number.isFinite(details.quantity) || details.quantity < 1)) {
         err.textContent = t("reqErrQuantity");
         err.hidden = false;
         return;
       }
       var description = String((form.querySelector('[name="description"]') || {}).value || "").trim();
-      var needsDesc =
-        category === "other" ||
-        details.itemType === "other";
+      var needsDesc = category === "other" || details.itemType === "other";
       if (needsDesc && !description) {
         err.textContent = t("reqErrDescriptionRequiredForOther");
         err.hidden = false;
@@ -604,9 +802,9 @@
         description: description,
         categories: [category],
       };
-      runSubmit(payload, form, err, success, submit, t, { onSuccessGoHome: onSuccessGoHome });
+      runSubmit(payload, bundle, err, success, submit, t, { onSuccessGoHome: onSuccessGoHome });
     });
-    return { form: form, success: success };
+    return { form: bundle, success: success };
   }
 
   function buildComplaintForm(t, onSuccessGoHome) {
@@ -810,6 +1008,125 @@
         payload.otherCategoryNote = description;
       }
       runSubmit(payload, form, err, success, submit, t, { onSuccessGoHome: onSuccessGoHome });
+    });
+
+    return { form: form, success: success };
+  }
+
+  var GUEST_NOTIF_DESC_REQUIRED = {
+    food_sensitivity_general: true,
+    other_health: true,
+    other_celebration: true,
+  };
+
+  function buildGuestNotificationForm(t, onSuccessGoHome) {
+    var form = document.createElement("form");
+    form.className = "req-form";
+    form.noValidate = true;
+
+    var guestSection = resSection("reqResSectionGuest", t);
+    guestSection.inner.appendChild(fieldText("name", "reqLabelName", t, true));
+    guestSection.inner.appendChild(fieldText("room", "reqLabelRoom", t, true));
+    guestSection.inner.appendChild(fieldNationality(t));
+    form.appendChild(guestSection.section);
+
+    var detailSection = resSection("reqSectionGuestNotificationDetails", t);
+    var groups = (getCfg().guestNotificationGroups || []).slice();
+    var firstRadio = true;
+    groups.forEach(function (g) {
+      var groupWrap = document.createElement("div");
+      groupWrap.className = "req-notif-group";
+      var groupTitle = document.createElement("div");
+      groupTitle.className = "req-notif-group__title";
+      groupTitle.textContent = t(g.sectionKey);
+      var chips = document.createElement("div");
+      chips.className = "req-chips";
+      chips.setAttribute("role", "radiogroup");
+      chips.setAttribute("aria-label", t(g.sectionKey));
+      (g.items || []).forEach(function (c) {
+        var lab = document.createElement("label");
+        lab.className = "req-chip";
+        var radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "guestNotifCategory";
+        radio.value = c.id;
+        if (firstRadio) {
+          radio.required = true;
+          firstRadio = false;
+        }
+        var span = document.createElement("span");
+        span.className = "req-chip__text";
+        span.textContent = t(c.key);
+        lab.appendChild(radio);
+        lab.appendChild(span);
+        chips.appendChild(lab);
+      });
+      groupWrap.appendChild(groupTitle);
+      groupWrap.appendChild(chips);
+      detailSection.inner.appendChild(groupWrap);
+    });
+    form.appendChild(detailSection.section);
+
+    var noteSection = resSection("reqSectionExtraNote", t);
+    var noteField = fieldDesc(t, "gn", "description", false);
+    noteField.querySelector("label").textContent = t("reqLabelGuestNotificationNote");
+    var noteHint = document.createElement("p");
+    noteHint.className = "req-notif-note-hint";
+    noteHint.textContent = t("reqNotifNoteHint");
+    noteSection.inner.appendChild(noteHint);
+    noteSection.inner.appendChild(noteField);
+    form.appendChild(noteSection.section);
+
+    var err = document.createElement("p");
+    err.className = "req-err";
+    err.hidden = true;
+    form.appendChild(err);
+
+    var submit = document.createElement("button");
+    submit.type = "submit";
+    submit.className = "btn-primary req-submit";
+    submit.textContent = t("reqSubmit");
+    form.appendChild(submit);
+
+    var success = document.createElement("div");
+    success.className = "req-success";
+    success.hidden = true;
+    success.innerHTML = '<h3 class="req-success__title"></h3><p class="req-success__body"></p>';
+
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      err.hidden = true;
+      var catEl = form.querySelector('input[name="guestNotifCategory"]:checked');
+      var category = catEl ? catEl.value : "";
+      if (!category) {
+        err.textContent = t("reqErrGuestNotificationCategoryRequired");
+        err.hidden = false;
+        return;
+      }
+      if (!form.reportValidity()) return;
+      if (!validateGuestFields(form, err, t)) return;
+      var description = String((form.querySelector('[name="description"]') || {}).value || "").trim();
+      if (GUEST_NOTIF_DESC_REQUIRED[category] && !description) {
+        err.textContent = t("reqErrGuestNotificationDescriptionRequired");
+        err.hidden = false;
+        return;
+      }
+      var payload = {
+        type: "guest_notification",
+        name: (form.querySelector('[name="name"]') || {}).value,
+        room: (form.querySelector('[name="room"]') || {}).value,
+        nationality: (form.querySelector('[name="nationality"]') || {}).value,
+        category: category,
+        description: description,
+        categories: [category],
+      };
+      if (category === "other_health" || category === "other_celebration") {
+        payload.otherCategoryNote = description || null;
+      }
+      runSubmit(payload, form, err, success, submit, t, {
+        onSuccessGoHome: onSuccessGoHome,
+        successBodyKey: "reqSuccessBodyGuestNotification",
+      });
     });
 
     return { form: form, success: success };
@@ -1520,6 +1837,14 @@
       var bf = buildFaultForm(t, onSuccessGoHome);
       wrap.appendChild(bf.form);
       wrap.appendChild(bf.success);
+    } else if (subId === "guest_notification") {
+      var leadN = document.createElement("p");
+      leadN.className = "req-intro";
+      leadN.textContent = t("reqNotifIntro");
+      wrap.appendChild(leadN);
+      var bn = buildGuestNotificationForm(t, onSuccessGoHome);
+      wrap.appendChild(bn.form);
+      wrap.appendChild(bn.success);
     } else if (subId === "res") {
       wrap.appendChild(buildReservationBlock(t, minIso, minMonth, onSuccessGoHome));
     } else {

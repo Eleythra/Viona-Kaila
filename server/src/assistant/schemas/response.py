@@ -9,7 +9,12 @@ ResponseType = Literal["answer", "redirect", "inform", "fallback"]
 
 class ChatMeta(BaseModel):
     class ChatAction(BaseModel):
-        kind: Literal["create_guest_request", "suggest_venue"]
+        kind: Literal[
+            "create_guest_request",
+            "suggest_venue",
+            "chat_form",
+            "open_reservation_form",
+        ]
         target_department: Literal["reception", "guest_relations"] | None = None
         priority: Literal["low", "medium", "high"] | None = None
         sub_intent: str | None = None
@@ -17,6 +22,10 @@ class ChatMeta(BaseModel):
         issue_type: str | None = None
         venue_id: str | None = None
         policy_hint: str | None = None
+        # Chat form-specific fields (optional; ignored by existing consumers if absent).
+        operation: Literal["request", "fault", "complaint", "guest_notification"] | None = None
+        step: str | None = None
+        payload: dict | None = None
 
     intent: IntentName
     confidence: float
@@ -25,6 +34,8 @@ class ChatMeta(BaseModel):
     source: SourceName
     multi_intent: bool = False
     action: ChatAction | None = None
+    # Web sohbet: kayıt tamamlandıktan sonra istemci modalı kapatıp ana sayfaya döner (ms). WhatsApp vb. için None.
+    exit_chat_after_ms: int | None = None
 
 
 class ChatResponse(BaseModel):

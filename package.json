@@ -1,5 +1,12 @@
 {
   "dependencies": {
     "@google/genai": "^1.46.0"
+  },
+  "devDependencies": {
+    "canvas": "^3.2.3",
+    "qrcode": "^1.5.4"
+  },
+  "scripts": {
+    "qr:png": "node scripts/generate-site-qr-png.js"
   }
 }

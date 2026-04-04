@@ -2,7 +2,7 @@
 -- VIONA / KAILA — Supabase SQL Editor’a TEK SEFERDE yapıştırın
 -- Sıra: uzantı → chat_observations → CHECK’ler → indeksler → chat_logs backfill
 --       → özet view’lar → şikâyet/arıza kolonları → 8b kova status CHECK → guest_reservations revizyonu
---       → rezervasyon status (rejected = admin “Onaylanmadı”)
+--       → rezervasyon status (rejected = admin “Onaylanmadı”) → guest_notifications (misafir bildirimleri)
 --
 -- NOT: CHECK eklenirken "violates check constraint" alırsanız, aşağıdaki
 --      "OPSİYONEL: CHECK öncesi veri temizliği" bölümünü sırayla çalıştırın.
@@ -570,7 +570,57 @@ alter table if exists public.guest_reservations
 --     'new','pending','in_progress','done','cancelled','rejected'
 --   );
 
+-- -----------------------------------------------------------------------------
+-- 10) guest_notifications — misafir bildirimleri (beslenme / sağlık / kutlama)
+--     API: guest-requests `type=guest_notification` → bu tabloya insert; admin sekmesi.
+--     Ayrı dosya: server/docs/guest-notifications-table.sql (aynı şema; tek betikte burada).
+-- -----------------------------------------------------------------------------
+create table if not exists public.guest_notifications (
+  id uuid primary key default gen_random_uuid(),
+  guest_name text not null,
+  room_number text not null,
+  nationality text not null,
+  description text not null default '',
+  categories jsonb not null default '[]'::jsonb,
+  other_category_note text,
+  category text,
+  details jsonb not null default '{}'::jsonb,
+  source text not null default 'viona_web',
+  submitted_at timestamptz not null default now(),
+  status text not null default 'new',
+  raw_payload jsonb
+);
+
+create index if not exists idx_guest_notifications_submitted_at on public.guest_notifications (submitted_at desc);
+create index if not exists idx_guest_notifications_status on public.guest_notifications (status);
+create index if not exists idx_guest_notifications_category on public.guest_notifications (category);
+
+-- Status CHECK: 8b / guest_reservations ile aynı değerler; tekrar yapıştırınca drop+add ile güncellenir.
+alter table if exists public.guest_notifications drop constraint if exists guest_notifications_status_check;
+alter table if exists public.guest_notifications drop constraint if exists guest_notifications_status_chk;
+
+alter table if exists public.guest_notifications
+  add constraint guest_notifications_status_check
+  check (
+    lower(trim((status)::text)) in (
+      'new',
+      'pending',
+      'in_progress',
+      'done',
+      'cancelled',
+      'rejected'
+    )
+  );
+
+-- OPSİYONEL: "violates check constraint" (guest_notifications.status) — geçersiz değerleri önce düzeltin:
+-- update public.guest_notifications set status = 'new'
+-- where lower(trim((status)::text)) not in (
+--   'new','pending','in_progress','done','cancelled','rejected'
+-- );
+
+alter table if exists public.guest_notifications enable row level security;
+
 -- =============================================================================
 -- Bitti. chat_observations, view’lar; istek/şikâyet/arıza kolonları + 8b CHECK;
--- guest_reservations kolonları, backfill, status CHECK (rejected).
+-- guest_reservations kolonları, backfill, status CHECK (rejected); guest_notifications.
 -- =============================================================================

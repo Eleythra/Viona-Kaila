@@ -67,6 +67,13 @@ INTENT_METADATA: dict[str, IntentMetadata] = {
         "action_type": "triage",
         "allowed_response_modes": ("guided", "inform"),
     },
+    "guest_notification": {
+        "intent_id": "guest_notification",
+        "domain": "guest_relations",
+        "route_type": "reception_and_guest_relations",
+        "action_type": "guest_notification_form",
+        "allowed_response_modes": ("guided",),
+    },
     "fault_report": {
         "intent_id": "fault_report",
         "domain": "room_and_maintenance",

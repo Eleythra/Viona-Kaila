@@ -9,6 +9,7 @@ IntentName = Literal[
     "request",
     "reservation",
     "special_need",
+    "guest_notification",
     "hotel_info",
     "chitchat",
     "current_time",

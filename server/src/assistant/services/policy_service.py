@@ -10,6 +10,7 @@ PolicyName = Literal[
     "compose_request",
     "compose_reservation",
     "compose_special_need",
+    "compose_guest_notification",
     "compose_chitchat",
     "compose_current_time",
     "answer_hotel_info",
@@ -31,6 +32,8 @@ class PolicyService:
             return "compose_reservation"
         if intent == "special_need":
             return "compose_special_need"
+        if intent == "guest_notification":
+            return "compose_guest_notification"
         if intent == "chitchat":
             return "compose_chitchat"
         if intent == "current_time":

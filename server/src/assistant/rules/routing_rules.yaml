@@ -11,6 +11,19 @@ fault_report:
   - arizali
   - kırıldı
   - kirildi
+  - arızalandı
+  - arizalandi
+  - arıza var
+  - ariza var
+  - tıkandı
+  - tikandi
+  - tıkanıyor
+  - tikanıyor
+  - tikanıyor
+  - yandı
+  - yandi
+  - patladı
+  - patladi
   - klima çalışmıyor
   - klima bozuk
   - klima soğutmuyor
@@ -65,6 +78,7 @@ reservation:
   - geç çıkış
   - gec cikis
   - rezervasyon
+  - rezrvasyon
   - reservation
   - oda değiş
   - oda degis

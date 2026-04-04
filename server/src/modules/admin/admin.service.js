@@ -168,6 +168,7 @@ export async function listAdminBucket(type, query = {}) {
     request: { table: "guest_requests" },
     complaint: { table: "guest_complaints" },
     fault: { table: "guest_faults" },
+    guest_notification: { table: "guest_notifications" },
     reservation: { table: "guest_reservations" },
   };
   const cfg = map[type];
@@ -324,6 +325,7 @@ function tableForType(type) {
     request: "guest_requests",
     complaint: "guest_complaints",
     fault: "guest_faults",
+    guest_notification: "guest_notifications",
     reservation: "guest_reservations",
   };
   const t = map[String(type || "")];
@@ -372,10 +374,15 @@ function formatStatusUpdateFailureMessage(type, normalized, supabaseError) {
     .map((x) => String(x));
   const raw = parts.join(" ");
   if (/check constraint|23514|violates check constraint/i.test(raw)) {
-    const bucketHint =
-      type === "reservation"
-        ? " Rezervasyon: supabase-paste-viona.sql bölüm 9 sonunu (status CHECK) veya guest-reservations-status-rejected.sql çalıştırın; geçersiz status değerleri varsa betikteki OPSİYONEL UPDATE ile temizleyin."
-        : " İstek/şikâyet/arıza: supabase-paste-viona.sql bölüm 8b veya guest-buckets-status-rejected.sql çalıştırın.";
+    let bucketHint =
+      " İstek/şikâyet/arıza: supabase-paste-viona.sql bölüm 8b veya guest-buckets-status-rejected.sql çalıştırın.";
+    if (type === "reservation") {
+      bucketHint =
+        " Rezervasyon: supabase-paste-viona.sql bölüm 9 sonunu (status CHECK) veya guest-reservations-status-rejected.sql çalıştırın; geçersiz status değerleri varsa betikteki OPSİYONEL UPDATE ile temizleyin.";
+    } else if (type === "guest_notification") {
+      bucketHint =
+        " Misafir bildirimleri: server/docs/supabase-paste-viona.sql bölüm 10 (veya guest-notifications-table.sql); status CHECK güncel olmalı (rejected dahil).";
+    }
     return `Veritabanı bu durumu kabul etmiyor (CHECK kısıtı).${bucketHint} Teknik: ${raw || "bilinmiyor"}`;
   }
   return raw || supabaseError?.message || "status_update_failed";

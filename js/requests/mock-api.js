@@ -1,6 +1,6 @@
 /**
  * @typedef {Object} GuestRequestPayload
- * @property {'request'|'complaint'|'fault'|'reservation_alacarte'|'reservation_spa'} type
+ * @property {'request'|'complaint'|'fault'|'guest_notification'|'reservation_alacarte'|'reservation_spa'} type
  * @property {string} name
  * @property {string} room
  * @property {string} nationality
