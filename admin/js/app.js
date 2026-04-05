@@ -4,6 +4,9 @@
   var adapter = window.AdminDataAdapter;
   var ui = window.AdminUI;
   if (!adapter || !ui) return;
+  /** Aynı sayfada app.js iki kez çalışırsa (üretim CDN/şablon hatası) tüm dinleyiciler çoğalır; Loglar CSV/JSON ardı arkasına iner. */
+  if (window.__VIONA_ADMIN_APP_BOOTED) return;
+  window.__VIONA_ADMIN_APP_BOOTED = true;
   var LOGIN_OK_KEY = "viona_admin_login_ok";
   var LOGIN_USER_KEY = "viona_admin_login_user";
   /** Girişte zorunlu; büyük-küçük harf duyarlı tek değer */
@@ -20,6 +23,9 @@
   /** Görünür sekmede arka plan yenilemesi (ms); sekmeye dönüşte ayrıca anlık tazeleme */
   var AUTO_REFRESH_MS = 60000;
   var visibilityRefreshTimer = null;
+  /** init() her başarılı girişte çağrılır; wire* yalnızca bir kez bağlanmalı */
+  var staticAdminListenersBound = false;
+  var logsExportInFlight = false;
   /** İstek / şikayet / arıza listeleri için sunucu sayfalama (rezervasyon: tümü birleştirilir). */
   var BUCKET_LIST_PAGE_SIZE = 100;
   /** Ana sayfa özetinde birleştirilen kayıt üst sınırı (sayfa × getBucketPage boyutu). */
@@ -591,16 +597,36 @@
     }
     if (csvBtn) {
       csvBtn.addEventListener("click", async function () {
-        var params = getLogsParams();
-        var blob = await adapter.downloadLogsCsv(params);
-        downloadBlob(blob, "chat_observations.csv");
+        if (logsExportInFlight) return;
+        logsExportInFlight = true;
+        csvBtn.disabled = true;
+        try {
+          var params = getLogsParams();
+          var blob = await adapter.downloadLogsCsv(params);
+          downloadBlob(blob, "chat_observations.csv");
+        } catch (e) {
+          window.alert("CSV indirilemedi: " + (e && e.message ? e.message : "bilinmeyen hata"));
+        } finally {
+          logsExportInFlight = false;
+          csvBtn.disabled = false;
+        }
       });
     }
     if (jsonBtn) {
       jsonBtn.addEventListener("click", async function () {
-        var params = getLogsParams();
-        var blob = await adapter.downloadLogsJson(params);
-        downloadBlob(blob, "chat_observations.json");
+        if (logsExportInFlight) return;
+        logsExportInFlight = true;
+        jsonBtn.disabled = true;
+        try {
+          var params = getLogsParams();
+          var blob = await adapter.downloadLogsJson(params);
+          downloadBlob(blob, "chat_observations.json");
+        } catch (e) {
+          window.alert("JSON indirilemedi: " + (e && e.message ? e.message : "bilinmeyen hata"));
+        } finally {
+          logsExportInFlight = false;
+          jsonBtn.disabled = false;
+        }
       });
     }
   }
@@ -1541,13 +1567,16 @@
   }
 
   async function init() {
-    wireTabs();
-    wireGuestNotifSubtabs();
-    wireEvaluationsToolbar();
-    wirePdfReportPanel();
-    wireLogsControls();
-    wireBackHomeButtons();
-    wireVisibilityRefresh();
+    if (!staticAdminListenersBound) {
+      staticAdminListenersBound = true;
+      wireTabs();
+      wireGuestNotifSubtabs();
+      wireEvaluationsToolbar();
+      wirePdfReportPanel();
+      wireLogsControls();
+      wireBackHomeButtons();
+      wireVisibilityRefresh();
+    }
     openTab(null);
     updateReservationNavStatus();
     await loadDashboard();
