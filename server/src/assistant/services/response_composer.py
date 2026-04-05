@@ -245,6 +245,10 @@ class ResponseComposer:
             return self.i18n.get("request_towel", language)
         if entity == "blanket":
             return self.i18n.get("request_blanket", language)
+        if entity == "water":
+            return self.i18n.get("request_water", language)
+        if entity == "pillow":
+            return self.i18n.get("request_pillow", language)
         if entity == "housekeeping_service":
             return self.i18n.get("request_housekeeping", language)
         if entity == "reception_contact":
@@ -311,6 +315,10 @@ class ResponseComposer:
             return self._pick_social_variant(language, "compliment", seed_text) or self.i18n.get("chitchat_compliment", language)
         if sub_intent == "how_are_you":
             return self._pick_social_variant(language, "how_are_you", seed_text) or self.i18n.get("chitchat_how_are_you", language)
+        if sub_intent == "confusion":
+            return self.i18n.get("chitchat_confusion_generic", language)
+        if sub_intent == "cancel_command_hint":
+            return self.i18n.get("chitchat_cancel_command_hint", language)
         return self._pick_social_variant(language, "greeting", seed_text) or self.i18n.get("chitchat_greeting", language)
 
     def _current_time(self, language: str) -> str:

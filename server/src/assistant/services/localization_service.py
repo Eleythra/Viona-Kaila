@@ -11,6 +11,32 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "chitchat_apology_from_user": "Hiç sorun değil. Size memnuniyetle yardımcı olmaya devam edebilirim.",
         "chitchat_compliment": "Nazik geri bildiriminiz için teşekkür ederim. Yardımcı olabildiysem ne mutlu bana.",
         "chitchat_how_are_you": "Teşekkür ederim, iyiyim. Kaila Beach Hotel ile ilgili sorularınızda yanınızdayım.",
+        "chitchat_cancel_command_hint": (
+            "«İptal» derken açık bir sohbet formu özeti, rezervasyon veya başka bir işlem mi kastediyorsunuz? "
+            "Formdaysanız özet ekranında 2 = vazgeç; rezervasyon için uygulamadaki Rezervasyonlar bölümünü kullanın. "
+            "Başka bir otel konusunda nasıl yardımcı olayım?"
+        ),
+        "chitchat_confusion_generic": "Tam olarak hangi kısmı netleştireyim? Otel bilgisi, talep, arıza veya şikayet için ne yazmanız gerektiğini söyleyebilirim.",
+        "chitchat_confusion_after_form_cancel": (
+            "Az önce kayıt özetini iptal etmiştiniz; bu yüzden kayıt oluşmadı. "
+            "Özet ekranında 1 = onaylayıp kayıt açmak, 2 = vazgeçmek anlamına gelir. "
+            "Tekrar başlamak için örneğin «priz çalışmıyor» yazabilirsiniz. "
+            "Ad soyad adımında kimlikteki gibi adınızı ve soyadınızı iki kelime olarak yazmanız gerekir (ör. Ayşe Yılmaz)."
+        ),
+        "session_ack_after_cancel": "Anlaşıldı. Başka bir konuda yardımcı olmamı isterseniz yazabilirsiniz.",
+        "session_vazgectim_after_cancel": (
+            "Kayıt oluşturulmadı. İsterseniz aynı konuda yeniden sohbet formu ile ilerleyebilir veya yeni bir talep / arıza yazabilirsiniz."
+        ),
+        "session_reservation_followup_short": (
+            "Rezervasyon iptali, değişikliği veya detayları için uygulamadaki Rezervasyonlar bölümünü kullanın. "
+            "«Yarın», «iptal» gibi kısa ifadeleri burada rezervasyonunuza bağlayamıyorum; seçiminizi uygulamada netleştirmeniz gerekir."
+        ),
+        "session_animation_schedule_followup": (
+            "Gündüz animasyon ve aktivite çizelgesi uygulamadaki «Animasyon ve etkinlikler» modülü ile otel verilerinde genelde her gün aynıdır; "
+            "çoğunlukla değişen kısım akşam gösterileri ve temalı gecelerdir, bazı günler ekstra şov da olabilir. "
+            "Yarın veya belirli bir akşam için net saat ve sahne bilgisini resepsiyon veya animasyon ekibinin güncel panosundan teyit etmenizi öneririm. "
+            "Mini Club / Mini Disco saatleri çocuk yaş grubuna göre sınırlı olabilir."
+        ),
         "chitchat_switch_en": "I'll reply in English from now on. How can I help you?",
         "chitchat_switch_tr": "Bundan sonra Türkçe yanıtlıyorum. Size nasıl yardımcı olabilirim?",
         "chitchat_switch_de": "Ich antworte ab jetzt auf Deutsch. Wie kann ich Ihnen helfen?",
@@ -37,6 +63,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "complaint_default": "Bu şikayet için öncelikle Misafir İlişkileri ile iletişime geçiniz. Dilerseniz resepsiyon üzerinden de iletebilirsiniz.",
         "request_towel": "Havlu talebinizi lütfen resepsiyon ile iletiniz.",
         "request_blanket": "Battaniye talebiniz için lütfen resepsiyon ile iletişime geçiniz.",
+        "request_water": "Odaya su veya içme suyu talebiniz için lütfen resepsiyon ile iletişime geçiniz; ekip yönlendirilecektir.",
+        "request_pillow": "Yastık talebiniz için lütfen resepsiyon ile iletişime geçiniz.",
         "request_housekeeping": "Oda temizliği ve housekeeping talepleriniz için resepsiyon ile iletişime geçebilirsiniz; ilgili ekip yönlendirilir.",
         "request_reception_contact": "Bu konuda en hızlı çözüm için lütfen resepsiyon ile doğrudan iletişime geçiniz.",
         "request_guest_relations_contact": "Bu konuda Misafir İlişkileri departmanı en doğru birimdir. Dilerseniz resepsiyon üzerinden de bağlantı sağlayabilirsiniz.",
@@ -56,18 +84,18 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "guest_notification_policy_hint": "Misafir bildiriminizi sohbet üzerinden kayıt için kategori seçerek iletebilirsiniz; bir sonraki mesajınızda 'gluten', 'alerji', 'kutlama' gibi anahtar kelimeleri yazmanız da yeterlidir.",
         "fixed_restaurant_info": "- Ana Restoran: Kahvaltı 07:00-10:00, Geç kahvaltı 10:00-10:30, Öğle yemeği 12:30-14:00, Akşam yemeği 19:00-21:00, Mini gece büfesi 23:30-00:00.\n- La Terrace A La Carte: 18:30-20:30 (rezervasyonlu, ücretli).\n- Sinton BBQ: 13:00-22:00 (Pazartesi kapalı).\nSnack ve cafe:\n- Dolphin Snack 12:00-16:00\n- Beach Imbiss Snack 12:00-16:00\n- Beach Imbiss İçecek 10:00-17:00\n- Gusto Snack 11:00-18:00\n- Libum Cafe 11:00-18:00\n- Moss Beach Restaurant & Bar 10:00-19:00\nBarlar:\n- Havuz Bar 10:00-00:00\n- Dondurma Servisi 15:00-17:00\n- Lobby Bar 10:00-00:00\n- Aqua Bar 10:00-18:00 ve 20:00-23:00\n- Dolphin Bar 10:00-17:00",
         "fixed_pool_beach_info": "- Özel plaj mevcuttur.\n- Şezlong, şemsiye ve plaj havlusu ücretsizdir.\n- Plaj kullanım saatleri: 08:30-18:30.\nHavuzlar:\n- Üç açık havuz: Relax Pool 08:30-18:30, Aquapark 10:00-12:00 ve 14:00-16:00, Dolphin Pool 08:30-18:30.\n- Kapalı havuz (spa): 08:00-19:00.\n- Aquapark ve açık alanda çocuklara uygun sığ su bölgeleri bulunur.\n- Havuz ve plajda can kurtaran mevcuttur.\n- Havuz ve plaj havlusu servisi ücretsizdir.",
-        "fixed_spa_info": "- La Serenite Spa kullanım saatleri: 09:00-19:00.\nÜcretsiz alanlar:\n- Sauna\n- Türk hamamı\n- Buhar odası\n- Kapalı havuz\nÜcretli hizmetler:\n- Masaj\n- Peeling\n- Cilt bakımı\n- Diğer bakım hizmetleri\nNot: Temel ıslak alan kullanımı ücretsiz, profesyonel bakım ve terapi hizmetleri ücretlidir.",
-        "fixed_animation_info": "- Akşam akrobatik dans şovları, temalı geceler, canlı müzik, DJ performansları.\n- Günlük program 10:00'da başlar; aqua gym, dart, su topu gibi aktiviteler içerir.\nÇocuk aktiviteleri:\n- Jammies Kids Club / Mini Club: 10:00-12:30 ve 14:30-17:00 (4-12 yaş)\n- Mini Disco: 20:45-21:00 (4-12 yaş)\n- Çocuk oyun parkı: 07:00-21:00\nNot: Programlar sezon ve operasyon takvimine göre değişebilir.",
+        "fixed_spa_info": "- La Serenite Spa kullanım saatleri: 09:00-19:00.\nÜcretsiz alanlar:\n- Sauna\n- Türk hamamı\n- Buhar odası\n- Kapalı havuz\nÜcretli hizmetler:\n- Masaj\n- Peeling\n- Cilt bakımı\n- Diğer bakım hizmetleri\nNot: Temel ıslak alan kullanımı ücretsiz, profesyonel bakım ve terapi hizmetleri ücretlidir.\n\nGüncel terapi ve bakım fiyat listesi ile paket PDF’leri sohbette uzun metin olarak verilmez; tüm premium içerik uygulamadaki «Spa & wellness» modülündedir. Modülü açmak için aşağıdaki düğmeyi kullanabilirsiniz.",
+        "fixed_spa_prices_module_hint": "Spa ve profesyonel bakım fiyatları sohbette listelenmez. Güncel fiyat listesi ve paketler yalnızca uygulamadaki «Spa & wellness» modülündedir; premium içeriğe aşağıdaki düğmeyle geçebilirsiniz.",
+        "fixed_restaurants_bars_module_hint": "Lobby Bar menüsü, Moss Beach Restaurant menüsü ve barlarda içecek / import içki fiyat listesi sohbette uzun metin olarak gösterilmez; güncel PDF’ler «Restaurant & barlar» modülündedir. İlgili listelere aşağıdaki düğmeyle ulaşabilirsiniz. (Genel restoran saatleri için «restoran saatleri» diye sorabilir veya aynı modüle gidebilirsiniz.)",
+        "fixed_animation_info": "- Akşam akrobatik dans şovları, temalı geceler, canlı müzik, DJ performansları (bu bölüm gün ve sezona göre çeşitlenebilir; bazı günler ekstra şov eklenebilir).\n- Gündüz çizelgesi genelde sabittir; günlük program 10:00'da başlar; aqua gym, dart, su topu gibi aktiviteler içerir. Güncel metin ve saatler uygulamadaki «Animasyon ve etkinlikler» modülündedir.\nÇocuk aktiviteleri:\n- Jammies Kids Club / Mini Club: 10:00-12:30 ve 14:30-17:00 (4-12 yaş)\n- Mini Disco: 20:45-21:00 (4-12 yaş)\n- Çocuk oyun parkı: 07:00-21:00\nNot: Akşam programı ve özel gösteriler güne göre farklılık gösterebilir; kesin bilgi için resepsiyon veya animasyon panosunu kontrol ediniz.",
         "fixed_outside_hotel_info": "Otel dışı öneriler için en güncel ve güvenli bilgi resepsiyondadır. Alanya merkez yaklaşık 3 km mesafededir; taksi ve toplu taşıma seçenekleri mevcuttur.",
         "fixed_alanya_discover_intro": "Alanya, Akdeniz kıyısında denizi, kalesi ve tarihi dokusuyla öne çıkan bir tatil kentidir. Gezginler için sık sorulan başlıca duraklar:\n\n• Kleopatra Plajı — ince kum ve berrak deniz\n• Kızıl Kule ve liman — şehrin simgesi\n• Alanya Kalesi — tepeden panoramik manzara; gün batımı çok beğenilir\n• Dim Çayı ve mesire alanları (iç kesim)\n\nOtelimiz Obagöl'de; şehir merkezine yaklaşık 3 km. Ulaşım için taksi ve toplu taşıma pratik seçeneklerdir. Güncel saatler, biletli alanlar ve özel turlar için resepsiyon en güvenilir kaynaktır.\n\nAşağıdaki düğmeyle uygulamadaki «Alanya'yı keşfedin» bölümünü açarak kısa metinler ve görsellerle bu noktaları inceleyebilirsiniz.",
         "fixed_ice_cream_info": "Evet, otelde dondurma servisi vardır. Dondurma servisi Havuz Bar'da 15:00-17:00 saatleri arasında ücretsiz sunulmaktadır. (Sezon ve operasyon takvimine göre değişiklik olabilir.)",
-        "hotel_info_soft_followup_towel": "Havlu veya plaj havlusu odaya gönderilsin derseniz «havlu talep ediyorum» yazarak sohbetten İstek formunu açabilirsiniz.",
-        "hotel_info_soft_followup_minibar": "Minibar dolumu veya eksik ürün bildirimi için «minibar talep ediyorum» veya «minibar yenileme istiyorum» yazarak İstek formunu açabilirsiniz.",
-        "hotel_info_soft_followup_room_equipment": "Kettle, askı, bornoz, terlik gibi oda ekipmanı için «oda ekipmanı talep ediyorum» veya ihtiyacınızı kısaca yazarak İstek formunu açabilirsiniz.",
-        "hotel_info_soft_followup_bedding": "Yastık, nevresim veya battaniye için «yatak takımı talep ediyorum» / «battaniye talep ediyorum» gibi yazarak İstek formunu açabilirsiniz.",
-        "hotel_info_soft_followup_baby_equipment": "Bebek yatağı veya mama sandalyesi için «bebek ekipmanı talep ediyorum» yazabilirsiniz.",
-        "hotel_info_soft_followup_room_cleaning": "Oda temizliği veya havlu değişimi için «oda temizliği talep ediyorum» yazarak İstek formunu açabilirsiniz.",
-        "hotel_info_soft_followup_generic": "Odaya ürün veya hizmet iletmek için ne istediğinizi belirterek «… talep ediyorum» yazmanız yeterlidir; İstek sohbet formu açılır.",
+        "fixed_laundry_dry_cleaning_info": "Çamaşırhane, kuru temizleme ve ütü hizmetleri otelde ücretli olarak sunulur. Teslim alma, süre ve güncel ücretler için lütfen resepsiyon veya housekeeping ile iletişime geçiniz; giysilerinizi ve talebinizi oradan iletebilirsiniz.",
+        "hotel_info_soft_followup_towel": (
+            "Yukarıdaki saat ve kart bilgisi plaj/havuz havlusuna aittir; bu havlular havuz veya plaj noktasından verilir. "
+            "Oda banyo havlusu bunlardan farklıdır, birbirinin yerine geçmez."
+        ),
     },
     "en": {
         "chitchat_greeting": "Hello, I'm Viona, your digital assistant at Kaila Beach Hotel. How can I help you?",
@@ -78,6 +106,32 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "chitchat_apology_from_user": "No worries at all. I'm happy to keep helping you.",
         "chitchat_compliment": "Thank you for your kind words. Glad I could help.",
         "chitchat_how_are_you": "I'm doing well, thank you. I'm here to help with anything about Kaila Beach Hotel.",
+        "chitchat_cancel_command_hint": (
+            "When you say “cancel”, do you mean a chat form summary, a reservation, or something else? "
+            "On the form summary, 2 means cancel; for bookings, use the Reservations section in the app. "
+            "What else can I help you with at the hotel?"
+        ),
+        "chitchat_confusion_generic": "Which part should I clarify? I can explain what to type for hotel information, a request, a fault report, or a complaint.",
+        "chitchat_confusion_after_form_cancel": (
+            "You had just cancelled the summary screen, so no record was created. "
+            "On that screen, 1 means confirm and open the record, 2 means cancel. "
+            "To start again, you can type something like “socket not working”. "
+            "For full name, please type your first and last name as on your ID (two words, e.g. Jane Smith)."
+        ),
+        "session_ack_after_cancel": "Understood. Tell me if you need help with anything else.",
+        "session_vazgectim_after_cancel": (
+            "No record was created. You can start the chat form again for the same topic or type a new request or fault report."
+        ),
+        "session_reservation_followup_short": (
+            "For cancellation, changes, or reservation details, please use the Reservations section in the app. "
+            "Short replies like “tomorrow” or “cancel” cannot be linked to your booking here—please complete the steps in the app."
+        ),
+        "session_animation_schedule_followup": (
+            "The daytime animation and activity schedule in the app’s «Animation & events» section and hotel information is usually the same every day; "
+            "what tends to change is the evening shows and themed nights, and some days there may be an extra performance. "
+            "For exact times for tomorrow or a specific evening, please confirm on the latest board at reception or with the animation team. "
+            "Mini Club / Mini Disco hours may vary by children’s age group."
+        ),
         "chitchat_switch_en": "I'll reply in English from now on. How can I help you?",
         "chitchat_switch_tr": "Bundan sonra Türkçe yanıtlıyorum. Size nasıl yardımcı olabilirim?",
         "chitchat_switch_de": "Ich antworte ab jetzt auf Deutsch. Wie kann ich Ihnen helfen?",
@@ -104,6 +158,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "complaint_default": "For this complaint, please contact Guest Relations first. You may also report it via reception.",
         "request_towel": "Please contact reception for your towel request.",
         "request_blanket": "Please contact reception for your blanket request.",
+        "request_water": "For water or drinking water to your room, please contact reception; the team will arrange delivery.",
+        "request_pillow": "Please contact reception for your pillow request.",
         "request_housekeeping": "For room cleaning and housekeeping requests, please contact reception; the relevant team will be arranged.",
         "request_reception_contact": "For the fastest resolution, please contact reception directly.",
         "request_guest_relations_contact": "For this matter, Guest Relations is the right department. You may also connect through reception.",
@@ -123,18 +179,18 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "guest_notification_policy_hint": "You can submit a guest notification via chat by choosing a category; you may also type keywords like gluten, allergy, or celebration in your next message.",
         "fixed_restaurant_info": "- Main Restaurant: Breakfast 07:00-10:00, Late breakfast 10:00-10:30, Lunch 12:30-14:00, Dinner 19:00-21:00, Mini night buffet 23:30-00:00.\n- La Terrace A La Carte: 18:30-20:30 (reservation required, paid).\n- Sinton BBQ: 13:00-22:00 (closed Mondays).\nSnack and cafe:\n- Dolphin Snack 12:00-16:00\n- Beach Imbiss Snack 12:00-16:00\n- Beach Imbiss Drinks 10:00-17:00\n- Gusto Snack 11:00-18:00\n- Libum Cafe 11:00-18:00\n- Moss Beach Restaurant & Bar 10:00-19:00\nBars:\n- Pool Bar 10:00-00:00\n- Ice Cream Service 15:00-17:00\n- Lobby Bar 10:00-00:00\n- Aqua Bar 10:00-18:00 and 20:00-23:00\n- Dolphin Bar 10:00-17:00",
         "fixed_pool_beach_info": "- Private beach available.\n- Sunbeds, umbrellas, and beach towels are free.\n- Beach usage hours: 08:30-18:30.\nPools:\n- Three outdoor pools: Relax Pool 08:30-18:30, Aquapark 10:00-12:00 and 14:00-16:00, Dolphin Pool 08:30-18:30.\n- Indoor pool (spa): 08:00-19:00.\n- Shallow areas for children are in the outdoor / aquapark zone.\n- Lifeguards are present at the pools and on the sea.\n- Pool and beach towel service is free.",
-        "fixed_spa_info": "- La Serenite Spa hours: 09:00-19:00.\nFree areas:\n- Sauna\n- Turkish bath\n- Steam room\n- Indoor pool\nPaid services:\n- Massage\n- Peeling\n- Skin care\n- Other treatment services\nNote: Basic wet-area use is free; professional care and therapy services are paid.",
-        "fixed_animation_info": "- Evening acrobatic dance shows, themed nights, live music, and DJ performances.\n- Daily program starts at 10:00 and includes aqua gym, darts, and water polo.\nChildren’s activities:\n- Jammies Kids Club / Mini Club: 10:00-12:30 and 14:30-17:00 (ages 4-12)\n- Mini Disco: 20:45-21:00 (ages 4-12)\n- Children’s playground: 07:00-21:00\nNote: Programs may vary based on seasonal and operational schedules.",
+        "fixed_spa_info": "- La Serenite Spa hours: 09:00-19:00.\nFree areas:\n- Sauna\n- Turkish bath\n- Steam room\n- Indoor pool\nPaid services:\n- Massage\n- Peeling\n- Skin care\n- Other treatment services\nNote: Basic wet-area use is free; professional care and therapy services are paid.\n\nTreatment menus and price lists are not shared as long text in chat; the up-to-date PDFs live in the in-app «Spa & wellness» section. Use the button below to open that page.",
+        "fixed_spa_prices_module_hint": "Spa treatment prices are not listed in chat. The current price list and packages are only in the «Spa & wellness» module — use the button below for the premium content.",
+        "fixed_restaurants_bars_module_hint": "The Lobby Bar menu, Moss Beach Restaurant menu, and bar drink / imported spirits price lists are not shown as long text in chat; up-to-date PDFs are in «Restaurants & bars». Open that section with the button below. (For general outlet hours you can still ask for «restaurant hours» or use the same module.)",
+        "fixed_animation_info": "- Evening acrobatic dance shows, themed nights, live music, and DJ performances (this part can vary by day and season; some days may include an extra show).\n- The daytime schedule is generally stable: the daily program starts at 10:00 with aqua gym, darts, and water polo. The latest wording and times are in the in-app «Animation & events» section.\nChildren’s activities:\n- Jammies Kids Club / Mini Club: 10:00-12:30 and 14:30-17:00 (ages 4-12)\n- Mini Disco: 20:45-21:00 (ages 4-12)\n- Children’s playground: 07:00-21:00\nNote: Evening line-ups and special shows may differ by day; please check reception or the animation board for the exact programme.",
         "fixed_outside_hotel_info": "For outside-hotel suggestions, reception provides the most up-to-date and safe guidance. Alanya city center is about 3 km away, and taxi/public transport options are available.",
         "fixed_alanya_discover_intro": "Alanya is a lively Mediterranean resort known for its seafront, castle and historic character. Highlights many guests enjoy:\n\n• Kleopatra Beach — fine sand and clear water\n• Red Tower and harbour — an iconic landmark\n• Alanya Castle — panoramic views from the hill; sunsets are memorable\n• Dim River picnic area inland\n\nOur hotel is in Obagöl, about 3 km from the city centre. Taxis and public transport are practical. For opening hours, ticketed sites and organised tours, reception is the safest source of up-to-date advice.\n\nUse the button below to open the in-app «Discover Alanya» section with short descriptions and images.",
         "fixed_ice_cream_info": "Yes, the hotel offers an ice cream service. It is served complimentary at the Pool Bar between 15:00 and 17:00. (Hours may vary by season and operations.)",
-        "hotel_info_soft_followup_towel": "For towels in your room, write e.g. «please send towels» or «I need a towel request» to open the Request form in chat.",
-        "hotel_info_soft_followup_minibar": "For minibar refill or missing items, write e.g. «minibar refill request» or «I need minibar restocked» to open the Request form.",
-        "hotel_info_soft_followup_room_equipment": "For kettle, hangers, bathrobe, slippers, etc., write e.g. «room equipment request» plus a short note to open the Request form.",
-        "hotel_info_soft_followup_bedding": "For pillow, duvet cover or blanket, write e.g. «bedding request» or «extra blanket request» to open the Request form.",
-        "hotel_info_soft_followup_baby_equipment": "For baby bed or high chair, write e.g. «baby equipment request» to open the Request form.",
-        "hotel_info_soft_followup_room_cleaning": "For housekeeping or towel change, write e.g. «room cleaning request» to open the Request form.",
-        "hotel_info_soft_followup_generic": "To send something to your room, write what you need plus «request» (e.g. «extra pillows request») so the Request chat form opens.",
+        "fixed_laundry_dry_cleaning_info": "Laundry, dry cleaning, and ironing are available at the hotel as paid services. Please contact reception or housekeeping for drop-off, turnaround, and current prices; they will handle your items and request.",
+        "hotel_info_soft_followup_towel": (
+            "The hours and card rules above refer to pool/beach towels issued at the pool/beach desk. "
+            "Those are not the same as the bathroom towels in your room."
+        ),
     },
     "de": {
         "chitchat_greeting": "Hallo, ich bin Viona, Ihre digitale Assistentin im Kaila Beach Hotel. Wie kann ich Ihnen helfen?",
@@ -145,6 +201,32 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "chitchat_apology_from_user": "Kein Problem. Ich helfe Ihnen gern weiter.",
         "chitchat_compliment": "Vielen Dank für Ihr nettes Feedback. Es freut mich, dass ich helfen konnte.",
         "chitchat_how_are_you": "Danke, mir geht es gut. Ich unterstütze Sie gern bei Fragen rund um das Kaila Beach Hotel.",
+        "chitchat_cancel_command_hint": (
+            "Meinen Sie mit „Abbrechen“ eine Chat-Formularzusammenfassung, eine Reservierung oder etwas anderes? "
+            "Auf der Zusammenfassung bedeutet 2 Abbrechen; für Buchungen nutzen Sie den Bereich Reservierungen in der App. "
+            "Wobei darf ich sonst im Hotel helfen?"
+        ),
+        "chitchat_confusion_generic": "Welchen Teil soll ich erklären? Ich kann sagen, was Sie für Hotelinfos, eine Anfrage, eine Störung oder eine Beschwerde schreiben können.",
+        "chitchat_confusion_after_form_cancel": (
+            "Sie hatten die Zusammenfassung gerade abgebrochen; deshalb wurde kein Eintrag erstellt. "
+            "Auf diesem Bildschirm bedeutet 1 Bestätigen und Eintrag anlegen, 2 Abbrechen. "
+            "Um neu zu starten, können Sie z. B. „Steckdose funktioniert nicht“ schreiben. "
+            "Bitte geben Sie Vor- und Nachnamen wie im Ausweis an (zwei Wörter, z. B. Anna Müller)."
+        ),
+        "session_ack_after_cancel": "Alles klar. Schreiben Sie gern, wenn Sie noch etwas brauchen.",
+        "session_vazgectim_after_cancel": (
+            "Es wurde kein Eintrag erstellt. Sie können den Chat-Flow erneut starten oder eine neue Anfrage bzw. Störungsmeldung schreiben."
+        ),
+        "session_reservation_followup_short": (
+            "Für Stornierung, Änderungen oder Reservierungsdetails nutzen Sie bitte den Bereich Reservierungen in der App. "
+            "Kurze Antworten wie „morgen“ oder „stornieren“ kann ich hier nicht Ihrer Buchung zuordnen—bitte dort auswählen."
+        ),
+        "session_animation_schedule_followup": (
+            "Der Tagesplan für Animation und Aktivitäten in der App unter «Animation & Veranstaltungen» und in den Hotelinformationen ist in der Regel täglich gleich; "
+            "häufiger ändern sich die Abendshows und Themenabende, und an manchen Tagen gibt es zusätzliche Shows. "
+            "Für morgen oder einen bestimmten Abend bestätigen Sie bitte die genauen Zeiten an der aktuellen Tafel an der Rezeption oder beim Animationsteam. "
+            "Mini Club / Mini Disco können je nach Altersgruppe der Kinder abweichen."
+        ),
         "chitchat_switch_en": "I'll reply in English from now on. How can I help you?",
         "chitchat_switch_tr": "Bundan sonra Türkçe yanıtlıyorum. Size nasıl yardımcı olabilirim?",
         "chitchat_switch_de": "Ich antworte ab jetzt auf Deutsch. Wie kann ich Ihnen helfen?",
@@ -171,6 +253,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "complaint_default": "Bitte wenden Sie sich bei dieser Beschwerde zuerst an die Gästebetreuung. Alternativ kann die Rezeption unterstützen.",
         "request_towel": "Bitte wenden Sie sich für Ihre Handtuchanfrage an die Rezeption.",
         "request_blanket": "Bitte wenden Sie sich für Ihre Deckenanfrage an die Rezeption.",
+        "request_water": "Für Wasser oder Trinkwasser aufs Zimmer wenden Sie sich bitte an die Rezeption; das Team organisiert die Zustellung.",
+        "request_pillow": "Bitte wenden Sie sich für Ihre Kissenanfrage an die Rezeption.",
         "request_housekeeping": "Für Zimmerreinigung und Housekeeping-Anfragen wenden Sie sich bitte an die Rezeption; das zuständige Team wird informiert.",
         "request_reception_contact": "Für die schnellste Lösung wenden Sie sich bitte direkt an die Rezeption.",
         "request_guest_relations_contact": "Für dieses Anliegen ist die Gästebetreuung die richtige Stelle. Auf Wunsch kann die Rezeption ebenfalls verbinden.",
@@ -190,18 +274,18 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "guest_notification_policy_hint": "Sie können eine Gästemeldung im Chat per Kategorie senden; schreiben Sie z. B. Gluten, Allergie oder Feier in Ihrer nächsten Nachricht.",
         "fixed_restaurant_info": "- Hauptrestaurant: Frühstück 07:00-10:00, Spätfrühstück 10:00-10:30, Mittagessen 12:30-14:00, Abendessen 19:00-21:00, Mini-Nachtbuffet 23:30-00:00.\n- La Terrace A La Carte: 18:30-20:30 (reservierungspflichtig, kostenpflichtig).\n- Sinton BBQ: 13:00-22:00 (montags geschlossen).\nSnack und Cafe:\n- Dolphin Snack 12:00-16:00\n- Beach Imbiss Snack 12:00-16:00\n- Beach Imbiss Getränke 10:00-17:00\n- Gusto Snack 11:00-18:00\n- Libum Cafe 11:00-18:00\n- Moss Beach Restaurant & Bar 10:00-19:00\nBars:\n- Pool Bar 10:00-00:00\n- Eis-Service 15:00-17:00\n- Lobby Bar 10:00-00:00\n- Aqua Bar 10:00-18:00 und 20:00-23:00\n- Dolphin Bar 10:00-17:00",
         "fixed_pool_beach_info": "- Privater Strand ist vorhanden.\n- Liegen, Sonnenschirme und Strandhandtücher sind kostenlos.\n- Strandnutzung: 08:30-18:30.\nPools:\n- Drei Außenbecken: Relax Pool 08:30-18:30, Aquapark 10:00-12:00 und 14:00-16:00, Dolphin Pool 08:30-18:30.\n- Hallenbad (Spa): 08:00-19:00.\n- Flache Kinderbereiche im Außen- und Aquaparkbereich.\n- Rettungsschwimmer an Pools und am Meer.\n- Handtuchservice für Pool und Strand ist kostenlos.",
-        "fixed_spa_info": "- Öffnungszeiten La Serenite Spa: 09:00-19:00.\nKostenlose Bereiche:\n- Sauna\n- Türkisches Bad\n- Dampfbad\n- Hallenbad\nKostenpflichtige Leistungen:\n- Massage\n- Peeling\n- Hautpflege\n- Weitere Behandlungen\nHinweis: Grundnutzung der Nassbereiche ist kostenlos; professionelle Pflege- und Therapieleistungen sind kostenpflichtig.",
-        "fixed_animation_info": "- Abendliche Akrobatik-Tanzshows, Themenabende, Live-Musik und DJ-Performances.\n- Tagesprogramm startet um 10:00 mit Aqua Gym, Dart und Wasserball.\nKinderaktivitäten:\n- Jammies Kids Club / Mini Club: 10:00-12:30 und 14:30-17:00 (4-12 Jahre)\n- Mini Disco: 20:45-21:00 (4-12 Jahre)\n- Kinderspielplatz: 07:00-21:00\nHinweis: Programme können je nach Saison- und Betriebsplan variieren.",
+        "fixed_spa_info": "- Öffnungszeiten La Serenite Spa: 09:00-19:00.\nKostenlose Bereiche:\n- Sauna\n- Türkisches Bad\n- Dampfbad\n- Hallenbad\nKostenpflichtige Leistungen:\n- Massage\n- Peeling\n- Hautpflege\n- Weitere Behandlungen\nHinweis: Grundnutzung der Nassbereiche ist kostenlos; professionelle Pflege- und Therapieleistungen sind kostenpflichtig.\n\nAktuelle Preislisten und Behandlungs-PDFs werden im Chat nicht als langer Text ausgegeben; die Premium-Inhalte finden Sie im App-Bereich «Spa & Wellness». Öffnen Sie die Seite über die Schaltfläche unten.",
+        "fixed_spa_prices_module_hint": "Spa- und Anwendungspreise werden im Chat nicht aufgelistet. Die aktuelle Preisliste und Pakete stehen nur im Modul «Spa & Wellness» — bitte nutzen Sie die Schaltfläche unten.",
+        "fixed_restaurants_bars_module_hint": "Lobby-Bar-Speisekarte, Moss-Restaurant-Speisekarte und Getränke-/Importspirituosen-Preislisten der Bars werden im Chat nicht als langer Text gezeigt; aktuelle PDFs liegen unter «Restaurants & Bars». Bitte öffnen Sie den Bereich über die Schaltfläche unten. (Allgemeine Öffnungszeiten können Sie weiterhin mit «Restaurantzeiten» erfragen oder im selben Modul einsehen.)",
+        "fixed_animation_info": "- Abendliche Akrobatik-Tanzshows, Themenabende, Live-Musik und DJ-Performances (dieser Teil kann je nach Tag und Saison wechseln; an manchen Tagen gibt es Zusatzshows).\n- Der Tagesablauf ist in der Regel stabil: Start um 10:00 mit Aqua Gym, Dart und Wasserball. Aktuelle Texte und Zeiten finden Sie in der App unter «Animation & Veranstaltungen».\nKinderaktivitäten:\n- Jammies Kids Club / Mini Club: 10:00-12:30 und 14:30-17:00 (4-12 Jahre)\n- Mini Disco: 20:45-21:00 (4-12 Jahre)\n- Kinderspielplatz: 07:00-21:00\nHinweis: Abendprogramm und Zusatzshows können täglich abweichen; genaue Auskunft an der Rezeption oder an der Animationstafel.",
         "fixed_outside_hotel_info": "Für Empfehlungen außerhalb des Hotels wenden Sie sich bitte an die Rezeption; dort erhalten Sie die aktuellsten und sichersten Informationen. Das Zentrum von Alanya ist etwa 3 km entfernt; Taxi- und ÖPNV-Optionen sind verfügbar.",
         "fixed_alanya_discover_intro": "Alanya ist ein lebendiges Mittelmeerziel mit Strand, Burg und historischem Flair. Beliebte Stationen:\n\n• Kleopatra-Strand — feiner Sand, klares Wasser\n• Roter Turm und Hafen — Wahrzeichen der Stadt\n• Burg von Alanya — Panoramablick; Sonnenuntergänge sind eindrucksvoll\n• Dim-Çayı und Picknickbereiche landeinwärts\n\nUnser Hotel liegt in Obagöl, etwa 3 km vom Zentrum. Taxi und ÖPNV sind praktisch. Für Öffnungszeiten, Eintritte und organisierte Ausflüge ist die Rezeption die zuverlässigste Anlaufstelle.\n\nMit der Schaltfläche unten öffnen Sie die App-Rubrik «Alanya entdecken» mit Kurztexten und Bildern.",
         "fixed_ice_cream_info": "Ja, im Hotel gibt es einen Eis-Service. Er wird kostenlos an der Pool Bar zwischen 15:00 und 17:00 Uhr angeboten. (Zeiten können je nach Saison und Betrieb variieren.)",
-        "hotel_info_soft_followup_towel": "Für Handtücher aufs Zimmer schreiben Sie z. B. «Handtuch bitte schicken» — dann öffnet sich das Anfrageformular.",
-        "hotel_info_soft_followup_minibar": "Für Minibar-Auffüllung oder fehlende Artikel: «Minibar auffüllen bitte» oder «Minibar-Anfrage» schreiben.",
-        "hotel_info_soft_followup_room_equipment": "Für Wasserkocher, Kleiderbügel, Bademantel, Hausschuhe: «Zimmerausstattung anfragen» plus kurze Notiz.",
-        "hotel_info_soft_followup_bedding": "Für Kissen, Bettwäsche oder Decke: «Bettwäsche-Anfrage» / «extra Decke bitte».",
-        "hotel_info_soft_followup_baby_equipment": "Für Babybett oder Hochstuhl: «Baby-Ausstattung anfragen».",
-        "hotel_info_soft_followup_room_cleaning": "Für Zimmerreinigung oder Handtuchwechsel: «Zimmerreinigung anfragen».",
-        "hotel_info_soft_followup_generic": "Schreiben Sie kurz, was Sie brauchen, plus «Anfrage» — dann öffnet sich das Anfrageformular im Chat.",
+        "fixed_laundry_dry_cleaning_info": "Wäscherei, chemische Reinigung und Bügelservice werden im Hotel kostenpflichtig angeboten. Bitte wenden Sie sich für Annahme, Bearbeitungszeit und aktuelle Preise an die Rezeption oder das Housekeeping.",
+        "hotel_info_soft_followup_towel": (
+            "Die genannten Zeiten und Kartenregeln gelten für Pool-/Strandhandtücher an der Ausgabe. "
+            "Das sind nicht die Badetücher auf dem Zimmer."
+        ),
     },
     "ru": {
         "chitchat_greeting": "Здравствуйте! Я Виона, ваш цифровой ассистент в отеле Kaila Beach. Чем могу помочь?",
@@ -212,6 +296,37 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "chitchat_apology_from_user": "Ничего страшного. Я с удовольствием продолжу помогать вам.",
         "chitchat_compliment": "Спасибо за тёплые слова. Рада, что смогла помочь.",
         "chitchat_how_are_you": "Спасибо, у меня всё хорошо. Я рядом, чтобы помочь с вопросами по Kaila Beach Hotel.",
+        "chitchat_cancel_command_hint": (
+            "Вы имеете в виду отмену сводки чат-формы, бронирование или что-то другое? "
+            "На экране сводки 2 — отмена; для бронирований используйте раздел «Бронирования» в приложении. "
+            "Чем ещё помочь по отелю?"
+        ),
+        "chitchat_cancel_command_hint": (
+            "Вы имеете в виду отмену сводки чат-формы, бронирование или что-то другое? "
+            "На экране сводки 2 — отмена; для бронирований используйте раздел «Бронирования» в приложении. "
+            "Чем ещё помочь по отелю?"
+        ),
+        "chitchat_confusion_generic": "Что именно пояснить? Могу подсказать, что написать про отель, запрос, неисправность или жалобу.",
+        "chitchat_confusion_after_form_cancel": (
+            "Вы только что отменили экран с итогом — запись не создана. "
+            "Там 1 означает подтвердить и создать заявку, 2 — отменить. "
+            "Чтобы начать снова, напишите, например: «розетка не работает». "
+            "В поле имени укажите имя и фамилию как в документе (два слова, например Анна Иванова)."
+        ),
+        "session_ack_after_cancel": "Поняла. Если нужна ещё помощь — напишите.",
+        "session_vazgectim_after_cancel": (
+            "Запись не создана. Можно снова пройти форму в чате или написать новый запрос / сообщить о неисправности."
+        ),
+        "session_reservation_followup_short": (
+            "Для отмены, изменений и деталей бронирования откройте раздел «Бронирования» в приложении. "
+            "Короткие фразы вроде «завтра» или «отмена» здесь нельзя привязать к вашей брони — уточните выбор в приложении."
+        ),
+        "session_animation_schedule_followup": (
+            "Дневное расписание анимации и активностей в приложении в разделе «Анимация и мероприятия» и в данных отеля обычно одинаковое изо дня в день; "
+            "чаще меняются вечерние шоу и тематические вечера, в отдельные дни возможны дополнительные представления. "
+            "Точное время на завтра или на конкретный вечер лучше уточнить на актуальном стенде у ресепшена или у команды анимации. "
+            "Часы Mini Club / Mini Disco могут зависеть от возрастной группы детей."
+        ),
         "chitchat_switch_en": "I'll reply in English from now on. How can I help you?",
         "chitchat_switch_tr": "Bundan sonra Türkçe yanıtlıyorum. Size nasıl yardımcı olabilirim?",
         "chitchat_switch_de": "Ich antworte ab jetzt auf Deutsch. Wie kann ich Ihnen helfen?",
@@ -238,6 +353,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "complaint_default": "По этой жалобе, пожалуйста, сначала обратитесь в службу по работе с гостями. Также можно передать через ресепшн.",
         "request_towel": "Пожалуйста, обратитесь на ресепшн по вопросу полотенца.",
         "request_blanket": "Пожалуйста, обратитесь на ресепшн по вопросу одеяла.",
+        "request_water": "Чтобы привезли воду или питьевую воду в номер, обратитесь на ресепшн; команда организует доставку.",
+        "request_pillow": "Пожалуйста, обратитесь на ресепшн по вопросу подушки.",
         "request_housekeeping": "По вопросам уборки и housekeeping, пожалуйста, обратитесь на ресепшн; нужная команда будет направлена.",
         "request_reception_contact": "Для самого быстрого решения, пожалуйста, свяжитесь с ресепшн напрямую.",
         "request_guest_relations_contact": "По этому вопросу наиболее подходящий отдел — служба по работе с гостями. Также можно обратиться через ресепшн.",
@@ -257,18 +374,18 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "guest_notification_policy_hint": "Уведомление для отеля можно отправить в чате, выбрав категорию; в следующем сообщении можно написать, например, глютен, аллергия или праздник.",
         "fixed_restaurant_info": "- Основной ресторан: завтрак 07:00-10:00, поздний завтрак 10:00-10:30, обед 12:30-14:00, ужин 19:00-21:00, мини-ночной буфет 23:30-00:00.\n- La Terrace A La Carte: 18:30-20:30 (по записи, платно).\n- Sinton BBQ: 13:00-22:00 (по понедельникам закрыт).\nСнеки и кафе:\n- Dolphin Snack 12:00-16:00\n- Beach Imbiss Snack 12:00-16:00\n- Beach Imbiss напитки 10:00-17:00\n- Gusto Snack 11:00-18:00\n- Libum Cafe 11:00-18:00\n- Moss Beach Restaurant & Bar 10:00-19:00\nБары:\n- Pool Bar 10:00-00:00\n- Мороженое 15:00-17:00\n- Lobby Bar 10:00-00:00\n- Aqua Bar 10:00-18:00 и 20:00-23:00\n- Dolphin Bar 10:00-17:00",
         "fixed_pool_beach_info": "- Есть частный пляж.\n- Шезлонги, зонты и пляжные полотенца бесплатно.\n- Пляж: 08:30-18:30.\nБассейны:\n- Три открытых: Relax Pool 08:30-18:30, Aquapark 10:00-12:00 и 14:00-16:00, Dolphin Pool 08:30-18:30.\n- Крытый (спа): 08:00-19:00.\n- Мелководье для детей в зоне аквапарка / открытых бассейнов.\n- Спасатели у бассейнов и на море.\n- Полотенца для бассейна и пляжа бесплатно.",
-        "fixed_spa_info": "- La Serenite Spa работает с 09:00 до 19:00.\nБесплатные зоны:\n- Сауна\n- Турецкий хаммам\n- Паровая комната\n- Крытый бассейн\nПлатные услуги:\n- Массаж\n- Пилинг\n- Уход за кожей\n- Другие процедуры\nПримечание: Базовое использование влажных зон бесплатно; профессиональные процедуры и терапия — платные.",
-        "fixed_animation_info": "- Вечерние акробатические танцевальные шоу, тематические вечера, живая музыка и DJ-выступления.\n- Дневная программа стартует в 10:00 и включает aqua gym, дартс и водное поло.\nДетские активности:\n- Jammies Kids Club / Mini Club: 10:00-12:30 и 14:30-17:00 (4-12 лет)\n- Mini Disco: 20:45-21:00 (4-12 лет)\n- Детская площадка: 07:00-21:00\nПримечание: Программы могут меняться в зависимости от сезона и операционного графика.",
+        "fixed_spa_info": "- La Serenite Spa работает с 09:00 до 19:00.\nБесплатные зоны:\n- Сауна\n- Турецкий хаммам\n- Паровая комната\n- Крытый бассейн\nПлатные услуги:\n- Массаж\n- Пилинг\n- Уход за кожей\n- Другие процедуры\nПримечание: Базовое использование влажных зон бесплатно; профессиональные процедуры и терапия — платные.\n\nАктуальные прайсы и PDF по процедурам в чат длинным текстом не выкладываются; премиум-контент — в разделе приложения «Spa & wellness». Откройте страницу кнопкой ниже.",
+        "fixed_spa_prices_module_hint": "Цены на спа и процедуры в чате не перечисляются. Актуальный прайс и пакеты только в модуле «Spa & wellness» — перейдите по кнопке ниже.",
+        "fixed_restaurants_bars_module_hint": "Меню Lobby Bar, меню Moss Beach Restaurant и прайсы барных напитков / импортного алкоголя в чате длинным текстом не показываются; актуальные PDF — в модуле «Рестораны и бары». Откройте раздел кнопкой ниже. (Общие часы работы точек можно спросить как «часы ресторанов» или посмотреть в том же модуле.)",
+        "fixed_animation_info": "- Вечерние акробатические шоу, тематические вечера, живая музыка и DJ (эта часть может меняться по дням и сезону; в отдельные дни возможны дополнительные шоу).\n- Дневной график в целом стабилен: старт в 10:00, aqua gym, дартс, водное поло. Актуальный текст и время — в приложении в разделе «Анимация и мероприятия».\nДетские активности:\n- Jammies Kids Club / Mini Club: 10:00-12:30 и 14:30-17:00 (4-12 лет)\n- Mini Disco: 20:45-21:00 (4-12 лет)\n- Детская площадка: 07:00-21:00\nПримечание: Вечерние программы и спецшоу могут отличаться по дням; точное расписание — у ресепшена или на стенде анимации.",
         "fixed_outside_hotel_info": "Для рекомендаций вне отеля лучше обратиться на ресепшн — там подскажут самые актуальные и безопасные варианты. Центр Аланьи находится примерно в 3 км, доступны такси и общественный транспорт.",
         "fixed_alanya_discover_intro": "Алания — популярный средиземноморский курорт с морем, крепостью и богатой историей. Часто советуют посетить:\n\n• Пляж Клеопатры — мелкий песок и прозрачная вода\n• Красная башня и гавань — символ города\n• Крепость Алании — панорама с холма; закаты впечатляют\n• Река Дим и зоны отдыха вглубь страны\n\nОтель в Обагёль, примерно 3 км до центра. Удобны такси и общественный транспорт. Актуальные часы работы, билеты и экскурсии лучше уточнять на ресепшене.\n\nКнопка ниже открывает раздел приложения «Откройте Аланью» с краткими текстами и фото.",
         "fixed_ice_cream_info": "Да, в отеле есть сервис мороженого. Он бесплатно подаётся в Pool Bar с 15:00 до 17:00. (Время может меняться в зависимости от сезона и операционного графика.)",
-        "hotel_info_soft_followup_towel": "Чтобы заказать полотенца в номер, напишите, например: «нужны полотенца в номер» — откроется форма запроса.",
-        "hotel_info_soft_followup_minibar": "Для пополнения мини-бара или сообщения о недостающих позициях: «запрос на мини-бар» или «пополнить мини-бар».",
-        "hotel_info_soft_followup_room_equipment": "Для чайника, вешалок, халата, тапочек: «запрос на оснащение номера» и коротко что нужно.",
-        "hotel_info_soft_followup_bedding": "Для подушки, постельного белья, одеяла: «запрос постельного белья» / «нужно одеяло».",
-        "hotel_info_soft_followup_baby_equipment": "Для детской кроватки или стульчика: «запрос детского оборудования».",
-        "hotel_info_soft_followup_room_cleaning": "Для уборки или смены полотенец: «запрос на уборку номера».",
-        "hotel_info_soft_followup_generic": "Напишите, что нужно в номер, и «запрос» — откроется форма запроса в чате.",
+        "fixed_laundry_dry_cleaning_info": "Прачечная, химчистка и глажка в отеле предоставляются на платной основе. По приёму вещей, срокам и актуальным ценам обратитесь на ресепшн или в housekeeping.",
+        "hotel_info_soft_followup_towel": (
+            "Указанное время и правила по карте относятся к пляжным/бассейновым полотенцам у выдачи у бассейна или пляжа. "
+            "Это не то же самое, что полотенца в ванной номера."
+        ),
     },
 }
 

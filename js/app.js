@@ -232,6 +232,12 @@
       '<svg class="rate-link__svg rate-link__svg--ig" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="rateIg" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#f09433"/><stop offset="50%" stop-color="#e6683c"/><stop offset="100%" stop-color="#bc1888"/></linearGradient></defs><rect x="2" y="2" width="20" height="20" rx="5" fill="url(#rateIg)"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="#fff" stroke-width="1.4"/><circle cx="17.4" cy="6.6" r="1.2" fill="#fff"/></svg>',
     booking:
       '<svg class="rate-link__svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 3v4M16 3v4M4 11h16"/></svg>',
+    bookingcom:
+      '<svg class="rate-link__svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2.5" fill="#003580"/><path fill="#fff" d="M6.5 9.5h11v1.6H6.5V9.5zm0 3.2h8v1.5H6.5v-1.5zm0 3.1h11v1.3H6.5v-1.3z"/></svg>',
+    expedia:
+      '<svg class="rate-link__svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#ffc72c"/><path fill="none" stroke="#1b1b1b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M7.5 12.5l2.8 2.5 6.2-7"/></svg>',
+    tripcom:
+      '<svg class="rate-link__svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="16" rx="3.5" fill="#2b6cef"/><path fill="#fff" d="M7 8.5h10v1.9H7V8.5zm0 3.4h6.5v1.8H7v-1.8z"/></svg>',
   };
 
   function badgeKeyFor(badge) {
@@ -246,6 +252,9 @@
     RATE_MODAL_BLOCKS.forEach((block, bi) => {
       const section = document.createElement("section");
       section.className = "rate-section";
+      if (block.sectionKey === "rateSectionReviews") {
+        section.classList.add("rate-section--reviews");
+      }
       section.style.animationDelay = `${bi * 0.06}s`;
 
       const h3 = document.createElement("h3");
@@ -253,9 +262,18 @@
       h3.textContent = t(block.sectionKey);
       section.appendChild(h3);
 
+      const isReviewBlock = block.sectionKey === "rateSectionReviews";
+      const itemsParent = isReviewBlock ? document.createElement("div") : null;
+      if (itemsParent) {
+        itemsParent.className = "rate-link-grid";
+        section.appendChild(itemsParent);
+      }
+
       block.items.forEach((item, ii) => {
         const a = document.createElement("a");
-        a.className = "rate-link" + (item.badge ? " rate-link--" + item.badge : "");
+        let linkClass = "rate-link" + (item.badge ? " rate-link--" + item.badge : "");
+        if (item.featured) linkClass += " rate-link--featured";
+        a.className = linkClass;
         a.href = item.href;
         a.target = "_blank";
         a.rel = "noopener noreferrer";
@@ -297,7 +315,7 @@
         a.appendChild(ico);
         a.appendChild(body);
         a.appendChild(arr);
-        section.appendChild(a);
+        (itemsParent || section).appendChild(a);
       });
 
       wrap.appendChild(section);
@@ -466,6 +484,34 @@
   window.vionaChatOpenAlanya = function () {
     moduleId = "alanya";
     requestSub = null;
+    surveySub = null;
+    showView("module");
+    renderModuleContent();
+    closeModals();
+  };
+
+  window.vionaChatOpenSpa = function () {
+    moduleId = "spa";
+    requestSub = null;
+    surveySub = null;
+    showView("module");
+    renderModuleContent();
+    closeModals();
+  };
+
+  window.vionaChatOpenRestaurantsBars = function () {
+    moduleId = "restaurant";
+    requestSub = null;
+    surveySub = null;
+    showView("module");
+    renderModuleContent();
+    closeModals();
+  };
+
+  // Sohbet: şikayet yönlendirmesi → İstekler / Şikayet alt sekmesi.
+  window.vionaChatOpenComplaintForm = function () {
+    moduleId = "requests";
+    requestSub = "complaint";
     surveySub = null;
     showView("module");
     renderModuleContent();

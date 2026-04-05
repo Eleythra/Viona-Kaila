@@ -79,10 +79,24 @@ FAULT_WORDS = [
     "засорился",
     "сгорел",
 ]
+# "temizlik kötü" burada olmamalı: _fuzzy_has çok kelimeli ifadede tek token (temizlik) ile
+# "temizlik istiyorum" gibi talepleri yanlışlıkla şikayet sayıyor. Aşağıdaki strict liste kullanılır.
+COMPLAINT_CLEANLINESS_STRICT_PHRASES = [
+    "temizlik kötü",
+    "temizlik kotu",
+    "temizlik berbat",
+    "temizlik rezalet",
+    "temizlik çok kötü",
+    "temizlik cok kotu",
+    "oda kirli",
+    "oda pis",
+    "oda çok kirli",
+    "oda cok kirli",
+]
 COMPLAINT_WORDS = [
     # TR
     "çok kötü", "cok kotu", "memnun değilim", "memnun degilim",
-    "gürültü", "gurultu", "temizlik kötü", "şikayet", "berbat",
+    "gürültü", "gurultu", "şikayet", "berbat",
     "hayal kırıklığı", "rezalet",
     # EN
     "complaint", "noisy", "dissatisfied", "unhappy", "terrible",
@@ -100,7 +114,10 @@ REQUEST_WORDS = [
     # towel / havlu
     "havlu",
     "towel",
+    "towels",
     "handtuch",
+    "handtücher",
+    "handtucher",
     "полотенце",
     # blanket / battaniye
     "battaniye",
@@ -131,6 +148,24 @@ ROUTING_HOUSEKEEPING_WORDS = [
     "housekeeping", "room cleaning", "clean my room",
     "zimmerreinigung", "reinigung bitte",
     "уборка номера", "уберите номер",
+    "temizlik istiyorum",
+    "temizlik istiyoruz",
+    "temizliğe ihtiyacım var",
+    "temizlige ihtiyacim var",
+    "temizliğe ihtiyacımız var",
+    "temizlige ihtiyacimiz var",
+    "temizlik talebi",
+    "temizlik talep",
+    "oda temizliği istiyorum",
+    "oda temizligi istiyorum",
+    "temizlik gelsin",
+    "oda temizlensin",
+    "temizleyin",
+    "cleaning please",
+    "need cleaning",
+    "need room cleaning",
+    "room cleaned",
+    "уборку в номер",
 ]
 ROUTING_RECEPTION_WORDS = [
     "resepsiyon", "resepsiyonla görüş", "resepsiyonla gorus",
@@ -338,21 +373,12 @@ SPECIAL_WORDS = [
     "erdnuss",
     "арахис",
     "nuts",
-    # Baby need
+    # Baby nutrition only (not crib/bed — those go to İstek / bebek ekipmanı kuralı)
     "baby food",
     "babynahrung",
     "детское питание",
-    "baby",
-    # TR baby / food
-    "bebek",
-    "bebeğim",
-    "bebeği",
-    "bebeği",
-    "mama",
     "bebek maması",
-    "bebek maması",
-    # DE baby
-    "babynahrung",
+    "bebek mamasi",
 ]
 
 # Chat istek formu (web ile aynı kategori id’leri). Önce daha özgül ifadeler.
@@ -379,6 +405,10 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
             "bebek ekipmani",
             "bebek yatağı",
             "bebek yatagi",
+            "bebek yatağına",
+            "bebek yatagina",
+            "bebek yatağa",
+            "bebek yataga",
             "mama sandalyesi",
             "baby equipment",
             "baby bed",
@@ -397,6 +427,10 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
             "yatak takımı",
             "yatak takimi",
             "battaniye",
+            "battiye",
+            "batiye",
+            "battainiye",
+            "batniye",
             "pillow",
             "duvet cover",
             "duvet",
@@ -416,7 +450,10 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
             "havlu",
             "havlum",
             "towel",
+            "towels",
             "handtuch",
+            "handtücher",
+            "handtucher",
             "полотенце",
             "ek havlu",
             "extra towel",
@@ -445,11 +482,241 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
 ]
 
 
+def _fuzzy_multiword_phrase_matches(text: str, phrase: str) -> bool:
+    """
+    Çok kelimeli istek ifadesinde yalnızca bir tokenın (ör. 'ekipmanı') eşleşmesiyle
+    yanlış kategori (bebek ekipmanı vs oda ekipmanı) seçilmesini engeller.
+    """
+    text_l = (text or "").lower()
+    parts = phrase.lower().split()
+    if len(parts) < 2:
+        return False
+    tokens = _norm_tokens(text)
+    for p in parts:
+        lp = len(p)
+        if lp <= 3:
+            # «odaya» içinde «oda» alt dizgesiyle «oda temizliği» yanlış eşleşmesin; yalnız tam token.
+            if p not in tokens:
+                return False
+            continue
+        found = p in text_l
+        if not found:
+            for u in tokens:
+                if abs(lp - len(u)) > 2:
+                    continue
+                if lp >= 4 and _dl(p, u) <= 1:
+                    found = True
+                    break
+        if not found:
+            return False
+    return True
+
+
 def extract_request_category_from_text(normalized_text: str) -> str | None:
+    t = (normalized_text or "").lower()
     for cat_id, phrases in REQUEST_ITEM_CATEGORY_PHRASES:
-        if any(_fuzzy_has(normalized_text, p) for p in phrases):
-            return cat_id
+        for p in phrases:
+            ps = p.strip()
+            if " " in ps:
+                if _fuzzy_multiword_phrase_matches(normalized_text, ps):
+                    return cat_id
+            elif _fuzzy_has(normalized_text, ps):
+                return cat_id
+    # «temizlik istiyorum» genelde 'genel temizlik' alt dizgesi taşımaz; açık talep + temizlik → housekeeping.
+    if _has_strong_service_request_intent(normalized_text):
+        if not any(
+            x in t
+            for x in (
+                "kötü",
+                "kotu",
+                "berbat",
+                "şikayet",
+                "sikayet",
+                "rezalet",
+                "kirli",
+                "pis",
+            )
+        ):
+            if any(
+                x in t
+                for x in (
+                    "temizlik",
+                    "temzilik",
+                    "cleaning",
+                    "housekeeping",
+                    "zimmerreinigung",
+                    "уборка",
+                    "уборку",
+                )
+            ):
+                return "room_cleaning"
     return None
+
+
+def extract_room_supply_request_entity(text: str) -> str | None:
+    """
+    Minibar dolum/eksik veya kettle için açık talep → İstek formu.
+    «minibar yok» / «kettle yok» gibi saf bilgi veya var mı soruları → None (RAG).
+    """
+    raw = text or ""
+    t = raw.lower()
+
+    def mentions_minibar() -> bool:
+        return "minibar" in t or "mini bar" in t or "mini-bar" in t
+
+    def minibar_info_only() -> bool:
+        if not mentions_minibar():
+            return False
+        if any(
+            x in t
+            for x in (
+                "ihtiyaç",
+                "ihtiyac",
+                "istiyorum",
+                "isterim",
+                "talep",
+                "içi boş",
+                "ici bos",
+                "içi bos",
+                "boş",
+                "bos",
+                "empty",
+                "refill",
+                "dolum",
+                "doldur",
+                "yenile",
+                "yenileme",
+                "eksik",
+                "restock",
+                "içinde",
+                "icinde",
+                "auffüll",
+                "nachfüll",
+                "leer",
+                "пуст",
+                "пополн",
+            )
+        ):
+            return False
+        if any(x in t for x in ("var mı", "varmi", "var mi", "is there", "do you have", "haben sie", "есть ли")):
+            return True
+        compact = re.sub(r"[\s?.!]+", " ", t).strip()
+        if compact in ("minibar yok", "yok minibar"):
+            return True
+        return False
+
+    def minibar_wants_supply() -> bool:
+        if not mentions_minibar():
+            return False
+        if minibar_info_only():
+            return False
+        return any(
+            x in t
+            for x in (
+                "içi boş",
+                "ici bos",
+                "içi bos",
+                "boş",
+                "bos",
+                "empty",
+                "refill",
+                "dolum",
+                "doldur",
+                "yenile",
+                "yenileme",
+                "eksik",
+                "dolu değil",
+                "dolu degil",
+                "hiç yok",
+                "hic yok",
+                "ihtiyaç",
+                "ihtiyac",
+                "istiyorum",
+                "isterim",
+                "talep",
+                "sipariş",
+                "siparis",
+                "restock",
+                "içinde",
+                "icinde",
+                "auffüll",
+                "nachfüll",
+                "leer",
+                "leere",
+                "пуст",
+                "пополн",
+                "need minibar",
+                "fill minibar",
+                "minibar refill",
+                " lazım",
+                " lazim",
+            )
+        )
+
+    def mentions_kettle() -> bool:
+        if any(
+            x in t
+            for x in (
+                "kettle",
+                "su ısıtıcısı",
+                "su isiticisi",
+                "wasserkocher",
+                "чайник",
+                "kettele",
+                "ketıl",
+                "ketil",
+            )
+        ):
+            return True
+        return _fuzzy_has(raw, "kettle")
+
+    def kettle_info_denial_only() -> bool:
+        if not mentions_kettle():
+            return False
+        if _has_strong_service_request_intent(raw):
+            return False
+        if any(x in t for x in ("çalışmıyor", "calismiyor", "broken", "arıza", "ariza", "not working")):
+            return False
+        if "yok" in t or "missing" in t or "no kettle" in t:
+            return True
+        return False
+
+    if minibar_wants_supply():
+        return "minibar"
+    if mentions_kettle() and not kettle_info_denial_only() and _has_strong_service_request_intent(raw):
+        return "kettle"
+    return None
+
+
+def _is_baby_equipment_intent(text: str) -> bool:
+    """
+    Bebek yatağı / sandalye / beşik talebi; beslenme bildirimi (gluten, bebek maması) değil.
+    """
+    if extract_request_category_from_text(text) == "baby_equipment":
+        return True
+    t = (text or "").lower()
+    if any(
+        m in t
+        for m in (
+            "mama sandalyesi",
+            "baby bed",
+            "high chair",
+            "baby equipment",
+            "crib",
+            "cot",
+            "kinderbett",
+            "reisebett",
+            "travel cot",
+        )
+    ):
+        return True
+    if ("beşik" in t or "besik" in t) and ("bebek" in t or "baby" in t):
+        return True
+    if ("bebek" in t or "baby" in t) and (
+        "yatak" in t or "yatağ" in t or "yatag" in t or "ekipman" in t or "equipment" in t
+    ):
+        return True
+    return False
 
 
 def _text_suggests_celebration_notif(text: str) -> bool:
@@ -497,8 +764,25 @@ def _has_strong_service_request_intent(text: str) -> bool:
         "bitte bring",
         "bitte schick",
         "bestellen",
+        "ihtiyacım",
+        "ihtiyacim",
+        "ihtiyacımız",
+        "ihtiyacimiz",
+        "need room",
+        "need cleaning",
+        "brauche ",
+        "benötige ",
     )
-    return any(m in t for m in markers)
+    if any(m in t for m in markers):
+        return True
+    # EN: «I need towels» vb.; «I need to know…» bilgi sorusu sayılmasın.
+    if re.search(r"(?<![a-z])(?:i|we) need (?!(?:to|someone)\b)", t):
+        return True
+    # TR: «… lazım» sık talep kalıbı (bebek yatağı, minibar vb.)
+    if " lazım" in t or " lazim" in t:
+        return True
+    ts = t.rstrip(".!? ")
+    return ts.endswith("lazım") or ts.endswith("lazim")
 
 
 RECOMMENDATION_WORDS = [
@@ -512,11 +796,21 @@ RECOMMENDATION_WORDS = [
     "pizza", "snack", "atıştırmalık", "atistirmalik",
     "kahve", "coffee", "tatlı", "tatli", "dessert",
     "çikolata", "cikolata", "chocolate",
-    "çocuk", "cocuk", "çocuğum", "cocugum", "kids", "mini club", "mini disco", "5 yaş", "5 yas", "aktivite", "activity",
+    # "mini club" / "mini disco" burada olmamalı: "mini disco kaçta" gibi saat soruları yanlışlıkla öneri metnine düşmesin.
+    "çocuk", "cocuk", "çocuğum", "cocugum", "kids", "5 yaş", "5 yas", "aktivite", "activity",
 ]
-URGENT_CONTACT_WORDS = [
-    "acil", "hemen", "urgent", "right now", "asap",
-    "şimdi biriyle konuşmam lazım", "simdi biriyle konusmam lazim",
+# Çok kelimeli ifadeler _fuzzy_has ile değil: aksi halde yalnızca "lazım" içeren
+# oda talepleri (ör. battaniye lazım) yanlışlıkla acil resepsiyon yoluna düşer.
+URGENT_RECEPTION_STRICT_PHRASES = [
+    "şimdi biriyle konuşmam lazım",
+    "simdi biriyle konusmam lazim",
+]
+URGENT_RECEPTION_SHORT_MARKERS = [
+    "acil",
+    "hemen",
+    "urgent",
+    "right now",
+    "asap",
 ]
 OUTSIDE_HOTEL_WORDS = [
     "otel dışında", "otel disinda", "outside hotel", "outside the hotel", "dışarıda", "disarida",
@@ -672,12 +966,12 @@ DEVICE_HINTS = {
     "hvac": ["klima", "ac", "air conditioner", "klimaanlage", "кондиционер"],
     "lighting": ["ışık", "isik", "lamba", "light", "lampe", "свет"],
     "internet": ["internet", "wifi", "wi-fi", "kablosuz", "wlan", "интернет", "вайфай"],
-    "kettle": ["kettle", "su ısıtıcısı", "su isiticisi", "wasserkocher", "чайник"],
+    "kettle": ["kettle", "su ısıtıcısı", "su isiticisi", "wasserkocher", "чайник", "kettele", "ketıl", "ketil"],
     "minibar": ["minibar", "mini bar"],
     "cabinet": ["dolap", "wardrobe", "schrank", "шкаф"],
     "phone": ["telefon", "phone", "telefon"],
-    "towel": ["havlu", "towel", "handtuch", "полотенце"],
-    "blanket": ["battaniye", "blanket", "decke", "одеяло"],
+    "towel": ["havlu", "towel", "towels", "handtuch", "handtücher", "handtucher", "полотенце"],
+    "blanket": ["battaniye", "battiye", "batiye", "battainiye", "batniye", "blanket", "decke", "одеяло"],
     "pillow": ["yastık", "yastik", "pillow", "kissen", "подушка"],
     "water": ["su", "water", "wasser", "вода"],
     # Dietary preference
@@ -811,15 +1105,31 @@ class RuleEngine:
     def is_strong_service_item_request(normalized_text: str) -> bool:
         return _has_strong_service_request_intent(normalized_text)
 
+    @staticmethod
+    def is_baby_equipment_intent(normalized_text: str) -> bool:
+        return _is_baby_equipment_intent(normalized_text)
+
+    @staticmethod
+    def sub_intent_for_room_request_entity(entity: str | None) -> str:
+        return RuleEngine._request_sub_intent(entity)
+
     def infer_guest_notification_group(self, normalized_text: str) -> str | None:
         """Sınıflandırıcı misafir bildirimi dediğinde metinden grup çıkarır (tam liste önce diyet göstermesin)."""
         if _matches_late_checkout_guest_notif(normalized_text):
             return "reception"
         if _text_suggests_celebration_notif(normalized_text):
             return "celebration"
+        if extract_room_supply_request_entity(normalized_text):
+            return None
+        if _is_baby_equipment_intent(normalized_text) and _has_strong_service_request_intent(
+            normalized_text
+        ):
+            return None
         if any(_fuzzy_has(normalized_text, w) for w in HEALTH_NOTIF_WORDS):
             return "health"
         if any(_fuzzy_has(normalized_text, w) for w in SPECIAL_WORDS):
+            if _is_baby_equipment_intent(normalized_text):
+                return None
             return "diet"
         return None
 
@@ -843,6 +1153,19 @@ class RuleEngine:
                 source="rule",
             )
 
+        if RuleEngine._text_is_cancel_like_short_message(normalized_text):
+            logger.info("RULE MATCH: chitchat (cancel_like_phrase)")
+            return IntentResult(
+                intent="chitchat",
+                sub_intent="cancel_command_hint",
+                entity=None,
+                department=None,
+                needs_rag=False,
+                response_mode="fixed",
+                confidence=0.99,
+                source="rule",
+            )
+
         # Geç çıkış → Talepler / Misafir bildirimleri (resepsiyon); rezervasyon formu değil.
         if _matches_late_checkout_guest_notif(normalized_text):
             logger.info("RULE MATCH: guest_notification (reception / late checkout)")
@@ -857,7 +1180,37 @@ class RuleEngine:
                 source="rule",
             )
 
-        # Misafir bildirimi (web modülüyle aynı kategori grupları): önce kutlama, sonra sağlık, sonra beslenme/alerji.
+        # Oda tedariki (bebek yatağı, minibar/kettle): kutlama/sağlık/diyet bildiriminden önce — yanlış form önlenir.
+        if _is_baby_equipment_intent(normalized_text) and _has_strong_service_request_intent(
+            normalized_text
+        ):
+            logger.info("RULE MATCH: request (baby_equipment_supply)")
+            return IntentResult(
+                intent="request",
+                sub_intent="room_supply_request",
+                entity=None,
+                department="reception",
+                needs_rag=False,
+                response_mode="guided",
+                confidence=1.0,
+                source="rule",
+            )
+        supply_entity_early = extract_room_supply_request_entity(normalized_text)
+        if supply_entity_early:
+            sub_sup = self._request_sub_intent(supply_entity_early)
+            logger.info("RULE MATCH: request (room_supply_early) entity=%s", supply_entity_early)
+            return IntentResult(
+                intent="request",
+                sub_intent=sub_sup,
+                entity=supply_entity_early,
+                department="reception",
+                needs_rag=False,
+                response_mode="guided",
+                confidence=1.0,
+                source="rule",
+            )
+
+        # Misafir bildirimi grupları: kutlama → sağlık → beslenme/alerji.
         if _text_suggests_celebration_notif(normalized_text):
             logger.info("RULE MATCH: guest_notification (celebration group)")
             return IntentResult(
@@ -883,17 +1236,20 @@ class RuleEngine:
                 source="rule",
             )
         if any(_fuzzy_has(normalized_text, w) for w in SPECIAL_WORDS):
-            logger.info("RULE MATCH: guest_notification (diet / allergy group)")
-            return IntentResult(
-                intent="guest_notification",
-                sub_intent="notif_group_diet",
-                entity=self._extract_entity(normalized_text),
-                department="guest_relations",
-                needs_rag=False,
-                response_mode="guided",
-                confidence=1.0,
-                source="rule",
-            )
+            if _is_baby_equipment_intent(normalized_text):
+                logger.info("RULE SKIP: diet guest_notification (baby equipment context)")
+            else:
+                logger.info("RULE MATCH: guest_notification (diet / allergy group)")
+                return IntentResult(
+                    intent="guest_notification",
+                    sub_intent="notif_group_diet",
+                    entity=self._extract_entity(normalized_text),
+                    department="guest_relations",
+                    needs_rag=False,
+                    response_mode="guided",
+                    confidence=1.0,
+                    source="rule",
+                )
         if _has_any_phrase_strict(normalized_text, MISAFIR_BILDIRIM_STRICT):
             logger.info("RULE MATCH: guest_notification (all categories)")
             return IntentResult(
@@ -907,7 +1263,9 @@ class RuleEngine:
                 source="rule",
             )
 
-        if any(_fuzzy_has(normalized_text, w) for w in URGENT_CONTACT_WORDS):
+        if _has_any_phrase_strict(normalized_text, URGENT_RECEPTION_STRICT_PHRASES) or any(
+            _fuzzy_has(normalized_text, w) for w in URGENT_RECEPTION_SHORT_MARKERS
+        ):
             logger.info("RULE MATCH: request (urgent_reception_contact)")
             return IntentResult(
                 intent="request",
@@ -943,6 +1301,32 @@ class RuleEngine:
                 needs_rag=False,
                 response_mode="answer",
                 confidence=0.95,
+                source="rule",
+            )
+
+        if RuleEngine._is_spa_price_module_redirect_query(normalized_text):
+            logger.info("RULE MATCH: hotel_info (spa_prices_module_redirect)")
+            return IntentResult(
+                intent="hotel_info",
+                sub_intent="service_information",
+                entity="fixed_spa_prices_module_hint",
+                department=None,
+                needs_rag=False,
+                response_mode="answer",
+                confidence=0.98,
+                source="rule",
+            )
+
+        if RuleEngine._matches_restaurants_bars_module_redirect(normalized_text):
+            logger.info("RULE MATCH: hotel_info (restaurants_bars_module_redirect)")
+            return IntentResult(
+                intent="hotel_info",
+                sub_intent="service_information",
+                entity="fixed_restaurants_bars_module_hint",
+                department=None,
+                needs_rag=False,
+                response_mode="answer",
+                confidence=0.97,
                 source="rule",
             )
 
@@ -999,8 +1383,79 @@ class RuleEngine:
                 source="rule",
             )
 
+        # Çamaşırhane / kuru temizleme / ütü: ücretli hizmet bilgisi (yazım hataları dahil); arıza formuna düşmesin.
+        if self._is_laundry_dry_cleaning_fixed_info_query(normalized_text):
+            logger.info("RULE MATCH: hotel_info (laundry_dry_cleaning_fixed)")
+            return IntentResult(
+                intent="hotel_info",
+                sub_intent="service_information",
+                entity="fixed_laundry_dry_cleaning_info",
+                department=None,
+                needs_rag=False,
+                response_mode="answer",
+                confidence=0.97,
+                source="rule",
+            )
+
+        # «temizlik» / «temzilik» tek başına → önce bilgi (RAG); «temizlik istiyorum» housekeeping kuralında kalır.
+        if self._is_cleaning_service_info_only_query(normalized_text):
+            logger.info("RULE MATCH: hotel_info (cleaning_service_info)")
+            return IntentResult(
+                intent="hotel_info",
+                sub_intent="service_information",
+                entity=None,
+                department=None,
+                needs_rag=True,
+                response_mode="answer",
+                confidence=0.94,
+                source="rule",
+            )
+
+        # Mini Club / Mini Disco / günlük animasyon saati soruları → sabit program metni (RAG/öneri öncesi).
+        if self._is_animation_kids_schedule_query(normalized_text):
+            logger.info("RULE MATCH: hotel_info (animation_kids_schedule)")
+            return IntentResult(
+                intent="hotel_info",
+                sub_intent="service_information",
+                entity="fixed_animation_info",
+                department=None,
+                needs_rag=False,
+                response_mode="answer",
+                confidence=0.98,
+                source="rule",
+            )
+
+        # «Animasyon programı» genel soru → sabit metin; yoksa genel anahtar RAG’e düşer, ardından «yarın» bağlamı kopar.
+        tl_anim = (normalized_text or "").lower()
+        if ("animasyon" in tl_anim or "animation" in tl_anim or "анимац" in tl_anim) and any(
+            k in tl_anim
+            for k in (
+                "program",
+                "programı",
+                "programi",
+                "schedule",
+                "tagesprogramm",
+                "расписан",
+                "програм",
+            )
+        ):
+            logger.info("RULE MATCH: hotel_info (animation_program_overview)")
+            return IntentResult(
+                intent="hotel_info",
+                sub_intent="service_information",
+                entity="fixed_animation_info",
+                department=None,
+                needs_rag=False,
+                response_mode="answer",
+                confidence=0.96,
+                source="rule",
+            )
+
         # Recommendation block (separate from routing and knowledge flows).
-        rec_entity = self._recommendation_entity(normalized_text)
+        if RuleEngine._text_is_cancel_like_short_message(normalized_text):
+            rec_entity = None
+        else:
+            rec_entity = self._recommendation_entity(normalized_text)
         if rec_entity and any(_fuzzy_has(normalized_text, w) for w in RECOMMENDATION_WORDS):
             logger.info("RULE MATCH: recommendation (%s)", rec_entity)
             return IntentResult(
@@ -1162,6 +1617,20 @@ class RuleEngine:
                 source="rule",
             )
 
+        tl = (normalized_text or "").lower()
+        if any(p in tl for p in COMPLAINT_CLEANLINESS_STRICT_PHRASES):
+            logger.info("RULE MATCH: complaint (cleanliness_strict)")
+            return IntentResult(
+                intent="complaint",
+                sub_intent="cleanliness_complaint",
+                entity=None,
+                department="guest_relations",
+                needs_rag=False,
+                response_mode="guided",
+                confidence=1.0,
+                source="rule",
+            )
+
         if any(_fuzzy_has(normalized_text, w) for w in COMPLAINT_WORDS):
             entity = self._extract_entity(normalized_text)
             sub = self._complaint_sub_intent(normalized_text, entity)
@@ -1218,6 +1687,19 @@ class RuleEngine:
                 needs_rag=False,
                 response_mode="guided",
                 confidence=1.0,
+                source="rule",
+            )
+
+        if RuleEngine._spa_wellness_chat_redirect_query(normalized_text):
+            logger.info("RULE MATCH: hotel_info (spa_wellness_fixed)")
+            return IntentResult(
+                intent="hotel_info",
+                sub_intent="service_information",
+                entity="fixed_spa_info",
+                department=None,
+                needs_rag=False,
+                response_mode="answer",
+                confidence=0.93,
                 source="rule",
             )
 
@@ -1426,6 +1908,31 @@ class RuleEngine:
     def _is_chitchat_query(text: str) -> bool:
         return RuleEngine._chitchat_sub_intent(text) is not None
 
+    # «Anlamadım» kısa mesajları: form iptali sonrası veya LLM düşük güven yolunda özel yanıt.
+    _CHITCHAT_CONFUSION_SOCIAL = frozenset(
+        {
+            "anlamadım",
+            "anlamiyorum",
+            "anlamadim",
+            "ne demek",
+            "ne demek istiyorsun",
+            "ne demek istiyorsunuz",
+            "i don't understand",
+            "i do not understand",
+            "what do you mean",
+            "don't understand",
+            "do not understand",
+            "verstehe nicht",
+            "versteh nicht",
+            "nicht verstanden",
+            "не понял",
+            "не поняла",
+            "не понимаю",
+            "что значит",
+            "что это значит",
+        }
+    )
+
     @staticmethod
     def _normalize_social_text(text: str) -> str:
         t = (text or "").lower().strip()
@@ -1438,6 +1945,8 @@ class RuleEngine:
         t = RuleEngine._normalize_social_text(text)
         if not t:
             return None
+        if t in RuleEngine._CHITCHAT_CONFUSION_SOCIAL:
+            return "confusion"
 
         social_patterns: dict[str, set[str]] = {
             "identity_question": {
@@ -1493,16 +2002,127 @@ class RuleEngine:
         return None
 
     @staticmethod
+    def is_confusion_followup_social(text: str) -> bool:
+        """Kısa «anlamadım» ifadesi (normalize_social_text uzayından)."""
+        t = RuleEngine._normalize_social_text(text or "")
+        return bool(t) and t in RuleEngine._CHITCHAT_CONFUSION_SOCIAL
+
+    @staticmethod
+    def _mentions_animation_or_kids_program_topic(text: str) -> bool:
+        """Günlük animasyon / çocuk kulübü / mini disco gibi programlar (duvar saatinden ayrıştırmak için)."""
+        t = (text or "").lower()
+        return any(
+            k in t
+            for k in (
+                "mini disco",
+                "mini club",
+                "mini-club",
+                "miniclub",
+                "minidisco",
+                "jammies",
+                "kids club",
+                "kidsclub",
+                "çocuk kulübü",
+                "cocuk kulubu",
+                "çocuk oyun",
+                "cocuk oyun",
+                "playground",
+                "kinderclub",
+                "kinder club",
+                "kinder disco",
+                "günlük program",
+                "gunluk program",
+                "daily program",
+                "tagesprogramm",
+                "animasyon",
+                "animation program",
+                "aqua gym",
+                "çocuk aktivite",
+                "cocuk aktivite",
+            )
+        )
+
+    @staticmethod
+    def _asks_activity_or_animation_schedule(text: str) -> bool:
+        """'Kaçta / saat kaç / ne zaman' ve benzeri program saati niyeti."""
+        t = (text or "").lower()
+        if any(
+            x in t
+            for x in (
+                "kaçta",
+                "kac ta",
+                "kacta",
+                "saat kaç",
+                "saat kac",
+                "ne zaman",
+                "hangi saatte",
+                "hangi saate",
+            )
+        ):
+            return True
+        if any(x in t for x in ("what time", "when does", "when is", "what hours")):
+            return True
+        if any(
+            x in t
+            for x in (
+                "wann ist",
+                "wann beginnt",
+                "wann startet",
+                "um wie viel uhr",
+                "welche zeit",
+                "wie spät ist",
+                "wie spaet ist",
+            )
+        ):
+            return True
+        if any(x in t for x in ("во сколько", "когда начинается", "расписание")):
+            return True
+        if ("saatleri" in t or "saatler" in t) and any(
+            x in t
+            for x in (
+                "mini",
+                "disco",
+                "kulüb",
+                "kulub",
+                "jammies",
+                "çocuk",
+                "cocuk",
+                "playground",
+                "kids club",
+                "animasyon",
+                "günlük",
+                "gunluk",
+                "aqua gym",
+                "program",
+            )
+        ):
+            return True
+        return False
+
+    @classmethod
+    def _is_animation_kids_schedule_query(cls, text: str) -> bool:
+        t = (text or "").lower()
+        return cls._asks_activity_or_animation_schedule(t) and cls._mentions_animation_or_kids_program_topic(t)
+
+    @staticmethod
     def _is_current_time_query(text: str) -> bool:
         t = (text or "").lower()
         # Turkish: "saat kaç" / "saat kac" (exclude "saatleri" opening hours, and check-in/out)
         if any(x in t for x in ["saat kaç", "saat kac"]) and not any(x in t for x in ["giriş", "giris", "çıkış", "cikis"]):
+            if RuleEngine._mentions_animation_or_kids_program_topic(t):
+                return False
             return True
         if any(x in t for x in ["what time is it", "what time now"]) or "what time" in t and ("now" in t or "is it" in t):
+            if RuleEngine._mentions_animation_or_kids_program_topic(t):
+                return False
             return True
         if "wie spät" in t or "wie spaet" in t:
+            if RuleEngine._mentions_animation_or_kids_program_topic(t):
+                return False
             return True
         if "который час" in t or "сколько времени" in t:
+            if RuleEngine._mentions_animation_or_kids_program_topic(t):
+                return False
             return True
         return False
 
@@ -1581,6 +2201,103 @@ class RuleEngine:
         return "eis" in _norm_tokens(t)
 
     @staticmethod
+    def _mentions_laundry_dry_cleaning_topic(text: str) -> bool:
+        """Kuru temizleme, çamaşırhane, laundry vb. (yaygın yazım hataları)."""
+        t = (text or "").lower()
+        if any(
+            k in t
+            for k in (
+                "dry cleaning",
+                "laundry",
+                "çamaşırhane",
+                "camasirhane",
+                "химчистка",
+                "chemische reinigung",
+                "wäscherei",
+                "waescherei",
+            )
+        ):
+            return True
+        if "ütü hizmeti" in t or "utu hizmeti" in t:
+            return True
+        # kuru temizleme / kuru temilzeme / kuru temizlme …
+        if "kuru tem" in t:
+            return True
+        compact = re.sub(r"\s+", "", t)
+        if "kurutem" in compact or "kurutemiz" in compact:
+            return True
+        return False
+
+    @classmethod
+    def _is_laundry_dry_cleaning_fixed_info_query(cls, text: str) -> bool:
+        """Oda temizliği talebinden ayrı: ücretli çamaşır / kuru temizleme bilgisi."""
+        if any(_fuzzy_has(text, w) for w in FAULT_WORDS):
+            return False
+        if not cls._mentions_laundry_dry_cleaning_topic(text):
+            return False
+        tl = (text or "").lower()
+        if any(
+            x in tl
+            for x in (
+                "şikayet",
+                "sikayet",
+                "complaint",
+                "beschwerde",
+                "жалоб",
+                "çok kötü",
+                "cok kotu",
+                "berbat",
+                "rezalet",
+            )
+        ):
+            return False
+        # Sadece oda temizliği isteği → housekeeping (üst kurallarda yakalanır); burada yakalama.
+        if _has_any_phrase_strict(tl, ROUTING_HOUSEKEEPING_WORDS):
+            return False
+        return True
+
+    @staticmethod
+    def _is_cleaning_service_info_only_query(text: str) -> bool:
+        """Açık talep ('istiyorum' vb.) yokken temizlik → bilgi (RAG); talep housekeeping yolunda."""
+        if _has_strong_service_request_intent(text):
+            return False
+        tl = (text or "").lower().strip().strip(".,!?")
+        if any(
+            x in tl
+            for x in (
+                "kötü",
+                "kotu",
+                "berbat",
+                "şikayet",
+                "sikayet",
+                "kirli",
+                "pis",
+                "rezalet",
+            )
+        ):
+            return False
+        # «housekeeping» tek başına aşağıdaki routing listesinde talep olarak geçer; burada yakalama.
+        if tl in ("temizlik", "temzilik", "cleaning", "reinigung"):
+            return True
+        if len(tl) > 56:
+            return False
+        short_q = (
+            "temizlik nasıl",
+            "temizlik nedir",
+            "temizlik var",
+            "temizlik ücretli",
+            "temizlik ucretli",
+            "temizlik hizmeti",
+            "temizlik saat",
+            "cleaning service",
+            "room cleaning info",
+        )
+        for p in short_q:
+            if tl == p or tl.startswith(p + " ") or tl.startswith(p + "?"):
+                return True
+        return False
+
+    @staticmethod
     def _is_service_info_query(text: str) -> bool:
         t = text.lower()
         info_terms = [
@@ -1605,7 +2322,19 @@ class RuleEngine:
             "химчистка",
             "глажка",
         ]
-        return any(k in t for k in info_terms)
+        if any(k in t for k in info_terms):
+            return True
+        return RuleEngine._mentions_laundry_dry_cleaning_topic(text)
+
+    @staticmethod
+    def _text_is_cancel_like_short_message(text: str) -> bool:
+        """«İptal et» vb. — içindeki «et» et (yemek) önerisi veya başka yanlış niyet tetiklemesin."""
+        t = (text or "").lower().strip()
+        if re.search(r"\biptal\s+et\b", t):
+            return True
+        if t in ("iptal et", "iptal", "vazgeç", "vazgec", "cancel", "abbrechen", "отмена"):
+            return True
+        return False
 
     @staticmethod
     def _recommendation_entity(text: str) -> str | None:
@@ -1636,7 +2365,9 @@ class RuleEngine:
             return "meat_bbq_pref"
         if any(k in t for k in ["balık", "balik", "fish"]):
             return "fish_pref"
-        if any(k in t for k in ["bbq", "barbeku", "barbecue", "et severim", "meat"]) or re.search(r"(?<![a-zçğıöşü])et(?![a-zçğıöşü])", t):
+        if any(k in t for k in ["bbq", "barbeku", "barbecue", "et severim", "meat"]) or re.search(
+            r"(?<!iptal )(?<![a-zçğıöşü])et(?![a-zçğıöşü])", t
+        ):
             return "meat_bbq_pref"
         if any(k in t for k in ["pizza", "snack", "atıştırmalık", "atistirmalik"]):
             return "pizza_snack_pref"
@@ -1662,6 +2393,239 @@ class RuleEngine:
     def _is_relaxation_query(text: str) -> bool:
         t = (text or "").lower()
         return any(k in t for k in ["çok yorgun", "cok yorgun", "yorgunum", "relax", "dinlenmek istiyorum", "rahatlamak istiyorum"])
+
+    @staticmethod
+    def _is_spa_price_module_redirect_query(text: str) -> bool:
+        """Yalnızca açık fiyat / tarife soruları → modül; «ücretli ne var» gibi bilgi soruları dışarıda."""
+        t = (text or "").lower()
+        if not any(
+            x in t
+            for x in (
+                "spa",
+                "wellness",
+                "serenite",
+                "masaj",
+                "massage",
+                "hamam",
+                "peeling",
+                "cilt bakım",
+                "cilt bakim",
+                "skin care",
+                "hautpflege",
+                "массаж",
+                "хаммам",
+                "спа",
+                "велнес",
+                "пилинг",
+            )
+        ):
+            return False
+        if any(
+            p in t
+            for p in (
+                "fiyat",
+                "fiyatı",
+                "fiyatlari",
+                "tarife",
+                "ne kadar",
+                "kaç para",
+                "kac para",
+                "price",
+                "prices",
+                "cost",
+                "how much",
+                "preis",
+                "preise",
+                "kosten",
+                "tariff",
+                "цена",
+                "стоимость",
+                "сколько",
+                "прайс",
+                "тариф",
+                "стоит",
+                "preisliste",
+                "preis list",
+            )
+        ):
+            return True
+        # «ücret» yalnız kelime sınırı: «ücretli» bilgi sorusunu yanlış yakalamasın.
+        if re.search(r"(?<![a-zçğıöşü])ücret(i|ler|leri|lerdir)?(?![a-zçğıöşü])", t):
+            return True
+        if re.search(r"(?<![a-zçğıöşü])ucret(i|ler|leri)?(?![a-zçğıöşü])", t):
+            return True
+        return False
+
+    @staticmethod
+    def _menu_word_or_typo_in(t: str) -> bool:
+        """«bar mneü», menyu vb. yazım hataları dahil menü sinyali."""
+        if any(x in t for x in ("menü", "menu", "меню", "speisekarte", "menyu")):
+            return True
+        if "mneü" in t or "mneu" in t:
+            return True
+        if "mnü" in t or " mnu" in t or t.endswith("mnu"):
+            return True
+        return False
+
+    @staticmethod
+    def _matches_restaurants_bars_module_redirect(text: str) -> bool:
+        """Lobby Bar / Moss menü ve bar içki fiyat listeleri → Restaurant & barlar modülü (uzun metin yok)."""
+        t = (text or "").lower()
+        # Boşluksuz yazım: «armenü» (= bar menü), «barmenu» vb.
+        if any(x in t for x in ("armenü", "armenu", "barmenü", "barmenu", "barmneü", "barmneu")):
+            return True
+        _tok = set(re.findall(r"[a-zA-ZçğıöşüÇĞİÖŞÜа-яА-ЯёЁ]+", t))
+        has_bar_word = "bar" in _tok or "bars" in _tok
+        if any(
+            k in t
+            for k in ("restoran saatleri", "restaurant hours", "restaurantzeiten", "часы ресторанов")
+        ) and not any(m in t for m in ("menü", "menu", "speisekarte", "меню", "menyu", "pdf", "mneü", "mneu")):
+            return False
+        if has_bar_word and RuleEngine._menu_word_or_typo_in(t):
+            return True
+        if len(t) <= 30 and t.startswith("ar ") and RuleEngine._menu_word_or_typo_in(t):
+            return True
+        if "moss" in t and (
+            RuleEngine._menu_word_or_typo_in(t)
+            or any(
+                m in t
+                for m in (
+                    "restaurant",
+                    "yemek",
+                    "food",
+                    "speise",
+                    "essen",
+                    "еда",
+                    "beach",
+                )
+            )
+        ):
+            return True
+        if ("lobby" in t or "lobi" in t or "лобби" in t) and has_bar_word:
+            if RuleEngine._menu_word_or_typo_in(t) or any(
+                m in t
+                for m in (
+                    "içecek",
+                    "icecek",
+                    "drink",
+                    "cocktail",
+                    "fiyat",
+                    "price",
+                    "preis",
+                    "liste",
+                    "list",
+                    "pdf",
+                    "напитк",
+                    "коктейл",
+                )
+            ):
+                return True
+        if has_bar_word or "бар" in t:
+            if any(
+                m in t
+                for m in (
+                    "içki",
+                    "icki",
+                    "import",
+                    "ithal",
+                    "alkol",
+                    "alcohol",
+                    "spirits",
+                    "viski",
+                    "vodka",
+                    "şarap",
+                    "sarap",
+                    "wine",
+                    "bier",
+                    "bira",
+                    "cocktail",
+                    "drink",
+                    "getränk",
+                    "getrank",
+                    "fiyat",
+                    "price",
+                    "preis",
+                    "liste",
+                    "list",
+                    "tarife",
+                    "меню",
+                    "цена",
+                    "напитк",
+                    "алкогол",
+                    "импорт",
+                )
+            ):
+                return True
+        if ("import" in t or "ithal" in t) and any(m in t for m in ("içki", "icki", "alkol", "alcohol", "drink", "bar")):
+            return True
+        if any(
+            p in t
+            for p in (
+                "restoran menüsü",
+                "restoran menusu",
+                "otel menüsü",
+                "otel menusu",
+                "hotel menu",
+                "restaurant menu",
+                "hotelmenü",
+                "speisekarte hotel",
+                "меню отеля",
+                "отель меню",
+            )
+        ):
+            return True
+        if RuleEngine._menu_word_or_typo_in(t) and (
+            has_bar_word
+            or "moss" in t
+            or "lobby" in t
+            or "lobi" in t
+            or "restoran" in t
+            or "restaurant" in t
+            or "otel" in t
+            or "hotel" in t
+            or "a la carte" in t
+            or "ala carte" in t
+            or "à la carte" in t
+        ):
+            return True
+        return False
+
+    @staticmethod
+    def _spa_wellness_chat_redirect_query(text: str) -> bool:
+        """Genel spa / wellness bilgi soruları → sabit metin + modül; arıza/şikayet cümlelerini ele."""
+        t = (text or "").lower()
+        if RuleEngine._is_spa_price_module_redirect_query(text):
+            return False
+        if any(
+            f in t
+            for f in (
+                "arıza",
+                "ariza",
+                "bozuk",
+                "çalışmıyor",
+                "calismiyor",
+                "fault",
+                "broken",
+                "wifi",
+                "wi-fi",
+                "internet",
+                "şikayet",
+                "sikayet",
+                "complaint",
+            )
+        ):
+            return False
+        if "la serenite" in t or "serenite" in t:
+            return True
+        if "wellness" in t:
+            return True
+        if "spa" in t:
+            return True
+        if "türk hamam" in t or "turk hamam" in t or "hamam" in t or "buhar odası" in t or "buhar odasi" in t:
+            return True
+        if "sauna" in t and any(x in t for x in ("spa", "otel", "hotel", "wellness", "ücretsiz", "ucretsiz", "ücretli", "ucretli")):
+            return True
+        return False
 
     @staticmethod
     def _is_bare_checkin_or_checkout_keyword(text: str) -> bool:
@@ -1739,7 +2703,29 @@ class RuleEngine:
 
     @staticmethod
     def _complaint_sub_intent(text: str, entity: str | None) -> str:
-        if "gürültü" in text or "gurultu" in text or "noise" in text:
+        # Tek kelimelik «şikayet» / complaint → uygulama formu butonu (service_complaint = yalnız metin).
+        tl_raw = (text or "").strip().lower()
+        core = tl_raw.strip(".,!?…").replace("؟", "")
+        parts = [p for p in core.split() if p]
+        _bare_complaint = frozenset(
+            {
+                "şikayet",
+                "sikayet",
+                "complaint",
+                "beschwerde",
+                "жалоба",
+            }
+        )
+        if len(parts) == 1 and parts[0] in _bare_complaint:
+            return "complaint_intake"
+        if (
+            "gürültü" in text
+            or "gurultu" in text
+            or "noise" in text
+            or "lärm" in text
+            or "laerm" in text
+            or "шум" in text
+        ):
             return "noise_complaint"
         if "temizlik" in text or "clean" in text:
             return "cleanliness_complaint"
@@ -1747,6 +2733,40 @@ class RuleEngine:
             return "staff_complaint"
         if "oda" in text or "room" in text:
             return "room_condition_complaint"
+        # «şikayetçiyim» + konu: butonlu şikayet formu için alt tür (genel «şikayetçiyim» tek başına değil).
+        if (
+            "şikayetçiyim" in text
+            or "şikayetciyim" in text
+            or "sikayetciyim" in text
+            or "şikayet ediyorum" in text
+            or "sikayet ediyorum" in text
+            or "complaining about" in text
+        ):
+            if (
+                "gürültü" in text
+                or "gurultu" in text
+                or "noise" in text
+                or "lärm" in text
+                or "laerm" in text
+                or "шум" in text
+                or "rahatsız" in text
+                or "rahatsiz" in text
+            ):
+                return "noise_complaint"
+            if (
+                "temizlik" in text
+                or "kirli" in text
+                or "pis" in text
+                or "clean" in text
+                or "dirty" in text
+                or "schmutz" in text
+                or "грязн" in text
+            ):
+                return "cleanliness_complaint"
+            if "personel" in text or "staff" in text or "персонал" in text:
+                return "staff_complaint"
+            if "oda" in text or "room" in text or "zimmer" in text or "номер" in text:
+                return "room_condition_complaint"
         return "service_complaint"
 
     @staticmethod

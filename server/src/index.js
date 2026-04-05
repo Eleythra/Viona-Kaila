@@ -166,6 +166,9 @@ const corsAllowlist = new Set(
   "http://localhost:5500",
   "http://127.0.0.1:5500",
   "http://127.0.0.1:3000",
+  /** Yerel statik sunucu: python -m http.server 8080 (Viona + /admin/) */
+  "http://localhost:8080",
+  "http://127.0.0.1:8080",
 ]
   .map(normalizeOrigin)
   .forEach((x) => corsAllowlist.add(x));

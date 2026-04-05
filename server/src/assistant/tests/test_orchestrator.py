@@ -13,7 +13,8 @@ from assistant.services.orchestrator import ChatOrchestrator  # noqa: E402
 from assistant.services.policy_service import PolicyService  # noqa: E402
 from assistant.services.response_composer import ResponseComposer  # noqa: E402
 from assistant.services.response_service import ResponseService  # noqa: E402
-from assistant.services.rule_engine import RuleEngine  # noqa: E402
+from assistant.services.rule_engine import RuleEngine, extract_request_category_from_text  # noqa: E402
+from assistant.utils.text_normalizer import normalize_text  # noqa: E402
 from assistant.services.throttle_service import ThrottleService  # noqa: E402
 
 
@@ -109,22 +110,159 @@ def test_kutlama_and_kkutlama_are_celebration_not_diet():
         assert "alerjen bildirimi" not in res.message.lower()
 
 
-def test_soft_havlu_appends_room_request_hint_after_rag():
+def test_havlu_rag_appends_pool_vs_room_towel_note_not_form_redirect():
     orch, rag, _ = build_orchestrator()
     res = orch.handle(ChatRequest(message="havlu", ui_language="tr", locale="tr"))
     assert rag.called is True
     assert res.meta.intent == "hotel_info"
     assert res.type == "answer"
-    assert "talep" in res.message.lower()
-    assert "havlu" in res.message.lower()
+    assert "plaj" in res.message.lower() or "havuz" in res.message.lower()
+    assert "istek formu" not in res.message.lower()
+    assert "talep ediyorum" not in res.message.lower()
 
 
-def test_soft_minibar_hint_is_not_towel_wording():
+def test_minibar_rag_has_no_chat_form_suffix():
     orch, rag, _ = build_orchestrator()
     res = orch.handle(ChatRequest(message="minibar", ui_language="tr", locale="tr"))
     assert rag.called is True
-    assert "minibar" in res.message.lower()
+    assert res.meta.intent == "hotel_info"
+    assert res.type == "answer"
     assert "havlu talep" not in res.message.lower()
+    assert "istek formu" not in res.message.lower()
+
+
+def test_minibar_empty_opens_request_form_not_reception_fallback():
+    orch, _, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="minibarın içi boş", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "request"
+    assert res.type == "inform"
+    assert res.meta.action and res.meta.action.kind == "chat_form"
+
+
+def test_minibar_yok_stays_hotel_info_not_request():
+    orch, rag, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="minibar yok", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "hotel_info"
+    assert res.type == "answer"
+    assert rag.called is True
+
+
+def test_kettle_yok_stays_hotel_info_not_request():
+    orch, rag, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="kettle yok", ui_language="en", locale="en"))
+    assert res.meta.intent == "hotel_info"
+    assert res.type == "answer"
+    assert rag.called is True
+
+
+def test_kettle_typo_with_need_opens_request_form():
+    orch, _, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="kettele ihtiyacım var", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "request"
+    assert res.type == "inform"
+    assert res.meta.action and res.meta.action.kind == "chat_form"
+
+
+def test_baby_bed_need_opens_request_not_diet_guest_notification():
+    orch, _, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="bebek yatağına ihtiyacım var", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "request"
+    assert res.type == "inform"
+    assert res.meta.action and res.meta.action.kind == "chat_form"
+    assert "alerjen" not in res.message.lower()
+    assert "gluten" not in res.message.lower()
+
+
+def test_pregnant_with_baby_bed_need_is_request_not_health_guest_notification():
+    """Hamilelik sağlık bildirimi, bebek yatağı talebinden önce gelmemeli."""
+    orch, _, _ = build_orchestrator()
+    res = orch.handle(
+        ChatRequest(message="hamileyim bebek yatağına ihtiyacım var", ui_language="tr", locale="tr")
+    )
+    assert res.meta.intent == "request"
+    assert res.type == "inform"
+    assert res.meta.action and res.meta.action.kind == "chat_form"
+
+
+def test_balayi_phrase_with_empty_minibar_is_supply_request_not_celebration():
+    """Balayı kelimesi kutlamadan önce minibar tedarik talebi yakalanmalı."""
+    orch, _, _ = build_orchestrator()
+    res = orch.handle(
+        ChatRequest(message="balayı odasındayız minibarın içi boş", ui_language="tr", locale="tr")
+    )
+    assert res.meta.intent == "request"
+    assert res.type == "inform"
+    assert res.meta.action and res.meta.action.kind == "chat_form"
+
+
+def test_baby_bed_lazim_opens_request_form():
+    orch, _, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="bebek yatağı lazım", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "request"
+    assert res.meta.action and res.meta.action.kind == "chat_form"
+
+
+def test_minibar_lazim_opens_request_form():
+    orch, _, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="minibar lazım", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "request"
+    assert res.meta.action and res.meta.action.kind == "chat_form"
+
+
+def test_critical_routing_regression_matrix():
+    """Kural motoru: doğru niyet + sohbet formu (regresyon tablosu). Her satır ayrı oturum."""
+    n = 0
+
+    def isolate():
+        nonlocal n
+        n += 1
+        return f"routing-reg-{n}", f"routing-reg-{n}"
+
+    def req(msg: str) -> None:
+        uid, sid = isolate()
+        orch, _, _ = build_orchestrator()
+        r = orch.handle(
+            ChatRequest(message=msg, ui_language="tr", locale="tr", user_id=uid, session_id=sid)
+        )
+        assert r.meta.intent == "request", msg
+        assert r.meta.action and r.meta.action.kind == "chat_form", msg
+
+    def gn(msg: str) -> None:
+        uid, sid = isolate()
+        orch, _, _ = build_orchestrator()
+        r = orch.handle(
+            ChatRequest(message=msg, ui_language="tr", locale="tr", user_id=uid, session_id=sid)
+        )
+        assert r.meta.intent == "guest_notification", msg
+        assert r.meta.action and r.meta.action.kind == "chat_form", msg
+
+    def fault(msg: str) -> None:
+        uid, sid = isolate()
+        orch, _, _ = build_orchestrator()
+        r = orch.handle(
+            ChatRequest(message=msg, ui_language="tr", locale="tr", user_id=uid, session_id=sid)
+        )
+        assert r.meta.intent == "fault_report", msg
+        assert r.meta.action and r.meta.action.kind == "chat_form", msg
+
+    def hi(msg: str) -> None:
+        uid, sid = isolate()
+        orch, rag, _ = build_orchestrator()
+        r = orch.handle(
+            ChatRequest(message=msg, ui_language="tr", locale="tr", user_id=uid, session_id=sid)
+        )
+        assert r.meta.intent == "hotel_info", msg
+        assert r.type == "answer", msg
+        assert rag.called is True, msg
+
+    req("temizlik istiyorum")
+    req("minibarın içi boş")
+    req("bebek yatağına ihtiyacım var")
+    gn("gluten hassasiyetim var")
+    gn("bebek maması ihtiyacım var")
+    fault("klima çalışmıyor")
+    hi("temizlik")
+    hi("minibar yok")
 
 
 def test_guest_notification_switch_from_diet_to_kutlama_at_category_step():
@@ -172,7 +310,9 @@ def test_request_and_complaint_cases():
     assert "havlu" in req.message.lower() or "banyo" in req.message.lower()
     assert cmp_.meta.intent == "complaint"
     assert cmp_.type == "inform"
-    assert cmp_.meta.action and cmp_.meta.action.kind == "chat_form"
+    assert cmp_.meta.action is None
+    assert "resepsiyon" in cmp_.message.lower()
+    assert "şikayet" in cmp_.message.lower() or "form" in cmp_.message.lower()
 
 
 def test_bare_cikis_is_hotel_info_not_reservation():
@@ -541,6 +681,73 @@ def test_current_time_tr_contains_hhmm():
     assert re.search(r"\d{2}:\d{2}", res.message)
 
 
+def test_dry_cleaning_typos_return_fixed_laundry_info_not_fault():
+    orch, rag, _ = build_orchestrator()
+    for msg in (
+        "kuru temilzeme",
+        "kuru temizlme",
+        "kuru temizleme hizmetinden nasıl yararlanabilirim",
+    ):
+        res = orch.handle(ChatRequest(message=msg, ui_language="tr", locale="tr"))
+        assert res.meta.intent == "hotel_info", msg
+        assert res.type == "answer", msg
+        assert rag.called is False, msg
+        assert "ücretli" in res.message.lower() or "resepsiyon" in res.message.lower(), msg
+
+
+def test_temizlik_istiyorum_opens_request_not_complaint():
+    orch, _, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="temizlik istiyorum", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "request"
+    assert res.type == "inform"
+    assert res.meta.action and res.meta.action.kind == "chat_form"
+
+
+def test_bare_temizlik_is_hotel_info_rag_not_housekeeping_form():
+    orch, rag, _ = build_orchestrator()
+    for msg in ("temizlik", "temzilik"):
+        rag.called = False
+        res = orch.handle(ChatRequest(message=msg, ui_language="tr", locale="tr"))
+        assert res.meta.intent == "hotel_info", msg
+        assert res.type == "answer", msg
+        assert rag.called is True, msg
+        assert res.meta.action is None, msg
+
+
+def test_kettle_single_word_rag_skips_redundant_room_equipment_suffix():
+    orch, rag, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="kettle", ui_language="en", locale="en"))
+    assert rag.called is True
+    assert res.meta.intent == "hotel_info"
+    assert "extra in-room" not in res.message.lower()
+    assert "room equipment" not in res.message.lower()
+
+
+def test_oda_ekipmani_typo_is_room_equipment_not_baby():
+    assert (
+        extract_request_category_from_text(normalize_text("oda ekipmanıı"))
+        == "room_equipment"
+    )
+
+
+def test_temizlik_kotu_still_complaint():
+    orch, _, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="temizlik kötü", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "complaint"
+    assert res.meta.action and res.meta.action.kind == "open_complaint_form"
+    assert res.type == "inform"
+
+
+def test_mini_disco_schedule_uses_fixed_animation_not_recommendation():
+    orch, rag, _ = build_orchestrator()
+    for msg in ("mini disco kaçta", "mini disco saat kaçta", "mini club ne zaman", "mini disco saat kaç"):
+        res = orch.handle(ChatRequest(message=msg, ui_language="tr", locale="tr"))
+        assert res.meta.intent == "hotel_info", msg
+        assert res.type == "answer", msg
+        assert rag.called is False, msg
+        assert "20:45" in res.message or "mini disco" in res.message.lower(), msg
+
+
 def test_checkout_quick_time_is_hotel_info():
     orch, rag, _ = build_orchestrator()
     # should be treated as hotel check-out time => hotel_info => rag
@@ -585,12 +792,138 @@ def test_late_checkout_opens_guest_notifications_not_reservation():
     assert res.meta.action.kind == "open_guest_notifications_form"
 
 
-def test_hotel_info_uses_rag():
+def test_spa_hours_fixed_answer_opens_spa_module_not_rag():
     orch, rag, _ = build_orchestrator()
     res = orch.handle(ChatRequest(message="spa saatleri nedir", ui_language="tr", locale="tr"))
-    assert rag.called is True
+    assert rag.called is False
     assert res.meta.intent == "hotel_info"
     assert res.type == "answer"
+    assert res.meta.action is not None
+    assert res.meta.action.kind == "open_spa_module"
+    assert "la serenite" in res.message.lower() or "09:00" in res.message
+
+
+def test_spa_massage_price_redirect_opens_spa_module_no_rag():
+    orch, rag, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="masaj fiyatları nedir", ui_language="tr", locale="tr"))
+    assert rag.called is False
+    assert res.meta.intent == "hotel_info"
+    assert res.meta.action and res.meta.action.kind == "open_spa_module"
+    low = res.message.lower()
+    assert "sohbette" in low or "chat" in low or "liste" in low or "module" in low or "modül" in low
+
+
+def test_moss_menu_redirect_opens_restaurants_module():
+    orch, rag, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="Moss restaurant menüsü var mı", ui_language="tr", locale="tr"))
+    assert rag.called is False
+    assert res.meta.intent == "hotel_info"
+    assert res.meta.action and res.meta.action.kind == "open_restaurants_bars_module"
+
+
+def test_lobby_bar_drink_prices_redirect_opens_restaurants_module():
+    orch, rag, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="lobby bar içki fiyat listesi", ui_language="tr", locale="tr"))
+    assert rag.called is False
+    assert res.meta.action and res.meta.action.kind == "open_restaurants_bars_module"
+
+
+def test_minibar_menu_does_not_trigger_restaurants_bar_redirect():
+    orch, rag, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="minibar menüsü", ui_language="tr", locale="tr"))
+    assert res.meta.action is None or res.meta.action.kind != "open_restaurants_bars_module"
+
+
+def test_spa_ucretli_ne_var_is_information_not_price_only_redirect():
+    """«Ücretli ne var» bilgi sorusu; yalnız fiyat/tarife sorusunda kısa fiyat yönlendirmesi."""
+    orch, rag, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="spa ücretli ne var", ui_language="tr", locale="tr"))
+    assert rag.called is False
+    assert res.meta.action and res.meta.action.kind == "open_spa_module"
+    low = res.message.lower()
+    assert "ücretsiz" in low or "free" in low or "ücretli" in low or "paid" in low or "la serenite" in low
+
+
+def test_bar_menu_typo_opens_restaurants_module():
+    orch, rag, _ = build_orchestrator()
+    r1 = orch.handle(ChatRequest(message="bar mneü", ui_language="tr", locale="tr"))
+    assert r1.meta.action and r1.meta.action.kind == "open_restaurants_bars_module"
+    r2 = orch.handle(ChatRequest(message="ar menü", ui_language="tr", locale="tr"))
+    assert r2.meta.action and r2.meta.action.kind == "open_restaurants_bars_module"
+    r3 = orch.handle(ChatRequest(message="armenü", ui_language="tr", locale="tr"))
+    assert r3.meta.action and r3.meta.action.kind == "open_restaurants_bars_module"
+    r4 = orch.handle(ChatRequest(message="barmenu", ui_language="tr", locale="tr"))
+    assert r4.meta.action and r4.meta.action.kind == "open_restaurants_bars_module"
+
+
+def test_battiye_typo_var_mi_routes_hotel_info_not_request_form():
+    orch, rag, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="battiye var mı", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "hotel_info"
+    assert not (res.meta.action and res.meta.action.kind == "chat_form")
+    assert rag.called is True
+
+
+def test_iptal_et_is_cancel_hint_not_meat_recommendation():
+    """«İptal et» içindeki «et» BBQ önerisi tetiklemesin (kural + net açıklama)."""
+    orch, _, intent = build_orchestrator()
+    res = orch.handle(ChatRequest(message="iptal et", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "chitchat"
+    low = res.message.lower()
+    assert "sinton" not in low and "bbq" not in low
+    assert "iptal" in low or "form" in low or "rezervasyon" in low
+    assert intent.calls == 0
+
+
+def test_odaya_su_gonder_reception_redirect_not_category_menu():
+    orch, _, intent = build_orchestrator()
+    res = orch.handle(ChatRequest(message="odaya su gönder", ui_language="tr", locale="tr"))
+    assert res.meta.intent == "request"
+    assert res.type == "redirect"
+    assert res.meta.action and res.meta.action.kind == "create_guest_request"
+    assert "kategori seçiniz" not in res.message.lower()
+    assert "su" in res.message.lower() or "resepsiyon" in res.message.lower()
+    assert intent.calls == 0
+
+
+def test_yarin_after_animation_program_gets_context_followup_not_greeting():
+    orch, rag, _ = build_orchestrator()
+    uid, sid = "u-anim-yar", "s-anim-yar"
+    r1 = orch.handle(
+        ChatRequest(message="animasyon programı", ui_language="tr", locale="tr", user_id=uid, session_id=sid)
+    )
+    assert r1.meta.intent == "hotel_info"
+    assert rag.called is False
+    r2 = orch.handle(ChatRequest(message="yarın", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    assert r2.meta.intent == "hotel_info"
+    low = r2.message.lower()
+    assert "merhaba, ben viona" not in low
+    assert "resepsiyon" in low or "program" in low or "animasyon" in low or "sezon" in low
+
+
+def test_yarin_after_animation_wins_over_reservation_session_hint():
+    """Rezervasyon modülüne girdikten sonra bile son tur animasyon programıysa «yarın» animasyon takibinde kalmalı."""
+    orch, rag, _ = build_orchestrator()
+    uid, sid = "u-anim-res", "s-anim-res"
+    orch.handle(ChatRequest(message="rezervasyon", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    orch.handle(
+        ChatRequest(message="animasyon programı", ui_language="tr", locale="tr", user_id=uid, session_id=sid)
+    )
+    r3 = orch.handle(ChatRequest(message="yarın", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    assert r3.meta.intent == "hotel_info"
+    low = r3.message.lower()
+    assert "rezervasyonlar bölüm" not in low
+    assert "merhaba, ben viona" not in low
+    assert "gündüz" in low or "animasyon" in low or "resepsiyon" in low or "program" in low
+
+
+def test_russian_animation_program_uses_fixed_animation_not_rag():
+    orch, rag, _ = build_orchestrator()
+    res = orch.handle(
+        ChatRequest(message="анимация программа отеля", ui_language="ru", locale="ru", user_id="u-ru-anim", session_id="s-ru")
+    )
+    assert res.meta.intent == "hotel_info"
+    assert rag.called is False
 
 
 def test_rule_match_does_not_call_llm():
@@ -723,7 +1056,8 @@ def test_routing_guest_relations_contact_and_generic_problem():
     assert gr.meta.intent == "request"
     assert "misafir" in gr.message.lower()
     assert prob.meta.intent == "complaint"
-    assert "kategori" in prob.message.lower()
+    assert prob.meta.action is None
+    assert "resepsiyon" in prob.message.lower()
     assert intent.calls == 0
 
 
@@ -866,6 +1200,7 @@ def test_outside_hotel_tired_and_seafood_dislike_cases():
     assert ("3 km" in outside.message) or ("resepsiyon" in outside.message.lower())
     assert tired.meta.intent == "hotel_info"
     assert "Spa" in tired.message or "spa" in tired.message
+    assert tired.meta.action is not None and tired.meta.action.kind == "open_spa_module"
     assert seafood.meta.intent == "recommendation"
     assert "Sinton" in seafood.message
     assert intent.calls == 0
@@ -952,4 +1287,480 @@ def test_sweet_craving_phrase_routes_to_dessert_recommendation():
     assert res.meta.intent == "recommendation"
     assert res.type == "answer"
     assert intent.calls == 0
+
+
+def test_full_operational_routing_matrix():
+    """Muaf istek, rezervasyon, geç çıkış, şikâyet, misafir bildirimi alt grupları ve arıza — doğru aksiyon."""
+    n = 0
+
+    def run(msg: str, *, ui="tr", loc="tr"):
+        nonlocal n
+        n += 1
+        orch, rag, intent = build_orchestrator()
+        r = orch.handle(
+            ChatRequest(
+                message=msg,
+                ui_language=ui,
+                locale=loc,
+                user_id=f"full-op-{n}",
+                session_id=f"full-op-{n}",
+            )
+        )
+        return r, rag, intent
+
+    # Geç çıkış → uygulama misafir bildirimi formu (sohbet adımı yok).
+    r, _, intent = run("geç çıkış istiyorum")
+    assert r.meta.intent == "guest_notification"
+    assert r.meta.action and r.meta.action.kind == "open_guest_notifications_form"
+    assert "geç çıkış" in r.message.lower()
+    assert intent.calls == 0
+
+    # Muaf oda talepleri → yönlendirme metni + create_guest_request (chat_form değil).
+    for phrase, needle in (
+        ("transfer istiyorum", "transfer"),
+        ("öğle paketi istiyorum", "20:00"),
+        ("resepsiyonla görüşmek istiyorum", "resepsiyon"),
+    ):
+        r, _, intent = run(phrase)
+        assert r.meta.intent == "request", phrase
+        assert r.type == "redirect", phrase
+        assert r.meta.action and r.meta.action.kind == "create_guest_request", phrase
+        assert needle in r.message.lower(), phrase
+        assert intent.calls == 0
+
+    r, _, intent = run("misafir ilişkilerine bağlanmak istiyorum")
+    assert r.meta.intent == "request"
+    assert r.type == "redirect"
+    assert r.meta.action and r.meta.action.kind == "create_guest_request"
+    assert "misafir" in r.message.lower()
+    assert intent.calls == 0
+
+    # Erken giriş → yalnız premium resepsiyon metni (buton yok).
+    r, _, intent = run("erken giriş talep ediyorum")
+    assert r.meta.intent == "reservation"
+    assert r.type == "inform"
+    assert r.meta.action is None
+    assert "resepsiyon" in r.message.lower() or "ön büro" in r.message.lower()
+    assert intent.calls == 0
+
+    r, _, intent = run("rezervasyon yaptırmak istiyorum")
+    assert r.meta.intent == "reservation"
+    assert r.meta.action and r.meta.action.kind == "open_reservation_form"
+    assert intent.calls == 0
+
+    # Şikâyet → yönlendirme metni, sohbet formu yok.
+    for phrase in ("komşu çok gürültülü şikayet", "oda pis şikayetçiyim"):
+        r, _, intent = run(phrase)
+        assert r.meta.intent == "complaint", phrase
+        assert r.type == "inform", phrase
+        assert r.meta.action and r.meta.action.kind == "open_complaint_form", phrase
+        assert intent.calls == 0
+
+    # Misafir bildirimi (tüm kategoriler) → sohbet formu, birleşik kategori ağacı.
+    r, _, intent = run("misafir bildirimi doldurmak istiyorum")
+    assert r.meta.intent == "guest_notification"
+    assert r.meta.action and r.meta.action.kind == "chat_form"
+    assert r.meta.action.operation == "guest_notification"
+    low = r.message.lower()
+    assert "beslenme / hassasiyet:" in low and "sağlık / özel durum:" in low
+    assert intent.calls == 0
+
+    # Sağlık grubu — kutlama listesi değil.
+    r, _, intent = run("hamileyim bilgi vermek istiyorum")
+    assert r.meta.intent == "guest_notification"
+    assert r.meta.action and r.meta.action.kind == "chat_form"
+    assert r.meta.action.operation == "guest_notification"
+    assert "doğum günü" not in r.message.lower()
+    assert intent.calls == 0
+
+    # Kutlama grubu — diyet listesi değil.
+    r, _, intent = run("evlilik yıldönümü kutlaması")
+    assert r.meta.intent == "guest_notification"
+    assert r.meta.action and r.meta.action.kind == "chat_form"
+    assert "alerjen bildirimi" not in r.message.lower()
+    assert intent.calls == 0
+
+    # İstek formu örnekleri.
+    for phrase in ("battaniye lazım", "kettle istiyorum"):
+        r, _, intent = run(phrase)
+        assert r.meta.intent == "request", phrase
+        assert r.meta.action and r.meta.action.kind == "chat_form", phrase
+        assert r.meta.action.operation == "request", phrase
+        assert intent.calls == 0
+
+    r, _, intent = run("priz çalışmıyor")
+    assert r.meta.intent == "fault_report"
+    assert r.meta.action and r.meta.action.kind == "chat_form"
+    assert r.meta.action.operation == "fault"
+    assert intent.calls == 0
+
+
+def test_multilingual_operational_routing_matrix_en_de_ru():
+    """İngilizce öncelikli: aynı operasyonel ağaç EN/DE/RU’da doğru niyet + yanıt dili + aksiyon."""
+    n = 0
+
+    def run(msg: str, lang: str):
+        nonlocal n
+        n += 1
+        orch, _, intent = build_orchestrator()
+        r = orch.handle(
+            ChatRequest(
+                message=msg,
+                ui_language=lang,
+                locale=lang,
+                conversation_language=lang,
+                user_id=f"i18n-op-{n}",
+                session_id=f"i18n-op-{n}",
+            )
+        )
+        assert r.meta.language == lang, msg
+        assert r.meta.ui_language == lang, msg
+        assert intent.calls == 0, msg
+        return r
+
+    # —— English ——
+    r = run("late checkout please", "en")
+    assert r.meta.intent == "guest_notification"
+    assert r.meta.action and r.meta.action.kind == "open_guest_notifications_form"
+    assert "late" in r.message.lower()
+
+    r = run("I need towels", "en")
+    assert r.meta.intent == "request"
+    assert r.meta.action and r.meta.action.kind == "chat_form"
+    assert r.meta.action.operation == "request"
+
+    orch_chk, rag_chk, _ = build_orchestrator()
+    r_chk = orch_chk.handle(
+        ChatRequest(
+            message="I need to know what time checkout is",
+            ui_language="en",
+            locale="en",
+            conversation_language="en",
+            user_id="i18n-checkout",
+            session_id="i18n-checkout",
+        )
+    )
+    assert r_chk.meta.intent == "hotel_info"
+    assert r_chk.type == "answer"
+    assert rag_chk.called is True
+
+    r = run("minibar is empty", "en")
+    assert r.meta.intent == "request"
+    assert r.meta.action and r.meta.action.kind == "chat_form"
+
+    for phrase in ("airport transfer please", "lunch box please", "speak to front desk"):
+        r = run(phrase, "en")
+        assert r.meta.intent == "request"
+        assert r.type == "redirect"
+        assert r.meta.action and r.meta.action.kind == "create_guest_request"
+
+    r = run("connect me to guest relations", "en")
+    assert r.meta.intent == "request"
+    assert r.type == "redirect"
+    assert r.meta.action and r.meta.action.kind == "create_guest_request"
+
+    r = run("early check-in request", "en")
+    assert r.meta.intent == "reservation"
+    assert r.type == "inform"
+    assert r.meta.action is None
+    assert "reception" in r.message.lower() or "front desk" in r.message.lower()
+
+    r = run("I want to make a reservation", "en")
+    assert r.meta.intent == "reservation"
+    assert r.meta.action and r.meta.action.kind == "open_reservation_form"
+
+    for phrase in ("awful noise from neighbors", "the cleaning is terrible"):
+        r = run(phrase, "en")
+        assert r.meta.intent == "complaint"
+        assert r.meta.action and r.meta.action.kind == "open_complaint_form"
+
+    r = run("I want to fill out a guest notification", "en")
+    assert r.meta.intent == "guest_notification"
+    assert r.meta.action and r.meta.action.kind == "chat_form"
+    low = r.message.lower()
+    assert "diet / sensitivity:" in low and "health / special situation:" in low
+
+    r = run("I am pregnant", "en")
+    assert r.meta.intent == "guest_notification"
+    assert r.meta.action and r.meta.action.kind == "chat_form"
+    assert "birthday" not in r.message.lower()
+
+    r = run("honeymoon celebration", "en")
+    assert r.meta.intent == "guest_notification"
+    assert r.meta.action and r.meta.action.kind == "chat_form"
+    assert "allergen" not in r.message.lower()
+
+    r = run("can i get a crib", "en")
+    assert r.meta.intent == "request"
+    assert r.meta.action and r.meta.action.kind == "chat_form"
+
+    r = run("shower is broken", "en")
+    assert r.meta.intent == "fault_report"
+    assert r.meta.action and r.meta.action.kind == "chat_form"
+    assert r.meta.action.operation == "fault"
+
+    # —— German ——
+    r = run("später check-out bitte", "de")
+    assert r.meta.intent == "guest_notification"
+    assert r.meta.action and r.meta.action.kind == "open_guest_notifications_form"
+    assert "check" in r.message.lower()
+
+    r = run("ich brauche handtücher", "de")
+    assert r.meta.intent == "request"
+    assert r.meta.action and r.meta.action.kind == "chat_form"
+
+    r = run("Beschwerde wegen Lärm", "de")
+    assert r.meta.intent == "complaint"
+    assert r.meta.action and r.meta.action.kind == "open_complaint_form"
+
+    r = run("Ich bin vegan", "de")
+    assert r.meta.intent == "guest_notification"
+    assert r.meta.action and r.meta.action.kind == "chat_form"
+
+    # —— Russian ——
+    r = run("поздний выезд", "ru")
+    assert r.meta.intent == "guest_notification"
+    assert r.meta.action and r.meta.action.kind == "open_guest_notifications_form"
+
+    r = run("мне нужно полотенце", "ru")
+    assert r.meta.intent == "request"
+    assert r.meta.action and r.meta.action.kind == "chat_form"
+
+    r = run("жалоба на шум", "ru")
+    assert r.meta.intent == "complaint"
+    assert r.meta.action and r.meta.action.kind == "open_complaint_form"
+
+
+def test_request_form_detail_enum_allows_switch_before_valid_choice():
+    """Liste ekranında geçerli numara seçilmeden başka talep konusuna geçilebilir (kettle → battaniye)."""
+    orch, _, _ = build_orchestrator()
+    uid, sid = "u-lock-kettle", "s-lock-kettle"
+    r1 = orch.handle(
+        ChatRequest(message="kettle istiyorum", ui_language="tr", locale="tr", user_id=uid, session_id=sid)
+    )
+    assert r1.meta.action and r1.meta.action.step == "detail_enum"
+    assert "kettle" in r1.message.lower() or "ısıtıcı" in r1.message.lower()
+    r2 = orch.handle(
+        ChatRequest(message="battaniye lazım", ui_language="tr", locale="tr", user_id=uid, session_id=sid)
+    )
+    assert r2.meta.intent == "request"
+    assert r2.meta.action and r2.meta.action.step == "detail_enum"
+    low = r2.message.lower()
+    assert "yastık" in low or "nevresim" in low or "battaniye" in low
+    assert "kettle" not in low and "ısıtıcı" not in low
+
+
+def test_request_form_detail_enum_off_topic_can_answer_hotel_info():
+    orch, rag, _ = build_orchestrator()
+    uid, sid = "u-lock-mb", "s-lock-mb"
+    r1 = orch.handle(
+        ChatRequest(message="minibarın içi boş", ui_language="tr", locale="tr", user_id=uid, session_id=sid)
+    )
+    assert r1.meta.action and r1.meta.action.step == "detail_enum"
+    rag.called = False
+    r2 = orch.handle(ChatRequest(message="minibar", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    assert r2.meta.intent == "hotel_info"
+    assert rag.called is True
+
+
+def test_request_form_locks_after_valid_enum_choice_on_detail_int():
+    """Geçerli enum seçiminden sonra (adet adımı) serbest metinle konu değişmez."""
+    orch, rag, _ = build_orchestrator()
+    uid, sid = "u-lock-post", "s-lock-post"
+    r1 = orch.handle(
+        ChatRequest(message="kettle istiyorum", ui_language="tr", locale="tr", user_id=uid, session_id=sid)
+    )
+    assert r1.meta.action and r1.meta.action.step == "detail_enum"
+    orch.handle(ChatRequest(message="4", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    rag.called = False
+    r3 = orch.handle(
+        ChatRequest(message="battaniye lazım", ui_language="tr", locale="tr", user_id=uid, session_id=sid)
+    )
+    assert r3.meta.intent == "request"
+    assert r3.meta.action and r3.meta.action.step == "detail_int"
+    mlow = r3.message.lower()
+    assert (
+        "pozitif" in mlow
+        or "sayı" in mlow
+        or "positive" in mlow
+        or "number" in mlow
+        or "zahl" in mlow
+    )
+    assert rag.called is False
+
+
+def test_guest_notification_category_step_allows_temizlik_info_switch():
+    """Yalnız kategori listesindeyken «temizlik» bilgi sorusuna geçilebilir."""
+    orch, rag, _ = build_orchestrator()
+    uid, sid = "u-cat-tem", "s-cat-tem"
+    r1 = orch.handle(
+        ChatRequest(
+            message="misafir bildirimi doldurmak istiyorum",
+            ui_language="tr",
+            locale="tr",
+            user_id=uid,
+            session_id=sid,
+        )
+    )
+    assert r1.meta.intent == "guest_notification"
+    assert r1.meta.action and r1.meta.action.step == "category"
+    rag.called = False
+    r2 = orch.handle(ChatRequest(message="temizlik", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    assert r2.meta.intent == "hotel_info"
+    assert rag.called is True
+
+
+def test_sikayetciyim_with_noise_gets_complaint_form_button():
+    orch, _, _ = build_orchestrator()
+    res = orch.handle(
+        ChatRequest(message="gürültüden şikayetçiyim", ui_language="tr", locale="tr", user_id="u-sn", session_id="s-sn")
+    )
+    assert res.meta.intent == "complaint"
+    assert res.meta.action and res.meta.action.kind == "open_complaint_form"
+
+
+def test_full_name_rejects_ah_requires_two_words():
+    orch, _, _ = build_orchestrator()
+    uid, sid = "u-fn-ah", "s-fn-ah"
+    for m in ("priz çalışmıyor", "2", "1", "1", "not"):
+        orch.handle(ChatRequest(message=m, ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    r = orch.handle(ChatRequest(message="ah", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    assert r.meta.action and r.meta.action.step == "full_name"
+    assert "iki kelime" in r.message.lower() or "two words" in r.message.lower()
+
+
+def test_reservation_short_followup_after_redirect_links_context():
+    orch, _, _ = build_orchestrator()
+    uid, sid = "u-rsv", "s-rsv"
+    r1 = orch.handle(ChatRequest(message="rezervasyon", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    assert r1.meta.intent == "reservation"
+    r2 = orch.handle(ChatRequest(message="yarınki", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    assert r2.meta.intent == "reservation"
+    assert "uygulama" in r2.message.lower() or "app" in r2.message.lower() or "rezervasyon" in r2.message.lower()
+
+
+def test_tamam_after_form_cancel_short_ack_not_generic_greeting():
+    orch, _, _ = build_orchestrator()
+    uid, sid = "u-ack", "s-ack"
+    for m in ("priz çalışmıyor", "2", "1", "1", "x"):
+        orch.handle(ChatRequest(message=m, ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    orch.handle(ChatRequest(message="Test User", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    orch.handle(ChatRequest(message="1001", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    orch.handle(ChatRequest(message="2", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    r = orch.handle(ChatRequest(message="tamam", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    assert r.meta.intent == "chitchat"
+    assert "merhaba, ben viona" not in r.message.lower()
+    assert "anlaşıldı" in r.message.lower() or "yardımcı" in r.message.lower()
+
+
+def test_tamam_after_cancel_then_hotel_info_not_cancel_ack():
+    """Konu değişince iptal bağlamı silinir; RAG sonrası «tamam» iptal onayı gibi yanıtlanmaz."""
+    orch, rag, _ = build_orchestrator()
+    uid, sid = "u-ack-hotel", "s-ack-hotel"
+    for m in ("priz çalışmıyor", "2", "1", "1", "x"):
+        orch.handle(ChatRequest(message=m, ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    orch.handle(ChatRequest(message="Test User", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    orch.handle(ChatRequest(message="1001", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    orch.handle(ChatRequest(message="2", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    rag.called = False
+    orch.handle(ChatRequest(message="temizlik", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    assert rag.called is True
+    r = orch.handle(ChatRequest(message="tamam", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    low = r.message.lower()
+    assert "başka bir konuda yardımcı" not in low
+
+
+def test_second_tamam_after_cancel_ack_not_cancel_ack_again():
+    """İlk «tamam» iptal bağlamını kapatır; ikinci «tamam» aynı kısa onayı tekrarlamaz."""
+    orch, _, _ = build_orchestrator()
+    uid, sid = "u-ack2", "s-ack2"
+    for m in ("priz çalışmıyor", "2", "1", "1", "x"):
+        orch.handle(ChatRequest(message=m, ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    orch.handle(ChatRequest(message="Test User", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    orch.handle(ChatRequest(message="1001", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    orch.handle(ChatRequest(message="2", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    r1 = orch.handle(ChatRequest(message="tamam", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    assert "başka bir konuda yardımcı" in r1.message.lower()
+    r2 = orch.handle(ChatRequest(message="tamam", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    assert "başka bir konuda yardımcı" not in r2.message.lower()
+
+
+def test_anlamadim_after_form_cancel_uses_context_not_only_greeting():
+    orch, _, _ = build_orchestrator()
+    uid, sid = "u-cx", "s-cx"
+    for m in ("priz çalışmıyor", "2", "1", "1", "arıza metni"):
+        orch.handle(ChatRequest(message=m, ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    orch.handle(ChatRequest(message="Test User", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    orch.handle(ChatRequest(message="1001", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    c = orch.handle(ChatRequest(message="2", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    assert "iptal" in c.message.lower()
+    r = orch.handle(ChatRequest(message="anlamadım", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    assert r.meta.intent == "chitchat"
+    low = r.message.lower()
+    assert "özet" in low or "onay" in low
+    assert "merhaba, ben viona" not in low
+
+
+def test_bare_sikayet_opens_complaint_form_button():
+    orch, _, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="şikayet", ui_language="tr", locale="tr", user_id="u-sk", session_id="s-sk"))
+    assert res.meta.intent == "complaint"
+    assert res.meta.action and res.meta.action.kind == "open_complaint_form"
+    assert "kategori" not in res.message.lower()
+
+
+def test_invalid_room_stays_on_room_step_not_category():
+    """Geçersiz oda numarası formu sıfırlamaz; oda adımında kalınır."""
+    orch, _, _ = build_orchestrator()
+    uid, sid = "u-rm-bad", "s-rm-bad"
+    for m in ("priz çalışmıyor", "2", "1", "1", "kısa"):
+        orch.handle(ChatRequest(message=m, ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    orch.handle(ChatRequest(message="Ali Yılmaz", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    r = orch.handle(ChatRequest(message="10000", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    assert r.meta.action and r.meta.action.step == "room"
+    assert "kategori seçim" not in r.message.lower()
+    assert "geçerli" in r.message.lower() or "gecersiz" in r.message.lower() or "valid" in r.message.lower()
+
+
+def test_chat_form_full_name_rejects_digits_stays_on_step():
+    """Adım: rakam içeren metin kabul edilmez; aynı adımda kalınır."""
+    orch, _, _ = build_orchestrator()
+    uid, sid = "u-fn-dig", "s-fn-dig"
+    for m in ("priz çalışmıyor", "2", "1", "1", "arıza özeti"):
+        orch.handle(ChatRequest(message=m, ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    r = orch.handle(ChatRequest(message="Ali 123", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    assert r.meta.action and r.meta.action.step == "full_name"
+    assert "rakam" in r.message.lower() or "digit" in r.message.lower()
+
+
+def test_chat_form_full_name_help_then_valid_advances_to_room():
+    orch, _, _ = build_orchestrator()
+    uid, sid = "u-fn-hlp", "s-fn-hlp"
+    for m in ("priz çalışmıyor", "2", "1", "1", "kısa not"):
+        orch.handle(ChatRequest(message=m, ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    h = orch.handle(ChatRequest(message="ne yazayım", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    assert h.meta.action and h.meta.action.step == "full_name"
+    assert "oda" in h.message.lower()
+    r = orch.handle(ChatRequest(message="Ali Yılmaz", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    assert r.meta.action and r.meta.action.step == "room"
+
+
+def test_chat_form_full_name_invisible_only_treated_as_empty():
+    orch, _, _ = build_orchestrator()
+    uid, sid = "u-fn-zw", "s-fn-zw"
+    for m in ("priz çalışmıyor", "2", "1", "1", "not"):
+        orch.handle(ChatRequest(message=m, ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    r = orch.handle(ChatRequest(message="\u200b\u200b", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    assert r.meta.action and r.meta.action.step == "full_name"
+    assert "yaz" in r.message.lower()
+
+
+def test_chat_form_full_name_single_letter_stays_on_step():
+    orch, _, _ = build_orchestrator()
+    uid, sid = "u-fn-1c", "s-fn-1c"
+    for m in ("priz çalışmıyor", "2", "1", "1", "not"):
+        orch.handle(ChatRequest(message=m, ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    r = orch.handle(ChatRequest(message="A", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
+    assert r.meta.action and r.meta.action.step == "full_name"
+    assert "kısa" in r.message.lower() or "short" in r.message.lower() or "kurz" in r.message.lower()
 

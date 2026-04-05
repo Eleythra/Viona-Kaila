@@ -1344,6 +1344,58 @@ body {
   }
 }
 
+/* Değerlendirme modalı — hizalı, tek sütun liste, premium cam panel */
+.modal-sheet--rate {
+  width: min(100%, 520px);
+  max-width: 520px;
+  max-height: min(88vh, 720px);
+  max-height: min(88dvh, 720px);
+  margin-inline: auto;
+  padding: 22px 18px max(24px, env(safe-area-inset-bottom));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35) inset,
+    0 28px 90px -24px rgba(0, 0, 0, 0.75);
+  background: linear-gradient(165deg, rgba(28, 36, 52, 0.97) 0%, rgba(14, 18, 28, 0.98) 55%, rgba(10, 14, 22, 0.99) 100%);
+  backdrop-filter: blur(var(--blur-glass));
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+}
+
+@media (min-width: 520px) {
+  .modal-sheet--rate {
+    padding: 26px 24px 28px;
+  }
+}
+
+#modal-rate .modal-head {
+  margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+#modal-rate .modal-head h2 {
+  font-size: clamp(1.12rem, 3.5vw, 1.28rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+#modal-rate .modal-lead {
+  margin-top: 10px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  max-width: 46ch;
+  color: rgba(242, 244, 248, 0.72);
+}
+
+#modal-rate .btn-icon-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+#modal-rate .btn-icon-close:focus-visible {
+  outline: 2px solid rgba(46, 184, 199, 0.75);
+  outline-offset: 2px;
+}
+
 .modal-head {
   display: flex;
   align-items: flex-start;
@@ -1387,13 +1439,13 @@ body {
 .rate-modal-body {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 22px;
 }
 
 .rate-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 11px;
   animation: rateFadeIn 0.55s ease-out both;
 }
 
@@ -1410,63 +1462,157 @@ body {
 
 .rate-section__title {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(242, 244, 248, 0.45);
+  color: rgba(242, 244, 248, 0.48);
+}
+
+.rate-section--reviews {
+  gap: 14px;
+}
+
+.rate-section--reviews .rate-section__title {
+  padding-bottom: 12px;
+  margin-bottom: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  letter-spacing: 0.13em;
+  color: rgba(242, 244, 248, 0.55);
+}
+
+.rate-section:not(.rate-section--reviews) .rate-section__title {
+  padding-bottom: 8px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Tek sütun: dar modallarda hizayı bozmayan, okunaklı liste */
+.rate-link-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .rate-link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 64px;
-  padding: 12px 12px 12px 14px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--stroke);
-  background: rgba(255, 255, 255, 0.05);
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 22px;
+  grid-template-rows: auto;
+  align-items: start;
+  gap: 0 14px;
+  padding: 14px 14px 14px 15px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
   color: var(--text);
   font: inherit;
   text-decoration: none;
   cursor: pointer;
-  transition: border-color 0.2s, transform 0.15s, box-shadow 0.25s;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.25s ease,
+    transform 0.18s ease,
+    background 0.2s ease;
   animation: rateFadeIn 0.5s ease-out both;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+}
+
+.rate-link:focus-visible {
+  outline: 2px solid rgba(46, 184, 199, 0.75);
+  outline-offset: 2px;
 }
 
 .rate-link:hover {
-  border-color: rgba(212, 168, 83, 0.45);
-  box-shadow: var(--shadow-hover);
+  border-color: rgba(212, 168, 83, 0.42);
+  box-shadow:
+    0 0 0 1px rgba(212, 168, 83, 0.12) inset,
+    0 18px 40px -22px rgba(0, 0, 0, 0.55);
+  transform: translateY(-1px);
+}
+
+.rate-link--social:hover {
+  border-color: rgba(244, 114, 182, 0.48);
+  box-shadow:
+    0 0 0 1px rgba(244, 114, 182, 0.14) inset,
+    0 18px 40px -22px rgba(0, 0, 0, 0.55);
+}
+
+.rate-link--booking:hover {
+  border-color: rgba(46, 184, 199, 0.55);
+  box-shadow:
+    0 0 0 1px rgba(46, 184, 199, 0.15) inset,
+    0 18px 40px -22px rgba(0, 0, 0, 0.55);
 }
 
 .rate-link:active {
-  transform: scale(0.99);
+  transform: translateY(0);
 }
 
 .rate-link--review {
-  border-color: rgba(212, 168, 83, 0.22);
-  background: linear-gradient(135deg, rgba(212, 168, 83, 0.1), rgba(12, 18, 28, 0.85));
+  border-color: rgba(212, 168, 83, 0.2);
+  background: linear-gradient(152deg, rgba(212, 168, 83, 0.09) 0%, rgba(16, 22, 34, 0.92) 48%, rgba(10, 14, 22, 0.95) 100%);
 }
 
 .rate-link--social {
-  border-color: rgba(236, 72, 153, 0.35);
-  background: linear-gradient(135deg, rgba(236, 72, 153, 0.12), rgba(12, 18, 28, 0.88));
+  border-color: rgba(236, 72, 153, 0.32);
+  background: linear-gradient(152deg, rgba(236, 72, 153, 0.1) 0%, rgba(16, 22, 34, 0.92) 50%, rgba(10, 14, 22, 0.96) 100%);
 }
 
 .rate-link--booking {
-  border-color: rgba(46, 184, 199, 0.45);
-  background: linear-gradient(135deg, rgba(46, 184, 199, 0.14), rgba(12, 18, 28, 0.85));
+  border-color: rgba(46, 184, 199, 0.38);
+  background: linear-gradient(152deg, rgba(46, 184, 199, 0.12) 0%, rgba(16, 22, 34, 0.92) 50%, rgba(10, 14, 22, 0.96) 100%);
+}
+
+.rate-link--featured.rate-link--review {
+  grid-template-columns: 54px minmax(0, 1fr) 24px;
+  padding: 17px 16px 17px 17px;
+  border-radius: calc(var(--radius-md) + 2px);
+  border-color: rgba(66, 133, 244, 0.42);
+  background: linear-gradient(
+    155deg,
+    rgba(66, 133, 244, 0.16) 0%,
+    rgba(212, 168, 83, 0.08) 38%,
+    rgba(12, 18, 30, 0.96) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    0 20px 48px -24px rgba(0, 0, 0, 0.6);
+}
+
+.rate-link--featured.rate-link--review:hover {
+  border-color: rgba(120, 175, 255, 0.55);
+}
+
+.rate-link--featured .rate-link__icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.32);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.rate-link--featured .rate-link__title {
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.rate-link--featured .rate-link__svg {
+  width: 28px;
+  height: 28px;
 }
 
 .rate-link__icon {
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
+  grid-column: 1;
+  grid-row: 1;
+  width: 48px;
+  height: 48px;
+  margin-top: 2px;
   display: grid;
   place-items: center;
   border-radius: var(--radius-inner);
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.26);
+  border: 1px solid rgba(255, 255, 255, 0.09);
 }
 
 .rate-link__svg {
@@ -1481,49 +1627,65 @@ body {
 }
 
 .rate-link__body {
-  flex: 1;
+  grid-column: 2;
+  grid-row: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  padding-top: 1px;
 }
 
 .rate-link__row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 12px;
+  align-items: start;
 }
 
 .rate-link__title {
-  font-size: 0.92rem;
+  margin: 0;
+  font-size: 0.93rem;
   font-weight: 700;
-  line-height: 1.25;
-}
-
-.rate-link__hint {
-  font-size: 0.78rem;
-  letter-spacing: 0.01em;
-  color: rgba(242, 244, 248, 0.62);
-  line-height: 1.35;
+  line-height: 1.28;
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 .rate-link__badge {
-  flex-shrink: 0;
-  font-size: 0.65rem;
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  align-self: start;
+  margin-top: 1px;
+  font-size: 0.62rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  padding: 4px 8px;
-  border-radius: 999px;
+  padding: 5px 9px;
+  border-radius: var(--radius-pill);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(0, 0, 0, 0.2);
-  color: rgba(242, 244, 248, 0.75);
+  background: rgba(0, 0, 0, 0.28);
+  color: rgba(242, 244, 248, 0.78);
+  white-space: nowrap;
+}
+
+@media (max-width: 340px) {
+  .rate-link__row {
+    grid-template-columns: 1fr;
+  }
+
+  .rate-link__badge {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+    margin-top: 0;
+  }
 }
 
 .rate-link--review .rate-link__badge {
-  border-color: rgba(212, 168, 83, 0.35);
-  color: rgba(255, 220, 160, 0.95);
+  border-color: rgba(212, 168, 83, 0.38);
+  color: rgba(255, 224, 170, 0.96);
 }
 
 .rate-link--social .rate-link__badge {
@@ -1536,11 +1698,26 @@ body {
   color: #a5f3fc;
 }
 
+.rate-link__hint {
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
+  line-height: 1.45;
+  color: rgba(242, 244, 248, 0.58);
+  max-width: 100%;
+}
+
 .rate-link__arrow {
-  flex-shrink: 0;
-  opacity: 0.4;
-  font-size: 1.05rem;
-  align-self: center;
+  grid-column: 3;
+  grid-row: 1;
+  margin-top: 14px;
+  justify-self: end;
+  opacity: 0.45;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.rate-link--featured .rate-link__arrow {
+  margin-top: 18px;
 }
 
 .viona-blurb {
@@ -2241,7 +2418,10 @@ body {
 /* Rezervasyon formu — belirgin CTA; ikon metinle aynı satırda, kompakt */
 .viona-chat__option-btn--reservation,
 .viona-chat__option-btn--cta-guest,
-.viona-chat__option-btn--cta-discover {
+.viona-chat__option-btn--cta-discover,
+.viona-chat__option-btn--cta-complaint,
+.viona-chat__option-btn--cta-spa,
+.viona-chat__option-btn--cta-restaurant {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -2262,7 +2442,10 @@ body {
 
 .viona-chat__option-btn--reservation::before,
 .viona-chat__option-btn--cta-guest::before,
-.viona-chat__option-btn--cta-discover::before {
+.viona-chat__option-btn--cta-discover::before,
+.viona-chat__option-btn--cta-complaint::before,
+.viona-chat__option-btn--cta-spa::before,
+.viona-chat__option-btn--cta-restaurant::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -2316,7 +2499,10 @@ body {
 
 .viona-chat__option-btn--reservation:hover,
 .viona-chat__option-btn--cta-guest:hover,
-.viona-chat__option-btn--cta-discover:hover {
+.viona-chat__option-btn--cta-discover:hover,
+.viona-chat__option-btn--cta-complaint:hover,
+.viona-chat__option-btn--cta-spa:hover,
+.viona-chat__option-btn--cta-restaurant:hover {
   border-color: rgba(212, 168, 83, 0.62);
   background:
     linear-gradient(145deg, rgba(212, 168, 83, 0.26) 0%, rgba(30, 139, 195, 0.2) 48%, rgba(18, 24, 36, 0.55) 100%);
@@ -2329,13 +2515,19 @@ body {
 
 .viona-chat__option-btn--reservation:hover .viona-chat__option-btn-res-ico,
 .viona-chat__option-btn--cta-guest:hover .viona-chat__option-btn-res-ico,
-.viona-chat__option-btn--cta-discover:hover .viona-chat__option-btn-res-ico {
+.viona-chat__option-btn--cta-discover:hover .viona-chat__option-btn-res-ico,
+.viona-chat__option-btn--cta-complaint:hover .viona-chat__option-btn-res-ico,
+.viona-chat__option-btn--cta-spa:hover .viona-chat__option-btn-res-ico,
+.viona-chat__option-btn--cta-restaurant:hover .viona-chat__option-btn-res-ico {
   color: #e8c878;
 }
 
 .viona-chat__option-btn--reservation:focus-visible,
 .viona-chat__option-btn--cta-guest:focus-visible,
-.viona-chat__option-btn--cta-discover:focus-visible {
+.viona-chat__option-btn--cta-discover:focus-visible,
+.viona-chat__option-btn--cta-complaint:focus-visible,
+.viona-chat__option-btn--cta-spa:focus-visible,
+.viona-chat__option-btn--cta-restaurant:focus-visible {
   outline: 2px solid var(--gold);
   outline-offset: 3px;
   border-color: rgba(212, 168, 83, 0.75);
@@ -2344,7 +2536,10 @@ body {
 @media (hover: none) {
   .viona-chat__option-btn--reservation:active,
   .viona-chat__option-btn--cta-guest:active,
-  .viona-chat__option-btn--cta-discover:active {
+  .viona-chat__option-btn--cta-discover:active,
+  .viona-chat__option-btn--cta-complaint:active,
+  .viona-chat__option-btn--cta-spa:active,
+  .viona-chat__option-btn--cta-restaurant:active {
     transform: translateY(0) scale(0.99);
   }
 }
@@ -2352,7 +2547,10 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .viona-chat__option-btn--reservation::before,
   .viona-chat__option-btn--cta-guest::before,
-  .viona-chat__option-btn--cta-discover::before {
+  .viona-chat__option-btn--cta-discover::before,
+  .viona-chat__option-btn--cta-complaint::before,
+  .viona-chat__option-btn--cta-spa::before,
+  .viona-chat__option-btn--cta-restaurant::before {
     animation: none;
     opacity: 0.4;
   }
@@ -2400,7 +2598,10 @@ body {
 /* Genel .viona-chat__option-btn width:100% / display:block üzerine — rezervasyon satır içi kompakt */
 .viona-chat__option-btn.viona-chat__option-btn--reservation,
 .viona-chat__option-btn.viona-chat__option-btn--cta-guest,
-.viona-chat__option-btn.viona-chat__option-btn--cta-discover {
+.viona-chat__option-btn.viona-chat__option-btn--cta-discover,
+.viona-chat__option-btn.viona-chat__option-btn--cta-complaint,
+.viona-chat__option-btn.viona-chat__option-btn--cta-spa,
+.viona-chat__option-btn.viona-chat__option-btn--cta-restaurant {
   display: inline-flex;
   width: auto;
   max-width: 100%;
@@ -5921,6 +6122,9 @@ select.req-input option {
   .rate-section,
   .rate-link {
     animation: none;
+  }
+  .rate-link:hover {
+    transform: none;
   }
   .action-tile::after {
     display: none;

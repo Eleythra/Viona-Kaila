@@ -1,8 +1,13 @@
 from assistant.schemas.chat import ChatRequest
+from assistant.schemas.intent import IntentResult
 from assistant.schemas.response import ChatMeta, ChatResponse
 from assistant.services.language_service import LanguageService
 from assistant.services.localization_service import LocalizationService
-from assistant.services.rule_engine import RuleEngine
+from assistant.services.rule_engine import (
+    RuleEngine,
+    extract_request_category_from_text,
+    extract_room_supply_request_entity,
+)
 from assistant.services.intent_service import IntentService
 from assistant.services.policy_service import PolicyService
 from assistant.services.rag_service import RagService
@@ -17,8 +22,15 @@ from assistant.core.logger import get_logger
 import re
 
 from assistant.services.chat_form_state import ChatFormState, InMemoryChatFormStore, OperationType
+from assistant.services.conversation_session import InMemoryConversationSessionStore
 from assistant.services.voice_channel_layer import VOICE_OPERATIONAL_USE_TEXT, VOICE_RESERVATION_HINT
 from assistant.services.hotel_room_numbers import is_valid_hotel_room_number
+from assistant.services.form_name_input import (
+    is_chat_form_full_name_help_request,
+    is_full_name_input_effectively_empty,
+    normalize_full_name_for_storage,
+    validate_chat_form_full_name,
+)
 
 
 def _reset_chat_form_to_category(state: ChatFormState) -> None:
@@ -106,6 +118,90 @@ _RESERVATION_REDIRECT_TEXT: dict[str, str] = {
     "en": "For your reservation requests, please continue via the Reservations section on the main screen. You can open it using the button below.",
     "de": "Für Ihre Reservierungsanfragen nutzen Sie bitte den Bereich „Reservierungen“ auf der Hauptseite. Sie können ihn über die Schaltfläche unten öffnen.",
     "ru": "Для запросов по бронированию, пожалуйста, перейдите в раздел «Резервации» на главном экране. Вы можете открыть его с помощью кнопки ниже.",
+}
+
+# Erken giriş: Rezervasyonlar modülü değil; ön büro — nazik, net resepsiyon yönlendirmesi (yalnız metin).
+_EARLY_CHECKIN_RECEPTION_TEXT: dict[str, str] = {
+    "tr": (
+        "Erken giriş, o günkü doluluk ve oda hazırlığına bağlıdır; en doğru bilgi ve yardımı "
+        "ön büro / resepsiyon ekibimiz verir. İsterseniz doğrudan resepsiyona uğrayabilir veya "
+        "telefonla arayabilirsiniz; talebinizi kısaca iletmeniz yeterli — ekibimiz sizi memnuniyetle yönlendirir."
+    ),
+    "en": (
+        "Early check-in is subject to availability and housekeeping on the day of arrival. "
+        "Our front desk team will gladly confirm what is possible and arrange the details. "
+        "Please stop by reception or call us when you arrive — we are here to help."
+    ),
+    "de": (
+        "Ein früherer Check-in hängt von Belegung und Zimmerbereitung am Anreisetag ab. "
+        "Unser Rezeptionsteam informiert Sie zuverlässig und hilft bei der Organisation. "
+        "Sprechen Sie uns bitte direkt an der Rezeption an oder rufen Sie uns an — wir unterstützen Sie gern."
+    ),
+    "ru": (
+        "Ранний заезд зависит от загрузки и готовности номера в день прибытия. "
+        "Актуальную информацию и помощь вам даст команда ресепшена. "
+        "Загляните на ресепшен или позвоните нам — мы с радостью подскажем варианты."
+    ),
+}
+
+
+def _is_early_checkin_reception_handoff(normalized: str, sub_intent: str | None, entity: str | None) -> bool:
+    tl = (normalized or "").lower()
+    if (entity or "").strip() == "early_checkin":
+        return True
+    if (sub_intent or "").strip() == "early_checkin_request":
+        return True
+    needles = (
+        "erken giriş",
+        "erken giris",
+        "erken giriş istiyorum",
+        "erken giris istiyorum",
+        "early check-in",
+        "early checkin",
+        "earlier check-in",
+        "earlier check in",
+        "want early check",
+        "wants early check",
+        "would like early check",
+        "früher einchecken",
+        "frueher einchecken",
+        "früher check-in",
+        "fruher check-in",
+        "ранний заезд",
+        "раннего заезда",
+    )
+    if any(n in tl for n in needles):
+        return True
+    return False
+
+
+# Şikayet: kategorisi net olanlar için uygulama şikayet formu butonu (open_complaint_form); genel “sorunum var” yalnız metin.
+_COMPLAINT_GUIDANCE_TEXT: dict[str, str] = {
+    "tr": (
+        "Şikayetinizi Viona uygulamasındaki şikayet formu ile iletebilirsiniz. "
+        "Aşağıdaki buton formu açar; dilerseniz resepsiyona da başvurabilirsiniz."
+    ),
+    "en": (
+        "You can submit your complaint using the complaint form in the Viona app. "
+        "The button below opens the form; you can also speak with reception."
+    ),
+    "de": (
+        "Sie können Ihre Beschwerde über das Beschwerdeformular in der Viona-App senden. "
+        "Die Schaltfläche unten öffnet das Formular; alternativ erreichen Sie die Rezeption."
+    ),
+    "ru": (
+        "Вы можете отправить жалобу через форму в приложении Viona. "
+        "Кнопка ниже открывает форму; также можно обратиться на ресепшен."
+    ),
+}
+
+_COMPLAINT_GUIDANCE_TEXT_GENERIC: dict[str, str] = {
+    "tr": (
+        "Yaşadığınız durumu netleştirmek için lütfen resepsiyon ile görüşün veya uygulamadaki şikayet formunu kullanın."
+    ),
+    "en": ("Please contact reception or use the complaint form in the app so the team can help you."),
+    "de": ("Bitte wenden Sie sich an die Rezeption oder nutzen Sie das Beschwerdeformular in der App."),
+    "ru": ("Обратитесь на ресепшен или используйте форму жалобы в приложении."),
 }
 
 # Geç çıkış: rezervasyon değil — Talepler → Misafir bildirimleri (ön büro / resepsiyon).
@@ -245,6 +341,31 @@ def _enum_options_for_detail(
     return options
 
 
+# Liste ekranında (detay enum) geçerli numara seçilmeden kategori gibi başka konuya geçilebilir.
+# Adet (detail_int) ve sonrası adımlar seçim yapıldıktan sonra kilitlidir.
+_FORM_TOPIC_SWITCH_STEPS = frozenset({"category", "detail_enum"})
+
+
+def _request_choice_text_matches_current_step(
+    state: ChatFormState,
+    text: str,
+    reply_language: str,
+) -> bool:
+    """Talep formu detail_enum adımında metin geçerli bir seçim numarası ise True (bağlam değiştirme yapılmaz)."""
+    t = (text or "").strip()
+    if not t or state.operation != "request" or state.step != "detail_enum":
+        return False
+    field_name = state.current_detail_field or ""
+    if not field_name:
+        return False
+    try:
+        idx = int(t)
+    except ValueError:
+        return False
+    opts = _enum_options_for_detail(state, state.category or "", field_name, reply_language)
+    return 1 <= idx <= len(opts)
+
+
 # Bu alt niyetler chat formu yerine ResponseComposer yönlendirme metni kullanır (öğle paketi, transfer, …).
 _REQUEST_CHAT_FORM_EXEMPT_SUBINTENTS = frozenset(
     {
@@ -254,6 +375,15 @@ _REQUEST_CHAT_FORM_EXEMPT_SUBINTENTS = frozenset(
         "transfer_request",
     }
 )
+
+
+def _request_rule_uses_reception_redirect_not_chat_form(sub_intent: str | None, entity: str | None) -> bool:
+    """İstek kuralı: sohbet kategori listesi yerine doğrudan resepsiyon yönlendirmesi (su ↔ minibar formu karışmasın)."""
+    if (sub_intent or "") in _REQUEST_CHAT_FORM_EXEMPT_SUBINTENTS:
+        return True
+    if (sub_intent or "") == "extra_item_request" and (entity or "").strip() == "water":
+        return True
+    return False
 
 
 def _form_record_type_label(kind: str, reply_language: str) -> str:
@@ -289,6 +419,154 @@ def _form_record_type_label(kind: str, reply_language: str) -> str:
     return m.get(k, k)
 
 
+# Onay adımı: kısa doğal dil (oturum durumu + form step ile birlikte yorumlanır).
+_CONFIRM_YES_PHRASES = frozenset(
+    {
+        "1",
+        "evet",
+        "onay",
+        "onaylıyorum",
+        "onayliyorum",
+        "ok",
+        "okay",
+        "tamam",
+        "olur",
+        "kabul",
+        "evet onaylıyorum",
+        "yes",
+        "confirm",
+        "ja",
+        "oké",
+        "oke",
+        "да",
+        "подтверждаю",
+    }
+)
+_CONFIRM_NO_PHRASES = frozenset(
+    {
+        "2",
+        "hayır",
+        "hayir",
+        "yok",
+        "iptal",
+        "vazgeç",
+        "vazgec",
+        "vazgeçtim",
+        "vazgecim",
+        "boşver",
+        "bosver",
+        "gerek yok",
+        "olmaz",
+        "no",
+        "cancel",
+        "abbrechen",
+        "nein",
+        "отмена",
+        "нет",
+    }
+)
+
+_SESSION_ACK_AFTER_CANCEL = frozenset(
+    {
+        "tamam",
+        "tm",
+        "ok",
+        "okay",
+        "anladım",
+        "anladim",
+        "peki",
+        "tamamdır",
+        "tamamdir",
+        "sağ ol",
+        "sagol",
+        "anlaşıldı",
+        "anlasildi",
+        "eyvallah",
+        "teşekkürler",
+        "tesekkurler",
+        "thanks",
+        "thank you",
+        "danke",
+        "спасибо",
+    }
+)
+_SESSION_VAZGECTIM_AFTER_CANCEL = frozenset(
+    {
+        "vazgeçtim",
+        "vazgecim",
+        "vazgeçiyorum",
+        "vazgeciyorum",
+        "boşver",
+        "bosver",
+        "gerek yok",
+        "iptal etmekten vazgeçtim",
+        "iptal etmekten vazgecim",
+    }
+)
+_RESERVATION_SHORT_FOLLOWUPS = frozenset(
+    {
+        "yarın",
+        "yarin",
+        "yarınki",
+        "yarinki",
+        "tomorrow",
+        "tmrw",
+        "morgen",
+        "завтра",
+        "öbürü",
+        "oburu",
+        "bu",
+        "şu",
+        "su",
+        "iptal",
+        "değiştir",
+        "degistir",
+    }
+)
+# Rezervasyon kısa takipten ayrı: yalnızca animasyon programı cevabından sonra «yarın» bağlamı.
+_ANIMATION_SCHEDULE_SHORT_FOLLOWUPS = frozenset(
+    {
+        "yarın",
+        "yarin",
+        "yarınki",
+        "yarinki",
+        "tomorrow",
+        "tmrw",
+        "morgen",
+        "завтра",
+    }
+)
+
+
+def _assistant_excerpt_suggests_animation_schedule(excerpt: str) -> bool:
+    low = (excerpt or "").lower()
+    return any(
+        m in low
+        for m in (
+            "animasyon",
+            "aqua gym",
+            "dart",
+            "su topu",
+            "mini disco",
+            "dj ",
+            "şov",
+            "etkinlik",
+            "jammies",
+            "kids club",
+            "çocuk oyun",
+            "radyo",
+            "program",
+            "acrobat",
+            "evening entertainment",
+            "animation",
+            "daily program",
+            "10:00",
+            "10:30",
+            "14:45",
+        )
+    )
+
+
 class ChatOrchestrator:
     def __init__(
         self,
@@ -304,6 +582,7 @@ class ChatOrchestrator:
         device_extractor: DeviceExtractor,
         response_composer: ResponseComposer,
         form_store: InMemoryChatFormStore | None = None,
+        conversation_session_store: InMemoryConversationSessionStore | None = None,
     ):
         self.settings = settings
         self.language_service = language_service
@@ -317,6 +596,9 @@ class ChatOrchestrator:
         self.device_extractor = device_extractor
         self.response_composer = response_composer
         self.form_store = form_store or InMemoryChatFormStore(settings.chat_form_ttl_seconds)
+        self.conversation_session_store = conversation_session_store or InMemoryConversationSessionStore(
+            ttl_seconds=settings.chat_form_ttl_seconds,
+        )
 
     def _voice_operational_redirect(self, reply_lang: str, ui_language: str):
         """Sesli kanal: form / kayıt yok; yazılı kanala yönlendirme metni."""
@@ -332,7 +614,149 @@ class ChatOrchestrator:
             action=None,
         )
 
+    def _build_confusion_chitchat_response(
+        self,
+        payload: ChatRequest,
+        reply_lang: str,
+        ui_language: str,
+        source: str,
+    ) -> ChatResponse:
+        sess = self.conversation_session_store.get(payload.channel, payload.user_id, payload.session_id)
+        had_cancel = sess.consume_post_cancel_followup()
+        key = (
+            "chitchat_confusion_after_form_cancel"
+            if had_cancel
+            else "chitchat_confusion_generic"
+        )
+        text = self.localization_service.get(key, reply_lang)
+        if not text or text == key:
+            text = self.localization_service.get(key, "tr")
+        return self.response_service.build(
+            "inform",
+            text,
+            "chitchat",
+            1.0,
+            reply_lang,
+            ui_language,
+            source,
+        )
+
     def handle(self, payload: ChatRequest) -> ChatResponse:
+        response = self._handle_chat_request(payload)
+        self._conversation_session_record_turn(payload, response)
+        return response
+
+    def _conversation_session_record_turn(self, payload: ChatRequest, response: ChatResponse) -> None:
+        st = self.conversation_session_store.get(payload.channel, payload.user_id, payload.session_id)
+        st.record_turn(
+            payload.message or "",
+            response.message or "",
+            str(response.meta.intent or ""),
+        )
+        st.sync_from_form(
+            None
+            if payload.channel == "voice"
+            else self.form_store.get(payload.channel, payload.user_id, payload.session_id),
+            payload.channel == "voice",
+        )
+
+    def _session_try_early_reply(
+        self,
+        payload: ChatRequest,
+        normalized: str,
+        reply_base: str,
+        ui_language: str,
+    ) -> ChatResponse | None:
+        if payload.channel == "voice":
+            return None
+        form_early = self.form_store.get(payload.channel, payload.user_id, payload.session_id)
+        sess = self.conversation_session_store.get(payload.channel, payload.user_id, payload.session_id)
+        sess.sync_from_form(form_early, False)
+        nl = (normalized or "").strip().lower()
+        if not nl:
+            return None
+        # Rezervasyon kısa takibinden önce: son tur animasyon programıysa «yarın» vb. bağlamı koru.
+        if (
+            form_early is None
+            and nl in _ANIMATION_SCHEDULE_SHORT_FOLLOWUPS
+            and sess.turns
+            and _assistant_excerpt_suggests_animation_schedule(sess.turns[-1].assistant_excerpt)
+        ):
+            text = self.localization_service.get("session_animation_schedule_followup", reply_base)
+            if not text or text == "session_animation_schedule_followup":
+                text = self.localization_service.get("session_animation_schedule_followup", "tr")
+            return self.response_service.build(
+                "inform",
+                text,
+                "hotel_info",
+                1.0,
+                reply_base,
+                ui_language,
+                "rule",
+            )
+        if form_early is None and sess.reservation_followup_alive() and nl in _RESERVATION_SHORT_FOLLOWUPS:
+            text = self.localization_service.get("session_reservation_followup_short", reply_base)
+            if not text or text == "session_reservation_followup_short":
+                text = self.localization_service.get("session_reservation_followup_short", "tr")
+            action = self._action_for_intent("reservation", None, None)
+            return self.response_service.build(
+                "inform",
+                text,
+                "reservation",
+                1.0,
+                reply_base,
+                ui_language,
+                "rule",
+                action=action,
+            )
+        if form_early is not None:
+            return None
+        if nl in _SESSION_ACK_AFTER_CANCEL and sess.last_notable_event == "form_cancelled":
+            sess.clear_misleading_cancel_context()
+            text = self.localization_service.get("session_ack_after_cancel", reply_base)
+            if not text or text == "session_ack_after_cancel":
+                text = self.localization_service.get("session_ack_after_cancel", "tr")
+            return self.response_service.build(
+                "inform",
+                text,
+                "chitchat",
+                1.0,
+                reply_base,
+                ui_language,
+                "rule",
+            )
+        if nl in _SESSION_VAZGECTIM_AFTER_CANCEL and sess.last_notable_event == "form_cancelled":
+            sess.clear_misleading_cancel_context()
+            text = self.localization_service.get("session_vazgectim_after_cancel", reply_base)
+            if not text or text == "session_vazgectim_after_cancel":
+                text = self.localization_service.get("session_vazgectim_after_cancel", "tr")
+            return self.response_service.build(
+                "inform",
+                text,
+                "chitchat",
+                1.0,
+                reply_base,
+                ui_language,
+                "rule",
+            )
+        return None
+
+    def _touch_reservation_context(self, payload: ChatRequest) -> None:
+        if payload.channel == "voice":
+            return
+        self.conversation_session_store.get(
+            payload.channel, payload.user_id, payload.session_id
+        ).touch_reservation_module_hint()
+
+    def _session_on_form_abandoned_clear_cancel_context(self, payload: ChatRequest) -> None:
+        """Form konu değişimi / sıfırlama ile silindiğinde eski iptal bağlamı kısa cevaplara yansımasın."""
+        if payload.channel == "voice":
+            return
+        self.conversation_session_store.get(
+            payload.channel, payload.user_id, payload.session_id
+        ).clear_misleading_cancel_context()
+
+    def _handle_chat_request(self, payload: ChatRequest) -> ChatResponse:
         decision_path: list[str] = ["request_context", "normalization", "language_context"]
         openai_path_used = False
         vector_store_used = False
@@ -378,6 +802,10 @@ class ChatOrchestrator:
             )
             return resp
 
+        early_sess = self._session_try_early_reply(payload, normalized, reply_base, ui_language)
+        if early_sess is not None:
+            return early_sess
+
         # Rezervasyonla ilgili çok net kısa mesajlar için doğrudan Rezervasyonlar modülüne yönlendirme.
         # Rule engine / LLM'e gitmeden deterministik davranır.
         norm_lower = normalized.lower()
@@ -404,6 +832,7 @@ class ChatOrchestrator:
                     "rule",
                     action=None,
                 )
+            self._touch_reservation_context(payload)
             text = _RESERVATION_REDIRECT_TEXT.get(reply_base, _RESERVATION_REDIRECT_TEXT["tr"])
             action = self._action_for_intent("reservation", None, None)
             return self.response_service.build(
@@ -488,19 +917,17 @@ class ChatOrchestrator:
                 effective_sub_intent = "greeting"
                 effective_entity = None
             language_switch_applied = reply_lang != reply_base
-            # Operasyonel niyetler: chat formu (istek / arıza / şikayet / misafir bildirimi).
-            if rule_intent.intent in ("request", "fault_report", "complaint", "guest_notification"):
+            # Operasyonel niyetler — sohbette yalnızca: istek, arıza, misafir bildirimi (şikayet → modül).
+            if rule_intent.intent in ("request", "fault_report", "guest_notification"):
                 if payload.channel == "voice":
-                    exempt_voice = (
-                        rule_intent.intent == "request"
-                        and rule_intent.sub_intent in _REQUEST_CHAT_FORM_EXEMPT_SUBINTENTS
+                    exempt_voice = rule_intent.intent == "request" and _request_rule_uses_reception_redirect_not_chat_form(
+                        rule_intent.sub_intent, rule_intent.entity
                     )
                     if not exempt_voice:
                         decision_path.append("voice_info_layer_operational")
                         return self._voice_operational_redirect(reply_lang, ui_language)
-                if (
-                    rule_intent.intent == "request"
-                    and rule_intent.sub_intent in _REQUEST_CHAT_FORM_EXEMPT_SUBINTENTS
+                if rule_intent.intent == "request" and _request_rule_uses_reception_redirect_not_chat_form(
+                    rule_intent.sub_intent, rule_intent.entity
                 ):
                     decision_path.append("compose_request_redirect")
                     response = self._apply_policy(
@@ -560,24 +987,45 @@ class ChatOrchestrator:
                 )
                 return response
 
-            response = self._apply_policy(
-                intent=rule_intent.intent,
-                sub_intent=effective_sub_intent,
-                entity=effective_entity,
-                confidence=rule_intent.confidence,
-                source=rule_intent.source,
-                message=payload.message,
-                reply_language=reply_lang,
-                ui_language=ui_language,
-                needs_rag=rule_intent.needs_rag,
-                response_mode=rule_intent.response_mode,
-            )
-            response = self._attach_action(
-                response=response,
-                intent=rule_intent.intent,
-                sub_intent=effective_sub_intent,
-                entity=effective_entity,
-            )
+            if rule_intent.intent == "chitchat" and effective_sub_intent == "confusion":
+                decision_path.append("chitchat_confusion_followup")
+                response = self._build_confusion_chitchat_response(
+                    payload, reply_lang, ui_language, rule_intent.source or "rule"
+                )
+            else:
+                response = self._apply_policy(
+                    intent=rule_intent.intent,
+                    sub_intent=effective_sub_intent,
+                    entity=effective_entity,
+                    confidence=rule_intent.confidence,
+                    source=rule_intent.source,
+                    message=payload.message,
+                    reply_language=reply_lang,
+                    ui_language=ui_language,
+                    needs_rag=rule_intent.needs_rag,
+                    response_mode=rule_intent.response_mode,
+                )
+                if rule_intent.intent == "reservation" and _is_early_checkin_reception_handoff(
+                    normalized, rule_intent.sub_intent, rule_intent.entity
+                ):
+                    text = _EARLY_CHECKIN_RECEPTION_TEXT.get(reply_lang, _EARLY_CHECKIN_RECEPTION_TEXT["tr"])
+                    response = self.response_service.build(
+                        "inform",
+                        text,
+                        "reservation",
+                        rule_intent.confidence,
+                        reply_lang,
+                        ui_language,
+                        "rule",
+                        action=None,
+                    )
+                else:
+                    response = self._attach_action(
+                        response=response,
+                        intent=rule_intent.intent,
+                        sub_intent=effective_sub_intent,
+                        entity=effective_entity,
+                    )
             rag_used = response.meta.source == "rag"
             if rag_used:
                 vector_store_used = bool((self.settings.openai_vector_store_id or "").strip())
@@ -603,6 +1051,8 @@ class ChatOrchestrator:
                 rule_intent.intent == "chitchat",
                 response.type,
             )
+            if rule_intent.intent in ("hotel_info", "recommendation"):
+                self._session_on_form_abandoned_clear_cancel_context(payload)
             return response
 
         decision_path.append("llm_classifier")
@@ -621,16 +1071,22 @@ class ChatOrchestrator:
             # Çok kısa / belirsiz mesajlarda sert fallback yerine nazik karşılama dön.
             short_norm = (normalized or "").strip()
             if len(short_norm) <= 20:
-                greet = self.localization_service.get("chitchat_greeting", reply_base)
-                resp = self.response_service.build(
-                    "inform",
-                    greet,
-                    "chitchat",
-                    1.0,
-                    reply_base,
-                    ui_language,
-                    "fallback",
-                )
+                if RuleEngine.is_confusion_followup_social(normalized):
+                    decision_path.append("low_confidence_confusion_followup")
+                    resp = self._build_confusion_chitchat_response(
+                        payload, reply_base, ui_language, "fallback"
+                    )
+                else:
+                    greet = self.localization_service.get("chitchat_greeting", reply_base)
+                    resp = self.response_service.build(
+                        "inform",
+                        greet,
+                        "chitchat",
+                        1.0,
+                        reply_base,
+                        ui_language,
+                        "fallback",
+                    )
             else:
                 resp = self._fallback_response(
                     llm_intent.intent,
@@ -660,8 +1116,34 @@ class ChatOrchestrator:
             )
             return resp
 
-        # LLM sınıflandırıcısı da operasyonel intent bulursa chat form akışını kullan.
-        if llm_intent.intent in ("request", "fault_report", "complaint", "guest_notification"):
+        _sup_ent = extract_room_supply_request_entity(normalized)
+        if (
+            llm_intent.intent == "guest_notification"
+            and RuleEngine.is_strong_service_item_request(normalized)
+            and (
+                RuleEngine.is_baby_equipment_intent(normalized)
+                or _sup_ent is not None
+            )
+        ):
+            _sub = (
+                RuleEngine.sub_intent_for_room_request_entity(_sup_ent)
+                if _sup_ent
+                else "room_supply_request"
+            )
+            llm_intent = IntentResult(
+                intent="request",
+                sub_intent=_sub,
+                entity=_sup_ent,
+                department="reception",
+                reason="operational_supply_not_guest_notif",
+                needs_rag=False,
+                response_mode="guided",
+                confidence=max(llm_intent.confidence, 0.95),
+                source="rule",
+            )
+
+        # LLM: sohbet formu yalnız istek / arıza / misafir bildirimi (şikayet ayrı modül).
+        if llm_intent.intent in ("request", "fault_report", "guest_notification"):
             if payload.channel == "voice":
                 decision_path.append("voice_info_layer_operational_llm")
                 return self._voice_operational_redirect(reply_base, ui_language)
@@ -702,12 +1184,27 @@ class ChatOrchestrator:
             needs_rag=llm_intent.needs_rag,
             response_mode=llm_intent.response_mode,
         )
-        response = self._attach_action(
-            response=response,
-            intent=llm_intent.intent,
-            sub_intent=llm_intent.sub_intent,
-            entity=llm_intent.entity,
-        )
+        if llm_intent.intent == "reservation" and _is_early_checkin_reception_handoff(
+            normalized, llm_intent.sub_intent, llm_intent.entity
+        ):
+            text = _EARLY_CHECKIN_RECEPTION_TEXT.get(reply_base, _EARLY_CHECKIN_RECEPTION_TEXT["tr"])
+            response = self.response_service.build(
+                "inform",
+                text,
+                "reservation",
+                llm_intent.confidence,
+                reply_base,
+                ui_language,
+                llm_intent.source or "rule",
+                action=None,
+            )
+        else:
+            response = self._attach_action(
+                response=response,
+                intent=llm_intent.intent,
+                sub_intent=llm_intent.sub_intent,
+                entity=llm_intent.entity,
+            )
         rag_used = response.meta.source == "rag"
         if rag_used:
             vector_store_used = bool((self.settings.openai_vector_store_id or "").strip())
@@ -733,6 +1230,8 @@ class ChatOrchestrator:
             False,
             response.type,
         )
+        if llm_intent.intent in ("hotel_info", "recommendation"):
+            self._session_on_form_abandoned_clear_cancel_context(payload)
         return response
 
     def _apply_policy(
@@ -794,21 +1293,20 @@ class ChatOrchestrator:
             )
 
         if policy == "compose_complaint":
-            extracted_entity = entity or self.rule_engine.extract_entity(normalize_text(message))
-            composed = self.response_composer.compose(
-                intent,
-                sub_intent or self._guess_complaint_sub_intent(message),
-                extracted_entity,
-                reply_language,
-            )
+            if (sub_intent or "") == "service_complaint":
+                text = _COMPLAINT_GUIDANCE_TEXT_GENERIC.get(
+                    reply_language, _COMPLAINT_GUIDANCE_TEXT_GENERIC["tr"]
+                )
+            else:
+                text = _COMPLAINT_GUIDANCE_TEXT.get(reply_language, _COMPLAINT_GUIDANCE_TEXT["tr"])
             return self.response_service.build(
-                "redirect",
-                composed,
+                "inform",
+                text,
                 intent,
                 confidence,
                 reply_language,
                 ui_language,
-                source,
+                source or "rule",
             )
 
         if policy == "compose_request":
@@ -830,8 +1328,7 @@ class ChatOrchestrator:
             )
 
         if policy == "compose_reservation":
-            # Rezervasyon taleplerinde misafiri web arayüzündeki Rezervasyonlar modülüne
-            # yönlendiriyoruz; resepsiyon fallback metnine gerek yok.
+            # Rezervasyon yalnız Rezervasyonlar sekmesinde; sohbet formu yok.
             text = _RESERVATION_REDIRECT_TEXT.get(reply_language, _RESERVATION_REDIRECT_TEXT["tr"])
             return self.response_service.build(
                 "inform",
@@ -840,7 +1337,7 @@ class ChatOrchestrator:
                 1.0,
                 reply_language,
                 ui_language,
-                "rule",
+                source or "rule",
             )
 
         if policy == "compose_special_need":
@@ -936,11 +1433,47 @@ class ChatOrchestrator:
                     "rule",
                     action={"kind": "open_alanya_module"},
                 )
+            if fixed_entity_key == "fixed_spa_info":
+                fixed_text = self.localization_service.get(fixed_entity_key, reply_language)
+                return self.response_service.build(
+                    "answer",
+                    fixed_text,
+                    intent,
+                    confidence,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "open_spa_module"},
+                )
+            if fixed_entity_key == "fixed_spa_prices_module_hint":
+                fixed_text = self.localization_service.get(fixed_entity_key, reply_language)
+                return self.response_service.build(
+                    "answer",
+                    fixed_text,
+                    intent,
+                    confidence,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "open_spa_module"},
+                )
+            if fixed_entity_key == "fixed_restaurants_bars_module_hint":
+                fixed_text = self.localization_service.get(fixed_entity_key, reply_language)
+                return self.response_service.build(
+                    "answer",
+                    fixed_text,
+                    intent,
+                    confidence,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "open_restaurants_bars_module"},
+                )
             if fixed_entity_key in (
                 "fixed_restaurant_info",
                 "fixed_ice_cream_info",
+                "fixed_laundry_dry_cleaning_info",
                 "fixed_pool_beach_info",
-                "fixed_spa_info",
                 "fixed_animation_info",
                 "fixed_outside_hotel_info",
             ):
@@ -977,16 +1510,19 @@ class ChatOrchestrator:
             if rag_answer:
                 nm = normalize_text(message)
                 rq_soft = self.rule_engine.extract_request_category(nm)
-                if rq_soft and not self.rule_engine.is_strong_service_item_request(nm):
-                    _soft_key = f"hotel_info_soft_followup_{rq_soft}"
-                    suffix = self.localization_service.get(_soft_key, reply_language).strip()
-                    if not suffix or suffix == _soft_key:
-                        _gen = "hotel_info_soft_followup_generic"
-                        suffix = self.localization_service.get(_gen, reply_language).strip()
-                        if suffix == _gen:
-                            suffix = ""
-                    if suffix:
-                        rag_answer = rag_answer.rstrip() + "\n\n" + suffix
+                # Bilgi (RAG) cevaplarına yalnızca havlu için plaj/havuz vs oda ayrımı eklenir; form yönlendirmesi yok.
+                suffix = ""
+                if (
+                    rq_soft == "towel"
+                    and not self.rule_engine.is_strong_service_item_request(nm)
+                ):
+                    s = self.localization_service.get(
+                        "hotel_info_soft_followup_towel", reply_language
+                    ).strip()
+                    if s and s != "hotel_info_soft_followup_towel":
+                        suffix = s
+                if suffix:
+                    rag_answer = rag_answer.rstrip() + "\n\n" + suffix
                 return self.response_service.build(
                     "answer",
                     rag_answer,
@@ -1237,21 +1773,13 @@ class ChatOrchestrator:
             )
         )
 
-        # Bağlamsal güncelleme: form ortasındayken kullanıcı güçlü bir şekilde
-        # yeni bir operasyonel niyet (ör. yeni arıza) veya sosyal selamlaşma
-        # yazarsa, mevcut formu kapatıp uygun akışa dön.
-        # "description" ve benzeri serbest metin adımlarında yeniden rule match yapma;
-        # aksi halde "su akmıyor" gibi metinler başka intent ile eşlenip kategori başa sarıyor.
-        if text and state.step not in (
-            "full_name",
-            "room",
-            "confirm",
-            "description",
-            "detail_enum",
-            "detail_int",
-            "location",
-            "urgency",
-        ):
+        # Bağlamsal güncelleme: kategori veya talep detay listesinde / adet sorulurken geçerli numara girilmediyse
+        # başka soruya veya bilgiye geçilebilir. Geçerli seçim yapıldıktan sonra (açıklama, isim, oda, onay vb.)
+        # form kilitli kalır; yanlış yanıtta aynı soru tekrar sorulur.
+        _skip_topic_switch = state.step != "category" and _request_choice_text_matches_current_step(
+            state, text, reply_language
+        )
+        if text and state.step in _FORM_TOPIC_SWITCH_STEPS and not _skip_topic_switch:
             re_intent = self.rule_engine.match(normalized)
             if re_intent:
                 # Aynı misafir bildirimi akışında konu değişti (ör. alerjen → kutlama): grubu güncelle.
@@ -1265,6 +1793,7 @@ class ChatOrchestrator:
                         ng_new = _GUEST_NOTIF_SUB_TO_GROUP[sub]
                         if state.notif_group != ng_new:
                             self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+                            self._session_on_form_abandoned_clear_cancel_context(payload)
                             return self._start_form_flow(
                                 payload=payload,
                                 intent="guest_notification",
@@ -1273,15 +1802,93 @@ class ChatOrchestrator:
                                 notif_group=ng_new,
                                 initial_request_category=None,
                             )
+                if re_intent.intent == "hotel_info" and state.operation in (
+                    "request",
+                    "fault",
+                    "guest_notification",
+                ):
+                    self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+                    self._session_on_form_abandoned_clear_cancel_context(payload)
+                    return self.handle(payload)
+                if re_intent.intent == "recommendation":
+                    self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+                    self._session_on_form_abandoned_clear_cancel_context(payload)
+                    return self.handle(payload)
+                if state.operation == "request" and re_intent.intent == "request":
+                    new_cat = extract_request_category_from_text(normalized)
+                    cur = (state.category or "").strip()
+                    if new_cat and new_cat != cur:
+                        self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+                        self._session_on_form_abandoned_clear_cancel_context(payload)
+                        return self.handle(payload)
                 if (
-                    re_intent.intent in ("request", "fault_report", "complaint", "guest_notification")
+                    re_intent.intent in ("request", "fault_report", "guest_notification", "complaint", "reservation")
                     and re_intent.intent != intent
                 ):
-                    # Farklı operasyonel intent: mevcut formu bırak, yeni formu başlat.
+                    # Farklı operasyonel intent: mevcut formu bırak; şikayet/rezervasyon → modül yönlendirmesi.
                     self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+                    self._session_on_form_abandoned_clear_cancel_context(payload)
+                    if re_intent.intent == "complaint":
+                        response = self._apply_policy(
+                            intent=re_intent.intent,
+                            sub_intent=re_intent.sub_intent,
+                            entity=re_intent.entity,
+                            confidence=re_intent.confidence,
+                            source=re_intent.source,
+                            message=payload.message,
+                            reply_language=reply_language,
+                            ui_language=ui_language,
+                            needs_rag=re_intent.needs_rag,
+                            response_mode=re_intent.response_mode,
+                        )
+                        return self._attach_action(
+                            response=response,
+                            intent=re_intent.intent,
+                            sub_intent=re_intent.sub_intent,
+                            entity=re_intent.entity,
+                        )
+                    if re_intent.intent == "reservation":
+                        if _is_early_checkin_reception_handoff(
+                            normalized, re_intent.sub_intent, re_intent.entity
+                        ):
+                            self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+                            self._session_on_form_abandoned_clear_cancel_context(payload)
+                            text = _EARLY_CHECKIN_RECEPTION_TEXT.get(
+                                reply_language, _EARLY_CHECKIN_RECEPTION_TEXT["tr"]
+                            )
+                            return self.response_service.build(
+                                "inform",
+                                text,
+                                "reservation",
+                                re_intent.confidence,
+                                reply_language,
+                                ui_language,
+                                "rule",
+                                action=None,
+                            )
+                        response = self._apply_policy(
+                            intent=re_intent.intent,
+                            sub_intent=re_intent.sub_intent,
+                            entity=re_intent.entity,
+                            confidence=re_intent.confidence,
+                            source=re_intent.source,
+                            message=payload.message,
+                            reply_language=reply_language,
+                            ui_language=ui_language,
+                            needs_rag=re_intent.needs_rag,
+                            response_mode=re_intent.response_mode,
+                        )
+                        return self._attach_action(
+                            response=response,
+                            intent=re_intent.intent,
+                            sub_intent=re_intent.sub_intent,
+                            entity=re_intent.entity,
+                        )
                     if (
                         re_intent.intent == "request"
-                        and re_intent.sub_intent in _REQUEST_CHAT_FORM_EXEMPT_SUBINTENTS
+                        and _request_rule_uses_reception_redirect_not_chat_form(
+                            re_intent.sub_intent, re_intent.entity
+                        )
                     ):
                         response = self._apply_policy(
                             intent=re_intent.intent,
@@ -1324,6 +1931,7 @@ class ChatOrchestrator:
                 if re_intent.intent == "chitchat":
                     # Selamlaşma / sohbet: formu iptal et ve sıcak karşılama yanıtı ver.
                     self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+                    self._session_on_form_abandoned_clear_cancel_context(payload)
                     greet = self.localization_service.get("chitchat_greeting", reply_language)
                     return self.response_service.build(
                         "inform",
@@ -2006,7 +2614,7 @@ class ChatOrchestrator:
             )
 
         if state.step == "full_name":
-            if not text:
+            if not text or is_full_name_input_effectively_empty(text):
                 if reply_language == "en":
                     msg = "Please write your full name."
                 elif reply_language == "de":
@@ -2029,7 +2637,119 @@ class ChatOrchestrator:
                         "step": "full_name",
                     },
                 )
-            state.full_name = text
+            if is_chat_form_full_name_help_request(text):
+                if reply_language == "en":
+                    msg = (
+                        "Please type your first and last name as shown on your ID or passport "
+                        "(letters, spaces, hyphens and apostrophes are fine). "
+                        "Do not use digits in this field—I will ask for your room number in the next step."
+                    )
+                elif reply_language == "de":
+                    msg = (
+                        "Bitte geben Sie Vor- und Nachnamen wie im Ausweis/Reisepass ein "
+                        "(Buchstaben, Leerzeichen, Bindestriche und Apostrophe sind in Ordnung). "
+                        "Keine Ziffern im Namen—die Zimmernummer erfrage ich im nächsten Schritt."
+                    )
+                elif reply_language == "ru":
+                    msg = (
+                        "Напишите имя и фамилию как в документе "
+                        "(буквы, пробелы, дефисы и апостроф допустимы). "
+                        "Без цифр в имени—номер комнаты спрошу на следующем шаге."
+                    )
+                else:
+                    msg = (
+                        "Kimlik veya pasaportta göründüğü gibi adınızı ve soyadınızı yazın "
+                        "(harf, boşluk, tire ve kesme işareti kullanılabilir). "
+                        "Bu alanda rakam kullanmayın; oda numaranızı bir sonraki adımda soracağım."
+                    )
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={
+                        "kind": "chat_form",
+                        "operation": state.operation,
+                        "step": "full_name",
+                    },
+                )
+            name_err = validate_chat_form_full_name(text)
+            if name_err:
+                if name_err == "has_digit":
+                    if reply_language == "en":
+                        msg = "Names cannot contain digits. Please use letters only (first and last name)."
+                    elif reply_language == "de":
+                        msg = "Namen dürfen keine Ziffern enthalten. Bitte nur Buchstaben (Vor- und Nachname)."
+                    elif reply_language == "ru":
+                        msg = "В имени не должно быть цифр. Укажите имя и фамилию буквами."
+                    else:
+                        msg = "Ad ve soyadda rakam kullanılamaz. Lütfen yalnızca harflerle yazın."
+                elif name_err == "no_letters":
+                    if reply_language == "en":
+                        msg = "Please enter a readable first and last name using letters."
+                    elif reply_language == "de":
+                        msg = "Bitte geben Sie einen lesbaren Vor- und Nachnamen mit Buchstaben ein."
+                    elif reply_language == "ru":
+                        msg = "Пожалуйста, укажите имя и фамилию буквами."
+                    else:
+                        msg = "Lütfen harflerle okunabilir bir ad ve soyad yazın."
+                elif name_err == "need_first_last":
+                    if reply_language == "en":
+                        msg = "Please type your first name and last name as two words (e.g. Jane Smith), as on your ID."
+                    elif reply_language == "de":
+                        msg = "Bitte schreiben Sie Vor- und Nachname in zwei Wörtern (z. B. Anna Müller), wie im Ausweis."
+                    elif reply_language == "ru":
+                        msg = "Укажите имя и фамилию двумя словами (например, Анна Иванова), как в документе."
+                    else:
+                        msg = (
+                            "Lütfen adınızı ve soyadınızı kimlikteki gibi iki kelime olarak yazın "
+                            "(örnek: Ayşe Yılmaz). Tek harf veya tek kelime yeterli değildir."
+                        )
+                elif name_err == "too_short":
+                    if reply_language == "en":
+                        msg = "That looks too short. Please write your first and last name."
+                    elif reply_language == "de":
+                        msg = "Das ist zu kurz. Bitte schreiben Sie Vor- und Nachname."
+                    elif reply_language == "ru":
+                        msg = "Слишком коротко. Напишите имя и фамилию."
+                    else:
+                        msg = "Çok kısa görünüyor. Lütfen adınızı ve soyadınızı yazın."
+                elif name_err == "too_long":
+                    if reply_language == "en":
+                        msg = "Please shorten your name to first and last name only (max. 120 characters)."
+                    elif reply_language == "de":
+                        msg = "Bitte kürzen Sie auf Vor- und Nachname (max. 120 Zeichen)."
+                    elif reply_language == "ru":
+                        msg = "Сократите до имени и фамилии (не более 120 символов)."
+                    else:
+                        msg = "Lütfen yalnızca ad ve soyadınızı yazın (en fazla 120 karakter)."
+                else:
+                    if reply_language == "en":
+                        msg = "Please write your first and last name."
+                    elif reply_language == "de":
+                        msg = "Bitte schreiben Sie Vor- und Nachname."
+                    elif reply_language == "ru":
+                        msg = "Напишите имя и фамилию."
+                    else:
+                        msg = "Lütfen adınızı ve soyadınızı yazın."
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={
+                        "kind": "chat_form",
+                        "operation": state.operation,
+                        "step": "full_name",
+                    },
+                )
+            state.full_name = normalize_full_name_for_storage(text)
             state.step = "room"
             self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
             if reply_language == "en":
@@ -2081,35 +2801,36 @@ class ChatOrchestrator:
                 )
             room_clean = text.strip()
             if not is_valid_hotel_room_number(room_clean):
-                _reset_chat_form_to_category(state)
                 self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
                 if reply_language == "en":
                     err = (
-                        "Please enter a valid room number for this hotel. "
-                        "Let's start again from category selection."
+                        "That room number is not valid for this hotel. "
+                        "Please enter your four-digit room number as on your key card."
                     )
                 elif reply_language == "de":
                     err = (
-                        "Bitte geben Sie eine gültige Zimmernummer für dieses Hotel ein. "
-                        "Wir beginnen erneut mit der Kategorieauswahl."
+                        "Diese Zimmernummer ist in diesem Hotel ungültig. "
+                        "Bitte geben Sie Ihre vierstellige Zimmernummer wie auf der Schlüsselkarte ein."
                     )
                 elif reply_language == "ru":
                     err = (
-                        "Пожалуйста, введите действительный номер комнаты этого отеля. "
-                        "Начнём снова с выбора категории."
+                        "Такой номер комнаты в этом отеле недействителен. "
+                        "Укажите четырёхзначный номер, как на ключ-карте."
                     )
                 else:
-                    err = "Lütfen geçerli bir oda numarası girin. Kategori seçiminden yeniden başlayalım."
-                msg = err + "\n\n" + _category_prompt(state.operation)
+                    err = (
+                        "Bu oda numarası otelimiz için geçerli değil. "
+                        "Lütfen anahtar kartınızdaki dört haneli oda numaranızı yazın."
+                    )
                 return self.response_service.build(
                     "inform",
-                    msg,
+                    err,
                     intent,
                     1.0,
                     reply_language,
                     ui_language,
                     "rule",
-                    action={"kind": "chat_form", "operation": state.operation, "step": "category"},
+                    action={"kind": "chat_form", "operation": state.operation, "step": "room"},
                 )
             state.room = room_clean
             # Oda alındı; şimdi özet + onay adımına geç.
@@ -2240,13 +2961,16 @@ class ChatOrchestrator:
                 )
 
             lowered = text.strip().lower()
-            is_yes = lowered in ("1", "evet", "onay", "onaylıyorum", "ok", "tamam")
-            is_no = lowered in ("2", "hayır", "hayir", "iptal", "vazgeç", "vazgec")
+            is_yes = lowered in _CONFIRM_YES_PHRASES
+            is_no = lowered in _CONFIRM_NO_PHRASES
 
             if not (is_yes or is_no):
                 # Sayı yerine serbest bir mesaj yazıldıysa formu güvenli şekilde iptal et
                 # ve normal sohbet akışına dön.
                 self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+                self.conversation_session_store.get(
+                    payload.channel, payload.user_id, payload.session_id
+                ).mark_form_cancelled(state.operation or "")
                 if reply_language == "en":
                     msg = "Okay, I have cancelled this form. You can ask a new question or report another issue."
                 elif reply_language == "de":
@@ -2268,6 +2992,9 @@ class ChatOrchestrator:
             if is_no:
                 # Form iptal; state temizle.
                 self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+                self.conversation_session_store.get(
+                    payload.channel, payload.user_id, payload.session_id
+                ).mark_form_cancelled(state.operation or "")
                 if reply_language == "en":
                     msg = "Okay, I have cancelled this record. You can start a new request or fault report anytime."
                 elif reply_language == "de":
@@ -2317,6 +3044,9 @@ class ChatOrchestrator:
             }
 
             self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+            self.conversation_session_store.get(
+                payload.channel, payload.user_id, payload.session_id
+            ).mark_form_submitted(state.operation or "")
 
             if reply_language == "en":
                 msg = "Thank you. I have recorded your request and will forward it to the relevant team."
@@ -2346,6 +3076,7 @@ class ChatOrchestrator:
 
         # Beklenmeyen step durumunda formu sıfırla ve güvenli fallback üret.
         self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+        self._session_on_form_abandoned_clear_cancel_context(payload)
         return self._fallback_response(
             intent,
             0.0,
@@ -2591,6 +3322,7 @@ class ChatOrchestrator:
         )()
 
     def _attach_action(self, response: ChatResponse, intent: str, sub_intent: str | None, entity: str | None) -> ChatResponse:
+        # hotel_info / current_time vb. için _action_for_intent None döner; policy’nin verdiği meta.action korunur.
         action = self._action_for_intent(intent=intent, sub_intent=sub_intent, entity=entity)
         if action is None:
             return response
@@ -2599,20 +3331,17 @@ class ChatOrchestrator:
 
     @staticmethod
     def _action_for_intent(intent: str, sub_intent: str | None, entity: str | None) -> dict | None:
-        # Chatbot üzerinden gelen istek/şikayet/arıza ve özel ihtiyaçlar Supabase üzerinde
-        # guest request/fault/complaint kaydına dönüşürken, rezervasyonlar için ayrı bir
-        # Rezervasyonlar modülü formuna yönlendirme tercih edilir.
+        # Sohbette: istek / arıza → chat formu veya yönlendirme; şikayet / rezervasyon → uygulama modülü.
         if intent == "reservation":
-            # Frontend, bu action'ı alıp uygun Rezervasyonlar formunu açabilir.
             return {
                 "kind": "open_reservation_form",
                 "sub_intent": sub_intent,
                 "entity": entity,
             }
-        if intent in ("fault_report", "complaint", "request", "special_need"):
-            department = "guest_relations" if intent in ("complaint", "special_need") else "reception"
+        if intent in ("fault_report", "request", "special_need"):
+            department = "guest_relations" if intent == "special_need" else "reception"
             priority = "medium"
-            if intent in ("complaint", "special_need"):
+            if intent == "special_need":
                 priority = "high"
             elif intent == "request":
                 priority = "low"
@@ -2646,12 +3375,25 @@ class ChatOrchestrator:
                 "entity": entity,
                 "sub_intent": sub_intent,
             }
+        if intent == "complaint" and sub_intent and sub_intent != "service_complaint":
+            return {
+                "kind": "open_complaint_form",
+                "sub_intent": sub_intent,
+                "entity": entity,
+            }
         return None
 
     @staticmethod
     def _guess_complaint_sub_intent(message: str) -> str:
         t = (message or "").lower()
-        if "gürültü" in t or "gurultu" in t or "noise" in t:
+        if (
+            "gürültü" in t
+            or "gurultu" in t
+            or "noise" in t
+            or "lärm" in t
+            or "laerm" in t
+            or "шум" in t
+        ):
             return "noise_complaint"
         if "temizlik" in t or "clean" in t:
             return "cleanliness_complaint"
@@ -2659,6 +3401,39 @@ class ChatOrchestrator:
             return "staff_complaint"
         if "oda" in t or "room" in t:
             return "room_condition_complaint"
+        if (
+            "şikayetçiyim" in t
+            or "şikayetciyim" in t
+            or "sikayetciyim" in t
+            or "şikayet ediyorum" in t
+            or "sikayet ediyorum" in t
+            or "complaining about" in t
+        ):
+            if (
+                "gürültü" in t
+                or "gurultu" in t
+                or "noise" in t
+                or "lärm" in t
+                or "laerm" in t
+                or "шум" in t
+                or "rahatsız" in t
+                or "rahatsiz" in t
+            ):
+                return "noise_complaint"
+            if (
+                "temizlik" in t
+                or "kirli" in t
+                or "pis" in t
+                or "clean" in t
+                or "dirty" in t
+                or "schmutz" in t
+                or "грязн" in t
+            ):
+                return "cleanliness_complaint"
+            if "personel" in t or "staff" in t or "персонал" in t:
+                return "staff_complaint"
+            if "oda" in t or "room" in t or "zimmer" in t or "номер" in t:
+                return "room_condition_complaint"
         return "service_complaint"
 
     @staticmethod
