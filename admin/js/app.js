@@ -38,6 +38,7 @@
     fault_report: "Arıza",
     reservation: "Rezervasyon",
     special_need: "Özel ihtiyaç",
+    guest_notification: "Misafir bildirimi",
     chitchat: "Sohbet",
     current_time: "Saat",
   };
@@ -521,6 +522,26 @@
         onDelete: async function (id) {
           if (!window.confirm("Bu log kaydı silinsin mi?")) return;
           await adapter.deleteLog(id);
+          await loadLogs();
+        },
+        onBulkDelete: async function (ids) {
+          var list = (ids || []).filter(Boolean);
+          if (!list.length) return;
+          if (
+            !window.confirm(
+              list.length +
+                " log kaydı kalıcı olarak silinsin mi? Bu işlem geri alınamaz.",
+            )
+          ) {
+            return;
+          }
+          try {
+            var res = await adapter.deleteLogsBulk(list);
+            var n = res && res.deleted != null ? res.deleted : list.length;
+            window.alert(String(n) + " kayıt silindi.");
+          } catch (e) {
+            window.alert("Toplu silme başarısız: " + (e && e.message ? e.message : "bilinmeyen hata"));
+          }
           await loadLogs();
         },
       });

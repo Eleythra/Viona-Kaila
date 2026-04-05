@@ -622,6 +622,34 @@ export async function deleteChatObservation(id) {
   return { id };
 }
 
+const CHAT_OBSERVATION_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Aynı istekte en fazla bu kadar uuid silinir (aşırı yükü önlemek için). */
+const CHAT_OBSERVATIONS_BULK_DELETE_MAX = 200;
+
+/**
+ * @param {unknown} ids
+ * @returns {Promise<{ deleted: number, ids: string[] }>}
+ */
+export async function deleteChatObservationsBulk(ids) {
+  const raw = Array.isArray(ids) ? ids : [];
+  const seen = new Set();
+  const unique = [];
+  for (const x of raw) {
+    const id = String(x ?? "").trim();
+    if (!id || !CHAT_OBSERVATION_ID_RE.test(id) || seen.has(id)) continue;
+    seen.add(id);
+    unique.push(id);
+    if (unique.length >= CHAT_OBSERVATIONS_BULK_DELETE_MAX) break;
+  }
+  if (!unique.length) {
+    return { deleted: 0, ids: [] };
+  }
+  const { error } = await getSupabase().from("chat_observations").delete().in("id", unique);
+  if (error) throw error;
+  return { deleted: unique.length, ids: unique };
+}
+
 export async function getChatObservationSummary(query = {}) {
   const filterQuery = stripNonFilterLogQuery(query);
   const rows = await fetchAllChatObservationRowsForSummary(filterQuery);
@@ -720,33 +748,170 @@ function extractExportFilters(query = {}) {
     intent: query.intent || "",
     layer: query.layer || "",
     domain: query.domain || "",
+    route_target: query.route_target || "",
     response_type: query.response_type || "",
+    session_id: query.session_id || "",
+    user_id: query.user_id || "",
+    multi_intent: query.multi_intent || "",
+    recommendation_made: query.recommendation_made || "",
+    is_correct: query.is_correct || "",
     search: query.search || "",
+    include_raw_payload: String(query.include_raw_payload || "false") === "true" ? "true" : "false",
   };
+}
+
+/** CSV üst bilgisi ve sütun sözlüğü (Türkçe); Excel’de # ile başlayan satırlar tek hücrede görünür. */
+const CHAT_OBS_CSV_COL_META = {
+  created_at: {
+    trHeader: "olusturulma_zamani",
+    trDesc: "Kaydın oluşturulduğu zaman (ISO 8601, UTC).",
+  },
+  session_id: {
+    trHeader: "oturum_kimligi",
+    trDesc: "Misafir oturumu tanımlayıcısı (anonim veya uygulama oturumu).",
+  },
+  user_id: {
+    trHeader: "kullanici_kimligi",
+    trDesc: "Giriş yapmış kullanıcı kimliği; boş olabilir.",
+  },
+  user_message: {
+    trHeader: "misafir_mesaji",
+    trDesc: "Misafirin gönderdiği metin (tek satıra indirgenmiş).",
+  },
+  ui_language: {
+    trHeader: "arayuz_dili",
+    trDesc: "Uygulama arayüzünde seçilen dil kodu.",
+  },
+  detected_language: {
+    trHeader: "alginan_dil",
+    trDesc: "Metinden tahmin edilen dil kodu.",
+  },
+  intent: {
+    trHeader: "niyet_intent",
+    trDesc: "Sınıflandırılmış ana niyet (backend IntentName ile uyumlu teknik ad).",
+  },
+  domain: {
+    trHeader: "alan_domain",
+    trDesc: "Konu alanı (ör. spa, oda); boş olabilir.",
+  },
+  sub_intent: {
+    trHeader: "alt_niyet",
+    trDesc: "Daha ince taneli niyet veya alt sınıf; model veya kural çıktısı.",
+  },
+  entity: {
+    trHeader: "varlik_entity",
+    trDesc: "Çıkarılan varlık adı veya kodu (ör. hizmet kodu); boş olabilir.",
+  },
+  confidence: {
+    trHeader: "guven_skoru",
+    trDesc: "Niyet güveni (0–1 arası sayı); boş ise kayıtta yoktur.",
+  },
+  multi_intent: {
+    trHeader: "coklu_niyet_evet_hayir",
+    trDesc: "Birden fazla konu işaretlendi mi (yes/no).",
+  },
+  response_type: {
+    trHeader: "yanit_turu",
+    trDesc: "Yanıt modu türü (ör. fixed, guided, answer, fallback).",
+  },
+  route_target: {
+    trHeader: "yonlendirme_hedefi",
+    trDesc: "Operasyonel yönlendirme hedefi; yoksa boş.",
+  },
+  recommendation_made: {
+    trHeader: "oneri_verildi_evet_hayir",
+    trDesc: "Bu turda somut öneri üretildi mi (yes/no).",
+  },
+  layer_used: {
+    trHeader: "kullanilan_katman",
+    trDesc: "Yanıtın üretildiği katman (rule, rag, llm, fallback).",
+  },
+  fallback_reason: {
+    trHeader: "yedek_katman_nedeni",
+    trDesc: "Fallback’e düşüldüyse kısa gerekçe metni.",
+  },
+  decision_path: {
+    trHeader: "karar_yolu",
+    trDesc: "Kural/orkestrasyon özeti (tek satır).",
+  },
+  assistant_response: {
+    trHeader: "asistan_yaniti",
+    trDesc: "Misafire gösterilen asistan yanıtı (tek satıra indirgenmiş).",
+  },
+  is_correct: {
+    trHeader: "inceleme_dogru_evet_hayir",
+    trDesc: "Manuel incelemede doğru işaretlendi mi (yes/no).",
+  },
+  review_note: {
+    trHeader: "inceleme_notu",
+    trDesc: "İnceleyenin serbest metin notu.",
+  },
+  reviewed_by: {
+    trHeader: "inceleyen",
+    trDesc: "İncelemeyi yapan kullanıcı veya kimlik.",
+  },
+  reviewed_at: {
+    trHeader: "inceleme_zamani",
+    trDesc: "İncelemenin yapıldığı zaman (ISO).",
+  },
+  raw_payload: {
+    trHeader: "ham_yuk_json",
+    trDesc: "İsteğe bağlı: ham JSON yükü (yalnızca panelde işaretlenirse).",
+  },
+};
+
+function csvCommentLine(text) {
+  const t = String(text || "").replaceAll("\r\n", " ").replaceAll("\n", " ").replaceAll("\r", " ");
+  return `# ${t}`;
+}
+
+function summarizeExportFiltersTr(f) {
+  const parts = [];
+  if (f.from || f.to) parts.push(`tarih ${f.from || "—"} … ${f.to || "—"}`);
+  if (f.language) parts.push(`arayüz dili=${f.language}`);
+  if (f.intent) parts.push(`intent=${f.intent}`);
+  if (f.layer) parts.push(`katman=${f.layer}`);
+  if (f.domain) parts.push(`domain=${f.domain}`);
+  if (f.route_target) parts.push(`route_target=${f.route_target}`);
+  if (f.response_type) parts.push(`yanıt türü=${f.response_type}`);
+  if (f.session_id) parts.push(`oturum=${f.session_id}`);
+  if (f.user_id) parts.push(`kullanıcı=${f.user_id}`);
+  if (f.multi_intent) parts.push(`çoklu niyet=${f.multi_intent}`);
+  if (f.recommendation_made) parts.push(`öneri=${f.recommendation_made}`);
+  if (f.is_correct) parts.push(`doğruluk incelemesi=${f.is_correct}`);
+  if (f.search) parts.push(`arama="${f.search}"`);
+  if (f.include_raw_payload === "true") parts.push("raw_payload dahil");
+  return parts.length ? parts.join(" | ") : "ek filtre yok (tarih dışında)";
+}
+
+function buildChatObservationCsvPreamble(query, columns, dataRowCount) {
+  const f = extractExportFilters(query);
+  const exportedAt = new Date().toISOString();
+  const lines = [
+    csvCommentLine("Viona — Sohbet gözlemleri (chat_observations) dışa aktarımı"),
+    csvCommentLine(
+      "Bu dosya yönetim panelindeki liste ile aynı filtre mantığını kullanır; veri satırları aşağıdadır."
+    ),
+    csvCommentLine(`Dışa aktarım zamanı (ISO UTC): ${exportedAt}`),
+    csvCommentLine(`Aktarılan veri satırı sayısı: ${dataRowCount} (üst sınır 5000; daha çok eşleşme varsa kesilir).`),
+    csvCommentLine("Sıralama: en yeni kayıt önce (created_at azalan)."),
+    csvCommentLine(`Uygulanan filtre özeti: ${summarizeExportFiltersTr(f)}`),
+    csvCommentLine(""),
+    csvCommentLine("--- Sütun başlıkları (bir sonraki satır) soldan sağa aşağıdaki açıklama sırasıyla eşleşir ---"),
+  ];
+  columns.forEach((key) => {
+    const meta = CHAT_OBS_CSV_COL_META[key];
+    const desc = meta ? meta.trDesc : "Ek alan.";
+    const head = meta ? meta.trHeader : key;
+    lines.push(csvCommentLine(`${head} (${key}): ${desc}`));
+  });
+  lines.push(csvCommentLine("--- Veri başlığı (Türkçe kısa adlar) ---"));
+  return lines;
 }
 
 export async function exportChatObservations(query = {}, format = "csv") {
   let qb = getSupabase().from("chat_observations").select("*").order("created_at", { ascending: false });
-  qb = applyDateFilters(qb, query, "created_at");
-  if (query.language) qb = qb.eq("ui_language", String(query.language));
-  if (query.intent) qb = qb.eq("intent", String(query.intent));
-  if (query.layer) qb = qb.eq("layer_used", String(query.layer));
-  if (query.domain) qb = qb.eq("domain", String(query.domain));
-  if (query.response_type) qb = qb.eq("response_type", String(query.response_type));
-  if (query.search) {
-    const q = String(query.search).trim();
-    if (q) {
-      const escaped = q.replaceAll(",", " ");
-      qb = qb.or(
-        [
-          `user_message.ilike.%${escaped}%`,
-          `assistant_response.ilike.%${escaped}%`,
-          `intent.ilike.%${escaped}%`,
-          `domain.ilike.%${escaped}%`,
-        ].join(",")
-      );
-    }
-  }
+  qb = applyChatObservationListFilters(qb, query);
   const { data, error } = await qb.limit(5000);
   if (error) throw error;
   const rows = data || [];
@@ -758,8 +923,14 @@ export async function exportChatObservations(query = {}, format = "csv") {
       {
         exported_at: new Date().toISOString(),
         record_count: mapped.length,
+        export_row_cap: 5000,
+        note_tr:
+          "En fazla 5000 satır döner; filtre listeyle aynıdır. Sütun açıklamaları için CSV dışa aktarımına bakın.",
         filters: extractExportFilters(query),
         columns,
+        column_descriptions_tr: Object.fromEntries(
+          columns.map((c) => [c, CHAT_OBS_CSV_COL_META[c]?.trDesc || ""])
+        ),
         rows: mapped,
       },
       null,
@@ -767,33 +938,9 @@ export async function exportChatObservations(query = {}, format = "csv") {
     );
   }
 
-  const labels = {
-    created_at: "created_at",
-    session_id: "session_id",
-    user_id: "user_id",
-    user_message: "user_message",
-    ui_language: "ui_language",
-    detected_language: "detected_language",
-    intent: "intent",
-    domain: "domain",
-    sub_intent: "sub_intent",
-    entity: "entity",
-    confidence: "confidence",
-    multi_intent: "multi_intent_yes_no",
-    response_type: "response_type",
-    route_target: "route_target",
-    recommendation_made: "recommendation_made_yes_no",
-    layer_used: "layer_used",
-    fallback_reason: "fallback_reason",
-    decision_path: "decision_path",
-    assistant_response: "assistant_response",
-    is_correct: "is_correct_yes_no",
-    review_note: "review_note",
-    reviewed_by: "reviewed_by",
-    reviewed_at: "reviewed_at",
-    raw_payload: "raw_payload_json",
-  };
-  const lines = [columns.map((c) => labels[c] || c).join(",")];
+  const preamble = buildChatObservationCsvPreamble(query, columns, mapped.length);
+  const headerRow = columns.map((c) => csvEscape(CHAT_OBS_CSV_COL_META[c]?.trHeader || c)).join(",");
+  const lines = [...preamble, headerRow];
   mapped.forEach((row) => {
     lines.push(columns.map((c) => csvEscape(row[c])).join(","));
   });

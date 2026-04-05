@@ -3771,13 +3771,37 @@
         return;
       }
       var html =
+        '<div class="logs-bulk-toolbar" role="toolbar" aria-label="Toplu seçim">' +
+        '<label class="logs-bulk-toolbar__check">' +
+        '<input type="checkbox" class="js-logs-select-page" aria-label="Bu sayfadaki tüm satırları seç" />' +
+        "<span>Bu sayfadakilerin tümünü seç</span>" +
+        "</label>" +
+        '<button type="button" class="btn-small logs-bulk-toolbar__btn js-logs-clear-selection">Seçimi kaldır</button>' +
+        '<button type="button" class="btn-small logs-bulk-toolbar__btn logs-bulk-toolbar__btn--danger js-logs-bulk-delete">Seçilenleri sil</button>' +
+        '<p class="logs-bulk-toolbar__hint">İstemediğiniz satırların işaretini kaldırın; yalnızca işaretli kayıtlar silinir. Diğer sayfalar için sayfa değiştirip tekrarlayın (tek istekte en fazla 200 kayıt).</p>' +
+        "</div>" +
         '<div class="bucket-table-wrap bucket-table-wrap--logs"><table class="admin-table admin-table--logs"><thead><tr>' +
-        "<th>Tarih</th><th>Kullanıcı Mesajı</th><th>Dil</th><th>Intent/Domain</th><th>Multi</th><th>Karar</th><th>Route</th><th>Öneri</th><th>Katman</th><th>Cevap</th><th>İşlem</th>" +
+        '<th class="admin-table__th--check"><span class="sr-only">Seç</span></th>' +
+        "<th>Tarih</th><th>Kullanıcı Mesajı</th><th>Dil</th><th>Intent</th><th>Domain</th><th>Alt niyet</th><th>Güven</th><th>Fallback</th><th>Multi</th><th>Karar</th><th>Route</th><th>Öneri</th><th>Katman</th><th>Cevap</th><th>İşlem</th>" +
         "</tr></thead><tbody>";
       rows.forEach(function (r) {
         var userMsg = String(r.user_message || "-");
         var assistantMsg = String(r.assistant_response || "-");
+        var confRaw = r.confidence;
+        var confStr = "-";
+        if (confRaw != null && confRaw !== "") {
+          var cn = Number(confRaw);
+          if (Number.isFinite(cn)) {
+            confStr = cn >= 0 && cn <= 1 ? Math.round(cn * 100) + "%" : String(cn);
+          }
+        }
+        var fbFull = String(r.fallback_reason || "").trim();
+        var fbDisp = fbFull || "-";
         html += "<tr>";
+        html +=
+          '<td class="admin-table__td--check"><input type="checkbox" class="js-log-select" data-id="' +
+          esc(r.id) +
+          '" aria-label="Bu satırı seç" /></td>';
         html += "<td>" + esc(formatSubmittedAtTr(r.created_at)) + "</td>";
         html +=
           '<td class="logs-cell logs-cell--user"><div class="logs-cell__body" title="' +
@@ -3786,7 +3810,16 @@
           esc(userMsg) +
           "</div></td>";
         html += "<td>" + esc((r.ui_language || "-") + " / " + (r.detected_language || "-")) + "</td>";
-        html += "<td>" + esc((r.intent || "-") + " / " + (r.domain || "-")) + "</td>";
+        html += "<td>" + esc(r.intent || "-") + "</td>";
+        html += "<td>" + esc(r.domain || "-") + "</td>";
+        html += "<td>" + esc(r.sub_intent || "-") + "</td>";
+        html += "<td>" + esc(confStr) + "</td>";
+        html +=
+          '<td class="logs-cell logs-cell--fallback"><div class="logs-cell__body logs-cell__body--fallback" title="' +
+          esc(fbFull || "-") +
+          '">' +
+          esc(fbDisp || "-") +
+          "</div></td>";
         html += "<td>" + esc(r.multi_intent ? "Evet" : "Hayır") + "</td>";
         html += "<td>" + esc(r.response_type || "-") + "</td>";
         html += "<td>" + esc(r.route_target || "none") + "</td>";
@@ -3806,6 +3839,61 @@
       });
       html += "</tbody></table></div>";
       mountEl.innerHTML = html;
+
+      var selectPage = mountEl.querySelector(".js-logs-select-page");
+      var bulkDeleteBtn = mountEl.querySelector(".js-logs-bulk-delete");
+      var clearSelBtn = mountEl.querySelector(".js-logs-clear-selection");
+
+      function updateBulkDeleteLabel() {
+        var n = mountEl.querySelectorAll(".js-log-select:checked").length;
+        if (bulkDeleteBtn) {
+          bulkDeleteBtn.textContent = n ? "Seçilenleri sil (" + n + ")" : "Seçilenleri sil";
+          bulkDeleteBtn.disabled = n === 0;
+        }
+        if (selectPage) {
+          var boxes = mountEl.querySelectorAll(".js-log-select");
+          var allChecked = boxes.length > 0 && n === boxes.length;
+          var noneChecked = n === 0;
+          selectPage.checked = allChecked;
+          selectPage.indeterminate = !allChecked && !noneChecked;
+        }
+      }
+
+      if (selectPage) {
+        selectPage.addEventListener("change", function () {
+          var on = selectPage.checked;
+          mountEl.querySelectorAll(".js-log-select").forEach(function (cb) {
+            cb.checked = on;
+          });
+          updateBulkDeleteLabel();
+        });
+      }
+      mountEl.querySelectorAll(".js-log-select").forEach(function (cb) {
+        cb.addEventListener("change", updateBulkDeleteLabel);
+      });
+      if (clearSelBtn) {
+        clearSelBtn.addEventListener("click", function () {
+          mountEl.querySelectorAll(".js-log-select").forEach(function (cb) {
+            cb.checked = false;
+          });
+          if (selectPage) {
+            selectPage.checked = false;
+            selectPage.indeterminate = false;
+          }
+          updateBulkDeleteLabel();
+        });
+      }
+      if (bulkDeleteBtn && handlers && typeof handlers.onBulkDelete === "function") {
+        bulkDeleteBtn.addEventListener("click", function () {
+          var ids = [];
+          mountEl.querySelectorAll(".js-log-select:checked").forEach(function (cb) {
+            ids.push(cb.getAttribute("data-id"));
+          });
+          handlers.onBulkDelete(ids);
+        });
+      }
+      updateBulkDeleteLabel();
+
       mountEl.querySelectorAll(".js-log-delete").forEach(function (btn) {
         btn.addEventListener("click", function () {
           if (!handlers || typeof handlers.onDelete !== "function") return;

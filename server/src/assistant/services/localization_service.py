@@ -37,6 +37,22 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
             "Yarın veya belirli bir akşam için net saat ve sahne bilgisini resepsiyon veya animasyon ekibinin güncel panosundan teyit etmenizi öneririm. "
             "Mini Club / Mini Disco saatleri çocuk yaş grubuna göre sınırlı olabilir."
         ),
+        "chat_form_cancel_ack_fault": (
+            "Tamam, bu arıza bildirimini iptal ettim. İstediğiniz zaman yeni bir arıza, talep veya misafir bildirimi oluşturabilirsiniz."
+        ),
+        "chat_form_cancel_ack_request": (
+            "Tamam, bu talebi iptal ettim. İstediğiniz zaman yeni bir talep, arıza bildirimi veya misafir bildirimi oluşturabilirsiniz."
+        ),
+        "chat_form_cancel_ack_complaint": (
+            "Tamam, bu şikayet kaydını iptal ettim. İstediğiniz zaman yeni bir şikayet, talep veya arıza bildirimi oluşturabilirsiniz."
+        ),
+        "chat_form_cancel_ack_guest_notification": (
+            "Tamam, bu misafir bildirimini iptal ettim. İstediğiniz zaman yeni bir misafir bildirimi, talep veya arıza bildirimi oluşturabilirsiniz."
+        ),
+        "chat_form_context_retract_ack": (
+            "Anladım; kayıt açmaya gerek kalmadıysa iyi oldu. Başka bir konuda — oda, yemek-içecek, aktiviteler veya resepsiyon — "
+            "nasıl yardımcı olayım, kısaca yazmanız yeterli."
+        ),
         "chitchat_switch_en": "I'll reply in English from now on. How can I help you?",
         "chitchat_switch_tr": "Bundan sonra Türkçe yanıtlıyorum. Size nasıl yardımcı olabilirim?",
         "chitchat_switch_de": "Ich antworte ab jetzt auf Deutsch. Wie kann ich Ihnen helfen?",
@@ -131,6 +147,22 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
             "what tends to change is the evening shows and themed nights, and some days there may be an extra performance. "
             "For exact times for tomorrow or a specific evening, please confirm on the latest board at reception or with the animation team. "
             "Mini Club / Mini Disco hours may vary by children’s age group."
+        ),
+        "chat_form_cancel_ack_fault": (
+            "Okay, I have cancelled this fault report. You can start a new fault report, request, or guest notification anytime."
+        ),
+        "chat_form_cancel_ack_request": (
+            "Okay, I have cancelled this request. You can start a new request, fault report, or guest notification anytime."
+        ),
+        "chat_form_cancel_ack_complaint": (
+            "Okay, I have cancelled this complaint. You can start a new complaint, request, or fault report anytime."
+        ),
+        "chat_form_cancel_ack_guest_notification": (
+            "Okay, I have cancelled this guest notification. You can start a new guest notification, request, or fault report anytime."
+        ),
+        "chat_form_context_retract_ack": (
+            "Understood — if no record is needed, that’s good news. Tell me in a few words how else I can help: your room, dining, "
+            "activities, or reception."
         ),
         "chitchat_switch_en": "I'll reply in English from now on. How can I help you?",
         "chitchat_switch_tr": "Bundan sonra Türkçe yanıtlıyorum. Size nasıl yardımcı olabilirim?",
@@ -227,6 +259,22 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
             "Für morgen oder einen bestimmten Abend bestätigen Sie bitte die genauen Zeiten an der aktuellen Tafel an der Rezeption oder beim Animationsteam. "
             "Mini Club / Mini Disco können je nach Altersgruppe der Kinder abweichen."
         ),
+        "chat_form_cancel_ack_fault": (
+            "In Ordnung, ich habe diese Störungsmeldung storniert. Sie können jederzeit eine neue Störungsmeldung, Anfrage oder Gästemeldung starten."
+        ),
+        "chat_form_cancel_ack_request": (
+            "In Ordnung, ich habe diese Anfrage storniert. Sie können jederzeit eine neue Anfrage, Störungsmeldung oder Gästemeldung starten."
+        ),
+        "chat_form_cancel_ack_complaint": (
+            "In Ordnung, ich habe diese Beschwerde storniert. Sie können jederzeit eine neue Beschwerde, Anfrage oder Störungsmeldung starten."
+        ),
+        "chat_form_cancel_ack_guest_notification": (
+            "In Ordnung, ich habe diese Gästemeldung storniert. Sie können jederzeit eine neue Gästemeldung, Anfrage oder Störungsmeldung starten."
+        ),
+        "chat_form_context_retract_ack": (
+            "Alles klar — wenn kein Eintrag nötig ist, freut mich das. Schreiben Sie kurz, womit ich sonst helfen darf: Zimmer, "
+            "Essen & Trinken, Aktivitäten oder Rezeption."
+        ),
         "chitchat_switch_en": "I'll reply in English from now on. How can I help you?",
         "chitchat_switch_tr": "Bundan sonra Türkçe yanıtlıyorum. Size nasıl yardımcı olabilirim?",
         "chitchat_switch_de": "Ich antworte ab jetzt auf Deutsch. Wie kann ich Ihnen helfen?",
@@ -301,11 +349,6 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
             "На экране сводки 2 — отмена; для бронирований используйте раздел «Бронирования» в приложении. "
             "Чем ещё помочь по отелю?"
         ),
-        "chitchat_cancel_command_hint": (
-            "Вы имеете в виду отмену сводки чат-формы, бронирование или что-то другое? "
-            "На экране сводки 2 — отмена; для бронирований используйте раздел «Бронирования» в приложении. "
-            "Чем ещё помочь по отелю?"
-        ),
         "chitchat_confusion_generic": "Что именно пояснить? Могу подсказать, что написать про отель, запрос, неисправность или жалобу.",
         "chitchat_confusion_after_form_cancel": (
             "Вы только что отменили экран с итогом — запись не создана. "
@@ -326,6 +369,21 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
             "чаще меняются вечерние шоу и тематические вечера, в отдельные дни возможны дополнительные представления. "
             "Точное время на завтра или на конкретный вечер лучше уточнить на актуальном стенде у ресепшена или у команды анимации. "
             "Часы Mini Club / Mini Disco могут зависеть от возрастной группы детей."
+        ),
+        "chat_form_cancel_ack_fault": (
+            "Хорошо, я отменила это сообщение о неисправности. Вы можете в любое время создать новое сообщение о неисправности, запрос или уведомление для отеля."
+        ),
+        "chat_form_cancel_ack_request": (
+            "Хорошо, я отменила этот запрос. Вы можете в любое время создать новый запрос, сообщение о неисправности или уведомление для отеля."
+        ),
+        "chat_form_cancel_ack_complaint": (
+            "Хорошо, я отменила эту жалобу. Вы можете в любое время создать новую жалобу, запрос или сообщение о неисправности."
+        ),
+        "chat_form_cancel_ack_guest_notification": (
+            "Хорошо, я отменила это уведомление для отеля. Вы можете в любое время создать новое уведомление, запрос или сообщение о неисправности."
+        ),
+        "chat_form_context_retract_ack": (
+            "Поняла — если запись не нужна, это хорошо. Напишите коротко, чем ещё помочь: номер, еда и напитки, мероприятия или ресепшн."
         ),
         "chitchat_switch_en": "I'll reply in English from now on. How can I help you?",
         "chitchat_switch_tr": "Bundan sonra Türkçe yanıtlıyorum. Size nasıl yardımcı olabilirim?",

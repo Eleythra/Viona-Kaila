@@ -466,6 +466,46 @@ _CONFIRM_NO_PHRASES = frozenset(
     }
 )
 
+# Sohbet formu: serbest metin adımlarında «talebi iptal et» vb. (onay özetindeki 2 = iptal ile karışmaması için yalnız «2» hariç).
+_FORM_ABORT_EXTRA_EXACT = frozenset(
+    {
+        "talebi iptal et",
+        "talebi iptal",
+        "formu iptal et",
+        "formu iptal",
+        "kaydı iptal et",
+        "kaydi iptal et",
+        "kaydı iptal",
+        "kayit iptal",
+        "bildirimi iptal et",
+        "bildirimi iptal",
+        "misafir bildirimini iptal et",
+        "misafir bildirimini iptal",
+        "vazgeçiyorum",
+        "vazgeciyorum",
+        "cancel form",
+        "stop form",
+        "formular abbrechen",
+        "abbrechen bitte",
+        "отменить заявку",
+        "отмена формы",
+    }
+)
+_FORM_ABORT_SUBSTRINGS = (
+    "talebi iptal",
+    "formu iptal",
+    "kaydı iptal",
+    "kayit iptal",
+    "bildirimi iptal",
+    "misafir bildirimini iptal",
+    "arıza iptal",
+    "ariza iptal",
+    "talep iptal",
+    "şikayeti iptal",
+    "sikayeti iptal",
+    "отменить форм",
+)
+
 _SESSION_ACK_AFTER_CANCEL = frozenset(
     {
         "tamam",
@@ -536,6 +576,117 @@ _ANIMATION_SCHEDULE_SHORT_FOLLOWUPS = frozenset(
         "завтра",
     }
 )
+# Follow-up registry (genişletme): followup_kind (conversation_session) + bu ifadeler + _start_form_flow / metin.
+# Yeni konu: kind ekle, touch_actionable_followup çağrısını record_turn’da bağla, gerekirse buraya tetikleyici ekle.
+_FOLLOWUP_HOW_NORMALIZED_PHRASES = frozenset(
+    {
+        "tamam nasıl",
+        "tamam nasil",
+        "peki nasıl",
+        "peki nasil",
+        "nasıl alırım",
+        "nasil alirim",
+        "nasıl alirim",
+        "nasıl talep ederim",
+        "nasil talep ederim",
+        "nasıl talep",
+        "nasil talep",
+        "nasıl yaparım",
+        "nasil yaparim",
+        "nasıl yapalım",
+        "nasil yapalim",
+        "how do i get it",
+        "how do i get",
+        "how can i get",
+        "how can i request",
+        "wie bekomme ich das",
+        "wie bestelle ich",
+        "как заказать",
+        "как получить",
+    }
+)
+
+
+def _is_short_how_followup_message(normalized_lower: str) -> bool:
+    t = (normalized_lower or "").strip().lower()
+    return t in _FOLLOWUP_HOW_NORMALIZED_PHRASES
+
+
+_CHAT_FORM_LIST_SELECTION_STEPS = frozenset({"category", "detail_enum", "detail_int", "location", "urgency"})
+
+
+def _user_wants_chat_form_abort_message(normalized: str, *, at_list_selection_step: bool = False) -> bool:
+    """Kategori / detay / açıklama / isim / oda adımlarında formu iptal ifadesi (menüde «2» seçimi ile karışmaz)."""
+    t = (normalized or "").strip()
+    if not t:
+        return False
+    if t == "2":
+        return False
+    if t in _CONFIRM_NO_PHRASES:
+        # Liste adımında «hayır» / «yok» genelde «arıza yok» anlamı; bağlamlı geri çekilme ayrı işlenir.
+        if at_list_selection_step and t in frozenset(
+            {"hayır", "hayir", "yok", "no", "nope", "nein", "нет"}
+        ):
+            return False
+        return True
+    if t in _FORM_ABORT_EXTRA_EXACT:
+        return True
+    if len(t) <= 48:
+        for s in _FORM_ABORT_SUBSTRINGS:
+            if s in t:
+                return True
+    return False
+
+
+def _user_wants_chat_form_soft_retract(normalized: str) -> bool:
+    """Kategori / enum / lokasyon / aciliyet listesinde: sorun yok, yanlış alarm, düzeldi vb."""
+    t = (normalized or "").strip()
+    if not t:
+        return False
+    if t in frozenset({"hayır", "hayir", "yok", "no", "nope", "nein", "нет"}):
+        return True
+    retract_markers = (
+        "yok değilmiş",
+        "yok degilmis",
+        "yokmuş",
+        "yokmus",
+        "bozuk değil",
+        "bozuk degil",
+        "bozuk değilmiş",
+        "bozuk degilmis",
+        "sorun yok",
+        "arıza yok",
+        "ariza yok",
+        "yanlışlıkla",
+        "yanlislikla",
+        "yanlış söyledim",
+        "yanlis soyledim",
+        "düzeldi",
+        "duzeldi",
+        "çalışıyormuş",
+        "calisiyormus",
+        "çalışıyor aslında",
+        "calisiyor aslinda",
+        "sanırım sorun yok",
+        "sanirim sorun yok",
+        "aslında bozuk değil",
+        "aslinda bozuk degil",
+        "sorun yokmuş",
+        "sorun yokmus",
+        "pardon yanlış",
+        "pardon yanlis",
+        "not broken",
+        "false alarm",
+        "works now",
+        "kein problem mehr",
+        "проблема решена",
+        "не сломано",
+    )
+    if any(p in t for p in retract_markers):
+        return True
+    if t.startswith("pardon") and len(t) <= 40:
+        return True
+    return False
 
 
 def _assistant_excerpt_suggests_animation_schedule(excerpt: str) -> bool:
@@ -659,6 +810,23 @@ class ChatOrchestrator:
             else self.form_store.get(payload.channel, payload.user_id, payload.session_id),
             payload.channel == "voice",
         )
+        intent = str(response.meta.intent or "")
+        if intent in ("fault_report", "complaint", "request", "guest_notification"):
+            st.clear_actionable_followup()
+        elif intent == "hotel_info":
+            nu = normalize_text(payload.message or "")
+            if self.rule_engine.extract_request_category(nu) == "baby_equipment" or self.rule_engine.is_baby_equipment_intent(
+                nu
+            ):
+                st.touch_actionable_followup(
+                    "baby_equipment_how",
+                    ttl_seconds=300,
+                    request_category="baby_equipment",
+                )
+            else:
+                st.clear_actionable_followup()
+        else:
+            st.clear_actionable_followup()
 
     def _session_try_early_reply(
         self,
@@ -709,6 +877,21 @@ class ChatOrchestrator:
                 "rule",
                 action=action,
             )
+        if (
+            form_early is None
+            and sess.actionable_followup_alive()
+            and _is_short_how_followup_message(nl)
+            and sess.followup_kind == "baby_equipment_how"
+        ):
+            cat = sess.followup_request_category or "baby_equipment"
+            sess.clear_actionable_followup()
+            return self._start_form_flow(
+                payload=payload,
+                intent="request",
+                reply_language=reply_base,
+                ui_language=ui_language,
+                initial_request_category=cat,
+            )
         if form_early is not None:
             return None
         if nl in _SESSION_ACK_AFTER_CANCEL and sess.last_notable_event == "form_cancelled":
@@ -738,6 +921,38 @@ class ChatOrchestrator:
                 reply_base,
                 ui_language,
                 "rule",
+            )
+        return None
+
+    def _session_try_followup_how_reply(
+        self,
+        payload: ChatRequest,
+        normalized: str,
+        reply_base: str,
+        ui_language: str,
+    ) -> ChatResponse | None:
+        """Düşük güven / kısa mesaj dalında: erken yanıt atlanmışsa bile «tamam nasıl» + followup → form."""
+        if payload.channel == "voice":
+            return None
+        form_early = self.form_store.get(payload.channel, payload.user_id, payload.session_id)
+        if form_early is not None:
+            return None
+        sess = self.conversation_session_store.get(payload.channel, payload.user_id, payload.session_id)
+        sess.sync_from_form(form_early, False)
+        nl = (normalized or "").strip().lower()
+        if (
+            sess.actionable_followup_alive()
+            and _is_short_how_followup_message(nl)
+            and sess.followup_kind == "baby_equipment_how"
+        ):
+            cat = sess.followup_request_category or "baby_equipment"
+            sess.clear_actionable_followup()
+            return self._start_form_flow(
+                payload=payload,
+                intent="request",
+                reply_language=reply_base,
+                ui_language=ui_language,
+                initial_request_category=cat,
             )
         return None
 
@@ -1077,16 +1292,21 @@ class ChatOrchestrator:
                         payload, reply_base, ui_language, "fallback"
                     )
                 else:
-                    greet = self.localization_service.get("chitchat_greeting", reply_base)
-                    resp = self.response_service.build(
-                        "inform",
-                        greet,
-                        "chitchat",
-                        1.0,
-                        reply_base,
-                        ui_language,
-                        "fallback",
-                    )
+                    ff = self._session_try_followup_how_reply(payload, normalized, reply_base, ui_language)
+                    if ff is not None:
+                        decision_path.append("low_confidence_followup_how")
+                        resp = ff
+                    else:
+                        greet = self.localization_service.get("chitchat_greeting", reply_base)
+                        resp = self.response_service.build(
+                            "inform",
+                            greet,
+                            "chitchat",
+                            1.0,
+                            reply_base,
+                            ui_language,
+                            "fallback",
+                        )
             else:
                 resp = self._fallback_response(
                     llm_intent.intent,
@@ -1753,6 +1973,16 @@ class ChatOrchestrator:
             },
         )
 
+    def _localized_chat_form_cancel_ack(self, operation: str | None, reply_language: str) -> str:
+        op = operation or "request"
+        key = {
+            "fault": "chat_form_cancel_ack_fault",
+            "request": "chat_form_cancel_ack_request",
+            "complaint": "chat_form_cancel_ack_complaint",
+            "guest_notification": "chat_form_cancel_ack_guest_notification",
+        }.get(op, "chat_form_cancel_ack_request")
+        return self.localization_service.get(key, reply_language)
+
     def _continue_form_flow(
         self,
         *,
@@ -1772,6 +2002,43 @@ class ChatOrchestrator:
                 else ("guest_notification" if state.operation == "guest_notification" else "request")
             )
         )
+
+        if text and _user_wants_chat_form_abort_message(
+            normalized,
+            at_list_selection_step=state.step in _CHAT_FORM_LIST_SELECTION_STEPS,
+        ):
+            self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+            self.conversation_session_store.get(
+                payload.channel, payload.user_id, payload.session_id
+            ).mark_form_cancelled(state.operation or "")
+            msg = self._localized_chat_form_cancel_ack(state.operation, reply_language)
+            return self.response_service.build(
+                "inform",
+                msg,
+                intent,
+                1.0,
+                reply_language,
+                ui_language,
+                "rule",
+            )
+
+        if text and state.step in _CHAT_FORM_LIST_SELECTION_STEPS and _user_wants_chat_form_soft_retract(
+            normalized
+        ):
+            self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+            self.conversation_session_store.get(
+                payload.channel, payload.user_id, payload.session_id
+            ).mark_form_cancelled(state.operation or "")
+            msg = self.localization_service.get("chat_form_context_retract_ack", reply_language)
+            return self.response_service.build(
+                "inform",
+                msg,
+                intent,
+                1.0,
+                reply_language,
+                ui_language,
+                "rule",
+            )
 
         # Bağlamsal güncelleme: kategori veya talep detay listesinde / adet sorulurken geçerli numara girilmediyse
         # başka soruya veya bilgiye geçilebilir. Geçerli seçim yapıldıktan sonra (açıklama, isim, oda, onay vb.)
@@ -2962,7 +3229,7 @@ class ChatOrchestrator:
 
             lowered = text.strip().lower()
             is_yes = lowered in _CONFIRM_YES_PHRASES
-            is_no = lowered in _CONFIRM_NO_PHRASES
+            is_no = lowered in _CONFIRM_NO_PHRASES or _user_wants_chat_form_abort_message(normalized)
 
             if not (is_yes or is_no):
                 # Sayı yerine serbest bir mesaj yazıldıysa formu güvenli şekilde iptal et
@@ -2971,14 +3238,7 @@ class ChatOrchestrator:
                 self.conversation_session_store.get(
                     payload.channel, payload.user_id, payload.session_id
                 ).mark_form_cancelled(state.operation or "")
-                if reply_language == "en":
-                    msg = "Okay, I have cancelled this form. You can ask a new question or report another issue."
-                elif reply_language == "de":
-                    msg = "In Ordnung, ich habe dieses Formular storniert. Sie können eine neue Frage stellen oder eine weitere Störung melden."
-                elif reply_language == "ru":
-                    msg = "Хорошо, я отменила эту форму. Вы можете задать новый вопрос или сообщить о другой проблеме."
-                else:
-                    msg = "Tamam, bu formu iptal ettim. Yeni bir soru sorabilir veya farklı bir arıza/talep bildirebilirsiniz."
+                msg = self._localized_chat_form_cancel_ack(state.operation, reply_language)
                 return self.response_service.build(
                     "inform",
                     msg,
@@ -2995,14 +3255,7 @@ class ChatOrchestrator:
                 self.conversation_session_store.get(
                     payload.channel, payload.user_id, payload.session_id
                 ).mark_form_cancelled(state.operation or "")
-                if reply_language == "en":
-                    msg = "Okay, I have cancelled this record. You can start a new request or fault report anytime."
-                elif reply_language == "de":
-                    msg = "In Ordnung, ich habe diesen Eintrag storniert. Sie können jederzeit eine neue Anfrage oder Störungsmeldung starten."
-                elif reply_language == "ru":
-                    msg = "Хорошо, я отменила эту заявку. Вы можете в любое время начать новый запрос или сообщить о неисправности."
-                else:
-                    msg = "Tamam, bu kaydı iptal ettim. İstediğiniz zaman yeni bir talep veya arıza bildirimi yapabilirsiniz."
+                msg = self._localized_chat_form_cancel_ack(state.operation, reply_language)
                 return self.response_service.build(
                     "inform",
                     msg,

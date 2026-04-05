@@ -1,3 +1,4 @@
+# Örnek tetikleyici kelimeler (dokümantasyon). Asıl yönlendirme mantığı assistant/services/rule_engine.py içindedir.
 fault_report:
   - bozuldu
   - bozuk
@@ -43,6 +44,13 @@ fault_report:
   - key card not working
   - kaputt
   - defekt
+  - ses gelmiyor
+  - görüntü yok
+  - hata veriyor
+  - elektrik yok
+  - su akmıyor
+  - technical problem
+  - not responding
 
 complaint:
   - şikayetçiyim
@@ -61,13 +69,19 @@ request:
   - istiyorum
   - rica ediyorum
   - gönderir misiniz
+  - getirebilir misiniz
+  - sağlayabilir misiniz
+  - talep ediyorum
+  - gerekiyor
   - lazım
   - ek havlu
+  - banyo havlusu
   - su istiyorum
   - yastık istiyorum
   - battaniye istiyorum
   - i need
   - can you send
+  - could you bring
   - extra towel
   - extra pillow
   - blanket

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { timingSafeEqual } from "node:crypto";
 import {
   deleteChatObservation,
+  deleteChatObservationsBulk,
   deleteAdminItem,
   getDashboardReports,
   getPdfReportPackage,
@@ -151,6 +152,17 @@ router.delete("/logs/:id", async (req, res) => {
     return res.status(200).json({ ok: true, ...data });
   } catch (error) {
     return adminErr(res, error, "admin_log_delete_failed");
+  }
+});
+
+router.post("/logs/bulk-delete", async (req, res) => {
+  try {
+    const body = req.body && typeof req.body === "object" ? req.body : {};
+    const ids = Array.isArray(body.ids) ? body.ids : [];
+    const data = await deleteChatObservationsBulk(ids);
+    return res.status(200).json({ ok: true, ...data });
+  } catch (error) {
+    return adminErr(res, error, "admin_logs_bulk_delete_failed");
   }
 });
 

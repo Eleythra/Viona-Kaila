@@ -15,6 +15,7 @@ TTL_SECONDS = 900
 
 NotableEvent = Literal["none", "form_cancelled", "form_submitted"]
 ActiveFlow = Literal["idle", "chat_form", "voice"]
+ActionableFollowupKind = Literal["none", "baby_equipment_how"]
 
 
 @dataclass
@@ -39,6 +40,10 @@ class ConversationSessionState:
     reservation_module_hint_active: bool = False
     """Kısa süreli: kullanıcı rezervasyon modülüne yönlendirildi; «yarınki» gibi kısa cevaplar buna bağlanır."""
     reservation_hint_until: float = 0.0
+    followup_kind: ActionableFollowupKind = "none"
+    """Bilgi cevabından sonra «tamam nasıl» ile istek formuna köprü (TTL ile)."""
+    followup_until: float = 0.0
+    followup_request_category: Optional[str] = None
 
     def sync_from_form(self, form_state: ChatFormState | None, channel_is_voice: bool) -> None:
         if channel_is_voice:
@@ -92,6 +97,7 @@ class ConversationSessionState:
         if self.last_notable_event == "form_cancelled":
             self.last_notable_event = "none"
             self.last_event_operation = ""
+        self.clear_actionable_followup()
         self.updated_at = time()
 
     def touch_reservation_module_hint(self, ttl_seconds: int = 420) -> None:
@@ -104,6 +110,35 @@ class ConversationSessionState:
             return False
         if time() > self.reservation_hint_until:
             self.reservation_module_hint_active = False
+            return False
+        return True
+
+    def touch_actionable_followup(
+        self,
+        kind: ActionableFollowupKind,
+        *,
+        ttl_seconds: int = 300,
+        request_category: str | None = None,
+    ) -> None:
+        if kind == "none":
+            self.clear_actionable_followup()
+            return
+        self.followup_kind = kind
+        self.followup_until = time() + max(60, int(ttl_seconds))
+        self.followup_request_category = request_category
+        self.updated_at = time()
+
+    def clear_actionable_followup(self) -> None:
+        self.followup_kind = "none"
+        self.followup_until = 0.0
+        self.followup_request_category = None
+        self.updated_at = time()
+
+    def actionable_followup_alive(self) -> bool:
+        if self.followup_kind == "none":
+            return False
+        if time() > self.followup_until:
+            self.clear_actionable_followup()
             return False
         return True
 

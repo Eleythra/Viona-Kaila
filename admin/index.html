@@ -13,7 +13,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/styles.css?v=18" />
-    <link rel="stylesheet" href="styles.css?v=13" />
+    <link rel="stylesheet" href="styles.css?v=17" />
   </head>
   <body class="admin-body">
     <section id="admin-login" class="admin-login">
@@ -267,8 +267,10 @@
         <section id="tab-logs" class="admin-tab admin-tab--logs hidden">
           <div class="section-head">
             <div class="logs-page-title">
-              <h2>Chatbot Log</h2>
-              <p class="logs-page-title__sub">Asistan oturumlarındaki mesaj ve yanıtlar; tarih ve filtrelerle incelenir, tablo sayfa sayfa listelenir.</p>
+              <h2>Sohbet logları</h2>
+              <p class="logs-page-title__sub">
+                Asistanın her turda kaydettiği gözlemler: niyet, katman, güven ve fallback bilgisi eğitim ve kalite incelemesi için burada toplanır. Liste ve CSV aynı filtreleri kullanır; CSV en fazla 5000 satır ve en yeni kayıt üsttedir.
+              </p>
             </div>
             <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
           </div>
@@ -276,7 +278,7 @@
             <summary class="logs-intent-legend__summary">
               <span class="logs-intent-legend__summary-text">
                 <span class="logs-intent-legend__summary-title">Intent türleri</span>
-                <span class="logs-intent-legend__summary-hint">Sistemdeki sınıf adları ve anlamları</span>
+                <span class="logs-intent-legend__summary-hint">Backend şeması (IntentName) ile aynı teknik adlar</span>
               </span>
               <span class="logs-intent-legend__chev" aria-hidden="true"></span>
             </summary>
@@ -287,16 +289,12 @@
                   <span class="logs-intent-card__desc">Mekân veya hizmet önerisi</span>
                 </div>
                 <div class="logs-intent-card" role="listitem">
-                  <span class="logs-intent-card__code">special_need</span>
-                  <span class="logs-intent-card__desc">Özel ihtiyaç, diyet, alerji</span>
-                </div>
-                <div class="logs-intent-card" role="listitem">
                   <span class="logs-intent-card__code">fault_report</span>
                   <span class="logs-intent-card__desc">Oda veya tesis arızası</span>
                 </div>
                 <div class="logs-intent-card" role="listitem">
                   <span class="logs-intent-card__code">complaint</span>
-                  <span class="logs-intent-card__desc">Şikayet</span>
+                  <span class="logs-intent-card__desc">Şikâyet</span>
                 </div>
                 <div class="logs-intent-card" role="listitem">
                   <span class="logs-intent-card__code">request</span>
@@ -307,12 +305,24 @@
                   <span class="logs-intent-card__desc">Rezervasyon veya ilgili soru</span>
                 </div>
                 <div class="logs-intent-card" role="listitem">
+                  <span class="logs-intent-card__code">special_need</span>
+                  <span class="logs-intent-card__desc">Özel ihtiyaç, diyet, alerji</span>
+                </div>
+                <div class="logs-intent-card" role="listitem">
+                  <span class="logs-intent-card__code">guest_notification</span>
+                  <span class="logs-intent-card__desc">Oda içi / misafir bildirimi (DND, temizlik vb.)</span>
+                </div>
+                <div class="logs-intent-card" role="listitem">
                   <span class="logs-intent-card__code">hotel_info</span>
                   <span class="logs-intent-card__desc">Otel bilgisi, kurallar, saatler</span>
                 </div>
                 <div class="logs-intent-card" role="listitem">
                   <span class="logs-intent-card__code">chitchat</span>
                   <span class="logs-intent-card__desc">Selamlaşma, genel sohbet</span>
+                </div>
+                <div class="logs-intent-card" role="listitem">
+                  <span class="logs-intent-card__code">current_time</span>
+                  <span class="logs-intent-card__desc">Saat veya güncel zaman soruları</span>
                 </div>
                 <div class="logs-intent-card logs-intent-card--wide" role="listitem">
                   <span class="logs-intent-card__code">unknown</span>
@@ -333,7 +343,9 @@
             <header class="logs-section__head">
               <p class="logs-section__eyebrow">Sorgu</p>
               <h3 class="logs-section__title">Filtreler ve dışa aktarım</h3>
-              <p class="logs-section__desc">Tarih ve anahtar kelime ile daraltın; CSV veya JSON olarak dışa aktarın.</p>
+              <p class="logs-section__desc">
+                Tarih, dil, intent ve katman ile daraltın. CSV dosyasının başında Türkçe açıklama ve sütun sözlüğü vardır; ham teknik alan adları açıklama satırlarında parantez içinde verilir. Liste ile aynı filtreler geçerlidir.
+              </p>
             </header>
             <div class="logs-toolbar">
               <input id="logs-search" class="logs-toolbar__search" type="search" placeholder="Mesaj, cevap veya intent ara…" />
@@ -350,15 +362,17 @@
               </select>
               <select id="logs-intent" class="logs-toolbar__select" aria-label="Intent">
                 <option value="">Intent (tümü)</option>
-                <option value="recommendation">recommendation</option>
-                <option value="special_need">special_need</option>
-                <option value="fault_report">fault_report</option>
-                <option value="complaint">complaint</option>
-                <option value="request">request</option>
-                <option value="reservation">reservation</option>
-                <option value="hotel_info">hotel_info</option>
-                <option value="chitchat">chitchat</option>
-                <option value="unknown">unknown</option>
+                <option value="recommendation">recommendation — öneri</option>
+                <option value="fault_report">fault_report — arıza</option>
+                <option value="complaint">complaint — şikâyet</option>
+                <option value="request">request — talep</option>
+                <option value="reservation">reservation — rezervasyon</option>
+                <option value="special_need">special_need — özel ihtiyaç</option>
+                <option value="guest_notification">guest_notification — oda/misafir bildirimi</option>
+                <option value="hotel_info">hotel_info — otel bilgisi</option>
+                <option value="chitchat">chitchat — sohbet</option>
+                <option value="current_time">current_time — saat/zaman</option>
+                <option value="unknown">unknown — bilinmeyen</option>
               </select>
               <select id="logs-layer" class="logs-toolbar__select" aria-label="Katman">
                 <option value="">Katman (tümü)</option>
@@ -382,7 +396,9 @@
             <header class="logs-section__head">
               <p class="logs-section__eyebrow">Kayıtlar</p>
               <h3 class="logs-section__title">Ham log tablosu</h3>
-              <p class="logs-section__desc">Sayfa başına 70 kayıt; önceki ve sonraki ile sayfalar arasında gezinin. Geniş tabloda yatay kaydırma kullanın. Uzun kullanıcı mesajı ve tam cevap, hücre içinde aşağı kaydırılarak okunur.</p>
+              <p class="logs-section__desc">
+                Sayfa başına 70 kayıt; önceki ve sonraki ile gezinin. Tablo geniştir: sağdaki <strong>Cevap</strong> sütununu görmek için tablo alanında veya ana içerikte <strong>yatay kaydırma</strong> kullanın (trackpad ile yatay sürükleyin veya kaydır çubuğuna bakın). Laptop ve geniş monitörde tam metin bu şekilde okunur.
+              </p>
             </header>
             <div id="logs-table" class="logs-table-mount"></div>
           </article>
@@ -392,13 +408,15 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" crossorigin="anonymous"></script>
+    <!-- Misafir formlarıyla aynı kaynak: spa-wellness-catalog.js her zaman config.js öncesi; kopya admin/js/config yok. -->
     <script src="../js/viona-backend-url.js?v=11"></script>
     <script src="../js/viona-api-resolve.js?v=11"></script>
     <script src="../js/api-config.js?v=12"></script>
-    <script src="../js/requests/config.js?v=11"></script>
+    <script src="../js/spa-wellness-catalog.js?v=2"></script>
+    <script src="../js/requests/config.js?v=13"></script>
     <script src="../js/hotel-room-numbers.js?v=1"></script>
-    <script src="js/data-adapter.js?v=13"></script>
-    <script src="js/ui.js?v=29"></script>
-    <script src="js/app.js?v=27"></script>
+    <script src="js/data-adapter.js?v=14"></script>
+    <script src="js/ui.js?v=32"></script>
+    <script src="js/app.js?v=29"></script>
   </body>
 </html>

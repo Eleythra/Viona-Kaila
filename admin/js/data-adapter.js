@@ -221,6 +221,16 @@
       var endpoint = getApiBase() + "/admin/logs/" + encodeURIComponent(id);
       return jfetch(endpoint, { method: "DELETE" });
     },
+    deleteLogsBulk: function (ids) {
+      var list = Array.isArray(ids) ? ids : [];
+      return jfetch(getApiBase() + "/admin/logs/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: list }),
+      }).then(function (d) {
+        return { deleted: d.deleted != null ? d.deleted : 0, ids: d.ids || [] };
+      });
+    },
     downloadLogsCsv: async function (params) {
       var query = buildQuery(params || {});
       var url = getApiBase() + "/admin/logs/export.csv" + (query ? "?" + query : "");
