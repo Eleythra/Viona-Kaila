@@ -6,6 +6,11 @@ node_modules/
 server/node_modules/
 # Puppeteer indirme önbelleği — GitHub 100 MB dosya sınırı; Render’da build sırasında indirilir.
 server/.cache/
+.cache/
+# whatsapp-web.js / oturum önbelleği ve çalışma zamanı (QR, session)
+.wwebjs_cache/
+server/.wwebjs_cache/
+server/runtime/
 .env
 .env.*
 !.env.example
