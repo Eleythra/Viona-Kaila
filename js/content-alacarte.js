@@ -14,10 +14,14 @@
   }
 
   var INTRO = {
-    tr: "Bu bölümde à la carte restoranlarımız (La Terrace, Sinton) tanıtılır. Her işletmenin ücreti ve rezervasyon kuralı farklıdır; özet bilgiler aşağıdadır.",
-    en: "Our à la carte restaurants (La Terrace, Sinton) — each has its own pricing and reservation rules; summaries below.",
-    de: "À-la-carte-Restaurants (La Terrace, Sinton) — Preise und Reservierungsregeln pro Betrieb; unten zusammengefasst.",
-    ru: "Рестораны à la carte (La Terrace, Sinton) — у каждого свои цены и правила брони; кратко ниже.",
+    tr:
+      "La Terrace ve Sinton BBQ, otelimizin à la carte deneyimleridir; her birinin ücretlendirmesi ve yoğunluk yönetimi farklıdır. Özellikle La Terrace A La Carte için masa ve akşam akışı Misafir İlişkileri (Guest Relations) ekibimizle zarif ve eksiksiz şekilde planlanır — böylece siz sadece anın tadını çıkarırsınız. Özet bilgiler aşağıdadır.",
+    en:
+      "La Terrace and Sinton BBQ are our à la carte venues, each with its own pricing and capacity rhythm. For La Terrace A La Carte in particular, seating and the evening flow are arranged with care through Guest Relations — so you can simply enjoy the moment. Summaries below.",
+    de:
+      "La Terrace und Sinton BBQ sind unsere À-la-carte-Adressen — mit jeweils eigenen Preisen und Kapazitätslogik. Für La Terrace A La Carte koordiniert unser Guest-Relations-Team Tisch und Ablauf diskret und reibungslos, damit Sie den Abend genießen können. Unten die Kurzinfos.",
+    ru:
+      "La Terrace и Sinton BBQ — наши à la carte площадки с разными ценами и логистикой загрузки. Для La Terrace A La Carte рассадка и вечерний сервис выстраиваются бережно через Guest Relations — вам остаётся только наслаждаться вечером. Кратко ниже.",
   };
 
   var BADGE_PAID = {
@@ -28,10 +32,10 @@
   };
 
   var BADGE_RES_REQUIRED = {
-    tr: "Rezervasyon gerekli",
-    en: "Reservation required",
-    de: "Reservierung erforderlich",
-    ru: "Нужна бронь",
+    tr: "Misafir İlişkileri ile önceden planlanır",
+    en: "Arranged in advance with Guest Relations",
+    de: "Nach Rücksprache mit dem Guest-Relations-Team",
+    ru: "По предварительной договорённости через Guest Relations",
   };
 
   function renderSlot(slot) {

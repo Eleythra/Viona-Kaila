@@ -34,32 +34,63 @@ VOICE_OPERATIONAL_USE_TEXT: dict[str, str] = {
     ),
 }
 
-# Rezervasyon anahtar kelimesi — kısa, premium yönlendirme.
-VOICE_RESERVATION_HINT: dict[str, str] = {
-    "tr": "Rezervasyonlarınız için ana ekrandaki Rezervasyonlar bölümü size özel adımlarla en uygun yolu sunar.",
-    "en": "For reservations, open Reservations on the main screen — it guides you smoothly through each step.",
-    "de": "Für Reservierungen öffnen Sie „Reservierungen“ auf dem Hauptbildschirm — dort führt Sie der Ablauf Schritt für Schritt.",
-    "ru": "Для бронирования откройте на главном экране раздел «Бронирования» — вас проведут по шагам с заботой.",
+# Rezervasyon — yüz yüze ekip yönlendirmesi; spa / à la carte / genel resepsiyon ayrımı (TTS).
+VOICE_RECEPTION_RESERVATION_HINT: dict[str, str] = {
+    "tr": (
+        "Konaklama ve genel rezervasyon taleplerinizde ön büro veya resepsiyon ekibimiz, sizi en doğru birime zarifçe yönlendirir; "
+        "şahsen ilgilenmelerini rica ederim."
+    ),
+    "en": (
+        "For stays and general reservations, our front desk will arrange the finest routing — please let them assist you in person."
+    ),
+    "de": (
+        "Für Aufenthalt und allgemeine Reservierungen koordiniert die Rezeption die passende Weiterleitung — "
+        "lassen Sie sich dort gern persönlich betreuen."
+    ),
+    "ru": (
+        "По проживанию и общим бронированиям ресепшн подберёт лучшее направление — обратитесь к команде лично."
+    ),
 }
+VOICE_SPA_BOOKING_HINT: dict[str, str] = {
+    "tr": "Spa, masaj ve ücretli ritüeller için La Serenite Spa ekibiyle doğrudan görüşmenizi öneririm; resepsiyon da sessizce bağlayabilir. Otel içi sabit hat: 5025.",
+    "en": "For spa, massage, and paid rituals, our La Serenite Spa hosts will refine every detail — reception can connect you discreetly. In-house line: 5025.",
+    "de": "Für Spa, Massage und Anwendungen betreut Sie das La Serenite Spa persönlich — die Rezeption verbindet Sie auf Wunsch diskret. Hotel-Innenanschluss: 5025.",
+    "ru": "По спа, массажу и платным ритуалам обратитесь к команде La Serenite Spa — ресепшн при желании деликатно соединит. Внутренний номер отеля: 5025.",
+}
+VOICE_ALACARTE_RESERVATION_HINT: dict[str, str] = {
+    "tr": "Ücretli à la carte masalar Misafir İlişkileri’nde özenle planlanır; doğrudan onlarla görüşmenizi rica ederim.",
+    "en": "À la carte dining is curated by Guest Relations — please reach out to them directly for the finest tables.",
+    "de": "À-la-carte-Tische koordiniert die Gästebetreuung mit besonderer Sorgfalt — wenden Sie sich bitte direkt dorthin.",
+    "ru": "Столы à la carte оформляет служба по работе с гостями — обратитесь к ним напрямую для лучших мест.",
+}
+
+# Geriye dönük uyumluluk (eski importlar).
+VOICE_RESERVATION_HINT = VOICE_RECEPTION_RESERVATION_HINT
 
 # TTS için buton / UI ifadelerini kırpmak (metin sohbetinde kalan uzun yönlendirmeler).
 _VOICE_STRIP_BY_LANG: dict[str, list[str]] = {
     "tr": [
         "Aşağıdaki butona dokunarak açabilirsiniz.",
         "Aşağıdaki buton bu formu doğrudan açar.",
+        "Aşağıdaki düğmeyle modülü açabilirsiniz.",
+        "Modülü açmak için aşağıdaki düğmeyi kullanabilirsiniz.",
     ],
     "en": [
         "You can open it using the button below.",
         "The button below opens that form directly.",
+        "Use the button below to open it.",
     ],
     "de": [
         "Sie können ihn über die Schaltfläche unten öffnen.",
         "Die Schaltfläche unten öffnet dieses Formular direkt.",
+        "Öffnen Sie ihn über die Schaltfläche unten.",
     ],
     "ru": [
         "Вы можете открыть его с помощью кнопки ниже.",
         "Кнопка ниже открывает эту форму напрямую.",
         "Кнопка ниже открывает эту форму сразу.",
+        "Откройте его кнопкой ниже.",
+        "Перейдите по кнопке ниже.",
     ],
 }
 

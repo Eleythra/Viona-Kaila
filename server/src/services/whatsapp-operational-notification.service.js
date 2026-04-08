@@ -2,6 +2,9 @@
  * Operasyon kayıtları (arıza / istek / şikayet) Supabase’e yazıldıktan sonra tetiklenen
  * WhatsApp Cloud API template bildirim katmanı. Rezervasyon göndermez.
  *
+ * İstek şablonu gövdesi: {{1}} ad, {{2}} oda, {{3}} talep grubu (form bölümü), {{4}} talep türü (satır + varsa zaman),
+ * {{5}} adet veya «-», {{6}}-{{7}} tarih/saat ve açıklama.
+ *
  * Şablon adları: arıza/istek/şikâyet sabit; misafir bildirimi + geç çıkış için varsayılan
  * `viona_guest_relation_notification` (7 gövde parametresi: ad, oda, üst kategori, alt kategori, tarih, saat, açıklama).
  * Geç çıkış aynı şablonu kullanır; üst/alt kategori sabit metin, tarih-saat istenen çıkış.
@@ -13,6 +16,14 @@
  * (misafir bildirimi / geç çıkış: hepsi birleştirilir; en az biri dolu olmalı — genelde WHATSAPP_FRONT_RECIPIENTS)
  */
 
+import { sendOperationalWhatsappGroupNotification } from "./whatsapp-group-operational-notification.service.js";
+import { coerceOperationalPayload, normalizeRequestCategoryKey } from "./operational-group-message-format.js";
+import {
+  getWhatsappGroupRegistryHealth,
+  resolveOperationalGroupForRecordType,
+} from "./whatsapp-group-registry.service.js";
+import { isOperationalRecordType } from "./operational-notification-routing.service.js";
+
 const TEMPLATE_FAULT = "viona_issue_notification";
 const TEMPLATE_REQUEST = "viona_request_notification";
 const TEMPLATE_COMPLAINT = "viona_complaint_notification";
@@ -22,12 +33,31 @@ const PARAM_MAX = 900;
 
 const WH_CATEGORY_LABELS = {
   request: {
-    towel: "Havlu",
-    bedding: "Yatak takımı",
+    towel_extra: "Ek havlu",
+    room_towel: "Ek oda havlusu",
+    bathrobe: "Bornoz",
+    bedding_sheet: "Çarşaf / nevresim",
+    bedding_pillow: "Yastık",
+    bedding_blanket: "Battaniye",
     room_cleaning: "Oda temizliği",
+    turndown: "Yatak düzenleme (turndown)",
+    slippers: "Terlik",
+    minibar_refill: "Minibar yenileme",
+    bottled_water: "Şişe su",
+    tea_coffee: "Çay / kahve",
+    toilet_paper: "Tuvalet kağıdı",
+    toiletries: "Şampuan / sabun",
+    climate_request: "Klima ayarı",
+    room_refresh: "Oda kokusu",
+    hanger: "Askı",
+    kettle: "Su ısıtıcı",
+    room_safe: "Kasa",
+    baby_bed: "Bebek yatağı",
+    towel: "Havlu",
+    bedding: "Yatak / nevresim",
     minibar: "Minibar",
-    baby_equipment: "Bebek ekipmanları",
-    room_equipment: "Oda ekipmanları",
+    baby_equipment: "Bebek ekipmanı",
+    room_equipment: "Oda ekipmanı",
     other: "Diğer",
   },
   fault: {
@@ -86,8 +116,39 @@ const WH_CATEGORY_LABELS = {
     general_areas: "Genel alanlar",
     hygiene: "Hijyen",
     internet_tv: "İnternet / TV",
+    lost_property: "Kayıp eşya",
     other: "Diğer",
   },
+};
+
+/** Şablon {{3}}: talep grubu (web formlarındaki bölüm başlığı ile aynı anlam). */
+const REQUEST_GROUP_LABELS_TR = {
+  towel_extra: "Yastık, havlu, bornoz ve terlik",
+  room_towel: "Yastık, havlu, bornoz ve terlik",
+  bathrobe: "Yastık, havlu, bornoz ve terlik",
+  slippers: "Yastık, havlu, bornoz ve terlik",
+  towel: "Yastık, havlu, bornoz ve terlik",
+  bedding_sheet: "Çarşaf ve battaniye",
+  bedding_blanket: "Çarşaf ve battaniye",
+  bedding: "Çarşaf ve battaniye",
+  bedding_pillow: "Yastık, havlu, bornoz ve terlik",
+  room_cleaning: "Oda hizmeti",
+  turndown: "Oda hizmeti",
+  minibar_refill: "Şişe su ve çay / kahve",
+  bottled_water: "Şişe su ve çay / kahve",
+  tea_coffee: "Şişe su ve çay / kahve",
+  minibar: "Şişe su ve çay / kahve",
+  toilet_paper: "Tuvalet kağıdı ve şampuan / sabun",
+  toiletries: "Tuvalet kağıdı ve şampuan / sabun",
+  climate_request: "Konfor ve klima",
+  room_refresh: "Konfor ve klima",
+  hanger: "Ekipman",
+  kettle: "Ekipman",
+  room_safe: "Ekipman",
+  baby_bed: "Ekipman",
+  baby_equipment: "Ekipman",
+  room_equipment: "Ekipman",
+  other: "Diğer",
 };
 
 const ITEM_TYPE_LABELS = {
@@ -113,7 +174,7 @@ const ROOM_CLEANING_REQ = {
 
 const TIMING_LABELS = {
   now: "Şimdi",
-  later: "Sonra",
+  later: "Daha sonra",
 };
 
 const MINIBAR_REQ = {
@@ -148,11 +209,14 @@ function clip(s) {
 function categoryLabel(kind, cat) {
   const k = String(kind);
   const c = String(cat || "").trim();
-  return clip(dash(WH_CATEGORY_LABELS?.[k]?.[c] || c));
+  const lower = c.toLowerCase();
+  return clip(dash(WH_CATEGORY_LABELS?.[k]?.[c] || WH_CATEGORY_LABELS?.[k]?.[lower] || c));
 }
 
 function guestNotificationMainCategoryLabel(catId) {
-  const c = String(catId || "").trim();
+  const c = String(catId || "")
+    .trim()
+    .toLowerCase();
   const m = WH_CATEGORY_LABELS?.guest_notification_main?.[c];
   return clip(dash(m || "Misafir bildirimi"));
 }
@@ -271,8 +335,10 @@ function urgLabel(v) {
 }
 
 function itemTypeLabel(v) {
-  const x = String(v || "").trim();
-  return clip(dash(ITEM_TYPE_LABELS[x] || x));
+  const x = String(v || "")
+    .trim()
+    .toLowerCase();
+  return clip(dash(ITEM_TYPE_LABELS[x] || String(v || "").trim() || "-"));
 }
 
 function buildFaultBodyParams(payload, now) {
@@ -290,45 +356,79 @@ function buildFaultBodyParams(payload, now) {
   ];
 }
 
-function buildRequestTalepTuru(category, details) {
+function requestItemLabelTr(category) {
+  const c = normalizeRequestCategoryKey(category);
+  if (!c) return "-";
+  return WH_CATEGORY_LABELS.request[c] ? clip(dash(WH_CATEGORY_LABELS.request[c])) : "-";
+}
+
+function requestGroupLabelTr(category) {
+  const c = normalizeRequestCategoryKey(category);
+  if (!c) return "-";
+  const g = REQUEST_GROUP_LABELS_TR[c];
+  if (g) return clip(dash(g));
+  return categoryLabel("request", c);
+}
+
+/** Şablon {{4}}: seçilen talep türü (satır) + varsa zamanlama / eski alt alanlar. */
+function buildRequestTypeLineTr(category, details) {
   const d = details && typeof details === "object" ? details : {};
-  const c = String(category || "").trim();
-  if (c === "towel" || c === "bedding") {
-    return itemTypeLabel(d.itemType);
+  const c = normalizeRequestCategoryKey(category);
+  const base = requestItemLabelTr(c);
+  if (d.timing && (c === "room_cleaning" || c === "turndown")) {
+    return clip(dash(`${base} · ${TIMING_LABELS[d.timing] || String(d.timing)}`));
   }
-  if (c === "room_cleaning") {
-    const parts = [];
-    if (d.requestType) parts.push(ROOM_CLEANING_REQ[d.requestType] || String(d.requestType));
+  if (c === "room_cleaning" && d.requestType) {
+    const parts = [ROOM_CLEANING_REQ[d.requestType] || String(d.requestType)];
     if (d.timing) parts.push(TIMING_LABELS[d.timing] || String(d.timing));
-    return clip(dash(parts.length ? parts.join(" · ") : "-"));
+    return clip(dash(parts.join(" · ")));
+  }
+  if (c === "towel" || c === "bedding") {
+    return clip(dash(itemTypeLabel(d.itemType) || base));
   }
   if (c === "minibar") {
-    return clip(dash(MINIBAR_REQ[d.requestType] || d.requestType));
+    return clip(dash(MINIBAR_REQ[d.requestType] || d.requestType || base));
   }
   if (c === "baby_equipment" || c === "room_equipment") {
-    return itemTypeLabel(d.itemType);
+    return clip(dash(itemTypeLabel(d.itemType) || base));
   }
-  if (c === "other") return "-";
-  return "-";
+  if (c === "other") return clip(dash(base));
+  return clip(dash(base));
 }
 
 function buildRequestQuantity(category, details) {
   const d = details && typeof details === "object" ? details : {};
-  const c = String(category || "").trim();
-  if (c === "towel" || c === "bedding" || c === "baby_equipment" || c === "room_equipment") {
-    if (d.quantity != null && String(d.quantity).trim() !== "") return clip(dash(String(d.quantity)));
+  if (d.quantity != null && String(d.quantity).trim() !== "") {
+    return clip(dash(String(d.quantity)));
   }
   return "-";
 }
 
 function buildRequestBodyParams(payload, now) {
-  const cat = payload.category;
-  const details = payload.details || {};
+  const cat = normalizeRequestCategoryKey(payload.category);
+  const details = payload.details && typeof payload.details === "object" ? payload.details : {};
+  const rawN = String(process.env.WHATSAPP_CLOUD_REQUEST_PARAM_COUNT || "8").trim();
+  const paramCount = Number.parseInt(rawN, 10);
+  /** Meta’da eski 4 değişkenli şablon: {{1}} ad, {{2}} oda, {{3}} kategori (tek satır Türkçe), {{4}} açıklama — 8 parametre gönderilince sıra kayıp ham anahtar düşebilir. */
+  if (paramCount === 4) {
+    const g = requestGroupLabelTr(cat);
+    const t = buildRequestTypeLineTr(cat, details);
+    const parts = [g, t].filter(function (x) {
+      return x && x !== "-" && x !== "—";
+    });
+    const combined = clip(parts.length ? parts.join(" · ") : "-");
+    return [
+      clip(dash(payload.name)),
+      clip(dash(payload.room)),
+      combined,
+      clip(dash(payload.description)),
+    ];
+  }
   return [
     clip(dash(payload.name)),
     clip(dash(payload.room)),
-    categoryLabel("request", cat),
-    buildRequestTalepTuru(cat, details),
+    requestGroupLabelTr(cat),
+    buildRequestTypeLineTr(cat, details),
     buildRequestQuantity(cat, details),
     dash(formatDateDDMMYYYY(now)),
     dash(formatTimeHHmm(now)),
@@ -454,11 +554,15 @@ export function getWhatsappOperationalHealthSummary() {
   const gr = parseOperationalRecipients(process.env.WHATSAPP_GUEST_RELATIONS_RECIPIENTS || "");
   const hk = parseOperationalRecipients(process.env.WHATSAPP_HK_RECIPIENTS || "");
   const mergedGuest = mergeRecipientLists(front, reception, gr, hk);
+  const mode = String(process.env.WHATSAPP_OPERATIONAL_DELIVERY_MODE || "group").trim().toLowerCase();
+  const groupRegistry = getWhatsappGroupRegistryHealth();
   return {
+    mode,
     accessTokenConfigured: Boolean(token),
     phoneNumberIdConfigured: Boolean(phoneId),
     cloudApiSendReady: Boolean(token && phoneId),
     guestRelationRecipientCount: mergedGuest.length,
+    groupRegistry,
   };
 }
 
@@ -507,13 +611,18 @@ function parseMetaError(raw) {
  * Kayıt başarıyla oluşturulduktan sonra çağrılır (createGuestRequest içinden).
  * @param {object} payload — normalize edilmiş misafir kaydı
  * @param {string} [intentFallback]
+ * @param {{ recordId?: string, resend?: boolean }} [options]
  */
-export async function sendOperationalWhatsappNotification(payload, intentFallback = "unknown") {
+export async function sendOperationalWhatsappNotification(payload, intentFallback = "unknown", options = {}) {
   const recordType = normalizeGuestType(payload, intentFallback);
+  payload = coerceOperationalPayload(recordType, payload);
+  const deliveryMode = String(process.env.WHATSAPP_OPERATIONAL_DELIVERY_MODE || "group")
+    .trim()
+    .toLowerCase();
   const { token, envKey: tokenEnvKey } = resolveWhatsappAccessToken();
   const phoneNumberId = resolveWhatsappPhoneNumberId();
 
-  if (!token || !phoneNumberId) {
+  if (deliveryMode === "cloud" && (!token || !phoneNumberId)) {
     console.warn(
       "[whatsapp_ops] notify_skipped reason=missing_credentials record_type=%s detail=set_WHATSAPP_ACCESS_TOKEN_or_WHATSAPP_CLOUD_ACCESS_TOKEN_and_WHATSAPP_PHONE_NUMBER_ID",
       recordType,
@@ -521,13 +630,7 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
     return;
   }
 
-  if (
-    recordType !== "fault" &&
-    recordType !== "request" &&
-    recordType !== "complaint" &&
-    recordType !== "guest_notification" &&
-    recordType !== "late_checkout"
-  ) {
+  if (!isOperationalRecordType(recordType)) {
     console.info("[whatsapp_ops] notify_skipped reason=not_operational_type record_type=%s", recordType);
     return;
   }
@@ -539,7 +642,7 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
   else templateName = resolveGuestRelationTemplateName();
 
   const recipients = recipientsForGuestPayload(payload, intentFallback);
-  if (!recipients.length) {
+  if (deliveryMode === "cloud" && !recipients.length) {
     const listName =
       recordType === "fault"
         ? "WHATSAPP_TECH_RECIPIENTS"
@@ -582,6 +685,47 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
   );
 
   const bodyParameters = bodyParams.map((text) => ({ type: "text", text: dash(text) }));
+
+  if (deliveryMode === "group") {
+    const groupCfg = resolveOperationalGroupForRecordType(recordType);
+    if (!groupCfg?.id) {
+      console.warn(
+        "[whatsapp_ops] notify_skipped reason=missing_group_id record_type=%s expected_group_key=%s",
+        recordType,
+        groupCfg?.key || "-",
+      );
+      return { ok: false, skipped: true, reason: "missing_group_id", channel: "group", recordType };
+    }
+    try {
+      const recordId = String(options?.recordId ?? "").trim();
+      const dedupeKey = options?.resend
+        ? `${recordType}:id:${recordId || "x"}:resend:${Date.now()}`
+        : recordId
+          ? `${recordType}:id:${recordId}`
+          : `${recordType}:${String(payload?.room || "-")}:${String(payload?.submittedAt || "-")}`;
+      const res = await sendOperationalWhatsappGroupNotification({
+        recordType,
+        payload,
+        bodyParams,
+        dedupeKey,
+      });
+      console.info(
+        "[whatsapp_ops] group_send_ok record_type=%s group_key=%s group_id=%s duplicate=%s",
+        recordType,
+        res.groupKey || "-",
+        res.groupId || "-",
+        String(Boolean(res.duplicate)),
+      );
+      return res;
+    } catch (err) {
+      console.warn(
+        "[whatsapp_ops] group_send_failed record_type=%s error=%s",
+        recordType,
+        err?.message || err,
+      );
+      return { ok: false, channel: "group", reason: "send_failed", error: String(err?.message || err || "") };
+    }
+  }
 
   for (const to of recipients) {
     let res;
@@ -648,6 +792,7 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
       detail.slice(0, 1000),
     );
   }
+  return { ok: true, channel: "cloud", recipients: recipients.length };
 }
 
 /** Geriye dönük uyum: önceki import adı. */

@@ -13,6 +13,17 @@ def test_sanitize_removes_markdown_bold():
     assert "Kalın" in out
 
 
+def test_sanitize_strips_module_cta_lines_multilingual():
+    tr = "Özet. Aşağıdaki düğmeyle modülü açabilirsiniz."
+    assert "düğmeyle" not in sanitize_message_for_voice(tr, "tr")
+    en = "Summary. Use the button below to open it."
+    assert "button below" not in sanitize_message_for_voice(en, "en")
+    de = "Kurz. Öffnen Sie ihn über die Schaltfläche unten."
+    assert "Schaltfläche unten" not in sanitize_message_for_voice(de, "de")
+    ru = "Кратко. Откройте его кнопкой ниже."
+    assert "кнопкой ниже" not in sanitize_message_for_voice(ru, "ru").lower()
+
+
 def test_finalize_empty_message_uses_fallback():
     meta = ChatMeta(
         intent="hotel_info",

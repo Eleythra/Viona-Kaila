@@ -1,5 +1,12 @@
 import { getSupabase } from "../../lib/supabase.js";
 import { isValidHotelRoomNumber } from "../../lib/hotel-room-numbers.js";
+import {
+  validateGuestFullName,
+  normalizeGuestFullNameForStorage,
+  guestFullNameErrorMessage,
+  GUEST_NAME_MAX_LEN,
+  GUEST_DESC_MAX_LEN,
+} from "../../lib/guest-full-name.js";
 import { sendOperationalWhatsappNotification } from "../../services/whatsapp-operational-notification.service.js";
 
 const SIMPLE_TYPES = new Set(["request", "complaint", "fault", "guest_notification"]);
@@ -7,28 +14,71 @@ const RESERVATION_TYPES = new Set(["reservation_alacarte", "reservation_spa"]);
 /** Yalnızca web formu; ayrı tablo guest_late_checkouts. */
 const LATE_CHECKOUT_TYPE = "late_checkout";
 const REQUEST_CATEGORIES = new Set([
+  "towel_extra",
+  "room_towel",
+  "bathrobe",
+  "bedding_sheet",
+  "bedding_pillow",
+  "bedding_blanket",
+  "room_cleaning",
+  "turndown",
+  "slippers",
+  "minibar_refill",
+  "bottled_water",
+  "tea_coffee",
+  "toilet_paper",
+  "toiletries",
+  "climate_request",
+  "room_refresh",
+  "hanger",
+  "kettle",
+  "room_safe",
+  "baby_bed",
+  "other",
+]);
+/** Adet zorunlu (form: detail_quantity). */
+const REQUEST_QUANTITY_CATEGORIES = new Set([
+  "towel_extra",
+  "room_towel",
+  "bathrobe",
+  "bedding_sheet",
+  "bedding_pillow",
+  "bedding_blanket",
+  "slippers",
+  "hanger",
+  "baby_bed",
+  "toilet_paper",
+  "toiletries",
+]);
+const REQUEST_TIMING_CATEGORIES = new Set(["room_cleaning", "turndown"]);
+const LEGACY_REQUEST_CATEGORIES = new Set([
   "towel",
   "bedding",
-  "room_cleaning",
   "minibar",
   "baby_equipment",
   "room_equipment",
-  "other",
 ]);
 const REQUEST_CATEGORY_ALIASES = {
-  extraTowels: "towel",
-  extra_towels: "towel",
-  towels: "towel",
-  linen: "bedding",
+  extraTowels: "towel_extra",
+  extra_towels: "towel_extra",
+  towels: "towel_extra",
+  towel: "towel_extra",
+  linen: "bedding_sheet",
+  bedding: "bedding_sheet",
   roomCleaning: "room_cleaning",
   room_cleaning_request: "room_cleaning",
-  minibarRefill: "minibar",
-  minibar_request: "minibar",
-  babyNeeds: "baby_equipment",
-  baby_equipment_request: "baby_equipment",
-  roomSupplies: "room_equipment",
-  room_equipment_request: "room_equipment",
+  minibarRefill: "minibar_refill",
+  minibar_request: "minibar_refill",
+  minibar: "minibar_refill",
+  babyNeeds: "baby_bed",
+  baby_equipment_request: "baby_bed",
+  baby_equipment: "baby_bed",
+  roomSupplies: "hanger",
+  room_equipment_request: "hanger",
+  room_equipment: "hanger",
   otherRequest: "other",
+  hand_towel: "room_towel",
+  bath_towel: "towel_extra",
 };
 const COMPLAINT_CATEGORIES = new Set([
   "room_cleaning",
@@ -41,9 +91,16 @@ const COMPLAINT_CATEGORIES = new Set([
   "general_areas",
   "hygiene",
   "internet_tv",
+  "lost_property",
   "other",
 ]);
-const COMPLAINT_DESC_REQUIRED = new Set(["staff_behavior", "general_areas", "hygiene", "other"]);
+const COMPLAINT_DESC_REQUIRED = new Set([
+  "staff_behavior",
+  "general_areas",
+  "hygiene",
+  "lost_property",
+  "other",
+]);
 const GUEST_NOTIFICATION_CATEGORIES = new Set([
   "allergen_notice",
   "gluten_sensitivity",
@@ -106,13 +163,6 @@ function looksLikeNationality(value) {
   return /^[A-Za-z]{2,12}$/.test(String(value || "").trim());
 }
 
-function looksLikePersonName(value) {
-  const s = String(value || "").trim();
-  if (!s) return false;
-  if (/\d/.test(s)) return false;
-  return /[A-Za-zÀ-žА-Яа-яİıĞğÜüŞşÖöÇç]/.test(s);
-}
-
 function toArray(value) {
   if (!Array.isArray(value)) return [];
   return value.map((x) => String(x || "").trim()).filter(Boolean);
@@ -143,10 +193,12 @@ function normalizePayload(payload) {
   );
   const base = {
     type,
-    name: cleanText(payload?.name, 160),
+    name: cleanText(payload?.name, GUEST_NAME_MAX_LEN),
     room: cleanText(payload?.room, 50),
     nationality: cleanText(payload?.nationality, 20),
-    description: cleanText(payload?.description, 4000),
+    description: String(payload?.description ?? "")
+      .trim()
+      .slice(0, 4000),
     checkoutDate,
     checkoutTime,
     category: cleanText(payload?.category, 64),
@@ -156,7 +208,9 @@ function normalizePayload(payload) {
     language: cleanText(payload?.language, 8),
     guestCount: toPositiveInt(payload?.guestCount),
     categories: toArray(payload?.categories),
-    otherCategoryNote: cleanText(payload?.otherCategoryNote, 1000),
+    otherCategoryNote: String(payload?.otherCategoryNote ?? "")
+      .trim()
+      .slice(0, 4000),
     reservation: payload?.reservation || null,
     source: cleanText(payload?.source || "viona_web", 64) || "viona_web",
     submittedAt: new Date().toISOString(),
@@ -186,47 +240,71 @@ function normalizeFaultCategory(value) {
   return FAULT_CATEGORY_ALIASES[raw] || raw;
 }
 
+function migrateLegacyRequestShape(normalized) {
+  const rawCat = String(normalized.category || "").trim();
+  if (!LEGACY_REQUEST_CATEGORIES.has(rawCat) && rawCat !== "room_cleaning") return;
+  const d = normalized.details && typeof normalized.details === "object" ? normalized.details : {};
+  if (rawCat === "towel") {
+    normalized.category = d.itemType === "hand_towel" ? "room_towel" : "towel_extra";
+    normalized.details = { quantity: toPositiveInt(d.quantity) };
+    return;
+  }
+  if (rawCat === "bedding") {
+    const map = { pillow: "bedding_pillow", duvet_cover: "bedding_sheet", blanket: "bedding_blanket" };
+    normalized.category = map[String(d.itemType || "").trim()] || "bedding_sheet";
+    normalized.details = { quantity: toPositiveInt(d.quantity) };
+    return;
+  }
+  if (rawCat === "minibar") {
+    normalized.category = "minibar_refill";
+    normalized.details = {};
+    return;
+  }
+  if (rawCat === "baby_equipment") {
+    normalized.category = "baby_bed";
+    normalized.details = { quantity: toPositiveInt(d.quantity) };
+    return;
+  }
+  if (rawCat === "room_equipment") {
+    const map = {
+      bathrobe: "bathrobe",
+      slippers: "slippers",
+      hanger: "hanger",
+      kettle: "kettle",
+    };
+    const next = map[String(d.itemType || "").trim()];
+    if (!next) {
+      normalized.category = "other";
+      return;
+    }
+    normalized.category = next;
+    if (REQUEST_QUANTITY_CATEGORIES.has(next)) {
+      normalized.details = { quantity: toPositiveInt(d.quantity) };
+    } else {
+      normalized.details = {};
+    }
+    return;
+  }
+  if (rawCat === "room_cleaning" && d.requestType) {
+    normalized.details = {
+      timing: cleanEnum(d.timing, new Set(["now", "later"])) || "now",
+    };
+  }
+}
+
 function normalizeRequestDetails(category, details = {}) {
   const d = details && typeof details === "object" ? details : {};
-  if (category === "towel") {
-    return {
-      itemType: cleanEnum(d.itemType, new Set(["bath_towel", "hand_towel"])),
-      quantity: toPositiveInt(d.quantity),
-    };
+  if (REQUEST_QUANTITY_CATEGORIES.has(category)) {
+    return { quantity: toPositiveInt(d.quantity) };
   }
-  if (category === "bedding") {
-    return {
-      itemType: cleanEnum(d.itemType, new Set(["pillow", "duvet_cover", "blanket"])),
-      quantity: toPositiveInt(d.quantity),
-    };
-  }
-  if (category === "room_cleaning") {
-    return {
-      requestType: cleanEnum(d.requestType, new Set(["general_cleaning", "towel_change", "room_check"])),
-      timing: cleanEnum(d.timing, new Set(["now", "later"])),
-    };
-  }
-  if (category === "minibar") {
-    return {
-      requestType: cleanEnum(d.requestType, new Set(["refill", "missing_item_report", "check_request"])),
-    };
-  }
-  if (category === "baby_equipment") {
-    return {
-      itemType: cleanEnum(d.itemType, new Set(["baby_bed", "high_chair", "other"])),
-      quantity: toPositiveInt(d.quantity),
-    };
-  }
-  if (category === "room_equipment") {
-    return {
-      itemType: cleanEnum(d.itemType, new Set(["bathrobe", "slippers", "hanger", "kettle", "other"])),
-      quantity: toPositiveInt(d.quantity),
-    };
+  if (REQUEST_TIMING_CATEGORIES.has(category)) {
+    return { timing: cleanEnum(d.timing, new Set(["now", "later"])) };
   }
   return {};
 }
 
 function validateRequestDetails(normalized) {
+  migrateLegacyRequestShape(normalized);
   var category = normalizeRequestCategory(normalized.category);
   if (!category && Array.isArray(normalized.categories) && normalized.categories.length) {
     category = normalizeRequestCategory(String(normalized.categories[0] || "").trim());
@@ -240,23 +318,12 @@ function validateRequestDetails(normalized) {
   normalized.categories = [category];
   normalized.otherCategoryNote = category === "other" ? normalized.description || null : null;
 
-  if (category === "towel" || category === "bedding") {
-    if (!details.itemType || !details.quantity) throw new Error("request details are required");
+  if (REQUEST_QUANTITY_CATEGORIES.has(category)) {
+    if (!details.quantity || details.quantity < 1) throw new Error("request details are required");
     return;
   }
-  if (category === "room_cleaning") {
-    if (!details.requestType || !details.timing) throw new Error("request details are required");
-    return;
-  }
-  if (category === "minibar") {
-    if (!details.requestType) throw new Error("request details are required");
-    return;
-  }
-  if (category === "baby_equipment" || category === "room_equipment") {
-    if (!details.itemType || !details.quantity) throw new Error("request details are required");
-    if (details.itemType === "other" && !normalized.description) {
-      throw new Error("description is required for other item type");
-    }
+  if (REQUEST_TIMING_CATEGORIES.has(category)) {
+    if (!details.timing) throw new Error("request details are required");
     return;
   }
   if (category === "other" && !normalized.description) {
@@ -385,7 +452,9 @@ function validate(normalized) {
   if (!normalized.name) throw new Error("name is required");
   if (!normalized.room) throw new Error("room is required");
   if (!normalized.nationality) throw new Error("nationality is required");
-  if (!looksLikePersonName(normalized.name)) throw new Error("name must contain letters only");
+  const nameErr = validateGuestFullName(normalized.name);
+  if (nameErr) throw new Error(guestFullNameErrorMessage(nameErr));
+  normalized.name = normalizeGuestFullNameForStorage(normalized.name);
   if (!isValidHotelRoomNumber(normalized.room)) throw new Error("invalid hotel room number");
   // Chatbot üzerinden gelen kayıtlarda milliyet alanı '-' olarak tutulabilir.
   if (normalized.source !== "viona_chat" && !looksLikeNationality(normalized.nationality)) {
@@ -438,6 +507,12 @@ function validate(normalized) {
     normalized.reservationDate = reservationDate;
     normalized.reservationTime = reservationTime;
     normalized.language = cleanText(normalized.language, 8) || "tr";
+  }
+  if (String(normalized.description || "").length > GUEST_DESC_MAX_LEN) {
+    throw new Error("description is too long");
+  }
+  if (String(normalized.otherCategoryNote || "").length > GUEST_DESC_MAX_LEN) {
+    throw new Error("other category note is too long");
   }
 }
 
@@ -575,34 +650,105 @@ async function insertLateCheckout(normalized) {
   return data.id;
 }
 
+/** İstemci / teşhis: 201 yanıtında; anahtar sızdırmaz. */
+function summarizeWhatsappNotifyResult(result) {
+  if (result == null || typeof result !== "object") {
+    return { ok: false, skipped: true, reason: "no_notify_result" };
+  }
+  const out = {
+    ok: Boolean(result.ok),
+    skipped: Boolean(result.skipped),
+    channel: String(result.channel || ""),
+    reason: String(result.reason || ""),
+  };
+  if (result.groupKey) out.groupKey = String(result.groupKey);
+  if (result.groupId) out.groupId = String(result.groupId);
+  if (result.duplicate != null) out.duplicate = Boolean(result.duplicate);
+  const errStr = result.error != null ? String(result.error).trim() : "";
+  if (errStr) out.error = errStr.slice(0, 500);
+  else if (String(result.reason || "") === "send_failed") out.error = "send_failed_detail_missing";
+  return out;
+}
+
+/**
+ * Misafir formu HTTP yanıtını WhatsApp botuna bağlamaz; kayıt hemen döner, WA arka planda.
+ * Aksi halde bot/QR beklerken istek dakikalarca "Gönderiliyor…"da kalır.
+ */
+function scheduleOperationalWhatsappAfterInsert(table, normalized, recordId) {
+  const idStr = String(recordId);
+  void sendOperationalWhatsappNotification(normalized, "unknown", { recordId: idStr })
+    .then((result) => updateWhatsappDeliveryStatus(table, idStr, result))
+    .catch((err) => {
+      console.warn(
+        "[guest_requests] whatsapp_async_failed table=%s id=%s error=%s",
+        table,
+        idStr,
+        err?.message || err,
+      );
+      return updateWhatsappDeliveryStatus(table, idStr, {
+        ok: false,
+        skipped: true,
+        channel: "unknown",
+        reason: "async_send_failed",
+        error: String(err?.message || err || "").slice(0, 500),
+      });
+    });
+}
+
+async function updateWhatsappDeliveryStatus(table, id, result) {
+  try {
+    const { data: existing } = await getSupabase()
+      .from(table)
+      .select("raw_payload")
+      .eq("id", id)
+      .maybeSingle();
+    const mergedPayload = {
+      ...(existing?.raw_payload && typeof existing.raw_payload === "object" ? existing.raw_payload : {}),
+      whatsapp_delivery: {
+        channel: String(result?.channel || "unknown"),
+        ok: Boolean(result?.ok),
+        skipped: Boolean(result?.skipped),
+        reason: String(result?.reason || ""),
+        groupKey: String(result?.groupKey || ""),
+        groupId: String(result?.groupId || ""),
+        ...(result?.error ? { error: String(result.error).slice(0, 800) } : {}),
+        sentAt: new Date().toISOString(),
+      },
+    };
+    await getSupabase().from(table).update({ raw_payload: mergedPayload }).eq("id", id);
+  } catch (err) {
+    console.warn("whatsapp_delivery_status_update_failed table=%s id=%s error=%s", table, id, err?.message || err);
+  }
+}
+
 export async function createGuestRequest(payload) {
   const normalized = normalizePayload(payload);
   validate(normalized);
 
   if (normalized.type === "request") {
     const id = await insertSimple("guest_requests", normalized);
-    await sendOperationalWhatsappNotification(normalized, "unknown");
-    return { id, bucket: "request" };
+    scheduleOperationalWhatsappAfterInsert("guest_requests", normalized, id);
+    return { id, bucket: "request", whatsapp: { pending: true } };
   }
   if (normalized.type === "complaint") {
     const id = await insertSimple("guest_complaints", normalized);
-    await sendOperationalWhatsappNotification(normalized, "unknown");
-    return { id, bucket: "complaint" };
+    scheduleOperationalWhatsappAfterInsert("guest_complaints", normalized, id);
+    return { id, bucket: "complaint", whatsapp: { pending: true } };
   }
   if (normalized.type === "fault") {
     const id = await insertSimple("guest_faults", normalized);
-    await sendOperationalWhatsappNotification(normalized, "unknown");
-    return { id, bucket: "fault" };
+    scheduleOperationalWhatsappAfterInsert("guest_faults", normalized, id);
+    return { id, bucket: "fault", whatsapp: { pending: true } };
   }
   if (normalized.type === "guest_notification") {
     const id = await insertSimple("guest_notifications", normalized);
-    await sendOperationalWhatsappNotification(normalized, "unknown");
-    return { id, bucket: "guest_notification" };
+    scheduleOperationalWhatsappAfterInsert("guest_notifications", normalized, id);
+    return { id, bucket: "guest_notification", whatsapp: { pending: true } };
   }
   if (normalized.type === LATE_CHECKOUT_TYPE) {
     const id = await insertLateCheckout(normalized);
-    await sendOperationalWhatsappNotification(normalized, "unknown");
-    return { id, bucket: "late_checkout" };
+    scheduleOperationalWhatsappAfterInsert("guest_late_checkouts", normalized, id);
+    return { id, bucket: "late_checkout", whatsapp: { pending: true } };
   }
   const id = await insertReservation(normalized);
   return { id, bucket: "reservation" };

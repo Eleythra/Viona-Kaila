@@ -11,7 +11,6 @@
   var LOGIN_USER_KEY = "viona_admin_login_user";
   /** Girişte zorunlu; büyük-küçük harf duyarlı tek değer */
   var ADMIN_USERNAME_REQUIRED = "Viona-Kaila";
-  var reservationSubtab = "overview";
   /** Misafir bildirimleri sekmesi: notifications | late_checkout */
   var guestNotifSubtab = "notifications";
   /** null = dashboard; operasyon listeleri için otomatik yenileme hedefi */
@@ -26,7 +25,7 @@
   /** init() her başarılı girişte çağrılır; wire* yalnızca bir kez bağlanmalı */
   var staticAdminListenersBound = false;
   var logsExportInFlight = false;
-  /** İstek / şikayet / arıza listeleri için sunucu sayfalama (rezervasyon: tümü birleştirilir). */
+  /** İstek / şikayet / arıza listeleri için sunucu sayfalama. */
   var BUCKET_LIST_PAGE_SIZE = 100;
   /** Ana sayfa özetinde birleştirilen kayıt üst sınırı (sayfa × getBucketPage boyutu). */
   var BUCKET_MERGE_MAX_PAGES = 100;
@@ -42,7 +41,7 @@
     request: "Talep",
     complaint: "Şikâyet",
     fault_report: "Arıza",
-    reservation: "Rezervasyon",
+    reservation: "Restoran · spa talebi (sohbet)",
     special_need: "Özel ihtiyaç",
     guest_notification: "Misafir bildirimi",
     chitchat: "Sohbet",
@@ -66,19 +65,24 @@
     return intentLabelTr(entry.key) + " · " + entry.count + " mesaj";
   }
 
-  var reservationSubtabLabels = {
-    overview: "Günlük takip (tümü)",
-    laTerrace: "La Terrace A La Carte",
-    sinton: "Sinton BBQ Restaurant",
-    spa: "Spa & wellness",
-  };
+  /** Anket hotel_categories: yalnızca >0 ortalamaların aritmetiği (yeni şema; çoklu alt başlık birleşimi). */
+  function surveyCategoryMean(catObj, keys) {
+    var vals = [];
+    (keys || []).forEach(function (k) {
+      var v = Number(catObj[k]);
+      if (Number.isFinite(v) && v > 0) vals.push(v);
+    });
+    if (!vals.length) return "-";
+    return (vals.reduce(function (a, b) {
+      return a + b;
+    }, 0) / vals.length).toFixed(2);
+  }
 
   var tabMap = {
     requests: "tab-requests",
     complaints: "tab-complaints",
     faults: "tab-faults",
     guest_notifications: "tab-guest-notifications",
-    reservations: "tab-reservations",
     evaluations: "tab-evaluations",
     "pdf-report": "tab-pdf-report",
     logs: "tab-logs",
@@ -95,13 +99,10 @@
       el.classList.toggle("hidden", isHome || tab !== k);
     });
     document.querySelectorAll(".admin-nav button").forEach(function (b) {
-      var isReservationSub = b.hasAttribute("data-res-subtab");
       var dt = b.getAttribute("data-tab") || "";
       var isActive;
       if (isHome) {
         isActive = dt === "home";
-      } else if (isReservationSub) {
-        isActive = tab === "reservations" && b.getAttribute("data-res-subtab") === reservationSubtab;
       } else {
         isActive = dt === tab;
       }
@@ -114,12 +115,6 @@
     });
   }
 
-  function updateReservationNavStatus() {
-    var el = document.getElementById("reservation-nav-status");
-    if (!el) return;
-    var label = reservationSubtabLabels[reservationSubtab] || reservationSubtab;
-    el.textContent = "Aktif görünüm: " + label;
-  }
 
   function emptyMergeResult() {
     return { items: [], truncated: false };
@@ -179,7 +174,6 @@
         adapter.getBucketMergeAll("fault", BUCKET_MERGE_MAX_PAGES).catch(emptyMergeResult),
         adapter.getBucketMergeAll("guest_notification", BUCKET_MERGE_MAX_PAGES).catch(emptyMergeResult),
         adapter.getBucketMergeAll("late_checkout", BUCKET_MERGE_MAX_PAGES).catch(emptyMergeResult),
-        adapter.getBucketMergeAll("reservation", BUCKET_MERGE_MAX_PAGES).catch(emptyMergeResult),
       ]);
       var br = buckets.map(normalizeMergeResult);
       var dashTruncated = br.some(function (x) {
@@ -189,9 +183,9 @@
       if (warnEl) {
         if (!dashReportOk) {
           warnEl.textContent =
-            "Rapor özeti şu an alınamadı" +
-            (dashReportErr ? " (" + dashReportErr + ")" : "") +
-            ". Ağ sekmesinde GET …/admin/reports/dashboard isteğini kontrol edin (404 ise API tabanı yanlış; Render uyuyorsa ikinci deneme). Operasyon listeleri ayrı istekle yüklenir.";
+            "Özet rapor şu an yüklenemedi" +
+            (dashReportErr ? " — " + dashReportErr : "") +
+            ". Geliştirici araçlarında /admin/reports/dashboard isteğini doğrulayın (404: API adresi). Operasyon listeleri bağımsız istekle gelmeye devam eder.";
           warnEl.classList.remove("hidden");
           warnEl.removeAttribute("aria-hidden");
         } else {
@@ -204,15 +198,71 @@
       if (mergeWarnEl) {
         if (dashTruncated) {
           mergeWarnEl.textContent =
-            "Pano özetinde bazı listeler " +
+            "Özet, bazı listelerde " +
             BUCKET_MERGE_MAX_PAGES +
-            " sayfa üst sınırına ulaştı; toplam kayıt sayıları eksik olabilir. Tam liste için ilgili sekmeleri açın.";
+            " sayfa üst sınırına takıldı; toplamlar eksik görünebilir. Tam veri için ilgili sekmeyi açın.";
           mergeWarnEl.classList.remove("hidden");
           mergeWarnEl.removeAttribute("aria-hidden");
         } else {
           mergeWarnEl.textContent = "";
           mergeWarnEl.classList.add("hidden");
           mergeWarnEl.setAttribute("aria-hidden", "true");
+        }
+      }
+      var waRoot = document.getElementById("dashboard-whatsapp-status");
+      var waDetail = document.getElementById("dashboard-whatsapp-status-detail");
+      if (waRoot && waDetail) {
+        waRoot.classList.remove(
+          "dashboard-whatsapp-status--ok",
+          "dashboard-whatsapp-status--warn",
+          "dashboard-whatsapp-status--loading",
+          "dashboard-whatsapp-status--unavailable",
+        );
+        waRoot.classList.add("dashboard-whatsapp-status--loading");
+        waDetail.textContent = "Operasyon hattı doğrulanıyor…";
+        try {
+          var waDiag = await adapter.getWhatsappAdminDiagnostics();
+          var st = (waDiag && waDiag.state) || {};
+          var ver = (waDiag && waDiag.verify) || {};
+          var parts = [];
+          if (!st.enabled) {
+            parts.push(
+              "Mesaj botu devre dışı" +
+                (st.envKeySet ? "" : " — ortam anahtarı eksik veya okunamıyor"),
+            );
+          } else if (!st.ready) {
+            parts.push(
+              "Bağlantı veya oturum henüz hazır değil" + (st.lastError ? " — " + st.lastError : ""),
+            );
+          } else {
+            parts.push("Bağlantı hazır");
+          }
+          if (ver.allOk === true) {
+            parts.push(
+              "Hedef gruplar doğrulandı" +
+                (ver.discoveredCount != null ? " · " + ver.discoveredCount + " grup eşleşti" : ""),
+            );
+          } else if (Array.isArray(ver.checks) && ver.checks.length) {
+            var badN = ver.checks.filter(function (c) {
+              return !c.ok;
+            }).length;
+            parts.push(badN ? badN + " grup için uyarı" : "Grup doğrulaması tamamlandı");
+          }
+          waDetail.textContent = parts.join(" · ");
+          var groupWarn =
+            ver.allOk === false ||
+            (Array.isArray(ver.checks) &&
+              ver.checks.some(function (c) {
+                return c && c.ok === false;
+              }));
+          var warnWa = !st.enabled || !st.ready || groupWarn;
+          waRoot.classList.remove("dashboard-whatsapp-status--loading");
+          waRoot.classList.add(warnWa ? "dashboard-whatsapp-status--warn" : "dashboard-whatsapp-status--ok");
+        } catch (_e) {
+          waRoot.classList.remove("dashboard-whatsapp-status--loading");
+          waRoot.classList.add("dashboard-whatsapp-status--unavailable", "dashboard-whatsapp-status--warn");
+          waDetail.textContent =
+            "Durum okunamadı. Ağınızı veya sunucu yanıtını kontrol edin; özet kısa süre içinde yenilenecek.";
         }
       }
       if (!report || typeof report !== "object") {
@@ -233,7 +283,6 @@
         complaint: br[1].items,
         fault: br[2].items,
         guest_notification: gnMerge,
-        reservation: br[5].items,
       };
       renderHomeTopStrip(dashData, report);
       renderDashboardAlerts(dashData);
@@ -250,20 +299,59 @@
         {
           title: "Anket ortalaması (özet)",
           value: sat.overallScore,
-          desc: "overall_score satır ortalaması.",
+          desc: "overall_score satır ortalaması (veya kategori / soru yedekleri).",
         },
         {
           title: "Viona ortalaması",
           value: sat.vionaScore,
-          desc: "viona_rating (Viona bölümü dolu kayıtlar).",
+          desc: "viona_rating veya viona soru ortalamaları.",
         },
-        { title: "Yemek & içecek", value: satCat.food || "-", desc: "hotel_categories.food ortalaması." },
+        {
+          title: "Genel değerlendirme",
+          value: satCat.generalEval || "-",
+          desc: "hotel_categories.generalEval (tek gönderim ortalaması).",
+        },
+        {
+          title: "Yemek & içecek (alt başlıklar ort.)",
+          value: (function () {
+            var m = surveyCategoryMean(satCat, [
+              "food_main_restaurant",
+              "food_la_terracca",
+              "food_snack_dolphin_gusto",
+              "food_bars",
+            ]);
+            if (m !== "-") return m;
+            return satCat.food != null && Number(satCat.food) > 0 ? String(satCat.food) : "-";
+          })(),
+          desc: "Yeni şema: dört alt anahtarın ortalaması. Eski kayıtlar: hotel_categories.food.",
+        },
         { title: "Oda & konfor", value: satCat.comfort || "-", desc: "hotel_categories.comfort." },
-        { title: "Temizlik", value: satCat.cleanliness || "-", desc: "hotel_categories.cleanliness." },
-        { title: "Personel", value: satCat.staff || "-", desc: "hotel_categories.staff." },
-        { title: "Havuz & plaj", value: satCat.poolBeach || "-", desc: "hotel_categories.poolBeach." },
+        { title: "Resepsiyon & ekip", value: satCat.staff || "-", desc: "hotel_categories.staff." },
+        {
+          title: "Havuz & plaj (havuz + plaj ort.)",
+          value: (function () {
+            var m = surveyCategoryMean(satCat, ["pool_area", "beach_area"]);
+            if (m !== "-") return m;
+            return satCat.poolBeach != null && Number(satCat.poolBeach) > 0 ? String(satCat.poolBeach) : "-";
+          })(),
+          desc: "Yeni şema: pool_area + beach_area. Eski kayıtlar: hotel_categories.poolBeach.",
+        },
         { title: "Spa & wellness", value: satCat.spaWellness || "-", desc: "hotel_categories.spaWellness." },
-        { title: "Genel deneyim", value: satCat.generalExperience || "-", desc: "hotel_categories.generalExperience." },
+        {
+          title: "Misafir deneyimi & hizmet",
+          value: satCat.guestExperience || "-",
+          desc: "hotel_categories.guestExperience (yeni şema).",
+        },
+        {
+          title: "Genel deneyim (eski anket)",
+          value: satCat.generalExperience || "-",
+          desc: "Yalnızca eski uygulama kayıtlarında hotel_categories.generalExperience.",
+        },
+        {
+          title: "Temizlik (eski anket)",
+          value: satCat.cleanliness || "-",
+          desc: "Eski şema; yeni ankette ayrı kategori yok, sorular oda/havuz/plajda.",
+        },
       ]);
       ui.renderMetricRows(document.getElementById("report-unanswered"), [
         { title: "Fallback satır sayısı", value: uq.fallbackCount, desc: "chat_observations içinde layer_used=fallback." },
@@ -351,8 +439,6 @@
         await loadBucket("fault", "list-faults");
       } else if (activeAdminTab === "guest_notifications") {
         await loadGuestNotifVisible();
-      } else if (activeAdminTab === "reservations") {
-        await loadBucket("reservation", "list-reservations");
       } else if (activeAdminTab === "evaluations") {
         await loadEvaluations();
       } else if (activeAdminTab === "logs") {
@@ -394,36 +480,25 @@
     if (!mount) return;
     var rethrow = opts && opts.rethrow;
     try {
-      var rows;
-      var pagination = null;
-      if (type === "reservation") {
-        var resMerged = await adapter.getBucketMergeAll("reservation", BUCKET_MERGE_MAX_PAGES);
-        rows = normalizeMergeResult(resMerged).items;
-      } else {
-        var pageNum = page != null ? page : bucketListPage[type] || 1;
-        bucketListPage[type] = pageNum;
-        var res = await adapter.getBucketPage(type, pageNum, BUCKET_LIST_PAGE_SIZE);
-        rows = res.items || [];
-        pagination = res.pagination || null;
-        if (
-          rows.length === 0 &&
-          pagination &&
-          pagination.page > 1 &&
-          (pagination.total || 0) > 0
-        ) {
-          await loadBucket(type, mountId, pagination.page - 1, opts);
-          return;
-        }
+      var pageNum = page != null ? page : bucketListPage[type] || 1;
+      bucketListPage[type] = pageNum;
+      var res = await adapter.getBucketPage(type, pageNum, BUCKET_LIST_PAGE_SIZE);
+      var rows = res.items || [];
+      var pagination = res.pagination || null;
+      if (
+        rows.length === 0 &&
+        pagination &&
+        pagination.page > 1 &&
+        (pagination.total || 0) > 0
+      ) {
+        await loadBucket(type, mountId, pagination.page - 1, opts);
+        return;
       }
       ui.renderBucketTable(mount, type, rows, {
-        initialReservationSubtab: type === "reservation" ? reservationSubtab : undefined,
         pagination: pagination,
-        onPage:
-          type === "reservation"
-            ? undefined
-            : function (nextPage) {
-                void loadBucket(type, mountId, nextPage);
-              },
+        onPage: function (nextPage) {
+          void loadBucket(type, mountId, nextPage);
+        },
         onStatus: async function (itemType, id, status) {
           try {
             await adapter.updateStatus(itemType, id, status);
@@ -432,7 +507,7 @@
             var msg =
               err && err.message
                 ? String(err.message)
-                : "Durum güncellenemedi. Ağ veya sunucu yanıtını kontrol edin.";
+                : "Durum güncellenemedi. Bağlantıyı veya sunucu yanıtını kontrol edin.";
             window.alert(msg);
           }
         },
@@ -441,18 +516,24 @@
           await adapter.deleteItem(itemType, id);
           await loadBucket(type, mountId);
         },
+        onWhatsappResend: async function (itemType, id) {
+          try {
+            await adapter.resendWhatsappOperational(itemType, id);
+            window.alert("Kayıt operasyon WhatsApp grubuna yeniden iletildi.");
+            await loadBucket(type, mountId, undefined, { rethrow: true });
+          } catch (err) {
+            var msg =
+              err && err.message
+                ? String(err.message)
+                : "WhatsApp iletimi tamamlanamadı. Bağlantıyı veya sunucu yanıtını kontrol edin.";
+            window.alert(msg);
+          }
+        },
         onCreate: async function (payload) {
           await adapter.createGuestRequest(payload);
           await loadBucket(type, mountId);
         },
       });
-      if (type === "reservation") {
-        mount.dispatchEvent(
-          new CustomEvent("reservation:setSubtab", {
-            detail: { key: reservationSubtab },
-          })
-        );
-      }
     } catch (e) {
       mount.textContent = "";
       var errP = document.createElement("p");
@@ -638,39 +719,6 @@
     }).length;
   }
 
-  function resNormStatus(r) {
-    return typeof ui.reservationNormalizeStatusKey === "function"
-      ? ui.reservationNormalizeStatusKey(r && r.status)
-      : String((r && r.status) || "new")
-          .trim()
-          .toLowerCase();
-  }
-
-  function countResByNorm(rows, want) {
-    return rows.filter(function (r) {
-      return resNormStatus(r) === want;
-    }).length;
-  }
-
-  /** İptal + beklenmeyen durum kodları (özet satırında ayrı gösterilir). */
-  function countResIptalVeDiger(rows) {
-    var n = 0;
-    (rows || []).forEach(function (r) {
-      var st = resNormStatus(r);
-      if (st === "cancelled") n++;
-      else if (
-        st !== "new" &&
-        st !== "pending" &&
-        st !== "in_progress" &&
-        st !== "done" &&
-        st !== "rejected"
-      ) {
-        n++;
-      }
-    });
-    return n;
-  }
-
   /** İstek / şikayet / arıza satırı — sayım ve ana sayfa özetleri için tek tip. */
   function normAdminIssueStatus(row) {
     var st = String((row && row.status) || "new")
@@ -679,43 +727,6 @@
       .replace(/\s+/g, "_");
     if (st === "inprogress") return "in_progress";
     return st;
-  }
-
-  /** Rezervasyon: beklemede (yeni / beklemede / eski onay süreci). */
-  function countAwaitingReservationApproval(rows) {
-    return rows.filter(function (r) {
-      var st = resNormStatus(r);
-      return st === "new" || st === "pending" || st === "in_progress";
-    }).length;
-  }
-
-  /** Onaylandı (API durumu: done). */
-  function countReservationApprovedLine(rows) {
-    return rows.filter(function (r) {
-      return resNormStatus(r) === "done";
-    }).length;
-  }
-
-  /** Mekân bazlı: bekliyor · onay hattı · onaylanmadı · iptal (rezervasyon tarihi günüyle eşleşen satır kümesi). */
-  function countReservationSplitByVenue(rows) {
-    var vk = ui.reservationVenueKeyFromRow;
-    var keys = ["laTerrace", "mare", "sinton", "spa", "other"];
-    var o = {};
-    keys.forEach(function (k) {
-      o[k] = { wait: 0, appr: 0, rej: 0, can: 0 };
-    });
-    if (typeof vk !== "function") return o;
-    rows.forEach(function (r) {
-      var st = resNormStatus(r);
-      var venue = vk(r);
-      var bucket =
-        venue === "laTerrace" || venue === "mare" || venue === "sinton" || venue === "spa" ? venue : "other";
-      if (st === "new" || st === "pending" || st === "in_progress") o[bucket].wait++;
-      else if (st === "done") o[bucket].appr++;
-      else if (st === "rejected") o[bucket].rej++;
-      else if (st === "cancelled") o[bucket].can++;
-    });
-    return o;
   }
 
   function countByStatus(rows, status) {
@@ -744,14 +755,6 @@
   function filterRowsSubmittedOnDay(rows, isoDay) {
     return rows.filter(function (r) {
       return submittedDateKey(r) === isoDay;
-    });
-  }
-
-  function filterReservationsOnServiceDay(rows, isoDay) {
-    var rd = ui.reservationDateValue;
-    if (typeof rd !== "function") return [];
-    return rows.filter(function (r) {
-      return rd(r) === isoDay;
     });
   }
 
@@ -802,24 +805,6 @@
     };
   }
 
-  function resGlobalSnapshot(resRows) {
-    var rows = resRows || [];
-    var w = 0;
-    var a = 0;
-    var j = 0;
-    var c = 0;
-    var o = 0;
-    rows.forEach(function (r) {
-      var st = resNormStatus(r);
-      if (st === "new" || st === "pending" || st === "in_progress") w++;
-      else if (st === "done") a++;
-      else if (st === "rejected") j++;
-      else if (st === "cancelled") c++;
-      else o++;
-    });
-    return { wait: w, appr: a, rej: j, can: c, other: o, total: rows.length };
-  }
-
   function renderAnalyticsDataSources(report) {
     var el = document.getElementById("dashboard-analytics-meta");
     if (!el) return;
@@ -854,9 +839,7 @@
     var comRows = data.complaint || [];
     var faultRows = data.fault || [];
     var notifRows = data.guest_notification || [];
-    var resRows = data.reservation || [];
-    var totalRecords =
-      reqRows.length + comRows.length + faultRows.length + notifRows.length + resRows.length;
+    var totalRecords = reqRows.length + comRows.length + faultRows.length + notifRows.length;
     var todayIso = todayIsoLocal();
     var todayLabel =
       typeof ui.formatIsoDateDisplayTr === "function" ? ui.formatIsoDateDisplayTr(todayIso) : todayIso;
@@ -869,7 +852,6 @@
     var faultSp = countOpsBeklemeYapildi(faultToday);
     var notifSp = countOpsBeklemeYapildi(notifToday);
     var opsAll = opsGlobalSnapshot(reqRows, comRows, faultRows, notifRows);
-    var resAll = resGlobalSnapshot(resRows);
     var opsWaitTotal = reqSp.wait + comSp.wait + faultSp.wait + notifSp.wait;
     var opsDoneTotal = reqSp.done + comSp.done + faultSp.done + notifSp.done;
     var opsRejTotal = reqSp.rej + comSp.rej + faultSp.rej + notifSp.rej;
@@ -883,15 +865,6 @@
       notifSp.cancelled +
       notifSp.other;
     var opsExtraAll = opsAll.cancelled + opsAll.other;
-    var resExtraAll = resAll.can + resAll.other;
-    var resToday = filterReservationsOnServiceDay(resRows, todayIso);
-    var resAwait = countAwaitingReservationApproval(resToday);
-    var resApproved = countReservationApprovedLine(resToday);
-    var resRejToday = resToday.filter(function (r) {
-      return resNormStatus(r) === "rejected";
-    }).length;
-    var resExtraToday = countResIptalVeDiger(resToday);
-    var resByVenue = countReservationSplitByVenue(resToday);
     var kpis = report && report.kpis ? report.kpis : {};
     var totalChats = kpis.totalChats != null ? kpis.totalChats : "—";
     var fb = kpis.fallbackRate != null ? kpis.fallbackRate + "%" : "—";
@@ -905,11 +878,9 @@
         : String(new Date().toLocaleString("tr-TR"));
     var opsLineExtrasAll = opsExtraAll > 0 ? " · İptal/diğer: <strong>" + opsExtraAll + "</strong>" : "";
     var opsLineExtrasToday = opsExtraToday > 0 ? " · İptal/diğer: <strong>" + opsExtraToday + "</strong>" : "";
-    var resLineExtrasAll = resExtraAll > 0 ? " · İptal/diğer: <strong>" + resExtraAll + "</strong>" : "";
-    var resLineExtrasToday = resExtraToday > 0 ? " · İptal/diğer: <strong>" + resExtraToday + "</strong>" : "";
     var globalBar =
       '<div class="home-top-strip__bar home-top-strip__bar--global">' +
-      '<div class="home-global-grid">' +
+      '<div class="home-global-grid home-global-grid--single">' +
       '<div class="home-global-card">' +
       '<span class="home-global-card__k">İstek · Şikayet · Arıza · Misafir bildirimi + geç çıkış (tüm zamanlar)</span>' +
       '<p class="home-global-card__body">Beklemede: <strong>' +
@@ -934,34 +905,8 @@
       "</strong>" +
       opsLineExtrasToday +
       "</p>" +
-      "</div>" +
-      '<div class="home-global-card">' +
-      '<span class="home-global-card__k">Rezervasyon (tüm zamanlar)</span>' +
-      '<p class="home-global-card__body">Beklemede: <strong>' +
-      resAll.wait +
-      "</strong> · Onaylandı: <strong>" +
-      resAll.appr +
-      "</strong> · Onaylanmadı: <strong>" +
-      resAll.rej +
-      "</strong> · Toplam: <strong>" +
-      resAll.total +
-      "</strong>" +
-      resLineExtrasAll +
-      "</p>" +
-      '<p class="home-global-card__sub">Bugün (rezervasyon günü ' +
-      todayLabel +
-      "): Beklemede <strong>" +
-      resAwait +
-      "</strong> · Onaylandı <strong>" +
-      resApproved +
-      "</strong> · Onaylanmadı <strong>" +
-      resRejToday +
-      "</strong>" +
-      resLineExtrasToday +
-      "</p>" +
-      "</div>" +
-      "</div>" +
-      '<p class="home-global-hint">Üst kartlar tüm zamanlar. Alt şerit: istek/şikayet/arıza/bildirim için <strong>bugün gönderilen</strong> kayıtlar; rezervasyon için <strong>rezervasyon tarihi bugün</strong> olan kayıtlar.</p>' +
+      "</div></div>" +
+      '<p class="home-global-hint">Üst özet tüm zamanlar. Alt şerit: bugün oluşturulan istek, şikayet, arıza ve bildirim kayıtları.</p>' +
       "</div>";
     var opsTypeItems =
       '<li class="home-res-venue">' +
@@ -1052,74 +997,11 @@
       '<ul class="home-res-strip__chips" role="list">' +
       opsTypeItems +
       "</ul></div></div>";
-    var venueOrder = ["laTerrace", "mare", "sinton", "spa"];
-    function venueChipHtml(k, title) {
-      var sp = resByVenue[k] || { wait: 0, appr: 0, rej: 0, can: 0 };
-      var lab = title || reservationSubtabLabels[k] || k;
-      var liCls = k === "other" ? "home-res-venue home-res-venue--other" : "home-res-venue";
-      return (
-        '<li class="' +
-        liCls +
-        '">' +
-        '<span class="home-res-venue__name">' +
-        lab +
-        "</span>" +
-        '<div class="home-res-venue__split home-res-venue__split--triple" role="group" aria-label="' +
-        lab +
-        ' özet">' +
-        '<span class="home-res-venue__leg home-res-venue__leg--wait"><span class="home-res-venue__leg-k">Beklemede</span> ' +
-        '<span class="home-res-venue__leg-v">' +
-        sp.wait +
-        "</span></span>" +
-        '<span class="home-res-venue__leg"><span class="home-res-venue__leg-k">Onaylandı</span> ' +
-        '<span class="home-res-venue__leg-v">' +
-        sp.appr +
-        "</span></span>" +
-        '<span class="home-res-venue__leg"><span class="home-res-venue__leg-k">Onaylanmadı</span> ' +
-        '<span class="home-res-venue__leg-v">' +
-        sp.rej +
-        "</span></span>" +
-        "</div>" +
-        "</li>"
-      );
-    }
-    var venueItems = venueOrder.map(function (k) {
-      return venueChipHtml(k);
-    }).join("");
-    var otherSp = resByVenue.other || { wait: 0, appr: 0, rej: 0, can: 0 };
-    if (otherSp.wait > 0 || otherSp.appr > 0 || otherSp.rej > 0 || otherSp.can > 0) {
-      venueItems += venueChipHtml("other", "Diğer");
-    }
-    var resBar =
-      '<div class="home-top-strip__bar home-top-strip__bar--reservations">' +
-      '<div class="home-res-strip">' +
-      '<div class="home-res-strip__row">' +
-      '<p class="home-res-strip__general">' +
-      "<strong>Rezervasyon</strong> · Bugün (" +
-      todayLabel +
-      ") · Beklemede: <strong>" +
-      resAwait +
-      "</strong> · Onaylandı: <strong>" +
-      resApproved +
-      "</strong> · Onaylanmadı: <strong>" +
-      resRejToday +
-      "</strong>" +
-      resLineExtrasToday +
-      "</p>" +
-      '<button type="button" class="home-res-strip__cta js-home-open-reservations">Listeyi aç →</button>' +
-      "</div>" +
-      '<p class="home-res-strip__hint">Rezervasyon tarihi bugün (' +
-      todayLabel +
-      "). İşlemler için <strong>Rezervasyonlar</strong> sekmesinde mekân listesini açın.</p>" +
-      '<ul class="home-res-strip__chips" role="list">' +
-      venueItems +
-      "</ul>" +
-      "</div></div>";
     el.innerHTML =
       globalBar +
       '<div class="home-top-strip__bar home-top-strip__bar--metrics">' +
       '<ul class="home-top-strip__stats" role="list">' +
-      '<li class="home-stat" title="İstek, şikayet, arıza, misafir bildirimi, geç çıkış ve rezervasyon satırlarının toplamı">' +
+      '<li class="home-stat" title="İstek, şikayet, arıza, misafir bildirimi ve geç çıkış satırlarının toplamı">' +
       '<span class="home-stat__label">Kayıt (toplam)</span>' +
       '<span class="home-stat__value">' +
       totalRecords +
@@ -1137,18 +1019,7 @@
       refreshed +
       "</span></li>" +
       "</ul></div>" +
-      opsBar +
-      resBar;
-    var openRes = el.querySelector(".js-home-open-reservations");
-    if (openRes) {
-      openRes.addEventListener("click", async function () {
-        openTab("reservations");
-        reservationSubtab = "overview";
-        updateReservationNavStatus();
-        await loadBucket("reservation", "list-reservations");
-        scheduleAutoRefresh();
-      });
-    }
+      opsBar;
     function wireOpsOpen(sel, tab, bucket, listElId) {
       var b = el.querySelector(sel);
       if (!b) return;
@@ -1182,21 +1053,6 @@
         return String(a.submitted_at || "").localeCompare(String(b.submitted_at || ""));
       });
     if (!open.length) return "Bekleyen kayıt yok";
-    var raw = String(open[0].submitted_at || "");
-    if (!raw) return "Tarih yok";
-    return typeof ui.formatDateTimeDisplayTr === "function" ? ui.formatDateTimeDisplayTr(raw) : raw;
-  }
-
-  function oldestAwaitingReservationText(rows) {
-    var open = rows
-      .filter(function (r) {
-        var st = resNormStatus(r);
-        return st === "new" || st === "pending" || st === "in_progress";
-      })
-      .sort(function (a, b) {
-        return String(a.submitted_at || "").localeCompare(String(b.submitted_at || ""));
-      });
-    if (!open.length) return "Beklemede kayıt yok";
     var raw = String(open[0].submitted_at || "");
     if (!raw) return "Tarih yok";
     return typeof ui.formatDateTimeDisplayTr === "function" ? ui.formatDateTimeDisplayTr(raw) : raw;
@@ -1246,13 +1102,11 @@
     var comRows = data.complaint || [];
     var faultRows = data.fault || [];
     var notifRows = data.guest_notification || [];
-    var resRows = data.reservation || [];
 
     var req = countPending(reqRows);
     var com = countPending(comRows);
     var fault = countPending(faultRows);
     var notif = countPending(notifRows);
-    var resAwaitCard = countAwaitingReservationApproval(resRows);
     var reqN = countByStatus(reqRows, "new");
     var reqP = countByStatus(reqRows, "pending");
     var reqI = countByStatus(reqRows, "in_progress");
@@ -1265,12 +1119,6 @@
     var notifN = countByStatus(notifRows, "new");
     var notifP = countByStatus(notifRows, "pending");
     var notifI = countByStatus(notifRows, "in_progress");
-    var resN = countResByNorm(resRows, "new");
-    var resP = countResByNorm(resRows, "pending");
-    var resI = countResByNorm(resRows, "in_progress");
-    var resD = countResByNorm(resRows, "done");
-    var resRj = countResByNorm(resRows, "rejected");
-    var resCx = countResByNorm(resRows, "cancelled");
 
     var html =
       '<div class="alert-grid">' +
@@ -1327,28 +1175,6 @@
         oldestOpen: oldestOpenText(notifRows),
         tab: "guest_notifications",
       }) +
-      renderReminderCard({
-        title: "Rezervasyonlar",
-        openKpiLabel: "Beklemede",
-        openCount: resAwaitCard,
-        newCount: resN,
-        pendingCount: resP,
-        inProgressCount: resI,
-        inProgressLabel: "Eski onay süreci (in_progress)",
-        statusMetaLine:
-          "Yeni: " +
-          resN +
-          " · Kuyruk: " +
-          resP +
-          (resI > 0 ? " · " + resI + " eski süreç" : "") +
-          " · Onaylandı: " +
-          resD +
-          " · Onaylanmadı: " +
-          resRj +
-          (resCx > 0 ? " · İptal (eski): " + resCx : ""),
-        oldestOpen: oldestAwaitingReservationText(resRows),
-        tab: "reservations",
-      }) +
       "</div>";
     el.innerHTML = html;
     el.querySelectorAll(".alert-openbtn[data-go-tab]").forEach(function (btn) {
@@ -1361,11 +1187,6 @@
         if (tab === "guest_notifications") {
           guestNotifSubtab = "notifications";
           await loadGuestNotifVisible();
-        }
-        if (tab === "reservations") {
-          reservationSubtab = "overview";
-          updateReservationNavStatus();
-          await loadBucket("reservation", "list-reservations");
         }
         scheduleAutoRefresh();
       });
@@ -1483,26 +1304,11 @@
     });
   }
 
-  document.addEventListener("viona:reservationSubtab", function (ev) {
-    var key = ev && ev.detail && ev.detail.key;
-    if (key == null || key === undefined) return;
-    reservationSubtab = String(key);
-    updateReservationNavStatus();
-    openTab("reservations");
-    void loadBucket("reservation", "list-reservations").then(function () {
-      scheduleAutoRefresh();
-    });
-  });
-
   function wireTabs() {
     document.querySelectorAll(".admin-nav button").forEach(function (btn) {
       btn.addEventListener("click", async function () {
         var tab = btn.getAttribute("data-tab");
-        var sub = btn.getAttribute("data-res-subtab");
         var previousActive = activeAdminTab;
-        if (tab === "reservations") {
-          reservationSubtab = sub != null && sub !== "" ? sub : "overview";
-        }
         openTab(tab);
         if (activeAdminTab === null) {
           if (previousActive !== null) {
@@ -1510,7 +1316,6 @@
               await loadDashboard();
             } catch (_e) {}
           }
-          updateReservationNavStatus();
           scheduleAutoRefresh();
           return;
         }
@@ -1521,11 +1326,9 @@
           guestNotifSubtab = "notifications";
           await loadGuestNotifVisible();
         }
-        if (tab === "reservations") await loadBucket("reservation", "list-reservations");
         if (tab === "evaluations") await loadEvaluations();
         if (tab === "pdf-report") setPdfCustomRangeUi(Boolean(document.getElementById("pdf-custom-range") && document.getElementById("pdf-custom-range").checked));
         if (tab === "logs") await loadLogs();
-        updateReservationNavStatus();
         scheduleAutoRefresh();
       });
     });
@@ -1578,7 +1381,6 @@
       wireVisibilityRefresh();
     }
     openTab(null);
-    updateReservationNavStatus();
     await loadDashboard();
     scheduleAutoRefresh();
   }

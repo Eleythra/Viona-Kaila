@@ -1,40 +1,12 @@
 /**
- * Misafir talepleri — kategori ve demo seçenekleri (ileride API ile değiştirilebilir).
- * Rezervasyon saatleri: tüm restoranlar için 15 dakika adımları.
+ * Misafir talepleri — kategori seçenekleri (API ile uyumlu).
+ * İstekler: düz seçim (Tür/alt kategori yok); bölüm başlıkları requestSections ile.
  */
 (function () {
   "use strict";
 
   function pad(n) {
     return n < 10 ? "0" + n : String(n);
-  }
-
-  function toMinutes(hhmm) {
-    var p = String(hhmm).split(":");
-    return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
-  }
-
-  function fromMinutes(m) {
-    var h = Math.floor(m / 60);
-    var mi = m % 60;
-    return pad(h) + ":" + pad(mi);
-  }
-
-  /**
-   * Kapalı aralık [start, end], 15 dakika adımları (örn. 18:45–20:30).
-   * @param {string} startHHMM
-   * @param {string} endHHMM
-   * @returns {string[]}
-   */
-  function slots15(startHHMM, endHHMM) {
-    var a = toMinutes(startHHMM);
-    var b = toMinutes(endHHMM);
-    var out = [];
-    var t;
-    for (t = a; t <= b; t += 15) {
-      out.push(fromMinutes(t));
-    }
-    return out;
   }
 
   /** Takvim: geçmiş günler kapalı — yalnızca bugün ve sonrası (yerel tarih). */
@@ -44,17 +16,8 @@
     return today.getFullYear() + "-" + pad(today.getMonth() + 1) + "-" + pad(today.getDate());
   };
 
-  /** La Terrace A La Carte: 18:30 – 20:30 */
-  var LA_TERRACE = slots15("18:30", "20:30");
-  /** Sinton BBQ: 13:00 – 21:15 (Pazartesi kapalı) */
-  var SINTON = slots15("13:00", "21:15");
-
-  /** Spa: La Serenite 09:00–19:00 arası 15 dk (ücretli hizmet randevusu) */
-  var SPA_SLOTS = slots15("09:00", "19:00");
-
   window.REQUESTS_CONFIG = {
     floorCalendarDate: "2026-03-01",
-    /** Misafir bildirimleri — hub alt sekmesi (gruplu radyo kategorileri). */
     guestNotificationGroups: [
       {
         sectionKey: "reqNotifGroupDiet",
@@ -87,16 +50,68 @@
         ],
       },
     ],
+    /**
+     * İstek formu: gruplu düz seçim (sunucu category = id).
+     * Sohbet asistanı sırası: `server/src/assistant/services/form_schema.py` → REQUEST_CATEGORY_CHAT_SECTIONS ile senkron tutun.
+     */
+    requestSections: [
+      {
+        sectionKey: "reqReqSecTowels",
+        items: [
+          { id: "bedding_pillow", key: "reqReqBeddingPillow" },
+          { id: "room_towel", key: "reqReqRoomTowelExtra" },
+          { id: "bathrobe", key: "reqReqBathrobe" },
+          { id: "slippers", key: "reqReqSlippers" },
+        ],
+      },
+      {
+        sectionKey: "reqReqSecBedding",
+        items: [
+          { id: "bedding_sheet", key: "reqReqBeddingSheet" },
+          { id: "bedding_blanket", key: "reqReqBeddingBlanket" },
+        ],
+      },
+      {
+        sectionKey: "reqReqSecRoomService",
+        items: [{ id: "room_cleaning", key: "reqReqRoomCleaningOnly" }],
+      },
+      {
+        sectionKey: "reqReqSecMinibarDrinks",
+        items: [
+          { id: "bottled_water", key: "reqReqBottledWater" },
+          { id: "tea_coffee", key: "reqReqTeaCoffee" },
+        ],
+      },
+      {
+        sectionKey: "reqReqSecBathAmenities",
+        items: [
+          { id: "toilet_paper", key: "reqReqToiletPaper" },
+          { id: "toiletries", key: "reqReqToiletries" },
+        ],
+      },
+      {
+        sectionKey: "reqReqSecComfort",
+        items: [
+          { id: "climate_request", key: "reqReqClimate" },
+          { id: "room_refresh", key: "reqReqRoomRefresh" },
+        ],
+      },
+      {
+        sectionKey: "reqReqSecEquipment",
+        items: [
+          { id: "hanger", key: "reqReqHanger" },
+          { id: "kettle", key: "reqReqKettle" },
+          { id: "room_safe", key: "reqReqRoomSafe" },
+          { id: "baby_bed", key: "reqReqBabyBedOnly" },
+        ],
+      },
+      {
+        sectionKey: "reqReqSecOther",
+        items: [{ id: "other", key: "reqCatOther" }],
+      },
+    ],
     categories: {
-      request: [
-        { id: "towel", key: "reqCatReqTowel" },
-        { id: "bedding", key: "reqCatReqBedding" },
-        { id: "room_cleaning", key: "reqCatReqCleaning" },
-        { id: "minibar", key: "reqCatReqMinibar" },
-        { id: "baby_equipment", key: "reqCatReqBabyEquipment" },
-        { id: "room_equipment", key: "reqCatReqRoomEquipment" },
-        { id: "other", key: "reqCatOther" },
-      ],
+      request: [],
       complaint: [
         { id: "room_cleaning", key: "reqCatComplaintCleaning" },
         { id: "noise", key: "reqCatComplaintNoise" },
@@ -108,6 +123,7 @@
         { id: "general_areas", key: "reqCatComplaintGeneralAreas" },
         { id: "hygiene", key: "reqCatComplaintHygiene" },
         { id: "internet_tv", key: "reqCatComplaintInternetTv" },
+        { id: "lost_property", key: "reqCatComplaintLostProperty" },
         { id: "other", key: "reqCatOther" },
       ],
       fault: [
@@ -122,34 +138,6 @@
         { id: "other", key: "reqCatOther" },
       ],
     },
-    restaurants: [
-      {
-        id: "laTerrace",
-        code: "la_terrace",
-        key: "reqRestLaTerrace",
-        slotProfile: "laTerrace",
-        infoKey: "reqResInfoLaTerrace",
-        closedWeekdays: [],
-      },
-      {
-        id: "sinton",
-        code: "sinton_bbq",
-        key: "reqRestSinton",
-        slotProfile: "sinton",
-        infoKey: "reqResInfoSinton",
-        closedWeekdays: [1],
-      },
-    ],
-    spaServices: [
-      { id: "massage", code: "massage", key: "reqSpaMassage" },
-      { id: "peeling", code: "peeling", key: "reqSpaPeeling" },
-      { id: "skin_care", code: "skin_care", key: "reqSpaSkin" },
-      { id: "other_care", code: "other_care", key: "reqSpaOtherCare" },
-    ],
-    spaServiceCategories: [],
-    laTerraceSlots: LA_TERRACE,
-    sintonSlots: SINTON,
-    spaTimeSlots: SPA_SLOTS,
     nationalities: [
       { value: "TR", key: "reqNatTR" },
       { value: "DE", key: "reqNatDE" },
@@ -163,56 +151,14 @@
     ],
   };
 
-  /**
-   * @param {string} restaurantId
-   * @returns {string[]}
-   */
-  window.getTimeSlotsForRestaurant = function (restaurantId) {
+  (function flattenRequestCats() {
     var cfg = window.REQUESTS_CONFIG;
-    if (!restaurantId) return [];
-    var r = cfg.restaurants.filter(function (x) {
-      return x.id === restaurantId;
-    })[0];
-    if (!r) return [];
-    switch (r.slotProfile) {
-      case "laTerrace":
-        return cfg.laTerraceSlots.slice();
-      case "sinton":
-        return cfg.sintonSlots.slice();
-      default:
-        return [];
-    }
-  };
-
-  window.generateTimeSlots15 = slots15;
-
-  (function mergeSpaWellnessCatalog() {
-    var C = window.VionaSpaWellnessCatalog;
-    if (!C || typeof C.getFlatServices !== "function") return;
-    var flat = C.getFlatServices();
-    if (!flat || !flat.length) return;
-    window.REQUESTS_CONFIG.spaServices = flat;
-    var cats = [];
-    var pkgs = C.programPackages;
-    var ptitle = C.programCategoryTitle;
-    if (Array.isArray(pkgs) && pkgs.length && ptitle) {
-      cats.push({
-        title: ptitle,
-        items: pkgs.map(function (p) {
-          return {
-            id: p.id,
-            code: p.code,
-            label: p.label,
-            price: p.price,
-            durationLine: p.durationLine,
-          };
-        }),
+    var out = [];
+    (cfg.requestSections || []).forEach(function (sec) {
+      (sec.items || []).forEach(function (it) {
+        out.push(it);
       });
-    }
-    (C.categories || []).forEach(function (c) {
-      cats.push(c);
     });
-    window.REQUESTS_CONFIG.spaServiceCategories = cats;
+    cfg.categories.request = out;
   })();
 })();
-

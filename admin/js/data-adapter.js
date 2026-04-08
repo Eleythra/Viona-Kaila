@@ -154,6 +154,31 @@
         body: JSON.stringify(payload || {}),
       });
     },
+    /** Operasyon WhatsApp grubuna kaydı yeniden ilet (istek / şikâyet / arıza / misafir bildirimi / geç çıkış). */
+    resendWhatsappOperational: function (type, id) {
+      var url =
+        adminRequestsCollectionUrl() +
+        "/" +
+        encodeURIComponent(type) +
+        "/" +
+        encodeURIComponent(id) +
+        "/whatsapp-resend";
+      return jfetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+    },
+    /** Bot durumu + yapılandırılmış grup doğrulama (yalnızca okuma). */
+    getWhatsappAdminDiagnostics: function () {
+      var base = getApiBase();
+      return Promise.all([
+        jfetch(base + "/admin/whatsapp-groups/state").then(function (d) {
+          return d.state || {};
+        }),
+        jfetch(base + "/admin/whatsapp-groups/verify").then(function (d) {
+          return d;
+        }),
+      ]).then(function (pair) {
+        return { state: pair[0], verify: pair[1] };
+      });
+    },
     updateStatus: function (type, id, status) {
       var endpoint =
         adminRequestsCollectionUrl() +

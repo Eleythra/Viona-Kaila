@@ -24,11 +24,31 @@
         ? window.vionaGetApiBase() + "/guest-requests"
         : cfg.guestRequestsEndpoint || "/api/guest-requests";
 
-    var response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload || {}),
-    });
+    var ctrl = new AbortController();
+    var timeoutMs = 60000;
+    var tid = setTimeout(function () {
+      ctrl.abort();
+    }, timeoutMs);
+    var response;
+    try {
+      response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload || {}),
+        signal: ctrl.signal,
+      });
+    } catch (e) {
+      var aborted =
+        e &&
+        (e.name === "AbortError" ||
+          String(e.message || "").toLowerCase().indexOf("abort") >= 0);
+      if (aborted) {
+        throw new Error("request_timeout");
+      }
+      throw e;
+    } finally {
+      clearTimeout(tid);
+    }
     var text = await response.text();
     var data = null;
     try {

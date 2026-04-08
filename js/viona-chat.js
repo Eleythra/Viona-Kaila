@@ -101,12 +101,16 @@
     '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 20a2 2 0 01-4 0M6 8a6 6 0 1112 0c0 5 2 5 2 5H4s2 0 2-5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var SVG_CHAT_CTA_COMPASS =
     '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.75"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/><path d="m14.5 9.5-3 5-1.5-1.5 3-5 1.5 1.5z" fill="currentColor" opacity="0.9"/></svg>';
+  var SVG_CHAT_CTA_PIN =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21s-6-5.2-6-10a6 6 0 1112 0c0 4.8-6 10-6 10z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="11" r="2.5" stroke="currentColor" stroke-width="1.75"/></svg>';
   var SVG_CHAT_CTA_COMPLAINT =
     '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 9v4M12 17h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var SVG_CHAT_CTA_SPA =
     '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3c-2 3-6 4-6 9a6 6 0 0012 0c0-5-4-6-6-9z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 18v3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>';
   var SVG_CHAT_CTA_UTENSILS =
     '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 3v9a3 3 0 006 0V3M8 3H6a2 2 0 00-2 2v7a4 4 0 008 0V5a2 2 0 00-2-2h-2M14 3v17" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var SVG_CHAT_CTA_TRANSFER =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 17h2.5l1-3h8l1 3H19" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/><path d="M6.5 14L5 7h4l1.5 4h3L15 7h4l-1.5 7M8 17v2M16 17v2" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/><circle cx="8.5" cy="17.5" r="1.8" stroke="currentColor" stroke-width="1.5"/><circle cx="15.5" cy="17.5" r="1.8" stroke="currentColor" stroke-width="1.5"/></svg>';
 
   function appendChatCtaButton(optWrap, opt, ctaClass, svgInner) {
     var btn = document.createElement("button");
@@ -142,6 +146,14 @@
       }
       if (opt.value === "__open_restaurants_bars_module__") {
         if (typeof window.vionaChatOpenRestaurantsBars === "function") window.vionaChatOpenRestaurantsBars();
+        return;
+      }
+      if (opt.value === "__open_transfer_module__") {
+        if (typeof window.vionaChatOpenTransfer === "function") window.vionaChatOpenTransfer();
+        return;
+      }
+      if (opt.value === "__open_where_module__") {
+        if (typeof window.vionaChatOpenWhere === "function") window.vionaChatOpenWhere();
         return;
       }
       if (opt.value === "__open_complaint_form__") {
@@ -217,7 +229,7 @@
         optWrap.className = "viona-chat__options";
         m.options.forEach(function (opt) {
           if (opt.value === "__open_reservation_form__") {
-            appendChatCtaButton(optWrap, opt, "viona-chat__option-btn--reservation", SVG_CHAT_CTA_CAL);
+            appendChatCtaButton(optWrap, opt, "viona-chat__option-btn--cta-restaurant", SVG_CHAT_CTA_UTENSILS);
             return;
           }
           if (opt.value === "__open_guest_notifications_form__") {
@@ -234,6 +246,14 @@
           }
           if (opt.value === "__open_restaurants_bars_module__") {
             appendChatCtaButton(optWrap, opt, "viona-chat__option-btn--cta-restaurant", SVG_CHAT_CTA_UTENSILS);
+            return;
+          }
+          if (opt.value === "__open_transfer_module__") {
+            appendChatCtaButton(optWrap, opt, "viona-chat__option-btn--cta-transfer", SVG_CHAT_CTA_TRANSFER);
+            return;
+          }
+          if (opt.value === "__open_where_module__") {
+            appendChatCtaButton(optWrap, opt, "viona-chat__option-btn--cta-discover", SVG_CHAT_CTA_PIN);
             return;
           }
           if (opt.value === "__open_complaint_form__") {
@@ -451,11 +471,11 @@
     var meta = data && data.meta ? data.meta : {};
     var action = meta && meta.action ? meta.action : null;
     if (action && action.kind === "open_reservation_form") {
-      // Tek buton: Rezervasyonlar modülünü aç.
+      /* Sunucu niyeti «rezervasyon» olsa da uygulamada form yok; Restaurant & barlar modülüne yönlendir (çok dilli etiket). */
       options = [
         {
-          value: "__open_reservation_form__",
-          label: t("chatOpenReservation") || "Rezervasyon formunu aç",
+          value: "__open_restaurants_bars_module__",
+          label: t("chatOpenRestaurantsBars") || "Restaurant & barlar",
         },
       ];
     } else if (action && action.kind === "open_guest_notifications_form") {
@@ -484,6 +504,20 @@
         {
           value: "__open_restaurants_bars_module__",
           label: t("chatOpenRestaurantsBars") || "Restaurant & barlar",
+        },
+      ];
+    } else if (action && action.kind === "open_transfer_module") {
+      options = [
+        {
+          value: "__open_transfer_module__",
+          label: t("chatOpenTransfer") || "Transfer",
+        },
+      ];
+    } else if (action && action.kind === "open_where_module") {
+      options = [
+        {
+          value: "__open_where_module__",
+          label: t("chatOpenWhere") || "Konum rehberini aç",
         },
       ];
     } else if (action && action.kind === "open_complaint_form") {

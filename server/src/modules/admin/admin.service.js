@@ -8,6 +8,7 @@ import { fetchPdfInsights } from "./reporting/pdf-insight-service.js";
 import path from "path";
 import { existsSync, readFileSync } from "fs";
 import { fileURLToPath } from "url";
+import { sendOperationalWhatsappNotification } from "../../services/whatsapp-operational-notification.service.js";
 
 function toPositiveInt(v, fallback) {
   const n = Number(v);
@@ -423,6 +424,37 @@ export async function deleteAdminItem(type, id) {
   const { error } = await getSupabase().from(table).delete().eq("id", idStr);
   if (error) throw error;
   return { id };
+}
+
+export async function resendWhatsappForAdminItem(type, id) {
+  const idStr = String(id ?? "").trim();
+  if (!idStr) throw new Error("id is required");
+  const table = tableForType(type);
+  if (table === "guest_reservations") throw new Error("reservation_not_supported_for_whatsapp");
+  const { data, error } = await getSupabase().from(table).select("*").eq("id", idStr).maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error("record_not_found");
+  const payload = data?.raw_payload && typeof data.raw_payload === "object" ? data.raw_payload : null;
+  if (!payload) throw new Error("raw_payload_missing");
+  const result = await sendOperationalWhatsappNotification(payload, "unknown", {
+    recordId: idStr,
+    resend: true,
+  });
+  const mergedPayload = {
+    ...payload,
+    whatsapp_delivery: {
+      channel: String(result?.channel || "unknown"),
+      ok: Boolean(result?.ok),
+      skipped: Boolean(result?.skipped),
+      reason: String(result?.reason || ""),
+      groupKey: String(result?.groupKey || ""),
+      groupId: String(result?.groupId || ""),
+      resentAt: new Date().toISOString(),
+      manual: true,
+    },
+  };
+  await getSupabase().from(table).update({ raw_payload: mergedPayload }).eq("id", idStr);
+  return { id: idStr, result };
 }
 
 function groupTop(items, keyName, top = 10) {
@@ -1066,7 +1098,19 @@ function createDummyDashboardReport() {
       vionaScore: 3.98,
       vionaScoreSource: "submission_mean",
       submissionCount: 120,
-      categories: { food: 4.1, comfort: 4.2, cleanliness: 4.4, staff: 4.0, spa: 3.8 },
+      categories: {
+        generalEval: 4.35,
+        food_main_restaurant: 4.2,
+        food_la_terracca: 4.4,
+        food_snack_dolphin_gusto: 4.1,
+        food_bars: 4.0,
+        comfort: 4.25,
+        staff: 4.3,
+        pool_area: 4.15,
+        beach_area: 4.05,
+        spaWellness: 4.0,
+        guestExperience: 4.2,
+      },
     },
     unansweredQuestions: {
       fallbackCount: 55,

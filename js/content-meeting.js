@@ -26,16 +26,16 @@
 
   var VENUE_LINES = [
     {
-      tr: "Astra Ball Room — Toplantı salonu · Organizasyon alanı — Ücretli — Rezervasyonlu",
-      en: "Astra Ball Room — Meeting room · Event space — Charged — Reservation required",
-      de: "Astra Ball Room — Tagungsraum · Veranstaltungsfläche — kostenpflichtig — nach Reservierung",
-      ru: "Astra Ball Room — зал для встреч · площадка для мероприятий — платно — по брони",
+      tr: "Astra Ball Room — Toplantı salonu · Organizasyon alanı — Ücretli — Misafir İlişkileri ile önceden planlanır",
+      en: "Astra Ball Room — Meeting room · Event space — Charged — Arrange in advance with Guest Relations",
+      de: "Astra Ball Room — Tagungsraum · Veranstaltungsfläche — kostenpflichtig — nach Absprache mit Guest Relations",
+      ru: "Astra Ball Room — зал для встреч · площадка — платно — по предварительной договорённости через Guest Relations",
     },
     {
-      tr: "Function Meeting Room — Toplantı salonu · Organizasyon alanı — Ücretli — Rezervasyonlu",
-      en: "Function Meeting Room — Meeting room · Event space — Charged — Reservation required",
-      de: "Function Meeting Room — Tagungsraum · Veranstaltungsfläche — kostenpflichtig — nach Reservierung",
-      ru: "Function Meeting Room — переговорная · площадка — платно — по брони",
+      tr: "Function Meeting Room — Toplantı salonu · Organizasyon alanı — Ücretli — Misafir İlişkileri ile önceden planlanır",
+      en: "Function Meeting Room — Meeting room · Event space — Charged — Arrange in advance with Guest Relations",
+      de: "Function Meeting Room — Tagungsraum · Veranstaltungsfläche — kostenpflichtig — nach Absprache mit Guest Relations",
+      ru: "Function Meeting Room — переговорная · площадка — платно — по предварительной договорённости через Guest Relations",
     },
     {
       tr: "Business Center — İş merkezi · Hizmet alanı — Ücretli",

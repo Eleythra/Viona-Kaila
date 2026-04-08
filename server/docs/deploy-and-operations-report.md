@@ -53,6 +53,23 @@ Ayrıntılı şablon: `server/.env.example`.
 `GET https://<node-host>/api/health`
 
 - `ok`, `hasSupabase`, `telegramTeknikConfigured` / `telegramHkConfigured` (token sızmaz)
+- Grup bildirimi kullanıyorsanız: `whatsappOperational.mode`, `whatsappGroupBot.ready` (bağlı cihaz hazır mı), `whatsappGroupBot.lastError` (boş olmalı)
+
+---
+
+## 4a. WhatsApp grup botu (Viona Ops) — sürekli çalışma
+
+**Telefondaki “son görülme” ile sunucunun göndermeye hazır olması aynı değil.** “Bağlı cihazlar” listesinde **Viona Ops** için görünen saat, WhatsApp’ın arayüzünde cihaz aktivitesini gösterir; headless oturum bazen uzun süre aynı saatte kalırken bile API tarafında mesaj gönderebilir. Asıl kritik olan:
+
+| Gereksinim | Açıklama |
+|------------|----------|
+| **Node API sürekli çalışsın** | İstek/arıza geldiğinde süreç ayakta olmalı. Yerelde: terminal kapanınca süreç ölür; üretimde **Render “always on”**, **systemd**, **PM2** vb. ile `node src/index.js` (veya `node server/src/index.js`) yeniden başlatma politikası kullanın. |
+| **`whatsappGroupBot.ready: true`** | `/api/health` içinde düzenli kontrol edin; `ready: false` veya `lastError` doluysa loglara bakın (`[whatsapp_group_bot]`). |
+| **Oturum kalıcılığı** | `WHATSAPP_GROUP_SESSION_DIR` (ör. `runtime/whatsapp-session`) aynı makinede kalıcı diskte olmalı; deploy’da bu klasörü sıfırlamayın, yoksa yeniden QR gerekir. |
+| **Telefon + internet** | Bağlı cihaz modelinde telefonun ara sıra internete bağlı olması WhatsApp tarafından beklenir; sunucu kapalıyken gelen olaylar işlenmez. |
+| **Çakışan süreç yok** | Aynı `user-data-dir` ile iki Chrome/Node çalışmasın; restart öncesi port **3001** ve gerekiyorsa Puppeteer süreçleri temizlenmeli (operasyon notlarındaki `pkill` / tek instance kuralı). |
+
+**Özet:** Her dakika gruba mesaj gelebilmesi için **API sürecinin 7/24 ayakta** ve **grup botunun hazır** olması gerekir; bunu izlemek için health endpoint + log uyarıları (ör. `disconnected`, `auth_failure`) yeterlidir. “Son görülme”yi tek başına SLA göstergesi saymayın.
 
 ---
 

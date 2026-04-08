@@ -1,7 +1,8 @@
 -- =============================================================================
 -- VIONA / KAILA — Supabase SQL Editor’a TEK SEFERDE yapıştırın
 -- Sıra: uzantı → chat_observations → CHECK’ler → indeksler → chat_logs backfill
---       → özet view’lar → şikâyet/arıza kolonları → 8b kova status CHECK → guest_reservations revizyonu
+--       → özet view’lar → şikâyet/arıza kolonları → 8a istek category CHECK → 8b kova status CHECK
+--       → guest_reservations revizyonu
 --       → rezervasyon status (rejected = admin “Onaylanmadı”) → guest_notifications → guest_late_checkouts (geç çıkış)
 --
 -- NOT: CHECK eklenirken "violates check constraint" alırsanız, aşağıdaki
@@ -315,6 +316,75 @@ alter table if exists public.guest_faults
 
 alter table if exists public.guest_faults
   add column if not exists details jsonb not null default '{}'::jsonb;
+
+-- -----------------------------------------------------------------------------
+-- 8a) guest_requests — category CHECK (guest-requests.service.js REQUEST_CATEGORIES)
+--     Eski SQL’deki dar liste (yalnızca towel, bedding, …) room_towel / bedding_pillow vb.
+--     gönderiminde "violates check constraint guest_requests_category_chk" üretir.
+--     Her yapıştırmada drop+add ile güncellenir (idempotent).
+--     CHECK başarısız olursa: önce tabloda izin verilmeyen category stringleri düzeltin (aşağı OPSİYONEL).
+-- -----------------------------------------------------------------------------
+alter table if exists public.guest_requests drop constraint if exists guest_requests_category_chk;
+
+alter table if exists public.guest_requests
+  add constraint guest_requests_category_chk
+  check (
+    category is null
+    or category in (
+      'towel_extra',
+      'room_towel',
+      'bathrobe',
+      'bedding_sheet',
+      'bedding_pillow',
+      'bedding_blanket',
+      'room_cleaning',
+      'turndown',
+      'slippers',
+      'minibar_refill',
+      'bottled_water',
+      'tea_coffee',
+      'toilet_paper',
+      'toiletries',
+      'climate_request',
+      'room_refresh',
+      'hanger',
+      'kettle',
+      'room_safe',
+      'baby_bed',
+      'other',
+      'towel',
+      'bedding',
+      'minibar',
+      'baby_equipment',
+      'room_equipment',
+      'extraTowels',
+      'extra_towels',
+      'towels',
+      'linen',
+      'roomCleaning',
+      'room_cleaning_request',
+      'minibarRefill',
+      'minibar_request',
+      'babyNeeds',
+      'baby_equipment_request',
+      'roomSupplies',
+      'room_equipment_request',
+      'otherRequest'
+    )
+  );
+
+-- OPSİYONEL: 8a "violates check constraint" — guest_requests.category tabloda izin listesi dışındaysa:
+-- update public.guest_requests set category = 'other'
+-- where category is not null
+--   and category not in (
+--     'towel_extra','room_towel','bathrobe','bedding_sheet','bedding_pillow','bedding_blanket',
+--     'room_cleaning','turndown','slippers','minibar_refill','bottled_water','tea_coffee',
+--     'toilet_paper','toiletries','climate_request','room_refresh','hanger','kettle','room_safe',
+--     'baby_bed','other','towel','bedding','minibar','baby_equipment','room_equipment',
+--     'extraTowels','extra_towels','towels','linen','roomCleaning','room_cleaning_request',
+--     'minibarRefill','minibar_request','babyNeeds','baby_equipment_request','roomSupplies',
+--     'room_equipment_request','otherRequest'
+--   );
 
 -- -----------------------------------------------------------------------------
 -- 8b) İstek / şikâyet / arıza — status CHECK içinde 'rejected' (Yapılamadı / Dikkate alınmadı)
@@ -666,8 +736,8 @@ alter table if exists public.guest_late_checkouts
 alter table if exists public.guest_late_checkouts enable row level security;
 
 -- =============================================================================
--- Bitti. chat_observations, view’lar; istek/şikâyet/arıza + 8b CHECK; guest_reservations;
--- guest_notifications (bölüm 10); guest_late_checkouts / geç çıkış (bölüm 11).
+-- Bitti. chat_observations, view’lar; istek/şikâyet/arıza kolonları + 8a category + 8b status;
+-- guest_reservations; guest_notifications (bölüm 10); guest_late_checkouts (bölüm 11).
 --
 -- Node API (guest-requests.service.js) kolon eşlemesi — şema sapması insert hatası verir:
 --   guest_notifications: guest_name, room_number, nationality, description, categories (jsonb),

@@ -14,7 +14,10 @@ import {
   listSurveySubmissions,
   updateChatObservationReview,
   updateAdminItemStatus,
+  resendWhatsappForAdminItem,
 } from "./admin.service.js";
+import { discoverWhatsappGroups, verifyConfiguredWhatsappGroups } from "../../services/whatsapp-group-discovery.service.js";
+import { getWhatsappGroupBotState } from "../../services/whatsapp-group-bot.service.js";
 
 const router = Router();
 const ADMIN_API_TOKEN = String(process.env.ADMIN_API_TOKEN || "").trim();
@@ -107,6 +110,42 @@ router.delete("/requests/:type/:id", async (req, res) => {
     return res.status(200).json({ ok: true, ...data });
   } catch (error) {
     return adminErr(res, error, "admin_item_delete_failed");
+  }
+});
+
+router.post("/requests/:type/:id/whatsapp-resend", async (req, res) => {
+  try {
+    const data = await resendWhatsappForAdminItem(req.params.type, req.params.id);
+    return res.status(200).json({ ok: true, ...data });
+  } catch (error) {
+    return adminErr(res, error, "admin_whatsapp_resend_failed");
+  }
+});
+
+router.get("/whatsapp-groups/state", async (_req, res) => {
+  try {
+    const state = getWhatsappGroupBotState();
+    return res.status(200).json({ ok: true, state });
+  } catch (error) {
+    return adminErr(res, error, "admin_whatsapp_group_state_failed");
+  }
+});
+
+router.get("/whatsapp-groups/discovery", async (_req, res) => {
+  try {
+    const groups = await discoverWhatsappGroups();
+    return res.status(200).json({ ok: true, groups });
+  } catch (error) {
+    return adminErr(res, error, "admin_whatsapp_group_discovery_failed");
+  }
+});
+
+router.get("/whatsapp-groups/verify", async (_req, res) => {
+  try {
+    const report = await verifyConfiguredWhatsappGroups();
+    return res.status(200).json({ ok: true, ...report });
+  } catch (error) {
+    return adminErr(res, error, "admin_whatsapp_group_verify_failed");
   }
 });
 

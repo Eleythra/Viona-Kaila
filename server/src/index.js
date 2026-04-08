@@ -1,8 +1,9 @@
+/** Dotenv + process.env önce yüklensin (diğer modüllerden önce). */
+import { getEnv, getEnvBootstrapDiagnostics } from "./config/env.js";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-import { getEnv } from "./config/env.js";
 import guestRequestsRouter from "./modules/guest-requests/guest-requests.router.js";
 import surveysRouter from "./modules/surveys/surveys.router.js";
 import adminRouter from "./modules/admin/admin.router.js";
@@ -14,6 +15,11 @@ import {
   getWhatsappOperationalHealthSummary,
   resolveWhatsappAccessToken,
 } from "./services/whatsapp-operational-notification.service.js";
+import {
+  ensureWhatsappGroupBotStarted,
+  getWhatsappGroupBotState,
+  shutdownWhatsappGroupBot,
+} from "./services/whatsapp-group-bot.service.js";
 
 const env = getEnv();
 const app = express();
@@ -36,10 +42,14 @@ const UPSTREAM_UNAVAILABLE_BY_LANG = {
 };
 
 const RESERVATION_REDIRECT_BY_LANG = {
-  tr: "Rezervasyonunuzla ilgili işlemler için lütfen ana sayfadaki Rezervasyonlar bölümünden devam edin. Aşağıdaki butona dokunarak açabilirsiniz.",
-  en: "For your reservation requests, please continue via the Reservations section on the main screen. You can open it using the button below.",
-  de: "Für Ihre Reservierungsanfragen nutzen Sie bitte den Bereich „Reservierungen“ auf der Hauptseite. Sie können ihn über die Schaltfläche unten öffnen.",
-  ru: "Для запросов по бронированию, пожалуйста, перейдите в раздел «Резервации» на главном экране. Вы можете открыть его с помощью кнопки ниже.",
+  tr:
+    "Konaklama ve özel masa düzenlemeleri için resepsiyon veya Misafir İlişkileri ekibimiz size yardımcı olur. Restoran saatleri, menüler ve bar bilgileri için aşağıdaki kısayola uygulamadaki «Restaurant & barlar» bölümünü açabilirsiniz.",
+  en:
+    "For your stay or special table arrangements, our reception or Guest Relations team can help. For restaurant hours, menus and bar information, use the shortcut below to open «Restaurants & bars» in the app.",
+  de:
+    "Für Ihren Aufenthalt oder besondere Tischwünsche helfen Ihnen Rezeption oder Guest Relations. Für Restaurantzeiten, Speisekarten und Barinfos öffnen Sie über die Schaltfläche unten «Restaurants & Bars» in der App.",
+  ru:
+    "По проживанию и особым столам вам помогут ресепшен или Guest Relations. Часы работы, меню ресторанов и бары — откройте через кнопку ниже раздел «Рестораны и бары» в приложении.",
 };
 
 function isReservationLikeMessage(msg = "") {
@@ -63,8 +73,7 @@ function safeFallback(locale = "tr", reason = "safe", userMessage = "") {
   const lang = normalizeLocale(locale);
   const isReservationLike = isReservationLikeMessage(userMessage);
 
-  // Eğer upstream'de sorun var ama misafir net şekilde rezervasyon soruyorsa,
-  // doğrudan Rezervasyonlar modülüne yönlendiren güvenli yanıt döndür.
+  // Konaklama / masa / restoran bağlamında: resepsiyon + MI yönlendirmesi ve Restaurant & barlar kısayolu (open_reservation_form istemci tarafında bu modüle map edilir).
   if (isReservationLike) {
     const text = RESERVATION_REDIRECT_BY_LANG[lang] || RESERVATION_REDIRECT_BY_LANG.tr;
     return {
@@ -338,11 +347,33 @@ app.use(
 app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
-app.get("/api/health", (_req, res) => {
+/** Tarayıcıda http://localhost:PORT/ açıldığında boş / "Cannot GET /" yerine yönlendirme. */
+app.get("/", (_req, res) => {
+  res
+    .type("text/html; charset=utf-8")
+    .send(
+      `<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Viona API</title></head><body style="font-family:system-ui,sans-serif;padding:1.5rem;max-width:40rem;line-height:1.5">
+<h1>Viona Node API</h1>
+<p>Bu süreç yalnızca REST API sunar; misafir arayüzü ayrı (statik site / domain).</p>
+<p><strong>Test:</strong> <a href="/api/health?pretty=1">/api/health?pretty=1</a> (tarayıcıda okunaklı) — ham JSON: <a href="/api/health">/api/health</a></p>
+<p>WhatsApp grup listesi admin token ile (curl veya Postman): <code>GET /api/admin/whatsapp-groups/discovery</code></p>
+</body></html>`,
+    );
+});
+
+function escapeHtmlJsonPreview(s) {
+  return String(s)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+app.get("/api/health", (req, res) => {
   const hotelTz = String(process.env.HOTEL_TIMEZONE || process.env.HOTEL_TZ || "Europe/Istanbul").trim();
-  res.json({
+  const payload = {
     ok: true,
     service: "viona-node-api",
+    envBootstrap: getEnvBootstrapDiagnostics(),
     adminAuthConfigured: Boolean(env.adminApiToken),
     hasSupabase: env.hasSupabase,
     /** TTS/STT için Azure anahtarı yüklü mü (Render’da AZURE_SPEECH_KEY kontrolü). */
@@ -351,7 +382,20 @@ app.get("/api/health", (_req, res) => {
     hotelTimezone: hotelTz || "Europe/Istanbul",
     /** WhatsApp operasyon: token/phone id ve misafir ilişkileri alıcı adedi (numara listelenmez). */
     whatsappOperational: getWhatsappOperationalHealthSummary(),
-  });
+    whatsappGroupBot: getWhatsappGroupBotState(),
+  };
+  const pretty =
+    String(req.query?.pretty || "") === "1" ||
+    String(req.headers?.accept || "").toLowerCase().includes("text/html");
+  if (pretty) {
+    const body = escapeHtmlJsonPreview(JSON.stringify(payload, null, 2));
+    return res
+      .type("text/html; charset=utf-8")
+      .send(
+        `<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>/api/health</title></head><body style="font-family:ui-monospace,monospace;padding:1rem;font-size:14px;line-height:1.4;background:#fafafa"><pre style="white-space:pre-wrap;word-break:break-word;margin:0">${body}</pre></body></html>`,
+      );
+  }
+  res.json(payload);
 });
 
 app.use("/api/guest-requests", guestRequestsRouter);
@@ -568,9 +612,7 @@ app.post("/api/chat", async (req, res) => {
       });
       return res.status(200).json(fb);
     }
-    // Eğer asistan geçerli bir payload döndürdüyse ancak mesaj güvenli fallback metni ise
-    // ve misafir açıkça rezervasyon soruyorsa, yanıtı rezervasyon formuna yönlendiren
-    // butonlu forma dönüştür.
+    // Güvenli fallback metni + rezervasyon benzeri mesaj: metni ve CTA’yı Restaurant & barlar ile hizala.
     try {
       const userText = String(message || "");
       const isResLike = isReservationLikeMessage(userText);
@@ -643,6 +685,44 @@ app.use((err, _req, res, next) => {
   return next(err);
 });
 
-app.listen(env.port, () => {
+const httpServer = app.listen(env.port, () => {
   console.log(`Server running on http://localhost:${env.port}`);
 });
+httpServer.on("error", (err) => {
+  if (err && err.code === "EADDRINUSE") {
+    console.error(
+      `[sunucu] Port ${env.port} dolu — başka bir terminalde veya arka planda zaten bu API çalışıyor olabilir. ` +
+        `Eski süreci durdur (Ctrl+C) veya: ss -tlnp | grep ${env.port}  /  lsof -i :${env.port}`,
+    );
+    process.exit(1);
+    return;
+  }
+  console.error("[sunucu] listen hatası:", err?.message || err);
+  process.exit(1);
+});
+
+ensureWhatsappGroupBotStarted().catch((err) => {
+  console.error("whatsapp_group_bot_boot_failed error=%s", err?.message || err);
+});
+
+let shuttingDown = false;
+function gracefulShutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.info(
+    "[sunucu] %s — HTTP kapatılıyor, WhatsApp/Chromium serbest bırakılıyor (yeniden başlatmada kilit kalmasın)",
+    signal,
+  );
+  httpServer.close(() => {
+    void (async () => {
+      await shutdownWhatsappGroupBot();
+      process.exit(0);
+    })();
+  });
+  setTimeout(() => {
+    console.warn("[sunucu] graceful timeout — process.exit(1)");
+    process.exit(1);
+  }, 28_000).unref();
+}
+process.once("SIGINT", () => gracefulShutdown("SIGINT"));
+process.once("SIGTERM", () => gracefulShutdown("SIGTERM"));

@@ -61,10 +61,14 @@
 
   var SPA_PRICE_STRIP = {
     intro: {
-      tr: "Güncel spa fiyatları ve hizmet detayları PDF dosyasındadır. İndirmek için düğmeye dokunun.",
-      en: "Current spa prices and service details are in the PDF. Tap the button to download.",
-      de: "Aktuelle Spa-Preise und Leistungen finden Sie in der PDF. Zum Herunterladen tippen.",
-      ru: "Актуальные цены и услуги спа — в PDF. Нажмите кнопку для загрузки.",
+      tr:
+        "Ücretli bakım ve terapi seçeneklerinizi La Serenite Spa ekibimizle yüz yüze veya çalışma saatleri içinde doğrudan spa resepsiyonundan netleştirmenizi öneririz; güncel fiyat ve menü özeti PDF’dedir — indirmek için düğmeye dokunun.",
+      en:
+        "We invite you to refine your treatment choices in person with our La Serenite Spa team or at the spa reception during opening hours. Current prices and menus are in the PDF — tap the button to download.",
+      de:
+        "Wählen Sie Ihre Anwendungen gern direkt mit unserem La-Serenite-Team oder an der Spa-Rezeption in den Öffnungszeiten. Aktuelle Preise und Menüs stehen in der PDF — zum Herunterladen tippen.",
+      ru:
+        "Уточнить платные процедуры лучше лично с командой La Serenite Spa или на ресепшене спа в часы работы. Актуальные цены и меню — в PDF; нажмите кнопку, чтобы скачать.",
     },
     btnLabel: {
       tr: "Spa fiyat listesi (PDF)",
@@ -114,6 +118,16 @@
       ru:
         "Глубокий отдых или новая энергия — профессиональные терапевты и спокойная атмосфера.",
     },
+    {
+      tr:
+        "Ücretli masaj ve bakım seanslarınız için en doğru saat, süre ve ritüel önerisini La Serenite Spa’daki uzmanlarımızdan birebir alabilirsiniz; ekibimiz sizi spa resepsiyonunda ağırlamaktan memnuniyet duyar.",
+      en:
+        "For paid massages and treatments, our La Serenite specialists will guide you personally on timing, duration and ritual — you are always welcome at the spa reception during spa hours.",
+      de:
+        "Für kostenpflichtige Massagen und Anwendungen beraten Sie unsere La-Serenite-Spezialistinnen und -Spezialisten persönlich zu Zeit, Dauer und Ritual — die Spa-Rezeption heißt Sie in den Öffnungszeiten willkommen.",
+      ru:
+        "По платным массажам и уходу вас проконсультируют специалисты La Serenite Spa лично — по времени, длительности и ритуалу; ресепшен спа ждёт вас в часы работы.",
+    },
   ];
 
   var LA_SERENITE = {
@@ -127,13 +141,13 @@
     },
     note: {
       tr:
-        "09:00 – 19:00 arası açıktır. Sauna, Türk hamamı, buhar odası ve kapalı havuz ücretsizdir; masaj ve bakım hizmetleri ücretlidir.",
+        "09:00 – 19:00 arası açıktır. Sauna, Türk hamamı, buhar odası ve kapalı havuz ücretsizdir; masaj ve bakım hizmetleri ücretlidir. Terapi planınız için La Serenite spa resepsiyonu ile doğrudan iletişime geçebilirsiniz.",
       en:
-        "Open 09:00 – 19:00. Sauna, Turkish bath, steam room and indoor pool are complimentary; massages and treatments are charged.",
+        "Open 09:00 – 19:00. Sauna, Turkish bath, steam room and indoor pool are complimentary; massages and treatments are charged. For therapies, please speak directly with the La Serenite spa reception.",
       de:
-        "Geöffnet 09:00 – 19:00. Sauna, Hamam, Dampfbad und Hallenbad inklusive; Massagen kostenpflichtig.",
+        "Geöffnet 09:00 – 19:00. Sauna, Hamam, Dampfbad und Hallenbad inklusive; Massagen kostenpflichtig. Für Therapien wenden Sie sich bitte direkt an die La-Serenite-Spa-Rezeption.",
       ru:
-        "09:00 – 19:00. Сауна, хамам, парная и бассейн бесплатно; массаж и уход — платно.",
+        "09:00 – 19:00. Сауна, хамам, парная и бассейн бесплатно; массаж и уход — платно. По процедурам обращайтесь напрямую на ресепшен La Serenite Spa.",
     },
     kv: [
       {
@@ -171,7 +185,7 @@
           value: { tr: "Ücretsiz", en: "Complimentary", de: "Kostenlos", ru: "Бесплатно" },
         },
         {
-          label: { tr: "Rezervasyon", en: "Reservation", de: "Reservierung", ru: "Запись" },
+          label: { tr: "Önceden haber", en: "Advance arrangement", de: "Voranmeldung", ru: "Предварительно" },
           value: { tr: "Gerekmiyor", en: "Not required", de: "Nicht nötig", ru: "Не требуется" },
         },
       ],
@@ -190,7 +204,7 @@
           value: { tr: "Ücretsiz", en: "Complimentary", de: "Kostenlos", ru: "Бесплатно" },
         },
         {
-          label: { tr: "Rezervasyon", en: "Reservation", de: "Reservierung", ru: "Запись" },
+          label: { tr: "Önceden haber", en: "Advance arrangement", de: "Voranmeldung", ru: "Предварительно" },
           value: { tr: "Gerekmiyor", en: "Not required", de: "Nicht nötig", ru: "Не требуется" },
         },
       ],
@@ -209,7 +223,7 @@
           value: { tr: "Ücretsiz", en: "Complimentary", de: "Kostenlos", ru: "Бесплатно" },
         },
         {
-          label: { tr: "Rezervasyon", en: "Reservation", de: "Reservierung", ru: "Запись" },
+          label: { tr: "Önceden haber", en: "Advance arrangement", de: "Voranmeldung", ru: "Предварительно" },
           value: { tr: "Gerekmiyor", en: "Not required", de: "Nicht nötig", ru: "Не требуется" },
         },
       ],
@@ -228,7 +242,7 @@
           value: { tr: "Ücretsiz", en: "Complimentary", de: "Kostenlos", ru: "Бесплатно" },
         },
         {
-          label: { tr: "Rezervasyon", en: "Reservation", de: "Reservierung", ru: "Запись" },
+          label: { tr: "Önceden haber", en: "Advance arrangement", de: "Voranmeldung", ru: "Предварительно" },
           value: { tr: "Gerekmiyor", en: "Not required", de: "Nicht nötig", ru: "Не требуется" },
         },
       ],
@@ -260,20 +274,20 @@
     img: "assets/images/spa/masaj.png",
     title: { tr: "Masaj & bakım", en: "Massage & treatments", de: "Massage & Pflege", ru: "Массаж и уход" },
     tag: {
-      tr: "Ücretli · randevu önerilir",
-      en: "Paid · booking recommended",
-      de: "Kostenpflichtig · Termin empfohlen",
-      ru: "Платно · лучше по записи",
+      tr: "Ücretli · La Serenite ekibiyle doğrudan",
+      en: "Paid · Directly with La Serenite",
+      de: "Kostenpflichtig · direkt mit La Serenite",
+      ru: "Платно · напрямую с La Serenite",
     },
     text: {
       tr:
-        "Masaj, kese, peeling, cilt bakımı ve diğer özel bakım hizmetleri ücretlidir. Fiyat ve randevu bilgisi spa bölümünde paylaşılır.",
+        "Masaj, kese, peeling, cilt bakımı ve diğer özel bakım hizmetleri ücretlidir. Süre, yoğunluk ve kişisel tercihleriniz için La Serenite spa resepsiyonundaki ekibimizle doğrudan görüşmenizi rica ederiz; güncel fiyatlar PDF menümüzdedir.",
       en:
-        "Massage, scrub, peeling, skin care and other treatments are charged. Prices and booking are shown at the spa area.",
+        "Massage, scrub, peeling, skin care and other treatments are charged. Please speak directly with our team at the La Serenite spa reception for timing, availability and personal preferences; current prices are in our PDF menu.",
       de:
-        "Massage, Kese, Peeling, Hautpflege und weitere Anwendungen sind kostenpflichtig — Preise und Termine im Spa-Bereich ausgewiesen.",
+        "Massage, Kese, Peeling, Hautpflege und weitere Anwendungen sind kostenpflichtig. Zeitfenster, Auslastung und persönliche Wünsche besprechen Sie bitte direkt an der La-Serenite-Spa-Rezeption; aktuelle Preise finden Sie im PDF-Menü.",
       ru:
-        "Массаж, кесе, пилинг, уход и другие процедуры платно — цены и запись указаны в зоне спа.",
+        "Массаж, кесе, пилинг, уход и другие процедуры платно. Время, загрузку и пожелания уточняйте напрямую на ресепшене La Serenite Spa; актуальные цены — в PDF-меню.",
     },
   };
 

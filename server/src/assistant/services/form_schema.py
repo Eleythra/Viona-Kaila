@@ -5,12 +5,26 @@ from typing import Literal, Sequence, Dict
 
 
 RequestCategory = Literal[
-    "towel",
-    "bedding",
+    "towel_extra",
+    "room_towel",
+    "bathrobe",
+    "bedding_sheet",
+    "bedding_pillow",
+    "bedding_blanket",
     "room_cleaning",
-    "minibar",
-    "baby_equipment",
-    "room_equipment",
+    "turndown",
+    "slippers",
+    "minibar_refill",
+    "bottled_water",
+    "tea_coffee",
+    "toilet_paper",
+    "toiletries",
+    "climate_request",
+    "room_refresh",
+    "hanger",
+    "kettle",
+    "room_safe",
+    "baby_bed",
     "other",
 ]
 
@@ -37,6 +51,7 @@ ComplaintCategory = Literal[
     "general_areas",
     "hygiene",
     "internet_tv",
+    "lost_property",
     "other",
 ]
 
@@ -51,41 +66,96 @@ class FieldDef:
 
 
 REQUEST_CATEGORIES: Sequence[RequestCategory] = (
-    "towel",
-    "bedding",
+    "towel_extra",
+    "room_towel",
+    "bathrobe",
+    "bedding_sheet",
+    "bedding_pillow",
+    "bedding_blanket",
     "room_cleaning",
-    "minibar",
-    "baby_equipment",
-    "room_equipment",
+    "turndown",
+    "slippers",
+    "minibar_refill",
+    "bottled_water",
+    "tea_coffee",
+    "toilet_paper",
+    "toiletries",
+    "climate_request",
+    "room_refresh",
+    "hanger",
+    "kettle",
+    "room_safe",
+    "baby_bed",
     "other",
 )
 
+_QTY: FieldDef = FieldDef("quantity", "int")
+_TIM: FieldDef = FieldDef("timing", "enum")
+_EMPTY: tuple[FieldDef, ...] = ()
+
 REQUEST_DETAIL_FIELDS: Dict[RequestCategory, Sequence[FieldDef]] = {
-    "towel": (
-        FieldDef("itemType", "enum"),
-        FieldDef("quantity", "int"),
-    ),
-    "bedding": (
-        FieldDef("itemType", "enum"),
-        FieldDef("quantity", "int"),
-    ),
-    "room_cleaning": (
-        FieldDef("requestType", "enum"),
-        FieldDef("timing", "enum"),
-    ),
-    "minibar": (
-        FieldDef("requestType", "enum"),
-    ),
-    "baby_equipment": (
-        FieldDef("itemType", "enum"),
-        FieldDef("quantity", "int"),
-    ),
-    "room_equipment": (
-        FieldDef("itemType", "enum"),
-        FieldDef("quantity", "int"),
-    ),
-    "other": (),
+    "towel_extra": (_QTY,),
+    "room_towel": (_QTY,),
+    "bathrobe": (_QTY,),
+    "bedding_sheet": (_QTY,),
+    "bedding_pillow": (_QTY,),
+    "bedding_blanket": (_QTY,),
+    "room_cleaning": (_TIM,),
+    "turndown": (_TIM,),
+    "slippers": (_QTY,),
+    "minibar_refill": _EMPTY,
+    "bottled_water": _EMPTY,
+    "tea_coffee": _EMPTY,
+    "toilet_paper": (_QTY,),
+    "toiletries": (_QTY,),
+    "climate_request": _EMPTY,
+    "room_refresh": _EMPTY,
+    "hanger": (_QTY,),
+    "kettle": _EMPTY,
+    "room_safe": _EMPTY,
+    "baby_bed": (_QTY,),
+    "other": _EMPTY,
 }
+
+# Sohbet istek formu: `js/requests/config.js` → `requestSections` ile aynı gruplama ve sıra (yorumda yol).
+# Uygulama seçicide görünmeyen id’ler: REQUEST_CATEGORY_IDS_NOT_IN_APP_PICKER (+ aşağıdaki açıklama).
+REQUEST_CATEGORY_CHAT_SECTIONS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("reqReqSecTowels", ("bedding_pillow", "room_towel", "bathrobe", "slippers")),
+    ("reqReqSecBedding", ("bedding_sheet", "bedding_blanket")),
+    ("reqReqSecRoomService", ("room_cleaning",)),
+    ("reqReqSecMinibarDrinks", ("bottled_water", "tea_coffee")),
+    ("reqReqSecBathAmenities", ("toilet_paper", "toiletries")),
+    ("reqReqSecComfort", ("climate_request", "room_refresh")),
+    ("reqReqSecEquipment", ("hanger", "kettle", "room_safe", "baby_bed")),
+    ("reqReqSecOther", ("other",)),
+)
+
+
+def request_categories_for_chat_ui() -> tuple[str, ...]:
+    """Uygulamadaki İstekler formuyla aynı düz kategori sırası (sohbette numaralı seçim)."""
+    return tuple(cat for _sk, cats in REQUEST_CATEGORY_CHAT_SECTIONS for cat in cats)
+
+
+# Web `requestSections` listesinde yok; API / NLU ile hâlâ geçerli (guest-requests.service.js ile aynı kavram).
+REQUEST_CATEGORY_IDS_NOT_IN_APP_PICKER: frozenset[str] = frozenset(
+    {"towel_extra", "turndown", "minibar_refill"}
+)
+
+
+def assert_request_chat_schema_invariants() -> None:
+    """Geliştirme hatası: sohbet bölümleri şemayı ihlal etmesin."""
+    allowed = set(REQUEST_CATEGORIES)
+    seen: list[str] = []
+    for _sk, cats in REQUEST_CATEGORY_CHAT_SECTIONS:
+        for c in cats:
+            assert c in allowed, f"Unknown request category in chat sections: {c}"
+            seen.append(c)
+    assert len(seen) == len(set(seen)), "Duplicate category in REQUEST_CATEGORY_CHAT_SECTIONS"
+    chat_set = set(seen)
+    for hidden in REQUEST_CATEGORY_IDS_NOT_IN_APP_PICKER:
+        assert hidden in allowed, hidden
+        assert hidden not in chat_set, f"Hidden category {hidden} must not appear in chat picker list"
+
 
 COMPLAINT_CATEGORIES: Sequence[ComplaintCategory] = (
     "room_cleaning",
@@ -98,6 +168,7 @@ COMPLAINT_CATEGORIES: Sequence[ComplaintCategory] = (
     "general_areas",
     "hygiene",
     "internet_tv",
+    "lost_property",
     "other",
 )
 

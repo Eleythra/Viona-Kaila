@@ -12,9 +12,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "chitchat_compliment": "Nazik geri bildiriminiz için teşekkür ederim. Yardımcı olabildiysem ne mutlu bana.",
         "chitchat_how_are_you": "Teşekkür ederim, iyiyim. Kaila Beach Hotel ile ilgili sorularınızda yanınızdayım.",
         "chitchat_cancel_command_hint": (
-            "«İptal» derken açık bir sohbet formu özeti, rezervasyon veya başka bir işlem mi kastediyorsunuz? "
-            "Formdaysanız özet ekranında 2 = vazgeç; rezervasyon için uygulamadaki Rezervasyonlar bölümünü kullanın. "
-            "Başka bir otel konusunda nasıl yardımcı olayım?"
+            "«İptal» derken kastettiğiniz şey sohbet formu özeti, bir rezervasyon talebi ya da başka bir işlem olabilir. "
+            "Özet ekranında 2 seçeneği vazgeç anlamına gelir. "
+            "Rezervasyon ve masa düzenlemeleri Kaila Beach’te ön büro ve uzman ekiplerimizle yüz yüze, kişiselleştirilmiş biçimde planlanır; "
+            "size en uygun birimi memnuniyetle yönlendiririz. Başka hangi otel konusunda yardımcı olayım?"
         ),
         "chitchat_confusion_generic": "Tam olarak hangi kısmı netleştireyim? Otel bilgisi, talep, arıza veya şikayet için ne yazmanız gerektiğini söyleyebilirim.",
         "chitchat_confusion_after_form_cancel": (
@@ -28,8 +29,9 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
             "Kayıt oluşturulmadı. İsterseniz aynı konuda yeniden sohbet formu ile ilerleyebilir veya yeni bir talep / arıza yazabilirsiniz."
         ),
         "session_reservation_followup_short": (
-            "Rezervasyon iptali, değişikliği veya detayları için uygulamadaki Rezervasyonlar bölümünü kullanın. "
-            "«Yarın», «iptal» gibi kısa ifadeleri burada rezervasyonunuza bağlayamıyorum; seçiminizi uygulamada netleştirmeniz gerekir."
+            "Kısa bir yanıtı tek başına mevcut bir rezervasyon kaydınıza bağlayamıyorum; net bir tarih veya net bir talep paylaşmanızı rica ederim. "
+            "Genel ve konaklama düzenlemeleri için ön büro / resepsiyon; zarif à la carte masa planlaması için Misafir İlişkileri; "
+            "spa ve masaj için La Serenite Spa ekibiyle doğrudan görüşmenizi öneririm — her adımda yanınızdayız."
         ),
         "session_animation_schedule_followup": (
             "Gündüz animasyon ve aktivite çizelgesi uygulamadaki «Animasyon ve etkinlikler» modülü ile otel verilerinde genelde her gün aynıdır; "
@@ -77,6 +79,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "complaint_noise": "Bu şikayetinizi öncelikle Misafir İlişkileri ile paylaşmanızı öneririm. Gerekirse resepsiyon üzerinden de hızlıca iletebilirsiniz.",
         "complaint_cleanliness": "Temizlikle ilgili bu durumu öncelikle Misafir İlişkileri ile paylaşınız; resepsiyon da destek sağlayabilir.",
         "complaint_default": "Bu şikayet için öncelikle Misafir İlişkileri ile iletişime geçiniz. Dilerseniz resepsiyon üzerinden de iletebilirsiniz.",
+        "complaint_lost_property": (
+            "Kayıp Eşya Yönetimi — Değerli eşyalar en fazla 1 yıl, diğer eşyalar en fazla 6 ay saklanmaktadır.\n\n"
+            "Eşyanızı aramak veya kaydı netleştirmek için öncelikle Misafir İlişkileri veya resepsiyon ekibimize başvurabilirsiniz. "
+            "İsterseniz aşağıdaki şikâyet formunu da doldurarak ayrıntıları yazılı iletebilirsiniz; ekibimiz kaydınızı özenle değerlendirir."
+        ),
         "request_towel": "Havlu talebinizi lütfen resepsiyon ile iletiniz.",
         "request_blanket": "Battaniye talebiniz için lütfen resepsiyon ile iletişime geçiniz.",
         "request_water": "Odaya su veya içme suyu talebiniz için lütfen resepsiyon ile iletişime geçiniz; ekip yönlendirilecektir.",
@@ -86,11 +93,27 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "request_guest_relations_contact": "Bu konuda Misafir İlişkileri departmanı en doğru birimdir. Dilerseniz resepsiyon üzerinden de bağlantı sağlayabilirsiniz.",
         "request_transfer": "Transfer talebiniz için lütfen resepsiyon ile iletişime geçiniz; uygun planlama yapılacaktır.",
         "request_lunch_box": "Lunch Box talebi için lütfen en geç saat 20:00'ye kadar resepsiyona bilgi veriniz.",
+        "request_spa_booking_contact": (
+            "La Serenite Spa’da masaj, bakım ve ücretli terapi randevularınız için doğrudan spa ekibimizle görüşmenizi içtenlikle rica ederiz; "
+            "size en uygun saat ve ritüelleri birlikte netleştirirler. İsterseniz resepsiyon da nazikçe yönlendirme sağlayabilir. "
+            "Spa rezervasyonu ve sorularınız için otel içi sabit hat: 5025."
+        ),
+        "request_ala_carte_reservation": (
+            "Ücretli restoranlarımızda ve à la carte deneyimlerinde masa ayarlamaları Misafir İlişkileri’nin özenli koordinasyonuyla yürütülür. "
+            "Doğrudan Misafir İlişkileri’ne başvurabilir; dilerseniz resepsiyon üzerinden de zarif bir bağlantı rica edebilirsiniz."
+        ),
+        "request_premium_reservation_reception": (
+            "Premium masa ve özel akşam yemekleri için en doğru koordinasyonu ön büro / resepsiyon ekibimiz üstlenir; "
+            "sizi ilgili restoranımıza veya birimimize özenle yönlendirir."
+        ),
         "request_default": "Bu talebinizi lütfen resepsiyon ile paylaşınız.",
         "reservation_early_checkin": "Erken giriş talebiniz için lütfen resepsiyon ile iletişime geçiniz.",
         "reservation_late_checkout": "Geç çıkış talebiniz için lütfen resepsiyon ile iletişime geçiniz.",
         "reservation_room_change": "Oda değişikliği talebiniz için lütfen resepsiyon ile iletişime geçiniz.",
-        "reservation_default": "Rezervasyonunuzla ilgili bu durum için lütfen resepsiyon ile iletişime geçiniz.",
+        "reservation_default": (
+            "Kaila Beach’te rezervasyon ve masa düzenlemeleriniz ön büro ile uzman ekiplerimiz tarafından yüz yüze, size özel ve özenle tamamlanır. "
+            "Genel konaklama ve planlar için resepsiyon; à la carte masalar için Misafir İlişkileri; spa ve masaj için La Serenite Spa — akıcı, seçkin bir deneyim için yanınızdayız."
+        ),
         "special_need_celiac": "Bu durumunuzu lütfen Misafir İlişkileri departmanına iletiniz; mutfak departmanından uygun destek sağlanabilir.",
         "special_need_vegan": "Beslenme tercihinizi lütfen Misafir İlişkileri departmanına iletiniz; uygun seçenekler konusunda yardımcı olunabilir.",
         "special_need_allergy": "Alerji bilginizi lütfen Misafir İlişkileri departmanına bildiriniz; gerekli yönlendirme sağlanacaktır.",
@@ -100,9 +123,23 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "guest_notification_policy_hint": "Misafir bildiriminizi sohbet üzerinden kayıt için kategori seçerek iletebilirsiniz; bir sonraki mesajınızda 'gluten', 'alerji', 'kutlama' gibi anahtar kelimeleri yazmanız da yeterlidir.",
         "fixed_restaurant_info": "- Ana Restoran: Kahvaltı 07:00-10:00, Geç kahvaltı 10:00-10:30, Öğle yemeği 12:30-14:00, Akşam yemeği 19:00-21:00, Mini gece büfesi 23:30-00:00.\n- La Terrace A La Carte: 18:30-20:30 (rezervasyonlu, ücretli).\n- Sinton BBQ: 13:00-22:00 (Pazartesi kapalı).\nSnack ve cafe:\n- Dolphin Snack 12:00-16:00\n- Beach Imbiss Snack 12:00-16:00\n- Beach Imbiss İçecek 10:00-17:00\n- Gusto Snack 11:00-18:00\n- Libum Cafe 11:00-18:00\n- Moss Beach Restaurant & Bar 10:00-19:00\nBarlar:\n- Havuz Bar 10:00-00:00\n- Dondurma Servisi 15:00-17:00\n- Lobby Bar 10:00-00:00\n- Aqua Bar 10:00-18:00 ve 20:00-23:00\n- Dolphin Bar 10:00-17:00",
         "fixed_pool_beach_info": "- Özel plaj mevcuttur.\n- Şezlong, şemsiye ve plaj havlusu ücretsizdir.\n- Plaj kullanım saatleri: 08:30-18:30.\nHavuzlar:\n- Üç açık havuz: Relax Pool 08:30-18:30, Aquapark 10:00-12:00 ve 14:00-16:00, Dolphin Pool 08:30-18:30.\n- Kapalı havuz (spa): 08:00-19:00.\n- Aquapark ve açık alanda çocuklara uygun sığ su bölgeleri bulunur.\n- Havuz ve plajda can kurtaran mevcuttur.\n- Havuz ve plaj havlusu servisi ücretsizdir.",
-        "fixed_spa_info": "- La Serenite Spa kullanım saatleri: 09:00-19:00.\nÜcretsiz alanlar:\n- Sauna\n- Türk hamamı\n- Buhar odası\n- Kapalı havuz\nÜcretli hizmetler:\n- Masaj\n- Peeling\n- Cilt bakımı\n- Diğer bakım hizmetleri\nNot: Temel ıslak alan kullanımı ücretsiz, profesyonel bakım ve terapi hizmetleri ücretlidir.\n\nGüncel terapi ve bakım fiyat listesi ile paket PDF’leri sohbette uzun metin olarak verilmez; tüm premium içerik uygulamadaki «Spa & wellness» modülündedir. Modülü açmak için aşağıdaki düğmeyi kullanabilirsiniz.",
+        "fixed_spa_info": "- La Serenite Spa kullanım saatleri: 09:00-19:00.\nÜcretsiz alanlar:\n- Sauna\n- Türk hamamı\n- Buhar odası\n- Kapalı havuz\nÜcretli hizmetler:\n- Masaj\n- Peeling\n- Cilt bakımı\n- Diğer bakım hizmetleri\nNot: Temel ıslak alan kullanımı ücretsiz, profesyonel bakım ve terapi hizmetleri ücretlidir.\n\nGüncel terapi ve bakım fiyat listesi ile paket PDF’leri sohbette uzun metin olarak verilmez; tüm premium içerik uygulamadaki «Spa & wellness» modülündedir. Modülü açmak için aşağıdaki düğmeyi kullanabilirsiniz.\n\nSpa rezervasyonu veya sorularınız için otel içi sabit hat: 5025.",
+        "fixed_kuafor_info": (
+            "Otelimizde kuaför hizmeti bulunmaktadır. Fiyat bilgisi, randevu ve kuaför hizmeti için doğrudan iletişim: "
+            "Savaş Bey — +90 546 608 16 72."
+        ),
+        "wayfinding_rag_miss_guest_relations": (
+            "Aradığınız noktanın konumunu şu an doğrulanmış kaynaklardan tek bir yanıtta çıkaramıyorum. "
+            "Kişiselleştirilmiş ve güncel yönlendirme için «Misafir İlişkileri» ekibimize başvurmanızı öneririm; "
+            "size zarif ve eksiksiz biçimde eşlik ederler. İsterseniz uygulamadaki «Nerede» bölümünden de haritaya bakabilirsiniz."
+        ),
+        "fixed_transfer_module_hint": (
+            "Kaila Beach’te özel araçlı transfer hizmeti sunulmaktadır; karşılama ve güzergâh koordinasyonu için resepsiyon / ön büro ile iletişime geçmenizi rica ederiz. "
+            "Güncel tarifeler, araç seçenekleri ve örnek güzergâh bilgileri sohbette uzun metin olarak paylaşılmaz; tüm premium içerik uygulamadaki «Transfer» modülündedir.\n\n"
+            "Aşağıdaki düğmeyle modülü açabilirsiniz."
+        ),
         "fixed_spa_prices_module_hint": "Spa ve profesyonel bakım fiyatları sohbette listelenmez. Güncel fiyat listesi ve paketler yalnızca uygulamadaki «Spa & wellness» modülündedir; premium içeriğe aşağıdaki düğmeyle geçebilirsiniz.",
-        "fixed_restaurants_bars_module_hint": "Lobby Bar menüsü, Moss Beach Restaurant menüsü ve barlarda içecek / import içki fiyat listesi sohbette uzun metin olarak gösterilmez; güncel PDF’ler «Restaurant & barlar» modülündedir. İlgili listelere aşağıdaki düğmeyle ulaşabilirsiniz. (Genel restoran saatleri için «restoran saatleri» diye sorabilir veya aynı modüle gidebilirsiniz.)",
+        "fixed_restaurants_bars_module_hint": "Havuz Bar menüsü, Lobby Bar menüsü, Moss Beach Restaurant menüsü ve barlarda içecek / import içki fiyat listesi sohbette uzun metin olarak gösterilmez; güncel PDF’ler «Restaurant & barlar» modülündedir. İlgili listelere aşağıdaki düğmeyle ulaşabilirsiniz. (Genel restoran saatleri için «restoran saatleri» diye sorabilir veya aynı modüle gidebilirsiniz.)",
         "fixed_animation_info": "- Akşam akrobatik dans şovları, temalı geceler, canlı müzik, DJ performansları (bu bölüm gün ve sezona göre çeşitlenebilir; bazı günler ekstra şov eklenebilir).\n- Gündüz çizelgesi genelde sabittir; günlük program 10:00'da başlar; aqua gym, dart, su topu gibi aktiviteler içerir. Güncel metin ve saatler uygulamadaki «Animasyon ve etkinlikler» modülündedir.\nÇocuk aktiviteleri:\n- Jammies Kids Club / Mini Club: 10:00-12:30 ve 14:30-17:00 (4-12 yaş)\n- Mini Disco: 20:45-21:00 (4-12 yaş)\n- Çocuk oyun parkı: 07:00-21:00\nNot: Akşam programı ve özel gösteriler güne göre farklılık gösterebilir; kesin bilgi için resepsiyon veya animasyon panosunu kontrol ediniz.",
         "fixed_outside_hotel_info": "Otel dışı öneriler için en güncel ve güvenli bilgi resepsiyondadır. Alanya merkez yaklaşık 3 km mesafededir; taksi ve toplu taşıma seçenekleri mevcuttur.",
         "fixed_alanya_discover_intro": "Alanya, Akdeniz kıyısında denizi, kalesi ve tarihi dokusuyla öne çıkan bir tatil kentidir. Gezginler için sık sorulan başlıca duraklar:\n\n• Kleopatra Plajı — ince kum ve berrak deniz\n• Kızıl Kule ve liman — şehrin simgesi\n• Alanya Kalesi — tepeden panoramik manzara; gün batımı çok beğenilir\n• Dim Çayı ve mesire alanları (iç kesim)\n\nOtelimiz Obagöl'de; şehir merkezine yaklaşık 3 km. Ulaşım için taksi ve toplu taşıma pratik seçeneklerdir. Güncel saatler, biletli alanlar ve özel turlar için resepsiyon en güvenilir kaynaktır.\n\nAşağıdaki düğmeyle uygulamadaki «Alanya'yı keşfedin» bölümünü açarak kısa metinler ve görsellerle bu noktaları inceleyebilirsiniz.",
@@ -111,6 +148,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "hotel_info_soft_followup_towel": (
             "Yukarıdaki saat ve kart bilgisi plaj/havuz havlusuna aittir; bu havlular havuz veya plaj noktasından verilir. "
             "Oda banyo havlusu bunlardan farklıdır, birbirinin yerine geçmez."
+        ),
+        "hotel_info_soft_followup_request_form_hint": (
+            "Odaya ürün göndermek veya talep kaydı açmak için sohbette «lazım», «talep ediyorum», «eksik var», "
+            "«ihtiyacım var», «rica ediyorum» gibi net ifadeler kullanabilir veya uygulamada İstekler bölümünden formu açabilirsiniz."
         ),
     },
     "en": {
@@ -123,9 +164,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "chitchat_compliment": "Thank you for your kind words. Glad I could help.",
         "chitchat_how_are_you": "I'm doing well, thank you. I'm here to help with anything about Kaila Beach Hotel.",
         "chitchat_cancel_command_hint": (
-            "When you say “cancel”, do you mean a chat form summary, a reservation, or something else? "
-            "On the form summary, 2 means cancel; for bookings, use the Reservations section in the app. "
-            "What else can I help you with at the hotel?"
+            "When you say “cancel”, you might mean a chat form summary, a booking request, or something else. "
+            "On the summary screen, 2 means cancel. "
+            "At Kaila Beach, reservations and table arrangements are curated in person by our front office and specialist teams — "
+            "we will be pleased to guide you to the right desk. How else may I assist you?"
         ),
         "chitchat_confusion_generic": "Which part should I clarify? I can explain what to type for hotel information, a request, a fault report, or a complaint.",
         "chitchat_confusion_after_form_cancel": (
@@ -139,8 +181,9 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
             "No record was created. You can start the chat form again for the same topic or type a new request or fault report."
         ),
         "session_reservation_followup_short": (
-            "For cancellation, changes, or reservation details, please use the Reservations section in the app. "
-            "Short replies like “tomorrow” or “cancel” cannot be linked to your booking here—please complete the steps in the app."
+            "A brief reply on its own cannot be tied to an existing booking here; please share a clear date or a clear request. "
+            "For general and stay arrangements, the front desk / reception; for refined à la carte tables, Guest Relations; "
+            "for spa and massage, La Serenite Spa — we remain at your service at every step."
         ),
         "session_animation_schedule_followup": (
             "The daytime animation and activity schedule in the app’s «Animation & events» section and hotel information is usually the same every day; "
@@ -188,6 +231,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "complaint_noise": "Please share this complaint with Guest Relations first. Reception can also assist with escalation if needed.",
         "complaint_cleanliness": "Please report this cleanliness issue to Guest Relations first; reception can also support.",
         "complaint_default": "For this complaint, please contact Guest Relations first. You may also report it via reception.",
+        "complaint_lost_property": (
+            "Lost & found — Valuables may be kept for up to one year; other items for up to six months.\n\n"
+            "For the most attentive assistance, please visit Guest Relations or reception. "
+            "You may also complete the complaint form below to share details in writing — our team will handle your record with care."
+        ),
         "request_towel": "Please contact reception for your towel request.",
         "request_blanket": "Please contact reception for your blanket request.",
         "request_water": "For water or drinking water to your room, please contact reception; the team will arrange delivery.",
@@ -197,11 +245,27 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "request_guest_relations_contact": "For this matter, Guest Relations is the right department. You may also connect through reception.",
         "request_transfer": "For transfer arrangements, please contact reception and the team will assist you.",
         "request_lunch_box": "For a Lunch Box request, please inform reception no later than 20:00.",
+        "request_spa_booking_contact": (
+            "For massages, rituals and paid treatments at La Serenite Spa, we kindly invite you to speak directly with our spa hosts — "
+            "they will refine timing and experiences with you. Reception can discreetly connect you whenever you wish. "
+            "For spa reservations and questions, the in-house direct line is 5025."
+        ),
+        "request_ala_carte_reservation": (
+            "Paid dining and à la carte tables are arranged with personal care by Guest Relations. "
+            "Please reach out to them directly; reception can also arrange a seamless introduction if you prefer."
+        ),
+        "request_premium_reservation_reception": (
+            "For premium seating and bespoke dining evenings, our front desk / reception orchestrates the finest routing "
+            "and introduces you to the right venue or team."
+        ),
         "request_default": "Please share this request with reception.",
         "reservation_early_checkin": "Please contact reception for your early check-in request.",
         "reservation_late_checkout": "Please contact reception for your late check-out request.",
         "reservation_room_change": "Please contact reception for your room change request.",
-        "reservation_default": "Please contact reception regarding your reservation request.",
+        "reservation_default": (
+            "At Kaila Beach, reservations and table arrangements are completed in person by our front-of-house and specialist hosts, with attentive, bespoke care. "
+            "For your stay and general plans, reception; for à la carte tables, Guest Relations; for spa and massage, La Serenite Spa — we are with you for a seamless, refined experience."
+        ),
         "special_need_celiac": "Please inform the Guest Relations department about this condition; suitable support can be coordinated with the kitchen.",
         "special_need_vegan": "Please inform the Guest Relations department about your dietary preference; suitable options may be arranged.",
         "special_need_allergy": "Please inform the Guest Relations department about your allergy; necessary guidance will be provided.",
@@ -211,9 +275,23 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "guest_notification_policy_hint": "You can submit a guest notification via chat by choosing a category; you may also type keywords like gluten, allergy, or celebration in your next message.",
         "fixed_restaurant_info": "- Main Restaurant: Breakfast 07:00-10:00, Late breakfast 10:00-10:30, Lunch 12:30-14:00, Dinner 19:00-21:00, Mini night buffet 23:30-00:00.\n- La Terrace A La Carte: 18:30-20:30 (reservation required, paid).\n- Sinton BBQ: 13:00-22:00 (closed Mondays).\nSnack and cafe:\n- Dolphin Snack 12:00-16:00\n- Beach Imbiss Snack 12:00-16:00\n- Beach Imbiss Drinks 10:00-17:00\n- Gusto Snack 11:00-18:00\n- Libum Cafe 11:00-18:00\n- Moss Beach Restaurant & Bar 10:00-19:00\nBars:\n- Pool Bar 10:00-00:00\n- Ice Cream Service 15:00-17:00\n- Lobby Bar 10:00-00:00\n- Aqua Bar 10:00-18:00 and 20:00-23:00\n- Dolphin Bar 10:00-17:00",
         "fixed_pool_beach_info": "- Private beach available.\n- Sunbeds, umbrellas, and beach towels are free.\n- Beach usage hours: 08:30-18:30.\nPools:\n- Three outdoor pools: Relax Pool 08:30-18:30, Aquapark 10:00-12:00 and 14:00-16:00, Dolphin Pool 08:30-18:30.\n- Indoor pool (spa): 08:00-19:00.\n- Shallow areas for children are in the outdoor / aquapark zone.\n- Lifeguards are present at the pools and on the sea.\n- Pool and beach towel service is free.",
-        "fixed_spa_info": "- La Serenite Spa hours: 09:00-19:00.\nFree areas:\n- Sauna\n- Turkish bath\n- Steam room\n- Indoor pool\nPaid services:\n- Massage\n- Peeling\n- Skin care\n- Other treatment services\nNote: Basic wet-area use is free; professional care and therapy services are paid.\n\nTreatment menus and price lists are not shared as long text in chat; the up-to-date PDFs live in the in-app «Spa & wellness» section. Use the button below to open that page.",
+        "fixed_spa_info": "- La Serenite Spa hours: 09:00-19:00.\nFree areas:\n- Sauna\n- Turkish bath\n- Steam room\n- Indoor pool\nPaid services:\n- Massage\n- Peeling\n- Skin care\n- Other treatment services\nNote: Basic wet-area use is free; professional care and therapy services are paid.\n\nTreatment menus and price lists are not shared as long text in chat; the up-to-date PDFs live in the in-app «Spa & wellness» section. Use the button below to open that page.\n\nFor spa reservations or questions, in-house direct line: 5025.",
+        "fixed_kuafor_info": (
+            "The hotel offers a hairdressing service. For prices, appointments, and hairdressing service, please contact "
+            "Mr. Savaş directly at +90 546 608 16 72."
+        ),
+        "wayfinding_rag_miss_guest_relations": (
+            "I cannot confirm that location in one verified answer right now. "
+            "For personalised, up-to-date wayfinding, please speak with Guest Relations — they will assist you with attentive care. "
+            "You may also open the «Where» section in the app for the map."
+        ),
+        "fixed_transfer_module_hint": (
+            "Kaila Beach offers a dedicated transfer service; for meet-and-greet and routing coordination, please contact reception / the front office. "
+            "Current rates, vehicle options, and sample route information are not shared as long text in chat; the premium content lives in the «Transfer» module.\n\n"
+            "Use the button below to open it."
+        ),
         "fixed_spa_prices_module_hint": "Spa treatment prices are not listed in chat. The current price list and packages are only in the «Spa & wellness» module — use the button below for the premium content.",
-        "fixed_restaurants_bars_module_hint": "The Lobby Bar menu, Moss Beach Restaurant menu, and bar drink / imported spirits price lists are not shown as long text in chat; up-to-date PDFs are in «Restaurants & bars». Open that section with the button below. (For general outlet hours you can still ask for «restaurant hours» or use the same module.)",
+        "fixed_restaurants_bars_module_hint": "The Pool Bar menu, Lobby Bar menu, Moss Beach Restaurant menu, and bar drink / imported spirits price lists are not shown as long text in chat; up-to-date PDFs are in «Restaurants & bars». Open that section with the button below. (For general outlet hours you can still ask for «restaurant hours» or use the same module.)",
         "fixed_animation_info": "- Evening acrobatic dance shows, themed nights, live music, and DJ performances (this part can vary by day and season; some days may include an extra show).\n- The daytime schedule is generally stable: the daily program starts at 10:00 with aqua gym, darts, and water polo. The latest wording and times are in the in-app «Animation & events» section.\nChildren’s activities:\n- Jammies Kids Club / Mini Club: 10:00-12:30 and 14:30-17:00 (ages 4-12)\n- Mini Disco: 20:45-21:00 (ages 4-12)\n- Children’s playground: 07:00-21:00\nNote: Evening line-ups and special shows may differ by day; please check reception or the animation board for the exact programme.",
         "fixed_outside_hotel_info": "For outside-hotel suggestions, reception provides the most up-to-date and safe guidance. Alanya city center is about 3 km away, and taxi/public transport options are available.",
         "fixed_alanya_discover_intro": "Alanya is a lively Mediterranean resort known for its seafront, castle and historic character. Highlights many guests enjoy:\n\n• Kleopatra Beach — fine sand and clear water\n• Red Tower and harbour — an iconic landmark\n• Alanya Castle — panoramic views from the hill; sunsets are memorable\n• Dim River picnic area inland\n\nOur hotel is in Obagöl, about 3 km from the city centre. Taxis and public transport are practical. For opening hours, ticketed sites and organised tours, reception is the safest source of up-to-date advice.\n\nUse the button below to open the in-app «Discover Alanya» section with short descriptions and images.",
@@ -222,6 +300,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "hotel_info_soft_followup_towel": (
             "The hours and card rules above refer to pool/beach towels issued at the pool/beach desk. "
             "Those are not the same as the bathroom towels in your room."
+        ),
+        "hotel_info_soft_followup_request_form_hint": (
+            "To have something brought to your room or to log a supply request, write clearly in chat "
+            "(e.g. «I need…», «please send», «it’s missing», «I’d like to request») or open the Requests form in the app."
         ),
     },
     "de": {
@@ -234,9 +316,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "chitchat_compliment": "Vielen Dank für Ihr nettes Feedback. Es freut mich, dass ich helfen konnte.",
         "chitchat_how_are_you": "Danke, mir geht es gut. Ich unterstütze Sie gern bei Fragen rund um das Kaila Beach Hotel.",
         "chitchat_cancel_command_hint": (
-            "Meinen Sie mit „Abbrechen“ eine Chat-Formularzusammenfassung, eine Reservierung oder etwas anderes? "
-            "Auf der Zusammenfassung bedeutet 2 Abbrechen; für Buchungen nutzen Sie den Bereich Reservierungen in der App. "
-            "Wobei darf ich sonst im Hotel helfen?"
+            "Mit „Abbrechen“ kann eine Chat-Formularzusammenfassung, eine Buchungsanfrage oder etwas anderes gemeint sein. "
+            "Auf der Zusammenfassung bedeutet 2 „Abbrechen“. "
+            "Reservierungen und Tischwünsche werden im Kaila Beach persönlich von unserer Front Office- und Spezialteams betreut — "
+            "wir verbinden Sie gern mit dem passenden Schalter. Wobei darf ich sonst behilflich sein?"
         ),
         "chitchat_confusion_generic": "Welchen Teil soll ich erklären? Ich kann sagen, was Sie für Hotelinfos, eine Anfrage, eine Störung oder eine Beschwerde schreiben können.",
         "chitchat_confusion_after_form_cancel": (
@@ -250,8 +333,9 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
             "Es wurde kein Eintrag erstellt. Sie können den Chat-Flow erneut starten oder eine neue Anfrage bzw. Störungsmeldung schreiben."
         ),
         "session_reservation_followup_short": (
-            "Für Stornierung, Änderungen oder Reservierungsdetails nutzen Sie bitte den Bereich Reservierungen in der App. "
-            "Kurze Antworten wie „morgen“ oder „stornieren“ kann ich hier nicht Ihrer Buchung zuordnen—bitte dort auswählen."
+            "Eine sehr kurze Antwort kann ich hier nicht mit einer bestehenden Buchung verknüpfen; bitte nennen Sie ein klares Datum oder ein klares Anliegen. "
+            "Für allgemeine Aufenthaltsfragen: Rezeption / Empfang; für elegante À-la-carte-Tische: Gästebetreuung; "
+            "für Spa und Massage: La Serenite Spa — wir stehen Ihnen auf jedem Schritt zur Seite."
         ),
         "session_animation_schedule_followup": (
             "Der Tagesplan für Animation und Aktivitäten in der App unter «Animation & Veranstaltungen» und in den Hotelinformationen ist in der Regel täglich gleich; "
@@ -299,6 +383,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "complaint_noise": "Bitte wenden Sie sich mit dieser Beschwerde zuerst an die Gästebetreuung. Bei Bedarf kann auch die Rezeption unterstützen.",
         "complaint_cleanliness": "Bitte melden Sie dieses Reinigungsproblem zunächst der Gästebetreuung; die Rezeption kann ebenfalls helfen.",
         "complaint_default": "Bitte wenden Sie sich bei dieser Beschwerde zuerst an die Gästebetreuung. Alternativ kann die Rezeption unterstützen.",
+        "complaint_lost_property": (
+            "Fundsachen — Wertgegenstände werden bis zu einem Jahr, übrige Gegenstände bis zu sechs Monaten aufbewahrt.\n\n"
+            "Für eine persönliche Betreuung wenden Sie sich bitte an die Gästebetreuung oder die Rezeption. "
+            "Optional können Sie unten das Beschwerdeformular ausfüllen und die Details schriftlich mitteilen — unser Team bearbeitet Ihren Eintrag aufmerksam."
+        ),
         "request_towel": "Bitte wenden Sie sich für Ihre Handtuchanfrage an die Rezeption.",
         "request_blanket": "Bitte wenden Sie sich für Ihre Deckenanfrage an die Rezeption.",
         "request_water": "Für Wasser oder Trinkwasser aufs Zimmer wenden Sie sich bitte an die Rezeption; das Team organisiert die Zustellung.",
@@ -308,11 +397,27 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "request_guest_relations_contact": "Für dieses Anliegen ist die Gästebetreuung die richtige Stelle. Auf Wunsch kann die Rezeption ebenfalls verbinden.",
         "request_transfer": "Für Transferanfragen wenden Sie sich bitte an die Rezeption; die Planung wird dort koordiniert.",
         "request_lunch_box": "Für eine Lunch-Box-Anfrage informieren Sie bitte die Rezeption spätestens bis 20:00 Uhr.",
+        "request_spa_booking_contact": (
+            "Für Massage, Anwendungen und kostenpflichtige Rituale im La Serenite Spa sprechen Sie bitte direkt mit unserem Spa-Team — "
+            "Zeiten und Wünsche werden dort persönlich abgestimmt. Die Rezeption verbindet Sie auf Wunsch diskret. "
+            "Für Spa-Reservierungen und Fragen: Hotel-Innenanschluss 5025."
+        ),
+        "request_ala_carte_reservation": (
+            "À-la-carte- und kostenpflichtige Restaurant-Tische werden von der Gästebetreuung mit besonderer Sorgfalt koordiniert. "
+            "Bitte wenden Sie sich direkt dorthin; die Rezeption kann auf Wunsch eine nahtlose Vermittlung übernehmen."
+        ),
+        "request_premium_reservation_reception": (
+            "Für Premium-Tische und exklusive Dining-Abende orchestriert die Rezeption / der Empfang die feinste Weiterleitung "
+            "und führt Sie zum passenden Restaurant oder Team."
+        ),
         "request_default": "Bitte teilen Sie diese Anfrage der Rezeption mit.",
         "reservation_early_checkin": "Bitte wenden Sie sich für Ihre Bitte um frühen Check-in an die Rezeption.",
         "reservation_late_checkout": "Bitte wenden Sie sich für Ihre Bitte um späten Check-out an die Rezeption.",
         "reservation_room_change": "Bitte wenden Sie sich für Ihren Zimmerwechsel an die Rezeption.",
-        "reservation_default": "Bitte wenden Sie sich bezüglich Ihrer Reservierung an die Rezeption.",
+        "reservation_default": (
+            "Im Kaila Beach werden Reservierungen und Tischwünsche persönlich von unserem Front Office und den Spezialteams mit aufmerksamer, maßgeschneiderter Betreuung für Sie abgestimmt. "
+            "Für Aufenthalt und allgemeine Planung: Rezeption; für À-la-carte-Tische: Gästebetreuung; für Spa und Massage: La Serenite Spa — für einen nahtlosen, stilvollen Aufenthalt an Ihrer Seite."
+        ),
         "special_need_celiac": "Bitte informieren Sie die Gästebetreuung über diese Situation; geeignete Unterstützung kann mit der Küche koordiniert werden.",
         "special_need_vegan": "Bitte informieren Sie die Gästebetreuung über Ihre Ernährungspräferenz; passende Optionen können angeboten werden.",
         "special_need_allergy": "Bitte informieren Sie die Gästebetreuung über Ihre Allergie; die notwendige Unterstützung wird bereitgestellt.",
@@ -322,9 +427,22 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "guest_notification_policy_hint": "Sie können eine Gästemeldung im Chat per Kategorie senden; schreiben Sie z. B. Gluten, Allergie oder Feier in Ihrer nächsten Nachricht.",
         "fixed_restaurant_info": "- Hauptrestaurant: Frühstück 07:00-10:00, Spätfrühstück 10:00-10:30, Mittagessen 12:30-14:00, Abendessen 19:00-21:00, Mini-Nachtbuffet 23:30-00:00.\n- La Terrace A La Carte: 18:30-20:30 (reservierungspflichtig, kostenpflichtig).\n- Sinton BBQ: 13:00-22:00 (montags geschlossen).\nSnack und Cafe:\n- Dolphin Snack 12:00-16:00\n- Beach Imbiss Snack 12:00-16:00\n- Beach Imbiss Getränke 10:00-17:00\n- Gusto Snack 11:00-18:00\n- Libum Cafe 11:00-18:00\n- Moss Beach Restaurant & Bar 10:00-19:00\nBars:\n- Pool Bar 10:00-00:00\n- Eis-Service 15:00-17:00\n- Lobby Bar 10:00-00:00\n- Aqua Bar 10:00-18:00 und 20:00-23:00\n- Dolphin Bar 10:00-17:00",
         "fixed_pool_beach_info": "- Privater Strand ist vorhanden.\n- Liegen, Sonnenschirme und Strandhandtücher sind kostenlos.\n- Strandnutzung: 08:30-18:30.\nPools:\n- Drei Außenbecken: Relax Pool 08:30-18:30, Aquapark 10:00-12:00 und 14:00-16:00, Dolphin Pool 08:30-18:30.\n- Hallenbad (Spa): 08:00-19:00.\n- Flache Kinderbereiche im Außen- und Aquaparkbereich.\n- Rettungsschwimmer an Pools und am Meer.\n- Handtuchservice für Pool und Strand ist kostenlos.",
-        "fixed_spa_info": "- Öffnungszeiten La Serenite Spa: 09:00-19:00.\nKostenlose Bereiche:\n- Sauna\n- Türkisches Bad\n- Dampfbad\n- Hallenbad\nKostenpflichtige Leistungen:\n- Massage\n- Peeling\n- Hautpflege\n- Weitere Behandlungen\nHinweis: Grundnutzung der Nassbereiche ist kostenlos; professionelle Pflege- und Therapieleistungen sind kostenpflichtig.\n\nAktuelle Preislisten und Behandlungs-PDFs werden im Chat nicht als langer Text ausgegeben; die Premium-Inhalte finden Sie im App-Bereich «Spa & Wellness». Öffnen Sie die Seite über die Schaltfläche unten.",
+        "fixed_spa_info": "- Öffnungszeiten La Serenite Spa: 09:00-19:00.\nKostenlose Bereiche:\n- Sauna\n- Türkisches Bad\n- Dampfbad\n- Hallenbad\nKostenpflichtige Leistungen:\n- Massage\n- Peeling\n- Hautpflege\n- Weitere Behandlungen\nHinweis: Grundnutzung der Nassbereiche ist kostenlos; professionelle Pflege- und Therapieleistungen sind kostenpflichtig.\n\nAktuelle Preislisten und Behandlungs-PDFs werden im Chat nicht als langer Text ausgegeben; die Premium-Inhalte finden Sie im App-Bereich «Spa & Wellness». Öffnen Sie die Seite über die Schaltfläche unten.\n\nFür Spa-Reservierungen oder Fragen: Hotel-Innenanschluss 5025.",
+        "fixed_kuafor_info": (
+            "Im Hotel gibt es einen Friseurservice. Für Preise, Termine und Friseurleistungen erreichen Sie Herrn Savaş unter +90 546 608 16 72."
+        ),
+        "wayfinding_rag_miss_guest_relations": (
+            "Den genauen Ort kann ich gerade nicht aus verifizierten Unterlagen in einer kurzen Antwort bestätigen. "
+            "Für eine persönliche, aktuelle Wegführung wenden Sie sich bitte an die Gästebetreuung (Guest Relations) — "
+            "sie begleitet Sie aufmerksam. In der App finden Sie unter «Wo» zusätzlich die Übersichtskarte."
+        ),
+        "fixed_transfer_module_hint": (
+            "Im Kaila Beach steht Ihnen ein Transfer-Service zur Verfügung; für Koordination und Abholung wenden Sie sich bitte an die Rezeption / den Empfang. "
+            "Aktuelle Preise, Fahrzeugoptionen und Routenbeispiele werden im Chat nicht als langer Text ausgegeben; die Premium-Inhalte liegen im «Transfer»-Modul.\n\n"
+            "Öffnen Sie ihn über die Schaltfläche unten."
+        ),
         "fixed_spa_prices_module_hint": "Spa- und Anwendungspreise werden im Chat nicht aufgelistet. Die aktuelle Preisliste und Pakete stehen nur im Modul «Spa & Wellness» — bitte nutzen Sie die Schaltfläche unten.",
-        "fixed_restaurants_bars_module_hint": "Lobby-Bar-Speisekarte, Moss-Restaurant-Speisekarte und Getränke-/Importspirituosen-Preislisten der Bars werden im Chat nicht als langer Text gezeigt; aktuelle PDFs liegen unter «Restaurants & Bars». Bitte öffnen Sie den Bereich über die Schaltfläche unten. (Allgemeine Öffnungszeiten können Sie weiterhin mit «Restaurantzeiten» erfragen oder im selben Modul einsehen.)",
+        "fixed_restaurants_bars_module_hint": "Pool-Bar-Menü, Lobby-Bar-Speisekarte, Moss-Restaurant-Speisekarte und Getränke-/Importspirituosen-Preislisten der Bars werden im Chat nicht als langer Text gezeigt; aktuelle PDFs liegen unter «Restaurants & Bars». Bitte öffnen Sie den Bereich über die Schaltfläche unten. (Allgemeine Öffnungszeiten können Sie weiterhin mit «Restaurantzeiten» erfragen oder im selben Modul einsehen.)",
         "fixed_animation_info": "- Abendliche Akrobatik-Tanzshows, Themenabende, Live-Musik und DJ-Performances (dieser Teil kann je nach Tag und Saison wechseln; an manchen Tagen gibt es Zusatzshows).\n- Der Tagesablauf ist in der Regel stabil: Start um 10:00 mit Aqua Gym, Dart und Wasserball. Aktuelle Texte und Zeiten finden Sie in der App unter «Animation & Veranstaltungen».\nKinderaktivitäten:\n- Jammies Kids Club / Mini Club: 10:00-12:30 und 14:30-17:00 (4-12 Jahre)\n- Mini Disco: 20:45-21:00 (4-12 Jahre)\n- Kinderspielplatz: 07:00-21:00\nHinweis: Abendprogramm und Zusatzshows können täglich abweichen; genaue Auskunft an der Rezeption oder an der Animationstafel.",
         "fixed_outside_hotel_info": "Für Empfehlungen außerhalb des Hotels wenden Sie sich bitte an die Rezeption; dort erhalten Sie die aktuellsten und sichersten Informationen. Das Zentrum von Alanya ist etwa 3 km entfernt; Taxi- und ÖPNV-Optionen sind verfügbar.",
         "fixed_alanya_discover_intro": "Alanya ist ein lebendiges Mittelmeerziel mit Strand, Burg und historischem Flair. Beliebte Stationen:\n\n• Kleopatra-Strand — feiner Sand, klares Wasser\n• Roter Turm und Hafen — Wahrzeichen der Stadt\n• Burg von Alanya — Panoramablick; Sonnenuntergänge sind eindrucksvoll\n• Dim-Çayı und Picknickbereiche landeinwärts\n\nUnser Hotel liegt in Obagöl, etwa 3 km vom Zentrum. Taxi und ÖPNV sind praktisch. Für Öffnungszeiten, Eintritte und organisierte Ausflüge ist die Rezeption die zuverlässigste Anlaufstelle.\n\nMit der Schaltfläche unten öffnen Sie die App-Rubrik «Alanya entdecken» mit Kurztexten und Bildern.",
@@ -333,6 +451,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "hotel_info_soft_followup_towel": (
             "Die genannten Zeiten und Kartenregeln gelten für Pool-/Strandhandtücher an der Ausgabe. "
             "Das sind nicht die Badetücher auf dem Zimmer."
+        ),
+        "hotel_info_soft_followup_request_form_hint": (
+            "Für eine Zustellung aufs Zimmer oder einen konkreten Anfrage-Eintrag schreiben Sie im Chat deutlich "
+            "(z. B. «brauche», «bitte schicken», «fehlt», «möchte bestellen») oder öffnen Sie das Formular unter «Anfragen» in der App."
         ),
     },
     "ru": {
@@ -345,9 +467,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "chitchat_compliment": "Спасибо за тёплые слова. Рада, что смогла помочь.",
         "chitchat_how_are_you": "Спасибо, у меня всё хорошо. Я рядом, чтобы помочь с вопросами по Kaila Beach Hotel.",
         "chitchat_cancel_command_hint": (
-            "Вы имеете в виду отмену сводки чат-формы, бронирование или что-то другое? "
-            "На экране сводки 2 — отмена; для бронирований используйте раздел «Бронирования» в приложении. "
-            "Чем ещё помочь по отелю?"
+            "Слово «отмена» может относиться к сводке чат-формы, к запросу на бронирование или к другому вопросу. "
+            "На экране сводки 2 означает отмену. "
+            "В Kaila Beach бронирования и столы оформляются лично нашими командами фронт-офиса и специалистов — "
+            "мы с удовольствием направим вас к нужной стойке. Чем ещё помочь?"
         ),
         "chitchat_confusion_generic": "Что именно пояснить? Могу подсказать, что написать про отель, запрос, неисправность или жалобу.",
         "chitchat_confusion_after_form_cancel": (
@@ -361,8 +484,9 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
             "Запись не создана. Можно снова пройти форму в чате или написать новый запрос / сообщить о неисправности."
         ),
         "session_reservation_followup_short": (
-            "Для отмены, изменений и деталей бронирования откройте раздел «Бронирования» в приложении. "
-            "Короткие фразы вроде «завтра» или «отмена» здесь нельзя привязать к вашей брони — уточните выбор в приложении."
+            "Очень короткий ответ нельзя связать с существующим бронированием здесь; укажите, пожалуйста, конкретную дату или конкретный запрос. "
+            "По общим вопросам проживания — ресепшн; по изысканным столам à la carte — служба по работе с гостями; "
+            "по спа и массажу — La Serenite Spa — мы рядом на каждом шаге."
         ),
         "session_animation_schedule_followup": (
             "Дневное расписание анимации и активностей в приложении в разделе «Анимация и мероприятия» и в данных отеля обычно одинаковое изо дня в день; "
@@ -409,6 +533,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "complaint_noise": "Пожалуйста, сначала сообщите об этой жалобе в службу по работе с гостями. При необходимости поможет и ресепшн.",
         "complaint_cleanliness": "Пожалуйста, сначала сообщите о проблеме с чистотой в службу по работе с гостями; ресепшн также может помочь.",
         "complaint_default": "По этой жалобе, пожалуйста, сначала обратитесь в службу по работе с гостями. Также можно передать через ресепшн.",
+        "complaint_lost_property": (
+            "Утерянные вещи — ценности хранятся до одного года, прочие предметы — до шести месяцев.\n\n"
+            "За персональным сопровождением обратитесь в службу по работе с гостями или на ресепшн. "
+            "При желании заполните форму жалобы ниже и опишите ситуацию письменно — команда внимательно обработает ваше обращение."
+        ),
         "request_towel": "Пожалуйста, обратитесь на ресепшн по вопросу полотенца.",
         "request_blanket": "Пожалуйста, обратитесь на ресепшн по вопросу одеяла.",
         "request_water": "Чтобы привезли воду или питьевую воду в номер, обратитесь на ресепшн; команда организует доставку.",
@@ -418,11 +547,27 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "request_guest_relations_contact": "По этому вопросу наиболее подходящий отдел — служба по работе с гостями. Также можно обратиться через ресепшн.",
         "request_transfer": "По вопросам трансфера, пожалуйста, обратитесь на ресепшн; они помогут с организацией.",
         "request_lunch_box": "Для заказа Lunch Box, пожалуйста, сообщите на ресепшн не позднее 20:00.",
+        "request_spa_booking_contact": (
+            "По массажу, ритуалам и платным процедурам в La Serenite Spa просим обратиться напрямую к нашим спа-хостам — "
+            "они лично подберут время и формат. Ресепшн по желанию деликатно соединит вас со спа. "
+            "Для записи в спа и вопросов — внутренний номер отеля: 5025."
+        ),
+        "request_ala_carte_reservation": (
+            "Платные ужины и столы à la carte оформляются с особым вниманием службой по работе с гостями. "
+            "Обратитесь туда напрямую; при желании ресепшн организует бесшовное знакомство с командой."
+        ),
+        "request_premium_reservation_reception": (
+            "Для премиальных мест и вечеров изысканной кухни ресепшн координирует наилучшее направление "
+            "и представит нужному ресторану или команде."
+        ),
         "request_default": "Пожалуйста, передайте этот запрос на ресепшн.",
         "reservation_early_checkin": "Пожалуйста, обратитесь на ресепшн по вопросу раннего заезда.",
         "reservation_late_checkout": "Пожалуйста, обратитесь на ресепшн по вопросу позднего выезда.",
         "reservation_room_change": "Пожалуйста, обратитесь на ресепшн по вопросу смены номера.",
-        "reservation_default": "Пожалуйста, обратитесь на ресепшн по вашему запросу по бронированию.",
+        "reservation_default": (
+            "В Kaila Beach бронирования и столы оформляются лично командами фронт-офиса и специалистов — с вниманием и с учётом ваших пожеланий. "
+            "Проживание и общие вопросы — ресепшн; столы à la carte — служба по работе с гостями; спа и массаж — La Serenite Spa — рядом для комфортного и изысканного отдыха."
+        ),
         "special_need_celiac": "Пожалуйста, сообщите об этом в службу по работе с гостями; необходимая поддержка может быть согласована с кухней.",
         "special_need_vegan": "Пожалуйста, сообщите о ваших пищевых предпочтениях в службу по работе с гостями; подходящие варианты могут быть предложены.",
         "special_need_allergy": "Пожалуйста, сообщите об аллергии в службу по работе с гостями; необходимая поддержка будет организована.",
@@ -432,9 +577,22 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "guest_notification_policy_hint": "Уведомление для отеля можно отправить в чате, выбрав категорию; в следующем сообщении можно написать, например, глютен, аллергия или праздник.",
         "fixed_restaurant_info": "- Основной ресторан: завтрак 07:00-10:00, поздний завтрак 10:00-10:30, обед 12:30-14:00, ужин 19:00-21:00, мини-ночной буфет 23:30-00:00.\n- La Terrace A La Carte: 18:30-20:30 (по записи, платно).\n- Sinton BBQ: 13:00-22:00 (по понедельникам закрыт).\nСнеки и кафе:\n- Dolphin Snack 12:00-16:00\n- Beach Imbiss Snack 12:00-16:00\n- Beach Imbiss напитки 10:00-17:00\n- Gusto Snack 11:00-18:00\n- Libum Cafe 11:00-18:00\n- Moss Beach Restaurant & Bar 10:00-19:00\nБары:\n- Pool Bar 10:00-00:00\n- Мороженое 15:00-17:00\n- Lobby Bar 10:00-00:00\n- Aqua Bar 10:00-18:00 и 20:00-23:00\n- Dolphin Bar 10:00-17:00",
         "fixed_pool_beach_info": "- Есть частный пляж.\n- Шезлонги, зонты и пляжные полотенца бесплатно.\n- Пляж: 08:30-18:30.\nБассейны:\n- Три открытых: Relax Pool 08:30-18:30, Aquapark 10:00-12:00 и 14:00-16:00, Dolphin Pool 08:30-18:30.\n- Крытый (спа): 08:00-19:00.\n- Мелководье для детей в зоне аквапарка / открытых бассейнов.\n- Спасатели у бассейнов и на море.\n- Полотенца для бассейна и пляжа бесплатно.",
-        "fixed_spa_info": "- La Serenite Spa работает с 09:00 до 19:00.\nБесплатные зоны:\n- Сауна\n- Турецкий хаммам\n- Паровая комната\n- Крытый бассейн\nПлатные услуги:\n- Массаж\n- Пилинг\n- Уход за кожей\n- Другие процедуры\nПримечание: Базовое использование влажных зон бесплатно; профессиональные процедуры и терапия — платные.\n\nАктуальные прайсы и PDF по процедурам в чат длинным текстом не выкладываются; премиум-контент — в разделе приложения «Spa & wellness». Откройте страницу кнопкой ниже.",
+        "fixed_spa_info": "- La Serenite Spa работает с 09:00 до 19:00.\nБесплатные зоны:\n- Сауна\n- Турецкий хаммам\n- Паровая комната\n- Крытый бассейн\nПлатные услуги:\n- Массаж\n- Пилинг\n- Уход за кожей\n- Другие процедуры\nПримечание: Базовое использование влажных зон бесплатно; профессиональные процедуры и терапия — платные.\n\nАктуальные прайсы и PDF по процедурам в чат длинным текстом не выкладываются; премиум-контент — в разделе приложения «Spa & wellness». Откройте страницу кнопкой ниже.\n\nДля записи в спа или вопросов — внутренний номер отеля: 5025.",
+        "fixed_kuafor_info": (
+            "В отеле есть услуги парикмахера. По ценам, записям и парикмахерским услугам свяжитесь с г-ном Савашем: +90 546 608 16 72."
+        ),
+        "wayfinding_rag_miss_guest_relations": (
+            "Сейчас не могу подтвердить расположение этого места одной проверенной фразой из базы. "
+            "Для персональной и актуальной навигации обратитесь, пожалуйста, в службу по работе с гостями — "
+            "команда поможет с вниманием и тактом. При желании откройте раздел «Где» в приложении с картой."
+        ),
+        "fixed_transfer_module_hint": (
+            "В отеле Kaila Beach доступен трансфер; для согласования встречи и маршрута обратитесь, пожалуйста, на ресепшн / в службу приёма. "
+            "Актуальные тарифы, варианты транспорта и примеры маршрутов в чат длинным текстом не выкладываются; премиум-контент — в модуле «Трансфер».\n\n"
+            "Откройте его кнопкой ниже."
+        ),
         "fixed_spa_prices_module_hint": "Цены на спа и процедуры в чате не перечисляются. Актуальный прайс и пакеты только в модуле «Spa & wellness» — перейдите по кнопке ниже.",
-        "fixed_restaurants_bars_module_hint": "Меню Lobby Bar, меню Moss Beach Restaurant и прайсы барных напитков / импортного алкоголя в чате длинным текстом не показываются; актуальные PDF — в модуле «Рестораны и бары». Откройте раздел кнопкой ниже. (Общие часы работы точек можно спросить как «часы ресторанов» или посмотреть в том же модуле.)",
+        "fixed_restaurants_bars_module_hint": "Меню Pool Bar, меню Lobby Bar, меню Moss Beach Restaurant и прайсы барных напитков / импортного алкоголя в чате длинным текстом не показываются; актуальные PDF — в модуле «Рестораны и бары». Откройте раздел кнопкой ниже. (Общие часы работы точек можно спросить как «часы ресторанов» или посмотреть в том же модуле.)",
         "fixed_animation_info": "- Вечерние акробатические шоу, тематические вечера, живая музыка и DJ (эта часть может меняться по дням и сезону; в отдельные дни возможны дополнительные шоу).\n- Дневной график в целом стабилен: старт в 10:00, aqua gym, дартс, водное поло. Актуальный текст и время — в приложении в разделе «Анимация и мероприятия».\nДетские активности:\n- Jammies Kids Club / Mini Club: 10:00-12:30 и 14:30-17:00 (4-12 лет)\n- Mini Disco: 20:45-21:00 (4-12 лет)\n- Детская площадка: 07:00-21:00\nПримечание: Вечерние программы и спецшоу могут отличаться по дням; точное расписание — у ресепшена или на стенде анимации.",
         "fixed_outside_hotel_info": "Для рекомендаций вне отеля лучше обратиться на ресепшн — там подскажут самые актуальные и безопасные варианты. Центр Аланьи находится примерно в 3 км, доступны такси и общественный транспорт.",
         "fixed_alanya_discover_intro": "Алания — популярный средиземноморский курорт с морем, крепостью и богатой историей. Часто советуют посетить:\n\n• Пляж Клеопатры — мелкий песок и прозрачная вода\n• Красная башня и гавань — символ города\n• Крепость Алании — панорама с холма; закаты впечатляют\n• Река Дим и зоны отдыха вглубь страны\n\nОтель в Обагёль, примерно 3 км до центра. Удобны такси и общественный транспорт. Актуальные часы работы, билеты и экскурсии лучше уточнять на ресепшене.\n\nКнопка ниже открывает раздел приложения «Откройте Аланью» с краткими текстами и фото.",
@@ -443,6 +601,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "hotel_info_soft_followup_towel": (
             "Указанное время и правила по карте относятся к пляжным/бассейновым полотенцам у выдачи у бассейна или пляжа. "
             "Это не то же самое, что полотенца в ванной номера."
+        ),
+        "hotel_info_soft_followup_request_form_hint": (
+            "Чтобы заказать доставку в номер или оформить запрос, напишите в чате явно "
+            "(например «нужно», «пришлите», «не хватает», «прошу доставить») или откройте форму в разделе «Запросы» в приложении."
         ),
     },
 }

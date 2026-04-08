@@ -1,5 +1,5 @@
 /**
- * Spa & Wellness — tek kaynak: rezervasyon formu + spa içerik modülü.
+ * Spa & Wellness — tek kaynak: spa içerik modülü + PDF menüleri.
  * Tekil hizmetler + program paketleri; süre ve fiyat seçim satırında ve içerikte gösterilir.
  */
 (function () {

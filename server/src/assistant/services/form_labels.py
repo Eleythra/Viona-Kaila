@@ -5,8 +5,180 @@ from typing import Literal, Dict
 Lang = Literal["tr", "en", "de", "ru"]
 
 
+# `js/requests/config.js` requestSections.sectionKey → `js/i18n.js` ile aynı metinler.
+REQUEST_SECTION_LABELS: Dict[str, Dict[Lang, str]] = {
+    "reqReqSecTowels": {
+        "tr": "Yastık, havlu, bornoz ve terlik",
+        "en": "Pillow, towels, bathrobe & slippers",
+        "de": "Kissen, Handtücher, Bademantel & Hausschuhe",
+        "ru": "Подушка, полотенца, халат и тапочки",
+    },
+    "reqReqSecBedding": {
+        "tr": "Çarşaf ve battaniye",
+        "en": "Sheets & blanket",
+        "de": "Bettwäsche & Decke",
+        "ru": "Бельё и одеяло",
+    },
+    "reqReqSecRoomService": {
+        "tr": "Oda hizmeti",
+        "en": "Room service",
+        "de": "Zimmerservice",
+        "ru": "Обслуживание номера",
+    },
+    "reqReqSecMinibarDrinks": {
+        "tr": "Şişe su ve çay / kahve",
+        "en": "Bottled water & tea / coffee",
+        "de": "Flaschenwasser & Tee / Kaffee",
+        "ru": "Вода в бутылках и чай / кофе",
+    },
+    "reqReqSecBathAmenities": {
+        "tr": "Tuvalet kağıdı ve şampuan / sabun",
+        "en": "Toilet paper & shampoo / soap",
+        "de": "Toilettenpapier & Shampoo / Seife",
+        "ru": "Туалетная бумага и шампунь / мыло",
+    },
+    "reqReqSecComfort": {
+        "tr": "Konfor ve klima",
+        "en": "Comfort & climate",
+        "de": "Komfort & Klima",
+        "ru": "Комфорт и климат",
+    },
+    "reqReqSecEquipment": {
+        "tr": "Ekipman",
+        "en": "Equipment",
+        "de": "Ausstattung",
+        "ru": "Оборудование",
+    },
+    "reqReqSecOther": {
+        "tr": "Diğer",
+        "en": "Other",
+        "de": "Sonstiges",
+        "ru": "Другое",
+    },
+}
+
 CATEGORY_LABELS: Dict[str, Dict[str, Dict[Lang, str]]] = {
     "request": {
+        "towel_extra": {
+            "tr": "Ek havlu",
+            "en": "Extra towels",
+            "de": "Extra Handtücher",
+            "ru": "Доп. полотенца",
+        },
+        "room_towel": {
+            "tr": "Ek oda havlusu",
+            "en": "Extra room towels",
+            "de": "Zusätzliche Zimmerhandtücher",
+            "ru": "Доп. полотенца для номера",
+        },
+        "bathrobe": {
+            "tr": "Bornoz",
+            "en": "Bathrobe",
+            "de": "Bademantel",
+            "ru": "Халат",
+        },
+        "bedding_sheet": {
+            "tr": "Çarşaf / nevresim",
+            "en": "Sheets / duvet cover",
+            "de": "Laken / Bezug",
+            "ru": "Простыни / пододеяльник",
+        },
+        "bedding_pillow": {
+            "tr": "Yastık",
+            "en": "Pillow",
+            "de": "Kissen",
+            "ru": "Подушка",
+        },
+        "bedding_blanket": {
+            "tr": "Battaniye",
+            "en": "Blanket",
+            "de": "Decke",
+            "ru": "Одеяло",
+        },
+        "room_cleaning": {
+            "tr": "Oda temizliği",
+            "en": "Room cleaning",
+            "de": "Zimmerreinigung",
+            "ru": "Уборка номера",
+        },
+        "turndown": {
+            "tr": "Yatak düzenleme",
+            "en": "Turndown service",
+            "de": "Turndown-Service",
+            "ru": "Вечерняя подготовка кровати",
+        },
+        "slippers": {
+            "tr": "Terlik",
+            "en": "Slippers",
+            "de": "Hausschuhe",
+            "ru": "Тапочки",
+        },
+        "minibar_refill": {
+            "tr": "Minibar yenileme",
+            "en": "Minibar refill",
+            "de": "Minibar auffüllen",
+            "ru": "Пополнение мини-бара",
+        },
+        "bottled_water": {
+            "tr": "Şişe su",
+            "en": "Bottled water",
+            "de": "Flaschenwasser",
+            "ru": "Бутилированная вода",
+        },
+        "tea_coffee": {
+            "tr": "Çay / kahve",
+            "en": "Tea / coffee",
+            "de": "Tee / Kaffee",
+            "ru": "Чай / кофе",
+        },
+        "toilet_paper": {
+            "tr": "Tuvalet kağıdı",
+            "en": "Toilet paper",
+            "de": "Toilettenpapier",
+            "ru": "Туалетная бумага",
+        },
+        "toiletries": {
+            "tr": "Şampuan / sabun",
+            "en": "Shampoo / soap",
+            "de": "Shampoo / Seife",
+            "ru": "Шампунь / мыло",
+        },
+        "climate_request": {
+            "tr": "Klima ayarı",
+            "en": "AC adjustment",
+            "de": "Klimaanlage einstellen",
+            "ru": "Настройка кондиционера",
+        },
+        "room_refresh": {
+            "tr": "Oda kokusu",
+            "en": "Room scent",
+            "de": "Raumduft",
+            "ru": "Аромат для номера",
+        },
+        "hanger": {
+            "tr": "Askı",
+            "en": "Hanger",
+            "de": "Kleiderbügel",
+            "ru": "Вешалка",
+        },
+        "kettle": {
+            "tr": "Su ısıtıcı",
+            "en": "Kettle",
+            "de": "Wasserkocher",
+            "ru": "Чайник",
+        },
+        "room_safe": {
+            "tr": "Kasa",
+            "en": "Safe",
+            "de": "Safe",
+            "ru": "Сейф",
+        },
+        "baby_bed": {
+            "tr": "Bebek yatağı",
+            "en": "Baby bed",
+            "de": "Babybett",
+            "ru": "Детская кроватка",
+        },
         "towel": {
             "tr": "Havlu",
             "en": "Towel",
@@ -18,12 +190,6 @@ CATEGORY_LABELS: Dict[str, Dict[str, Dict[Lang, str]]] = {
             "en": "Bedding",
             "de": "Bettwäsche",
             "ru": "Постельное бельё",
-        },
-        "room_cleaning": {
-            "tr": "Oda temizliği",
-            "en": "Room cleaning",
-            "de": "Zimmerreinigung",
-            "ru": "Уборка номера",
         },
         "minibar": {
             "tr": "Minibar",
@@ -166,6 +332,12 @@ CATEGORY_LABELS: Dict[str, Dict[str, Dict[Lang, str]]] = {
             "en": "Internet / TV",
             "de": "Internet / TV",
             "ru": "Интернет / ТВ",
+        },
+        "lost_property": {
+            "tr": "Kayıp eşya",
+            "en": "Lost property",
+            "de": "Verlorenes Eigentum / Fundsachen",
+            "ru": "Утерянные вещи",
         },
         "other": {
             "tr": "Diğer",
@@ -363,6 +535,11 @@ def _normalize_lang(lang: str | None) -> Lang:
 def category_label(intent: str, category: str, lang: str | None) -> str:
     l = _normalize_lang(lang)
     return CATEGORY_LABELS.get(intent, {}).get(category, {}).get(l, category)
+
+
+def request_section_label(section_key: str, lang: str | None) -> str:
+    l = _normalize_lang(lang)
+    return REQUEST_SECTION_LABELS.get(section_key, {}).get(l, section_key)
 
 
 def field_label(field: str, lang: str | None) -> str:

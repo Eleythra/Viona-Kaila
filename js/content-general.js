@@ -496,20 +496,20 @@
       icon: IC.cal,
       defaultOpen: false,
       title: {
-        tr: "Rezervasyon gerektiren hizmetler",
-        en: "Services requiring reservation",
-        de: "Reservierungspflichtig",
-        ru: "По предварительной записи",
+        tr: "Önceden haber gerektiren hizmetler",
+        en: "Services needing advance notice",
+        de: "Leistungen mit Voranmeldung",
+        ru: "Услуги по предварительной договорённости",
       },
       html: {
         tr:
-          "<p>A la carte ücretlidir; kullanmadan önce rezervasyon yaptırılması gerekir. A la carte restoran hizmeti: 5 gece ve üzeri konaklamalarda 1 kez ücretsizdir ve rezervasyon gereklidir.</p>",
+          "<p>A la carte ücretlidir; kullanmadan önce resepsiyon veya ilgili restoran ile önceden haber vermeniz gerekir. 5 gece ve üzeri konaklamalarda 1 kez ücretsiz kullanım hakkı olabilir; yine de önceden haber vermeniz istenir.</p>",
         en:
-          "<p>À la carte is charged; reservation is required before use. À la carte restaurant: for stays of 5 nights or more, one visit is free and reservation is still required.</p>",
+          "<p>À la carte is charged; please arrange in advance with reception or the restaurant. For stays of 5 nights or more, one complimentary visit may apply; advance notice is still requested.</p>",
         de:
-          "<p>À la carte kostenpflichtig; Reservierung erforderlich. Bei Aufenthalten ab 5 Nächten: einmal kostenfrei, dennoch Reservierung nötig.</p>",
+          "<p>À la carte kostenpflichtig; bitte vorher bei Rezeption oder Restaurant anmelden. Ab 5 Nächten kann einmal kostenfrei sein; Voranmeldung bleibt erforderlich.</p>",
         ru:
-          "<p>À la carte платно; нужна запись. При проживании от 5 ночей — один раз бесплатно, запись обязательна.</p>",
+          "<p>À la carte платно; заранее договоритесь на ресепшене или в ресторане. От 5 ночей возможно одно бесплатное посещение; предварительная договорённость всё равно нужна.</p>",
       },
     },
     {

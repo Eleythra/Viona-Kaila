@@ -19,6 +19,8 @@ class ChatMeta(BaseModel):
             "open_alanya_module",
             "open_spa_module",
             "open_restaurants_bars_module",
+            "open_transfer_module",
+            "open_where_module",
         ]
         target_department: Literal["reception", "guest_relations"] | None = None
         priority: Literal["low", "medium", "high"] | None = None

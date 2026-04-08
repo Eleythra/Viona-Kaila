@@ -534,6 +534,10 @@
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 10px 14px;
 }
+.home-global-grid--single {
+  grid-template-columns: 1fr;
+  max-width: 520px;
+}
 .home-global-card {
   padding: 10px 12px;
   border-radius: 12px;
@@ -1223,17 +1227,129 @@
 
 /* Ana sayfa — rapor API uyarısı */
 .dashboard-api-warning {
-  margin: 0;
-  padding: 10px 14px;
-  border-radius: 0;
-  border-bottom: 1px solid rgba(248, 113, 113, 0.35);
-  background: rgba(127, 29, 29, 0.25);
+  margin: 0 0 10px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  background: linear-gradient(145deg, rgba(127, 29, 29, 0.32) 0%, rgba(40, 20, 24, 0.55) 100%);
   color: #fecaca;
-  font-size: 0.88rem;
-  line-height: 1.45;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
 }
 .dashboard-api-warning.hidden {
   display: none;
+}
+
+/* WhatsApp operasyon — ana uygulama ile uyumlu premium durum kartı */
+.dashboard-whatsapp-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin: 0 0 12px;
+  padding: 14px 16px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(46, 184, 199, 0.28);
+  border-top: 1px solid rgba(212, 168, 83, 0.38);
+  background:
+    linear-gradient(180deg, rgba(212, 168, 83, 0.1) 0%, transparent 38%),
+    linear-gradient(155deg, rgba(46, 184, 199, 0.12) 0%, rgba(14, 22, 34, 0.88) 52%, rgba(10, 16, 26, 0.92) 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 10px 32px rgba(0, 0, 0, 0.18);
+  text-align: left;
+}
+.dashboard-whatsapp-status__icon {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  margin-top: 2px;
+  border-radius: 11px;
+  background: linear-gradient(145deg, rgba(46, 184, 199, 0.35) 0%, rgba(46, 184, 199, 0.08) 100%);
+  border: 1px solid rgba(46, 184, 199, 0.4);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset;
+  position: relative;
+}
+.dashboard-whatsapp-status__icon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(186, 240, 248, 0.95);
+  box-shadow: 0 0 0 3px rgba(46, 184, 199, 0.25);
+}
+.dashboard-whatsapp-status--loading .dashboard-whatsapp-status__icon::after {
+  animation: adminWaPulse 1.1s ease-in-out infinite;
+}
+.dashboard-whatsapp-status--unavailable .dashboard-whatsapp-status__icon::after,
+.dashboard-whatsapp-status--warn:not(.dashboard-whatsapp-status--loading) .dashboard-whatsapp-status__icon::after {
+  background: rgba(253, 186, 116, 0.95);
+  box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.28);
+}
+.dashboard-whatsapp-status--ok .dashboard-whatsapp-status__icon::after {
+  background: rgba(167, 243, 208, 0.98);
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.25);
+}
+@keyframes adminWaPulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-whatsapp-status--loading .dashboard-whatsapp-status__icon::after {
+    animation: none;
+    opacity: 0.85;
+  }
+}
+.dashboard-whatsapp-status__copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dashboard-whatsapp-status__kicker {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(200, 244, 252, 0.88);
+}
+.dashboard-whatsapp-status__detail {
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.55;
+  color: rgba(236, 242, 250, 0.94);
+  text-wrap: balance;
+}
+.dashboard-whatsapp-status--ok .dashboard-whatsapp-status__detail {
+  color: rgba(224, 250, 236, 0.95);
+}
+.dashboard-whatsapp-status--warn .dashboard-whatsapp-status__detail,
+.dashboard-whatsapp-status--unavailable .dashboard-whatsapp-status__detail {
+  color: rgba(254, 243, 199, 0.96);
+}
+.dashboard-whatsapp-status--ok {
+  border-color: rgba(52, 211, 153, 0.32);
+}
+.dashboard-whatsapp-status--warn {
+  border-color: rgba(251, 146, 60, 0.35);
+  background:
+    linear-gradient(180deg, rgba(212, 168, 83, 0.12) 0%, transparent 40%),
+    linear-gradient(155deg, rgba(120, 53, 15, 0.22) 0%, rgba(18, 22, 30, 0.9) 55%, rgba(12, 16, 24, 0.94) 100%);
+}
+.dashboard-whatsapp-status--unavailable.dashboard-whatsapp-status--warn {
+  border-top-color: rgba(251, 146, 60, 0.45);
 }
 
 /* —— Loglar sekmesi —— */
@@ -1665,7 +1781,7 @@
   font-size: 0.78rem;
   font-weight: 600;
 }
-/* Beklemede: sarı; olumlu: yeşil; olumsuz: kırmızı (istek / şikayet / arıza / rezervasyon) */
+/* Beklemede: sarı; olumlu: yeşil; olumsuz: kırmızı (istek / şikayet / arıza / restoran-spa talepleri) */
 .status-new,
 .status-pending,
 .status-in_progress,
@@ -1682,6 +1798,75 @@
 }
 .status-cancelled { background: #2a323c; color: #9aa7b8; }
 .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.btn-wa-resend {
+  border-color: rgba(34, 197, 94, 0.42);
+  background: linear-gradient(180deg, #14532d 0%, #0f3d24 100%);
+  color: #d1fae5;
+}
+.btn-wa-resend:hover:not(:disabled) {
+  border-color: rgba(74, 222, 128, 0.5);
+  background: #166534;
+}
+
+/* WhatsApp yeniden gönder — açık onay modalı (yanlış tıklama / çift gönderim önleme) */
+.admin-wa-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 120000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+.admin-wa-modal.hidden {
+  display: none !important;
+}
+.admin-wa-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 8, 14, 0.72);
+  backdrop-filter: blur(4px);
+}
+.admin-wa-modal__card {
+  position: relative;
+  z-index: 1;
+  max-width: 420px;
+  width: 100%;
+  padding: 22px 22px 20px;
+  border-radius: var(--admin-radius, 16px);
+  border: 1px solid rgba(46, 184, 199, 0.26);
+  border-top: 1px solid rgba(212, 168, 83, 0.4);
+  background:
+    linear-gradient(180deg, rgba(212, 168, 83, 0.09) 0%, transparent 42%),
+    linear-gradient(165deg, rgba(46, 184, 199, 0.1) 0%, rgba(14, 20, 32, 0.96) 55%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 24px 56px rgba(0, 0, 0, 0.48);
+}
+.admin-wa-modal__title {
+  margin: 0 0 12px;
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  color: #f0f7ff;
+  text-wrap: balance;
+}
+.admin-wa-modal__body {
+  margin: 0 0 18px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.58;
+  color: rgba(200, 216, 236, 0.92);
+}
+.admin-wa-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 .btn-small {
   border: 1px solid rgba(51, 72, 96, 0.95);
   background: linear-gradient(180deg, #182536 0%, #152131 100%);
@@ -2013,7 +2198,7 @@
   font-weight: 500;
   line-height: 1.45;
 }
-/* Rezervasyon takip — kart + günlük liste */
+/* Restoran · spa · à la carte talep panosu — kart + günlük liste */
 .reservation-shell {
   display: grid;
   gap: 14px;
@@ -3274,6 +3459,7 @@
   font-weight: 700;
   letter-spacing: -0.02em;
   color: #f0f4fc;
+  overflow-wrap: break-word;
 }
 .eval-section__cat {
   text-align: right;
@@ -3344,6 +3530,54 @@
   flex-direction: column;
   gap: 12px;
 }
+.eval-subgroup {
+  border-radius: 14px;
+  border: 1px solid rgba(46, 184, 199, 0.14);
+  background: rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+}
+.eval-subgroup + .eval-subgroup {
+  margin-top: 4px;
+}
+.eval-subgroup__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 14px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(100deg, rgba(46, 184, 199, 0.09), transparent 65%);
+}
+.eval-subgroup__title {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #c8dcf5;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.35;
+  overflow-wrap: break-word;
+}
+.eval-subgroup__avg {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #5ee1d6;
+  white-space: nowrap;
+}
+.eval-subgroup__avg-denom {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #6b7c94;
+  margin-left: 2px;
+}
+.eval-subgroup__body {
+  padding: 12px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 .eval-question {
   padding: 10px 12px;
   border-radius: 12px;
@@ -3367,6 +3601,7 @@
   line-height: 1.45;
   color: #dce4f0;
   margin-bottom: 8px;
+  overflow-wrap: break-word;
 }
 .eval-question__meta {
   flex-shrink: 0;

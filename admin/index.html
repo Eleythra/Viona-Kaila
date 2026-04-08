@@ -12,8 +12,8 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="../css/styles.css?v=18" />
-    <link rel="stylesheet" href="styles.css?v=17" />
+    <link rel="stylesheet" href="../css/styles.css?v=30" />
+    <link rel="stylesheet" href="styles.css?v=23" />
   </head>
   <body class="admin-body">
     <section id="admin-login" class="admin-login">
@@ -38,20 +38,14 @@
         <div class="admin-sidebar__body">
           <h1>Viona Admin</h1>
           <nav class="admin-nav" aria-label="Ana menü">
-            <button type="button" data-tab="home" title="Giriş özeti ve raporlar">Ana sayfa</button>
-            <button type="button" data-tab="requests" title="İstek kayıtlarını açar">İstekler</button>
-            <button type="button" data-tab="complaints" title="Şikayet kayıtlarını açar">Şikayetler</button>
-            <button type="button" data-tab="faults" title="Arıza kayıtlarını açar">Arızalar</button>
-            <button type="button" data-tab="guest_notifications" title="Misafir bildirim kayıtlarını açar">Misafir bildirimleri</button>
-            <button type="button" data-tab="reservations" data-res-subtab="overview" title="Tüm rezervasyonların günlük listesi ve raporu">Rezervasyonlar</button>
-            <div class="admin-nav-sub" aria-label="Rezervasyon alt sekmeleri">
-              <button type="button" data-tab="reservations" data-res-subtab="laTerrace" title="La Terrace rezervasyonlarını filtreler">La Terrace A La Carte</button>
-              <button type="button" data-tab="reservations" data-res-subtab="sinton" title="Sinton rezervasyonlarını filtreler">Sinton BBQ Restaurant</button>
-              <button type="button" data-tab="reservations" data-res-subtab="spa" title="Spa & wellness rezervasyonlarını filtreler">Spa & wellness</button>
-            </div>
-            <button type="button" data-tab="evaluations" title="Misafir anket özeti">Değerlendirmeler</button>
-            <button type="button" data-tab="logs" title="Sohbet günlükleri ve kalite incelemesi">Loglar</button>
-            <button type="button" data-tab="pdf-report" title="PDF rapor oluşturma ekranını açar">Rapor</button>
+            <button type="button" data-tab="home" aria-controls="tab-dashboard" title="Giriş özeti ve raporlar">Ana sayfa</button>
+            <button type="button" data-tab="requests" aria-controls="tab-requests" title="İstek kayıtlarını açar">İstekler</button>
+            <button type="button" data-tab="complaints" aria-controls="tab-complaints" title="Şikayet kayıtlarını açar">Şikayetler</button>
+            <button type="button" data-tab="faults" aria-controls="tab-faults" title="Arıza kayıtlarını açar">Arızalar</button>
+            <button type="button" data-tab="guest_notifications" aria-controls="tab-guest-notifications" title="Misafir bildirim kayıtlarını açar">Misafir bildirimleri</button>
+            <button type="button" data-tab="evaluations" aria-controls="tab-evaluations" title="Misafir anket özeti">Değerlendirmeler</button>
+            <button type="button" data-tab="logs" aria-controls="tab-logs" title="Sohbet günlükleri ve kalite incelemesi">Loglar</button>
+            <button type="button" data-tab="pdf-report" aria-controls="tab-pdf-report" title="PDF rapor oluşturma ekranını açar">Rapor</button>
           </nav>
         </div>
         <footer class="admin-sidebar__footer">
@@ -70,6 +64,18 @@
             <div class="home-panel__body home-panel__body--flush">
               <p id="dashboard-api-warning" class="dashboard-api-warning hidden" role="status" aria-hidden="true"></p>
               <p id="dashboard-merge-warning" class="dashboard-api-warning hidden" role="status" aria-hidden="true"></p>
+              <div
+                id="dashboard-whatsapp-status"
+                class="dashboard-whatsapp-status"
+                role="status"
+                aria-live="polite"
+              >
+                <span class="dashboard-whatsapp-status__icon" aria-hidden="true"></span>
+                <div class="dashboard-whatsapp-status__copy">
+                  <span class="dashboard-whatsapp-status__kicker">WhatsApp · Operasyon</span>
+                  <span id="dashboard-whatsapp-status-detail" class="dashboard-whatsapp-status__detail"></span>
+                </div>
+              </div>
               <div id="home-top-strip" class="home-top-strip" aria-label="Özet göstergeler"></div>
             </div>
           </section>
@@ -177,22 +183,14 @@
           <div id="list-guest-notifications" class="admin-gn-list-panel" role="tabpanel"></div>
           <div id="list-late-checkouts" class="admin-gn-list-panel hidden" role="tabpanel"></div>
         </section>
-        <section id="tab-reservations" class="admin-tab hidden">
-          <div class="section-head">
-            <h2>Rezervasyonlar</h2>
-            <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
-          </div>
-          <p class="section-lead">Genel görünüm: günlük özet ve tablo. Alt menüdeki sekmeler: tek mekân yönetimi. <span class="admin-sync-hint">Sekme açıkken liste periyodik yenilenir.</span></p>
-          <p id="reservation-nav-status" class="reservation-nav-status">Aktif görünüm: Rezervasyonlar</p>
-          <div id="list-reservations"></div>
-        </section>
-
         <section id="tab-evaluations" class="admin-tab hidden">
           <div class="section-head">
             <h2>Değerlendirmeler</h2>
             <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
           </div>
-          <p class="section-lead">Anket ortalamaları (1–5). Dönem için tarih seçin.</p>
+          <p class="section-lead">
+            Misafir uygulaması «Deneyiminizi Değerlendirin» anketi (1–5). Her başlık ayrı gönderilir; yemek ve havuz/plajda alt alanlar ayrı kayıt oluşturur. Dönem için tarih seçin.
+          </p>
           <div class="eval-toolbar glass-block">
             <label class="eval-toolbar__field">Başlangıç <input type="date" id="eval-date-from" /></label>
             <label class="eval-toolbar__field">Bitiş <input type="date" id="eval-date-to" /></label>
@@ -301,10 +299,6 @@
                   <span class="logs-intent-card__desc">Operasyonel talep</span>
                 </div>
                 <div class="logs-intent-card" role="listitem">
-                  <span class="logs-intent-card__code">reservation</span>
-                  <span class="logs-intent-card__desc">Rezervasyon veya ilgili soru</span>
-                </div>
-                <div class="logs-intent-card" role="listitem">
                   <span class="logs-intent-card__code">special_need</span>
                   <span class="logs-intent-card__desc">Özel ihtiyaç, diyet, alerji</span>
                 </div>
@@ -366,7 +360,6 @@
                 <option value="fault_report">fault_report — arıza</option>
                 <option value="complaint">complaint — şikâyet</option>
                 <option value="request">request — talep</option>
-                <option value="reservation">reservation — rezervasyon</option>
                 <option value="special_need">special_need — özel ihtiyaç</option>
                 <option value="guest_notification">guest_notification — oda/misafir bildirimi</option>
                 <option value="hotel_info">hotel_info — otel bilgisi</option>
@@ -408,15 +401,13 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" crossorigin="anonymous"></script>
-    <!-- Misafir formlarıyla aynı kaynak: spa-wellness-catalog.js her zaman config.js öncesi; kopya admin/js/config yok. -->
     <script src="../js/viona-backend-url.js?v=11"></script>
     <script src="../js/viona-api-resolve.js?v=11"></script>
     <script src="../js/api-config.js?v=12"></script>
-    <script src="../js/spa-wellness-catalog.js?v=2"></script>
-    <script src="../js/requests/config.js?v=13"></script>
+    <script src="../js/requests/config.js?v=20"></script>
     <script src="../js/hotel-room-numbers.js?v=1"></script>
     <script src="js/data-adapter.js?v=14"></script>
-    <script src="js/ui.js?v=32"></script>
-    <script src="js/app.js?v=30"></script>
+    <script src="js/ui.js?v=45"></script>
+    <script src="js/app.js?v=37"></script>
   </body>
 </html>

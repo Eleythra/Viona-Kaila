@@ -22,11 +22,13 @@ function routeErr(res, error, fallbackMsg) {
 router.post("/", async (req, res) => {
   try {
     const result = await createGuestRequest(req.body || {});
-    return res.status(201).json({
+    const body = {
       ok: true,
       id: String(result.id),
       bucket: result.bucket,
-    });
+    };
+    if (result.whatsapp != null) body.whatsapp = result.whatsapp;
+    return res.status(201).json(body);
   } catch (error) {
     return routeErr(res, error, "guest_request_create_failed");
   }

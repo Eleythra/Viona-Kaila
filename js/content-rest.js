@@ -45,6 +45,16 @@
 
   var SECTIONS = [
     {
+      type: "zoneStart",
+      variant: "dining",
+      title: {
+        tr: "Restoranlar ve gün içi",
+        en: "Restaurants & daytime dining",
+        de: "Restaurants & Tagesgastronomie",
+        ru: "Рестораны и дневное питание",
+      },
+    },
+    {
       type: "card",
       img: "assets/images/rest/anarestaurant-8f4cde02-6c41-4770-9b8c-041525cdc4c9.png",
       title: {
@@ -65,7 +75,7 @@
           time: "07:00 – 10:00",
           format: { tr: "Açık büfe", en: "Open buffet", de: "Buffet", ru: "Шведский стол" },
           charge: { tr: "Ücretsiz", en: "Included", de: "Inklusive", ru: "Включено" },
-          res: { tr: "Rezervasyon gerekmiyor", en: "No reservation", de: "Keine Reservierung", ru: "Без записи" },
+          res: { tr: "Önceden haber gerekmez", en: "No advance notice needed", de: "Keine Voranmeldung nötig", ru: "Без предварительной договорённости" },
           detail: {
             tr: "Açık büfe servis ve alkolsüz içecekler.",
             en: "Buffet service and non-alcoholic drinks.",
@@ -78,7 +88,7 @@
           time: "10:00 – 10:30",
           format: { tr: "Azaltılmış açık büfe", en: "Reduced buffet", de: "Reduziertes Buffet", ru: "Сокращённый стол" },
           charge: { tr: "Ücretsiz", en: "Included", de: "Inklusive", ru: "Включено" },
-          res: { tr: "Rezervasyon gerekmiyor", en: "No reservation", de: "Keine Reservierung", ru: "Без записи" },
+          res: { tr: "Önceden haber gerekmez", en: "No advance notice needed", de: "Keine Voranmeldung nötig", ru: "Без предварительной договорённости" },
           detail: {
             tr: "Azaltılmış açık büfe ve alkolsüz içecekler.",
             en: "Reduced buffet and non-alcoholic drinks.",
@@ -91,7 +101,7 @@
           time: "12:30 – 14:00",
           format: { tr: "Açık büfe", en: "Open buffet", de: "Buffet", ru: "Шведский стол" },
           charge: { tr: "Ücretsiz", en: "Included", de: "Inklusive", ru: "Включено" },
-          res: { tr: "Rezervasyon gerekmiyor", en: "No reservation", de: "Keine Reservierung", ru: "Без записи" },
+          res: { tr: "Önceden haber gerekmez", en: "No advance notice needed", de: "Keine Voranmeldung nötig", ru: "Без предварительной договорённости" },
           detail: {
             tr: "Açık büfe servis ve yerel alkollü / alkolsüz içecekler.",
             en: "Buffet with local alcoholic and non-alcoholic drinks.",
@@ -104,7 +114,7 @@
           time: "19:00 – 21:00",
           format: { tr: "Açık büfe", en: "Open buffet", de: "Buffet", ru: "Шведский стол" },
           charge: { tr: "Ücretsiz", en: "Included", de: "Inklusive", ru: "Включено" },
-          res: { tr: "Rezervasyon gerekmiyor", en: "No reservation", de: "Keine Reservierung", ru: "Без записи" },
+          res: { tr: "Önceden haber gerekmez", en: "No advance notice needed", de: "Keine Voranmeldung nötig", ru: "Без предварительной договорённости" },
           detail: {
             tr: "Açık büfe servis ve yerel alkollü / alkolsüz içecekler.",
             en: "Buffet with local alcoholic and non-alcoholic drinks.",
@@ -117,7 +127,7 @@
           time: "23:30 – 00:00",
           format: { tr: "Gece servisi", en: "Night service", de: "Nachtservice", ru: "Ночное обслуживание" },
           charge: { tr: "Ücretsiz", en: "Included", de: "Inklusive", ru: "Включено" },
-          res: { tr: "Rezervasyon gerekmiyor", en: "No reservation", de: "Keine Reservierung", ru: "Без записи" },
+          res: { tr: "Önceden haber gerekmez", en: "No advance notice needed", de: "Keine Voranmeldung nötig", ru: "Без предварительной договорённости" },
           detail: {
             tr: "Gece çorbası ve mini kahvaltı büfesi.",
             en: "Night soup and mini breakfast buffet.",
@@ -152,7 +162,7 @@
           time: "12:00 – 16:00",
           format: { tr: "Hızlı servis · hafif atıştırmalık", en: "Quick service · light snacks", de: "Schnellservice", ru: "Быстрое обслуживание" },
           charge: { tr: "Ücretsiz", en: "Included", de: "Inklusive", ru: "Включено" },
-          res: { tr: "Rezervasyon gerekmiyor", en: "No reservation", de: "Keine Reservierung", ru: "Без записи" },
+          res: { tr: "Önceden haber gerekmez", en: "No advance notice needed", de: "Keine Voranmeldung nötig", ru: "Без предварительной договорённости" },
           detail: {
             tr: "Pizza, hamburger, hot dog, nugget, patates kızartması ve çeşitli hafif atıştırmalıklar.",
             en: "Pizza, burgers, hot dogs, nuggets, fries and assorted light snacks.",
@@ -178,7 +188,7 @@
           time: "12:00 – 16:00",
           format: { tr: "Hızlı servis", en: "Quick service", de: "Schnellservice", ru: "Быстрое обслуживание" },
           charge: { tr: "Ücretsiz", en: "Included", de: "Inklusive", ru: "Включено" },
-          res: { tr: "Rezervasyon gerekmiyor", en: "No reservation", de: "Keine Reservierung", ru: "Без записи" },
+          res: { tr: "Önceden haber gerekmez", en: "No advance notice needed", de: "Keine Voranmeldung nötig", ru: "Без предварительной договорённости" },
           detail: {
             tr: "Patates kızartması, sosisli sandviç, gözleme.",
             en: "Fries, sausage sandwich, gözleme.",
@@ -191,7 +201,7 @@
           time: "10:00 – 17:00",
           format: { tr: "İçecek servisi", en: "Drinks service", de: "Getränke", ru: "Напитки" },
           charge: { tr: "Ücretsiz", en: "Included", de: "Inklusive", ru: "Включено" },
-          res: { tr: "Rezervasyon gerekmiyor", en: "No reservation", de: "Keine Reservierung", ru: "Без записи" },
+          res: { tr: "Önceden haber gerekmez", en: "No advance notice needed", de: "Keine Voranmeldung nötig", ru: "Без предварительной договорённости" },
           detail: {
             tr: "Bira, çay, kahve, konsantre meyve suyu, gazlı içecekler, su, ayran.",
             en: "Beer, tea, coffee, concentrated juices, soft drinks, water, ayran.",
@@ -212,7 +222,7 @@
           time: "11:00 – 18:00",
           format: { tr: "Masaya servis", en: "Table service", de: "Bedienung", ru: "К столу" },
           charge: { tr: "Ücretsiz", en: "Included", de: "Inklusive", ru: "Включено" },
-          res: { tr: "Rezervasyon gerekmiyor", en: "No reservation", de: "Keine Reservierung", ru: "Без записи" },
+          res: { tr: "Önceden haber gerekmez", en: "No advance notice needed", de: "Keine Voranmeldung nötig", ru: "Без предварительной договорённости" },
           detail: {
             tr: "Atıştırmalık yiyecekler.",
             en: "Snack foods.",
@@ -238,7 +248,7 @@
           time: "11:00 – 18:00",
           format: { tr: "Self servis", en: "Self-service", de: "Selbstbedienung", ru: "Самообслуживание" },
           charge: { tr: "Ücretsiz", en: "Included", de: "Inklusive", ru: "Включено" },
-          res: { tr: "Rezervasyon gerekmiyor", en: "No reservation", de: "Keine Reservierung", ru: "Без записи" },
+          res: { tr: "Önceden haber gerekmez", en: "No advance notice needed", de: "Keine Voranmeldung nötig", ru: "Без предварительной договорённости" },
           detail: {
             tr: "Çay, kahve, konsantre meyve suyu, gazlı içecekler, su; pasta, kek, kurabiye çeşitleri; atıştırmalık yiyecekler.",
             en: "Tea, coffee, concentrated juices, soft drinks, water; cakes, pastries, cookies; snacks.",
@@ -275,7 +285,7 @@
           time: "10:00 – 19:00",
           format: { tr: "Bar ve snack servisi", en: "Bar and snack service", de: "Bar- und Snackservice", ru: "Бар и закуски" },
           charge: { tr: "Ücretli", en: "Paid", de: "Kostenpflichtig", ru: "Платно" },
-          res: { tr: "Rezervasyon gerekmiyor", en: "Reservation required", de: "Reservierung nötig", ru: "Нужна запись" },
+          res: { tr: "Yoğunluk durumunda önceden haber verin", en: "Busy times: call ahead", de: "Zu Stoßzeiten bitte vorher melden", ru: "В часы пик лучше заранее договориться" },
           detail: {
             tr: "Ev yapımı yiyecekler; alkollü ve alkolsüz içecekler.",
             en: "Homemade food; alcoholic and non-alcoholic drinks.",
@@ -285,9 +295,11 @@
         },
       ],
     },
+    { type: "zoneEnd" },
     {
-      type: "heading",
-      key: {
+      type: "zoneStart",
+      variant: "bars",
+      title: {
         tr: "Barlar",
         en: "Bars",
         de: "Bars",
@@ -296,6 +308,12 @@
     },
     {
       type: "barExtras",
+      blockTitle: {
+        tr: "İthal içecekler · ücretli liste",
+        en: "Imported drinks · paid price list",
+        de: "Importgetränke · kostenpflichtige Preisliste",
+        ru: "Импортные напитки · платный прайс",
+      },
       intro: {
         tr: "İthal içeceklerin güncel fiyatları PDF listesindedir. İndirmek için aşağıdaki düğmeye dokunun.",
         en: "Imported drinks are priced as in the PDF list. Tap the button below to download.",
@@ -322,40 +340,6 @@
           ru: "kaila-prajs-napitki-ru.pdf",
         },
       },
-    },
-    {
-      type: "card",
-      img: "assets/images/rest/poolbar-1328efd6-bd3d-4fc1-a2ad-7a54cb8ebfb8.png",
-      title: { tr: "Havuz Bar", en: "Pool Bar", de: "Pool Bar", ru: "Бар у бассейна" },
-      location: { tr: "Havuz kenarında", en: "Poolside", de: "Am Pool", ru: "У бассейна" },
-      slots: [
-        {
-          name: { tr: "Bar servisi", en: "Bar service", de: "Bar", ru: "Бар" },
-          time: "10:00 – 00:00",
-          format: { tr: "Bar servisi", en: "Bar service", de: "Bar", ru: "Обслуживание в баре" },
-          charge: { tr: "Ücretsiz", en: "Included", de: "Inklusive", ru: "Включено" },
-          res: { tr: "Rezervasyon gerekmiyor", en: "No reservation", de: "Keine Reservierung", ru: "Без записи" },
-          detail: {
-            tr: "Yerel alkollü ve alkolsüz içecekler.",
-            en: "Local alcoholic and non-alcoholic drinks.",
-            de: "Lokale alkoholische und alkoholfreie Getränke.",
-            ru: "Местные алкогольные и безалкогольные напитки.",
-          },
-        },
-        {
-          name: { tr: "Dondurma servisi", en: "Ice cream service", de: "Eisservice", ru: "Мороженое" },
-          time: "15:00 – 17:00",
-          format: { tr: "Havuz Bar", en: "At Pool Bar", de: "Pool Bar", ru: "У бассейна" },
-          charge: { tr: "Ücretsiz", en: "Included", de: "Inklusive", ru: "Включено" },
-          res: { tr: "Rezervasyon gerekmiyor", en: "No reservation", de: "Keine Reservierung", ru: "Без записи" },
-          detail: {
-            tr: "Dondurma çeşitleri.",
-            en: "Assorted ice cream.",
-            de: "Eissorten.",
-            ru: "Ассорти мороженого.",
-          },
-        },
-      ],
     },
     {
       type: "card",
@@ -389,12 +373,67 @@
           time: "10:00 – 00:00",
           format: { tr: "Bar servisi", en: "Bar service", de: "Bar", ru: "Бар" },
           charge: { tr: "Ücretsiz", en: "Included", de: "Inklusive", ru: "Включено" },
-          res: { tr: "Rezervasyon gerekmiyor", en: "No reservation", de: "Keine Reservierung", ru: "Без записи" },
+          res: { tr: "Önceden haber gerekmez", en: "No advance notice needed", de: "Keine Voranmeldung nötig", ru: "Без предварительной договорённости" },
           detail: {
             tr: "Yerel alkollü ve alkolsüz içecekler; Türk kahvesi.",
             en: "Local alcoholic and non-alcoholic drinks; Turkish coffee.",
             de: "Lokale Getränke; türkischer Kaffee.",
             ru: "Местные напитки; турецкий кофе.",
+          },
+        },
+      ],
+    },
+    {
+      type: "card",
+      img: "assets/images/rest/poolbar-1328efd6-bd3d-4fc1-a2ad-7a54cb8ebfb8.png",
+      title: { tr: "Havuz Bar", en: "Pool Bar", de: "Pool Bar", ru: "Бар у бассейна" },
+      location: { tr: "Havuz kenarında", en: "Poolside", de: "Am Pool", ru: "У бассейна" },
+      action: {
+        label: {
+          tr: "Havuz Bar menüsü (PDF)",
+          en: "Pool Bar menu (PDF)",
+          de: "Pool Bar Menü (PDF)",
+          ru: "Меню Pool Bar (PDF)",
+        },
+        hrefByLang: {
+          tr: "assets/docs/pool-bar-menu-tr.pdf",
+          en: "assets/docs/pool-bar-menu-en.pdf",
+          de: "assets/docs/pool-bar-menu-de.pdf",
+          ru: "assets/docs/pool-bar-menu-ru.pdf",
+        },
+        downloadByLang: {
+          tr: "pool-bar-menu-tr.pdf",
+          en: "pool-bar-menu-en.pdf",
+          de: "pool-bar-menu-de.pdf",
+          ru: "pool-bar-menu-ru.pdf",
+        },
+        icon: true,
+      },
+      slots: [
+        {
+          name: { tr: "Bar servisi", en: "Bar service", de: "Bar", ru: "Бар" },
+          time: "10:00 – 00:00",
+          format: { tr: "Bar servisi", en: "Bar service", de: "Bar", ru: "Обслуживание в баре" },
+          charge: { tr: "Ücretsiz", en: "Included", de: "Inklusive", ru: "Включено" },
+          res: { tr: "Önceden haber gerekmez", en: "No advance notice needed", de: "Keine Voranmeldung nötig", ru: "Без предварительной договорённости" },
+          detail: {
+            tr: "Yerel alkollü ve alkolsüz içecekler.",
+            en: "Local alcoholic and non-alcoholic drinks.",
+            de: "Lokale alkoholische und alkoholfreie Getränke.",
+            ru: "Местные алкогольные и безалкогольные напитки.",
+          },
+        },
+        {
+          name: { tr: "Dondurma servisi", en: "Ice cream service", de: "Eisservice", ru: "Мороженое" },
+          time: "15:00 – 17:00",
+          format: { tr: "Havuz Bar", en: "At Pool Bar", de: "Pool Bar", ru: "У бассейна" },
+          charge: { tr: "Ücretsiz", en: "Included", de: "Inklusive", ru: "Включено" },
+          res: { tr: "Önceden haber gerekmez", en: "No advance notice needed", de: "Keine Voranmeldung nötig", ru: "Без предварительной договорённости" },
+          detail: {
+            tr: "Dondurma çeşitleri.",
+            en: "Assorted ice cream.",
+            de: "Eissorten.",
+            ru: "Ассорти мороженого.",
           },
         },
       ],
@@ -410,7 +449,7 @@
           time: "10:00 – 18:00 · 20:00 – 23:00",
           format: { tr: "Bar servisi", en: "Bar service", de: "Bar", ru: "Бар" },
           charge: { tr: "Ücretsiz", en: "Included", de: "Inklusive", ru: "Включено" },
-          res: { tr: "Rezervasyon gerekmiyor", en: "No reservation", de: "Keine Reservierung", ru: "Без записи" },
+          res: { tr: "Önceden haber gerekmez", en: "No advance notice needed", de: "Keine Voranmeldung nötig", ru: "Без предварительной договорённости" },
           detail: {
             tr: "Yerel alkollü ve alkolsüz içecekler.",
             en: "Local alcoholic and non-alcoholic drinks.",
@@ -431,7 +470,7 @@
           time: "10:00 – 17:00",
           format: { tr: "Bar servisi", en: "Bar service", de: "Bar", ru: "Бар" },
           charge: { tr: "Ücretsiz", en: "Included", de: "Inklusive", ru: "Включено" },
-          res: { tr: "Rezervasyon gerekmiyor", en: "No reservation", de: "Keine Reservierung", ru: "Без записи" },
+          res: { tr: "Önceden haber gerekmez", en: "No advance notice needed", de: "Keine Voranmeldung nötig", ru: "Без предварительной договорённости" },
           detail: {
             tr: "Yerel alkollü ve alkolsüz içecekler.",
             en: "Local alcoholic and non-alcoholic drinks.",
@@ -441,6 +480,7 @@
         },
       ],
     },
+    { type: "zoneEnd" },
     {
       type: "rules",
       key: {
@@ -593,7 +633,13 @@
 
   function renderBarExtras(item) {
     var wrap = document.createElement("div");
-    wrap.className = "rest-bar-extras";
+    wrap.className = "rest-bar-extras rest-bar-extras--import-prices";
+    if (item.blockTitle) {
+      var bt = document.createElement("h3");
+      bt.className = "rest-bar-extras__block-title";
+      bt.textContent = T(item.blockTitle);
+      wrap.appendChild(bt);
+    }
     var intro = document.createElement("p");
     intro.className = "rest-bar-extras__intro";
     intro.textContent = T(item.intro || {});
@@ -652,19 +698,37 @@
     root.appendChild(lead);
     var stack = document.createElement("div");
     stack.className = "venue-stack";
+    var zoneEl = null;
 
     SECTIONS.forEach(function (item) {
+      if (item.type === "zoneStart") {
+        zoneEl = document.createElement("section");
+        zoneEl.className = "rest-zone rest-zone--" + item.variant;
+        if (item.title) {
+          var zt = document.createElement("h2");
+          zt.className = "rest-zone__title";
+          zt.textContent = T(item.title);
+          zoneEl.appendChild(zt);
+        }
+        stack.appendChild(zoneEl);
+        return;
+      }
+      if (item.type === "zoneEnd") {
+        zoneEl = null;
+        return;
+      }
+      var parent = zoneEl || stack;
       if (item.type === "heading") {
         var h2 = document.createElement("h2");
-        h2.className = "rest-section-title";
+        h2.className = "rest-section-title" + (item.variant === "sub" ? " rest-section-title--sub" : "");
         h2.textContent = T(item.key);
-        stack.appendChild(h2);
+        parent.appendChild(h2);
       } else if (item.type === "barExtras") {
-        stack.appendChild(renderBarExtras(item));
+        parent.appendChild(renderBarExtras(item));
       } else if (item.type === "card") {
-        stack.appendChild(renderCard(item));
+        parent.appendChild(renderCard(item));
       } else if (item.type === "rules") {
-        stack.appendChild(renderRules(item));
+        parent.appendChild(renderRules(item));
       }
     });
 

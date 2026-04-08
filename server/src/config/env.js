@@ -1,6 +1,79 @@
 import dotenv from "dotenv";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-dotenv.config();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+/** `server/` kökü — `env.js` konumuna göre (cwd’den bağımsız). */
+const serverRoot = path.resolve(__dirname, "..", "..");
+
+/** Son yüklenen `.env` özeti (health teşhisi; değer sızdırmaz). */
+let envBootstrap = {
+  loadedPath: "",
+  parsedKeyCount: 0,
+  error: "",
+};
+
+function applyParsedToProcessEnv(parsed) {
+  for (const [key, value] of Object.entries(parsed)) {
+    process.env[key] = String(value);
+  }
+}
+
+/**
+ * Önce dosyayı UTF-8 okuyup `dotenv.parse` ile `process.env`’e yazıyoruz (BOM / satır sonu edge-case).
+ * Ardından `dotenv.config` ile tekrarlı yükleme (override).
+ */
+function loadServerDotenv() {
+  const candidates = [
+    path.join(serverRoot, ".env"),
+    path.join(process.cwd(), "server", ".env"),
+    path.join(process.cwd(), ".env"),
+  ];
+  for (const p of candidates) {
+    const resolved = path.resolve(p);
+    if (!fs.existsSync(resolved)) continue;
+    try {
+      let text = fs.readFileSync(resolved, "utf8");
+      if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
+      const parsed = dotenv.parse(text);
+      applyParsedToProcessEnv(parsed);
+      dotenv.config({ path: resolved, override: true });
+      envBootstrap = {
+        loadedPath: resolved,
+        parsedKeyCount: Object.keys(parsed).length,
+        error: "",
+      };
+      return;
+    } catch (err) {
+      envBootstrap = {
+        loadedPath: resolved,
+        parsedKeyCount: 0,
+        error: String(err?.message || err),
+      };
+      /* Bir sonraki aday yolu dene. */
+    }
+  }
+  dotenv.config();
+}
+
+loadServerDotenv();
+
+/** `/api/health` teşhisi: tam yol yerine sadece dosya adı + sayılar. */
+export function getEnvBootstrapDiagnostics() {
+  const p = envBootstrap.loadedPath;
+  const base = p ? path.basename(p) : "";
+  return {
+    serverEnvLoaded: Boolean(p),
+    serverEnvFile: base || null,
+    parsedKeyCount: envBootstrap.parsedKeyCount,
+    loadError: envBootstrap.error || null,
+    cwd: process.cwd(),
+    whatsappGroupBotInProcessEnv:
+      process.env.WHATSAPP_GROUP_BOT_ENABLED !== undefined &&
+      String(process.env.WHATSAPP_GROUP_BOT_ENABLED).trim() !== "",
+  };
+}
 
 function optional(name, fallback = "") {
   const value = process.env[name];

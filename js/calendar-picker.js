@@ -1,5 +1,5 @@
 /**
- * Ay görünümlü tek günlük tarih seçici (requests rezervasyonu için).
+ * Ay görünümlü tek günlük tarih seçici (talep formları için).
  * min: YYYY-MM-DD; minMonth: YYYY-MM (önceki aylara geçişi kapatır).
  */
 (function () {

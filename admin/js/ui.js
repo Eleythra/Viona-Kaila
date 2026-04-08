@@ -7,6 +7,73 @@
     return d.innerHTML;
   }
 
+  var adminWaConfirmModalOpen = false;
+
+  function ensureAdminWaResendModal() {
+    if (document.getElementById("admin-wa-resend-modal")) return;
+    var root = document.createElement("div");
+    root.id = "admin-wa-resend-modal";
+    root.className = "admin-wa-modal hidden";
+    root.setAttribute("role", "dialog");
+    root.setAttribute("aria-modal", "true");
+    root.setAttribute("aria-labelledby", "admin-wa-resend-modal-title");
+    root.setAttribute("aria-hidden", "true");
+    root.innerHTML =
+      '<div class="admin-wa-modal__backdrop" data-wa-modal-backdrop tabindex="-1"></div>' +
+      '<div class="admin-wa-modal__card glass-block">' +
+      '<h3 id="admin-wa-resend-modal-title" class="admin-wa-modal__title">Operasyon WhatsApp’a yeniden iletilsin mi?</h3>' +
+      '<p class="admin-wa-modal__body">Bu kayıt <strong>operasyon WhatsApp grubuna</strong> bir kez daha gönderilir. Yanlışlıkla açtıysanız <strong>İptal</strong> ile kapatın. Onay sonrası sunucu mesajı yollar; lütfen çift gönderim yapmayın.</p>' +
+      '<div class="admin-wa-modal__actions">' +
+      '<button type="button" class="btn-small" data-wa-modal-cancel>İptal</button>' +
+      '<button type="button" class="btn-primary btn-small" data-wa-modal-confirm>WhatsApp’a ilet</button>' +
+      "</div></div>";
+    document.body.appendChild(root);
+  }
+
+  /** İstek / şikâyet / arıza / misafir bildirimi satırındaki WA yeniden gönder — tarayıcı confirm yerine net modal (yanlış tıklama koruması). */
+  function openAdminWhatsappResendConfirm() {
+    if (adminWaConfirmModalOpen) return Promise.resolve(false);
+    adminWaConfirmModalOpen = true;
+    return new Promise(function (resolve) {
+      ensureAdminWaResendModal();
+      var root = document.getElementById("admin-wa-resend-modal");
+      if (!root) {
+        adminWaConfirmModalOpen = false;
+        resolve(false);
+        return;
+      }
+      var backdrop = root.querySelector("[data-wa-modal-backdrop]");
+      var btnCancel = root.querySelector("[data-wa-modal-cancel]");
+      var btnOk = root.querySelector("[data-wa-modal-confirm]");
+      function finish(val) {
+        adminWaConfirmModalOpen = false;
+        root.classList.add("hidden");
+        root.setAttribute("aria-hidden", "true");
+        document.removeEventListener("keydown", onKey);
+        if (btnCancel) btnCancel.removeEventListener("click", onCancel);
+        if (btnOk) btnOk.removeEventListener("click", onOk);
+        if (backdrop) backdrop.removeEventListener("click", onCancel);
+        resolve(val);
+      }
+      function onCancel() {
+        finish(false);
+      }
+      function onOk() {
+        finish(true);
+      }
+      function onKey(ev) {
+        if (ev.key === "Escape") onCancel();
+      }
+      root.classList.remove("hidden");
+      root.setAttribute("aria-hidden", "false");
+      document.addEventListener("keydown", onKey);
+      if (btnCancel) btnCancel.addEventListener("click", onCancel);
+      if (btnOk) btnOk.addEventListener("click", onOk);
+      if (backdrop) backdrop.addEventListener("click", onCancel);
+      if (btnCancel) btnCancel.focus();
+    });
+  }
+
   /** API / DB farklı yazımları için; rozet sınıfı, filtre ve buton mantığı tek tip. */
   function normalizeBucketStatus(raw) {
     var s = String(raw == null ? "new" : raw)
@@ -43,68 +110,15 @@
     return s;
   }
 
-  /** Misafir anketi başlık / soru etiketleri (uygulamadaki TR metinlerle uyumlu). */
+  /** Misafir anketi — js/survey-schema.js ile aynı sıra ve soru anahtarları. */
   var SURVEY_EVAL_SECTIONS = [
     {
-      tabId: "food",
-      title: "Yemek & içecek",
+      tabId: "generalEval",
+      title: "Genel değerlendirme",
       questions: [
-        { id: "food_taste", label: "Ana restoran ve açık büfe lezzeti" },
-        { id: "food_variety", label: "Menü çeşitliliği (içecek / yemek)" },
-        { id: "food_presentation", label: "Servis hızı ve sunum" },
-      ],
-    },
-    {
-      tabId: "comfort",
-      title: "Oda & konfor",
-      questions: [
-        { id: "room_comfort", label: "Oda düzeni, klima ve ekipman" },
-        { id: "bed_comfort", label: "Uyku kalitesi / yatak konforu" },
-        { id: "quietness", label: "Gürültü ve dinlenme ortamı" },
-      ],
-    },
-    {
-      tabId: "cleanliness",
-      title: "Temizlik & hijyen",
-      questions: [
-        { id: "room_cleanliness", label: "Oda temizliği ve tedarik" },
-        { id: "common_area_cleanliness", label: "Lobi, koridor ve ortak alanlar" },
-      ],
-    },
-    {
-      tabId: "staff",
-      title: "Resepsiyon & ekip",
-      questions: [
-        { id: "staff_kindness", label: "Resepsiyon ilgisi ve karşılama" },
-        { id: "staff_speed", label: "Talep ve şikâyet yanıt süresi" },
-        { id: "staff_helpfulness", label: "Yardımseverlik (tüm ekip)" },
-      ],
-    },
-    {
-      tabId: "poolBeach",
-      title: "Havuz & plaj",
-      questions: [
-        { id: "pool_beach_cleanliness", label: "Havuz ve plaj düzeni" },
-        { id: "pool_beach_access", label: "Şezlong, havuz ve plaj erişimi" },
-        { id: "pool_beach_satisfaction", label: "Havuz & plaj genel memnuniyeti" },
-      ],
-    },
-    {
-      tabId: "spaWellness",
-      title: "Spa & wellness",
-      questions: [
-        { id: "spa_quality", label: "Randevu ve spa hizmet kalitesi" },
-        { id: "spa_ambience", label: "Spa ortamı ve dinlenme" },
-        { id: "spa_satisfaction", label: "Spa fiyat / değer dengesi" },
-      ],
-    },
-    {
-      tabId: "generalExperience",
-      title: "Genel deneyim",
-      questions: [
-        { id: "general_satisfaction", label: "Kaila Beach genel memnuniyet" },
-        { id: "return_again", label: "Tekrar konaklar mısınız?" },
-        { id: "recommend", label: "Başkasına tavsiye eder misiniz?" },
+        { id: "gen_stay_experience", label: "Genel konaklama deneyiminizi nasıl değerlendirirsiniz?" },
+        { id: "gen_service_quality", label: "Otel hizmetlerinin genel kalitesini nasıl değerlendirirsiniz?" },
+        { id: "gen_return_intent", label: "Otelimizi tekrar tercih etme isteğinizi nasıl değerlendirirsiniz?" },
       ],
     },
     {
@@ -118,9 +132,113 @@
         { id: "viona_overall", label: "Viona ile genel memnuniyet" },
       ],
     },
+    {
+      title: "Yemek & içecek",
+      categoryKeys: ["food_main_restaurant", "food_la_terracca", "food_snack_dolphin_gusto", "food_bars"],
+      subgroups: [
+        {
+          title: "Ana restoran (açık büfe)",
+          categoryKey: "food_main_restaurant",
+          questions: [
+            { id: "food_buffet_quality", label: "Yemek kalitesini nasıl değerlendirirsiniz?" },
+            { id: "food_buffet_variety", label: "Menü çeşitliliğini nasıl değerlendirirsiniz?" },
+            { id: "food_buffet_service", label: "Servis ve personel ilgisini nasıl değerlendirirsiniz?" },
+          ],
+        },
+        {
+          title: "A La Carte – La Terraca",
+          categoryKey: "food_la_terracca",
+          questions: [
+            { id: "food_terrace_quality", label: "Sunulan yemeklerin kalitesini nasıl değerlendirirsiniz?" },
+            { id: "food_terrace_speed", label: "Servis hızını nasıl değerlendirirsiniz?" },
+            { id: "food_terrace_overall", label: "Genel deneyiminizi nasıl değerlendirirsiniz?" },
+          ],
+        },
+        {
+          title: "Snack restoranlar – Dolphin & Gusto",
+          categoryKey: "food_snack_dolphin_gusto",
+          questions: [
+            { id: "food_snack_quality", label: "Sunulan ürünlerin kalitesini nasıl değerlendirirsiniz?" },
+            { id: "food_snack_speed", label: "Servis hızını nasıl değerlendirirsiniz?" },
+            { id: "food_snack_area", label: "Alan konforunu ve düzenini nasıl değerlendirirsiniz?" },
+          ],
+        },
+        {
+          title: "Barlar",
+          categoryKey: "food_bars",
+          questions: [
+            { id: "food_bar_quality", label: "İçecek kalitesini nasıl değerlendirirsiniz?" },
+            { id: "food_bar_speed", label: "Servis hızını nasıl değerlendirirsiniz?" },
+            { id: "food_bar_staff", label: "Personel ilgisini nasıl değerlendirirsiniz?" },
+          ],
+        },
+      ],
+    },
+    {
+      tabId: "comfort",
+      title: "Oda & konfor",
+      questions: [
+        { id: "room_comfort_overall", label: "Odanızın genel konforunu nasıl değerlendirirsiniz?" },
+        { id: "room_cleanliness", label: "Odanızın temizliğini nasıl değerlendirirsiniz?" },
+        { id: "bed_sleep_quality", label: "Yatak kalitesini ve uyku konforunu nasıl değerlendirirsiniz?" },
+        { id: "noise_insulation", label: "Gürültü seviyesini ve izolasyonu nasıl değerlendirirsiniz?" },
+      ],
+    },
+    {
+      tabId: "staff",
+      title: "Resepsiyon & ekip",
+      questions: [
+        { id: "reception_check_in_out", label: "Check-in ve check-out sürecini nasıl değerlendirirsiniz?" },
+        { id: "staff_interest_approach", label: "Personelin ilgisini ve yaklaşımını nasıl değerlendirirsiniz?" },
+        { id: "request_resolution_speed", label: "Taleplerinize çözüm hızını nasıl değerlendirirsiniz?" },
+      ],
+    },
+    {
+      title: "Havuz & plaj",
+      categoryKeys: ["pool_area", "beach_area"],
+      subgroups: [
+        {
+          title: "Havuz",
+          categoryKey: "pool_area",
+          questions: [
+            { id: "pool_cleanliness", label: "Havuz alanının temizliğini nasıl değerlendirirsiniz?" },
+            { id: "pool_lounger_space", label: "Şezlong ve dinlenme alanı yeterliliğini nasıl değerlendirirsiniz?" },
+            { id: "pool_overall", label: "Genel havuz deneyimini nasıl değerlendirirsiniz?" },
+          ],
+        },
+        {
+          title: "Plaj",
+          categoryKey: "beach_area",
+          questions: [
+            { id: "beach_cleanliness", label: "Plaj alanının temizliğini nasıl değerlendirirsiniz?" },
+            { id: "beach_lounger_space", label: "Şezlong ve dinlenme alanı yeterliliğini nasıl değerlendirirsiniz?" },
+            { id: "beach_overall", label: "Genel plaj deneyimini nasıl değerlendirirsiniz?" },
+          ],
+        },
+      ],
+    },
+    {
+      tabId: "spaWellness",
+      title: "Spa & wellness",
+      questions: [
+        { id: "spa_service_quality", label: "Hizmet kalitesini nasıl değerlendirirsiniz?" },
+        { id: "spa_staff_interest", label: "Personel ilgisini nasıl değerlendirirsiniz?" },
+        { id: "spa_overall_experience", label: "Genel spa deneyiminizi nasıl değerlendirirsiniz?" },
+      ],
+    },
+    {
+      tabId: "guestExperience",
+      title: "Misafir deneyimi & hizmet",
+      questions: [
+        { id: "guest_response_speed", label: "Taleplerinize verilen yanıt hızını nasıl değerlendirirsiniz?" },
+        { id: "guest_issue_resolution", label: "Yaşadığınız bir sorun olduysa çözüm sürecini nasıl değerlendirirsiniz?" },
+        { id: "guest_solution_focus", label: "Personelin çözüm odaklı yaklaşımını nasıl değerlendirirsiniz?" },
+        { id: "guest_hotel_care", label: "Genel olarak otelin ilgisini ve takibini nasıl değerlendirirsiniz?" },
+      ],
+    },
   ];
 
-  /** Yerel tarih YYYY-MM-DD (rezervasyon takvimlerinde geçmiş günleri kapatmak için min). */
+  /** Yerel tarih YYYY-MM-DD (tarih seçicilerde geçmiş günleri kapatmak için min). */
   function todayIsoLocal() {
     var d = new Date();
     var pad = function (n) {
@@ -201,7 +319,7 @@
     var h = "";
     function stBtn(stat, label) {
       return (
-        '<button class="btn-small js-status" data-id="' +
+        '<button type="button" class="btn-small js-status" data-id="' +
         esc(id) +
         '" data-type="' +
         esc(type) +
@@ -224,8 +342,44 @@
     } else {
       h += stBtn("new", "Beklemede");
     }
-    h += '<button class="btn-small js-delete" data-id="' + esc(id) + '" data-type="' + esc(type) + '">Sil</button>';
+    h +=
+      '<button type="button" class="btn-small btn-wa-resend js-wa-resend" data-type="' +
+      esc(type) +
+      '" data-id="' +
+      esc(id) +
+      '" title="Operasyon WhatsApp grubuna yeniden ilet">WhatsApp</button>';
+    h += '<button type="button" class="btn-small js-delete" data-id="' + esc(id) + '" data-type="' + esc(type) + '">Sil</button>';
     return h;
+  }
+
+  /** İstek / şikâyet / arıza / misafir bildirimi / geç çıkış tablolarında WA yeniden gönder. Modal onay + kısa gecikme (çift tıklama / dokunma). */
+  function wireWhatsappResendButtons(mountEl, handlers) {
+    if (!mountEl || !handlers || typeof handlers.onWhatsappResend !== "function") return;
+    mountEl.querySelectorAll(".js-wa-resend").forEach(function (btn) {
+      btn.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        var el = btn;
+        if (el.disabled || el.getAttribute("aria-busy") === "true") return;
+        void openAdminWhatsappResendConfirm().then(function (confirmed) {
+          if (!confirmed) return;
+          el.disabled = true;
+          el.setAttribute("aria-busy", "true");
+          window.setTimeout(function () {
+            var p = handlers.onWhatsappResend(el.getAttribute("data-type"), el.getAttribute("data-id"));
+            if (p && typeof p.then === "function") {
+              p.finally(function () {
+                el.disabled = false;
+                el.removeAttribute("aria-busy");
+              });
+            } else {
+              el.disabled = false;
+              el.removeAttribute("aria-busy");
+            }
+          }, 400);
+        });
+      });
+    });
   }
 
   function typeLabel(type) {
@@ -234,12 +388,61 @@
     if (type === "guest_notification") return "Misafir bildirimi";
     if (type === "late_checkout") return "Geç çıkış";
     if (type === "fault") return "Arıza";
-    if (type === "reservation") return "Rezervasyon";
+    if (type === "reservation") return "Kapalı";
     return "Kayıt";
   }
 
+  /** İstek tablosu «Kategori» sütunu: web formundaki grup başlığı (seçilemez üst başlık). */
+  var REQUEST_GROUP_LABELS = {
+    towel_extra: "Yastık, havlu, bornoz ve terlik",
+    room_towel: "Yastık, havlu, bornoz ve terlik",
+    bathrobe: "Yastık, havlu, bornoz ve terlik",
+    slippers: "Yastık, havlu, bornoz ve terlik",
+    towel: "Yastık, havlu, bornoz ve terlik",
+    bedding_sheet: "Çarşaf ve battaniye",
+    bedding_blanket: "Çarşaf ve battaniye",
+    bedding: "Çarşaf ve battaniye",
+    bedding_pillow: "Yastık, havlu, bornoz ve terlik",
+    room_cleaning: "Oda hizmeti",
+    turndown: "Oda hizmeti",
+    minibar_refill: "Şişe su ve çay / kahve",
+    bottled_water: "Şişe su ve çay / kahve",
+    tea_coffee: "Şişe su ve çay / kahve",
+    minibar: "Şişe su ve çay / kahve",
+    toilet_paper: "Tuvalet kağıdı ve şampuan / sabun",
+    toiletries: "Tuvalet kağıdı ve şampuan / sabun",
+    climate_request: "Konfor ve klima",
+    room_refresh: "Konfor ve klima",
+    hanger: "Ekipman",
+    kettle: "Ekipman",
+    room_safe: "Ekipman",
+    baby_bed: "Ekipman",
+    baby_equipment: "Ekipman",
+    room_equipment: "Ekipman",
+    other: "Diğer",
+  };
+
   var CATEGORY_LABELS = {
     request: {
+      towel_extra: "Ek havlu",
+      room_towel: "Ek oda havlusu",
+      bathrobe: "Bornoz",
+      bedding_sheet: "Çarşaf / nevresim",
+      bedding_pillow: "Yastık",
+      bedding_blanket: "Battaniye",
+      turndown: "Yatak düzenleme",
+      slippers: "Terlik",
+      minibar_refill: "Minibar yenileme",
+      bottled_water: "Şişe su",
+      tea_coffee: "Çay / kahve",
+      toilet_paper: "Tuvalet kağıdı",
+      toiletries: "Şampuan / sabun",
+      climate_request: "Klima ayarı",
+      room_refresh: "Oda kokusu",
+      hanger: "Askı",
+      kettle: "Su ısıtıcı",
+      room_safe: "Kasa",
+      baby_bed: "Bebek yatağı",
       towel: "Havlu",
       extraTowels: "Havlu",
       extra_towels: "Havlu",
@@ -272,6 +475,7 @@
       general_areas: "Genel alanlar",
       hygiene: "Hijyen",
       internet_tv: "İnternet / TV",
+      lost_property: "Kayıp eşya",
       staff: "Personel davranışı",
       other: "Diğer",
     },
@@ -351,56 +555,91 @@
     return { details: details, category: cat, raw: raw };
   }
 
-  /** Misafir formundaki seçilen tür (sadece etiket, ön ek yok). */
+  function requestFormGroupLabel(row) {
+    var ctx = requestDetailsAndCategory(row);
+    var cat = ctx.category;
+    if (!cat) return "-";
+    return REQUEST_GROUP_LABELS[cat] || (CATEGORY_LABELS.request && CATEGORY_LABELS.request[cat]) || cat;
+  }
+
+  /** Seçilen talep satırı (tür) + varsa zamanlama; grup adı değil. */
   function requestFormTypeLabel(row) {
-    if (!row || typeof row !== "object") return "—";
+    if (!row || typeof row !== "object") return "-";
     var ctx = requestDetailsAndCategory(row);
     var details = ctx.details;
     var cat = ctx.category;
     var vm = requestValueMap();
+    var catTitle = (CATEGORY_LABELS.request && CATEGORY_LABELS.request[cat]) || "";
+
+    if (cat === "room_cleaning" && details.requestType) {
+      var leg = [];
+      leg.push(vm[String(details.requestType)] || String(details.requestType));
+      if (details.timing) leg.push(vm[String(details.timing)] || String(details.timing));
+      return leg.join(" · ");
+    }
+    if (
+      catTitle &&
+      cat !== "towel" &&
+      cat !== "bedding" &&
+      cat !== "minibar" &&
+      cat !== "baby_equipment" &&
+      cat !== "room_equipment"
+    ) {
+      if (details.timing) return catTitle + " · " + (vm[String(details.timing)] || String(details.timing));
+      return catTitle;
+    }
 
     if (cat === "towel") {
       if (details.itemType) return vm[String(details.itemType)] || String(details.itemType);
-      return "—";
+      return "-";
     }
     if (cat === "bedding") {
       if (details.itemType) return vm[String(details.itemType)] || String(details.itemType);
-      return "—";
+      return "-";
     }
     if (cat === "baby_equipment" || cat === "room_equipment") {
       if (details.itemType) return vm[String(details.itemType)] || String(details.itemType);
-      return "—";
-    }
-    if (cat === "room_cleaning") {
-      var p = [];
-      if (details.requestType) p.push(vm[String(details.requestType)] || String(details.requestType));
-      if (details.timing) p.push(vm[String(details.timing)] || String(details.timing));
-      return p.length ? p.join(" · ") : "—";
+      return "-";
     }
     if (cat === "minibar") {
       if (details.requestType) return vm[String(details.requestType)] || String(details.requestType);
-      return "—";
+      return "-";
     }
     if (cat === "other") {
-      return "—";
+      return (CATEGORY_LABELS.request && CATEGORY_LABELS.request.other) || "Diğer";
     }
 
     if (details.itemType) return vm[String(details.itemType)] || String(details.itemType);
     if (details.requestType) return vm[String(details.requestType)] || String(details.requestType);
     if (details.timing) return vm[String(details.timing)] || String(details.timing);
-    return "—";
+    return "-";
   }
 
-  /** Sadece havlu, nevresim, ekipman kategorilerinde adet; yoksa çizgi. */
+  /** Adet yalnızca ilgili türlerde; yoksa «-» (WhatsApp ile aynı). */
   function requestFormQuantityDisplay(row) {
-    if (!row || typeof row !== "object") return "—";
+    if (!row || typeof row !== "object") return "-";
     var ctx = requestDetailsAndCategory(row);
     var details = ctx.details;
     var cat = ctx.category;
-    var withQty = cat === "towel" || cat === "bedding" || cat === "baby_equipment" || cat === "room_equipment";
-    if (!withQty) return "—";
+    var withQty =
+      cat === "towel_extra" ||
+      cat === "room_towel" ||
+      cat === "bathrobe" ||
+      cat === "bedding_sheet" ||
+      cat === "bedding_pillow" ||
+      cat === "bedding_blanket" ||
+      cat === "slippers" ||
+      cat === "hanger" ||
+      cat === "baby_bed" ||
+      cat === "toilet_paper" ||
+      cat === "toiletries" ||
+      cat === "towel" ||
+      cat === "bedding" ||
+      cat === "baby_equipment" ||
+      cat === "room_equipment";
+    if (!withQty) return "-";
     var q = details.quantity;
-    if (q == null || String(q).trim() === "") return "—";
+    if (q == null || String(q).trim() === "") return "-";
     return String(q);
   }
 
@@ -638,26 +877,10 @@
   function issueDetailText(row, type) {
     if (!row || typeof row !== "object") return "-";
     if (type === "request") {
-      var rawR = row.raw_payload && typeof row.raw_payload === "object" ? row.raw_payload : {};
-      var category = String(row.category || rawR.category || ((row.categories || [])[0] || ""));
-      var details = row.details && typeof row.details === "object" ? row.details : (rawR.details && typeof rawR.details === "object" ? rawR.details : {});
-      var valueMap = requestValueMap();
       var outReq = [];
-      outReq.push("Kategori: " + (CATEGORY_LABELS.request[category] || category || "-"));
-      if (category === "towel" && details.itemType) outReq.push("Havlu türü: " + (valueMap[String(details.itemType)] || String(details.itemType)));
-      else if (category === "bedding" && details.itemType) outReq.push("Ürün türü: " + (valueMap[String(details.itemType)] || String(details.itemType)));
-      else if ((category === "baby_equipment" || category === "room_equipment") && details.itemType) {
-        outReq.push("Ekipman türü: " + (valueMap[String(details.itemType)] || String(details.itemType)));
-      } else if (details.itemType) outReq.push("Tür: " + (valueMap[String(details.itemType)] || String(details.itemType)));
-      if (category === "room_cleaning" && details.requestType) {
-        outReq.push("Talep türü: " + (valueMap[String(details.requestType)] || String(details.requestType)));
-      } else if (category === "minibar" && details.requestType) {
-        outReq.push("Talep türü: " + (valueMap[String(details.requestType)] || String(details.requestType)));
-      } else if (details.requestType) outReq.push("Talep: " + (valueMap[String(details.requestType)] || String(details.requestType)));
-      if (details.timing) {
-        outReq.push((category === "room_cleaning" ? "Zaman tercihi: " : "Zaman: ") + (valueMap[String(details.timing)] || String(details.timing)));
-      }
-      if (details.quantity != null && String(details.quantity) !== "") outReq.push("Adet: " + String(details.quantity));
+      outReq.push("Talep grubu: " + requestFormGroupLabel(row));
+      outReq.push("Talep türü: " + requestFormTypeLabel(row));
+      outReq.push("Adet: " + requestFormQuantityDisplay(row));
       if (row.description) outReq.push("Not: " + String(row.description));
       return outReq.join(" | ");
     }
@@ -724,7 +947,7 @@
     if (t === "reservation_alacarte" && rid === "sinton") return "Sinton BBQ Restaurant";
     if (t === "reservation_alacarte") return "A la carte";
     if (t === "reservation_spa") return "Spa & wellness";
-    return "Rezervasyon";
+    return "Kayıt";
   }
 
   function reservationDetailText(row) {
@@ -787,7 +1010,7 @@
     var h = "";
     function stBtn(status, label) {
       return (
-        '<button class="btn-small js-status" data-id="' +
+        '<button type="button" class="btn-small js-status" data-id="' +
         esc(id) +
         '" data-type="' +
         esc(type) +
@@ -810,7 +1033,7 @@
     } else if (st === "cancelled") {
       h += stBtn("new", "Beklemede");
     }
-    h += '<button class="btn-small js-delete" data-id="' + esc(id) + '" data-type="' + esc(type) + '">Sil</button>';
+    h += '<button type="button" class="btn-small js-delete" data-id="' + esc(id) + '" data-type="' + esc(type) + '">Sil</button>';
     return h;
   }
 
@@ -864,7 +1087,7 @@
     for (var i = 0; i < all.length; i++) {
       if (all[i].key === tabKey) return all[i].label;
     }
-    return "Rezervasyon";
+    return "Genel";
   }
 
   function dayLabel(dateKey) {
@@ -1118,7 +1341,7 @@
       sinton: "Sinton-BBQ-Restaurant",
       spa: "Spa-Wellness",
     };
-    return map[String(ovFilterKey || "all")] || "Rezervasyon";
+    return map[String(ovFilterKey || "all")] || "Genel";
   }
 
   function reservationVenueCountsForDate(iso, venueKey, rows) {
@@ -1144,7 +1367,7 @@
     doc.setFont("helvetica", "bold");
     doc.setFontSize(17);
     doc.setTextColor(28, 58, 98);
-    doc.text(pdfLatinize("Gunluk rezervasyon raporu"), M, y);
+    doc.text(pdfLatinize("Gunluk restoran spa talep raporu"), M, y);
     y += 20;
     doc.setDrawColor(46, 120, 170);
     doc.setLineWidth(0.9);
@@ -1160,7 +1383,7 @@
     doc.setTextColor(35, 40, 45);
     var blok = [
       pdfLatinize(
-        "Rezervasyon gunu (tablo): " +
+        "Tarih (tablo): " +
           formatIsoDateDisplayTr(iso) +
           "   |   Cikti mekani: " +
           mekanAdi
@@ -1179,7 +1402,7 @@
           (cnt.cancelled ? "  |  Iptal: " + String(cnt.cancelled) : "")
       ),
       pdfLatinize(
-        "Aciklama: Satirlar rezervasyon tarihine goredir. Talep zamani sutunu, talebin sisteme dususunu gosterir (yerel saat, gg/aa ss:dd)."
+        "Aciklama: Satirlar secilen hizmet gunune goredir. Talep zamani sutunu, talebin sisteme dususunu gosterir (yerel saat, gg/aa ss:dd)."
       ),
     ];
     doc.setFontSize(9.5);
@@ -1370,7 +1593,7 @@
     return reservationSmartDefaultIso(rows, "overview", "all");
   }
 
-  /** Şerit: o rezervasyon günü + bağlam (genel bakış filtresi veya tek mekân) için toplam ve beklemede sayısı. */
+  /** Şerit: hizmet günü + bağlam (genel bakış filtresi veya tek mekân) için toplam ve beklemede sayısı. */
   function reservationUpcomingStripStats(rows, dayIso, ctx) {
     var list;
     if (ctx.mode === "overview") {
@@ -1468,10 +1691,10 @@
     el.setAttribute("aria-hidden", "false");
     if (c.wait > 0) {
       el.className = "reservation-today-alert reservation-today-alert--wait";
-      el.textContent = "Bugüne " + c.wait + " bekleyen rezervasyon talebi var.";
+      el.textContent = "Bugüne " + c.wait + " bekleyen talep var.";
     } else {
       el.className = "reservation-today-alert reservation-today-alert--info";
-      el.textContent = "Bugüne " + c.total + " rezervasyon kaydı var (bekleyen yok).";
+      el.textContent = "Bugüne " + c.total + " kayıt var (bekleyen yok).";
     }
   }
 
@@ -1547,7 +1770,7 @@
       '<label>Misafir adı <input name="name" type="text" required autocomplete="name" /></label>' +
       '<label>Oda <input name="room" type="text" inputmode="numeric" required autocomplete="off" /></label>' +
       adminNationalitySelectHtml() +
-      '<label class="reservation-manual-date-wrap">Rezervasyon tarihi' +
+      '<label class="reservation-manual-date-wrap">Tarih' +
       '<div class="reservation-date-combo">' +
       '<input name="date" type="date" class="reservation-manual-date-native" min="' +
       esc(todayIsoLocal()) +
@@ -1567,7 +1790,7 @@
       '<label class="reservation-manual-note-label">Özel not <input name="note" type="text" placeholder="İsteğe bağlı" autocomplete="off" /></label>' +
       "</div>" +
       '<p class="reservation-manual-help">Dolu saatler listede yok. Oda: otelin geçerli oda numarası (ör. 1205).</p>' +
-      '<button type="submit" class="btn-small">Manuel rezervasyon ekle</button>' +
+      '<button type="submit" class="btn-small">Manuel kayıt ekle</button>' +
       '<p class="reservation-manual-status"></p>' +
       "</form>"
     );
@@ -1576,7 +1799,7 @@
   function renderReservationBoard(mountEl, type, rows, handlers) {
     if (!Array.isArray(rows)) rows = [];
 
-    /* Her yeniden çizimde mountEl üzerindeki rezervasyon dinleyicilerini kaldır (aksi halde birikir; eski closure ile kopuk DOM güncellenir). */
+    /* Her yeniden çizimde mountEl üzerindeki talep panosu dinleyicilerini kaldır (aksi halde birikir). */
     if (typeof AbortController !== "undefined") {
       if (mountEl._vionaResAbc) {
         try {
@@ -1631,8 +1854,8 @@
         '<div class="bucket-shell reservation-shell reservation-shell--overview">' +
         '<header class="reservation-hero reservation-hero--overview">' +
         '<div class="reservation-hero__intro">' +
-        "<h3>Günlük rezervasyon takibi</h3>" +
-        "<p>Özet, <strong>rezervasyonun yapıldığı güne</strong> göredir; <strong>Gönderim</strong> sütunu talebin ne zaman geldiğini gösterir. Seçilen güne göre tüm mekânların listesi. Durum değişikliği için soldan ilgili mekân sekmesine geçin. Üstteki chip’ler yalnızca tabloyu filtreler.</p>" +
+        "<h3>Günlük talep takibi</h3>" +
+        "<p>Özet, <strong>seçilen hizmet gününe</strong> göredir; <strong>Gönderim</strong> sütunu talebin ne zaman geldiğini gösterir. Seçilen güne göre tüm mekânların listesi. Durum değişikliği için soldan ilgili mekân sekmesine geçin. Üstteki chip’ler yalnızca tabloyu filtreler.</p>" +
         "</div>" +
         '<div class="reservation-venue-summary-grid">' +
         venueCardInner("laTerrace", "La Terrace A La Carte") +
@@ -1650,7 +1873,7 @@
         '<button type="button" class="reservation-filter-chip" data-filter="spa">Spa & wellness</button>' +
         "</div>" +
         '<div class="reservation-overview-toolbar">' +
-        '<label class="reservation-date-label reservation-date-label--combo">Rezervasyon tarihi' +
+        '<label class="reservation-date-label reservation-date-label--combo">Tarih' +
         '<div class="reservation-date-combo">' +
         '<input type="date" class="reservation-overview-date-native" value="' +
         esc(isoOv) +
@@ -1669,7 +1892,7 @@
         "</div>" +
         "</div>" +
         '<p class="reservation-today-alert is-hidden" role="status" aria-live="polite" aria-hidden="true"></p>' +
-        '<div class="reservation-upcoming-strip" role="group" aria-label="Önümüzdeki günler (rezervasyon tarihi)"></div>' +
+        '<div class="reservation-upcoming-strip" role="group" aria-label="Önümüzdeki günler"></div>' +
         '<p class="reservation-overview-summary"></p>' +
         '<div class="bucket-table-wrap">' +
         '<table class="admin-table reservation-overview-table">' +
@@ -1719,7 +1942,7 @@
             : reservationSubtabLabel(ovFilterKey);
         if (summaryEl) {
           summaryEl.textContent =
-            "Rezervasyon tarihi " +
+            "Tarih " +
             formatIsoDateDisplayTr(iso) +
             " — " +
             list.length +
@@ -1732,7 +1955,7 @@
         paintReservationTodayAlert(alertTodayOv, rows, { mode: "overview", filterKey: ovFilterKey });
         if (!list.length) {
           tbodyOv.innerHTML =
-            '<tr><td colspan="9" class="admin-table__empty">Bu tarih ve filtre için rezervasyon yok.</td></tr>';
+            '<tr><td colspan="9" class="admin-table__empty">Bu tarih ve filtre için kayıt yok.</td></tr>';
           return;
         }
         var out = "";
@@ -1871,7 +2094,7 @@
       "<h3>" +
       esc(venueTitle) +
       "</h3>" +
-      "<p>Bu mekân ve seçili gün için sayılar aşağıda. Hepsini bir arada görmek için üst menüden <strong>Rezervasyonlar</strong> genel görünümünü açın.</p>" +
+      "<p>Bu mekân ve seçili gün için sayılar aşağıda. Genel özet için ana paneli kullanın.</p>" +
       "</div>" +
       '<div class="reservation-hero__stats reservation-hero__stats--venue-only">' +
       '<div class="reservation-mini-stat reservation-mini-stat--wait"><span>Beklemede (bu gün)</span><strong class="js-vvenue-wait">' +
@@ -1898,7 +2121,7 @@
       "</strong></p>" +
       '<div class="reservation-day-panel">' +
       '<div class="reservation-day-panel__toolbar">' +
-      '<label class="reservation-date-label reservation-date-label--combo">Rezervasyon tarihi' +
+      '<label class="reservation-date-label reservation-date-label--combo">Tarih' +
       '<div class="reservation-date-combo">' +
       '<input type="date" class="reservation-view-date-native" value="' +
       esc(isoVenueDefault) +
@@ -1910,7 +2133,7 @@
       '<p class="reservation-day-summary"></p>' +
       "</div>" +
       '<p class="reservation-today-alert is-hidden" role="status" aria-live="polite" aria-hidden="true"></p>' +
-      '<div class="reservation-upcoming-strip" role="group" aria-label="Önümüzdeki günler (rezervasyon tarihi)"></div>' +
+      '<div class="reservation-upcoming-strip" role="group" aria-label="Önümüzdeki günler (hizmet günü)"></div>' +
       '<div class="reservation-day-filters">' +
       '<input type="search" class="bucket-search reservation-day-search" placeholder="Bu gün içinde ara (misafir, oda, not)..." />' +
       '<select class="bucket-filter-status reservation-day-status">' +
@@ -1991,7 +2214,7 @@
 
       if (!list.length) {
         tbody.innerHTML =
-          '<tr><td colspan="9" class="admin-table__empty">Bu tarihte bu mekân için rezervasyon yok.</td></tr>';
+          '<tr><td colspan="9" class="admin-table__empty">Bu tarihte bu mekân için kayıt yok.</td></tr>';
         return;
       }
 
@@ -2170,17 +2393,17 @@
         var time = String(fd.get("time") || "").trim();
         var guestCount = parseInt(String(fd.get("guestCount") || "0"), 10);
         var note = String(fd.get("note") || "").trim();
-        var safeDescription = note ? note.trim() : "Manuel rezervasyon";
+        var safeDescription = note ? note.trim() : "Manuel kayıt";
         if (!name || !room || !nationality || !isoDate || !time) {
           if (statusEl) statusEl.textContent = "Misafir, oda, uyruk, tarih ve saat zorunludur.";
           return;
         }
         if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) {
-          if (statusEl) statusEl.textContent = "Rezervasyon tarihini takvimden seçin.";
+          if (statusEl) statusEl.textContent = "Tarihi takvimden seçin.";
           return;
         }
         if (isoDate < todayIsoLocal()) {
-          if (statusEl) statusEl.textContent = "Geçmiş güne rezervasyon eklenemez.";
+          if (statusEl) statusEl.textContent = "Geçmiş güne kayıt eklenemez.";
           return;
         }
         var gcMaxOp = activeTab === "spa" ? 6 : 12;
@@ -2254,7 +2477,7 @@
         try {
           if (handlers && typeof handlers.onCreate === "function") {
             await handlers.onCreate(payload);
-            if (statusEl) statusEl.textContent = "Manuel rezervasyon kaydedildi.";
+            if (statusEl) statusEl.textContent = "Manuel kayıt kaydedildi.";
             manualForm.reset();
             var natSel = manualForm.querySelector('select[name="nationality"]');
             if (natSel) natSel.value = "TR";
@@ -2369,7 +2592,7 @@
       '<div class="bucket-stat"><span>Yapılamadı</span><strong>' + esc(rejected) + "</strong></div>" +
       "</div>" +
       '<p class="bucket-help bucket-help--requests">' +
-      "Kategori = talep türü. Tür ve Adet = form seçimleri (yoksa çizgi). Açıklama = misafir notu. Personel notu = dahili.</p>" +
+      "Kategori = talep grubu (form başlığı). Tür = seçilen satır. Adet = yalnızca adetli türlerde; diğerinde «-». Açıklama = misafir notu. Yeni kayıtlar operasyon WhatsApp grubuna düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.</p>" +
       '<div class="bucket-toolbar bucket-toolbar--requests">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
       '<div class="reservation-date-combo bucket-toolbar-date-combo">' +
@@ -2396,7 +2619,7 @@
     } else {
       rows.forEach(function (r) {
         var st = normalizeBucketStatus(r.status);
-        var catLabel = categoryText("request", r.categories, r.category);
+        var catLabel = requestFormGroupLabel(r);
         var typeLabel = requestFormTypeLabel(r);
         var qtyDisp = requestFormQuantityDisplay(r);
         var descFull = requestFormDescription(r);
@@ -2482,7 +2705,7 @@
         }
       }
       if (!row) return;
-      var catLabel = categoryText("request", row.categories, row.category);
+      var catLabel = requestFormGroupLabel(row);
       var typeLabel = requestFormTypeLabel(row);
       var qtyDisp = requestFormQuantityDisplay(row);
       var descFull = requestFormDescription(row);
@@ -2521,6 +2744,7 @@
         handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
       });
     });
+    wireWhatsappResendButtons(mountEl, handlers);
 
     if (search) search.addEventListener("input", applyFilters);
     if (statusFilter) statusFilter.addEventListener("change", applyFilters);
@@ -2574,7 +2798,7 @@
       '<div class="bucket-stat"><span>Dikkate alınmadı</span><strong>' + esc(rejected) + "</strong></div>" +
       "</div>" +
       '<p class="bucket-help bucket-help--complaints">' +
-      "Kategori ve açıklama misafir formundan. Personel notu dahilidir.</p>" +
+      "Kategori ve açıklama misafir formundan. Personel notu dahilidir. Yeni kayıtlar operasyon WhatsApp grubuna düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.</p>" +
       '<div class="bucket-toolbar bucket-toolbar--complaints">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
       '<div class="reservation-date-combo bucket-toolbar-date-combo">' +
@@ -2716,6 +2940,7 @@
         handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
       });
     });
+    wireWhatsappResendButtons(mountEl, handlers);
 
     if (search) search.addEventListener("input", applyFilters);
     if (statusFilter) statusFilter.addEventListener("change", applyFilters);
@@ -2769,7 +2994,7 @@
       '<div class="bucket-stat"><span>Dikkate alınmadı</span><strong>' + esc(rejected) + "</strong></div>" +
       "</div>" +
       '<p class="bucket-help bucket-help--complaints">' +
-      "Beslenme, sağlık ve kutlama bildirimleri; personel notu yerel olarak tarayıcıda saklanır.</p>" +
+      "Beslenme, sağlık ve kutlama bildirimleri; personel notu yerel olarak tarayıcıda saklanır. Yeni kayıtlar operasyon WhatsApp grubuna düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.</p>" +
       '<div class="bucket-toolbar bucket-toolbar--complaints">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
       '<div class="reservation-date-combo bucket-toolbar-date-combo">' +
@@ -2916,6 +3141,7 @@
         handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
       });
     });
+    wireWhatsappResendButtons(mountEl, handlers);
 
     if (search) search.addEventListener("input", applyFilters);
     if (statusFilter) statusFilter.addEventListener("change", applyFilters);
@@ -2967,7 +3193,7 @@
       '<div class="bucket-stat"><span>Onaylanmadı</span><strong>' + esc(rejected) + "</strong></div>" +
       "</div>" +
       '<p class="bucket-help bucket-help--late-checkout">' +
-      "Web formundan gelen geç çıkış talepleri; WhatsApp misafir bildirimi şablonu ile iletilir. Personel notu yerel tarayıcıda saklanır.</p>" +
+      "Web formundan gelen geç çıkış talepleri; misafir bildirimi şablonu ile iletilir ve operasyon WhatsApp grubuna düşer. Personel notu yerel tarayıcıda saklanır; gerekirse satırdaki WhatsApp ile tekrar gönderin.</p>" +
       '<div class="bucket-toolbar bucket-toolbar--complaints">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
       '<div class="reservation-date-combo bucket-toolbar-date-combo">' +
@@ -3125,6 +3351,7 @@
         handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
       });
     });
+    wireWhatsappResendButtons(mountEl, handlers);
 
     if (search) search.addEventListener("input", applyFilters);
     if (statusFilter) statusFilter.addEventListener("change", applyFilters);
@@ -3178,7 +3405,7 @@
       '<div class="bucket-stat"><span>Yapılamadı</span><strong>' + esc(rejected) + "</strong></div>" +
       "</div>" +
       '<p class="bucket-help bucket-help--faults">' +
-      "Kategori, lokasyon, aciliyet ve açıklama formdan. Personel notu dahilidir.</p>" +
+      "Kategori, lokasyon, aciliyet ve açıklama formdan. Personel notu dahilidir. Yeni kayıtlar operasyon WhatsApp grubuna düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.</p>" +
       '<div class="bucket-toolbar bucket-toolbar--faults">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
       '<div class="reservation-date-combo bucket-toolbar-date-combo">' +
@@ -3330,6 +3557,7 @@
         handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
       });
     });
+    wireWhatsappResendButtons(mountEl, handlers);
 
     if (search) search.addEventListener("input", applyFilters);
     if (statusFilter) statusFilter.addEventListener("change", applyFilters);
@@ -3467,16 +3695,96 @@
         return sumW / sumC;
       }
 
-      var sectionsHtml = SURVEY_EVAL_SECTIONS.map(function (sec, si) {
-        var catAvg = byCat[sec.tabId];
-        if (sec.isViona && (catAvg == null || Number(catAvg) <= 0)) {
-          var qids = sec.questions.map(function (q) {
-            return q.id;
+      function avgOfCategoryKeys(keys, catMap) {
+        var vals = [];
+        (keys || []).forEach(function (k) {
+          var v = Number(catMap[k]);
+          if (Number.isFinite(v) && v > 0) vals.push(v);
+        });
+        if (!vals.length) return null;
+        return vals.reduce(function (a, b) {
+          return a + b;
+        }, 0) / vals.length;
+      }
+
+      function collectSectionQuestionIds(sec) {
+        var ids = [];
+        if (sec.subgroups && sec.subgroups.length) {
+          sec.subgroups.forEach(function (sg) {
+            (sg.questions || []).forEach(function (q) {
+              ids.push(q.id);
+            });
           });
-          var derived = weightedAvgFromQuestionStats(qids, viona);
-          if (derived != null && Number(derived) > 0) catAvg = derived;
+        } else if (sec.questions) {
+          sec.questions.forEach(function (q) {
+            ids.push(q.id);
+          });
+        }
+        return ids;
+      }
+
+      function questionRowHtml(q, bucket) {
+        var st = bucket[q.id];
+        var has = st && st.avg != null && Number(st.avg) > 0;
+        var avgStr = has ? Number(st.avg).toFixed(2) : "—";
+        var cnt = st && st.count != null ? st.count : 0;
+        var pct = has ? Math.min(100, Math.round((Number(st.avg) / 5) * 100)) : 0;
+        var qTier = has ? barTierClass(st.avg) : "";
+        return (
+          '<div class="eval-question">' +
+          '<div class="eval-question__row">' +
+          '<div class="eval-question__main">' +
+          '<span class="eval-question__label">' +
+          esc(q.label) +
+          "</span>" +
+          '<div class="eval-bar" role="presentation" aria-hidden="true"><span class="eval-bar__fill' +
+          qTier +
+          '" style="width:' +
+          pct +
+          '%"></span></div>' +
+          "</div>" +
+          '<div class="eval-question__meta">' +
+          '<span class="eval-question__score-num">' +
+          esc(avgStr) +
+          '<span class="eval-question__denom">/5</span></span>' +
+          (cnt > 0
+            ? '<span class="eval-question__n" title="Bu soruya 1–5 puanı kayıtlı anket satırı sayısı">' +
+              esc(cnt) +
+              " kayıt</span>"
+            : '<span class="eval-question__n eval-question__n--empty">veri yok</span>') +
+          "</div>" +
+          "</div>" +
+          "</div>"
+        );
+      }
+
+      var sectionsHtml = SURVEY_EVAL_SECTIONS.map(function (sec, si) {
+        var bucket = sec.isViona ? viona : hotel;
+        var catAvg = null;
+        if (sec.isViona) {
+          var v0 = Number(byCat[sec.tabId]);
+          if (Number.isFinite(v0) && v0 > 0) catAvg = v0;
+          if (catAvg == null || Number(catAvg) <= 0) {
+            var qv = (sec.questions || []).map(function (q) {
+              return q.id;
+            });
+            var dv = weightedAvgFromQuestionStats(qv, viona);
+            if (dv != null && Number(dv) > 0) catAvg = dv;
+          }
+        } else if (sec.categoryKeys && sec.categoryKeys.length) {
+          catAvg = avgOfCategoryKeys(sec.categoryKeys, byCat);
+        } else if (sec.tabId) {
+          var tv = Number(byCat[sec.tabId]);
+          if (Number.isFinite(tv) && tv > 0) catAvg = tv;
         }
         var catOk = catAvg != null && Number(catAvg) > 0;
+        if (!catOk && !sec.isViona) {
+          var d2 = weightedAvgFromQuestionStats(collectSectionQuestionIds(sec), hotel);
+          if (d2 != null && Number(d2) > 0) {
+            catAvg = d2;
+            catOk = true;
+          }
+        }
         var catStr = catOk ? Number(catAvg).toFixed(2) : "—";
         var catPct = catOk ? Math.min(100, Math.round((Number(catAvg) / 5) * 100)) : 0;
         var catTier = catOk ? barTierClass(catAvg) : "";
@@ -3484,43 +3792,49 @@
           sec.isViona && catOk
             ? '<p class="eval-section__cat-hint">Aşağıdaki soru puanlarından ağırlıklı hesaplanır.</p>'
             : "";
+        var multiHint =
+          !sec.isViona && sec.subgroups && sec.subgroups.length
+            ? '<p class="eval-section__cat-hint">Çoklu alt başlık: üst ortalama, alt kategori özetlerinin ortalaması veya soru verisinden türetilir.</p>'
+            : "";
 
-        var rowsHtml = sec.questions
-          .map(function (q) {
-            var st = sec.isViona ? viona[q.id] : hotel[q.id];
-            var has = st && st.avg != null && Number(st.avg) > 0;
-            var avgStr = has ? Number(st.avg).toFixed(2) : "—";
-            var cnt = st && st.count != null ? st.count : 0;
-            var pct = has ? Math.min(100, Math.round((Number(st.avg) / 5) * 100)) : 0;
-            var qTier = has ? barTierClass(st.avg) : "";
-            return (
-              '<div class="eval-question">' +
-              '<div class="eval-question__row">' +
-              '<div class="eval-question__main">' +
-              '<span class="eval-question__label">' +
-              esc(q.label) +
-              "</span>" +
-              '<div class="eval-bar" role="presentation" aria-hidden="true"><span class="eval-bar__fill' +
-              qTier +
-              '" style="width:' +
-              pct +
-              '%"></span></div>' +
-              "</div>" +
-              '<div class="eval-question__meta">' +
-              '<span class="eval-question__score-num">' +
-              esc(avgStr) +
-              '<span class="eval-question__denom">/5</span></span>' +
-              (cnt > 0
-                ? '<span class="eval-question__n" title="Bu soruya 1–5 puanı kayıtlı anket satırı sayısı">' +
-                  esc(cnt) +
-                  " kayıt</span>"
-                : '<span class="eval-question__n eval-question__n--empty">veri yok</span>') +
-              "</div>" +
-              "</div>" +
-              "</div>"
-            );
-          })
-          .join("");
+        var rowsHtml = "";
+        if (sec.subgroups && sec.subgroups.length) {
+          rowsHtml = sec.subgroups
+            .map(function (sg) {
+              var sk = sg.categoryKey ? byCat[sg.categoryKey] : null;
+              var sgOk = sk != null && Number(sk) > 0;
+              var sgStr = sgOk ? Number(sk).toFixed(2) : "—";
+              var inner = (sg.questions || []).map(function (q) {
+                return questionRowHtml(q, hotel);
+              }).join("");
+              return (
+                '<div class="eval-subgroup">' +
+                '<div class="eval-subgroup__head">' +
+                '<h4 class="eval-subgroup__title">' +
+                esc(sg.title) +
+                "</h4>" +
+                (sg.categoryKey
+                  ? '<span class="eval-subgroup__avg" title="Bu alt başlık için hotel_categories.' +
+                    esc(sg.categoryKey) +
+                    '">' +
+                    esc(sgStr) +
+                    '<span class="eval-subgroup__avg-denom">/5</span></span>'
+                  : "") +
+                "</div>" +
+                '<div class="eval-subgroup__body">' +
+                inner +
+                "</div>" +
+                "</div>"
+              );
+            })
+            .join("");
+        } else {
+          rowsHtml = (sec.questions || [])
+            .map(function (q) {
+              return questionRowHtml(q, bucket);
+            })
+            .join("");
+        }
 
         return (
           '<article class="eval-section glass-block">' +
@@ -3536,6 +3850,7 @@
           '<div class="eval-section__cat" aria-label="Başlık ortalaması">' +
           '<p class="eval-section__cat-label">Başlık ortalaması</p>' +
           vionaCatHint +
+          multiHint +
           '<span class="eval-section__cat-value">' +
           esc(catStr) +
           '</span><span class="eval-section__cat-denom">/5</span>' +
@@ -3564,9 +3879,10 @@
         '<div class="eval-summary glass-block">' +
         '<h3 class="eval-summary__title">Özet</h3>' +
         '<p class="eval-summary__lead">' +
-        "İlk ortalama: <strong>tüm anket kayıtları</strong>ndaki özet alan (<code>overall_score</code>) ortalamasıdır. " +
-        "Otel başlıkları ile Viona ayrı kaydedilebildiği için tek bir “otel notu” değildir. " +
-        "İkinci ortalama: <strong>yalnızca Viona</strong> bölümü doldurulmuş kayıtlarda asistan genel notu (<code>viona_rating</code>)." +
+        "Her satır kısmi gönderim olabilir (<code>hotel_categories</code> tek anahtar içerir). " +
+        "Özet puan: <code>overall_score</code> dolu satırların ortalaması; boşsa kategori veya soru ortalamalarından türetilir. " +
+        "Viona: <code>viona_rating</code> veya dört Viona sorusunun ağırlıklı ortalaması. " +
+        "Yemek ve havuz/plaj bloklarında üst ortalama, alt başlık özetlerinin aritmetiğidir (yalnızca pozitif değerler)." +
         "</p>" +
         '<div class="eval-summary__grid">' +
         '<div class="eval-summary__item"><span class="eval-summary__k">Toplam kayıt</span><span class="eval-summary__v">' +
@@ -3591,6 +3907,7 @@
         '<p class="eval-footnote">Seçilen dönemdeki anket kayıtları.</p>' +
         "</div>";
     },
+    wireWhatsappResendButtons: wireWhatsappResendButtons,
     renderBucketTable: function (mountEl, type, rows, handlers) {
       if (type === "request") {
         renderRequestsPanel(mountEl, rows || [], handlers);
@@ -3613,7 +3930,8 @@
         return;
       }
       if (type === "reservation") {
-        renderReservationBoard(mountEl, type, rows || [], handlers);
+        mountEl.innerHTML =
+          '<p class="admin-load-error">Bu liste türü devre dışıdır; panelden kaldırılmıştır.</p>';
         return;
       }
       rows = rows || [];
@@ -3660,7 +3978,7 @@
         "</div>" +
         '<p class="bucket-help">' +
         esc(typeLabel(type)) +
-        ": ilk kayıt beklemede. Olumlu / olumsuz durumlar birbirine çevrilebilir; şikayetlerde dikkate alındı / alınmadı.</p>" +
+        ": ilk kayıt beklemede. Olumlu / olumsuz durumlar birbirine çevrilebilir; şikayetlerde dikkate alındı / alınmadı. Uygun kayıtlar operasyon WhatsApp grubuna gider; gerekirse satırdaki WhatsApp ile tekrar gönderin.</p>" +
         '<div class="bucket-toolbar">' +
         '<input class="bucket-search" type="search" placeholder="Oda, misafir veya detay ara..." />' +
         '<select class="bucket-filter-status">' +
@@ -3720,6 +4038,7 @@
           handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
         });
       });
+      wireWhatsappResendButtons(mountEl, handlers);
 
       var search = mountEl.querySelector(".bucket-search");
       var statusFilter = mountEl.querySelector(".bucket-filter-status");
@@ -3912,11 +4231,11 @@
     formatDateOnlyDisplayTr: function (iso) {
       return formatIsoDateDisplayTr(iso);
     },
-    /** Rezervasyon satırı → laTerrace | mare | sinton | spa | null (ana sayfa özet sayımı). */
+    /** Eski kayıt satırı → laTerrace | mare | sinton | spa | null (ana sayfa özet sayımı). */
     reservationVenueKeyFromRow: reservationVenueKeyFromRow,
-    /** Rezervasyon günü YYYY-MM-DD (günlük özet filtresi). */
+    /** Tarih YYYY-MM-DD (günlük özet filtresi). */
     reservationDateValue: reservationDateValue,
-    /** Rezervasyon durumu normalizasyonu (sayım / etiket tek kaynak). */
+    /** Kayıt durumu normalizasyonu (sayım / etiket tek kaynak). */
     reservationNormalizeStatusKey: reservationNormalizeStatusKey,
   };
 })();

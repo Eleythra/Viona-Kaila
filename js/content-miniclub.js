@@ -32,10 +32,10 @@
   };
 
   var BADGE_NO_RES = {
-    tr: "Rezervasyon gerekmiyor",
-    en: "No reservation",
-    de: "Keine Reservierung",
-    ru: "Без записи",
+    tr: "Önceden haber gerekmez",
+    en: "No advance notice needed",
+    de: "Keine Voranmeldung nötig",
+    ru: "Без предварительной договорённости",
   };
 
   function renderSlot(slot) {

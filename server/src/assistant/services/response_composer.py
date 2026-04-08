@@ -238,6 +238,8 @@ class ResponseComposer:
             return self.i18n.get("complaint_noise", language)
         if sub_intent == "cleanliness_complaint":
             return self.i18n.get("complaint_cleanliness", language)
+        if sub_intent == "lost_property_complaint":
+            return self.i18n.get("complaint_lost_property", language)
         return self.i18n.get("complaint_default", language)
 
     def _request(self, entity: str | None, language: str) -> str:
@@ -253,6 +255,12 @@ class ResponseComposer:
             return self.i18n.get("request_housekeeping", language)
         if entity == "reception_contact":
             return self.i18n.get("request_reception_contact", language)
+        if entity == "premium_table_reservation":
+            return self.i18n.get("request_premium_reservation_reception", language)
+        if entity == "spa_contact":
+            return self.i18n.get("request_spa_booking_contact", language)
+        if entity == "ala_carte_reservation":
+            return self.i18n.get("request_ala_carte_reservation", language)
         if entity == "guest_relations_contact":
             return self.i18n.get("request_guest_relations_contact", language)
         if entity == "transfer_request":

@@ -1,34 +1,37 @@
 (function () {
   "use strict";
 
+  /** Önem / kullanım sıklığı: talepler, bilgi, yön, oda servisi ve yemek üstte; transfer ara ara; kampanya / toplantı / Alanya altta; değerlendirme en sonda. */
   const MODULE_DEFS = [
-    { id: "general", i18nKey: "modGeneral", icon: "building" },
-    { id: "where", i18nKey: "modWhere", icon: "map" },
-    { id: "restaurant", i18nKey: "modRest", icon: "utensils" },
-    { id: "alacarte", i18nKey: "modAlacarte", icon: "plate" },
-    { id: "beach", i18nKey: "modBeach", icon: "waves" },
     { id: "requests", i18nKey: "modRequests", icon: "messages", isRequests: true },
+    { id: "general", i18nKey: "modGeneral", icon: "building" },
+    { id: "where", i18nKey: "modWhere", icon: "pin" },
+    { id: "room_service", i18nKey: "modRoomService", icon: "roomService" },
+    { id: "restaurant", i18nKey: "modRest", icon: "utensils" },
+    { id: "beach", i18nKey: "modBeach", icon: "waves" },
     { id: "spa", i18nKey: "modSpa", icon: "spa" },
-    { id: "discount", i18nKey: "modDiscount", icon: "percent" },
+    { id: "transfer", i18nKey: "modTransfer", icon: "transfer" },
+    { id: "alacarte", i18nKey: "modAlacarte", icon: "plate" },
     { id: "animation", i18nKey: "modAnim", icon: "spark" },
     { id: "miniclub", i18nKey: "modMini", icon: "smile" },
+    { id: "discount", i18nKey: "modDiscount", icon: "percent" },
     { id: "meeting", i18nKey: "modMeet", icon: "users" },
     { id: "alanya", i18nKey: "modAlanya", icon: "compass" },
     { id: "survey", i18nKey: "modSurvey", icon: "star", isSurvey: true },
   ];
 
   const REQUEST_SUBS = [
-    { id: "request", i18nKey: "subRequest" },
-    { id: "complaint", i18nKey: "subComplaint" },
-    { id: "fault", i18nKey: "subFault" },
-    { id: "guest_notification", i18nKey: "subGuestNotification" },
-    { id: "res", i18nKey: "subRes" },
+    { id: "request", i18nKey: "subRequest", hintKey: "subRequestHint" },
+    { id: "complaint", i18nKey: "subComplaint", hintKey: "subComplaintHint" },
+    { id: "fault", i18nKey: "subFault", hintKey: "subFaultHint" },
+    { id: "guest_notification", i18nKey: "subGuestNotification", hintKey: "subGuestNotificationHint" },
   ];
 
   const ICONS = {
     building:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M4 20V9l8-5 8 5v11"/><path d="M9 20v-6h6v6"/><path d="M9 10h.01M15 10h.01"/></svg>',
     map: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M9 20l-5 2V6l5-2 6 2 5-2v16l-5 2-6-2z"/><path d="M9 6v14"/><path d="M15 8v14"/></svg>',
+    pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.2-6-10a6 6 0 1112 0c0 4.8-6 10-6 10z"/><circle cx="12" cy="11" r="2.5"/></svg>',
     utensils:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M7 4v17M4 7h6"/><path d="M17 4v17M14 4h6"/></svg>',
     plate:
@@ -49,6 +52,10 @@
     compass:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><path d="M14.5 9.5l-3 5-2-2 5-3z"/></svg>',
     star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7L12 17.8 5.7 21l2.3-7-6-4.6h7.6L12 2z"/></svg>',
+    transfer:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 17h2.5l1-3h8l1 3H19" stroke-linecap="round"/><path d="M6.5 14L5 7h4l1.5 4h3L15 7h4l-1.5 7M8 17v2M16 17v2"/><circle cx="8.5" cy="17.5" r="1.8"/><circle cx="15.5" cy="17.5" r="1.8"/></svg>',
+    roomService:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 10h16v9a1 1 0 01-1 1H5a1 1 0 01-1-1v-9z" stroke-linejoin="round"/><path d="M8 10V8a4 4 0 018 0v2"/><path d="M9 14h6M9 18h4" stroke-linecap="round"/></svg>',
   };
 
   /** i18n.js ile aynı anahtar; burada da tanımlı olsun (bağımsız yükleme). */
@@ -68,10 +75,10 @@
   const el = (id) => document.getElementById(id);
 
   const SURVEY_TITLE_FALLBACK = {
-    tr: "Otel ve Uygulama Deneyiminizi Değerlendirin",
-    en: "Rate Your Hotel and App Experience",
-    de: "Bewerten Sie Ihr Hotel- und App-Erlebnis",
-    ru: "Оцените ваш опыт отеля и приложения",
+    tr: "Deneyiminizi Değerlendirin",
+    en: "Rate Your Experience",
+    de: "Bewerten Sie Ihr Erlebnis",
+    ru: "Оцените свой опыт",
   };
 
   function t(key) {
@@ -202,6 +209,8 @@
   function renderModuleGrid() {
     const grid = el("module-grid");
     grid.innerHTML = "";
+    grid.setAttribute("role", "navigation");
+    grid.setAttribute("aria-label", t("homeModuleGridAria"));
     MODULE_DEFS.forEach((def) => {
       const btn = document.createElement("button");
       btn.type = "button";
@@ -396,9 +405,12 @@
         return;
       }
 
-      const h2 = document.createElement("h2");
-      h2.textContent = t(def.i18nKey);
-      inner.appendChild(h2);
+      const skipDefaultH2 = moduleId === "transfer" || moduleId === "room_service" || moduleId === "where";
+      if (!skipDefaultH2) {
+        const h2 = document.createElement("h2");
+        h2.textContent = t(def.i18nKey);
+        inner.appendChild(h2);
+      }
 
       if (moduleId === "where" && typeof window.renderWhereModule === "function") {
         window.renderWhereModule(inner, t);
@@ -406,6 +418,8 @@
       }
 
       const MODULE_RENDERERS = {
+        transfer: "renderTransferModule",
+        room_service: "renderRoomServiceModule",
         general: "renderGeneralModule",
         restaurant: "renderRestaurantModule",
         alacarte: "renderAlacarteModule",
@@ -419,7 +433,7 @@
       };
       const rName = MODULE_RENDERERS[moduleId];
       if (rName && typeof window[rName] === "function") {
-        window[rName](inner, t);
+        window[rName](inner, t, lang);
         return;
       }
 
@@ -457,15 +471,9 @@
     showView("home");
   }
 
-  // Chatbot'tan gelen rezervasyon yönlendirmesi için: İstekler modülünü
-  // Rezervasyonlar alt sekmesi (REQUEST_SUBS içindeki "res") ile aç.
+  // Eski API: sunucu hâlâ open_reservation_form gönderebilir — artık restoran modülüne yönlendirilir.
   window.vionaChatOpenReservations = function () {
-    moduleId = "requests";
-    requestSub = "res";
-    surveySub = null;
-    showView("module");
-    renderModuleContent();
-    closeModals();
+    if (typeof window.vionaChatOpenRestaurantsBars === "function") window.vionaChatOpenRestaurantsBars();
   };
 
   // Chatbot: geç çıkış → İstekler hub / Misafir bildirimleri; geç çıkış formu doğrudan açılır.
@@ -501,6 +509,24 @@
 
   window.vionaChatOpenRestaurantsBars = function () {
     moduleId = "restaurant";
+    requestSub = null;
+    surveySub = null;
+    showView("module");
+    renderModuleContent();
+    closeModals();
+  };
+
+  window.vionaChatOpenTransfer = function () {
+    moduleId = "transfer";
+    requestSub = null;
+    surveySub = null;
+    showView("module");
+    renderModuleContent();
+    closeModals();
+  };
+
+  window.vionaChatOpenWhere = function () {
+    moduleId = "where";
     requestSub = null;
     surveySub = null;
     showView("module");

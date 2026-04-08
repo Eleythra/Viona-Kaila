@@ -7,14 +7,19 @@
   },
   "main": "src/index.js",
   "scripts": {
-    "test": "node --test src/modules/admin/reporting/*.test.mjs src/modules/admin/*.test.mjs",
+    "test": "node --test src/modules/admin/reporting/*.test.mjs src/modules/admin/*.test.mjs src/services/operational-group-message-format.test.mjs",
     "test:assistant": "PYTHONPATH=src .venv/bin/python -m pytest src/assistant/tests -q --tb=line",
     "dev": "node src/index.js",
     "puppeteer:install-chrome": "PUPPETEER_CACHE_DIR=.cache/puppeteer npx puppeteer browsers install chrome",
     "puppeteer:verify-chrome": "node scripts/verify-puppeteer-chrome.mjs",
     "seed:surveys-test": "node scripts/seed-survey-evaluations-test.mjs",
     "seed:surveys-test:clean": "node scripts/delete-survey-evaluations-seed.mjs",
-    "verify:surveys-report": "node scripts/verify-survey-evaluations-report.mjs"
+    "verify:surveys-report": "node scripts/verify-survey-evaluations-report.mjs",
+    "smoke:guest-request": "node scripts/smoke-guest-request-room-cleaning.mjs",
+    "whatsapp:reset-session": "node scripts/reset-whatsapp-group-session.mjs",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:stop": "pm2 stop viona-node-api",
+    "pm2:logs": "pm2 logs viona-node-api --lines 100"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
@@ -25,6 +30,9 @@
     "express-rate-limit": "^8.3.1",
     "helmet": "^8.1.0",
     "openai": "^5.12.2",
-    "puppeteer": "^24.40.0"
+    "puppeteer": "^24.40.0",
+    "qrcode": "^1.5.4",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.34.6"
   }
 }

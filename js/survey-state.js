@@ -1,17 +1,34 @@
 (function () {
   "use strict";
 
-  var TAB_ORDER = [
-    "food",
-    "comfort",
-    "cleanliness",
-    "staff",
-    "poolBeach",
-    "spaWellness",
-    "generalExperience",
-    "viona",
-  ];
-  var HOTEL_TABS = TAB_ORDER.slice(0, 7);
+  function eachHotelLeaf(schema, fn) {
+    schema.tabs.forEach(function (tab) {
+      if (tab.isViona) return;
+      if (tab.subTabs && tab.subTabs.length) {
+        tab.subTabs.forEach(function (st) {
+          fn(st);
+        });
+      } else if (tab.questions && tab.questions.length) {
+        fn(tab);
+      }
+    });
+  }
+
+  function findSurveySection(schema, sectionId) {
+    for (var i = 0; i < schema.tabs.length; i++) {
+      var t = schema.tabs[i];
+      if (t.id === sectionId) {
+        if (t.subTabs && t.subTabs.length) return null;
+        return t;
+      }
+      if (t.subTabs) {
+        for (var j = 0; j < t.subTabs.length; j++) {
+          if (t.subTabs[j].id === sectionId) return t.subTabs[j];
+        }
+      }
+    }
+    return null;
+  }
 
   function detectDeviceType() {
     if (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) {
@@ -34,24 +51,39 @@
     var tabComments = {};
 
     schema.tabs.forEach(function (tab) {
-      tabComments[tab.id] = "";
-      tab.questions.forEach(function (q) {
-        if (tab.isViona) vionaAnswers[q.id] = 0;
-        else hotelAnswers[q.id] = 0;
-      });
+      if (tab.isViona) {
+        tabComments[tab.id] = "";
+        tab.questions.forEach(function (q) {
+          vionaAnswers[q.id] = 0;
+        });
+        return;
+      }
+      if (tab.subTabs && tab.subTabs.length) {
+        tab.subTabs.forEach(function (st) {
+          tabComments[st.id] = "";
+          st.questions.forEach(function (q) {
+            hotelAnswers[q.id] = 0;
+          });
+        });
+        return;
+      }
+      if (tab.questions && tab.questions.length) {
+        tabComments[tab.id] = "";
+        tab.questions.forEach(function (q) {
+          hotelAnswers[q.id] = 0;
+        });
+      }
     });
 
     return {
-      activeTabId: schema.tabs[0].id,
+      activeTabId: schema.tabs[0] ? schema.tabs[0].id : "",
       hotelAnswers: hotelAnswers,
       vionaAnswers: vionaAnswers,
       tabComments: tabComments,
       hotelComment: "",
       vionaComment: "",
       submittedMessage: "",
-      /** true = hata metni (kırmızı kutu), false = teşekkür vb. */
       submittedIsError: false,
-      /** Başarı sonrası teşekkürün altında gösterilen kısa açıklama (i18n). */
       submitExtraLine: "",
       lastSubmittedPayload: null,
     };
@@ -94,20 +126,23 @@
 
   function computeHotelCategories(state, schema) {
     var categories = {};
-    schema.tabs.forEach(function (tab) {
-      if (tab.isViona) return;
-      var vals = tab.questions.map(function (q) {
+    eachHotelLeaf(schema, function (leaf) {
+      var vals = leaf.questions.map(function (q) {
         return state.hotelAnswers[q.id] || 0;
       });
-      categories[tab.id] = average(vals);
+      categories[leaf.id] = average(vals);
     });
     return categories;
   }
 
   function computeOverallScore(categories) {
-    return average(HOTEL_TABS.map(function (id) {
-      return categories[id] || 0;
-    }));
+    var ids = Object.keys(categories);
+    if (!ids.length) return 0;
+    return average(
+      ids.map(function (id) {
+        return categories[id] || 0;
+      })
+    );
   }
 
   function buildPayload(state, schema) {
@@ -118,7 +153,7 @@
       var txt = String(state.tabComments[tabId] || "").trim();
       if (txt) hotelCommentParts.push(tabId + ": " + txt);
     });
-    var payload = {
+    return {
       submittedAt: new Date().toISOString(),
       overallScore: computeOverallScore(categories),
       hotelCategories: categories,
@@ -130,15 +165,10 @@
       deviceType: detectDeviceType(),
       language: getLanguage(),
     };
-    return payload;
   }
 
-  /** Gönderilen sekmenin puan ve yorumunu sıfırlar (aynı sekmede yeniden değerlendirme). */
   function resetSubmittedTab(state, schema, tabId) {
-    var tab = null;
-    schema.tabs.forEach(function (t) {
-      if (t.id === tabId) tab = t;
-    });
+    var tab = findSurveySection(schema, tabId);
     if (!tab) return;
     if (tab.isViona) {
       tab.questions.forEach(function (q) {
@@ -152,12 +182,8 @@
     state.tabComments[tabId] = "";
   }
 
-  /** Yalnızca seçilen sekmenin puanları; diğer bölümler gönderilmez (çoklu gönderim). */
   function buildPayloadForTab(state, schema, tabId) {
-    var tab = null;
-    schema.tabs.forEach(function (t) {
-      if (t.id === tabId) tab = t;
-    });
+    var tab = findSurveySection(schema, tabId);
     if (!tab) throw new Error("invalid_survey_tab");
 
     var hotelAnswers = {};
@@ -222,5 +248,7 @@
     buildPayload: buildPayload,
     buildPayloadForTab: buildPayloadForTab,
     resetSubmittedTab: resetSubmittedTab,
+    findSurveySection: findSurveySection,
+    eachHotelLeaf: eachHotelLeaf,
   };
 })();
