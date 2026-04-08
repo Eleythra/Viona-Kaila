@@ -13,3 +13,6 @@ server/.cache/
 .vercel/
 __pycache__/
 *.pyc
+# Python sanal ortamlar — asla commit etme
+server/.venv/
+.venv-assistant/
