@@ -193,6 +193,10 @@ export function getEnv() {
     azureSpeechFetchTimeoutMs: optionalNonNegativeMs("AZURE_SPEECH_FETCH_TIMEOUT_MS", 25_000),
     /** Admin API auth token (zorunlu). */
     adminApiToken: optional("ADMIN_API_TOKEN", ""),
+    /** Saha ekip sayfaları (admin/ops-*.html): tam admin token’dan ayrı; yalnızca ilgili kova listesi + durum PATCH. */
+    opsLinkTokenHk: optional("OPS_LINK_TOKEN_HK", ""),
+    opsLinkTokenTech: optional("OPS_LINK_TOKEN_TECH", ""),
+    opsLinkTokenFront: optional("OPS_LINK_TOKEN_FRONT", ""),
     /** CORS allowlist (virgülle ayrılmış origin listesi). */
     corsAllowedOrigins: optionalCsv("CORS_ALLOWED_ORIGINS", []),
     /** Basit rate-limit. */

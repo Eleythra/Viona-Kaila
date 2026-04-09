@@ -7,6 +7,7 @@ import rateLimit from "express-rate-limit";
 import guestRequestsRouter from "./modules/guest-requests/guest-requests.router.js";
 import surveysRouter from "./modules/surveys/surveys.router.js";
 import adminRouter from "./modules/admin/admin.router.js";
+import opsLinkRouter from "./modules/ops-link/ops-link.router.js";
 import { createSpeechRouter, createSttRawMiddleware, handleStt } from "./modules/speech/speech.router.js";
 import { getSupabase, isSupabaseConfigured, withSupabaseFetchGuard } from "./lib/supabase.js";
 import { createGuestRequest } from "./modules/guest-requests/guest-requests.service.js";
@@ -318,7 +319,7 @@ app.use(
       return callback(new Error("cors_not_allowed"));
     },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Admin-Token"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Admin-Token", "X-Ops-Token"],
     credentials: false,
   }),
 );
@@ -338,6 +339,16 @@ app.use(
   rateLimit({
     windowMs: env.rateLimitWindowMs,
     max: env.adminRateLimitMax,
+    standardHeaders: true,
+    legacyHeaders: false,
+  }),
+);
+
+app.use(
+  "/api/ops",
+  rateLimit({
+    windowMs: env.rateLimitWindowMs,
+    max: Math.max(env.adminRateLimitMax, 120),
     standardHeaders: true,
     legacyHeaders: false,
   }),
@@ -399,6 +410,7 @@ app.get("/api/health", (req, res) => {
 app.use("/api/guest-requests", guestRequestsRouter);
 app.use("/api/surveys", surveysRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/ops", opsLinkRouter);
 app.use("/api", createSpeechRouter());
 app.post("/api/stt", createSttRawMiddleware(), handleStt);
 
