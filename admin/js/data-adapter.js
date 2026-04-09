@@ -123,12 +123,13 @@
         return d.report;
       });
     },
-    getBucketPage: function (type, page, pageSize) {
-      var q = buildQuery({
+    getBucketPage: function (type, page, pageSize, extraQuery) {
+      var base = {
         type: type,
         page: page,
         pageSize: pageSize,
-      });
+      };
+      var q = buildQuery(Object.assign(base, extraQuery || {}));
       var endpoint = adminRequestsCollectionUrl() + "?" + q;
       return jfetch(endpoint).then(function (d) {
         return {
@@ -193,6 +194,22 @@
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: status }),
+      });
+    },
+    patchSatisfaction: function (type, id, payload) {
+      var endpoint =
+        adminRequestsCollectionUrl() +
+        "/" +
+        encodeURIComponent(type) +
+        "/" +
+        encodeURIComponent(id) +
+        "/satisfaction";
+      return jfetch(endpoint, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload || {}),
+      }).then(function (d) {
+        return d.item;
       });
     },
     deleteItem: function (type, id) {

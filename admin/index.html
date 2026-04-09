@@ -13,17 +13,17 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/styles.css?v=30" />
-    <link rel="stylesheet" href="styles.css?v=23" />
+    <link rel="stylesheet" href="styles.css?v=31" />
   </head>
   <body class="admin-body">
     <section id="admin-login" class="admin-login">
       <form id="admin-login-form" class="glass-block admin-login__card">
         <h1>Viona Admin Giriş</h1>
-        <p>Devam etmek için admin API token girin.</p>
+        <p>Devam etmek için panel şifrenizi girin (yönetici tarafından tanımlanan giriş kodu).</p>
         <p class="admin-login__field-label" id="admin-username-label">Kullanıcı adı</p>
         <div class="admin-login__fixed-user" role="status" aria-labelledby="admin-username-label">Viona-Kaila</div>
         <input type="hidden" id="admin-username" value="Viona-Kaila" autocomplete="username" />
-        <label>Admin API Token</label>
+        <label for="admin-password">Panel şifresi</label>
         <div class="admin-password-row">
           <input id="admin-password" type="password" autocomplete="current-password" required />
           <button id="admin-password-toggle" type="button" class="btn-small">Göster</button>
@@ -43,6 +43,9 @@
             <button type="button" data-tab="complaints" aria-controls="tab-complaints" title="Şikayet kayıtlarını açar">Şikayetler</button>
             <button type="button" data-tab="faults" aria-controls="tab-faults" title="Arıza kayıtlarını açar">Arızalar</button>
             <button type="button" data-tab="guest_notifications" aria-controls="tab-guest-notifications" title="Misafir bildirim kayıtlarını açar">Misafir bildirimleri</button>
+            <button type="button" data-tab="op_hk" aria-controls="tab-op-hk" title="HK Operasyon: isteklerde durum güncelleme">HK Operasyon</button>
+            <button type="button" data-tab="op_tech" aria-controls="tab-op-tech" title="Teknik Operasyon: arızalarda durum güncelleme">Teknik Operasyon</button>
+            <button type="button" data-tab="op_front" aria-controls="tab-op-front" title="Ön büro Operasyon: şikâyet, bildirim, geç çıkış">Ön büro Operasyon</button>
             <button type="button" data-tab="evaluations" aria-controls="tab-evaluations" title="Misafir anket özeti">Değerlendirmeler</button>
             <button type="button" data-tab="logs" aria-controls="tab-logs" title="Sohbet günlükleri ve kalite incelemesi">Loglar</button>
             <button type="button" data-tab="pdf-report" aria-controls="tab-pdf-report" title="PDF rapor oluşturma ekranını açar">Rapor</button>
@@ -75,6 +78,32 @@
                   <span class="dashboard-whatsapp-status__kicker">WhatsApp · Operasyon</span>
                   <span id="dashboard-whatsapp-status-detail" class="dashboard-whatsapp-status__detail"></span>
                 </div>
+              </div>
+              <div class="op-deeplinks glass-block" role="region" aria-label="Saha operasyon sekmeleri">
+                <p class="op-deeplinks__title">Tam panel (yönetici) — operasyon sekmeleri</p>
+                <p class="op-deeplinks__hint">
+                  Siz <strong>HK Operasyon</strong>, <strong>Teknik Operasyon</strong> ve <strong>Ön büro Operasyon</strong> sekmelerinden güncellersiniz.
+                  Üstteki İstekler / Şikayetler vb. salt okunur özet içindir.
+                </p>
+                <div class="op-deeplinks__grid">
+                  <button type="button" class="btn-small op-deeplinks__link js-dash-open-op-hk">HK Operasyon</button>
+                  <button type="button" class="btn-small op-deeplinks__link js-dash-open-op-tech">Teknik Operasyon</button>
+                  <button type="button" class="btn-small op-deeplinks__link js-dash-open-op-front">Ön büro Operasyon</button>
+                </div>
+                <p class="op-deeplinks__hint op-deeplinks__hint--tight">
+                  <strong>Ekip / WhatsApp (sınırlı erişim):</strong> tam panele giremezler; yalnızca işaretleme sayfaları.
+                  Bağlantı örneği: <code class="op-deeplinks__code">…/admin/ops-hk.html#EKIP_SIFRESI</code> — şifre sunucuda
+                  <code class="op-deeplinks__code">OPS_LINK_TOKEN_HK</code> ile aynı olmalıdır.
+                </p>
+                <div class="op-deeplinks__grid">
+                  <a class="btn-small op-deeplinks__link" href="ops-hk.html" target="_blank" rel="noopener">Ekip sayfası · HK</a>
+                  <a class="btn-small op-deeplinks__link" href="ops-tech.html" target="_blank" rel="noopener">Ekip sayfası · Teknik</a>
+                  <a class="btn-small op-deeplinks__link" href="ops-front.html" target="_blank" rel="noopener">Ekip sayfası · Ön büro</a>
+                </div>
+                <p class="op-deeplinks__hint op-deeplinks__hint--after-links">
+                  WhatsApp grubunda bu üç linki <strong>sabitlenmiş mesaj</strong> veya grup açıklamasına ekleyin; otomatik şablon
+                  bildiriminin altına link koymak Meta şablon onayı gerektirir.
+                </p>
               </div>
               <div id="home-top-strip" class="home-top-strip" aria-label="Özet göstergeler"></div>
             </div>
@@ -183,6 +212,137 @@
           <div id="list-guest-notifications" class="admin-gn-list-panel" role="tabpanel"></div>
           <div id="list-late-checkouts" class="admin-gn-list-panel hidden" role="tabpanel"></div>
         </section>
+
+        <section id="tab-op-hk" class="admin-tab hidden">
+          <div class="section-head">
+            <h2>HK Operasyon</h2>
+            <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
+          </div>
+          <p class="section-lead">
+            Misafir isteklerinde durum güncellemesi. Aşağıdan süz; salt okunur tam liste için <strong>İstekler</strong> sekmesini kullanın.
+          </p>
+          <div class="op-filter-bar glass-block" id="op-hk-filters" role="search" aria-label="HK operasyon filtreleri">
+            <div class="op-filter-bar__row">
+              <label class="op-filter-field"
+                ><span class="op-filter-field__lbl">Durum</span>
+                <select id="op-hk-filter-status" class="op-filter-input">
+                  <option value="">Tüm kayıtlar</option>
+                  <option value="new">Yeni</option>
+                  <option value="pending">Bekliyor</option>
+                  <option value="in_progress">İşlemde</option>
+                  <option value="done">Yapıldı</option>
+                  <option value="rejected">Yapılamadı</option>
+                  <option value="cancelled">İptal</option>
+                </select>
+              </label>
+              <label class="op-filter-field"
+                ><span class="op-filter-field__lbl">Kayıt başlangıç</span>
+                <input id="op-hk-filter-from" type="date" class="op-filter-input" autocomplete="off" />
+              </label>
+              <label class="op-filter-field"
+                ><span class="op-filter-field__lbl">Kayıt bitiş</span>
+                <input id="op-hk-filter-to" type="date" class="op-filter-input" autocomplete="off" />
+              </label>
+              <label class="op-filter-field op-filter-field--room"
+                ><span class="op-filter-field__lbl">Oda</span>
+                <input id="op-hk-filter-room" type="text" class="op-filter-input" placeholder="Tam eşleşme" autocomplete="off" />
+              </label>
+              <div class="op-filter-actions">
+                <button type="button" class="btn-primary btn-small" id="op-hk-filter-apply">Uygula</button>
+                <button type="button" class="btn-small" id="op-hk-filter-clear">Sıfırla</button>
+              </div>
+            </div>
+            <p class="op-filter-hint">Filtreler sunucuda uygulanır; <strong>Uygula</strong> ile listeyi yenilersiniz.</p>
+          </div>
+          <div id="op-hk-mount"></div>
+        </section>
+        <section id="tab-op-tech" class="admin-tab hidden">
+          <div class="section-head">
+            <h2>Teknik Operasyon</h2>
+            <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
+          </div>
+          <p class="section-lead">
+            Arıza kayıtlarında durum güncellemesi. Aşağıdan süz; salt okunur tam liste için <strong>Arızalar</strong> sekmesini kullanın.
+          </p>
+          <div class="op-filter-bar glass-block" id="op-tech-filters" role="search" aria-label="Teknik operasyon filtreleri">
+            <div class="op-filter-bar__row">
+              <label class="op-filter-field"
+                ><span class="op-filter-field__lbl">Durum</span>
+                <select id="op-tech-filter-status" class="op-filter-input">
+                  <option value="">Tüm kayıtlar</option>
+                  <option value="new">Yeni</option>
+                  <option value="pending">Bekliyor</option>
+                  <option value="in_progress">Üzerinde</option>
+                  <option value="done">Tamam</option>
+                  <option value="rejected">Yapılamadı</option>
+                  <option value="cancelled">İptal</option>
+                </select>
+              </label>
+              <label class="op-filter-field"
+                ><span class="op-filter-field__lbl">Kayıt başlangıç</span>
+                <input id="op-tech-filter-from" type="date" class="op-filter-input" autocomplete="off" />
+              </label>
+              <label class="op-filter-field"
+                ><span class="op-filter-field__lbl">Kayıt bitiş</span>
+                <input id="op-tech-filter-to" type="date" class="op-filter-input" autocomplete="off" />
+              </label>
+              <label class="op-filter-field op-filter-field--room"
+                ><span class="op-filter-field__lbl">Oda</span>
+                <input id="op-tech-filter-room" type="text" class="op-filter-input" placeholder="Tam eşleşme" autocomplete="off" />
+              </label>
+              <div class="op-filter-actions">
+                <button type="button" class="btn-primary btn-small" id="op-tech-filter-apply">Uygula</button>
+                <button type="button" class="btn-small" id="op-tech-filter-clear">Sıfırla</button>
+              </div>
+            </div>
+            <p class="op-filter-hint">Filtreler sunucuda uygulanır; <strong>Uygula</strong> ile listeyi yenilersiniz.</p>
+          </div>
+          <div id="op-tech-mount"></div>
+        </section>
+        <section id="tab-op-front" class="admin-tab hidden">
+          <div class="section-head">
+            <h2>Ön büro Operasyon</h2>
+            <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
+          </div>
+          <p class="section-lead">
+            Üç liste birlikte güncellenir. Aşağıdaki süzgeç üç blokta da geçerlidir. Salt okunur detay için ilgili ana sekmeleri kullanın.
+          </p>
+          <div class="op-filter-bar glass-block" id="op-front-filters" role="search" aria-label="Ön büro operasyon filtreleri">
+            <div class="op-filter-bar__row">
+              <label class="op-filter-field"
+                ><span class="op-filter-field__lbl">Durum</span>
+                <select id="op-front-filter-status" class="op-filter-input">
+                  <option value="">Tüm kayıtlar</option>
+                  <option value="new">Yeni</option>
+                  <option value="pending">Bekliyor</option>
+                  <option value="in_progress">İşlemde</option>
+                  <option value="done">Tamamlandı</option>
+                  <option value="rejected">Olumsuz</option>
+                  <option value="cancelled">İptal</option>
+                </select>
+              </label>
+              <label class="op-filter-field"
+                ><span class="op-filter-field__lbl">Kayıt başlangıç</span>
+                <input id="op-front-filter-from" type="date" class="op-filter-input" autocomplete="off" />
+              </label>
+              <label class="op-filter-field"
+                ><span class="op-filter-field__lbl">Kayıt bitiş</span>
+                <input id="op-front-filter-to" type="date" class="op-filter-input" autocomplete="off" />
+              </label>
+              <label class="op-filter-field op-filter-field--room"
+                ><span class="op-filter-field__lbl">Oda</span>
+                <input id="op-front-filter-room" type="text" class="op-filter-input" placeholder="Tam eşleşme" autocomplete="off" />
+              </label>
+              <div class="op-filter-actions">
+                <button type="button" class="btn-primary btn-small" id="op-front-filter-apply">Uygula</button>
+                <button type="button" class="btn-small" id="op-front-filter-clear">Sıfırla</button>
+              </div>
+            </div>
+            <p class="op-filter-hint">Şikâyet, bildirim ve geç çıkış listeleri aynı tarih/oda/durum filtresiyle yenilenir.</p>
+          </div>
+          <div id="op-front-mount"></div>
+        </section>
+
         <section id="tab-evaluations" class="admin-tab hidden">
           <div class="section-head">
             <h2>Değerlendirmeler</h2>
@@ -406,8 +566,8 @@
     <script src="../js/api-config.js?v=13"></script>
     <script src="../js/requests/config.js?v=20"></script>
     <script src="../js/hotel-room-numbers.js?v=1"></script>
-    <script src="js/data-adapter.js?v=14"></script>
-    <script src="js/ui.js?v=45"></script>
-    <script src="js/app.js?v=38"></script>
+    <script src="js/data-adapter.js?v=16"></script>
+    <script src="js/ui.js?v=50"></script>
+    <script src="js/app.js?v=43"></script>
   </body>
 </html>

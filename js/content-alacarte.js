@@ -6,6 +6,24 @@
     return P(row || {});
   }
 
+  var SINTON_MENU_PDF = {
+    tr: "assets/docs/sinton-menu-tr.pdf",
+    en: "assets/docs/sinton-menu-en.pdf",
+    ru: "assets/docs/sinton-menu-ru.pdf",
+  };
+
+  function normLang(code) {
+    var c = String(code || "tr").toLowerCase();
+    if (c === "en" || c === "de" || c === "ru") return c;
+    return "tr";
+  }
+
+  function sintonMenuHref(lang) {
+    var L = normLang(lang);
+    if (L === "de") L = "en";
+    return SINTON_MENU_PDF[L] || SINTON_MENU_PDF.tr;
+  }
+
   function el(tag, cls, text) {
     var n = document.createElement(tag);
     if (cls) n.className = cls;
@@ -131,6 +149,7 @@
         de: "Amerikanisches BBQ · Cocktails",
         ru: "Американское BBQ · коктейли",
       },
+      menuKey: "sinton",
       slots: [
         {
           name: {
@@ -170,7 +189,7 @@
     },
   ];
 
-  function renderCard(item) {
+  function renderCard(item, t, lang) {
     var card = el("article", "venue-card venue-card--rest alacarte-card");
     var fig = el("div", "venue-card__media");
     var img = document.createElement("img");
@@ -189,13 +208,43 @@
       slotsWrap.appendChild(renderSlot(slot));
     });
     body.appendChild(slotsWrap);
+
+    if (item.menuKey === "sinton" && typeof t === "function") {
+      var menuRow = el("div", "alacarte-menu-cta");
+      var a = document.createElement("a");
+      a.className = "alacarte-menu-cta__btn";
+      a.href = sintonMenuHref(lang);
+      a.setAttribute("download", "");
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.setAttribute("aria-label", t("alacarteSintonMenuAria"));
+      var ico = el("span", "alacarte-menu-cta__ico");
+      ico.setAttribute("aria-hidden", "true");
+      ico.innerHTML =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+      a.appendChild(ico);
+      a.appendChild(el("span", "alacarte-menu-cta__label", t("alacarteSintonMenuCta")));
+      menuRow.appendChild(a);
+      body.appendChild(menuRow);
+    }
+
     card.appendChild(fig);
     card.appendChild(body);
     return card;
   }
 
-  function renderAlacarteModule(container) {
+  function renderAlacarteModule(container, t, lang) {
     var root = el("div", "viona-mod viona-mod--alacarte");
+    var stored = "tr";
+    try {
+      if (typeof localStorage !== "undefined") {
+        var s = localStorage.getItem("viona_lang");
+        if (s) stored = s;
+      }
+    } catch (e) {
+      /* no-op */
+    }
+    var L = lang != null && lang !== "" ? lang : normLang(stored);
 
     var intro = el("div", "alacarte-intro");
     intro.appendChild(el("p", "alacarte-intro__p", T(INTRO)));
@@ -203,7 +252,7 @@
 
     var stack = el("div", "venue-stack");
     CARDS.forEach(function (item) {
-      stack.appendChild(renderCard(item));
+      stack.appendChild(renderCard(item, t, L));
     });
     root.appendChild(stack);
 

@@ -194,6 +194,10 @@ export async function listAdminBucket(type, query = {}) {
   let qb = getSupabase().from(cfg.table).select("*", { count: "exact" }).order("submitted_at", { ascending: false });
   qb = applyDateFilters(qb, query, "submitted_at");
   if (query.status) qb = qb.eq("status", String(query.status));
+  if (type !== "reservation" && query.room_number) {
+    const rn = String(query.room_number || "").trim();
+    if (rn) qb = qb.eq("room_number", rn);
+  }
   if (type === "reservation") {
     if (query.reservation_type) qb = qb.eq("reservation_type", String(query.reservation_type));
     if (query.service_code) qb = qb.eq("service_code", String(query.service_code));
@@ -431,6 +435,57 @@ export async function updateAdminItemStatus(type, id, status) {
     throw new Error(`status_update_no_row.${hint}`);
   }
   return data;
+}
+
+const SATISFACTION_BUCKET_TYPES = new Set(["request", "complaint", "fault", "guest_notification", "late_checkout"]);
+
+/**
+ * Misafir memnuniyeti: raw_payload.admin.guest_satisfaction içinde saklanır (1–5 + not).
+ * @param {string} type
+ * @param {string} id
+ * @param {{ score?: unknown, note?: unknown }} body
+ */
+export async function mergeGuestSatisfactionAdmin(type, id, body = {}) {
+  const t = String(type || "").trim();
+  if (!SATISFACTION_BUCKET_TYPES.has(t)) throw new Error("invalid admin bucket type");
+  const idStr = String(id ?? "").trim();
+  if (!idStr) throw new Error("id is required");
+
+  let score = null;
+  const rawScore = body.score;
+  if (rawScore != null && rawScore !== "") {
+    const n = Number(rawScore);
+    if (!Number.isFinite(n) || n < 1 || n > 5) throw new Error("invalid satisfaction score");
+    score = Math.round(n);
+  }
+  const note = body.note == null ? "" : String(body.note).trim();
+
+  const table = tableForType(t);
+  const { data: row, error: fetchErr } = await sb(() =>
+    getSupabase().from(table).select("raw_payload").eq("id", idStr).maybeSingle(),
+  );
+  if (fetchErr) rethrowSupabaseError(fetchErr);
+  if (!row) throw new Error("record_not_found");
+
+  const raw = row.raw_payload && typeof row.raw_payload === "object" ? { ...row.raw_payload } : {};
+  const admin = raw.admin && typeof raw.admin === "object" ? { ...raw.admin } : {};
+  if (score == null && note === "") {
+    if (admin.guest_satisfaction) delete admin.guest_satisfaction;
+  } else {
+    admin.guest_satisfaction = {
+      score,
+      note,
+      updated_at: new Date().toISOString(),
+    };
+  }
+  raw.admin = admin;
+
+  const { data: out, error: upErr } = await sb(() =>
+    getSupabase().from(table).update({ raw_payload: raw }).eq("id", idStr).select("id,raw_payload").maybeSingle(),
+  );
+  if (upErr) rethrowSupabaseError(upErr);
+  if (!out) throw new Error("satisfaction_update_no_row");
+  return out;
 }
 
 export async function deleteAdminItem(type, id) {

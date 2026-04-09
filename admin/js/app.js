@@ -83,10 +83,29 @@
     complaints: "tab-complaints",
     faults: "tab-faults",
     guest_notifications: "tab-guest-notifications",
+    op_hk: "tab-op-hk",
+    op_tech: "tab-op-tech",
+    op_front: "tab-op-front",
     evaluations: "tab-evaluations",
     "pdf-report": "tab-pdf-report",
     logs: "tab-logs",
   };
+  var OP_ACTION_PAGE_SIZE = 50;
+  var opHkPage = 1;
+  var opTechPage = 1;
+  var opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
+  var opFilterHk = { status: "", from: "", to: "", room: "" };
+  var opFilterTech = { status: "", from: "", to: "", room: "" };
+  var opFilterFront = { status: "", from: "", to: "", room: "" };
+
+  function opQueryFromFilter(f) {
+    var o = {};
+    if (f.status) o.status = f.status;
+    if (f.from) o.from = f.from;
+    if (f.to) o.to = f.to;
+    if (f.room && String(f.room).trim()) o.room_number = String(f.room).trim();
+    return o;
+  }
 
   function openTab(tab) {
     var isHome = tab == null || tab === "" || tab === "home";
@@ -150,6 +169,111 @@
       await loadBucket("late_checkout", "list-late-checkouts");
     } else {
       await loadBucket("guest_notification", "list-guest-notifications");
+    }
+  }
+
+  async function loadOpHk(page) {
+    var mount = document.getElementById("op-hk-mount");
+    if (!mount) return;
+    if (page != null) opHkPage = page;
+    try {
+      var res = await adapter.getBucketPage(
+        "request",
+        opHkPage,
+        OP_ACTION_PAGE_SIZE,
+        opQueryFromFilter(opFilterHk),
+      );
+      ui.renderOperationBucket(mount, {
+        bucketType: "request",
+        rows: res.items || [],
+        pagination: res.pagination,
+        onPage: function (p) {
+          void loadOpHk(p);
+        },
+        buttonLabels: ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"],
+        summaryRow: function (r) {
+          return typeof ui.operationSummaryForType === "function"
+            ? ui.operationSummaryForType("request", r)
+            : "—";
+        },
+        onStatus: async function (bt, id, status) {
+          await adapter.updateStatus(bt, id, status);
+          await loadOpHk(opHkPage);
+        },
+      });
+    } catch (e) {
+      mount.innerHTML =
+        '<p class="admin-load-error">' + escHtml(formatAdminBucketLoadError(e)) + "</p>";
+    }
+  }
+
+  function escHtml(s) {
+    var d = document.createElement("div");
+    d.textContent = String(s || "");
+    return d.innerHTML;
+  }
+
+  async function loadOpTech(page) {
+    var mount = document.getElementById("op-tech-mount");
+    if (!mount) return;
+    if (page != null) opTechPage = page;
+    try {
+      var res = await adapter.getBucketPage(
+        "fault",
+        opTechPage,
+        OP_ACTION_PAGE_SIZE,
+        opQueryFromFilter(opFilterTech),
+      );
+      ui.renderOperationBucket(mount, {
+        bucketType: "fault",
+        rows: res.items || [],
+        pagination: res.pagination,
+        onPage: function (p) {
+          void loadOpTech(p);
+        },
+        buttonLabels: ["Bekliyor", "Üzerinde", "Tamam", "Yapılamadı"],
+        onStatus: async function (bt, id, status) {
+          await adapter.updateStatus(bt, id, status);
+          await loadOpTech(opTechPage);
+        },
+      });
+    } catch (e) {
+      mount.innerHTML =
+        '<p class="admin-load-error">' + escHtml(formatAdminBucketLoadError(e)) + "</p>";
+    }
+  }
+
+  async function loadOpFront(pageType, page) {
+    var mount = document.getElementById("op-front-mount");
+    if (!mount) return;
+    if (pageType && page != null) opFrontPages[pageType] = page;
+    try {
+      var fq = opQueryFromFilter(opFilterFront);
+      var c = await adapter.getBucketPage("complaint", opFrontPages.complaint, OP_ACTION_PAGE_SIZE, fq);
+      var gn = await adapter.getBucketPage(
+        "guest_notification",
+        opFrontPages.guest_notification,
+        OP_ACTION_PAGE_SIZE,
+        fq,
+      );
+      var lc = await adapter.getBucketPage("late_checkout", opFrontPages.late_checkout, OP_ACTION_PAGE_SIZE, fq);
+      ui.renderOperationFront(
+        mount,
+        { complaint: c, guest_notification: gn, late_checkout: lc },
+        {
+          onPage: function (bt, p) {
+            opFrontPages[bt] = p;
+            void loadOpFront();
+          },
+          onStatus: async function (bt, id, status) {
+            await adapter.updateStatus(bt, id, status);
+            await loadOpFront();
+          },
+        },
+      );
+    } catch (e) {
+      mount.innerHTML =
+        '<p class="admin-load-error">' + escHtml(formatAdminBucketLoadError(e)) + "</p>";
     }
   }
 
@@ -425,6 +549,12 @@
         await loadBucket("fault", "list-faults");
       } else if (activeAdminTab === "guest_notifications") {
         await loadGuestNotifVisible();
+      } else if (activeAdminTab === "op_hk") {
+        await loadOpHk();
+      } else if (activeAdminTab === "op_tech") {
+        await loadOpTech();
+      } else if (activeAdminTab === "op_front") {
+        await loadOpFront();
       } else if (activeAdminTab === "evaluations") {
         await loadEvaluations();
       } else if (activeAdminTab === "logs") {
@@ -490,12 +620,39 @@
         await loadBucket(type, mountId, pagination.page - 1, opts);
         return;
       }
-      ui.renderBucketTable(mount, type, rows, {
+      var bucketReadOnly =
+        type === "request" ||
+        type === "complaint" ||
+        type === "fault" ||
+        type === "guest_notification" ||
+        type === "late_checkout";
+      var bucketHandlers = {
         pagination: pagination,
         onPage: function (nextPage) {
           void loadBucket(type, mountId, nextPage);
         },
-        onStatus: async function (itemType, id, status) {
+        readOnly: bucketReadOnly,
+      };
+      if (bucketReadOnly) {
+        bucketHandlers.onSatisfaction = async function (itemType, id, score, note) {
+          try {
+            await adapter.patchSatisfaction(itemType, id, {
+              score: score === "" || score == null ? null : Number(score),
+              note: note,
+            });
+            window.alert("Misafir memnuniyeti kaydedildi.");
+            await loadBucket(type, mountId, undefined, { rethrow: true });
+          } catch (err) {
+            var msg =
+              err && err.message
+                ? String(err.message)
+                : "Kayıt başarısız. Bağlantıyı veya yetkiyi kontrol edin.";
+            window.alert(msg);
+            throw err;
+          }
+        };
+      } else {
+        bucketHandlers.onStatus = async function (itemType, id, status) {
           try {
             await adapter.updateStatus(itemType, id, status);
             await loadBucket(type, mountId, undefined, { rethrow: true });
@@ -506,13 +663,13 @@
                 : "Durum güncellenemedi. Bağlantıyı veya sunucu yanıtını kontrol edin.";
             window.alert(msg);
           }
-        },
-        onDelete: async function (itemType, id) {
+        };
+        bucketHandlers.onDelete = async function (itemType, id) {
           if (!window.confirm("Kaydı silmek istiyor musunuz?")) return;
           await adapter.deleteItem(itemType, id);
           await loadBucket(type, mountId);
-        },
-        onWhatsappResend: async function (itemType, id) {
+        };
+        bucketHandlers.onWhatsappResend = async function (itemType, id) {
           try {
             await adapter.resendWhatsappOperational(itemType, id);
             window.alert("Kayıt operasyon WhatsApp grubuna yeniden iletildi.");
@@ -524,12 +681,15 @@
                 : "WhatsApp iletimi tamamlanamadı. Bağlantıyı veya sunucu yanıtını kontrol edin.";
             window.alert(msg);
           }
-        },
-        onCreate: async function (payload) {
-          await adapter.createGuestRequest(payload);
-          await loadBucket(type, mountId);
-        },
-      });
+        };
+        if (type === "request") {
+          bucketHandlers.onCreate = async function (payload) {
+            await adapter.createGuestRequest(payload);
+            await loadBucket(type, mountId);
+          };
+        }
+      }
+      ui.renderBucketTable(mount, type, rows, bucketHandlers);
     } catch (e) {
       mount.textContent = "";
       var errP = document.createElement("p");
@@ -982,10 +1142,10 @@
       opsLineExtrasToday +
       "</p>" +
       '<div class="home-ops-strip__actions">' +
-      '<button type="button" class="home-ops-strip__mini js-home-open-requests">İstekler →</button>' +
-      '<button type="button" class="home-ops-strip__mini js-home-open-complaints">Şikayetler →</button>' +
-      '<button type="button" class="home-ops-strip__mini js-home-open-faults">Arızalar →</button>' +
-      '<button type="button" class="home-ops-strip__mini js-home-open-guest-notifications">Bildirimler →</button>' +
+      '<button type="button" class="home-ops-strip__mini js-home-open-op-hk">HK Operasyon →</button>' +
+      '<button type="button" class="home-ops-strip__mini js-home-open-op-front">Ön büro Operasyon →</button>' +
+      '<button type="button" class="home-ops-strip__mini js-home-open-op-tech">Teknik Operasyon →</button>' +
+      '<button type="button" class="home-ops-strip__mini js-home-open-guest-notifications">Salt okuma · Bildirimler →</button>' +
       "</div></div>" +
       '<p class="home-res-strip__hint">Bugün gönderilen kayıtlar (' +
       todayLabel +
@@ -1025,9 +1185,18 @@
         scheduleAutoRefresh();
       });
     }
-    wireOpsOpen(".js-home-open-requests", "requests", "request", "list-requests");
-    wireOpsOpen(".js-home-open-complaints", "complaints", "complaint", "list-complaints");
-    wireOpsOpen(".js-home-open-faults", "faults", "fault", "list-faults");
+    function wireOpTab(sel, tab, loader) {
+      var b = el.querySelector(sel);
+      if (!b) return;
+      b.addEventListener("click", async function () {
+        openTab(tab);
+        await loader();
+        scheduleAutoRefresh();
+      });
+    }
+    wireOpTab(".js-home-open-op-hk", "op_hk", loadOpHk);
+    wireOpTab(".js-home-open-op-tech", "op_tech", loadOpTech);
+    wireOpTab(".js-home-open-op-front", "op_front", loadOpFront);
     var bGnHome = el.querySelector(".js-home-open-guest-notifications");
     if (bGnHome) {
       bGnHome.addEventListener("click", async function () {
@@ -1128,7 +1297,7 @@
         statusMetaLine:
           "Yeni: " + reqN + " · Kuyruk: " + reqP + (reqI > 0 ? " · Eski işlemde: " + reqI : ""),
         oldestOpen: oldestOpenText(reqRows),
-        tab: "requests",
+        tab: "op_hk",
       }) +
       renderReminderCard({
         title: "Şikayetler",
@@ -1140,7 +1309,7 @@
         statusMetaLine:
           "Yeni: " + comN + " · Kuyruk: " + comP + (comI > 0 ? " · Eski işlemde: " + comI : ""),
         oldestOpen: oldestOpenText(comRows),
-        tab: "complaints",
+        tab: "op_front",
       }) +
       renderReminderCard({
         title: "Arızalar",
@@ -1152,7 +1321,7 @@
         statusMetaLine:
           "Yeni: " + faultN + " · Kuyruk: " + faultP + (faultI > 0 ? " · Eski işlemde: " + faultI : ""),
         oldestOpen: oldestOpenText(faultRows),
-        tab: "faults",
+        tab: "op_tech",
       }) +
       renderReminderCard({
         title: "Misafir bildirimleri + geç çıkış",
@@ -1169,7 +1338,7 @@
           (notifI > 0 ? " · Eski işlemde: " + notifI : "") +
           " (birleşik liste; sekmede alt görünümler ayrı)",
         oldestOpen: oldestOpenText(notifRows),
-        tab: "guest_notifications",
+        tab: "op_front",
       }) +
       "</div>";
     el.innerHTML = html;
@@ -1184,6 +1353,9 @@
           guestNotifSubtab = "notifications";
           await loadGuestNotifVisible();
         }
+        if (tab === "op_hk") await loadOpHk();
+        if (tab === "op_tech") await loadOpTech();
+        if (tab === "op_front") await loadOpFront();
         scheduleAutoRefresh();
       });
     });
@@ -1325,6 +1497,9 @@
         if (tab === "evaluations") await loadEvaluations();
         if (tab === "pdf-report") setPdfCustomRangeUi(Boolean(document.getElementById("pdf-custom-range") && document.getElementById("pdf-custom-range").checked));
         if (tab === "logs") await loadLogs();
+        if (tab === "op_hk") await loadOpHk();
+        if (tab === "op_tech") await loadOpTech();
+        if (tab === "op_front") await loadOpFront();
         scheduleAutoRefresh();
       });
     });
@@ -1354,6 +1529,86 @@
     });
   }
 
+  function wireDashboardOpShortcuts() {
+    function bind(sel, tab, loadFn) {
+      document.querySelectorAll(sel).forEach(function (btn) {
+        btn.addEventListener("click", async function () {
+          openTab(tab);
+          await loadFn();
+          scheduleAutoRefresh();
+        });
+      });
+    }
+    bind(".js-dash-open-op-hk", "op_hk", loadOpHk);
+    bind(".js-dash-open-op-tech", "op_tech", loadOpTech);
+    bind(".js-dash-open-op-front", "op_front", loadOpFront);
+  }
+
+  function readOpFilterFromDom(prefix) {
+    var status = document.getElementById(prefix + "-filter-status");
+    var from = document.getElementById(prefix + "-filter-from");
+    var to = document.getElementById(prefix + "-filter-to");
+    var room = document.getElementById(prefix + "-filter-room");
+    return {
+      status: status && status.value ? status.value : "",
+      from: from && from.value ? from.value : "",
+      to: to && to.value ? to.value : "",
+      room: room && room.value ? String(room.value).trim() : "",
+    };
+  }
+
+  function clearOpFilterDom(prefix) {
+    var status = document.getElementById(prefix + "-filter-status");
+    var from = document.getElementById(prefix + "-filter-from");
+    var to = document.getElementById(prefix + "-filter-to");
+    var room = document.getElementById(prefix + "-filter-room");
+    if (status) status.value = "";
+    if (from) from.value = "";
+    if (to) to.value = "";
+    if (room) room.value = "";
+  }
+
+  function wireOpFilterBars() {
+    function bindBar(prefix, filterObj, applyPage) {
+      var applyBtn = document.getElementById(prefix + "-filter-apply");
+      var clearBtn = document.getElementById(prefix + "-filter-clear");
+      if (applyBtn) {
+        applyBtn.addEventListener("click", function () {
+          var next = readOpFilterFromDom(prefix);
+          filterObj.status = next.status;
+          filterObj.from = next.from;
+          filterObj.to = next.to;
+          filterObj.room = next.room;
+          applyPage();
+          scheduleAutoRefresh();
+        });
+      }
+      if (clearBtn) {
+        clearBtn.addEventListener("click", function () {
+          filterObj.status = "";
+          filterObj.from = "";
+          filterObj.to = "";
+          filterObj.room = "";
+          clearOpFilterDom(prefix);
+          applyPage();
+          scheduleAutoRefresh();
+        });
+      }
+    }
+    bindBar("op-hk", opFilterHk, function () {
+      opHkPage = 1;
+      void loadOpHk(1);
+    });
+    bindBar("op-tech", opFilterTech, function () {
+      opTechPage = 1;
+      void loadOpTech(1);
+    });
+    bindBar("op-front", opFilterFront, function () {
+      opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
+      void loadOpFront();
+    });
+  }
+
   function wireVisibilityRefresh() {
     document.addEventListener("visibilitychange", function () {
       if (document.hidden) return;
@@ -1374,6 +1629,8 @@
       wirePdfReportPanel();
       wireLogsControls();
       wireBackHomeButtons();
+      wireDashboardOpShortcuts();
+      wireOpFilterBars();
       wireVisibilityRefresh();
     }
     openTab(null);
@@ -1447,7 +1704,7 @@
           try {
             sessionStorage.removeItem(LOGIN_USER_KEY);
           } catch (_x) {}
-          if (err) err.textContent = "Geçersiz veya yetkisiz admin token.";
+          if (err) err.textContent = "Geçersiz veya yetkisiz şifre.";
           return;
         }
         if (err) err.textContent = "";

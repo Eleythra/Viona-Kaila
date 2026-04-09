@@ -14,6 +14,7 @@ import {
   listSurveySubmissions,
   updateChatObservationReview,
   updateAdminItemStatus,
+  mergeGuestSatisfactionAdmin,
   resendWhatsappForAdminItem,
 } from "./admin.service.js";
 const router = Router();
@@ -103,6 +104,15 @@ router.patch("/requests/:type/:id/status", async (req, res) => {
     return res.status(200).json({ ok: true, item: data });
   } catch (error) {
     return adminErr(res, error, "admin_status_update_failed");
+  }
+});
+
+router.patch("/requests/:type/:id/satisfaction", async (req, res) => {
+  try {
+    const data = await mergeGuestSatisfactionAdmin(req.params.type, req.params.id, req.body || {});
+    return res.status(200).json({ ok: true, item: data });
+  } catch (error) {
+    return adminErr(res, error, "admin_satisfaction_update_failed");
   }
 });
 

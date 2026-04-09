@@ -159,8 +159,48 @@
     },
   ];
 
-  function renderAlanyaModule(container) {
+  var ALANYA_GUIDE_PDF = "assets/docs/alanya-local-cultural-natural-guide.pdf";
+
+  function renderAlanyaModule(container, t) {
     var root = el("div", "viona-mod viona-mod--alanya");
+
+    var guide = el("section", "alanya-guide-card alanya-guide-card--premium");
+    guide.setAttribute("aria-label", t("alanyaGuideTitle"));
+
+    var deco = el("div", "alanya-guide-card__deco");
+    deco.setAttribute("aria-hidden", "true");
+    deco.innerHTML =
+      '<svg class="alanya-guide-card__mark" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M24 4L44 38H4L24 4Z" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round" opacity="0.35"/><circle cx="24" cy="26" r="6" stroke="currentColor" stroke-width="1.25" opacity="0.5"/></svg>';
+    guide.appendChild(deco);
+
+    var inner = el("div", "alanya-guide-card__inner");
+    inner.appendChild(el("span", "alanya-guide-card__eyebrow", t("alanyaGuideEyebrow")));
+    inner.appendChild(el("h3", "alanya-guide-card__title", t("alanyaGuideTitle")));
+    var glead = el("p", "alanya-guide-card__lead");
+    glead.textContent = t("alanyaGuideLead");
+    inner.appendChild(glead);
+
+    var a = document.createElement("a");
+    a.className = "alanya-guide-card__cta";
+    a.href = ALANYA_GUIDE_PDF;
+    a.setAttribute("download", "");
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    var ctaIco = el("span", "alanya-guide-card__cta-ico");
+    ctaIco.setAttribute("aria-hidden", "true");
+    ctaIco.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+    a.appendChild(ctaIco);
+    a.appendChild(el("span", "alanya-guide-card__cta-label", t("alanyaGuideDownload")));
+    var ctaChev = el("span", "alanya-guide-card__cta-chev");
+    ctaChev.setAttribute("aria-hidden", "true");
+    ctaChev.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';
+    a.appendChild(ctaChev);
+    inner.appendChild(a);
+
+    guide.appendChild(inner);
+    root.appendChild(guide);
 
     var lead = el("p", "viona-mod-lead");
     lead.textContent = T(LEAD);

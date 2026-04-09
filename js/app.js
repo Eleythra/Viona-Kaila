@@ -13,6 +13,8 @@
     { id: "transfer", i18nKey: "modTransfer", icon: "transfer" },
     { id: "alacarte", i18nKey: "modAlacarte", icon: "plate" },
     { id: "animation", i18nKey: "modAnim", icon: "spark" },
+    { id: "sustainability", i18nKey: "modSustainability", icon: "leaf" },
+    { id: "coming_soon", i18nKey: "modComingSoon", icon: "calendar" },
     { id: "miniclub", i18nKey: "modMini", icon: "smile" },
     { id: "discount", i18nKey: "modDiscount", icon: "percent" },
     { id: "meeting", i18nKey: "modMeet", icon: "users" },
@@ -56,6 +58,10 @@
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 17h2.5l1-3h8l1 3H19" stroke-linecap="round"/><path d="M6.5 14L5 7h4l1.5 4h3L15 7h4l-1.5 7M8 17v2M16 17v2"/><circle cx="8.5" cy="17.5" r="1.8"/><circle cx="15.5" cy="17.5" r="1.8"/></svg>',
     roomService:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M4 10h16v9a1 1 0 01-1 1H5a1 1 0 01-1-1v-9z" stroke-linejoin="round"/><path d="M8 10V8a4 4 0 018 0v2"/><path d="M9 14h6M9 18h4" stroke-linecap="round"/></svg>',
+    leaf:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>',
+    calendar:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
   };
 
   /** i18n.js ile aynı anahtar; burada da tanımlı olsun (bağımsız yükleme). */
@@ -247,6 +253,10 @@
       '<svg class="rate-link__svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#ffc72c"/><path fill="none" stroke="#1b1b1b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M7.5 12.5l2.8 2.5 6.2-7"/></svg>',
     tripcom:
       '<svg class="rate-link__svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="16" rx="3.5" fill="#2b6cef"/><path fill="#fff" d="M7 8.5h10v1.9H7V8.5zm0 3.4h6.5v1.8H7v-1.8z"/></svg>',
+    corendon:
+      '<svg class="rate-link__svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#ea580c"/><path fill="#fff" d="M8 7h8a1.5 1.5 0 011.5 1.5V11h-11V8.5A1.5 1.5 0 018 7zm-1.5 5h13v6.5A1.5 1.5 0 0118 20H6a1.5 1.5 0 01-1.5-1.5V12z" opacity="0.96"/></svg>',
+    zoover:
+      '<svg class="rate-link__svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#16a34a"/><path fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M8 10h8M8 14h5"/><circle cx="9" cy="10" r="1.2" fill="#fff"/><circle cx="15" cy="14" r="1.2" fill="#fff"/></svg>',
   };
 
   function badgeKeyFor(badge) {
@@ -345,6 +355,11 @@
       inner._whereCleanup();
       delete inner._whereCleanup;
     }
+    if (inner._nearExploreCleanup && typeof inner._nearExploreCleanup === "function") {
+      inner._nearExploreCleanup();
+      delete inner._nearExploreCleanup;
+    }
+    delete inner._nearExplorePopState;
     inner.innerHTML = "";
     if (typeof window._vionaClearActivitiesCarousel === "function") {
       window._vionaClearActivitiesCarousel();
@@ -427,6 +442,8 @@
         spa: "renderSpaModule",
         discount: "renderDiscountModule",
         animation: "renderActivitiesModule",
+        sustainability: "renderSustainabilityModule",
+        coming_soon: "renderNearbyExploreModule",
         miniclub: "renderMiniclubModule",
         meeting: "renderMeetingModule",
         alanya: "renderAlanyaModule",
@@ -461,10 +478,20 @@
       return;
     }
     const inner = el("module-inner");
+    if (moduleId === "coming_soon" && inner._nearExplorePopState && typeof inner._nearExplorePopState === "function") {
+      if (inner._nearExplorePopState()) {
+        return;
+      }
+    }
     if (inner._whereCleanup && typeof inner._whereCleanup === "function") {
       inner._whereCleanup();
       delete inner._whereCleanup;
     }
+    if (inner._nearExploreCleanup && typeof inner._nearExploreCleanup === "function") {
+      inner._nearExploreCleanup();
+      delete inner._nearExploreCleanup;
+    }
+    delete inner._nearExplorePopState;
     moduleId = null;
     requestSub = null;
     surveySub = null;
@@ -553,12 +580,27 @@
         inner._whereCleanup();
         delete inner._whereCleanup;
       }
+      if (inner._nearExploreCleanup && typeof inner._nearExploreCleanup === "function") {
+        inner._nearExploreCleanup();
+        delete inner._nearExploreCleanup;
+      }
+      delete inner._nearExplorePopState;
       inner.innerHTML = "";
     }
     moduleId = null;
     requestSub = null;
     surveySub = null;
     showView("home");
+  };
+
+  /** Çevrede Keşfet → İstekler (resepsiyon yardımı). */
+  window.vionaOpenRequestsFromNearby = function () {
+    moduleId = "requests";
+    requestSub = "request";
+    surveySub = null;
+    showView("module");
+    renderModuleContent();
+    closeModals();
   };
 
   function setLang(code) {
