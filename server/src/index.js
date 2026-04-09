@@ -337,19 +337,32 @@ app.use(
   }),
 );
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      // Server-to-server / curl / health-check requests may have no Origin.
-      if (!origin) return callback(null, true);
-      if (isAllowedOrigin(origin)) return callback(null, true);
-      return callback(new Error("cors_not_allowed"));
-    },
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Admin-Token"],
-    credentials: false,
-  }),
-);
+/** CORS: varsayılan gevşek (`origin: true`) — statik host / Vercel / ters vekil karmaşasında formlar çalışır. Sıkı liste: CORS_STRICT=1. */
+const corsMiddleware = env.corsStrict
+  ? cors({
+      origin(origin, callback) {
+        if (!origin) return callback(null, true);
+        if (isAllowedOrigin(origin)) return callback(null, true);
+        return callback(new Error("cors_not_allowed"));
+      },
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "X-Admin-Token",
+        "Accept",
+        "Accept-Language",
+        "X-Requested-With",
+      ],
+      credentials: false,
+    })
+  : cors({
+      origin: true,
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      credentials: false,
+    });
+
+app.use(corsMiddleware);
 
 app.use(
   "/api",

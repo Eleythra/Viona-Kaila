@@ -32,7 +32,11 @@
   function mergeAuthHeaders(base) {
     var h = Object.assign({}, base || {});
     var token = getAdminToken();
-    if (token) h.Authorization = "Bearer " + token;
+    if (token) {
+      h.Authorization = "Bearer " + token;
+      /** Bazı ters vekiller Authorization’ı düşürür; sunucu ikisini de kabul eder. */
+      h["X-Admin-Token"] = token;
+    }
     return h;
   }
 

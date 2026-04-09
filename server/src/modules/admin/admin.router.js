@@ -20,11 +20,14 @@ import { discoverWhatsappGroups, verifyConfiguredWhatsappGroups } from "../../se
 import { getWhatsappGroupBotState } from "../../services/whatsapp-group-bot.service.js";
 
 const router = Router();
-/** BOM / yanlışlıkla yapışan satır sonu (tek satır token). */
-const ADMIN_API_TOKEN = String(process.env.ADMIN_API_TOKEN || "")
-  .replace(/^\uFEFF/, "")
-  .split(/\r?\n/)[0]
-  .trim();
+
+/** Her istekte okunur (.env güncellemesi / yanlış modül yükleme sırası riskini azaltır). */
+function configuredAdminToken() {
+  return String(process.env.ADMIN_API_TOKEN || "")
+    .replace(/^\uFEFF/, "")
+    .split(/\r?\n/)[0]
+    .trim();
+}
 
 function extractAdminToken(req) {
   const bearer = String(req.headers?.authorization || "").trim();
@@ -37,26 +40,34 @@ function extractAdminToken(req) {
 }
 
 function isAdminTokenValid(candidate = "") {
-  if (!ADMIN_API_TOKEN) return false;
+  const secret = configuredAdminToken();
+  if (!secret) return false;
   const left = Buffer.from(String(candidate || ""), "utf8");
-  const right = Buffer.from(ADMIN_API_TOKEN, "utf8");
+  const right = Buffer.from(secret, "utf8");
   if (left.length !== right.length) return false;
   return timingSafeEqual(left, right);
 }
 
 router.get("/auth/validate", (req, res) => {
-  if (!ADMIN_API_TOKEN) {
+  if (!configuredAdminToken()) {
     return res.status(503).json({ ok: false, error: "admin_auth_not_configured" });
   }
   const token = extractAdminToken(req);
   if (!isAdminTokenValid(token)) {
+    console.warn(
+      "[admin] auth_validate unauthorized token_len=%s secret_len=%s has_auth_header=%s has_x_admin=%s",
+      String(token || "").length,
+      String(configuredAdminToken() || "").length,
+      Boolean(req.headers?.authorization),
+      Boolean(req.headers?.["x-admin-token"]),
+    );
     return res.status(401).json({ ok: false, error: "unauthorized" });
   }
   return res.status(200).json({ ok: true });
 });
 
 router.use((req, res, next) => {
-  if (!ADMIN_API_TOKEN) {
+  if (!configuredAdminToken()) {
     return res.status(503).json({ ok: false, error: "admin_auth_not_configured" });
   }
   const token = extractAdminToken(req);

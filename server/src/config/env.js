@@ -168,6 +168,11 @@ export function getEnv() {
      * → `https://proje-xxx.vercel.app` ve `https://viona-admin.eleythra.com` izinli olur.
      */
     corsAllowedOriginSuffixes: optionalCsv("CORS_ALLOWED_ORIGIN_SUFFIXES", []),
+    /**
+     * `1` ise yalnızca CORS_ALLOWED_ORIGINS / sonek listesine göre izin (kurumsal kilit).
+     * Varsayılan kapalı: `origin: true` ile tüm kökenlere yanıt (misafir formları + Vercel proxy uyumu).
+     */
+    corsStrict: optional("CORS_STRICT", "0") === "1",
     /** Basit rate-limit. */
     rateLimitWindowMs: optionalInt("RATE_LIMIT_WINDOW_MS", 60_000),
     rateLimitMax: optionalInt("RATE_LIMIT_MAX", 180),
