@@ -40,14 +40,24 @@
     return h;
   }
 
+  /** Vercel harici API proxy’si üstbilgileri düşürebilir; admin_token sorgusu VPS’e ulaşır. */
+  function withAdminTokenQuery(url) {
+    var token = getAdminToken();
+    if (!token) return url;
+    if (/[?&]admin_token=/.test(url)) return url;
+    var sep = url.indexOf("?") >= 0 ? "&" : "?";
+    return url + sep + "admin_token=" + encodeURIComponent(token);
+  }
+
   function jfetch(url, options) {
     var opts = options ? Object.assign({}, options) : {};
     opts.headers = mergeAuthHeaders(opts.headers);
+    var finalUrl = withAdminTokenQuery(url);
     var m = String(opts.method || "GET").toUpperCase();
     if (m === "GET" && !opts.cache) {
       opts.cache = "no-store";
     }
-    return fetch(url, opts).then(async function (r) {
+    return fetch(finalUrl, opts).then(async function (r) {
       var text = await r.text();
       var d = null;
       try {

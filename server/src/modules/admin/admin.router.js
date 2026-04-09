@@ -36,7 +36,16 @@ function extractAdminToken(req) {
     if (token) return token;
   }
   const headerToken = String(req.headers?.["x-admin-token"] || "").trim();
-  return headerToken || "";
+  if (headerToken) return headerToken;
+  /** Vercel → harici HTTP rewrite bazen Authorization / X-Admin-Token düşürür; gövde veya sorgu ile aynı token. */
+  const body = req.body;
+  if (body && typeof body === "object" && !Buffer.isBuffer(body)) {
+    const fromBody = String(body.adminToken || body.token || "").trim();
+    if (fromBody) return fromBody;
+  }
+  const qtok = String(req.query?.admin_token || req.query?.token || "").trim();
+  if (qtok) return qtok;
+  return "";
 }
 
 function isAdminTokenValid(candidate = "") {

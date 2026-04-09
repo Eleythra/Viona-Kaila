@@ -58,4 +58,4 @@ Sonra tekrar tek QR.
 
 ## Üretim domain
 
-Misafir sitesi bu API’ye vurmalı (`__VIONA_NODE_RENDER_API__` veya ters proxy). Sadece lokalde bot varken canlı site başka hosta gidiyorsa WhatsApp o isteklerde çalışmaz.
+Misafir sitesi bu Node API’ye vurmalı (örn. `https://api.eleythra.com/api` — `__VIONA_NODE_RENDER_API__` veya ters proxy). Python asistan (Render) ayrı adrestir; karıştırmayın.

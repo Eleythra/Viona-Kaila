@@ -16,7 +16,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "http://178.104.104.45:3001/api/:path*"
+      "destination": "https://api.eleythra.com/api/:path*"
     }
   ],
   "headers": [

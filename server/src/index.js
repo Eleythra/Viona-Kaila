@@ -155,67 +155,6 @@ function guessMultiIntent(message = "") {
   return /\s(ama|ayrıca|ayrica|fakat|but|also)\s/.test(t);
 }
 
-function normalizeOrigin(value = "") {
-  const s = String(value || "").trim().replace(/\/+$/, "");
-  if (!s) return "";
-  return s.toLowerCase();
-}
-
-/** Ortamdan gelen origin’ler + yerel/statik test için sabitler (birleşim).
- * CORS_ALLOWED_ORIGINS dolu olsa bile önceden sadece boşken localhost ekleniyordu;
- * bu yüzden .env’de yalnızca üretim domain’leri varken lokal 5500 reddediliyordu. */
-const corsAllowlist = new Set(
-  (env.corsAllowedOrigins || []).map((x) => normalizeOrigin(x)).filter(Boolean),
-);
-
-function normalizeCorsHostnameSuffix(entry = "") {
-  let s = String(entry || "").trim().toLowerCase();
-  if (!s) return "";
-  s = s.replace(/^\.+/, "");
-  if (!s) return "";
-  return `.${s}`;
-}
-
-const corsHostnameSuffixes = (env.corsAllowedOriginSuffixes || [])
-  .map((x) => normalizeCorsHostnameSuffix(x))
-  .filter(Boolean);
-
-function originMatchesConfiguredSuffix(normalizedOrigin = "") {
-  if (!corsHostnameSuffixes.length) return false;
-  try {
-    const u = new URL(normalizedOrigin);
-    const host = String(u.hostname || "").toLowerCase();
-    if (!host) return false;
-    return corsHostnameSuffixes.some((suf) => host === suf.slice(1) || host.endsWith(suf));
-  } catch {
-    return false;
-  }
-}
-
-[
-  "https://viona-kaila.onrender.com",
-  "http://178.104.104.45:3001",
-  "https://viona-node-api.onrender.com",
-  "http://localhost:3000",
-  "http://localhost:5173",
-  "http://localhost:5500",
-  "http://127.0.0.1:5500",
-  "http://127.0.0.1:3000",
-  /** Yerel statik sunucu: python -m http.server 8080 (Viona + /admin/) */
-  "http://localhost:8080",
-  "http://127.0.0.1:8080",
-]
-  .map(normalizeOrigin)
-  .forEach((x) => corsAllowlist.add(x));
-
-function isAllowedOrigin(origin = "") {
-  const normalized = normalizeOrigin(origin);
-  if (!normalized) return false;
-  if (corsAllowlist.has(normalized)) return true;
-  if (originMatchesConfiguredSuffix(normalized)) return true;
-  return false;
-}
-
 /** Supabase chat_observations.chat_obs_response_type_chk */
 const CHAT_OBS_RESPONSE_TYPES = new Set(["answer", "redirect", "inform", "fallback"]);
 /** Supabase chat_observations.chat_obs_layer_used_chk */
@@ -337,32 +276,11 @@ app.use(
   }),
 );
 
-/** CORS: varsayılan gevşek (`origin: true`) — statik host / Vercel / ters vekil karmaşasında formlar çalışır. Sıkı liste: CORS_STRICT=1. */
-const corsMiddleware = env.corsStrict
-  ? cors({
-      origin(origin, callback) {
-        if (!origin) return callback(null, true);
-        if (isAllowedOrigin(origin)) return callback(null, true);
-        return callback(new Error("cors_not_allowed"));
-      },
-      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-      allowedHeaders: [
-        "Content-Type",
-        "Authorization",
-        "X-Admin-Token",
-        "Accept",
-        "Accept-Language",
-        "X-Requested-With",
-      ],
-      credentials: false,
-    })
-  : cors({
-      origin: true,
-      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-      credentials: false,
-    });
-
-app.use(corsMiddleware);
+/**
+ * CORS: `cors` paketi varsayılanı — tüm kökenlere izin (origin: true).
+ * Önceki sıkı liste + Vercel/proxy kombinasyonunda tarayıcı hâlâ cors_not_allowed görüyordu; burada özelleştirme yok.
+ */
+app.use(cors());
 
 app.use(
   "/api",
@@ -423,6 +341,8 @@ app.get("/api/health", (req, res) => {
     /** WhatsApp operasyon: token/phone id ve misafir ilişkileri alıcı adedi (numara listelenmez). */
     whatsappOperational: getWhatsappOperationalHealthSummary(),
     whatsappGroupBot: getWhatsappGroupBotState(),
+    /** Teşhis: canlıda cors_not_allowed görüyorsanız bu satır open değilse eski kod çalışıyordur. */
+    corsPolicy: "open",
   };
   const pretty =
     String(req.query?.pretty || "") === "1" ||
