@@ -1,5 +1,5 @@
 /**
- * Çevrede Keşfet — kategori → liste + Leaflet harita, manuel veri.
+ * Çevrede Keşfet — Google Haritalar (gömülü iframe) + liste; yol tarifi Google yönlendirme URL’si.
  */
 (function () {
   "use strict";
@@ -37,19 +37,25 @@
   }
 
   function formatDistance(m, lang) {
+    if (m == null || isNaN(m) || m < 0) return "—";
     if (m < 1000) {
       var mR = Math.round(m / 10) * 10;
       if (lang === "de") return "ca. " + mR + " m";
       if (lang === "ru") return "≈ " + mR + " м";
       return "≈ " + mR + " m";
     }
-    var km = (m / 1000).toFixed(1).replace(".", ",");
-    if (lang === "de") return "ca. " + km + " km";
-    if (lang === "ru") return "≈ " + km.replace(",", ".") + " км";
-    return "≈ " + km + " km";
+    var kmNum = (m / 1000).toFixed(1);
+    if (lang === "en" || lang === "ru") {
+      if (lang === "ru") return "≈ " + kmNum + " км";
+      return "≈ " + kmNum + " km";
+    }
+    var kmComma = kmNum.replace(".", ",");
+    if (lang === "de") return "ca. " + kmComma + " km";
+    return "≈ " + kmComma + " km";
   }
 
   function formatWalkMin(meters, lang) {
+    if (meters == null || isNaN(meters) || meters < 0) return "—";
     var min = Math.max(1, Math.round(meters / 75));
     if (lang === "de") return "ca. " + min + " Min. zu Fuß";
     if (lang === "ru") return "≈ " + min + " мин пешком";
@@ -57,18 +63,108 @@
     return "≈ " + min + " min walk";
   }
 
-  function googleDirectionsUrl(fromLat, fromLng, toLat, toLng) {
+  /** Koordinatları kısa, stabil metin yap (URL için). */
+  function coordPair(lat, lng) {
+    var la = typeof lat === "number" ? Math.round(lat * 1e7) / 1e7 : lat;
+    var ln = typeof lng === "number" ? Math.round(lng * 1e7) / 1e7 : lng;
+    return la + "," + ln;
+  }
+
+  /** Harita / rota URL’lerinde okunaklı etiket: isim + adres (ters jeode kodlamada yanlış POI adını azaltır). */
+  function mapsEndpointLabel(nameStr, addressStr) {
+    var n = nameStr != null ? String(nameStr).trim() : "";
+    var a = addressStr != null ? String(addressStr).trim() : "";
+    if (n && a) return n + ", " + a;
+    return n || a;
+  }
+
+  function hotelMapsLabel(hotel, Lg) {
+    return mapsEndpointLabel(pick(hotel.name, Lg), pick(hotel.address, Lg));
+  }
+
+  function placeMapsLabel(place, Lg) {
+    return mapsEndpointLabel(pick(place.name, Lg), pick(place.address, Lg));
+  }
+
+  /** Rota uçları: önce isim+adres, yoksa koordinat. */
+  function hotelRouteEndpoint(hotel, Lg) {
+    var lbl = hotelMapsLabel(hotel, Lg);
+    if (lbl) return lbl;
+    return coordPair(hotel.lat, hotel.lng);
+  }
+
+  function placeRouteEndpoint(place, Lg) {
+    var lbl = placeMapsLabel(place, Lg);
+    if (lbl) return lbl;
+    if (typeof place.lat === "number" && typeof place.lng === "number") {
+      return coordPair(place.lat, place.lng);
+    }
+    return "";
+  }
+
+  function googleMapsHl(Lg) {
+    if (Lg === "en" || Lg === "de" || Lg === "ru") return Lg;
+    return "tr";
+  }
+
+  /** Gömülü harita: tek nokta (otel / bölge). placeQuery doluysa isim+adres ile arama, yoksa pin koordinat. */
+  function googleMapsEmbedPlace(lat, lng, zoom, Lg, placeQuery) {
+    var q =
+      placeQuery != null && String(placeQuery).trim()
+        ? String(placeQuery).trim()
+        : coordPair(lat, lng);
+    return (
+      "https://www.google.com/maps?q=" +
+      encodeURIComponent(q) +
+      "&z=" +
+      (zoom || 17) +
+      "&hl=" +
+      googleMapsHl(Lg) +
+      "&output=embed"
+    );
+  }
+
+  /** Gömülü harita: otel → hedef rota önizlemesi (metin etiketleri). */
+  function googleMapsEmbedRoute(saddrLabel, daddrLabel, Lg) {
+    return (
+      "https://www.google.com/maps?saddr=" +
+      encodeURIComponent(saddrLabel) +
+      "&daddr=" +
+      encodeURIComponent(daddrLabel) +
+      "&hl=" +
+      googleMapsHl(Lg) +
+      "&output=embed"
+    );
+  }
+
+  /**
+   * Tam ekran yol tarifi: başlangıç = otel, varış = seçilen yer (isim+adres; Google’da doğru etiketler).
+   * @see https://developers.google.com/maps/documentation/urls/get-started
+   */
+  function googleDirectionsUrl(hotel, place, Lg) {
+    var o = hotelRouteEndpoint(hotel, Lg);
+    var d = placeRouteEndpoint(place, Lg);
     return (
       "https://www.google.com/maps/dir/?api=1&origin=" +
-      encodeURIComponent(fromLat + "," + fromLng) +
+      encodeURIComponent(o) +
       "&destination=" +
-      encodeURIComponent(toLat + "," + toLng) +
+      encodeURIComponent(d) +
       "&travelmode=driving"
     );
   }
 
-  function ensureLeaflet() {
-    return typeof window.L !== "undefined" && window.L.map;
+  function validHotelCoords(h) {
+    if (!h || typeof h !== "object") return false;
+    var la = h.lat;
+    var ln = h.lng;
+    return (
+      typeof la === "number" &&
+      typeof ln === "number" &&
+      !isNaN(la) &&
+      !isNaN(ln) &&
+      Math.abs(la) <= 90 &&
+      Math.abs(ln) <= 180
+    );
   }
 
   function renderNearbyExploreModule(container, t, lang) {
@@ -78,15 +174,38 @@
     var places = d.places || [];
     var order = d.categoryOrder || [];
 
+    if (!validHotelCoords(hotel)) {
+      var errP = el("p", "placeholder near-explore-config-error", t("nearExploreConfigError"));
+      container.appendChild(errP);
+      return;
+    }
+
     var state = {
       screen: "home",
       category: null,
       selectedId: null,
-      mapHome: null,
-      mapCat: null,
-      layers: { hotel: null, places: {} },
-      markers: {},
+      homeIframeEl: null,
+      catIframeEl: null,
     };
+
+    function makeGmapsIframe(titleText, src) {
+      var ifr = document.createElement("iframe");
+      ifr.className = "near-explore-gmaps-frame";
+      ifr.setAttribute("title", titleText);
+      ifr.setAttribute("loading", "lazy");
+      ifr.setAttribute("referrerpolicy", "no-referrer-when-downgrade");
+      ifr.setAttribute("allowfullscreen", "");
+      ifr.src = src;
+      return ifr;
+    }
+
+    function setCategoryMapRoute(place) {
+      if (!state.catIframeEl || !place) return;
+      var fromLbl = hotelRouteEndpoint(hotel, Lg);
+      var toLbl = placeRouteEndpoint(place, Lg);
+      if (!toLbl) return;
+      state.catIframeEl.src = googleMapsEmbedRoute(fromLbl, toLbl, Lg);
+    }
 
     var root = el("div", "viona-mod viona-mod--near-explore");
 
@@ -100,9 +219,13 @@
     var mapHomeEl = el("div", "near-explore-map");
     mapHomeEl.id = "near-explore-map-home";
     mapHomeWrap.appendChild(mapHomeEl);
+    mapHomeWrap.setAttribute("role", "region");
+    mapHomeWrap.setAttribute("aria-label", pick(hotel.name, Lg));
     shellHome.appendChild(mapHomeWrap);
 
     var catGrid = el("div", "near-explore-cats");
+    catGrid.setAttribute("role", "group");
+    catGrid.setAttribute("aria-label", t("modComingSoon"));
     order.forEach(function (catId) {
       var btn = el("button", "near-explore-cat", "");
       btn.type = "button";
@@ -131,12 +254,14 @@
     shellCat.appendChild(catTop);
 
     var mapCatWrap = el("div", "near-explore-mapwrap near-explore-mapwrap--category");
+    mapCatWrap.setAttribute("role", "region");
     var mapCatEl = el("div", "near-explore-map");
     mapCatEl.id = "near-explore-map-category";
     mapCatWrap.appendChild(mapCatEl);
     shellCat.appendChild(mapCatWrap);
 
     var listEl = el("div", "near-explore-list");
+    listEl.setAttribute("role", "region");
     shellCat.appendChild(listEl);
 
     var detail = el("div", "near-explore-detail hidden");
@@ -144,14 +269,41 @@
     detail.setAttribute("aria-modal", "true");
     var detailInner = el("div", "near-explore-detail__panel glass-block");
     detail.appendChild(detailInner);
+
+    var onDetailEscape = null;
+    function detachDetailEscape() {
+      if (onDetailEscape) {
+        document.removeEventListener("keydown", onDetailEscape);
+        onDetailEscape = null;
+      }
+    }
+    function closeDetailSheet() {
+      detachDetailEscape();
+      detail.classList.add("hidden");
+      detailInner.innerHTML = "";
+      var sid = state.selectedId;
+      if (sid && state.screen === "category") {
+        requestAnimationFrame(function () {
+          var cards = listEl.querySelectorAll(".near-explore-card");
+          for (var i = 0; i < cards.length; i++) {
+            if (cards[i].dataset.placeId === sid && typeof cards[i].focus === "function") {
+              cards[i].focus();
+              break;
+            }
+          }
+        });
+      }
+    }
+
     detail.addEventListener("click", function (e) {
-      if (e.target === detail) detail.classList.add("hidden");
+      if (e.target === detail) closeDetailSheet();
     });
     root.appendChild(shellHome);
     root.appendChild(shellCat);
     root.appendChild(detail);
 
     function showHome() {
+      detachDetailEscape();
       state.screen = "home";
       state.category = null;
       state.selectedId = null;
@@ -159,16 +311,8 @@
       shellCat.classList.add("hidden");
       detail.classList.add("hidden");
       detailInner.innerHTML = "";
-      if (state.mapCat) {
-        try {
-          state.mapCat.remove();
-        } catch (e) {}
-        state.mapCat = null;
-        state.markers = {};
-      }
-      setTimeout(function () {
-        if (state.mapHome) state.mapHome.invalidateSize();
-      }, 80);
+      mapCatEl.innerHTML = "";
+      state.catIframeEl = null;
     }
 
     function placesInCategory(catId) {
@@ -178,18 +322,28 @@
     }
 
     function openCategory(catId) {
+      detachDetailEscape();
+      detailInner.innerHTML = "";
+      detail.classList.add("hidden");
       state.screen = "category";
       state.category = catId;
       state.selectedId = null;
       shellHome.classList.add("hidden");
       shellCat.classList.remove("hidden");
       catTitle.textContent = t("nearCat_" + catId);
+      mapCatWrap.setAttribute("aria-label", catTitle.textContent);
+      listEl.setAttribute("aria-label", catTitle.textContent);
       listEl.innerHTML = "";
-      detail.classList.add("hidden");
 
       var list = placesInCategory(catId);
+      if (list.length === 0) {
+        listEl.appendChild(el("p", "near-explore-empty", t("nearExploreEmptyCategory")));
+      }
       list.forEach(function (place) {
-        var m = haversineM(hotel.lat, hotel.lng, place.lat, place.lng);
+        var m =
+          typeof place.lat === "number" && typeof place.lng === "number"
+            ? haversineM(hotel.lat, hotel.lng, place.lat, place.lng)
+            : NaN;
         var card = el("article", "near-explore-card glass-block");
         if (place.isFeatured) card.classList.add("near-explore-card--featured");
         card.dataset.placeId = place.id;
@@ -235,67 +389,37 @@
       initCategoryMap(catId, list);
     }
 
-    function hotelDivIcon(Lref) {
-      return Lref.divIcon({
-        className: "near-explore-marker near-explore-marker--hotel",
-        html: '<div class="near-explore-marker__dot"></div>',
-        iconSize: [28, 36],
-        iconAnchor: [14, 34],
-      });
-    }
-
-    function placeDivIcon(Lref, active) {
-      return Lref.divIcon({
-        className: "near-explore-marker near-explore-marker--place" + (active ? " is-active" : ""),
-        html: '<div class="near-explore-marker__pin"></div>',
-        iconSize: [26, 34],
-        iconAnchor: [13, 32],
-      });
-    }
-
     function initCategoryMap(catId, list) {
-      if (!ensureLeaflet()) return;
-      var Lref = window.L;
-      if (state.mapCat) {
-        try {
-          state.mapCat.remove();
-        } catch (e) {}
-        state.mapCat = null;
+      mapCatEl.innerHTML = "";
+      state.catIframeEl = null;
+      var titleText = t("nearCat_" + catId) + " — " + pick(hotel.name, Lg);
+      var src;
+      if (list.length === 0) {
+        src = googleMapsEmbedPlace(
+          hotel.lat,
+          hotel.lng,
+          hotel.defaultZoom || 17,
+          Lg,
+          hotelMapsLabel(hotel, Lg)
+        );
+      } else {
+        var first = list[0];
+        var toFirst = placeRouteEndpoint(first, Lg);
+        if (toFirst) {
+          src = googleMapsEmbedRoute(hotelRouteEndpoint(hotel, Lg), toFirst, Lg);
+        } else {
+          src = googleMapsEmbedPlace(
+            hotel.lat,
+            hotel.lng,
+            hotel.defaultZoom || 17,
+            Lg,
+            hotelMapsLabel(hotel, Lg)
+          );
+        }
       }
-      state.markers = {};
-
-      var bounds = Lref.latLngBounds([hotel.lat, hotel.lng]);
-      list.forEach(function (p) {
-        bounds.extend([p.lat, p.lng]);
-      });
-
-      state.mapCat = Lref.map(mapCatEl, {
-        zoomControl: true,
-        scrollWheelZoom: false,
-      });
-      Lref.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
-        maxZoom: 19,
-      }).addTo(state.mapCat);
-
-      state.markers.hotel = Lref.marker([hotel.lat, hotel.lng], { icon: hotelDivIcon(Lref) })
-        .addTo(state.mapCat)
-        .bindPopup(pick(hotel.name, Lg));
-
-      list.forEach(function (p) {
-        var mk = Lref.marker([p.lat, p.lng], { icon: placeDivIcon(Lref, false) })
-          .addTo(state.mapCat)
-          .bindPopup(pick(p.name, Lg));
-        mk.on("click", function () {
-          selectPlace(p.id);
-        });
-        state.markers[p.id] = { marker: mk, place: p };
-      });
-
-      state.mapCat.fitBounds(bounds, { padding: [28, 28], maxZoom: 16 });
-      setTimeout(function () {
-        state.mapCat.invalidateSize();
-      }, 120);
+      var ifr = makeGmapsIframe(titleText, src);
+      mapCatEl.appendChild(ifr);
+      state.catIframeEl = ifr;
     }
 
     function selectPlace(id) {
@@ -303,24 +427,36 @@
       var p = places.filter(function (x) {
         return x.id === id;
       })[0];
-      if (!p || !state.mapCat) return;
+      if (!p) return;
 
-      Object.keys(state.markers).forEach(function (k) {
-        if (k === "hotel") return;
-        var o = state.markers[k];
-        if (!o || !o.marker) return;
-        var active = k === id;
-        o.marker.setIcon(placeDivIcon(window.L, active));
+      setCategoryMapRoute(p);
+
+      listEl.querySelectorAll(".near-explore-card").forEach(function (c) {
+        c.classList.toggle("near-explore-card--active", c.dataset.placeId === id);
       });
-
-      state.mapCat.setView([p.lat, p.lng], Math.max(state.mapCat.getZoom(), 16), { animate: true });
+      var activeCard = listEl.querySelector('[data-place-id="' + id + '"]');
+      if (activeCard && activeCard.scrollIntoView) {
+        var smoothScroll = true;
+        try {
+          if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            smoothScroll = false;
+          }
+        } catch (e) {}
+        activeCard.scrollIntoView({ block: "nearest", behavior: smoothScroll ? "smooth" : "auto" });
+      }
 
       detailInner.innerHTML = "";
-      var m = haversineM(hotel.lat, hotel.lng, p.lat, p.lng);
+      var m =
+        typeof p.lat === "number" && typeof p.lng === "number"
+          ? haversineM(hotel.lat, hotel.lng, p.lat, p.lng)
+          : NaN;
       var dist = formatDistance(m, Lg);
-      var dur = formatWalkMin(m, Lg);
+      var dur =
+        typeof p.lat === "number" && typeof p.lng === "number" ? formatWalkMin(m, Lg) : "—";
 
       var h = el("h4", "near-explore-detail__title", pick(p.name, Lg));
+      h.id = "near-explore-detail-heading";
+      detail.setAttribute("aria-labelledby", "near-explore-detail-heading");
       detailInner.appendChild(h);
       detailInner.appendChild(el("p", "near-explore-detail__cat", t("nearCat_" + p.category)));
       detailInner.appendChild(el("p", "near-explore-detail__desc", pick(p.description, Lg)));
@@ -329,59 +465,71 @@
       meta.innerHTML = "<span>" + dist + "</span><span>" + dur + "</span>";
       detailInner.appendChild(meta);
 
+      var routeSummary = el("p", "near-explore-detail__route");
+      routeSummary.textContent =
+        pick(hotel.name, Lg) + " → " + pick(p.name, Lg);
+      detailInner.appendChild(routeSummary);
+
       var actions = el("div", "near-explore-detail__actions");
-      var aDir = el("a", "btn-primary near-explore-detail__btn", t("nearExploreDirections"));
-      aDir.href = googleDirectionsUrl(hotel.lat, hotel.lng, p.lat, p.lng);
-      aDir.target = "_blank";
-      aDir.rel = "noopener noreferrer";
-      var aRec = el("button", "near-explore-btn--ghost near-explore-detail__btn", t("nearExploreReception"));
-      aRec.type = "button";
-      aRec.addEventListener("click", function () {
-        if (typeof window.vionaOpenRequestsFromNearby === "function") {
-          window.vionaOpenRequestsFromNearby();
-        }
-      });
-      actions.appendChild(aDir);
-      actions.appendChild(aRec);
+      var destOk = placeRouteEndpoint(p, Lg) !== "";
+      if (destOk) {
+        var aDir = el("a", "btn-primary near-explore-detail__btn", t("nearExploreDirections"));
+        aDir.href = googleDirectionsUrl(hotel, p, Lg);
+        aDir.target = "_blank";
+        aDir.rel = "noopener noreferrer";
+        aDir.setAttribute(
+          "aria-label",
+          t("nearExploreDirections") + ": " + pick(hotel.name, Lg) + " — " + pick(p.name, Lg)
+        );
+        actions.appendChild(aDir);
+      } else {
+        actions.appendChild(el("p", "near-explore-detail__no-dir", t("nearExploreDirectionsNoCoords")));
+      }
+      if (p.mapsUrl && typeof p.mapsUrl === "string") {
+        var aGm = el("a", "near-explore-btn--ghost near-explore-detail__btn", t("nearExploreOpenInMaps"));
+        aGm.href = p.mapsUrl;
+        aGm.target = "_blank";
+        aGm.rel = "noopener noreferrer";
+        actions.appendChild(aGm);
+      }
       detailInner.appendChild(actions);
 
       var btnClose = el("button", "near-explore-detail__close", "×");
       btnClose.type = "button";
       btnClose.setAttribute("aria-label", t("close"));
       btnClose.addEventListener("click", function () {
-        detail.classList.add("hidden");
+        closeDetailSheet();
       });
       detailInner.appendChild(btnClose);
 
+      detachDetailEscape();
+      onDetailEscape = function (ev) {
+        if (ev.key === "Escape") {
+          ev.preventDefault();
+          closeDetailSheet();
+        }
+      };
+      document.addEventListener("keydown", onDetailEscape);
+
       detail.classList.remove("hidden");
+      try {
+        btnClose.focus();
+      } catch (e) {}
     }
 
     function initHomeMap() {
-      if (!ensureLeaflet()) return;
-      var Lref = window.L;
-      if (state.mapHome) return;
-      state.mapHome = Lref.map(mapHomeEl, {
-        zoomControl: false,
-        attributionControl: false,
-        dragging: false,
-        scrollWheelZoom: false,
-        doubleClickZoom: false,
-        boxZoom: false,
-        keyboard: false,
-        tap: false,
-        touchZoom: false,
-      });
-      Lref.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "",
-        maxZoom: 19,
-      }).addTo(state.mapHome);
-      Lref.marker([hotel.lat, hotel.lng], { icon: hotelDivIcon(Lref) })
-        .addTo(state.mapHome)
-        .bindPopup(pick(hotel.name, Lg));
-      state.mapHome.setView([hotel.lat, hotel.lng], hotel.defaultZoom || 16);
-      setTimeout(function () {
-        state.mapHome.invalidateSize();
-      }, 100);
+      if (state.homeIframeEl) return;
+      mapHomeEl.innerHTML = "";
+      var src = googleMapsEmbedPlace(
+        hotel.lat,
+        hotel.lng,
+        hotel.defaultZoom || 17,
+        Lg,
+        hotelMapsLabel(hotel, Lg)
+      );
+      var ifr = makeGmapsIframe(pick(hotel.name, Lg), src);
+      mapHomeEl.appendChild(ifr);
+      state.homeIframeEl = ifr;
     }
 
     container.appendChild(root);
@@ -391,19 +539,30 @@
     });
 
     container._nearExploreCleanup = function () {
-      try {
-        if (state.mapHome) state.mapHome.remove();
-      } catch (e) {}
-      try {
-        if (state.mapCat) state.mapCat.remove();
-      } catch (e) {}
-      state.mapHome = null;
-      state.mapCat = null;
+      detachDetailEscape();
+      if (state.homeIframeEl) {
+        try {
+          state.homeIframeEl.src = "about:blank";
+        } catch (e) {}
+        try {
+          state.homeIframeEl.remove();
+        } catch (e2) {}
+        state.homeIframeEl = null;
+      }
+      if (state.catIframeEl) {
+        try {
+          state.catIframeEl.src = "about:blank";
+        } catch (e) {}
+        try {
+          state.catIframeEl.remove();
+        } catch (e2) {}
+        state.catIframeEl = null;
+      }
     };
 
     container._nearExplorePopState = function () {
       if (!detail.classList.contains("hidden")) {
-        detail.classList.add("hidden");
+        closeDetailSheet();
         return true;
       }
       if (state.screen === "category") {

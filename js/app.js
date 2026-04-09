@@ -14,7 +14,7 @@
     { id: "alacarte", i18nKey: "modAlacarte", icon: "plate" },
     { id: "animation", i18nKey: "modAnim", icon: "spark" },
     { id: "sustainability", i18nKey: "modSustainability", icon: "leaf" },
-    { id: "coming_soon", i18nKey: "modComingSoon", icon: "calendar" },
+    { id: "coming_soon", i18nKey: "modComingSoon", icon: "pin" },
     { id: "miniclub", i18nKey: "modMini", icon: "smile" },
     { id: "discount", i18nKey: "modDiscount", icon: "percent" },
     { id: "meeting", i18nKey: "modMeet", icon: "users" },
@@ -591,16 +591,6 @@
     requestSub = null;
     surveySub = null;
     showView("home");
-  };
-
-  /** Çevrede Keşfet → İstekler (resepsiyon yardımı). */
-  window.vionaOpenRequestsFromNearby = function () {
-    moduleId = "requests";
-    requestSub = "request";
-    surveySub = null;
-    showView("module");
-    renderModuleContent();
-    closeModals();
   };
 
   function setLang(code) {
