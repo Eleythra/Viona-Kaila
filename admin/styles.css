@@ -187,6 +187,18 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
+/* Tablo kabuğu: sade çerçeve, göz yormayan (panel + ops-*.html) */
+.admin-layout .viona-table-shell.glass-block,
+.admin-body .viona-table-shell.glass-block {
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--admin-radius-sm);
+  border: 1px solid var(--admin-border-subtle);
+  background: rgba(14, 18, 28, 0.5);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
 .admin-sidebar {
   position: sticky;
   top: max(18px, env(safe-area-inset-top, 0px));
@@ -248,9 +260,10 @@
   padding: 10px 14px;
   text-align: left;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 600;
   letter-spacing: 0.01em;
+  line-height: 1.28;
   transition: background var(--admin-ease), border-color var(--admin-ease), color var(--admin-ease), box-shadow var(--admin-ease);
 }
 .admin-nav button:hover:not(.is-active) {
@@ -1062,7 +1075,12 @@
 }
 .admin-table th, .admin-table td { padding: 10px; border-bottom: 1px solid #1d2737; text-align: left; vertical-align: top; }
 .admin-table thead th { color: #9fb0cb; font-size: 0.84rem; text-transform: uppercase; letter-spacing: 0.03em; }
-.admin-table tbody tr:hover { background: #142033; }
+.admin-table tbody tr:hover:not(.ops-row--new) { background: #142033; }
+/* Log tablosu dışındaki kayıt listeleri: satırlar arası daha net, modern ayırıcı (viona birleşik tabloda ayrı kural) */
+.admin-body .admin-main .admin-table:not(.admin-table--logs):not(.viona-table) th,
+.admin-body .admin-main .admin-table:not(.admin-table--logs):not(.viona-table) td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
 .logs-cell {
   max-width: none;
   white-space: normal;
@@ -1781,14 +1799,18 @@
   font-size: 0.78rem;
   font-weight: 600;
 }
-/* Beklemede: sarı; olumlu: yeşil; olumsuz: kırmızı (istek / şikayet / arıza / restoran-spa talepleri) */
+/* Kuyruk: yeni / bekliyor sarı ton; işlemde (yapılıyor) daha açık sarı */
 .status-new,
 .status-pending,
-.status-in_progress,
 .status-badge--wait {
-  background: linear-gradient(160deg, #5c4a12 0%, #4a3d0f 100%);
-  color: #ffe08a;
-  border: 1px solid rgba(255, 200, 80, 0.35);
+  background: rgba(90, 75, 25, 0.35);
+  color: #e8d48a;
+  border: 1px solid rgba(200, 170, 80, 0.28);
+}
+.status-in_progress {
+  background: rgba(120, 95, 20, 0.4);
+  color: #fff0a0;
+  border: 1px solid rgba(255, 220, 100, 0.42);
 }
 .status-done { background: #15462a; color: #96f0ba; border: 1px solid rgba(100, 220, 150, 0.25); }
 .status-rejected {
@@ -3683,4 +3705,429 @@
 }
 .bucket-shell--late-checkout .bucket-help--late-checkout {
   max-width: 52rem;
+}
+
+/* Operasyon derin bağlantıları (ana sayfa) */
+.op-deeplinks {
+  margin-top: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--admin-radius);
+  border: 1px solid var(--admin-border);
+  background: rgba(18, 27, 42, 0.65);
+}
+.op-deeplinks__title {
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--admin-text-title);
+}
+.op-deeplinks__hint {
+  margin: 0 0 0.65rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--admin-text-muted);
+}
+.op-deeplinks__hint--tight {
+  margin-top: 0.85rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--admin-border-subtle);
+}
+.op-deeplinks__hint--after-links {
+  margin-top: 0.55rem;
+  font-size: 0.76rem;
+}
+.op-deeplinks__code {
+  font-size: 0.72rem;
+  word-break: break-all;
+}
+.op-deeplinks__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+a.op-deeplinks__link,
+button.op-deeplinks__link {
+  text-decoration: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Saha ekip sayfaları (ops-*.html): minimal kabuk */
+.ops-light-app {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 1rem 1rem 2.5rem;
+  box-sizing: border-box;
+}
+.ops-light-head {
+  margin-bottom: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--admin-radius);
+}
+.ops-light-head__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.ops-light-head__title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--admin-text-title);
+}
+.ops-light-note {
+  margin: 0.65rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--admin-text-muted);
+}
+.ops-light-intro {
+  margin: 0 0 0.65rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--admin-text-muted);
+}
+.ops-light-intro--muted {
+  font-size: 0.8rem;
+  opacity: 0.92;
+}
+.ops-light-code {
+  font-size: 0.78em;
+  padding: 0.12em 0.35em;
+  border-radius: 0.25rem;
+  background: rgba(255, 255, 255, 0.08);
+  word-break: break-all;
+}
+.ops-light-mount {
+  margin-top: 0.5rem;
+}
+.ops-light-loading,
+.ops-light-error {
+  margin: 1rem 0;
+  font-size: 0.9rem;
+  color: var(--admin-text-muted);
+}
+.ops-light-error {
+  color: #f0a8a8;
+}
+
+/* Operasyon sekmeleri: filtre çubuğu */
+.op-filter-bar {
+  margin-bottom: 0.85rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--admin-radius-sm);
+  border: 1px solid var(--admin-border-subtle);
+  background: rgba(255, 255, 255, 0.02);
+}
+.op-filter-bar__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.65rem 1rem;
+}
+.op-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  min-width: 0;
+}
+.op-filter-field--room {
+  flex: 1 1 140px;
+  max-width: 200px;
+}
+.op-filter-field__lbl {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--admin-text-dim);
+}
+.op-filter-input {
+  min-height: 38px;
+  padding: 0.35rem 0.55rem;
+  border-radius: var(--admin-radius-sm);
+  border: 1px solid rgba(51, 72, 96, 0.95);
+  background: #121b2a;
+  color: var(--admin-text);
+  font: inherit;
+  font-size: 0.86rem;
+  max-width: 100%;
+}
+.op-filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  margin-left: auto;
+}
+.op-filter-hint {
+  margin: 0.65rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: var(--admin-text-muted);
+}
+
+/* Birleşik veri tabloları — sade, düşük kontrast */
+.admin-body .viona-table-scroll {
+  overflow: auto;
+  max-height: min(70vh, 900px);
+  -webkit-overflow-scrolling: touch;
+  border-radius: 0 0 var(--admin-radius-sm) var(--admin-radius-sm);
+}
+.admin-body .viona-table-scroll .admin-table.viona-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+.admin-body .viona-table-scroll .admin-table.viona-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--admin-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  border-bottom: 1px solid var(--admin-border-subtle);
+  box-shadow: none;
+  vertical-align: bottom;
+}
+.admin-body .viona-table-scroll .admin-table.viona-table tbody td {
+  padding: 9px 10px;
+  font-size: 0.84rem;
+  line-height: 1.4;
+  color: var(--admin-text);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: top;
+}
+.admin-body .viona-table-scroll .admin-table.viona-table tbody tr:hover:not(.ops-row--new) {
+  background: transparent;
+}
+.admin-body .viona-table-scroll .admin-table.viona-table tbody tr:hover:not(.ops-row--new) td {
+  background: rgba(255, 255, 255, 0.025);
+}
+.admin-body .viona-table-scroll .admin-table.viona-table tbody tr.ops-row--new:hover > td {
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 2px 0 0 rgba(100, 140, 200, 0.35);
+}
+/* Operasyon satırı: özet + dar sütunlar */
+.admin-body .viona-table-scroll .admin-table.viona-table.op-table thead th {
+  white-space: nowrap;
+}
+.admin-body .viona-table-scroll .admin-table.viona-table.op-table .op-th-sum {
+  min-width: 12rem;
+}
+.admin-body .viona-table-scroll .admin-table.viona-table.op-table td:nth-child(3) {
+  max-width: 36rem;
+  line-height: 1.4;
+  color: var(--admin-text);
+}
+.admin-body .viona-table-scroll .admin-table.viona-table.op-table .op-th-time {
+  width: 9.5rem;
+}
+.admin-body .viona-table-scroll .admin-table.viona-table.op-table .op-th-room {
+  width: 5rem;
+}
+.admin-body .viona-table-scroll .admin-table.viona-table.op-table .op-th-status,
+.admin-body .viona-table-scroll .admin-table.viona-table.op-table .op-th-actions {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* Operasyon tabloları: satır içi düğmeler için biraz daha yüksek */
+.admin-body .viona-table-scroll--ops {
+  max-height: min(62vh, 780px);
+}
+
+/* Salt liste tabloları: daha derli toplu (İstek / Şikayet / Arıza / Misafir) */
+.admin-body .viona-table-scroll--compact {
+  max-height: min(56vh, 640px);
+}
+.admin-body .viona-table-scroll--compact .admin-table.viona-table thead th {
+  padding: 5px 8px;
+  font-size: 0.7rem;
+}
+.admin-body .viona-table-scroll--compact .admin-table.viona-table tbody td {
+  padding: 5px 8px;
+  font-size: 0.78rem;
+  line-height: 1.32;
+}
+.admin-body .viona-table-scroll--compact .status-badge {
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+.admin-body .viona-table-scroll--compact .cat-badge {
+  font-size: 0.72rem;
+  padding: 2px 6px;
+}
+
+.op-front-section__title {
+  margin: 0 0 0.45rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+  letter-spacing: 0.01em;
+}
+.op-front-section + .op-front-section {
+  margin-top: 1.1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--admin-border-subtle);
+}
+
+/* Yeni kayıt: ince sol çizgi, hafif arka plan */
+.admin-body .viona-table-scroll .ops-row--new > td,
+.ops-row--new > td {
+  background: rgba(255, 255, 255, 0.02);
+  box-shadow: inset 2px 0 0 rgba(100, 140, 200, 0.4);
+}
+.bucket-sat-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 10rem;
+}
+.bucket-sat-edit .bucket-sat-score {
+  max-width: 6rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--admin-radius-sm);
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface-2);
+  color: var(--admin-text);
+  font: inherit;
+}
+.bucket-sat-edit .bucket-sat-note {
+  min-height: 2.5rem;
+  resize: vertical;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--admin-radius-sm);
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface-2);
+  color: var(--admin-text);
+  font: inherit;
+}
+
+/* Ayrı operasyon sayfaları (operations-*.html) */
+.op-body .op-app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem 1rem 2rem;
+}
+.op-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--admin-radius);
+}
+.op-header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.15rem;
+}
+.op-lead {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--admin-text-muted);
+}
+.op-header__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.op-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.op-subtitle {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.op-table-wrap {
+  padding: 0.5rem;
+  border-radius: var(--admin-radius);
+  overflow: auto;
+}
+.op-status-btns {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.28rem;
+  justify-content: flex-start;
+}
+.op-status-btns .op-st {
+  padding: 5px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.op-st.is-active {
+  border-color: rgba(61, 108, 255, 0.45);
+  background: rgba(61, 108, 255, 0.14);
+  color: #e8eeff;
+}
+.op-st.is-active[data-status="in_progress"] {
+  border-color: rgba(220, 180, 70, 0.55);
+  background: rgba(200, 155, 40, 0.2);
+  color: #fff3b0;
+}
+.admin-body .viona-table-scroll--ops .admin-table.viona-table.op-table td:last-child {
+  white-space: nowrap;
+  vertical-align: middle;
+}
+@media (max-width: 720px) {
+  .op-status-btns {
+    flex-wrap: wrap;
+  }
+}
+.op-loading {
+  color: var(--admin-text-muted);
+}
+
+.admin-sidebar__ops {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--admin-border-subtle);
+}
+.admin-sidebar__ops-label {
+  margin: 0 0 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--admin-text-dim);
+}
+.admin-sidebar__ops-link {
+  display: inline-block;
+  margin: 0 0.35rem 0.35rem 0;
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--admin-radius-sm);
+  border: 1px solid var(--admin-border);
+  background: rgba(18, 27, 42, 0.5);
+  color: var(--admin-text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--admin-ease), color var(--admin-ease), border-color var(--admin-ease);
+}
+.admin-sidebar__ops-link:hover,
+.admin-sidebar__ops-link:focus-visible {
+  color: var(--admin-text-title);
+  border-color: rgba(61, 108, 255, 0.35);
+  background: rgba(61, 108, 255, 0.1);
+  outline: none;
 }

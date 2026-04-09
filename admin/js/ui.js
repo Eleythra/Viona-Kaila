@@ -7,6 +7,86 @@
     return d.innerHTML;
   }
 
+  /** Sunucu: raw_payload.admin.guest_satisfaction */
+  function rawPayloadAdminSat(r) {
+    try {
+      var rp = r && r.raw_payload;
+      if (!rp || typeof rp !== "object") return { score: "", note: "" };
+      var ad = rp.admin;
+      if (!ad || typeof ad !== "object") return { score: "", note: "" };
+      var gs = ad.guest_satisfaction;
+      if (!gs || typeof gs !== "object") return { score: "", note: "" };
+      var sc = gs.score;
+      return {
+        score: sc != null && String(sc) !== "" && Number.isFinite(Number(sc)) ? Number(sc) : "",
+        note: gs.note != null ? String(gs.note) : "",
+      };
+    } catch (_e) {
+      return { score: "", note: "" };
+    }
+  }
+
+  function satisfactionEditCellHtml(type, row) {
+    var sat = rawPayloadAdminSat(row);
+    var opts = '<option value="">—</option>';
+    for (var n = 1; n <= 5; n++) {
+      opts +=
+        '<option value="' +
+        n +
+        '"' +
+        (Number(sat.score) === n ? " selected" : "") +
+        ">" +
+        n +
+        "</option>";
+    }
+    return (
+      '<div class="bucket-sat-edit">' +
+      '<select class="bucket-sat-score js-admin-sat-score" data-type="' +
+      esc(type) +
+      '" data-id="' +
+      esc(row.id) +
+      '" aria-label="Memnuniyet 1–5">' +
+      opts +
+      "</select>" +
+      '<textarea class="bucket-sat-note js-admin-sat-note" rows="2" data-type="' +
+      esc(type) +
+      '" data-id="' +
+      esc(row.id) +
+      '" placeholder="Kısa not">' +
+      esc(sat.note) +
+      "</textarea>" +
+      '<button type="button" class="btn-small btn-primary js-admin-sat-save" data-type="' +
+      esc(type) +
+      '" data-id="' +
+      esc(row.id) +
+      '">Kaydet</button></div>'
+    );
+  }
+
+  function wireAdminSatisfaction(mountEl, handlers) {
+    if (!mountEl || !handlers || typeof handlers.onSatisfaction !== "function") return;
+    mountEl.querySelectorAll(".js-admin-sat-save").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var tr = btn.closest("tr");
+        var scoreEl = tr ? tr.querySelector(".js-admin-sat-score") : null;
+        var noteEl = tr ? tr.querySelector(".js-admin-sat-note") : null;
+        var t = String(btn.getAttribute("data-type") || "");
+        var id = String(btn.getAttribute("data-id") || "");
+        var score = scoreEl && scoreEl.value !== "" ? scoreEl.value : "";
+        var note = noteEl ? String(noteEl.value || "").trim() : "";
+        var p = handlers.onSatisfaction(t, id, score, note);
+        if (p && typeof p.then === "function") {
+          btn.disabled = true;
+          p.then(function () {
+            btn.disabled = false;
+          }).catch(function () {
+            btn.disabled = false;
+          });
+        }
+      });
+    });
+  }
+
   var adminWaConfirmModalOpen = false;
 
   function ensureAdminWaResendModal() {
@@ -272,11 +352,19 @@
     return s === "new" || s === "pending" || s === "in_progress";
   }
 
-  /** İstek/arıza: Yapıldı · Yapılamadı · Şikayet: Dikkate alındı · alınmadı — beklemede sarı, olumlu yeşil, olumsuz kırmızı. */
+  /** İstek/arıza: Yapıldı · Yapılamadı · Şikayet: Dikkate alındı · alınmadı — kuyruk adımları ayrı etiket. */
   function issueStatusLabel(issueType, status) {
     var s = normalizeBucketStatus(status);
     if (s === "cancelled") return "İptal";
-    if (issueIsWaitStatus(s)) return "Beklemede";
+    if (s === "new") return "Yeni";
+    if (s === "pending") return "Bekliyor";
+    if (s === "in_progress") {
+      if (issueType === "fault") return "Üzerinde";
+      if (issueType === "complaint" || issueType === "guest_notification" || issueType === "late_checkout") {
+        return "İşlemde";
+      }
+      return "Yapılıyor";
+    }
     if (s === "done") {
       if (issueType === "late_checkout") return "Onaylandı";
       return issueType === "complaint" || issueType === "guest_notification" ? "Dikkate alındı" : "Yapıldı";
@@ -2566,6 +2654,8 @@
   function renderRequestsPanel(mountEl, rows, handlers) {
     if (!Array.isArray(rows)) rows = [];
     var pag = handlers && handlers.pagination;
+    var ro = Boolean(handlers && handlers.readOnly);
+    var satH = Boolean(handlers && typeof handlers.onSatisfaction === "function");
     var totalCount = bucketTopStatsTotal(pag, rows);
     var topstatsTitle = pag
       ? BUCKET_QUAD_STATS_TITLE_WHEN_PAGED
@@ -2581,6 +2671,10 @@
       return normalizeBucketStatus(r.status) === "rejected";
     }).length;
 
+    var helpReq = ro
+      ? "Salt izleme: durum güncellemesi HK operasyon sayfasından yapılır. Misafir memnuniyeti (1–5 + not) yalnızca burada sunucuya kaydedilir."
+      : "Kategori = talep grubu (form başlığı). Tür = seçilen satır. Adet = yalnızca adetli türlerde; diğerinde «-». Açıklama = misafir notu. Yeni kayıtlar operasyon WhatsApp grubuna düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.";
+
     var html =
       '<div class="bucket-shell bucket-shell--requests">' +
       '<div class="bucket-topstats bucket-topstats--quad"' +
@@ -2592,7 +2686,8 @@
       '<div class="bucket-stat"><span>Yapılamadı</span><strong>' + esc(rejected) + "</strong></div>" +
       "</div>" +
       '<p class="bucket-help bucket-help--requests">' +
-      "Kategori = talep grubu (form başlığı). Tür = seçilen satır. Adet = yalnızca adetli türlerde; diğerinde «-». Açıklama = misafir notu. Yeni kayıtlar operasyon WhatsApp grubuna düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.</p>" +
+      helpReq +
+      "</p>" +
       '<div class="bucket-toolbar bucket-toolbar--requests">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
       '<div class="reservation-date-combo bucket-toolbar-date-combo">' +
@@ -2608,10 +2703,14 @@
       '<option value="rejected">Yapılamadı</option>' +
       "</select>" +
       "</div>" +
-      '<div class="bucket-table-wrap">' +
-      '<table class="admin-table admin-table--requests">' +
+      '<div class="viona-table-shell glass-block">' +
+      '<div class="viona-table-scroll viona-table-scroll--compact">' +
+      '<table class="admin-table viona-table admin-table--requests">' +
       "<thead><tr>" +
-      "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Kategori</th><th>Tür</th><th>Adet</th><th>Açıklama</th><th>Personel notu</th><th>Durum</th><th>İşlemler</th>" +
+      "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Kategori</th><th>Tür</th><th>Adet</th><th>Açıklama</th>" +
+      (ro
+        ? "<th>Personel notu (salt okunur)</th><th>Durum</th>" + (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
+        : "<th>Personel notu</th><th>Durum</th><th>İşlemler</th>") +
       "</tr></thead><tbody>";
 
     if (!rows.length) {
@@ -2637,7 +2736,9 @@
           .join(" ")
           .toLowerCase();
         html +=
-          '<tr class="bucket-row request-row" data-id="' +
+          '<tr class="bucket-row request-row' +
+          (ro && st === "new" ? " ops-row--new" : "") +
+          '" data-id="' +
           esc(r.id) +
           '" data-status="' +
           esc(st) +
@@ -2654,25 +2755,35 @@
         html += '<td class="request-cell-type">' + esc(typeLabel) + "</td>";
         html += '<td class="request-cell-qty">' + esc(qtyDisp) + "</td>";
         html += '<td class="request-cell-desc">' + esc(descFull) + "</td>";
-        html +=
-          '<td class="request-cell-staff"><textarea class="request-staff-note js-req-staff-note" rows="2" data-id="' +
-          esc(r.id) +
-          '" placeholder="İç not">' +
-          esc(staffNote) +
-          "</textarea></td>";
+        if (ro) {
+          html += '<td class="request-cell-staff">' + esc(staffNote) + "</td>";
+        } else {
+          html +=
+            '<td class="request-cell-staff"><textarea class="request-staff-note js-req-staff-note" rows="2" data-id="' +
+            esc(r.id) +
+            '" placeholder="İç not">' +
+            esc(staffNote) +
+            "</textarea></td>";
+        }
         html += '<td><span class="status-badge status-' + esc(st) + '">' + esc(issueStatusLabel("request", st)) + "</span></td>";
-        html += '<td><div class="row-actions">';
-        html += issueRowActionsHtml("request", r.id, st);
-        html += "</div></td>";
+        if (ro) {
+          html += satH ? "<td>" + satisfactionEditCellHtml("request", r) + "</td>" : "<td></td>";
+        } else {
+          html += '<td><div class="row-actions">';
+          html += issueRowActionsHtml("request", r.id, st);
+          html += "</div></td>";
+        }
         html += "</tr>";
       });
     }
 
-    html += "</tbody></table></div></div>";
+    html += "</tbody></table></div></div></div>";
     mountEl.innerHTML = html;
     if (handlers && handlers.pagination && handlers.onPage) {
       attachAdminPager(mountEl, handlers.pagination, rows, handlers.onPage);
     }
+
+    wireAdminSatisfaction(mountEl, handlers);
 
     var search = mountEl.querySelector(".bucket-search");
     var statusFilter = mountEl.querySelector(".bucket-filter-status");
@@ -2725,26 +2836,28 @@
       tr.setAttribute("data-search", rowSearchText);
     }
 
-    mountEl.querySelectorAll(".js-req-staff-note").forEach(function (ta) {
-      ta.addEventListener("blur", function () {
-        var id = String(ta.getAttribute("data-id") || "");
-        setRequestStaffNote(id, ta.value);
-        refreshRowSearchFromStaffNote(ta);
-        applyFilters();
+    if (!ro) {
+      mountEl.querySelectorAll(".js-req-staff-note").forEach(function (ta) {
+        ta.addEventListener("blur", function () {
+          var id = String(ta.getAttribute("data-id") || "");
+          setRequestStaffNote(id, ta.value);
+          refreshRowSearchFromStaffNote(ta);
+          applyFilters();
+        });
       });
-    });
 
-    mountEl.querySelectorAll(".js-status").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        handlers.onStatus(btn.getAttribute("data-type"), btn.getAttribute("data-id"), btn.getAttribute("data-status"));
+      mountEl.querySelectorAll(".js-status").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          handlers.onStatus(btn.getAttribute("data-type"), btn.getAttribute("data-id"), btn.getAttribute("data-status"));
+        });
       });
-    });
-    mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+      mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+        });
       });
-    });
-    wireWhatsappResendButtons(mountEl, handlers);
+      wireWhatsappResendButtons(mountEl, handlers);
+    }
 
     if (search) search.addEventListener("input", applyFilters);
     if (statusFilter) statusFilter.addEventListener("change", applyFilters);
@@ -2772,6 +2885,8 @@
   function renderComplaintsPanel(mountEl, rows, handlers) {
     if (!Array.isArray(rows)) rows = [];
     var pag = handlers && handlers.pagination;
+    var ro = Boolean(handlers && handlers.readOnly);
+    var satH = Boolean(handlers && typeof handlers.onSatisfaction === "function");
     var totalCount = bucketTopStatsTotal(pag, rows);
     var topstatsTitle = pag
       ? BUCKET_QUAD_STATS_TITLE_WHEN_PAGED
@@ -2798,7 +2913,10 @@
       '<div class="bucket-stat"><span>Dikkate alınmadı</span><strong>' + esc(rejected) + "</strong></div>" +
       "</div>" +
       '<p class="bucket-help bucket-help--complaints">' +
-      "Kategori ve açıklama misafir formundan. Personel notu dahilidir. Yeni kayıtlar operasyon WhatsApp grubuna düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.</p>" +
+      (ro
+        ? "Salt izleme: durum güncellemesi ön büro operasyon sayfasından yapılır. Misafir memnuniyeti burada kaydedilir."
+        : "Kategori ve açıklama misafir formundan. Personel notu dahilidir. Yeni kayıtlar operasyon WhatsApp grubuna düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
+      "</p>" +
       '<div class="bucket-toolbar bucket-toolbar--complaints">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
       '<div class="reservation-date-combo bucket-toolbar-date-combo">' +
@@ -2814,10 +2932,14 @@
       '<option value="rejected">Dikkate alınmadı</option>' +
       "</select>" +
       "</div>" +
-      '<div class="bucket-table-wrap">' +
-      '<table class="admin-table admin-table--complaints">' +
+      '<div class="viona-table-shell glass-block">' +
+      '<div class="viona-table-scroll viona-table-scroll--compact">' +
+      '<table class="admin-table viona-table admin-table--complaints">' +
       "<thead><tr>" +
-      "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Şikayet konusu</th><th>Açıklama</th><th>Personel notu</th><th>Durum</th><th>İşlemler</th>" +
+      "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Şikayet konusu</th><th>Açıklama</th>" +
+      (ro
+        ? "<th>Personel notu (salt okunur)</th><th>Durum</th>" + (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
+        : "<th>Personel notu</th><th>Durum</th><th>İşlemler</th>") +
       "</tr></thead><tbody>";
 
     if (!rows.length) {
@@ -2839,7 +2961,9 @@
           .join(" ")
           .toLowerCase();
         html +=
-          '<tr class="bucket-row complaint-row" data-id="' +
+          '<tr class="bucket-row complaint-row' +
+          (ro && st === "new" ? " ops-row--new" : "") +
+          '" data-id="' +
           esc(r.id) +
           '" data-status="' +
           esc(st) +
@@ -2854,25 +2978,35 @@
         html += "<td>" + esc(r.nationality || "-") + "</td>";
         html += '<td><span class="cat-badge cat-badge--complaint">' + esc(catLabel) + "</span></td>";
         html += '<td class="complaint-cell-desc">' + esc(descFull) + "</td>";
-        html +=
-          '<td class="request-cell-staff"><textarea class="request-staff-note js-compl-staff-note" rows="2" data-id="' +
-          esc(r.id) +
-          '" placeholder="İç not">' +
-          esc(staffNote) +
-          "</textarea></td>";
+        if (ro) {
+          html += '<td class="request-cell-staff">' + esc(staffNote) + "</td>";
+        } else {
+          html +=
+            '<td class="request-cell-staff"><textarea class="request-staff-note js-compl-staff-note" rows="2" data-id="' +
+            esc(r.id) +
+            '" placeholder="İç not">' +
+            esc(staffNote) +
+            "</textarea></td>";
+        }
         html += '<td><span class="status-badge status-' + esc(st) + '">' + esc(issueStatusLabel("complaint", st)) + "</span></td>";
-        html += '<td><div class="row-actions">';
-        html += issueRowActionsHtml("complaint", r.id, st);
-        html += "</div></td>";
+        if (ro) {
+          html += satH ? "<td>" + satisfactionEditCellHtml("complaint", r) + "</td>" : "<td></td>";
+        } else {
+          html += '<td><div class="row-actions">';
+          html += issueRowActionsHtml("complaint", r.id, st);
+          html += "</div></td>";
+        }
         html += "</tr>";
       });
     }
 
-    html += "</tbody></table></div></div>";
+    html += "</tbody></table></div></div></div>";
     mountEl.innerHTML = html;
     if (handlers && handlers.pagination && handlers.onPage) {
       attachAdminPager(mountEl, handlers.pagination, rows, handlers.onPage);
     }
+
+    wireAdminSatisfaction(mountEl, handlers);
 
     var search = mountEl.querySelector(".bucket-search");
     var statusFilter = mountEl.querySelector(".bucket-filter-status");
@@ -2921,26 +3055,28 @@
       tr.setAttribute("data-search", rowSearchText);
     }
 
-    mountEl.querySelectorAll(".js-compl-staff-note").forEach(function (ta) {
-      ta.addEventListener("blur", function () {
-        var id = String(ta.getAttribute("data-id") || "");
-        setComplaintStaffNote(id, ta.value);
-        refreshComplaintRowSearch(ta);
-        applyFilters();
+    if (!ro) {
+      mountEl.querySelectorAll(".js-compl-staff-note").forEach(function (ta) {
+        ta.addEventListener("blur", function () {
+          var id = String(ta.getAttribute("data-id") || "");
+          setComplaintStaffNote(id, ta.value);
+          refreshComplaintRowSearch(ta);
+          applyFilters();
+        });
       });
-    });
 
-    mountEl.querySelectorAll(".js-status").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        handlers.onStatus(btn.getAttribute("data-type"), btn.getAttribute("data-id"), btn.getAttribute("data-status"));
+      mountEl.querySelectorAll(".js-status").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          handlers.onStatus(btn.getAttribute("data-type"), btn.getAttribute("data-id"), btn.getAttribute("data-status"));
+        });
       });
-    });
-    mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+      mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+        });
       });
-    });
-    wireWhatsappResendButtons(mountEl, handlers);
+      wireWhatsappResendButtons(mountEl, handlers);
+    }
 
     if (search) search.addEventListener("input", applyFilters);
     if (statusFilter) statusFilter.addEventListener("change", applyFilters);
@@ -2968,6 +3104,8 @@
   function renderGuestNotificationsPanel(mountEl, rows, handlers) {
     if (!Array.isArray(rows)) rows = [];
     var pag = handlers && handlers.pagination;
+    var ro = Boolean(handlers && handlers.readOnly);
+    var satH = Boolean(handlers && typeof handlers.onSatisfaction === "function");
     var totalCount = bucketTopStatsTotal(pag, rows);
     var topstatsTitle = pag
       ? BUCKET_QUAD_STATS_TITLE_WHEN_PAGED
@@ -2994,7 +3132,10 @@
       '<div class="bucket-stat"><span>Dikkate alınmadı</span><strong>' + esc(rejected) + "</strong></div>" +
       "</div>" +
       '<p class="bucket-help bucket-help--complaints">' +
-      "Beslenme, sağlık ve kutlama bildirimleri; personel notu yerel olarak tarayıcıda saklanır. Yeni kayıtlar operasyon WhatsApp grubuna düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.</p>" +
+      (ro
+        ? "Salt izleme; durum ön büro operasyon sayfasından. Misafir memnuniyeti burada kaydedilir."
+        : "Beslenme, sağlık ve kutlama bildirimleri; personel notu yerel olarak tarayıcıda saklanır. Yeni kayıtlar operasyon WhatsApp grubuna düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
+      "</p>" +
       '<div class="bucket-toolbar bucket-toolbar--complaints">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
       '<div class="reservation-date-combo bucket-toolbar-date-combo">' +
@@ -3010,10 +3151,14 @@
       '<option value="rejected">Dikkate alınmadı</option>' +
       "</select>" +
       "</div>" +
-      '<div class="bucket-table-wrap">' +
-      '<table class="admin-table admin-table--complaints">' +
+      '<div class="viona-table-shell glass-block">' +
+      '<div class="viona-table-scroll viona-table-scroll--compact">' +
+      '<table class="admin-table viona-table admin-table--complaints">' +
       "<thead><tr>" +
-      "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Bildirim konusu</th><th>Açıklama</th><th>Personel notu</th><th>Durum</th><th>İşlemler</th>" +
+      "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Bildirim konusu</th><th>Açıklama</th>" +
+      (ro
+        ? "<th>Personel notu (salt okunur)</th><th>Durum</th>" + (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
+        : "<th>Personel notu</th><th>Durum</th><th>İşlemler</th>") +
       "</tr></thead><tbody>";
 
     if (!rows.length) {
@@ -3035,7 +3180,9 @@
           .join(" ")
           .toLowerCase();
         html +=
-          '<tr class="bucket-row guest-notif-row" data-id="' +
+          '<tr class="bucket-row guest-notif-row' +
+          (ro && st === "new" ? " ops-row--new" : "") +
+          '" data-id="' +
           esc(r.id) +
           '" data-status="' +
           esc(st) +
@@ -3050,30 +3197,40 @@
         html += "<td>" + esc(r.nationality || "-") + "</td>";
         html += '<td><span class="cat-badge cat-badge--complaint">' + esc(catLabel) + "</span></td>";
         html += '<td class="complaint-cell-desc">' + esc(descFull) + "</td>";
-        html +=
-          '<td class="request-cell-staff"><textarea class="request-staff-note js-gn-staff-note" rows="2" data-id="' +
-          esc(r.id) +
-          '" placeholder="İç not">' +
-          esc(staffNote) +
-          "</textarea></td>";
+        if (ro) {
+          html += '<td class="request-cell-staff">' + esc(staffNote) + "</td>";
+        } else {
+          html +=
+            '<td class="request-cell-staff"><textarea class="request-staff-note js-gn-staff-note" rows="2" data-id="' +
+            esc(r.id) +
+            '" placeholder="İç not">' +
+            esc(staffNote) +
+            "</textarea></td>";
+        }
         html +=
           '<td><span class="status-badge status-' +
           esc(st) +
           '">' +
           esc(issueStatusLabel("guest_notification", st)) +
           "</span></td>";
-        html += '<td><div class="row-actions">';
-        html += issueRowActionsHtml("guest_notification", r.id, st);
-        html += "</div></td>";
+        if (ro) {
+          html += satH ? "<td>" + satisfactionEditCellHtml("guest_notification", r) + "</td>" : "<td></td>";
+        } else {
+          html += '<td><div class="row-actions">';
+          html += issueRowActionsHtml("guest_notification", r.id, st);
+          html += "</div></td>";
+        }
         html += "</tr>";
       });
     }
 
-    html += "</tbody></table></div></div>";
+    html += "</tbody></table></div></div></div>";
     mountEl.innerHTML = html;
     if (handlers && handlers.pagination && handlers.onPage) {
       attachAdminPager(mountEl, handlers.pagination, rows, handlers.onPage);
     }
+
+    wireAdminSatisfaction(mountEl, handlers);
 
     var search = mountEl.querySelector(".bucket-search");
     var statusFilter = mountEl.querySelector(".bucket-filter-status");
@@ -3122,26 +3279,28 @@
       tr.setAttribute("data-search", rowSearchText);
     }
 
-    mountEl.querySelectorAll(".js-gn-staff-note").forEach(function (ta) {
-      ta.addEventListener("blur", function () {
-        var id = String(ta.getAttribute("data-id") || "");
-        setGuestNotifStaffNote(id, ta.value);
-        refreshGnRowSearch(ta);
-        applyFilters();
+    if (!ro) {
+      mountEl.querySelectorAll(".js-gn-staff-note").forEach(function (ta) {
+        ta.addEventListener("blur", function () {
+          var id = String(ta.getAttribute("data-id") || "");
+          setGuestNotifStaffNote(id, ta.value);
+          refreshGnRowSearch(ta);
+          applyFilters();
+        });
       });
-    });
 
-    mountEl.querySelectorAll(".js-status").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        handlers.onStatus(btn.getAttribute("data-type"), btn.getAttribute("data-id"), btn.getAttribute("data-status"));
+      mountEl.querySelectorAll(".js-status").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          handlers.onStatus(btn.getAttribute("data-type"), btn.getAttribute("data-id"), btn.getAttribute("data-status"));
+        });
       });
-    });
-    mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+      mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+        });
       });
-    });
-    wireWhatsappResendButtons(mountEl, handlers);
+      wireWhatsappResendButtons(mountEl, handlers);
+    }
 
     if (search) search.addEventListener("input", applyFilters);
     if (statusFilter) statusFilter.addEventListener("change", applyFilters);
@@ -3169,6 +3328,8 @@
   function renderLateCheckoutsPanel(mountEl, rows, handlers) {
     if (!Array.isArray(rows)) rows = [];
     var pag = handlers && handlers.pagination;
+    var ro = Boolean(handlers && handlers.readOnly);
+    var satH = Boolean(handlers && typeof handlers.onSatisfaction === "function");
     var totalCount = bucketTopStatsTotal(pag, rows);
     var topstatsTitle = pag ? BUCKET_QUAD_STATS_TITLE_WHEN_PAGED : "";
     var open = rows.filter(function (r) {
@@ -3193,7 +3354,10 @@
       '<div class="bucket-stat"><span>Onaylanmadı</span><strong>' + esc(rejected) + "</strong></div>" +
       "</div>" +
       '<p class="bucket-help bucket-help--late-checkout">' +
-      "Web formundan gelen geç çıkış talepleri; misafir bildirimi şablonu ile iletilir ve operasyon WhatsApp grubuna düşer. Personel notu yerel tarayıcıda saklanır; gerekirse satırdaki WhatsApp ile tekrar gönderin.</p>" +
+      (ro
+        ? "Salt izleme; onay ön büro operasyon sayfasından. Memnuniyet burada kaydedilir."
+        : "Web formundan gelen geç çıkış talepleri; misafir bildirimi şablonu ile iletilir ve operasyon WhatsApp grubuna düşer. Personel notu yerel tarayıcıda saklanır; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
+      "</p>" +
       '<div class="bucket-toolbar bucket-toolbar--complaints">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
       '<div class="reservation-date-combo bucket-toolbar-date-combo">' +
@@ -3209,10 +3373,14 @@
       '<option value="rejected">Onaylanmadı</option>' +
       "</select>" +
       "</div>" +
-      '<div class="bucket-table-wrap">' +
-      '<table class="admin-table admin-table--late-checkout">' +
+      '<div class="viona-table-shell glass-block">' +
+      '<div class="viona-table-scroll viona-table-scroll--compact">' +
+      '<table class="admin-table viona-table admin-table--late-checkout">' +
       "<thead><tr>" +
-      "<th>Kayıt</th><th>Çıkış tarihi</th><th>Çıkış saati</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Misafir notu</th><th>Personel notu</th><th>Durum</th><th>İşlemler</th>" +
+      "<th>Kayıt</th><th>Çıkış tarihi</th><th>Çıkış saati</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Misafir notu</th>" +
+      (ro
+        ? "<th>Personel notu (salt okunur)</th><th>Durum</th>" + (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
+        : "<th>Personel notu</th><th>Durum</th><th>İşlemler</th>") +
       "</tr></thead><tbody>";
 
     function checkoutDateDisp(r) {
@@ -3242,7 +3410,9 @@
           .join(" ")
           .toLowerCase();
         html +=
-          '<tr class="bucket-row late-checkout-row" data-id="' +
+          '<tr class="bucket-row late-checkout-row' +
+          (ro && st === "new" ? " ops-row--new" : "") +
+          '" data-id="' +
           esc(r.id) +
           '" data-status="' +
           esc(st) +
@@ -3258,30 +3428,40 @@
         html += "<td>" + esc(r.guest_name || "-") + "</td>";
         html += "<td>" + esc(r.nationality || "-") + "</td>";
         html += '<td class="complaint-cell-desc">' + esc(descFull) + "</td>";
-        html +=
-          '<td class="request-cell-staff"><textarea class="request-staff-note js-lc-staff-note" rows="2" data-id="' +
-          esc(r.id) +
-          '" placeholder="İç not">' +
-          esc(staffNote) +
-          "</textarea></td>";
+        if (ro) {
+          html += '<td class="request-cell-staff">' + esc(staffNote) + "</td>";
+        } else {
+          html +=
+            '<td class="request-cell-staff"><textarea class="request-staff-note js-lc-staff-note" rows="2" data-id="' +
+            esc(r.id) +
+            '" placeholder="İç not">' +
+            esc(staffNote) +
+            "</textarea></td>";
+        }
         html +=
           '<td><span class="status-badge status-' +
           esc(st) +
           '">' +
           esc(issueStatusLabel("late_checkout", st)) +
           "</span></td>";
-        html += '<td><div class="row-actions">';
-        html += issueRowActionsHtml("late_checkout", r.id, st);
-        html += "</div></td>";
+        if (ro) {
+          html += satH ? "<td>" + satisfactionEditCellHtml("late_checkout", r) + "</td>" : "<td></td>";
+        } else {
+          html += '<td><div class="row-actions">';
+          html += issueRowActionsHtml("late_checkout", r.id, st);
+          html += "</div></td>";
+        }
         html += "</tr>";
       });
     }
 
-    html += "</tbody></table></div></div>";
+    html += "</tbody></table></div></div></div>";
     mountEl.innerHTML = html;
     if (handlers && handlers.pagination && handlers.onPage) {
       attachAdminPager(mountEl, handlers.pagination, rows, handlers.onPage);
     }
+
+    wireAdminSatisfaction(mountEl, handlers);
 
     var search = mountEl.querySelector(".bucket-search");
     var statusFilter = mountEl.querySelector(".bucket-filter-status");
@@ -3332,26 +3512,28 @@
       tr.setAttribute("data-search", rowSearchText);
     }
 
-    mountEl.querySelectorAll(".js-lc-staff-note").forEach(function (ta) {
-      ta.addEventListener("blur", function () {
-        var id = String(ta.getAttribute("data-id") || "");
-        setLateCheckoutStaffNote(id, ta.value);
-        refreshLcRowSearch(ta);
-        applyFilters();
+    if (!ro) {
+      mountEl.querySelectorAll(".js-lc-staff-note").forEach(function (ta) {
+        ta.addEventListener("blur", function () {
+          var id = String(ta.getAttribute("data-id") || "");
+          setLateCheckoutStaffNote(id, ta.value);
+          refreshLcRowSearch(ta);
+          applyFilters();
+        });
       });
-    });
 
-    mountEl.querySelectorAll(".js-status").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        handlers.onStatus(btn.getAttribute("data-type"), btn.getAttribute("data-id"), btn.getAttribute("data-status"));
+      mountEl.querySelectorAll(".js-status").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          handlers.onStatus(btn.getAttribute("data-type"), btn.getAttribute("data-id"), btn.getAttribute("data-status"));
+        });
       });
-    });
-    mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+      mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+        });
       });
-    });
-    wireWhatsappResendButtons(mountEl, handlers);
+      wireWhatsappResendButtons(mountEl, handlers);
+    }
 
     if (search) search.addEventListener("input", applyFilters);
     if (statusFilter) statusFilter.addEventListener("change", applyFilters);
@@ -3379,6 +3561,8 @@
   function renderFaultsPanel(mountEl, rows, handlers) {
     if (!Array.isArray(rows)) rows = [];
     var pag = handlers && handlers.pagination;
+    var ro = Boolean(handlers && handlers.readOnly);
+    var satH = Boolean(handlers && typeof handlers.onSatisfaction === "function");
     var totalCount = bucketTopStatsTotal(pag, rows);
     var topstatsTitle = pag
       ? BUCKET_QUAD_STATS_TITLE_WHEN_PAGED
@@ -3405,7 +3589,10 @@
       '<div class="bucket-stat"><span>Yapılamadı</span><strong>' + esc(rejected) + "</strong></div>" +
       "</div>" +
       '<p class="bucket-help bucket-help--faults">' +
-      "Kategori, lokasyon, aciliyet ve açıklama formdan. Personel notu dahilidir. Yeni kayıtlar operasyon WhatsApp grubuna düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.</p>" +
+      (ro
+        ? "Salt izleme; durum teknik operasyon sayfasından. Misafir memnuniyeti burada kaydedilir."
+        : "Kategori, lokasyon, aciliyet ve açıklama formdan. Personel notu dahilidir. Yeni kayıtlar operasyon WhatsApp grubuna düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
+      "</p>" +
       '<div class="bucket-toolbar bucket-toolbar--faults">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
       '<div class="reservation-date-combo bucket-toolbar-date-combo">' +
@@ -3421,10 +3608,14 @@
       '<option value="rejected">Yapılamadı</option>' +
       "</select>" +
       "</div>" +
-      '<div class="bucket-table-wrap">' +
-      '<table class="admin-table admin-table--faults">' +
+      '<div class="viona-table-shell glass-block">' +
+      '<div class="viona-table-scroll viona-table-scroll--compact">' +
+      '<table class="admin-table viona-table admin-table--faults">' +
       "<thead><tr>" +
-      "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Arıza kategorisi</th><th>Lokasyon</th><th>Aciliyet</th><th>Açıklama</th><th>Personel notu</th><th>Durum</th><th>İşlemler</th>" +
+      "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Arıza kategorisi</th><th>Lokasyon</th><th>Aciliyet</th><th>Açıklama</th>" +
+      (ro
+        ? "<th>Personel notu (salt okunur)</th><th>Durum</th>" + (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
+        : "<th>Personel notu</th><th>Durum</th><th>İşlemler</th>") +
       "</tr></thead><tbody>";
 
     if (!rows.length) {
@@ -3450,7 +3641,9 @@
           .join(" ")
           .toLowerCase();
         html +=
-          '<tr class="bucket-row fault-row" data-id="' +
+          '<tr class="bucket-row fault-row' +
+          (ro && st === "new" ? " ops-row--new" : "") +
+          '" data-id="' +
           esc(r.id) +
           '" data-status="' +
           esc(st) +
@@ -3467,25 +3660,35 @@
         html += '<td class="fault-cell-loc">' + esc(locLabel) + "</td>";
         html += '<td class="fault-cell-urg"><span class="fault-urg fault-urg--' + esc(String(faultRawUrgency(r) || "na")) + '">' + esc(urgLabel) + "</span></td>";
         html += '<td class="fault-cell-desc">' + esc(descFull) + "</td>";
-        html +=
-          '<td class="request-cell-staff"><textarea class="request-staff-note js-fault-staff-note" rows="2" data-id="' +
-          esc(r.id) +
-          '" placeholder="İç not">' +
-          esc(staffNote) +
-          "</textarea></td>";
+        if (ro) {
+          html += '<td class="request-cell-staff">' + esc(staffNote) + "</td>";
+        } else {
+          html +=
+            '<td class="request-cell-staff"><textarea class="request-staff-note js-fault-staff-note" rows="2" data-id="' +
+            esc(r.id) +
+            '" placeholder="İç not">' +
+            esc(staffNote) +
+            "</textarea></td>";
+        }
         html += '<td><span class="status-badge status-' + esc(st) + '">' + esc(issueStatusLabel("fault", st)) + "</span></td>";
-        html += '<td><div class="row-actions">';
-        html += issueRowActionsHtml("fault", r.id, st);
-        html += "</div></td>";
+        if (ro) {
+          html += satH ? "<td>" + satisfactionEditCellHtml("fault", r) + "</td>" : "<td></td>";
+        } else {
+          html += '<td><div class="row-actions">';
+          html += issueRowActionsHtml("fault", r.id, st);
+          html += "</div></td>";
+        }
         html += "</tr>";
       });
     }
 
-    html += "</tbody></table></div></div>";
+    html += "</tbody></table></div></div></div>";
     mountEl.innerHTML = html;
     if (handlers && handlers.pagination && handlers.onPage) {
       attachAdminPager(mountEl, handlers.pagination, rows, handlers.onPage);
     }
+
+    wireAdminSatisfaction(mountEl, handlers);
 
     var search = mountEl.querySelector(".bucket-search");
     var statusFilter = mountEl.querySelector(".bucket-filter-status");
@@ -3538,26 +3741,28 @@
       tr.setAttribute("data-search", rowSearchText);
     }
 
-    mountEl.querySelectorAll(".js-fault-staff-note").forEach(function (ta) {
-      ta.addEventListener("blur", function () {
-        var id = String(ta.getAttribute("data-id") || "");
-        setFaultStaffNote(id, ta.value);
-        refreshFaultRowSearch(ta);
-        applyFilters();
+    if (!ro) {
+      mountEl.querySelectorAll(".js-fault-staff-note").forEach(function (ta) {
+        ta.addEventListener("blur", function () {
+          var id = String(ta.getAttribute("data-id") || "");
+          setFaultStaffNote(id, ta.value);
+          refreshFaultRowSearch(ta);
+          applyFilters();
+        });
       });
-    });
 
-    mountEl.querySelectorAll(".js-status").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        handlers.onStatus(btn.getAttribute("data-type"), btn.getAttribute("data-id"), btn.getAttribute("data-status"));
+      mountEl.querySelectorAll(".js-status").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          handlers.onStatus(btn.getAttribute("data-type"), btn.getAttribute("data-id"), btn.getAttribute("data-status"));
+        });
       });
-    });
-    mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+      mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+        });
       });
-    });
-    wireWhatsappResendButtons(mountEl, handlers);
+      wireWhatsappResendButtons(mountEl, handlers);
+    }
 
     if (search) search.addEventListener("input", applyFilters);
     if (statusFilter) statusFilter.addEventListener("change", applyFilters);
@@ -3580,6 +3785,170 @@
     }
 
     applyFilters();
+  }
+
+  /** Saha sekmeleri: hızlı durum düğmeleri (admin oturumu ile). */
+  function renderOperationBucketImpl(mountEl, cfg) {
+    if (!mountEl || !cfg) return;
+    var bucketType = cfg.bucketType;
+    var rows = cfg.rows || [];
+    var pagination = cfg.pagination;
+    var onPage = cfg.onPage;
+    var onStatus = cfg.onStatus;
+    var buttonLabels = cfg.buttonLabels || ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"];
+    var summaryRow =
+      cfg.summaryRow ||
+      function () {
+        return "—";
+      };
+    var statVals = [
+      { v: "pending" },
+      { v: "in_progress" },
+      { v: "done" },
+      { v: "rejected" },
+    ];
+    function statusButtonsHtml(id, current) {
+      var st = normalizeBucketStatus(current);
+      var h = '<div class="op-status-btns" data-op-id="' + esc(id) + '">';
+      statVals.forEach(function (opt, i) {
+        var on = st === opt.v || (st === "new" && opt.v === "pending");
+        h +=
+          '<button type="button" class="btn-small op-st js-op-st' +
+          (on ? " is-active" : "") +
+          '" data-status="' +
+          esc(opt.v) +
+          '">' +
+          esc(buttonLabels[i] || opt.v) +
+          "</button>";
+      });
+      h += "</div>";
+      return h;
+    }
+    var html =
+      '<div class="viona-table-shell glass-block">' +
+      '<div class="viona-table-scroll viona-table-scroll--ops">' +
+      '<table class="admin-table viona-table op-table">' +
+      "<thead><tr>" +
+      '<th scope="col" class="op-th-time">Kayıt</th>' +
+      '<th scope="col" class="op-th-room">Oda</th>' +
+      '<th scope="col" class="op-th-sum">Özet</th>' +
+      '<th scope="col" class="op-th-status">Durum</th>' +
+      '<th scope="col" class="op-th-actions">İşlem</th>' +
+      "</tr></thead><tbody>";
+    if (!rows.length) {
+      html += '<tr><td colspan="5" class="admin-table__empty">Kayıt yok.</td></tr>';
+    } else {
+      rows.forEach(function (r) {
+        var st = normalizeBucketStatus(r.status);
+        var trCls = st === "new" ? ' class="ops-row--new"' : "";
+        var sum = String(summaryRow(r) || "—");
+        if (sum.length > 140) sum = sum.slice(0, 137) + "…";
+        html +=
+          "<tr" +
+          trCls +
+          "><td>" +
+          esc(formatSubmittedAtTr(r.submitted_at)) +
+          "</td><td>" +
+          esc(r.room_number || "—") +
+          "</td><td>" +
+          esc(sum) +
+          '</td><td><span class="status-badge status-' +
+          esc(st) +
+          '">' +
+          esc(issueStatusLabel(bucketType, st)) +
+          "</span></td><td>" +
+          statusButtonsHtml(r.id, r.status) +
+          "</td></tr>";
+      });
+    }
+    html += "</tbody></table></div></div></div>";
+    mountEl.innerHTML = html;
+    if (pagination && typeof onPage === "function") {
+      attachAdminPager(mountEl, pagination, rows, onPage);
+    }
+    if (typeof onStatus === "function") {
+      mountEl.querySelectorAll(".js-op-st").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var cell = btn.closest(".op-status-btns");
+          if (!cell) return;
+          var id = cell.getAttribute("data-op-id");
+          var status = btn.getAttribute("data-status");
+          var p = onStatus(bucketType, id, status);
+          if (p && typeof p.then === "function") {
+            btn.disabled = true;
+            p.finally(function () {
+              btn.disabled = false;
+            });
+          }
+        });
+      });
+    }
+  }
+
+  function operationSummaryForType(bucketType, r) {
+    if (bucketType === "request") {
+      return [
+        requestFormGroupLabel(r),
+        requestFormTypeLabel(r),
+        requestFormDescription(r),
+      ]
+        .filter(Boolean)
+        .join(" · ");
+    }
+    if (bucketType === "fault") {
+      return [categoryText("fault", r.categories, r.category), faultFormDescription(r)].filter(Boolean).join(" · ");
+    }
+    if (bucketType === "complaint" || bucketType === "guest_notification") {
+      return [categoryText(bucketType, r.categories, r.category), complaintFormDescription(r)]
+        .filter(Boolean)
+        .join(" · ");
+    }
+    if (bucketType === "late_checkout") {
+      return complaintFormDescription(r);
+    }
+    return "—";
+  }
+
+  function renderOperationFrontImpl(mountEl, packs, handlers) {
+    if (!mountEl) return;
+    packs = packs || {};
+    var onStatus = handlers && handlers.onStatus;
+    var onPage = handlers && handlers.onPage;
+    function appendBlock(title, bucketType, pack, labels) {
+      pack = pack || { items: [], pagination: null };
+      var section = document.createElement("section");
+      section.className = "op-front-section";
+      section.innerHTML = "<h3 class=\"op-subtitle op-front-section__title\">" + esc(title) + "</h3>";
+      var inner = document.createElement("div");
+      inner.className = "op-front-inner";
+      section.appendChild(inner);
+      renderOperationBucketImpl(inner, {
+        bucketType: bucketType,
+        rows: pack.items || [],
+        pagination: pack.pagination,
+        onPage:
+          typeof onPage === "function"
+            ? function (next) {
+                onPage(bucketType, next);
+              }
+            : null,
+        onStatus: onStatus,
+        buttonLabels: labels,
+        summaryRow: function (row) {
+          return operationSummaryForType(bucketType, row);
+        },
+      });
+      mountEl.appendChild(section);
+    }
+    mountEl.innerHTML = "";
+    appendBlock("Şikâyetler", "complaint", packs.complaint, ["Bekliyor", "İşlemde", "Dikkate alındı", "Alınmadı"]);
+    appendBlock("Misafir bildirimleri", "guest_notification", packs.guest_notification, [
+      "Bekliyor",
+      "İşlemde",
+      "Dikkate alındı",
+      "Alınmadı",
+    ]);
+    appendBlock("Geç çıkış", "late_checkout", packs.late_checkout, ["Bekliyor", "İşlemde", "Onaylandı", "Onaylanmadı"]);
   }
 
   window.AdminUI = {
@@ -3992,7 +4361,7 @@
         "</option>" +
         "</select>" +
         "</div>" +
-        '<div class="bucket-table-wrap"><table class="admin-table"><thead><tr><th>Tarih</th><th>Tip</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Kategori</th><th>Detay</th><th>Durum</th><th>İşlemler</th></tr></thead><tbody>';
+        '<div class="viona-table-shell glass-block"><div class="viona-table-scroll viona-table-scroll--compact"><table class="admin-table viona-table"><thead><tr><th>Tarih</th><th>Tip</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Kategori</th><th>Detay</th><th>Durum</th><th>İşlemler</th></tr></thead><tbody>';
       if (!rows.length) {
         html += '<tr><td colspan="9" class="admin-table__empty">Bu sayfada kayıt yok.</td></tr>';
       } else {
@@ -4022,7 +4391,7 @@
           html += "</tr>";
         });
       }
-      html += "</tbody></table></div></div>";
+      html += "</tbody></table></div></div></div>";
       mountEl.innerHTML = html;
       if (handlers && handlers.pagination && handlers.onPage) {
         attachAdminPager(mountEl, handlers.pagination, rows, handlers.onPage);
@@ -4237,5 +4606,17 @@
     reservationDateValue: reservationDateValue,
     /** Kayıt durumu normalizasyonu (sayım / etiket tek kaynak). */
     reservationNormalizeStatusKey: reservationNormalizeStatusKey,
+    /** HK / Teknik saha sekmesi tablosu. */
+    renderOperationBucket: function (mountEl, cfg) {
+      renderOperationBucketImpl(mountEl, cfg);
+    },
+    /** Ön büro: üç liste. */
+    renderOperationFront: function (mountEl, packs, handlers) {
+      renderOperationFrontImpl(mountEl, packs, handlers);
+    },
+    /** Saha tabloları için kısa özet metni (istek / arıza / şikâyet vb.). */
+    operationSummaryForType: function (bucketType, row) {
+      return operationSummaryForType(bucketType, row);
+    },
   };
 })();
