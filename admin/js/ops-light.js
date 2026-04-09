@@ -264,6 +264,8 @@
 
   function formatErr(e) {
     var m = e && e.message ? String(e.message) : "";
+    if (m === "http_404")
+      return "API’de /api/ops bulunamadı. Render’da Node servisinin son commit ile yeniden deploy edildiğini ve doğru repoya bağlı olduğunu kontrol edin.";
     if (m === "unauthorized" || m === "http_401") return "Şifre geçersiz veya süresi dolmuş.";
     if (m === "wrong_ops_token") return "Bu şifre bu sayfa için değil (yanlış ekip bağlantısı).";
     if (m === "forbidden_bucket" || m === "http_403") return "Bu işlem bu hesap için izinli değil.";

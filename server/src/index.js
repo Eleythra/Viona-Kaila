@@ -392,6 +392,12 @@ app.get("/api/health", (req, res) => {
     hotelTimezone: hotelTz || "Europe/Istanbul",
     /** WhatsApp operasyon (Cloud): token/phone id ve alıcı sayıları (numara listelenmez). */
     whatsappOperational: getWhatsappOperationalHealthSummary(),
+    /** Saha /api/ops: env’de token tanımlı mı (değerler listelenmez). Bu alan yoksa sunucu sürümü /api/ops öncesi. */
+    opsLinkTokensConfigured: {
+      hk: Boolean(String(env.opsLinkTokenHk || "").trim()),
+      tech: Boolean(String(env.opsLinkTokenTech || "").trim()),
+      front: Boolean(String(env.opsLinkTokenFront || "").trim()),
+    },
   };
   const pretty =
     String(req.query?.pretty || "") === "1" ||
