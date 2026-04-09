@@ -1,16 +1,10 @@
 /**
- * Canlı API tek adres: Render’daki Node (Express). Tarayıcıdan tüm /api buraya gider;
- * Node /api/chat isteğini sunucu içinden Python asistana iletir (CORS tek yerde).
+ * Canlı Node API (Hetzner VPS; önceden Render).
  *
- * Render’da bu Web Service için zorunlu ortam değişkenleri:
- *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ASSISTANT_CHAT_ENDPOINT (Python /api/chat tam URL)
- *
- * Sağlık kontrolü yalnızca bu Node servisinde: https://BU-HOST/api/health
- *   (Python/asistan URL’si değil; örn. viona-kaila…/api/health farklı uygulama dönebilir.)
- * JSON’da hasSupabase:true ve (yeni sürümde) telegramTeknikConfigured görmelisiniz.
- * Servis adın farklıysa yalnızca aşağıdaki satırı güncelle.
+ * Vercel + HTTPS: `""` — `/api` + vercel.json → Hetzner proxy.
+ * Doğrudan IP: "http://178.104.104.45:3001/api" (HTTPS sitede tarayıcı engelleyebilir).
  */
 (function () {
   "use strict";
-  window.__VIONA_NODE_RENDER_API__ = "https://viona-node-api.onrender.com/api";
+  window.__VIONA_NODE_RENDER_API__ = "";
 })();

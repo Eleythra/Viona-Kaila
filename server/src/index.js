@@ -169,6 +169,7 @@ const corsAllowlist = new Set(
 );
 [
   "https://viona-kaila.onrender.com",
+  "http://178.104.104.45:3001",
   "https://viona-node-api.onrender.com",
   "http://localhost:3000",
   "http://localhost:5173",

@@ -16,7 +16,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://viona-node-api.onrender.com/api/:path*"
+      "destination": "http://178.104.104.45:3001/api/:path*"
     }
   ],
   "headers": [

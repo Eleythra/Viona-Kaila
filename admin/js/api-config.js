@@ -1,7 +1,7 @@
 /**
  * Genel API endpoint yapılandırması.
  *
- * Canlıda taban: js/viona-backend-url.js → __VIONA_NODE_RENDER_API__ (Render Node). Vercel
+ * Canlıda taban: js/viona-backend-url.js → __VIONA_NODE_RENDER_API__ (boşsa `/api` → vercel.json → Hetzner Node). Vercel
  * rewrites bazen uygulanmaz (x-render-routing: no-server, /api 404); doğrudan Node daha güvenilir.
  * Tamamen elle: window.__VIONA_API_BASE__ bu scriptten önce.
  *
