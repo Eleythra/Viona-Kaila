@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatOperationalGroupMessageText } from "./operational-group-message-format.js";
+import { formatOperationalTemplatePreviewText } from "./operational-template-format.js";
 
 test("İstek: kettle + not — Türkçe form bölümü ve tür, ham anahtar yok", () => {
-  const text = formatOperationalGroupMessageText("request", {
+  const text = formatOperationalTemplatePreviewText("request", {
     name: "Ahmet Bay",
     room: "1001",
     category: "kettle",
@@ -19,7 +19,7 @@ test("İstek: kettle + not — Türkçe form bölümü ve tür, ham anahtar yok"
 });
 
 test("İstek: oda temizliği + şimdi", () => {
-  const text = formatOperationalGroupMessageText("request", {
+  const text = formatOperationalTemplatePreviewText("request", {
     name: "Test",
     room: "1205",
     category: "room_cleaning",
@@ -32,7 +32,7 @@ test("İstek: oda temizliği + şimdi", () => {
 });
 
 test("İstek: kategori büyük harf / camelCase — ham anahtar yok; yalnızca categories[]", () => {
-  const text = formatOperationalGroupMessageText("request", {
+  const text = formatOperationalTemplatePreviewText("request", {
     name: "Ahmet Bay",
     room: "1001",
     category: "Slippers",
@@ -44,7 +44,7 @@ test("İstek: kategori büyük harf / camelCase — ham anahtar yok; yalnızca c
   assert.match(text, /Terlik/);
   assert.match(text, /Yastık, havlu, bornoz ve terlik/);
 
-  const text2 = formatOperationalGroupMessageText("request", {
+  const text2 = formatOperationalTemplatePreviewText("request", {
     name: "X",
     room: "1",
     categories: ["slippers"],

@@ -1,5 +1,21 @@
 # API Contracts
 
+## WhatsApp operasyon yönlendirmesi (Cloud API)
+
+Kayıt `createGuestRequest` ile Supabase’e yazıldıktan sonra aynı `type` ile `sendOperationalWhatsappNotification` tetiklenir. Alıcı listeleri yalnızca `server/.env` (Render ortam değişkenleri):
+
+| `type` | Şablon (gövde parametre sayısı) | `.env` alıcı listesi |
+|--------|----------------------------------|----------------------|
+| `fault` | Arıza (8) | `WHATSAPP_TECH_RECIPIENTS` |
+| `request` | İstek (8) | `WHATSAPP_HK_RECIPIENTS` |
+| `complaint` | Şikayet (6) | `WHATSAPP_FRONT_RECIPIENTS` |
+| `guest_notification` | Misafir bildirimi (7) | `WHATSAPP_FRONT_RECIPIENTS` |
+| `late_checkout` | Geç çıkış (7, misafir şablonu ile aynı aile) | `WHATSAPP_FRONT_RECIPIENTS` |
+
+Web formları (`js/render-requests-module.js` vb.) ve sohbetten gelen `create_guest_request` eylemi aynı Node API’yi kullanır; Render’da `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` ve yukarıdaki listeler dolu olmalı.
+
+---
+
 ## Public write endpoints
 
 ### `POST /api/guest-requests`

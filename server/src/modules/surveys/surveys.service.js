@@ -1,4 +1,4 @@
-import { getSupabase } from "../../lib/supabase.js";
+import { getSupabase, throwIfSupabaseDatastoreDnsError, withSupabaseFetchGuard } from "../../lib/supabase.js";
 
 function cleanText(value, maxLen = 5000) {
   return String(value || "").trim().slice(0, maxLen);
@@ -31,24 +31,29 @@ function validate(row) {
 export async function createSurveySubmission(payload) {
   const row = normalize(payload);
   validate(row);
-  const { data, error } = await getSupabase()
-    .from("survey_submissions")
-    .insert({
-      submitted_at: row.submittedAt,
-      overall_score: row.overallScore,
-      hotel_categories: row.hotelCategories,
-      hotel_answers: row.hotelAnswers,
-      hotel_comment: row.hotelComment,
-      viona_rating: row.vionaRating,
-      viona_answers: row.vionaAnswers,
-      viona_comment: row.vionaComment,
-      device_type: row.deviceType || null,
-      language: row.language,
-      source: row.source,
-      raw_payload: row.rawPayload,
-    })
-    .select("id")
-    .single();
-  if (error) throw error;
+  const { data, error } = await withSupabaseFetchGuard(() =>
+    getSupabase()
+      .from("survey_submissions")
+      .insert({
+        submitted_at: row.submittedAt,
+        overall_score: row.overallScore,
+        hotel_categories: row.hotelCategories,
+        hotel_answers: row.hotelAnswers,
+        hotel_comment: row.hotelComment,
+        viona_rating: row.vionaRating,
+        viona_answers: row.vionaAnswers,
+        viona_comment: row.vionaComment,
+        device_type: row.deviceType || null,
+        language: row.language,
+        source: row.source,
+        raw_payload: row.rawPayload,
+      })
+      .select("id")
+      .single(),
+  );
+  if (error) {
+    throwIfSupabaseDatastoreDnsError(error);
+    throw error;
+  }
   return { id: data.id };
 }

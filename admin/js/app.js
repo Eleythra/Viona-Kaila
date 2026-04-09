@@ -222,40 +222,26 @@
         waDetail.textContent = "Operasyon hattı doğrulanıyor…";
         try {
           var waDiag = await adapter.getWhatsappAdminDiagnostics();
-          var st = (waDiag && waDiag.state) || {};
-          var ver = (waDiag && waDiag.verify) || {};
+          var op = (waDiag && waDiag.operational) || {};
           var parts = [];
-          if (!st.enabled) {
+          if (op.cloudApiSendReady) {
+            parts.push("WhatsApp Cloud API hazır (token + Phone number ID)");
+            var cc = op.cloudRecipientCounts || {};
             parts.push(
-              "Mesaj botu devre dışı" +
-                (st.envKeySet ? "" : " — ortam anahtarı eksik veya okunamıyor"),
-            );
-          } else if (!st.ready) {
-            parts.push(
-              "Bağlantı veya oturum henüz hazır değil" + (st.lastError ? " — " + st.lastError : ""),
+              "Alıcı sayısı — Teknik (arıza): " +
+                (cc.tech != null ? cc.tech : "—") +
+                ", HK (istek): " +
+                (cc.hk != null ? cc.hk : "—") +
+                ", Ön büro (şikayet / misafir bildirimi / geç çıkış): " +
+                (cc.front != null ? cc.front : "—"),
             );
           } else {
-            parts.push("Bağlantı hazır");
-          }
-          if (ver.allOk === true) {
             parts.push(
-              "Hedef gruplar doğrulandı" +
-                (ver.discoveredCount != null ? " · " + ver.discoveredCount + " grup eşleşti" : ""),
+              "WhatsApp gönderimi için eksik ayar: sunucuda WHATSAPP_ACCESS_TOKEN ve WHATSAPP_PHONE_NUMBER_ID",
             );
-          } else if (Array.isArray(ver.checks) && ver.checks.length) {
-            var badN = ver.checks.filter(function (c) {
-              return !c.ok;
-            }).length;
-            parts.push(badN ? badN + " grup için uyarı" : "Grup doğrulaması tamamlandı");
           }
           waDetail.textContent = parts.join(" · ");
-          var groupWarn =
-            ver.allOk === false ||
-            (Array.isArray(ver.checks) &&
-              ver.checks.some(function (c) {
-                return c && c.ok === false;
-              }));
-          var warnWa = !st.enabled || !st.ready || groupWarn;
+          var warnWa = !op.cloudApiSendReady;
           waRoot.classList.remove("dashboard-whatsapp-status--loading");
           waRoot.classList.add(warnWa ? "dashboard-whatsapp-status--warn" : "dashboard-whatsapp-status--ok");
         } catch (_e) {
@@ -450,6 +436,16 @@
     }
   }
 
+  /** fetch/undici: "Failed to fetch", "TypeError: fetch failed", cause.code EAI_AGAIN (DNS). */
+  function isBrowserNetworkFailure(e) {
+    var m = e && e.message ? String(e.message) : "";
+    if (m.indexOf("Failed to fetch") === 0 || m.indexOf("NetworkError") === 0) return true;
+    if (/fetch failed/i.test(m)) return true;
+    var c = e && e.cause;
+    if (c && String(c.code || "") === "EAI_AGAIN") return true;
+    return false;
+  }
+
   function formatAdminBucketLoadError(e) {
     var m = e && e.message ? String(e.message) : "";
     var tail = " Ağ bağlantısını, API tabanını (data-viona-live-api) ve panel girişini kontrol edin.";
@@ -469,8 +465,8 @@
     if (/^http_\d+$/.test(m)) {
       return "API yanıtı HTTP " + m.replace(/^http_/, "") + "." + tail;
     }
-    if (m.indexOf("Failed to fetch") === 0 || m.indexOf("NetworkError") === 0) {
-      return "İstek ağ üzerinden tamamlanamadı (CORS, HTTPS karışımı veya sunucu kapalı olabilir)." + tail;
+    if (isBrowserNetworkFailure(e)) {
+      return "İstek ağ üzerinden tamamlanamadı (CORS, HTTPS karışımı, DNS veya sunucu kapalı olabilir)." + tail;
     }
     return "Veri yüklenemedi: " + m + "." + tail;
   }
@@ -1290,7 +1286,7 @@
         }
       } catch (e) {
         var msg = String((e && e.message) || "");
-        if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+        if (isBrowserNetworkFailure(e)) {
           if (statusEl)
             statusEl.textContent =
               "PDF rapor oluşturulamadı: Sunucuya ulaşılamıyor veya istek zaman aşımı (Render’da PDF + AI uzun sürebilir). Ağı ve API adresini kontrol edin.";
@@ -1445,26 +1441,7 @@
           await adapter.validateAdminToken();
           sessionStorage.setItem(LOGIN_OK_KEY, "1");
           sessionStorage.setItem(LOGIN_USER_KEY, ADMIN_USERNAME_REQUIRED);
-        } catch (e) {
-          adapter.clearAdminToken();
-          try {
-            sessionStorage.removeItem(LOGIN_USER_KEY);
-          } catch (_x) {}
-          if (err) {
-            var msg = (e && e.message) || "";
-            if (/failed to fetch|networkerror|load failed|cors/i.test(msg)) {
-              err.textContent =
-                "Sunucuya bağlanılamadı veya CORS engeli (VPS .env: CORS_ALLOWED_ORIGINS / CORS_ALLOWED_ORIGIN_SUFFIXES).";
-            } else if (msg === "unauthorized" || msg === "http_401") {
-              err.textContent = "Geçersiz veya yetkisiz admin token (VPS ADMIN_API_TOKEN ile aynı olmalı).";
-            } else if (msg === "admin_auth_not_configured" || msg === "http_503") {
-              err.textContent = "Sunucuda ADMIN_API_TOKEN tanımlı değil.";
-            } else {
-              err.textContent = msg ? "Giriş başarısız: " + msg : "Geçersiz veya yetkisiz admin token.";
-            }
-          }
-          return;
-        }
+        } catch (_e) {}
         if (sessionStorage.getItem(LOGIN_OK_KEY) !== "1") {
           adapter.clearAdminToken();
           try {

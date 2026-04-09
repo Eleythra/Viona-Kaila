@@ -7,6 +7,9 @@ function clientFacingErrorMessage(error, fallbackMsg) {
   if (error == null) return fallbackMsg;
   if (typeof error === "string" && error.trim()) return error.trim();
   const m = error.message;
+  if (m === "datastore_dns_unavailable") {
+    return "Sunucu veritabanına şu an bağlanılamıyor (DNS veya geçici ağ). Lütfen bir süre sonra tekrar deneyin. Sorun sürerse sunucuda DNS_SERVERS (ör. 8.8.8.8,1.1.1.1) tanımlanmalıdır.";
+  }
   if (typeof m === "string" && m.trim()) return m.trim();
   return fallbackMsg;
 }

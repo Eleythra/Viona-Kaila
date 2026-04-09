@@ -1,10 +1,7 @@
 /**
  * Genel API endpoint yapılandırması.
  *
- * Canlıda taban: js/viona-backend-url.js → `https://api.eleythra.com/api`. Vercel
- * rewrites bazen uygulanmaz (x-render-routing: no-server, /api 404); doğrudan Node daha güvenilir.
- * Tamamen elle: window.__VIONA_API_BASE__ bu scriptten önce.
- *
+ * Canlı Vercel: viona-api-resolve ile aynı kök /api (vercel.json → Render). Override: __VIONA_API_BASE__.
  * Admin panel veri eşlemesi (özet):
  * - Ana sayfa raporu: adminDashboardReportEndpoint → varsayılan son ~30 gün (tarih parametresi yoksa).
  * - Operasyon özetleri: adminRequestsEndpoint sayfalı GET (birleştirme admin/js/app.js).
@@ -22,6 +19,8 @@
   var base;
   if (typeof custom === "string" && custom.trim()) {
     base = custom.trim().replace(/\/+$/, "");
+  } else if (typeof window.vionaShouldUseRelativeApiBase === "function" && window.vionaShouldUseRelativeApiBase()) {
+    base = "/api";
   } else if (isLocalhost || isFile) {
     base = "http://127.0.0.1:3001/api";
   } else {
@@ -32,6 +31,12 @@
       base = "/api";
     }
   }
+
+  try {
+    if (typeof console !== "undefined" && console.info) {
+      console.info("[viona] API baseUrl:", base);
+    }
+  } catch (_e) {}
 
   window.VIONA_API_CONFIG = {
     baseUrl: base,

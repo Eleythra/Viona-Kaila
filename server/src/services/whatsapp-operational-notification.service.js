@@ -1,33 +1,38 @@
 /**
- * Operasyon kayıtları (arıza / istek / şikayet) Supabase’e yazıldıktan sonra tetiklenen
- * WhatsApp Cloud API template bildirim katmanı. Rezervasyon göndermez.
+ * Operasyon kayıtları (arıza / istek / şikayet / misafir bildirimi) Supabase’e yazıldıktan sonra tetiklenen
+ * WhatsApp Cloud API şablon bildirimi (Meta Graph: access token + Phone number ID + alıcı numaraları).
  *
- * İstek şablonu gövdesi: {{1}} ad, {{2}} oda, {{3}} talep grubu (form bölümü), {{4}} talep türü (satır + varsa zaman),
- * {{5}} adet veya «-», {{6}}-{{7}} tarih/saat ve açıklama.
+ * Meta’da onaylı şablon gövdeleri (gövde parametreleri sırası kodla uyumlu olmalı):
  *
- * Şablon adları: arıza/istek/şikâyet sabit; misafir bildirimi + geç çıkış için varsayılan
- * `viona_guest_relation_notification` (7 gövde parametresi: ad, oda, üst kategori, alt kategori, tarih, saat, açıklama).
- * Geç çıkış aynı şablonu kullanır; üst/alt kategori sabit metin, tarih-saat istenen çıkış.
- * Şablon adı önceliği: WHATSAPP_GUEST_RELATION_TEMPLATE_NAME → WHATSAPP_GUEST_NOTIFICATION_TEMPLATE → viona_guest_relation_notification.
- * Eski Manager adı: viona_guest_notification → env ile geçici bağlanabilir.
- * Env: WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID,
- * WHATSAPP_TECH_RECIPIENTS | WHATSAPP_HK_RECIPIENTS | WHATSAPP_FRONT_RECIPIENTS |
- * WHATSAPP_RECEPTION_RECIPIENTS | WHATSAPP_GUEST_RELATIONS_RECIPIENTS
- * (misafir bildirimi / geç çıkış: hepsi birleştirilir; en az biri dolu olmalı — genelde WHATSAPP_FRONT_RECIPIENTS)
+ * Misafir bildirimi: {{1}} ad, {{2}} oda, {{3}} kategori, {{4}} alt kategori, {{5}} tarih, {{6}} saat, {{7}} açıklama.
+ * Şikayet: {{1}}–{{6}} (ad, oda, şikayet kategorisi, tarih, saat, açıklama).
+ * İstek: {{1}}–{{8}} (ad, oda, talep kategorisi, talep türü, adet, tarih, saat, açıklama).
+ * Arıza: {{1}}–{{8}} (ad, oda, arıza kategorisi, lokasyon, aciliyet, tarih, saat, açıklama).
+ *
+ * Yönlendirme: arıza → WHATSAPP_TECH_RECIPIENTS | istek → WHATSAPP_HK_RECIPIENTS |
+ * şikayet + misafir bildirimi + geç çıkış → WHATSAPP_FRONT_RECIPIENTS (ön büro).
+ *
+ * Env: WHATSAPP_ACCESS_TOKEN (veya WHATSAPP_CLOUD_ACCESS_TOKEN), WHATSAPP_PHONE_NUMBER_ID,
+ * isteğe bağlı WHATSAPP_BUSINESS_ACCOUNT_ID (referans), WHATSAPP_TEMPLATE_* ile şablon adı override.
  */
 
-import { sendOperationalWhatsappGroupNotification } from "./whatsapp-group-operational-notification.service.js";
-import { coerceOperationalPayload, normalizeRequestCategoryKey } from "./operational-group-message-format.js";
-import {
-  getWhatsappGroupRegistryHealth,
-  resolveOperationalGroupForRecordType,
-} from "./whatsapp-group-registry.service.js";
+import { coerceOperationalPayload, normalizeRequestCategoryKey } from "./operational-template-format.js";
 import { isOperationalRecordType } from "./operational-notification-routing.service.js";
 
 const TEMPLATE_FAULT = "viona_issue_notification";
 const TEMPLATE_REQUEST = "viona_request_notification";
 const TEMPLATE_COMPLAINT = "viona_complaint_notification";
 const DEFAULT_TEMPLATE_GUEST_RELATION = "viona_guest_relation_notification";
+
+function resolveFaultTemplateName() {
+  return String(process.env.WHATSAPP_TEMPLATE_FAULT || "").trim() || TEMPLATE_FAULT;
+}
+function resolveRequestTemplateName() {
+  return String(process.env.WHATSAPP_TEMPLATE_REQUEST || "").trim() || TEMPLATE_REQUEST;
+}
+function resolveComplaintTemplateName() {
+  return String(process.env.WHATSAPP_TEMPLATE_COMPLAINT || "").trim() || TEMPLATE_COMPLAINT;
+}
 
 const PARAM_MAX = 900;
 
@@ -121,8 +126,8 @@ const WH_CATEGORY_LABELS = {
   },
 };
 
-/** Şablon {{3}}: talep grubu (web formlarındaki bölüm başlığı ile aynı anlam). */
-const REQUEST_GROUP_LABELS_TR = {
+/** Şablon {{3}}: form bölümü (web formlarındaki üst başlık; WhatsApp sohbet grubu değil). */
+const REQUEST_SECTION_LABELS_TR = {
   towel_extra: "Yastık, havlu, bornoz ve terlik",
   room_towel: "Yastık, havlu, bornoz ve terlik",
   bathrobe: "Yastık, havlu, bornoz ve terlik",
@@ -253,21 +258,6 @@ function normalizeGuestType(payload, intentFallback) {
   return raw || "unknown";
 }
 
-function mergeRecipientLists(...lists) {
-  const seen = new Set();
-  const out = [];
-  for (const list of lists) {
-    if (!Array.isArray(list)) continue;
-    for (const n of list) {
-      if (!seen.has(n)) {
-        seen.add(n);
-        out.push(n);
-      }
-    }
-  }
-  return out;
-}
-
 /**
  * Virgül / noktalı virgül / satır sonu ile ayrılmış numaralar; segment trim; API için E.164 rakamları.
  */
@@ -297,29 +287,15 @@ export function recipientsForGuestPayload(payload, intentFallback = "unknown") {
   const pt = String(payload?.type || "").toLowerCase();
   if (pt === "fault") return parseOperationalRecipients(process.env.WHATSAPP_TECH_RECIPIENTS || "");
   if (pt === "request") return parseOperationalRecipients(process.env.WHATSAPP_HK_RECIPIENTS || "");
-  if (pt === "complaint") return parseOperationalRecipients(process.env.WHATSAPP_FRONT_RECIPIENTS || "");
-  if (pt === "guest_notification" || pt === "late_checkout") {
-    const front = parseOperationalRecipients(process.env.WHATSAPP_FRONT_RECIPIENTS || "");
-    const reception = parseOperationalRecipients(process.env.WHATSAPP_RECEPTION_RECIPIENTS || "");
-    const gr = parseOperationalRecipients(process.env.WHATSAPP_GUEST_RELATIONS_RECIPIENTS || "");
-    const hk = parseOperationalRecipients(process.env.WHATSAPP_HK_RECIPIENTS || "");
-    // Önce ön büro (WHATSAPP_FRONT_RECIPIENTS), sonra resepsiyon / misafir ilişkileri / HK.
-    const merged = mergeRecipientLists(front, reception, gr, hk);
-    if (merged.length) return merged;
-    return [];
+  /* Şikayet + misafir bildirimi + geç çıkış: yalnızca ön büro numaraları */
+  if (pt === "complaint" || pt === "guest_notification" || pt === "late_checkout") {
+    return parseOperationalRecipients(process.env.WHATSAPP_FRONT_RECIPIENTS || "");
   }
   const t = normalizeGuestType(payload, intentFallback);
   if (t === "fault") return parseOperationalRecipients(process.env.WHATSAPP_TECH_RECIPIENTS || "");
   if (t === "request") return parseOperationalRecipients(process.env.WHATSAPP_HK_RECIPIENTS || "");
-  if (t === "complaint") return parseOperationalRecipients(process.env.WHATSAPP_FRONT_RECIPIENTS || "");
-  if (t === "guest_notification" || t === "late_checkout") {
-    const front = parseOperationalRecipients(process.env.WHATSAPP_FRONT_RECIPIENTS || "");
-    const reception = parseOperationalRecipients(process.env.WHATSAPP_RECEPTION_RECIPIENTS || "");
-    const gr = parseOperationalRecipients(process.env.WHATSAPP_GUEST_RELATIONS_RECIPIENTS || "");
-    const hk = parseOperationalRecipients(process.env.WHATSAPP_HK_RECIPIENTS || "");
-    const merged = mergeRecipientLists(front, reception, gr, hk);
-    if (merged.length) return merged;
-    return [];
+  if (t === "complaint" || t === "guest_notification" || t === "late_checkout") {
+    return parseOperationalRecipients(process.env.WHATSAPP_FRONT_RECIPIENTS || "");
   }
   return [];
 }
@@ -362,10 +338,10 @@ function requestItemLabelTr(category) {
   return WH_CATEGORY_LABELS.request[c] ? clip(dash(WH_CATEGORY_LABELS.request[c])) : "-";
 }
 
-function requestGroupLabelTr(category) {
+function requestSectionLabelTr(category) {
   const c = normalizeRequestCategoryKey(category);
   if (!c) return "-";
-  const g = REQUEST_GROUP_LABELS_TR[c];
+  const g = REQUEST_SECTION_LABELS_TR[c];
   if (g) return clip(dash(g));
   return categoryLabel("request", c);
 }
@@ -411,7 +387,7 @@ function buildRequestBodyParams(payload, now) {
   const paramCount = Number.parseInt(rawN, 10);
   /** Meta’da eski 4 değişkenli şablon: {{1}} ad, {{2}} oda, {{3}} kategori (tek satır Türkçe), {{4}} açıklama — 8 parametre gönderilince sıra kayıp ham anahtar düşebilir. */
   if (paramCount === 4) {
-    const g = requestGroupLabelTr(cat);
+    const g = requestSectionLabelTr(cat);
     const t = buildRequestTypeLineTr(cat, details);
     const parts = [g, t].filter(function (x) {
       return x && x !== "-" && x !== "—";
@@ -427,7 +403,7 @@ function buildRequestBodyParams(payload, now) {
   return [
     clip(dash(payload.name)),
     clip(dash(payload.room)),
-    requestGroupLabelTr(cat),
+    requestSectionLabelTr(cat),
     buildRequestTypeLineTr(cat, details),
     buildRequestQuantity(cat, details),
     dash(formatDateDDMMYYYY(now)),
@@ -545,24 +521,28 @@ export function buildWhatsappGraphMessagesUrl() {
   return `https://graph.facebook.com/${graphVer}/${phoneNumberId}/messages`;
 }
 
-/** /api/health: anahtar sızdırmaz; misafir bildirimi + geç çıkış şablonu alıcı sayısı. */
+/** /api/health: anahtar sızdırmaz; ön büro / HK / teknik alıcı sayıları. */
 export function getWhatsappOperationalHealthSummary() {
   const { token } = resolveWhatsappAccessToken();
   const phoneId = resolveWhatsappPhoneNumberId();
-  const front = parseOperationalRecipients(process.env.WHATSAPP_FRONT_RECIPIENTS || "");
-  const reception = parseOperationalRecipients(process.env.WHATSAPP_RECEPTION_RECIPIENTS || "");
-  const gr = parseOperationalRecipients(process.env.WHATSAPP_GUEST_RELATIONS_RECIPIENTS || "");
-  const hk = parseOperationalRecipients(process.env.WHATSAPP_HK_RECIPIENTS || "");
-  const mergedGuest = mergeRecipientLists(front, reception, gr, hk);
-  const mode = String(process.env.WHATSAPP_OPERATIONAL_DELIVERY_MODE || "group").trim().toLowerCase();
-  const groupRegistry = getWhatsappGroupRegistryHealth();
+  const techN = parseOperationalRecipients(process.env.WHATSAPP_TECH_RECIPIENTS || "").length;
+  const hkN = parseOperationalRecipients(process.env.WHATSAPP_HK_RECIPIENTS || "").length;
+  const frontN = parseOperationalRecipients(process.env.WHATSAPP_FRONT_RECIPIENTS || "").length;
   return {
-    mode,
+    mode: "cloud",
     accessTokenConfigured: Boolean(token),
     phoneNumberIdConfigured: Boolean(phoneId),
+    whatsappBusinessAccountIdConfigured: Boolean(
+      String(process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || "").trim(),
+    ),
     cloudApiSendReady: Boolean(token && phoneId),
-    guestRelationRecipientCount: mergedGuest.length,
-    groupRegistry,
+    cloudRecipientCounts: {
+      tech: techN,
+      hk: hkN,
+      front: frontN,
+    },
+    /** Şikayet + misafir bildirimi + geç çıkış → WHATSAPP_FRONT_RECIPIENTS */
+    guestRelationRecipientCount: frontN,
   };
 }
 
@@ -616,13 +596,10 @@ function parseMetaError(raw) {
 export async function sendOperationalWhatsappNotification(payload, intentFallback = "unknown", options = {}) {
   const recordType = normalizeGuestType(payload, intentFallback);
   payload = coerceOperationalPayload(recordType, payload);
-  const deliveryMode = String(process.env.WHATSAPP_OPERATIONAL_DELIVERY_MODE || "group")
-    .trim()
-    .toLowerCase();
   const { token, envKey: tokenEnvKey } = resolveWhatsappAccessToken();
   const phoneNumberId = resolveWhatsappPhoneNumberId();
 
-  if (deliveryMode === "cloud" && (!token || !phoneNumberId)) {
+  if (!token || !phoneNumberId) {
     console.warn(
       "[whatsapp_ops] notify_skipped reason=missing_credentials record_type=%s detail=set_WHATSAPP_ACCESS_TOKEN_or_WHATSAPP_CLOUD_ACCESS_TOKEN_and_WHATSAPP_PHONE_NUMBER_ID",
       recordType,
@@ -636,21 +613,19 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
   }
 
   let templateName = "";
-  if (recordType === "fault") templateName = TEMPLATE_FAULT;
-  else if (recordType === "request") templateName = TEMPLATE_REQUEST;
-  else if (recordType === "complaint") templateName = TEMPLATE_COMPLAINT;
+  if (recordType === "fault") templateName = resolveFaultTemplateName();
+  else if (recordType === "request") templateName = resolveRequestTemplateName();
+  else if (recordType === "complaint") templateName = resolveComplaintTemplateName();
   else templateName = resolveGuestRelationTemplateName();
 
   const recipients = recipientsForGuestPayload(payload, intentFallback);
-  if (deliveryMode === "cloud" && !recipients.length) {
+  if (!recipients.length) {
     const listName =
       recordType === "fault"
         ? "WHATSAPP_TECH_RECIPIENTS"
         : recordType === "request"
           ? "WHATSAPP_HK_RECIPIENTS"
-          : recordType === "complaint"
-            ? "WHATSAPP_FRONT_RECIPIENTS"
-            : "WHATSAPP_FRONT_RECIPIENTS veya RECEPTION / GUEST_RELATIONS / HK (en az biri dolu olmalı)";
+          : "WHATSAPP_FRONT_RECIPIENTS";
     console.warn(
       "[whatsapp_ops] notify_skipped reason=empty_recipient_list record_type=%s template=%s env_list=%s (virgülle numara ekleyin)",
       recordType,
@@ -685,47 +660,6 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
   );
 
   const bodyParameters = bodyParams.map((text) => ({ type: "text", text: dash(text) }));
-
-  if (deliveryMode === "group") {
-    const groupCfg = resolveOperationalGroupForRecordType(recordType);
-    if (!groupCfg?.id) {
-      console.warn(
-        "[whatsapp_ops] notify_skipped reason=missing_group_id record_type=%s expected_group_key=%s",
-        recordType,
-        groupCfg?.key || "-",
-      );
-      return { ok: false, skipped: true, reason: "missing_group_id", channel: "group", recordType };
-    }
-    try {
-      const recordId = String(options?.recordId ?? "").trim();
-      const dedupeKey = options?.resend
-        ? `${recordType}:id:${recordId || "x"}:resend:${Date.now()}`
-        : recordId
-          ? `${recordType}:id:${recordId}`
-          : `${recordType}:${String(payload?.room || "-")}:${String(payload?.submittedAt || "-")}`;
-      const res = await sendOperationalWhatsappGroupNotification({
-        recordType,
-        payload,
-        bodyParams,
-        dedupeKey,
-      });
-      console.info(
-        "[whatsapp_ops] group_send_ok record_type=%s group_key=%s group_id=%s duplicate=%s",
-        recordType,
-        res.groupKey || "-",
-        res.groupId || "-",
-        String(Boolean(res.duplicate)),
-      );
-      return res;
-    } catch (err) {
-      console.warn(
-        "[whatsapp_ops] group_send_failed record_type=%s error=%s",
-        recordType,
-        err?.message || err,
-      );
-      return { ok: false, channel: "group", reason: "send_failed", error: String(err?.message || err || "") };
-    }
-  }
 
   for (const to of recipients) {
     let res;

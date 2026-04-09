@@ -1,4 +1,4 @@
-import { getSupabase } from "../../lib/supabase.js";
+import { getSupabase, throwIfSupabaseDatastoreDnsError, withSupabaseFetchGuard } from "../../lib/supabase.js";
 import { isValidHotelRoomNumber } from "../../lib/hotel-room-numbers.js";
 import {
   validateGuestFullName,
@@ -215,7 +215,27 @@ function normalizePayload(payload) {
     source: cleanText(payload?.source || "viona_web", 64) || "viona_web",
     submittedAt: new Date().toISOString(),
   };
+  migrateGuestNotificationLateCheckoutToDedicatedType(base);
   return base;
+}
+
+/**
+ * Sohbet / istemci bazen `type: guest_notification` + `category: late_checkout` gönderir.
+ * Tarih, saat ve açıklama tam ise `guest_late_checkouts` tablosuna yazılmak üzere `type: late_checkout` yapılır.
+ */
+function migrateGuestNotificationLateCheckoutToDedicatedType(n) {
+  if (n.type !== "guest_notification") return;
+  if (String(n.category || "").trim().toLowerCase() !== "late_checkout") return;
+  const d = n.details && typeof n.details === "object" ? n.details : {};
+  const cd = cleanText(n.checkoutDate || d.checkoutDate, 32);
+  const ct = normalizeCheckoutTime(n.checkoutTime || d.checkoutTime);
+  if (!isIsoDateYmd(cd) || !ct) return;
+  const desc = String(n.description || "").trim();
+  if (!desc) return;
+  n.type = LATE_CHECKOUT_TYPE;
+  n.checkoutDate = cd;
+  n.checkoutTime = ct;
+  n.details = { ...d, checkoutDate: cd, checkoutTime: ct };
 }
 
 function toPositiveInt(value) {
@@ -518,6 +538,7 @@ function validate(normalized) {
 
 function throwSupabaseInsertError(table, error) {
   if (!error) return;
+  throwIfSupabaseDatastoreDnsError(error);
   const parts = [error.message, error.details, error.hint].filter(Boolean).map((x) => String(x).trim());
   const msg = parts.length ? parts.join(" — ") : "database_insert_failed";
   const err = new Error(msg);
@@ -560,7 +581,9 @@ async function insertSimple(table, normalized) {
     row.category = normalized.category || null;
     row.details = normalized.details || {};
   }
-  let { data, error } = await getSupabase().from(table).insert(row).select("id").single();
+  let { data, error } = await withSupabaseFetchGuard(() =>
+    getSupabase().from(table).insert(row).select("id").single(),
+  );
   if (
     error &&
     (table === "guest_requests" ||
@@ -571,7 +594,9 @@ async function insertSimple(table, normalized) {
   ) {
     delete row.category;
     delete row.details;
-    const retry = await getSupabase().from(table).insert(row).select("id").single();
+    const retry = await withSupabaseFetchGuard(() =>
+      getSupabase().from(table).insert(row).select("id").single(),
+    );
     data = retry.data;
     error = retry.error;
   }
@@ -609,7 +634,9 @@ async function insertReservation(normalized) {
     status: "new",
     raw_payload: normalized,
   };
-  let { data, error } = await getSupabase().from("guest_reservations").insert(row).select("id").single();
+  let { data, error } = await withSupabaseFetchGuard(() =>
+    getSupabase().from("guest_reservations").insert(row).select("id").single(),
+  );
   if (
     error &&
     /column .*language|column .*service_code|column .*service_label|column .*reservation_date|column .*reservation_time|column .*guest_count|column .*updated_at/i.test(
@@ -623,7 +650,9 @@ async function insertReservation(normalized) {
     delete row.reservation_time;
     delete row.guest_count;
     delete row.updated_at;
-    const retry = await getSupabase().from("guest_reservations").insert(row).select("id").single();
+    const retry = await withSupabaseFetchGuard(() =>
+      getSupabase().from("guest_reservations").insert(row).select("id").single(),
+    );
     data = retry.data;
     error = retry.error;
   }
@@ -645,7 +674,9 @@ async function insertLateCheckout(normalized) {
     status: "new",
     raw_payload: normalized,
   };
-  const { data, error } = await getSupabase().from("guest_late_checkouts").insert(row).select("id").single();
+  const { data, error } = await withSupabaseFetchGuard(() =>
+    getSupabase().from("guest_late_checkouts").insert(row).select("id").single(),
+  );
   if (error) throwSupabaseInsertError("guest_late_checkouts", error);
   return data.id;
 }
@@ -697,11 +728,9 @@ function scheduleOperationalWhatsappAfterInsert(table, normalized, recordId) {
 
 async function updateWhatsappDeliveryStatus(table, id, result) {
   try {
-    const { data: existing } = await getSupabase()
-      .from(table)
-      .select("raw_payload")
-      .eq("id", id)
-      .maybeSingle();
+    const { data: existing } = await withSupabaseFetchGuard(() =>
+      getSupabase().from(table).select("raw_payload").eq("id", id).maybeSingle(),
+    );
     const mergedPayload = {
       ...(existing?.raw_payload && typeof existing.raw_payload === "object" ? existing.raw_payload : {}),
       whatsapp_delivery: {
@@ -715,12 +744,18 @@ async function updateWhatsappDeliveryStatus(table, id, result) {
         sentAt: new Date().toISOString(),
       },
     };
-    await getSupabase().from(table).update({ raw_payload: mergedPayload }).eq("id", id);
+    await withSupabaseFetchGuard(() =>
+      getSupabase().from(table).update({ raw_payload: mergedPayload }).eq("id", id),
+    );
   } catch (err) {
     console.warn("whatsapp_delivery_status_update_failed table=%s id=%s error=%s", table, id, err?.message || err);
   }
 }
 
+/**
+ * Web + sohbet (`source: viona_chat`) aynı doğrulama ve WhatsApp yönlendirmesini kullanır:
+ * arıza → teknik, istek → HK, şikayet / misafir bildirimi / geç çıkış → ön büro (`WHATSAPP_*_RECIPIENTS`).
+ */
 export async function createGuestRequest(payload) {
   const normalized = normalizePayload(payload);
   validate(normalized);

@@ -7,9 +7,15 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 stop_all() {
   for p in 3001 8010 8080; do
     fuser -k "${p}/tcp" 2>/dev/null || true
+    sudo -n fuser -k "${p}/tcp" 2>/dev/null || true
   done
-  pkill -9 -f 'session-viona-operational' 2>/dev/null || true
-  echo "Durduruldu: 3001, 8010, 8080 + WhatsApp session Chromium (varsa)."
+  # fuser yetkisiz kalırsa: dinleyen süreçleri kapat
+  for p in 3001 8010 8080; do
+    for pid in $(lsof -t -iTCP:"$p" -sTCP:LISTEN 2>/dev/null); do
+      kill -9 "${pid}" 2>/dev/null || true
+    done
+  done
+  echo "Durduruldu: 3001, 8010, 8080."
 }
 
 start_all() {
@@ -25,7 +31,19 @@ start_all() {
   cd "$ROOT"
   python3 -m http.server 8080 --bind 127.0.0.1 &
   echo ""
+  sleep 1
+  if curl -sf --connect-timeout 3 "http://127.0.0.1:3001/api/health" >/dev/null 2>&1; then
+    echo "Node API (3001) health: OK"
+  else
+    echo "UYARI: 3001 üzerinde health yanıt yok veya yeni Node başlamadı."
+    echo "  Eski süreç portu tutuyor olabilir. Çözüm (bir kez, kendi terminalinde):"
+    echo "    sudo fuser -k 3001/tcp"
+    echo "  Sonra: cd \"${ROOT}/server\" && node src/index.js"
+    echo "  Teşhis: ./scripts/local-dev-check.sh"
+  fi
+  echo ""
   echo "Arka planda başlatıldı. Kontrol:"
+  echo "  ./scripts/local-dev-check.sh"
   echo "  curl -s http://127.0.0.1:3001/api/health | head -c 400"
   echo "  Tarayıcı: http://127.0.0.1:8080/  ve  http://127.0.0.1:8080/admin/"
 }

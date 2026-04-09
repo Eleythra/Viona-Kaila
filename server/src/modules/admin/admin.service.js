@@ -1,4 +1,15 @@
-import { getSupabase } from "../../lib/supabase.js";
+import { getSupabase, throwIfSupabaseDatastoreDnsError, withSupabaseFetchGuard } from "../../lib/supabase.js";
+
+/** Geçici DNS (EAI_AGAIN) → datastore_dns_unavailable (503). */
+function sb(fn) {
+  return withSupabaseFetchGuard(fn);
+}
+
+function rethrowSupabaseError(error) {
+  if (!error) return;
+  throwIfSupabaseDatastoreDnsError(error);
+  throw error;
+}
 import { getEnv } from "../../config/env.js";
 import { buildVionaReportData } from "./reporting/report-engine.js";
 import { renderVionaPdfBuffer } from "./reporting/pdf.service.js";
@@ -131,8 +142,8 @@ async function fetchAllChatObservationRowsForSummary(filterQuery) {
     let qb = getSupabase().from("chat_observations").select(cols);
     qb = applyChatObservationListFilters(qb, filterQuery);
     qb = qb.order("created_at", { ascending: true });
-    const { data, error } = await qb.range(offset, offset + OBS_BATCH - 1);
-    if (error) throw error;
+    const { data, error } = await sb(() => qb.range(offset, offset + OBS_BATCH - 1));
+    if (error) rethrowSupabaseError(error);
     const chunk = data || [];
     all.push(...chunk);
     if (chunk.length < OBS_BATCH) break;
@@ -150,8 +161,11 @@ async function fetchAllRowsBatched(table, selectCols, dateQuery, dateColumn = "c
     let q = getSupabase().from(table).select(selectCols);
     q = applyDateFilters(q, dateQuery, dateColumn);
     q = q.order(dateColumn, { ascending: true });
-    const { data, error } = await q.range(offset, offset + OBS_BATCH - 1);
-    if (error) return { error, data: null, truncated: false };
+    const { data, error } = await sb(() => q.range(offset, offset + OBS_BATCH - 1));
+    if (error) {
+      throwIfSupabaseDatastoreDnsError(error);
+      return { error, data: null, truncated: false };
+    }
     const chunk = data || [];
     all.push(...chunk);
     if (chunk.length < OBS_BATCH) break;
@@ -186,8 +200,8 @@ export async function listAdminBucket(type, query = {}) {
     if (query.room_number) qb = qb.eq("room_number", String(query.room_number));
     if (query.reservation_date) qb = qb.eq("reservation_date", String(query.reservation_date));
   }
-  const { data, error, count } = await qb.range(paging.from, paging.to);
-  if (error) throw error;
+  const { data, error, count } = await sb(() => qb.range(paging.from, paging.to));
+  if (error) rethrowSupabaseError(error);
 
   return {
     items: data || [],
@@ -205,8 +219,8 @@ export async function listSurveySubmissions(query = {}) {
   let qb = getSupabase().from("survey_submissions").select("*", { count: "exact" }).order("submitted_at", { ascending: false });
   qb = applyDateFilters(qb, query, "submitted_at");
   if (query.language) qb = qb.eq("language", String(query.language));
-  const { data, error, count } = await qb.range(paging.from, paging.to);
-  if (error) throw error;
+  const { data, error, count } = await sb(() => qb.range(paging.from, paging.to));
+  if (error) rethrowSupabaseError(error);
   return {
     items: data || [],
     pagination: {
@@ -400,12 +414,14 @@ export async function updateAdminItemStatus(type, id, status) {
   const normalized = normalizeIncomingAdminStatus(status);
   if (!VALID_STATUS.has(normalized)) throw new Error("invalid status");
   const table = tableForType(type);
-  const { data, error } = await getSupabase()
-    .from(table)
-    .update({ status: normalized })
-    .eq("id", idStr)
-    .select("id,status")
-    .maybeSingle();
+  const { data, error } = await sb(() =>
+    getSupabase()
+      .from(table)
+      .update({ status: normalized })
+      .eq("id", idStr)
+      .select("id,status")
+      .maybeSingle(),
+  );
   if (error) throw new Error(formatStatusUpdateFailureMessage(type, normalized, error));
   if (!data) {
     const hint =
@@ -421,8 +437,8 @@ export async function deleteAdminItem(type, id) {
   const idStr = String(id ?? "").trim();
   if (!idStr) throw new Error("id is required");
   const table = tableForType(type);
-  const { error } = await getSupabase().from(table).delete().eq("id", idStr);
-  if (error) throw error;
+  const { error } = await sb(() => getSupabase().from(table).delete().eq("id", idStr));
+  if (error) rethrowSupabaseError(error);
   return { id };
 }
 
@@ -431,8 +447,8 @@ export async function resendWhatsappForAdminItem(type, id) {
   if (!idStr) throw new Error("id is required");
   const table = tableForType(type);
   if (table === "guest_reservations") throw new Error("reservation_not_supported_for_whatsapp");
-  const { data, error } = await getSupabase().from(table).select("*").eq("id", idStr).maybeSingle();
-  if (error) throw error;
+  const { data, error } = await sb(() => getSupabase().from(table).select("*").eq("id", idStr).maybeSingle());
+  if (error) rethrowSupabaseError(error);
   if (!data) throw new Error("record_not_found");
   const payload = data?.raw_payload && typeof data.raw_payload === "object" ? data.raw_payload : null;
   if (!payload) throw new Error("raw_payload_missing");
@@ -453,7 +469,7 @@ export async function resendWhatsappForAdminItem(type, id) {
       manual: true,
     },
   };
-  await getSupabase().from(table).update({ raw_payload: mergedPayload }).eq("id", idStr);
+  await sb(() => getSupabase().from(table).update({ raw_payload: mergedPayload }).eq("id", idStr));
   return { id: idStr, result };
 }
 
@@ -616,8 +632,8 @@ export async function listChatObservations(query = {}) {
   qb = applyChatObservationListFilters(qb, query);
   qb = qb.order("created_at", { ascending: false });
 
-  const { data, error, count } = await qb.range(paging.from, paging.to);
-  if (error) throw error;
+  const { data, error, count } = await sb(() => qb.range(paging.from, paging.to));
+  if (error) rethrowSupabaseError(error);
   return {
     items: data || [],
     pagination: {
@@ -637,20 +653,17 @@ export async function updateChatObservationReview(id, payload = {}) {
     reviewed_by: payload.reviewed_by == null ? null : String(payload.reviewed_by),
     reviewed_at: new Date().toISOString(),
   };
-  const { data, error } = await getSupabase()
-    .from("chat_observations")
-    .update(patch)
-    .eq("id", id)
-    .select("*")
-    .single();
-  if (error) throw error;
+  const { data, error } = await sb(() =>
+    getSupabase().from("chat_observations").update(patch).eq("id", id).select("*").single(),
+  );
+  if (error) rethrowSupabaseError(error);
   return data;
 }
 
 export async function deleteChatObservation(id) {
   if (!id) throw new Error("id is required");
-  const { error } = await getSupabase().from("chat_observations").delete().eq("id", id);
-  if (error) throw error;
+  const { error } = await sb(() => getSupabase().from("chat_observations").delete().eq("id", id));
+  if (error) rethrowSupabaseError(error);
   return { id };
 }
 
@@ -677,8 +690,8 @@ export async function deleteChatObservationsBulk(ids) {
   if (!unique.length) {
     return { deleted: 0, ids: [] };
   }
-  const { error } = await getSupabase().from("chat_observations").delete().in("id", unique);
-  if (error) throw error;
+  const { error } = await sb(() => getSupabase().from("chat_observations").delete().in("id", unique));
+  if (error) rethrowSupabaseError(error);
   return { deleted: unique.length, ids: unique };
 }
 
@@ -944,8 +957,8 @@ function buildChatObservationCsvPreamble(query, columns, dataRowCount) {
 export async function exportChatObservations(query = {}, format = "csv") {
   let qb = getSupabase().from("chat_observations").select("*").order("created_at", { ascending: false });
   qb = applyChatObservationListFilters(qb, query);
-  const { data, error } = await qb.limit(5000);
-  if (error) throw error;
+  const { data, error } = await sb(() => qb.limit(5000));
+  if (error) rethrowSupabaseError(error);
   const rows = data || [];
   const includeRawPayload = String(query.include_raw_payload || "false") === "true";
   const mapped = rows.map((row) => mapObservationRow(row, includeRawPayload));

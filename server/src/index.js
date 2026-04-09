@@ -8,19 +8,13 @@ import guestRequestsRouter from "./modules/guest-requests/guest-requests.router.
 import surveysRouter from "./modules/surveys/surveys.router.js";
 import adminRouter from "./modules/admin/admin.router.js";
 import { createSpeechRouter, createSttRawMiddleware, handleStt } from "./modules/speech/speech.router.js";
-import { getSupabase, isSupabaseConfigured } from "./lib/supabase.js";
+import { getSupabase, isSupabaseConfigured, withSupabaseFetchGuard } from "./lib/supabase.js";
 import { createGuestRequest } from "./modules/guest-requests/guest-requests.service.js";
 import {
   buildWhatsappGraphMessagesUrl,
   getWhatsappOperationalHealthSummary,
   resolveWhatsappAccessToken,
 } from "./services/whatsapp-operational-notification.service.js";
-import {
-  ensureWhatsappGroupBotStarted,
-  getWhatsappGroupBotState,
-  shutdownWhatsappGroupBot,
-} from "./services/whatsapp-group-bot.service.js";
-
 const env = getEnv();
 const app = express();
 
@@ -155,6 +149,45 @@ function guessMultiIntent(message = "") {
   return /\s(ama|ayrıca|ayrica|fakat|but|also)\s/.test(t);
 }
 
+function normalizeOrigin(value = "") {
+  const s = String(value || "").trim().replace(/\/+$/, "");
+  if (!s) return "";
+  return s.toLowerCase();
+}
+
+/** Ortamdan gelen origin’ler + yerel/statik test için sabitler (birleşim).
+ * CORS_ALLOWED_ORIGINS dolu olsa bile önceden sadece boşken localhost ekleniyordu;
+ * bu yüzden .env’de yalnızca üretim domain’leri varken lokal 5500 reddediliyordu. */
+const corsAllowlist = new Set(
+  (env.corsAllowedOrigins || []).map((x) => normalizeOrigin(x)).filter(Boolean),
+);
+[
+  "https://viona-kaila.onrender.com",
+  "https://viona-node-api.onrender.com",
+  /** Vercel / özel alan: doğrudan Render’a istek (proxy dışı veya eski istemci) */
+  "https://viona.eleythra.com",
+  "https://www.viona.eleythra.com",
+  "https://viona-admin.eleythra.com",
+  "https://www.viona-admin.eleythra.com",
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://localhost:5500",
+  "http://127.0.0.1:5500",
+  "http://127.0.0.1:3000",
+  /** Yerel statik sunucu: python -m http.server 8080 (Viona + /admin/) */
+  "http://localhost:8080",
+  "http://127.0.0.1:8080",
+]
+  .map(normalizeOrigin)
+  .forEach((x) => corsAllowlist.add(x));
+
+function isAllowedOrigin(origin = "") {
+  const normalized = normalizeOrigin(origin);
+  if (!normalized) return false;
+  if (corsAllowlist.has(normalized)) return true;
+  return false;
+}
+
 /** Supabase chat_observations.chat_obs_response_type_chk */
 const CHAT_OBS_RESPONSE_TYPES = new Set(["answer", "redirect", "inform", "fallback"]);
 /** Supabase chat_observations.chat_obs_layer_used_chk */
@@ -233,7 +266,7 @@ async function writeChatObservation({
         response,
       },
     };
-    await getSupabase().from("chat_observations").insert(row);
+    await withSupabaseFetchGuard(() => getSupabase().from("chat_observations").insert(row));
   } catch (err) {
     console.warn("chat_observation_write_failed error=%s", err?.message || err);
   }
@@ -276,11 +309,19 @@ app.use(
   }),
 );
 
-/**
- * CORS: `cors` paketi varsayılanı — tüm kökenlere izin (origin: true).
- * Önceki sıkı liste + Vercel/proxy kombinasyonunda tarayıcı hâlâ cors_not_allowed görüyordu; burada özelleştirme yok.
- */
-app.use(cors());
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Server-to-server / curl / health-check requests may have no Origin.
+      if (!origin) return callback(null, true);
+      if (isAllowedOrigin(origin)) return callback(null, true);
+      return callback(new Error("cors_not_allowed"));
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Admin-Token"],
+    credentials: false,
+  }),
+);
 
 app.use(
   "/api",
@@ -314,7 +355,7 @@ app.get("/", (_req, res) => {
 <h1>Viona Node API</h1>
 <p>Bu süreç yalnızca REST API sunar; misafir arayüzü ayrı (statik site / domain).</p>
 <p><strong>Test:</strong> <a href="/api/health?pretty=1">/api/health?pretty=1</a> (tarayıcıda okunaklı) — ham JSON: <a href="/api/health">/api/health</a></p>
-<p>WhatsApp grup listesi admin token ile (curl veya Postman): <code>GET /api/admin/whatsapp-groups/discovery</code></p>
+<p>Operasyon WhatsApp (Cloud API): <code>WHATSAPP_ACCESS_TOKEN</code>, <code>WHATSAPP_PHONE_NUMBER_ID</code>, <code>WHATSAPP_TECH_RECIPIENTS</code> / <code>WHATSAPP_HK_RECIPIENTS</code> / <code>WHATSAPP_FRONT_RECIPIENTS</code> — ayrıntı <code>server/.env.example</code>.</p>
 </body></html>`,
     );
 });
@@ -338,11 +379,8 @@ app.get("/api/health", (req, res) => {
     azureSpeechConfigured: Boolean(String(env.azureSpeechKey || "").trim()),
     /** Geç çıkış “bugün” eşiği için kullanılan IANA dilimi (varsayılan Europe/Istanbul). */
     hotelTimezone: hotelTz || "Europe/Istanbul",
-    /** WhatsApp operasyon: token/phone id ve misafir ilişkileri alıcı adedi (numara listelenmez). */
+    /** WhatsApp operasyon (Cloud): token/phone id ve alıcı sayıları (numara listelenmez). */
     whatsappOperational: getWhatsappOperationalHealthSummary(),
-    whatsappGroupBot: getWhatsappGroupBotState(),
-    /** Teşhis: canlıda cors_not_allowed görüyorsanız bu satır open değilse eski kod çalışıyordur. */
-    corsPolicy: "open",
   };
   const pretty =
     String(req.query?.pretty || "") === "1" ||
@@ -661,23 +699,13 @@ httpServer.on("error", (err) => {
   process.exit(1);
 });
 
-ensureWhatsappGroupBotStarted().catch((err) => {
-  console.error("whatsapp_group_bot_boot_failed error=%s", err?.message || err);
-});
-
 let shuttingDown = false;
 function gracefulShutdown(signal) {
   if (shuttingDown) return;
   shuttingDown = true;
-  console.info(
-    "[sunucu] %s — HTTP kapatılıyor, WhatsApp/Chromium serbest bırakılıyor (yeniden başlatmada kilit kalmasın)",
-    signal,
-  );
+  console.info("[sunucu] %s — HTTP kapatılıyor", signal);
   httpServer.close(() => {
-    void (async () => {
-      await shutdownWhatsappGroupBot();
-      process.exit(0);
-    })();
+    process.exit(0);
   });
   setTimeout(() => {
     console.warn("[sunucu] graceful timeout — process.exit(1)");

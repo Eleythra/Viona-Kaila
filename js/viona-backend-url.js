@@ -1,14 +1,16 @@
 /**
- * Canlı Node API (Hetzner): misafir formları, admin proxy, WhatsApp operasyon tetikleri.
+ * Canlı API tek adres: Render’daki Node (Express). Tarayıcıdan tüm /api buraya gider;
+ * Node /api/chat isteğini sunucu içinden Python asistana iletir (CORS tek yerde).
  *
- * Üretim: `https://api.eleythra.com/api` — DNS A kaydı VPS’e; sunucuda HTTPS (443) → Node :3001.
+ * Render’da bu Web Service için zorunlu ortam değişkenleri:
+ *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ASSISTANT_CHAT_ENDPOINT (Python /api/chat tam URL)
  *
- * Vercel’de aynı kökten `/api` kullanıyorsanız `vercel.json` bu adresi prox’lar; isterseniz burayı `""`
- * bırakıp yalnızca same-origin `/api` de kullanılabilir.
- *
- * Python sohbet asistanı Render’da kalır; bu dosya onu değiştirmez (`ASSISTANT_CHAT_ENDPOINT` sunucu .env).
+ * Sağlık kontrolü yalnızca bu Node servisinde: https://BU-HOST/api/health
+ *   (Python/asistan URL’si değil; örn. viona-kaila…/api/health farklı uygulama dönebilir.)
+ * JSON’da hasSupabase, adminAuthConfigured, whatsappOperational (Cloud API; grup botu yok) kontrol edilir.
+ * Servis adın farklıysa yalnızca aşağıdaki satırı güncelle.
  */
 (function () {
   "use strict";
-  window.__VIONA_NODE_RENDER_API__ = "https://api.eleythra.com/api";
+  window.__VIONA_NODE_RENDER_API__ = "https://viona-node-api.onrender.com/api";
 })();

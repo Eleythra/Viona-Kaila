@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import dns from "node:dns";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,13 +17,15 @@ let envBootstrap = {
 
 function applyParsedToProcessEnv(parsed) {
   for (const [key, value] of Object.entries(parsed)) {
+    /* Shell / platform ortamı önce gelir; `.env` yalnızca boş anahtarları doldurur (örn. PORT=3002 ile geçici port). */
+    if (Object.prototype.hasOwnProperty.call(process.env, key)) continue;
     process.env[key] = String(value);
   }
 }
 
 /**
  * Önce dosyayı UTF-8 okuyup `dotenv.parse` ile `process.env`’e yazıyoruz (BOM / satır sonu edge-case).
- * Ardından `dotenv.config` ile tekrarlı yükleme (override).
+ * Ardından `dotenv.config` (override yok — mevcut ortam kazanır).
  */
 function loadServerDotenv() {
   const candidates = [
@@ -38,7 +41,7 @@ function loadServerDotenv() {
       if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
       const parsed = dotenv.parse(text);
       applyParsedToProcessEnv(parsed);
-      dotenv.config({ path: resolved, override: true });
+      dotenv.config({ path: resolved, override: false });
       envBootstrap = {
         loadedPath: resolved,
         parsedKeyCount: Object.keys(parsed).length,
@@ -59,19 +62,48 @@ function loadServerDotenv() {
 
 loadServerDotenv();
 
+/**
+ * Supabase vb. için `getaddrinfo EAI_AGAIN` (geçici DNS) sık görülür.
+ * ipv4first + isteğe bağlı genel çözümleyiciler (DNS_SERVERS) ile azaltılır.
+ */
+function applyNodeDnsFromEnv() {
+  try {
+    dns.setDefaultResultOrder("ipv4first");
+  } catch {
+    /* çok eski Node */
+  }
+  const raw = String(process.env.DNS_SERVERS || "").trim();
+  if (!raw) return;
+  const servers = raw
+    .split(",")
+    .map((s) => String(s || "").trim())
+    .filter(Boolean);
+  if (!servers.length) return;
+  try {
+    dns.setServers(servers);
+    console.info("[dns] DNS_SERVERS aktif (%d sunucu)", servers.length);
+  } catch (err) {
+    console.warn("[dns] DNS_SERVERS geçersiz, yok sayılıyor: %s", String(err?.message || err));
+  }
+}
+
+applyNodeDnsFromEnv();
+
 /** `/api/health` teşhisi: tam yol yerine sadece dosya adı + sayılar. */
 export function getEnvBootstrapDiagnostics() {
   const p = envBootstrap.loadedPath;
   const base = p ? path.basename(p) : "";
+  const dnsCustom = String(process.env.DNS_SERVERS || "").trim();
   return {
     serverEnvLoaded: Boolean(p),
     serverEnvFile: base || null,
     parsedKeyCount: envBootstrap.parsedKeyCount,
     loadError: envBootstrap.error || null,
     cwd: process.cwd(),
-    whatsappGroupBotInProcessEnv:
-      process.env.WHATSAPP_GROUP_BOT_ENABLED !== undefined &&
-      String(process.env.WHATSAPP_GROUP_BOT_ENABLED).trim() !== "",
+    dnsIpv4First: true,
+    dnsCustomResolverCount: dnsCustom
+      ? dnsCustom.split(",").filter((x) => String(x || "").trim()).length
+      : 0,
   };
 }
 
@@ -97,6 +129,15 @@ function optionalInt(name, fallback) {
   const n = Number(raw);
   if (!Number.isFinite(n) || n <= 0) return fallback;
   return Math.floor(n);
+}
+
+function optionalCsv(name, fallback = []) {
+  const raw = optional(name, "");
+  if (!raw) return fallback;
+  return raw
+    .split(",")
+    .map((x) => String(x || "").trim())
+    .filter(Boolean);
 }
 
 /** 0 = özellik kapalı; boş = varsayılan (ms). */
@@ -152,6 +193,8 @@ export function getEnv() {
     azureSpeechFetchTimeoutMs: optionalNonNegativeMs("AZURE_SPEECH_FETCH_TIMEOUT_MS", 25_000),
     /** Admin API auth token (zorunlu). */
     adminApiToken: optional("ADMIN_API_TOKEN", ""),
+    /** CORS allowlist (virgülle ayrılmış origin listesi). */
+    corsAllowedOrigins: optionalCsv("CORS_ALLOWED_ORIGINS", []),
     /** Basit rate-limit. */
     rateLimitWindowMs: optionalInt("RATE_LIMIT_WINDOW_MS", 60_000),
     rateLimitMax: optionalInt("RATE_LIMIT_MAX", 180),

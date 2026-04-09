@@ -32,45 +32,41 @@
   function mergeAuthHeaders(base) {
     var h = Object.assign({}, base || {});
     var token = getAdminToken();
-    if (token) {
-      h.Authorization = "Bearer " + token;
-      /** Bazı ters vekiller Authorization’ı düşürür; sunucu ikisini de kabul eder. */
-      h["X-Admin-Token"] = token;
-    }
+    if (token) h.Authorization = "Bearer " + token;
     return h;
-  }
-
-  /** Vercel harici API proxy’si üstbilgileri düşürebilir; admin_token sorgusu VPS’e ulaşır. */
-  function withAdminTokenQuery(url) {
-    var token = getAdminToken();
-    if (!token) return url;
-    if (/[?&]admin_token=/.test(url)) return url;
-    var sep = url.indexOf("?") >= 0 ? "&" : "?";
-    return url + sep + "admin_token=" + encodeURIComponent(token);
   }
 
   function jfetch(url, options) {
     var opts = options ? Object.assign({}, options) : {};
     opts.headers = mergeAuthHeaders(opts.headers);
-    var finalUrl = withAdminTokenQuery(url);
     var m = String(opts.method || "GET").toUpperCase();
     if (m === "GET" && !opts.cache) {
       opts.cache = "no-store";
     }
-    return fetch(finalUrl, opts).then(async function (r) {
-      var text = await r.text();
-      var d = null;
-      try {
-        d = text ? JSON.parse(text) : null;
-      } catch (_e) {
-        d = null;
-      }
-      if (!r.ok || !d || d.ok === false) {
-        var msg = (d && d.error) || ("http_" + r.status);
-        throw new Error(msg);
-      }
-      return d;
-    });
+    return fetch(url, opts)
+      .then(async function (r) {
+        var text = await r.text();
+        var d = null;
+        try {
+          d = text ? JSON.parse(text) : null;
+        } catch (_e) {
+          d = null;
+        }
+        if (!r.ok || !d || d.ok === false) {
+          var msg = (d && d.error) || ("http_" + r.status);
+          throw new Error(msg);
+        }
+        return d;
+      })
+      .catch(function (err) {
+        try {
+          var safe = typeof url === "string" ? url.split("?")[0] : "request";
+          if (typeof console !== "undefined" && console.warn) {
+            console.warn("[viona] admin API isteği başarısız:", safe, err && err.name ? err.name : err);
+          }
+        } catch (_e) {}
+        throw err;
+      });
   }
 
   function getAdminToken() {
@@ -179,18 +175,10 @@
         "/whatsapp-resend";
       return jfetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
     },
-    /** Bot durumu + yapılandırılmış grup doğrulama (yalnızca okuma). */
+    /** Operasyon WhatsApp özeti: kök zaten …/api; burada /health → sunucuda /api/health. */
     getWhatsappAdminDiagnostics: function () {
-      var base = getApiBase();
-      return Promise.all([
-        jfetch(base + "/admin/whatsapp-groups/state").then(function (d) {
-          return d.state || {};
-        }),
-        jfetch(base + "/admin/whatsapp-groups/verify").then(function (d) {
-          return d;
-        }),
-      ]).then(function (pair) {
-        return { state: pair[0], verify: pair[1] };
+      return jfetch(getApiBase() + "/health").then(function (d) {
+        return { operational: (d && d.whatsappOperational) || {}, healthOk: Boolean(d && d.ok) };
       });
     },
     updateStatus: function (type, id, status) {

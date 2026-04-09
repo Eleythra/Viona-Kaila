@@ -16,18 +16,8 @@ import {
   updateAdminItemStatus,
   resendWhatsappForAdminItem,
 } from "./admin.service.js";
-import { discoverWhatsappGroups, verifyConfiguredWhatsappGroups } from "../../services/whatsapp-group-discovery.service.js";
-import { getWhatsappGroupBotState } from "../../services/whatsapp-group-bot.service.js";
-
 const router = Router();
-
-/** Her istekte okunur (.env güncellemesi / yanlış modül yükleme sırası riskini azaltır). */
-function configuredAdminToken() {
-  return String(process.env.ADMIN_API_TOKEN || "")
-    .replace(/^\uFEFF/, "")
-    .split(/\r?\n/)[0]
-    .trim();
-}
+const ADMIN_API_TOKEN = String(process.env.ADMIN_API_TOKEN || "").trim();
 
 function extractAdminToken(req) {
   const bearer = String(req.headers?.authorization || "").trim();
@@ -36,47 +26,30 @@ function extractAdminToken(req) {
     if (token) return token;
   }
   const headerToken = String(req.headers?.["x-admin-token"] || "").trim();
-  if (headerToken) return headerToken;
-  /** Vercel → harici HTTP rewrite bazen Authorization / X-Admin-Token düşürür; gövde veya sorgu ile aynı token. */
-  const body = req.body;
-  if (body && typeof body === "object" && !Buffer.isBuffer(body)) {
-    const fromBody = String(body.adminToken || body.token || "").trim();
-    if (fromBody) return fromBody;
-  }
-  const qtok = String(req.query?.admin_token || req.query?.token || "").trim();
-  if (qtok) return qtok;
-  return "";
+  return headerToken || "";
 }
 
 function isAdminTokenValid(candidate = "") {
-  const secret = configuredAdminToken();
-  if (!secret) return false;
+  if (!ADMIN_API_TOKEN) return false;
   const left = Buffer.from(String(candidate || ""), "utf8");
-  const right = Buffer.from(secret, "utf8");
+  const right = Buffer.from(ADMIN_API_TOKEN, "utf8");
   if (left.length !== right.length) return false;
   return timingSafeEqual(left, right);
 }
 
 router.get("/auth/validate", (req, res) => {
-  if (!configuredAdminToken()) {
+  if (!ADMIN_API_TOKEN) {
     return res.status(503).json({ ok: false, error: "admin_auth_not_configured" });
   }
   const token = extractAdminToken(req);
   if (!isAdminTokenValid(token)) {
-    console.warn(
-      "[admin] auth_validate unauthorized token_len=%s secret_len=%s has_auth_header=%s has_x_admin=%s",
-      String(token || "").length,
-      String(configuredAdminToken() || "").length,
-      Boolean(req.headers?.authorization),
-      Boolean(req.headers?.["x-admin-token"]),
-    );
     return res.status(401).json({ ok: false, error: "unauthorized" });
   }
   return res.status(200).json({ ok: true });
 });
 
 router.use((req, res, next) => {
-  if (!configuredAdminToken()) {
+  if (!ADMIN_API_TOKEN) {
     return res.status(503).json({ ok: false, error: "admin_auth_not_configured" });
   }
   const token = extractAdminToken(req);
@@ -88,7 +61,12 @@ router.use((req, res, next) => {
 
 function adminErr(res, error, fallbackMsg) {
   const code = error?.statusCode === 503 ? 503 : 400;
-  return res.status(code).json({ ok: false, error: error?.message || fallbackMsg });
+  let msg = error?.message || fallbackMsg;
+  if (msg === "datastore_dns_unavailable") {
+    msg =
+      "Sunucu veritabanına şu an bağlanılamıyor (DNS veya geçici ağ). Lütfen bir süre sonra tekrar deneyin. Sorun sürerse sunucuda DNS_SERVERS (ör. 8.8.8.8,1.1.1.1) tanımlanmalıdır.";
+  }
+  return res.status(code).json({ ok: false, error: msg });
 }
 
 router.get("/requests", async (req, res) => {
@@ -143,33 +121,6 @@ router.post("/requests/:type/:id/whatsapp-resend", async (req, res) => {
     return res.status(200).json({ ok: true, ...data });
   } catch (error) {
     return adminErr(res, error, "admin_whatsapp_resend_failed");
-  }
-});
-
-router.get("/whatsapp-groups/state", async (_req, res) => {
-  try {
-    const state = getWhatsappGroupBotState();
-    return res.status(200).json({ ok: true, state });
-  } catch (error) {
-    return adminErr(res, error, "admin_whatsapp_group_state_failed");
-  }
-});
-
-router.get("/whatsapp-groups/discovery", async (_req, res) => {
-  try {
-    const groups = await discoverWhatsappGroups();
-    return res.status(200).json({ ok: true, groups });
-  } catch (error) {
-    return adminErr(res, error, "admin_whatsapp_group_discovery_failed");
-  }
-});
-
-router.get("/whatsapp-groups/verify", async (_req, res) => {
-  try {
-    const report = await verifyConfiguredWhatsappGroups();
-    return res.status(200).json({ ok: true, ...report });
-  } catch (error) {
-    return adminErr(res, error, "admin_whatsapp_group_verify_failed");
   }
 });
 

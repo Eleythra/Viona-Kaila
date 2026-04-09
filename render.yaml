@@ -2,14 +2,21 @@
 # Python asistan ayrı repoda / ayrı servis (örn. https://viona-kaila.onrender.com) ise
 # burada ikinci bir web servisi tanımlamayın; çift deploy olmasın.
 #
-# Panel: New → Blueprint → bu repo. Oluşan URL, servis adıyla biter (örn. viona-node-api.onrender.com).
-# Üretimde Node API Hetzner + api.eleythra.com ise bu blueprint kullanılmayabilir; frontend yine api.eleythra.com’a gider.
-# Python asistan aşağıdaki ASSISTANT_CHAT_ENDPOINT ile Render’da kalır — değiştirmeyin.
+# Panel: New → Blueprint → bu repo. Oluşan URL, servis adıyla biter:
+#   name: viona-node-api  →  https://viona-node-api.onrender.com
+# Frontend (viona-backend-url.js + vercel.json) bu host ile uyumludur.
 # Operasyon özeti (PDF indirilebilir): server/docs/deploy-and-operations-report.md
 #
+# Supabase DNS: Render/OS bazen getaddrinfo EAI_AGAIN verir; Node için genel çözümleyiciler önerilir.
+# Blueprint’te DNS_SERVERS sabitlenir; Dashboard’dan override edilebilir.
+#
 # Zorunlu env (Render Dashboard → Environment):
-#   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+#   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ADMIN_API_TOKEN
 #   ASSISTANT_CHAT_ENDPOINT = Python asistanın tam chat URL’si (aşağıdaki varsayılan)
+# Operasyon WhatsApp (Cloud API, bireysel numaralar; grup botu / whatsapp-web.js yok):
+#   WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID
+#   WHATSAPP_TECH_RECIPIENTS, WHATSAPP_HK_RECIPIENTS, WHATSAPP_FRONT_RECIPIENTS (virgülle)
+# Eski grup oturumu env anahtarlarını Dashboard’dan silin (kafa karıştırır).
 # Opsiyonel (misafir istek/arıza Telegram):
 #   TELEGRAM_TEKNIK_BOT_TOKEN, TELEGRAM_TEKNIK_CHAT_ID, TELEGRAM_HK_BOT_TOKEN, TELEGRAM_HK_CHAT_ID
 # Sesli Viona (TTS/STT, Azure — Dashboard’dan ekleyin; aşağıdaki sync: false satırları hatırlatıcı):
@@ -28,6 +35,8 @@ services:
     buildCommand: npm install && PUPPETEER_CACHE_DIR=.cache/puppeteer npx puppeteer browsers install chrome && node scripts/verify-puppeteer-chrome.mjs
     startCommand: node src/index.js
     envVars:
+      - key: DNS_SERVERS
+        value: "8.8.8.8,1.1.1.1"
       - key: NODE_VERSION
         value: "20.18.0"
       - key: PUPPETEER_CACHE_DIR
@@ -37,6 +46,18 @@ services:
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ADMIN_API_TOKEN
+        sync: false
+      - key: WHATSAPP_ACCESS_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_TECH_RECIPIENTS
+        sync: false
+      - key: WHATSAPP_HK_RECIPIENTS
+        sync: false
+      - key: WHATSAPP_FRONT_RECIPIENTS
         sync: false
       - key: OPENAI_API_KEY
         sync: false

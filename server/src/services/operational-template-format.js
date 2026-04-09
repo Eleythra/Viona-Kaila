@@ -1,6 +1,6 @@
 /**
- * WhatsApp *grup* mesajları için okunaklı Türkçe metin (Cloud API şablonundan bağımsız).
- * Web formlarındaki bölüm / tür etiketleri ile hizalı — whatsapp-operational-notification.service.js ile aynı sözlük.
+ * Operasyon kayıtları için payload normalizasyonu ve Türkçe etiket sözlüğü.
+ * WhatsApp Cloud API şablon gövdesi parametreleriyle uyumlu (grup / whatsapp-web.js yok).
  */
 
 const WH_CATEGORY_LABELS = {
@@ -93,7 +93,8 @@ const WH_CATEGORY_LABELS = {
   },
 };
 
-const REQUEST_GROUP_LABELS_TR = {
+/** Web formu «bölüm» başlıkları (WhatsApp sohbet grubu değil). */
+const REQUEST_SECTION_LABELS_TR = {
   towel_extra: "Yastık, havlu, bornoz ve terlik",
   room_towel: "Yastık, havlu, bornoz ve terlik",
   bathrobe: "Yastık, havlu, bornoz ve terlik",
@@ -242,10 +243,10 @@ function requestItemLabelTr(category) {
   return WH_CATEGORY_LABELS.request[c] || "—";
 }
 
-function requestGroupLabelTr(category) {
+function requestSectionLabelTr(category) {
   const c = normalizeRequestCategoryKey(category);
   if (!c) return "—";
-  const g = REQUEST_GROUP_LABELS_TR[c];
+  const g = REQUEST_SECTION_LABELS_TR[c];
   if (g) return dash(g);
   return categoryLabel("request", c);
 }
@@ -316,7 +317,7 @@ function parseIsoDateToLocalDate(isoYmd) {
  * @param {string} recordType — fault | request | complaint | guest_notification | late_checkout
  * @param {object} payload — normalize edilmiş misafir kaydı
  */
-export function formatOperationalGroupMessageText(recordType, payload) {
+export function formatOperationalTemplatePreviewText(recordType, payload) {
   const rt = String(recordType || "").trim();
   payload = coerceOperationalPayload(rt, payload);
   const route = ROUTING_LINE[rt] || { line: "*OPERASYON*" };
@@ -337,7 +338,7 @@ export function formatOperationalGroupMessageText(recordType, payload) {
   if (rt === "request") {
     const cat = normalizeRequestCategoryKey(payload?.category);
     const details = payload?.details && typeof payload.details === "object" ? payload.details : {};
-    lines.push(`Form bölümü: ${requestGroupLabelTr(cat)}`);
+    lines.push(`Form bölümü: ${requestSectionLabelTr(cat)}`);
     lines.push(`Talep türü: ${buildRequestTypeLineTr(cat, details)}`);
     const qty = buildRequestQuantityLine(cat, details);
     if (qty != null) lines.push(`Adet: ${qty}`);
