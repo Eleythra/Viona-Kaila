@@ -163,6 +163,11 @@ export function getEnv() {
     adminApiToken: optional("ADMIN_API_TOKEN", ""),
     /** CORS allowlist (virgülle ayrılmış origin listesi). */
     corsAllowedOrigins: optionalCsv("CORS_ALLOWED_ORIGINS", []),
+    /**
+     * İsteğe bağlı: kök hostname soneki (virgülle). Örn: `.vercel.app,.eleythra.com`
+     * → `https://proje-xxx.vercel.app` ve `https://viona-admin.eleythra.com` izinli olur.
+     */
+    corsAllowedOriginSuffixes: optionalCsv("CORS_ALLOWED_ORIGIN_SUFFIXES", []),
     /** Basit rate-limit. */
     rateLimitWindowMs: optionalInt("RATE_LIMIT_WINDOW_MS", 60_000),
     rateLimitMax: optionalInt("RATE_LIMIT_MAX", 180),

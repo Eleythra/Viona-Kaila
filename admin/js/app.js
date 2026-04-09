@@ -1445,7 +1445,26 @@
           await adapter.validateAdminToken();
           sessionStorage.setItem(LOGIN_OK_KEY, "1");
           sessionStorage.setItem(LOGIN_USER_KEY, ADMIN_USERNAME_REQUIRED);
-        } catch (_e) {}
+        } catch (e) {
+          adapter.clearAdminToken();
+          try {
+            sessionStorage.removeItem(LOGIN_USER_KEY);
+          } catch (_x) {}
+          if (err) {
+            var msg = (e && e.message) || "";
+            if (/failed to fetch|networkerror|load failed|cors/i.test(msg)) {
+              err.textContent =
+                "Sunucuya bağlanılamadı veya CORS engeli (VPS .env: CORS_ALLOWED_ORIGINS / CORS_ALLOWED_ORIGIN_SUFFIXES).";
+            } else if (msg === "unauthorized" || msg === "http_401") {
+              err.textContent = "Geçersiz veya yetkisiz admin token (VPS ADMIN_API_TOKEN ile aynı olmalı).";
+            } else if (msg === "admin_auth_not_configured" || msg === "http_503") {
+              err.textContent = "Sunucuda ADMIN_API_TOKEN tanımlı değil.";
+            } else {
+              err.textContent = msg ? "Giriş başarısız: " + msg : "Geçersiz veya yetkisiz admin token.";
+            }
+          }
+          return;
+        }
         if (sessionStorage.getItem(LOGIN_OK_KEY) !== "1") {
           adapter.clearAdminToken();
           try {

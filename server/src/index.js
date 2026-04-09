@@ -167,6 +167,31 @@ function normalizeOrigin(value = "") {
 const corsAllowlist = new Set(
   (env.corsAllowedOrigins || []).map((x) => normalizeOrigin(x)).filter(Boolean),
 );
+
+function normalizeCorsHostnameSuffix(entry = "") {
+  let s = String(entry || "").trim().toLowerCase();
+  if (!s) return "";
+  s = s.replace(/^\.+/, "");
+  if (!s) return "";
+  return `.${s}`;
+}
+
+const corsHostnameSuffixes = (env.corsAllowedOriginSuffixes || [])
+  .map((x) => normalizeCorsHostnameSuffix(x))
+  .filter(Boolean);
+
+function originMatchesConfiguredSuffix(normalizedOrigin = "") {
+  if (!corsHostnameSuffixes.length) return false;
+  try {
+    const u = new URL(normalizedOrigin);
+    const host = String(u.hostname || "").toLowerCase();
+    if (!host) return false;
+    return corsHostnameSuffixes.some((suf) => host === suf.slice(1) || host.endsWith(suf));
+  } catch {
+    return false;
+  }
+}
+
 [
   "https://viona-kaila.onrender.com",
   "http://178.104.104.45:3001",
@@ -187,6 +212,7 @@ function isAllowedOrigin(origin = "") {
   const normalized = normalizeOrigin(origin);
   if (!normalized) return false;
   if (corsAllowlist.has(normalized)) return true;
+  if (originMatchesConfiguredSuffix(normalized)) return true;
   return false;
 }
 

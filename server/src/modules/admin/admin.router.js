@@ -20,7 +20,11 @@ import { discoverWhatsappGroups, verifyConfiguredWhatsappGroups } from "../../se
 import { getWhatsappGroupBotState } from "../../services/whatsapp-group-bot.service.js";
 
 const router = Router();
-const ADMIN_API_TOKEN = String(process.env.ADMIN_API_TOKEN || "").trim();
+/** BOM / yanlışlıkla yapışan satır sonu (tek satır token). */
+const ADMIN_API_TOKEN = String(process.env.ADMIN_API_TOKEN || "")
+  .replace(/^\uFEFF/, "")
+  .split(/\r?\n/)[0]
+  .trim();
 
 function extractAdminToken(req) {
   const bearer = String(req.headers?.authorization || "").trim();
