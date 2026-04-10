@@ -110,6 +110,46 @@
     } catch (_e) {}
   }
 
+  /**
+   * WhatsApp / bazı uygulama tarayıcıları # parçasını düşürür; sunucu loglarına gitmez (yalnızca tarayıcı).
+   * Örnek: ops-hk.html?k=ANAHTAR veya ?token= / ?t=
+   */
+  function absorbQueryToken() {
+    try {
+      var u = new URL(window.location.href);
+      var raw = u.searchParams.get("k") || u.searchParams.get("token") || u.searchParams.get("t");
+      if (!raw) return;
+      raw = String(raw).trim();
+      if (!raw) return;
+      setToken(raw);
+      u.searchParams.delete("k");
+      u.searchParams.delete("token");
+      u.searchParams.delete("t");
+      var qs = u.searchParams.toString();
+      var path = u.pathname + (qs ? "?" + qs : "") + (u.hash || "");
+      history.replaceState(null, "", path);
+    } catch (_e) {}
+  }
+
+  function absorbTokensFromUrl() {
+    absorbHashToken();
+    if (!getToken()) absorbQueryToken();
+  }
+
+  function showGateBusy() {
+    var busy = document.getElementById("ops-login-busy");
+    var form = document.getElementById("ops-login-form");
+    if (busy) busy.classList.remove("hidden");
+    if (form) form.classList.add("hidden");
+  }
+
+  function showGateForm() {
+    var busy = document.getElementById("ops-login-busy");
+    var form = document.getElementById("ops-login-form");
+    if (busy) busy.classList.add("hidden");
+    if (form) form.classList.remove("hidden");
+  }
+
   function showLogin() {
     var login = document.getElementById("ops-login");
     var app = document.getElementById("ops-app");
@@ -273,7 +313,7 @@
     if (m === "http_404")
       return "API’de /api/ops bulunamadı. Render’da Node servisinin son commit ile yeniden deploy edildiğini ve doğru repoya bağlı olduğunu kontrol edin.";
     if (m === "unauthorized" || m === "http_401")
-      return "Bu sayfa için şifre, sunucu .env içindeki OPS_LINK_TOKEN_HK / _TECH / _FRONT ile aynı olmalıdır. Tam yönetim paneli (/admin/ ana giriş) ayrı şifre kullanır (ADMIN_API_TOKEN).";
+      return "Sunucu bu anahtarı kabul etmedi. Render’daki OPS_LINK_TOKEN_HK / _TECH / _FRONT değerleri, linkteki metinle aynı mı kontrol edin. WhatsApp vb. # kısmını silebildiği için şu formu da deneyin: …/ops-hk.html?k=ANAHTAR (Ön büro’da ö/ü için URL kodlaması gerekir).";
     if (m === "wrong_ops_token") return "Bu şifre bu sayfa için değil (yanlış ekip bağlantısı).";
     if (m === "forbidden_bucket" || m === "http_403") return "Bu işlem bu hesap için izinli değil.";
     if (m === "http_503" || m.indexOf("datastore") !== -1) return "Sunucu veya veritabanı şu an kullanılamıyor.";
@@ -306,6 +346,7 @@
       await bootApp();
     } catch (e) {
       clearToken();
+      showGateForm();
       if (err) err.textContent = formatErr(e);
     }
   }
@@ -315,6 +356,7 @@
     if (!b) return;
     b.addEventListener("click", function () {
       clearToken();
+      showGateForm();
       showLogin();
       var pw = document.getElementById("ops-password");
       if (pw) pw.value = "";
@@ -350,10 +392,12 @@
       document.body.innerHTML = "<p>Geçersiz operasyon sayfası.</p>";
       return;
     }
-    absorbHashToken();
+    absorbTokensFromUrl();
     document.title = (TITLES[role] || "Operasyon") + " · Viona";
     var h = document.getElementById("ops-login-heading");
     if (h) h.textContent = TITLES[role];
+    var busyTitle = document.getElementById("ops-login-busy-title");
+    if (busyTitle) busyTitle.textContent = TITLES[role] || "Operasyon";
     var deeplinkHint = document.getElementById("ops-deeplink-hint");
     if (deeplinkHint) {
       deeplinkHint.textContent = "";
@@ -362,10 +406,23 @@
     wireLoginForm();
     wirePwToggle();
     wireLogout();
+    showLogin();
     if (getToken()) {
+      showGateBusy();
       void tryEnter();
     } else {
+      showGateForm();
+    }
+  }
+
+  function onHashChange() {
+    var role = getRole();
+    if (!role || !TITLES[role]) return;
+    absorbTokensFromUrl();
+    if (getToken()) {
       showLogin();
+      showGateBusy();
+      void tryEnter();
     }
   }
 
@@ -374,4 +431,5 @@
   } else {
     init();
   }
+  window.addEventListener("hashchange", onHashChange);
 })();

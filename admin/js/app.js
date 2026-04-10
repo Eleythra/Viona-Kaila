@@ -87,6 +87,7 @@
     op_tech: "tab-op-tech",
     op_front: "tab-op-front",
     evaluations: "tab-evaluations",
+    comments: "tab-comments",
     "pdf-report": "tab-pdf-report",
     logs: "tab-logs",
   };
@@ -557,6 +558,8 @@
         await loadOpFront();
       } else if (activeAdminTab === "evaluations") {
         await loadEvaluations();
+      } else if (activeAdminTab === "comments") {
+        /* içerik sonra eklenecek */
       } else if (activeAdminTab === "logs") {
         await loadLogs();
       }
@@ -1495,6 +1498,9 @@
           await loadGuestNotifVisible();
         }
         if (tab === "evaluations") await loadEvaluations();
+        if (tab === "comments") {
+          /* placeholder sekme */
+        }
         if (tab === "pdf-report") setPdfCustomRangeUi(Boolean(document.getElementById("pdf-custom-range") && document.getElementById("pdf-custom-range").checked));
         if (tab === "logs") await loadLogs();
         if (tab === "op_hk") await loadOpHk();

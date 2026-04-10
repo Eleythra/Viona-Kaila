@@ -13,7 +13,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/styles.css?v=30" />
-    <link rel="stylesheet" href="styles.css?v=31" />
+    <link rel="stylesheet" href="styles.css?v=32" />
   </head>
   <body class="admin-body">
     <section id="admin-login" class="admin-login">
@@ -39,14 +39,19 @@
           <h1>Viona Admin</h1>
           <nav class="admin-nav" aria-label="Ana menü">
             <button type="button" data-tab="home" aria-controls="tab-dashboard" title="Giriş özeti ve raporlar">Ana sayfa</button>
+            <p class="admin-nav__group-label" id="admin-nav-ops-lbl">Saha operasyon</p>
+            <div class="admin-nav__ops" role="group" aria-labelledby="admin-nav-ops-lbl">
+              <button type="button" class="admin-nav__btn--ops" data-tab="op_hk" aria-controls="tab-op-hk" title="HK Operasyon: isteklerde durum güncelleme">HK Operasyon</button>
+              <button type="button" class="admin-nav__btn--ops" data-tab="op_tech" aria-controls="tab-op-tech" title="Teknik Operasyon: arızalarda durum güncelleme">Teknik Operasyon</button>
+              <button type="button" class="admin-nav__btn--ops" data-tab="op_front" aria-controls="tab-op-front" title="Ön büro Operasyon: şikâyet, bildirim, geç çıkış">Ön büro Operasyon</button>
+            </div>
+            <div class="admin-nav__divider" aria-hidden="true"></div>
             <button type="button" data-tab="requests" aria-controls="tab-requests" title="İstek kayıtlarını açar">İstekler</button>
             <button type="button" data-tab="complaints" aria-controls="tab-complaints" title="Şikayet kayıtlarını açar">Şikayetler</button>
             <button type="button" data-tab="faults" aria-controls="tab-faults" title="Arıza kayıtlarını açar">Arızalar</button>
             <button type="button" data-tab="guest_notifications" aria-controls="tab-guest-notifications" title="Misafir bildirim kayıtlarını açar">Misafir bildirimleri</button>
-            <button type="button" data-tab="op_hk" aria-controls="tab-op-hk" title="HK Operasyon: isteklerde durum güncelleme">HK Operasyon</button>
-            <button type="button" data-tab="op_tech" aria-controls="tab-op-tech" title="Teknik Operasyon: arızalarda durum güncelleme">Teknik Operasyon</button>
-            <button type="button" data-tab="op_front" aria-controls="tab-op-front" title="Ön büro Operasyon: şikâyet, bildirim, geç çıkış">Ön büro Operasyon</button>
             <button type="button" data-tab="evaluations" aria-controls="tab-evaluations" title="Misafir anket özeti">Değerlendirmeler</button>
+            <button type="button" data-tab="comments" aria-controls="tab-comments" title="Misafir yorumları (yakında)">Yorumlar</button>
             <button type="button" data-tab="logs" aria-controls="tab-logs" title="Sohbet günlükleri ve kalite incelemesi">Loglar</button>
             <button type="button" data-tab="pdf-report" aria-controls="tab-pdf-report" title="PDF rapor oluşturma ekranını açar">Rapor</button>
           </nav>
@@ -92,9 +97,10 @@
                 </div>
                 <p class="op-deeplinks__hint op-deeplinks__hint--tight">
                   <strong>Ekip / WhatsApp (sınırlı erişim):</strong> tam panele giremezler; yalnızca işaretleme sayfaları.
-                  Paylaşılacak link: <code class="op-deeplinks__code">…/admin/ops-hk.html#TOKEN</code> —
-                  <code class="op-deeplinks__code">TOKEN</code>, ilgili <code class="op-deeplinks__code">OPS_LINK_TOKEN_*</code>
-                  değeri ile <strong>karakter karakter aynı</strong> olmalıdır (hangi ekip olduğu dosya adından bellidir).
+                  Paylaşılacak link: <code class="op-deeplinks__code">…/admin/ops-hk.html#TOKEN</code> veya WhatsApp için
+                  <code class="op-deeplinks__code">…/admin/ops-hk.html?k=TOKEN</code> (# bazen düşer).
+                  <code class="op-deeplinks__code">TOKEN</code> = ilgili <code class="op-deeplinks__code">OPS_LINK_TOKEN_*</code>
+                  (Render .env ile aynı).
                 </p>
                 <div class="op-deeplinks__grid">
                   <a class="btn-small op-deeplinks__link" href="ops-hk.html" target="_blank" rel="noopener">Ekip sayfası · HK</a>
@@ -362,6 +368,14 @@
           <div id="evaluations-mount" class="eval-mount"></div>
         </section>
 
+        <section id="tab-comments" class="admin-tab hidden" aria-label="Yorumlar">
+          <div class="section-head">
+            <h2>Yorumlar</h2>
+            <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
+          </div>
+          <p class="section-lead">Bu bölüm yakında doldurulacak.</p>
+        </section>
+
         <section id="tab-pdf-report" class="admin-tab hidden">
           <div class="section-head">
             <h2>Rapor</h2>
@@ -569,6 +583,6 @@
     <script src="../js/hotel-room-numbers.js?v=1"></script>
     <script src="js/data-adapter.js?v=16"></script>
     <script src="js/ui.js?v=50"></script>
-    <script src="js/app.js?v=43"></script>
+    <script src="js/app.js?v=44"></script>
   </body>
 </html>

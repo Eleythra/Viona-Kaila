@@ -16,18 +16,23 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/styles.css?v=30" />
-    <link rel="stylesheet" href="styles.css?v=31" />
+    <link rel="stylesheet" href="styles.css?v=32" />
   </head>
   <body class="admin-body" data-viona-ops-role="tech">
     <section id="ops-login" class="admin-login">
+      <div id="ops-login-busy" class="glass-block admin-login__card ops-login-busy hidden" aria-live="polite" aria-busy="true">
+        <h1 id="ops-login-busy-title" class="ops-login-busy__title">Teknik Operasyon</h1>
+        <p class="ops-light-loading">Bağlantı doğrulanıyor…</p>
+      </div>
       <form id="ops-login-form" class="glass-block admin-login__card">
         <h1 id="ops-login-heading">Teknik Operasyon</h1>
         <p class="ops-light-intro">
           Arıza kayıtlarında durum işaretlemek için ekip şifresini girin. Tam yönetim paneli bu sayfada yoktur.
         </p>
         <p class="ops-light-intro ops-light-intro--muted">
-          Şifre veya <code class="ops-light-code">#</code> sonrası, <code class="ops-light-code">OPS_LINK_TOKEN_TECH</code>
-          ile birebir aynı olmalıdır.
+          <code class="ops-light-code">#</code> sonrası veya <code class="ops-light-code">?k=</code> —
+          <code class="ops-light-code">OPS_LINK_TOKEN_TECH</code> ile aynı. WhatsApp için:
+          <code class="ops-light-code">…/ops-tech.html?k=…</code>
         </p>
         <p id="ops-deeplink-hint" class="ops-light-intro ops-light-intro--warn hidden" role="status"></p>
         <label for="ops-password">Ekip şifresi</label>
@@ -58,6 +63,6 @@
     <script src="../js/api-config.js?v=13"></script>
     <script src="../js/hotel-room-numbers.js?v=1"></script>
     <script src="js/ui.js?v=50"></script>
-    <script src="js/ops-light.js?v=3"></script>
+    <script src="js/ops-light.js?v=4"></script>
   </body>
 </html>
