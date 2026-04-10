@@ -89,6 +89,7 @@
     });
   }
 
+  /** # sonrası tam metin OPS_LINK_TOKEN_* ile birebir aynı olmalı (kısa veya uzun fark etmez). */
   function absorbHashToken() {
     var h = String(window.location.hash || "");
     if (h.length <= 1) return;
@@ -97,7 +98,12 @@
       raw = decodeURIComponent(raw);
     } catch (_e) {}
     raw = String(raw || "").trim();
-    if (!raw) return;
+    if (!raw) {
+      try {
+        history.replaceState(null, "", window.location.pathname + window.location.search);
+      } catch (_e) {}
+      return;
+    }
     setToken(raw);
     try {
       history.replaceState(null, "", window.location.pathname + window.location.search);
@@ -266,7 +272,8 @@
     var m = e && e.message ? String(e.message) : "";
     if (m === "http_404")
       return "API’de /api/ops bulunamadı. Render’da Node servisinin son commit ile yeniden deploy edildiğini ve doğru repoya bağlı olduğunu kontrol edin.";
-    if (m === "unauthorized" || m === "http_401") return "Şifre geçersiz veya süresi dolmuş.";
+    if (m === "unauthorized" || m === "http_401")
+      return "Bu sayfa için şifre, sunucu .env içindeki OPS_LINK_TOKEN_HK / _TECH / _FRONT ile aynı olmalıdır. Tam yönetim paneli (/admin/ ana giriş) ayrı şifre kullanır (ADMIN_API_TOKEN).";
     if (m === "wrong_ops_token") return "Bu şifre bu sayfa için değil (yanlış ekip bağlantısı).";
     if (m === "forbidden_bucket" || m === "http_403") return "Bu işlem bu hesap için izinli değil.";
     if (m === "http_503" || m.indexOf("datastore") !== -1) return "Sunucu veya veritabanı şu an kullanılamıyor.";
@@ -347,6 +354,11 @@
     document.title = (TITLES[role] || "Operasyon") + " · Viona";
     var h = document.getElementById("ops-login-heading");
     if (h) h.textContent = TITLES[role];
+    var deeplinkHint = document.getElementById("ops-deeplink-hint");
+    if (deeplinkHint) {
+      deeplinkHint.textContent = "";
+      deeplinkHint.classList.add("hidden");
+    }
     wireLoginForm();
     wirePwToggle();
     wireLogout();

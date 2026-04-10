@@ -27,9 +27,11 @@
           listelenen kayıtlar güncellenir.
         </p>
         <p class="ops-light-intro ops-light-intro--muted">
-          WhatsApp’tan otomatik giriş için yöneticinin verdiği bağlantıdaki <code class="ops-light-code">#…</code> kısmı
-          tarayıcıda şifreyi bir kez kaydeder.
+          Şifre veya paylaşım linkindeki <code class="ops-light-code">#</code> sonrası, sunucu
+          <code class="ops-light-code">.env</code> içindeki <code class="ops-light-code">OPS_LINK_TOKEN_HK</code>
+          değeri ile birebir aynı olmalıdır (tam yönetim paneli şifresi değil).
         </p>
+        <p id="ops-deeplink-hint" class="ops-light-intro ops-light-intro--warn hidden" role="status"></p>
         <label for="ops-password">Ekip şifresi</label>
         <div class="admin-password-row">
           <input id="ops-password" type="password" autocomplete="current-password" required />
@@ -58,6 +60,6 @@
     <script src="../js/api-config.js?v=13"></script>
     <script src="../js/hotel-room-numbers.js?v=1"></script>
     <script src="js/ui.js?v=50"></script>
-    <script src="js/ops-light.js?v=1"></script>
+    <script src="js/ops-light.js?v=3"></script>
   </body>
 </html>

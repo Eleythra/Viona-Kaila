@@ -225,7 +225,7 @@
 
     var catGrid = el("div", "near-explore-cats");
     catGrid.setAttribute("role", "group");
-    catGrid.setAttribute("aria-label", t("modComingSoon"));
+    catGrid.setAttribute("aria-label", t("nearExploreCategoriesAria"));
     order.forEach(function (catId) {
       var btn = el("button", "near-explore-cat", "");
       btn.type = "button";
@@ -316,9 +316,24 @@
     }
 
     function placesInCategory(catId) {
-      return places.filter(function (p) {
+      var list = places.filter(function (p) {
         return p.category === catId;
       });
+      list.sort(function (a, b) {
+        var af = a.isFeatured ? 1 : 0;
+        var bf = b.isFeatured ? 1 : 0;
+        if (bf !== af) return bf - af;
+        var da =
+          typeof a.lat === "number" && typeof a.lng === "number"
+            ? haversineM(hotel.lat, hotel.lng, a.lat, a.lng)
+            : Infinity;
+        var db =
+          typeof b.lat === "number" && typeof b.lng === "number"
+            ? haversineM(hotel.lat, hotel.lng, b.lat, b.lng)
+            : Infinity;
+        return da - db;
+      });
+      return list;
     }
 
     function openCategory(catId) {
@@ -434,7 +449,14 @@
       listEl.querySelectorAll(".near-explore-card").forEach(function (c) {
         c.classList.toggle("near-explore-card--active", c.dataset.placeId === id);
       });
-      var activeCard = listEl.querySelector('[data-place-id="' + id + '"]');
+      var activeCard = null;
+      var cardNodes = listEl.querySelectorAll(".near-explore-card");
+      for (var ci = 0; ci < cardNodes.length; ci++) {
+        if (cardNodes[ci].dataset.placeId === id) {
+          activeCard = cardNodes[ci];
+          break;
+        }
+      }
       if (activeCard && activeCard.scrollIntoView) {
         var smoothScroll = true;
         try {

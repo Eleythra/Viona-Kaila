@@ -121,6 +121,7 @@ const I18N = {
     nearExploreLead:
       "Kaila Beach Hotel’den yola çıkarak çevrenizdeki önemli noktaları keşfedin. Önce bir kategori seçin; yalnızca o kategorideki yerler haritada ve listede görünür.",
     nearExploreTagline: "Yakınında neler var — kolayca keşfet.",
+    nearExploreCategoriesAria: "Yakındaki kategoriler",
     nearExploreBack: "Kategorilere dön",
     nearExploreDirections: "Yol tarifi al",
     nearExploreOpenInMaps: "Google Haritalar’da aç",
@@ -686,6 +687,7 @@ const I18N = {
     nearExploreLead:
       "Discover useful places around Kaila Beach Hotel. Pick a category first — only those places appear on the map and in the list.",
     nearExploreTagline: "What’s around you — explore with ease.",
+    nearExploreCategoriesAria: "Nearby categories",
     nearExploreBack: "Back to categories",
     nearExploreDirections: "Get directions",
     nearExploreOpenInMaps: "Open in Google Maps",
@@ -1250,6 +1252,7 @@ const I18N = {
     nearExploreLead:
       "Entdecken Sie Orte rund um das Kaila Beach Hotel. Wählen Sie zuerst eine Kategorie — nur diese Punkte erscheinen auf Karte und Liste.",
     nearExploreTagline: "Was ist in der Nähe — einfach entdecken.",
+    nearExploreCategoriesAria: "Kategorien in der Nähe",
     nearExploreBack: "Zurück zu den Kategorien",
     nearExploreDirections: "Route anzeigen",
     nearExploreOpenInMaps: "In Google Maps öffnen",
@@ -1815,6 +1818,7 @@ const I18N = {
     nearExploreLead:
       "Откройте полезные места вокруг Kaila Beach Hotel. Сначала выберите категорию — на карте и в списке только она.",
     nearExploreTagline: "Что рядом — легко найти.",
+    nearExploreCategoriesAria: "Категории поблизости",
     nearExploreBack: "К категориям",
     nearExploreDirections: "Маршрут",
     nearExploreOpenInMaps: "Открыть в Google Картах",

@@ -3794,6 +3794,14 @@ button.op-deeplinks__link {
   font-size: 0.8rem;
   opacity: 0.92;
 }
+.ops-light-intro--warn {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #e8c96a;
+  border-left: 3px solid rgba(232, 201, 106, 0.55);
+  padding-left: 0.65rem;
+  margin-top: -0.25rem;
+}
 .ops-light-code {
   font-size: 0.78em;
   padding: 0.12em 0.35em;
