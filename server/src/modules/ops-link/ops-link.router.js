@@ -11,9 +11,24 @@ const BUCKETS_BY_ROLE = {
   front: new Set(["complaint", "guest_notification", "late_checkout"]),
 };
 
+const SURFACE_ROLES = new Set(["hk", "tech", "front"]);
+
+function normalizeOrigin(value = "") {
+  return String(value || "")
+    .trim()
+    .replace(/\/+$/, "")
+    .toLowerCase();
+}
+
+function normText(s) {
+  return String(s ?? "")
+    .normalize("NFC")
+    .trim();
+}
+
 function safeEqual(a, b) {
-  const x = Buffer.from(String(a ?? ""), "utf8");
-  const y = Buffer.from(String(b ?? ""), "utf8");
+  const x = Buffer.from(normText(a), "utf8");
+  const y = Buffer.from(normText(b), "utf8");
   if (x.length !== y.length) return false;
   return timingSafeEqual(x, y);
 }
@@ -28,17 +43,72 @@ function extractOpsToken(req) {
   return h || "";
 }
 
-function resolveRole(token) {
-  const env = getEnv();
-  const t = String(token || "").trim();
+function extractOpsPageHeader(req) {
+  const h = String(req.headers?.["x-viona-ops-page"] || "").trim().toLowerCase();
+  return SURFACE_ROLES.has(h) ? h : "";
+}
+
+/** Token ile eşleşen rol; yoksa null */
+function roleFromToken(token, env) {
+  const t = normText(token);
   if (!t) return null;
-  const hk = String(env.opsLinkTokenHk || "").trim();
-  const tech = String(env.opsLinkTokenTech || "").trim();
-  const front = String(env.opsLinkTokenFront || "").trim();
+  const hk = normText(env.opsLinkTokenHk || "");
+  const tech = normText(env.opsLinkTokenTech || "");
+  const front = normText(env.opsLinkTokenFront || "");
   if (hk && safeEqual(t, hk)) return "hk";
   if (tech && safeEqual(t, tech)) return "tech";
   if (front && safeEqual(t, front)) return "front";
   return null;
+}
+
+function trustedOpsOriginSet(env) {
+  const set = new Set([
+    "https://viona-admin.eleythra.com",
+    "https://www.viona-admin.eleythra.com",
+    "http://127.0.0.1:8080",
+    "http://localhost:8080",
+    "http://127.0.0.1:5500",
+    "http://localhost:5500",
+    "http://127.0.0.1:3000",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
+    "https://viona-kaila.onrender.com",
+    "https://viona.eleythra.com",
+    "https://www.viona.eleythra.com",
+  ]);
+  (env.corsAllowedOrigins || []).forEach((raw) => {
+    const n = normalizeOrigin(raw);
+    if (n) set.add(n);
+  });
+  return set;
+}
+
+function isTrustedOpsCaller(req, env) {
+  const allowed = trustedOpsOriginSet(env);
+  const o = normalizeOrigin(req.headers?.origin);
+  if (o && allowed.has(o)) return true;
+  const ref = String(req.headers?.referer || "").trim().toLowerCase();
+  if (!ref) return false;
+  for (const base of allowed) {
+    const b = base.toLowerCase();
+    if (ref === b || ref.startsWith(`${b}/`)) return true;
+  }
+  return false;
+}
+
+/**
+ * Önce token; yoksa veya OPS_TRUST_OPS_PAGE_HEADER=1 + güvenilir çağrı ise X-Viona-Ops-Page.
+ */
+function resolveRoleFromRequest(req) {
+  const env = getEnv();
+  const token = extractOpsToken(req);
+  const fromTok = roleFromToken(token, env);
+  if (fromTok) return fromTok;
+  if (!env.opsTrustOpsPageHeader) return null;
+  if (!isTrustedOpsCaller(req, env)) return null;
+  const page = extractOpsPageHeader(req);
+  return page || null;
 }
 
 function adminErr(res, error, fallbackMsg) {
@@ -52,8 +122,7 @@ function adminErr(res, error, fallbackMsg) {
 }
 
 router.get("/auth/validate", (req, res) => {
-  const token = extractOpsToken(req);
-  const role = resolveRole(token);
+  const role = resolveRoleFromRequest(req);
   if (!role) {
     return res.status(401).json({ ok: false, error: "unauthorized" });
   }
@@ -61,8 +130,7 @@ router.get("/auth/validate", (req, res) => {
 });
 
 router.use((req, res, next) => {
-  const token = extractOpsToken(req);
-  const role = resolveRole(token);
+  const role = resolveRoleFromRequest(req);
   if (!role) {
     return res.status(401).json({ ok: false, error: "unauthorized" });
   }

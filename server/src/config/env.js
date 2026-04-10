@@ -197,6 +197,11 @@ export function getEnv() {
     opsLinkTokenHk: optional("OPS_LINK_TOKEN_HK", ""),
     opsLinkTokenTech: optional("OPS_LINK_TOKEN_TECH", ""),
     opsLinkTokenFront: optional("OPS_LINK_TOKEN_FRONT", ""),
+    /**
+     * 1 ise /api/ops istekleri (yalnızca admin / bilinen statik origin’lerden) token olmadan kabul edilir;
+     * rol X-Viona-Ops-Page başlığından (ops-hk.html → hk) alınır. Linkte #/?k= gerekmez.
+     */
+    opsTrustOpsPageHeader: optional("OPS_TRUST_OPS_PAGE_HEADER", "") === "1",
     /** CORS allowlist (virgülle ayrılmış origin listesi). */
     corsAllowedOrigins: optionalCsv("CORS_ALLOWED_ORIGINS", []),
     /** Basit rate-limit. */

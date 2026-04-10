@@ -97,10 +97,13 @@
                 </div>
                 <p class="op-deeplinks__hint op-deeplinks__hint--tight">
                   <strong>Ekip / WhatsApp (sınırlı erişim):</strong> tam panele giremezler; yalnızca işaretleme sayfaları.
-                  Paylaşılacak link: <code class="op-deeplinks__code">…/admin/ops-hk.html#TOKEN</code> veya WhatsApp için
-                  <code class="op-deeplinks__code">…/admin/ops-hk.html?k=TOKEN</code> (# bazen düşer).
-                  <code class="op-deeplinks__code">TOKEN</code> = ilgili <code class="op-deeplinks__code">OPS_LINK_TOKEN_*</code>
-                  (Render .env ile aynı).
+                  <strong>Token’sız mod (önerilen kolaylık):</strong> Render’da
+                  <code class="op-deeplinks__code">OPS_TRUST_OPS_PAGE_HEADER=1</code> — ekip sadece
+                  <code class="op-deeplinks__code">…/admin/ops-hk.html</code> vb. açar; #/şifre gerekmez (yalnızca admin domain’inden).
+                  <strong>Token’lı mod:</strong>
+                  <code class="op-deeplinks__code">…/ops-hk.html#TOKEN</code> veya WhatsApp’ta
+                  <code class="op-deeplinks__code">?k=TOKEN</code> —
+                  <code class="op-deeplinks__code">OPS_LINK_TOKEN_*</code> ile aynı.
                 </p>
                 <div class="op-deeplinks__grid">
                   <a class="btn-small op-deeplinks__link" href="ops-hk.html" target="_blank" rel="noopener">Ekip sayfası · HK</a>

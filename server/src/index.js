@@ -319,7 +319,13 @@ app.use(
       return callback(new Error("cors_not_allowed"));
     },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Admin-Token", "X-Ops-Token"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Admin-Token",
+      "X-Ops-Token",
+      "X-Viona-Ops-Page",
+    ],
     credentials: false,
   }),
 );
@@ -398,6 +404,8 @@ app.get("/api/health", (req, res) => {
       tech: Boolean(String(env.opsLinkTokenTech || "").trim()),
       front: Boolean(String(env.opsLinkTokenFront || "").trim()),
     },
+    /** 1 iken /api/ops token olmadan yalnızca güvenilir origin + X-Viona-Ops-Page ile açılır (dahili kullanım). */
+    opsTrustOpsPageHeader: Boolean(env.opsTrustOpsPageHeader),
   };
   const pretty =
     String(req.query?.pretty || "") === "1" ||

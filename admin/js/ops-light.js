@@ -69,8 +69,13 @@
     var url = base + "/ops" + pathWithQuery;
     var opts = options ? Object.assign({}, options) : {};
     opts.headers = Object.assign({}, opts.headers || {});
+    var surface = getRole();
+    if (surface) opts.headers["X-Viona-Ops-Page"] = surface;
     var tok = getToken();
-    if (tok) opts.headers["X-Ops-Token"] = tok;
+    if (tok) {
+      opts.headers["X-Ops-Token"] = tok;
+      opts.headers["Authorization"] = "Bearer " + tok;
+    }
     var m = String(opts.method || "GET").toUpperCase();
     if (m === "GET" && !opts.cache) opts.cache = "no-store";
     return fetch(url, opts).then(async function (r) {
@@ -313,7 +318,7 @@
     if (m === "http_404")
       return "API’de /api/ops bulunamadı. Render’da Node servisinin son commit ile yeniden deploy edildiğini ve doğru repoya bağlı olduğunu kontrol edin.";
     if (m === "unauthorized" || m === "http_401")
-      return "Sunucu bu anahtarı kabul etmedi. Render’daki OPS_LINK_TOKEN_HK / _TECH / _FRONT değerleri, linkteki metinle aynı mı kontrol edin. WhatsApp vb. # kısmını silebildiği için şu formu da deneyin: …/ops-hk.html?k=ANAHTAR (Ön büro’da ö/ü için URL kodlaması gerekir).";
+      return "Sunucu girişi reddetti. Render’da OPS_TRUST_OPS_PAGE_HEADER=1 ekleyip servisi yeniden başlatın (linkte token gerekmez; yalnızca güvenilen admin sitesinden). Alternatif: OPS_LINK_TOKEN_* ile # veya ?k= aynı olsun. Ayrıca Authorization: Bearer bazı proxy’lerde X-Ops-Token’tan daha iyi iletilir — sayfayı sert yenileyin (ops-light.js güncel mi).";
     if (m === "wrong_ops_token") return "Bu şifre bu sayfa için değil (yanlış ekip bağlantısı).";
     if (m === "forbidden_bucket" || m === "http_403") return "Bu işlem bu hesap için izinli değil.";
     if (m === "http_503" || m.indexOf("datastore") !== -1) return "Sunucu veya veritabanı şu an kullanılamıyor.";
@@ -407,23 +412,17 @@
     wirePwToggle();
     wireLogout();
     showLogin();
-    if (getToken()) {
-      showGateBusy();
-      void tryEnter();
-    } else {
-      showGateForm();
-    }
+    showGateBusy();
+    void tryEnter();
   }
 
   function onHashChange() {
     var role = getRole();
     if (!role || !TITLES[role]) return;
     absorbTokensFromUrl();
-    if (getToken()) {
-      showLogin();
-      showGateBusy();
-      void tryEnter();
-    }
+    showLogin();
+    showGateBusy();
+    void tryEnter();
   }
 
   if (document.readyState === "loading") {
