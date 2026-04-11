@@ -4886,32 +4886,79 @@
   text-align: center;
 }
 
-/* WhatsApp «panelde aç»: yalnızca tek kayıt kartı (tam liste aynı sayfa, ?id= / ?type= yok) */
+/* WhatsApp «panelde aç»: tek kart — durum rozeti ve seçim düğmeleri belirgin */
 .admin-body--ops-wa-card-only #ops-mount {
-  max-width: 28rem;
+  max-width: 22rem;
   margin-left: auto;
   margin-right: auto;
 }
-.ops-wa-card-only {
-  padding: 0.85rem 1rem 1rem;
+.admin-body--ops-wa-card-only .ops-wa-card-only {
+  padding: 0.5rem 0.35rem 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.45);
 }
-.ops-wa-card-only__intro {
-  margin: 0 0 0.85rem;
-  font-size: 0.95rem;
-  line-height: 1.45;
-  color: var(--admin-text, #eaf0ff);
-}
-.ops-wa-single-card-host {
-  margin-bottom: 0.85rem;
-}
-.ops-wa-card-only__actions {
-  margin: 0 0 0.4rem;
-}
-.ops-wa-card-only__hint {
+.admin-body--ops-wa-card-only .ops-wa-single-card-host {
   margin: 0;
-  font-size: 0.8rem;
-  line-height: 1.4;
-  color: var(--admin-text-muted, #a3b6d4);
+}
+.admin-body--ops-wa-card-only .op-cards-shell {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+.admin-body--ops-wa-card-only .op-card {
+  padding: 1rem 1rem 1.05rem;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+.admin-body--ops-wa-card-only .op-card__top {
+  margin-bottom: 0.55rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.admin-body--ops-wa-card-only .op-card__badge {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  padding: 0.42rem 0.95rem;
+  border-radius: 9999px;
+  line-height: 1.2;
+}
+.admin-body--ops-wa-card-only .op-card__actions {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top-color: rgba(255, 255, 255, 0.14);
+}
+.admin-body--ops-wa-card-only .op-status-btns--cards {
+  gap: 0.55rem;
+}
+.admin-body--ops-wa-card-only .op-status-btns--cards .op-st {
+  min-height: 3rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.2;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(30, 41, 59, 0.65);
+  color: #e2e8f0;
+}
+.admin-body--ops-wa-card-only .op-status-btns--cards .op-st:not(.is-active):not(:disabled) {
+  opacity: 0.88;
+}
+.admin-body--ops-wa-card-only .op-status-btns--cards .op-st.is-active {
+  opacity: 1;
+  font-weight: 800;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  outline: 2px solid rgba(255, 255, 255, 0.35);
+  outline-offset: 1px;
+}
+.admin-body--ops-wa-card-only .op-status-btns--cards .op-st:disabled {
+  opacity: 0.45;
+}
+.admin-body--ops-wa-card-only .op-del--card {
+  min-height: 2.75rem;
+  border-radius: 10px;
+  font-weight: 700;
 }
 
 .op-card {

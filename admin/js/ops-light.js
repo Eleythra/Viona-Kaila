@@ -271,37 +271,13 @@
     } catch (_e) {}
   }
 
-  /** WhatsApp «panelde aç»: yalnızca tek kayıt kartı; tam liste aynı dosyanın `?id=`suz adresi. */
-  function waPanelCardOnlyShellHtml(surface) {
-    var intro =
-      surface === "hk"
-        ? "Bu sayfa yalnızca WhatsApp’tan açtığınız misafir isteği kaydı içindir. Durumu aşağıda işaretleyebilirsiniz."
-        : surface === "tech"
-          ? "Bu sayfa yalnızca WhatsApp’tan açtığınız arıza kaydı içindir. Durumu aşağıda işaretleyebilirsiniz."
-          : "Bu sayfa yalnızca WhatsApp’tan açtığınız ön büro kaydı içindir. Durumu aşağıda işaretleyebilirsiniz.";
+  /** WhatsApp «panelde aç»: yalnızca tek kayıt kartı (metin/link yok; tam liste için adres çubuğundan ?id= kaldırılır). */
+  function waPanelCardOnlyMountHtml() {
     return (
-      '<div class="ops-wa-card-only glass-block" role="region" aria-label="Tek operasyon kaydı">' +
-      '<p class="ops-wa-card-only__intro">' +
-      escHtml(intro) +
-      '</p><div id="ops-wa-single-card-host" class="ops-wa-single-card-host"></div>' +
-      '<p class="ops-wa-card-only__actions">' +
-      '<a class="btn-primary btn-small" id="ops-wa-open-full-list" href="#">' +
-      escHtml("Tam operasyon listesi (süzgeç ve tablo)") +
-      "</a></p>" +
-      '<p class="ops-wa-card-only__hint">' +
-      escHtml(
-        "Tam liste aynı sayfadır; adres çubuğunda `?id=` ve `?type=` olmamalı. Aşağıdaki bağlantı tam listeyi açar; yer imine de öyle kaydedin.",
-      ) +
-      "</p></div>"
+      '<div class="ops-wa-card-only glass-block" role="region" aria-label="Operasyon kaydı">' +
+      '<div id="ops-wa-single-card-host" class="ops-wa-single-card-host"></div>' +
+      "</div>"
     );
-  }
-
-  function wireWaOpenFullListHref() {
-    var a = document.getElementById("ops-wa-open-full-list");
-    if (!a) return;
-    try {
-      a.setAttribute("href", window.location.pathname || "/");
-    } catch (_e) {}
   }
 
   function waBucketStatusButtonLabels(bucketType) {
@@ -560,8 +536,7 @@
           try {
             document.body.classList.add("admin-body--ops-wa-card-only");
           } catch (_bc) {}
-          mount.innerHTML = waPanelCardOnlyShellHtml("hk");
-          wireWaOpenFullListHref();
+          mount.innerHTML = waPanelCardOnlyMountHtml();
           var hkCardHost = document.getElementById("ops-wa-single-card-host");
           async function hkRefetchWaCard() {
             try {
@@ -764,8 +739,7 @@
           try {
             document.body.classList.add("admin-body--ops-wa-card-only");
           } catch (_bc2) {}
-          mount.innerHTML = waPanelCardOnlyShellHtml("tech");
-          wireWaOpenFullListHref();
+          mount.innerHTML = waPanelCardOnlyMountHtml();
           var techCardHost = document.getElementById("ops-wa-single-card-host");
           async function techRefetchWaCard() {
             try {
@@ -980,8 +954,7 @@
           try {
             document.body.classList.add("admin-body--ops-wa-card-only");
           } catch (_s2) {}
-          mount.innerHTML = waPanelCardOnlyShellHtml("front");
-          wireWaOpenFullListHref();
+          mount.innerHTML = waPanelCardOnlyMountHtml();
           var frontWaHost = document.getElementById("ops-wa-single-card-host");
           var bFront = deepLink.type;
           var idFront = deepLink.id;
