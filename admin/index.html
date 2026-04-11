@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0b1017" />
+    <meta
+      name="description"
+      content="Viona yönetim paneli: anlık özet, operasyon sekmeleri, kayıt listeleri ve raporlar."
+    />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com https: data:; connect-src 'self' http://127.0.0.1:3001 http://localhost:3001 https:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" />
     <title>Viona Admin Panel</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -13,13 +17,13 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/styles.css?v=30" />
-    <link rel="stylesheet" href="styles.css?v=32" />
+    <link rel="stylesheet" href="styles.css?v=39" />
   </head>
   <body class="admin-body">
     <section id="admin-login" class="admin-login">
       <form id="admin-login-form" class="glass-block admin-login__card">
         <h1>Viona Admin Giriş</h1>
-        <p>Devam etmek için panel şifrenizi girin (yönetici tarafından tanımlanan giriş kodu).</p>
+        <p>Devam etmek için panel şifrenizi girin. Erişim, sunucuda tanımlı yönetici anahtarı ile doğrulanır.</p>
         <p class="admin-login__field-label" id="admin-username-label">Kullanıcı adı</p>
         <div class="admin-login__fixed-user" role="status" aria-labelledby="admin-username-label">Viona-Kaila</div>
         <input type="hidden" id="admin-username" value="Viona-Kaila" autocomplete="username" />
@@ -47,11 +51,11 @@
             </div>
             <div class="admin-nav__divider" aria-hidden="true"></div>
             <button type="button" data-tab="requests" aria-controls="tab-requests" title="İstek kayıtlarını açar">İstekler</button>
-            <button type="button" data-tab="complaints" aria-controls="tab-complaints" title="Şikayet kayıtlarını açar">Şikayetler</button>
+            <button type="button" data-tab="complaints" aria-controls="tab-complaints" title="Şikâyet kayıtlarını açar">Şikâyetler</button>
             <button type="button" data-tab="faults" aria-controls="tab-faults" title="Arıza kayıtlarını açar">Arızalar</button>
             <button type="button" data-tab="guest_notifications" aria-controls="tab-guest-notifications" title="Misafir bildirim kayıtlarını açar">Misafir bildirimleri</button>
             <button type="button" data-tab="evaluations" aria-controls="tab-evaluations" title="Misafir anket özeti">Değerlendirmeler</button>
-            <button type="button" data-tab="comments" aria-controls="tab-comments" title="Misafir yorumları (yakında)">Yorumlar</button>
+            <button type="button" data-tab="comments" aria-controls="tab-comments" title="Misafir yorumları — modül yakında">Yorumlar</button>
             <button type="button" data-tab="logs" aria-controls="tab-logs" title="Sohbet günlükleri ve kalite incelemesi">Loglar</button>
             <button type="button" data-tab="pdf-report" aria-controls="tab-pdf-report" title="PDF rapor oluşturma ekranını açar">Rapor</button>
           </nav>
@@ -67,55 +71,17 @@
             <header class="home-panel__head">
               <p class="home-panel__eyebrow">Özet</p>
               <h2 id="home-live-heading" class="home-panel__title">Anlık durum</h2>
-              <p class="home-panel__desc">Rapor ve kayıtlardan özet; yenileme zamanı altta güncellenir.</p>
+              <p class="home-panel__desc">
+                Rapor ve kayıtlardan özet. Ana sayfa açıkken veriler periyodik yenilenir; güncelleme saati üst banttaki özet satırında yer alır.
+              </p>
             </header>
             <div class="home-panel__body home-panel__body--flush">
               <p id="dashboard-api-warning" class="dashboard-api-warning hidden" role="status" aria-hidden="true"></p>
               <p id="dashboard-merge-warning" class="dashboard-api-warning hidden" role="status" aria-hidden="true"></p>
-              <div
-                id="dashboard-whatsapp-status"
-                class="dashboard-whatsapp-status"
-                role="status"
-                aria-live="polite"
-              >
-                <span class="dashboard-whatsapp-status__icon" aria-hidden="true"></span>
-                <div class="dashboard-whatsapp-status__copy">
-                  <span class="dashboard-whatsapp-status__kicker">WhatsApp · Operasyon</span>
-                  <span id="dashboard-whatsapp-status-detail" class="dashboard-whatsapp-status__detail"></span>
-                </div>
-              </div>
-              <div class="op-deeplinks glass-block" role="region" aria-label="Saha operasyon sekmeleri">
-                <p class="op-deeplinks__title">Tam panel (yönetici) — operasyon sekmeleri</p>
-                <p class="op-deeplinks__hint">
-                  Siz <strong>HK Operasyon</strong>, <strong>Teknik Operasyon</strong> ve <strong>Ön büro Operasyon</strong> sekmelerinden güncellersiniz.
-                  Üstteki İstekler / Şikayetler vb. salt okunur özet içindir.
-                </p>
-                <div class="op-deeplinks__grid">
-                  <button type="button" class="btn-small op-deeplinks__link js-dash-open-op-hk">HK Operasyon</button>
-                  <button type="button" class="btn-small op-deeplinks__link js-dash-open-op-tech">Teknik Operasyon</button>
-                  <button type="button" class="btn-small op-deeplinks__link js-dash-open-op-front">Ön büro Operasyon</button>
-                </div>
-                <p class="op-deeplinks__hint op-deeplinks__hint--tight">
-                  <strong>Ekip / WhatsApp (sınırlı erişim):</strong> tam panele giremezler; yalnızca işaretleme sayfaları.
-                  <strong>Token’sız mod (önerilen kolaylık):</strong> Render’da
-                  <code class="op-deeplinks__code">OPS_TRUST_OPS_PAGE_HEADER=1</code> — ekip sadece
-                  <code class="op-deeplinks__code">…/admin/ops-hk.html</code> vb. açar; #/şifre gerekmez (yalnızca admin domain’inden).
-                  <strong>Token’lı mod:</strong>
-                  <code class="op-deeplinks__code">…/ops-hk.html#TOKEN</code> veya WhatsApp’ta
-                  <code class="op-deeplinks__code">?k=TOKEN</code> —
-                  <code class="op-deeplinks__code">OPS_LINK_TOKEN_*</code> ile aynı.
-                </p>
-                <div class="op-deeplinks__grid">
-                  <a class="btn-small op-deeplinks__link" href="ops-hk.html" target="_blank" rel="noopener">Ekip sayfası · HK</a>
-                  <a class="btn-small op-deeplinks__link" href="ops-tech.html" target="_blank" rel="noopener">Ekip sayfası · Teknik</a>
-                  <a class="btn-small op-deeplinks__link" href="ops-front.html" target="_blank" rel="noopener">Ekip sayfası · Ön büro</a>
-                </div>
-                <p class="op-deeplinks__hint op-deeplinks__hint--after-links">
-                  WhatsApp grubunda bu üç linki <strong>sabitlenmiş mesaj</strong> veya grup açıklamasına ekleyin; otomatik şablon
-                  bildiriminin altına link koymak Meta şablon onayı gerektirir.
-                </p>
-              </div>
               <div id="home-top-strip" class="home-top-strip" aria-label="Özet göstergeler"></div>
+              <div class="home-dashboard-alerts-wrap">
+                <div id="dashboard-alerts"></div>
+              </div>
             </div>
           </section>
 
@@ -123,21 +89,10 @@
             <header class="home-panel__head">
               <p class="home-panel__eyebrow">Rapor</p>
               <h2 id="home-kpi-heading" class="home-panel__title">Ana göstergeler</h2>
-              <p class="home-panel__desc">Sohbet hacmi, fallback oranı ve memnuniyet skorları.</p>
+              <p class="home-panel__desc">Sohbet hacmi, fallback oranı ve memnuniyet; rapor uçlarından canlı özet.</p>
             </header>
             <div class="home-panel__body">
               <div id="kpi-cards" class="kpi-grid home-kpi-grid"></div>
-            </div>
-          </section>
-
-          <section class="home-panel home-panel--ops" aria-labelledby="home-ops-heading">
-            <header class="home-panel__head">
-              <p class="home-panel__eyebrow">İş akışı</p>
-              <h2 id="home-ops-heading" class="home-panel__title">Operasyon</h2>
-              <p class="home-panel__desc">Bekleyen kayıtların kısa özeti. Tam liste ilgili sekmede.</p>
-            </header>
-            <div class="home-panel__body home-panel__body--alerts">
-              <div id="dashboard-alerts"></div>
             </div>
           </section>
 
@@ -189,10 +144,10 @@
         </section>
         <section id="tab-complaints" class="admin-tab hidden">
           <div class="section-head">
-            <h2>Şikayetler</h2>
+            <h2>Şikâyetler</h2>
             <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
           </div>
-          <p class="section-lead">Şikayet kayıtları ve personel notları.</p>
+          <p class="section-lead">Şikâyet kayıtları ve personel notları; tam yetkili düzenleme.</p>
           <div id="list-complaints"></div>
         </section>
         <section id="tab-faults" class="admin-tab hidden">
@@ -239,9 +194,9 @@
                   <option value="">Tüm kayıtlar</option>
                   <option value="new">Yeni</option>
                   <option value="pending">Bekliyor</option>
-                  <option value="in_progress">İşlemde</option>
+                  <option value="in_progress">Yapılıyor</option>
                   <option value="done">Yapıldı</option>
-                  <option value="rejected">Yapılamadı</option>
+                  <option value="rejected">Yapılmadı</option>
                   <option value="cancelled">İptal</option>
                 </select>
               </label>
@@ -282,9 +237,9 @@
                   <option value="">Tüm kayıtlar</option>
                   <option value="new">Yeni</option>
                   <option value="pending">Bekliyor</option>
-                  <option value="in_progress">Üzerinde</option>
-                  <option value="done">Tamam</option>
-                  <option value="rejected">Yapılamadı</option>
+                  <option value="in_progress">Yapılıyor</option>
+                  <option value="done">Yapıldı</option>
+                  <option value="rejected">Yapılmadı</option>
                   <option value="cancelled">İptal</option>
                 </select>
               </label>
@@ -315,8 +270,11 @@
             <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
           </div>
           <p class="section-lead">
-            Üç liste birlikte güncellenir. Aşağıdaki süzgeç üç blokta da geçerlidir. Salt okunur detay için ilgili ana sekmeleri kullanın.
+            Üstteki rakamlar sunucudan canlı sayılır. Tek süzgeç alanı vardır: alttaki sekmelerden hangi liste seçiliyse
+            (Şikâyetler, Misafir bildirimleri, Geç çıkış) <strong>Uygula</strong> yalnız o kategoriye uygulanır; diğer
+            ikisinin kayıtlı süzgeci ayrı kalır.
           </p>
+          <p id="op-front-filter-scope" class="op-filter-scope" role="status"></p>
           <div class="op-filter-bar glass-block" id="op-front-filters" role="search" aria-label="Ön büro operasyon filtreleri">
             <div class="op-filter-bar__row">
               <label class="op-filter-field"
@@ -325,7 +283,7 @@
                   <option value="">Tüm kayıtlar</option>
                   <option value="new">Yeni</option>
                   <option value="pending">Bekliyor</option>
-                  <option value="in_progress">İşlemde</option>
+                  <option value="in_progress">Yapılıyor</option>
                   <option value="done">Tamamlandı</option>
                   <option value="rejected">Olumsuz</option>
                   <option value="cancelled">İptal</option>
@@ -348,7 +306,7 @@
                 <button type="button" class="btn-small" id="op-front-filter-clear">Sıfırla</button>
               </div>
             </div>
-            <p class="op-filter-hint">Şikâyet, bildirim ve geç çıkış listeleri aynı tarih/oda/durum filtresiyle yenilenir.</p>
+            <p class="op-filter-hint">Sekmeyi değiştirdiğinizde alanlar o sekmenin son süzgecini gösterir.</p>
           </div>
           <div id="op-front-mount"></div>
         </section>
@@ -376,7 +334,11 @@
             <h2>Yorumlar</h2>
             <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
           </div>
-          <p class="section-lead">Bu bölüm yakında doldurulacak.</p>
+          <p class="section-lead">Misafir yorumları kaynağı bağlandığında bu sekmede listelenir.</p>
+          <div class="admin-placeholder glass-block" role="status">
+            <p class="admin-placeholder__title">Yakında</p>
+            <p class="admin-placeholder__text">Şu an için veri çekilmez; modül hazır olduğunda aynı düzenle devam edecektir.</p>
+          </div>
         </section>
 
         <section id="tab-pdf-report" class="admin-tab hidden">
@@ -584,8 +546,8 @@
     <script src="../js/api-config.js?v=13"></script>
     <script src="../js/requests/config.js?v=20"></script>
     <script src="../js/hotel-room-numbers.js?v=1"></script>
-    <script src="js/data-adapter.js?v=16"></script>
-    <script src="js/ui.js?v=50"></script>
-    <script src="js/app.js?v=44"></script>
+    <script src="js/data-adapter.js?v=19"></script>
+    <script src="js/ui.js?v=53"></script>
+    <script src="js/app.js?v=49"></script>
   </body>
 </html>

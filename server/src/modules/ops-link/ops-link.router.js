@@ -1,7 +1,14 @@
 import { Router } from "express";
 import { timingSafeEqual } from "node:crypto";
 import { getEnv } from "../../config/env.js";
-import { listAdminBucket, updateAdminItemStatus } from "../admin/admin.service.js";
+import {
+  deleteAdminItem,
+  getAdminBucketItem,
+  getFrontOfficeOperationSummary,
+  getFrontOfficeTypeSummary,
+  listAdminBucket,
+  updateAdminItemStatus,
+} from "../admin/admin.service.js";
 
 const router = Router();
 
@@ -84,7 +91,30 @@ function trustedOpsOriginSet(env) {
   return set;
 }
 
+function firstForwardedHost(req) {
+  const raw = req.headers["x-forwarded-host"] || req.headers["x-vercel-forwarded-host"] || "";
+  const first = String(raw).split(",")[0].trim().toLowerCase();
+  return first.replace(/:\d+$/, "");
+}
+
+/** Vercel → Render: tarayıcı Origin’i bazen iletilmez; proxy X-Forwarded-Host taşır. */
+function forwardedHostIsTrustedAdmin(req, env) {
+  const h = firstForwardedHost(req);
+  if (!h) return false;
+  if (h === "viona-admin.eleythra.com" || h === "www.viona-admin.eleythra.com") return true;
+  for (const raw of env.corsAllowedOrigins || []) {
+    try {
+      const u = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+      if (u.hostname.toLowerCase() === h) return true;
+    } catch {
+      /* yok say */
+    }
+  }
+  return false;
+}
+
 function isTrustedOpsCaller(req, env) {
+  if (forwardedHostIsTrustedAdmin(req, env)) return true;
   const allowed = trustedOpsOriginSet(env);
   const o = normalizeOrigin(req.headers?.origin);
   if (o && allowed.has(o)) return true;
@@ -152,6 +182,55 @@ router.get("/requests", async (req, res) => {
   }
 });
 
+router.get("/requests/front-summary", async (req, res) => {
+  try {
+    if (req.opsRole !== "front") {
+      return res.status(403).json({ ok: false, error: "forbidden_bucket" });
+    }
+    const summary = await getFrontOfficeOperationSummary(req.query || {});
+    return res.status(200).json({ ok: true, summary });
+  } catch (error) {
+    return adminErr(res, error, "ops_front_summary_failed");
+  }
+});
+
+router.get("/requests/front-type-summary", async (req, res) => {
+  try {
+    if (req.opsRole !== "front") {
+      return res.status(403).json({ ok: false, error: "forbidden_bucket" });
+    }
+    const type = String(req.query.type || "");
+    const allowed = BUCKETS_BY_ROLE[req.opsRole];
+    if (!allowed || !allowed.has(type)) {
+      return res.status(403).json({ ok: false, error: "forbidden_bucket" });
+    }
+    const summary = await getFrontOfficeTypeSummary(type, req.query || {});
+    return res.status(200).json({ ok: true, summary });
+  } catch (error) {
+    return adminErr(res, error, "ops_front_type_summary_failed");
+  }
+});
+
+/** HK pilot: WhatsApp derin bağlantı — tek istek kaydı (liste sayfasında olmasa bile). */
+router.get("/requests/:type/:id", async (req, res) => {
+  try {
+    if (req.opsRole !== "hk") {
+      return res.status(403).json({ ok: false, error: "forbidden_bucket" });
+    }
+    const type = String(req.params.type || "");
+    if (type !== "request") {
+      return res.status(403).json({ ok: false, error: "forbidden_bucket" });
+    }
+    const item = await getAdminBucketItem(type, req.params.id);
+    return res.status(200).json({ ok: true, type, item });
+  } catch (error) {
+    const msg = String(error?.message || "");
+    if (msg === "invalid_id") return res.status(400).json({ ok: false, error: "invalid_id" });
+    if (msg === "record_not_found") return res.status(404).json({ ok: false, error: "record_not_found" });
+    return adminErr(res, error, "ops_item_get_failed");
+  }
+});
+
 router.patch("/requests/:type/:id/status", async (req, res) => {
   try {
     const type = String(req.params.type || "");
@@ -163,6 +242,20 @@ router.patch("/requests/:type/:id/status", async (req, res) => {
     return res.status(200).json({ ok: true, item: data });
   } catch (error) {
     return adminErr(res, error, "ops_status_update_failed");
+  }
+});
+
+router.delete("/requests/:type/:id", async (req, res) => {
+  try {
+    const type = String(req.params.type || "");
+    const allowed = BUCKETS_BY_ROLE[req.opsRole];
+    if (!allowed || !allowed.has(type)) {
+      return res.status(403).json({ ok: false, error: "forbidden_bucket" });
+    }
+    const data = await deleteAdminItem(type, req.params.id);
+    return res.status(200).json({ ok: true, ...data });
+  } catch (error) {
+    return adminErr(res, error, "ops_item_delete_failed");
   }
 });
 

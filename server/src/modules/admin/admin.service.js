@@ -218,6 +218,138 @@ export async function listAdminBucket(type, query = {}) {
   };
 }
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isUuidString(id) {
+  return typeof id === "string" && UUID_RE.test(id.trim());
+}
+
+/** Tek satır (ops derin bağlantı / HK seçili kayıt paneli). */
+export async function getAdminBucketItem(type, id) {
+  const idStr = String(id ?? "").trim();
+  if (!idStr || !isUuidString(idStr)) throw new Error("invalid_id");
+  const table = tableForType(type);
+  const { data, error } = await sb(() => getSupabase().from(table).select("*").eq("id", idStr).maybeSingle());
+  if (error) rethrowSupabaseError(error);
+  if (!data) throw new Error("record_not_found");
+  return data;
+}
+
+function applyGuestBucketListFilters(qb, type, query = {}) {
+  let q = applyDateFilters(qb, query, "submitted_at");
+  if (type !== "reservation" && query.room_number) {
+    const rn = String(query.room_number || "").trim();
+    if (rn) q = q.eq("room_number", rn);
+  }
+  if (query.status) q = q.eq("status", String(query.status));
+  return q;
+}
+
+async function countGuestBucketHead(table, type, query, statusRule) {
+  let qb = getSupabase().from(table).select("id", { count: "exact", head: true });
+  qb = applyGuestBucketListFilters(qb, type, query);
+  if (statusRule?.kind === "in") qb = qb.in("status", statusRule.values);
+  else if (statusRule?.kind === "eq") qb = qb.eq("status", statusRule.value);
+  const { error, count } = await sb(() => qb);
+  if (error) rethrowSupabaseError(error);
+  return count || 0;
+}
+
+function stripPagingAndType(query = {}) {
+  const out = { ...query };
+  delete out.page;
+  delete out.pageSize;
+  delete out.type;
+  return out;
+}
+
+async function countFrontTypeStatusGroups(type, q0) {
+  const table = tableForType(type);
+  /** `.in()` + `head` bazı ortamlarda güvenilir olmayabildiği için new ve pending ayrı sayılır. */
+  const [bekNew, bekPending, islemde, yapildi, yapilmadi, iptal, toplam] = await Promise.all([
+    countGuestBucketHead(table, type, q0, { kind: "eq", value: "new" }),
+    countGuestBucketHead(table, type, q0, { kind: "eq", value: "pending" }),
+    countGuestBucketHead(table, type, q0, { kind: "eq", value: "in_progress" }),
+    countGuestBucketHead(table, type, q0, { kind: "eq", value: "done" }),
+    countGuestBucketHead(table, type, q0, { kind: "eq", value: "rejected" }),
+    countGuestBucketHead(table, type, q0, { kind: "eq", value: "cancelled" }),
+    countGuestBucketHead(table, type, q0, null),
+  ]);
+  const bekliyor = bekNew + bekPending;
+  return { bekliyor, islemde, yapildi, yapilmadi, iptal, toplam };
+}
+
+/** Şikâyet + misafir bildirimi + geç çıkış: tarih/oda (ve istenirse durum) filtreleriyle özet; kategori bazlı byType. */
+export async function getFrontOfficeOperationSummary(query = {}) {
+  const types = ["complaint", "guest_notification", "late_checkout"];
+  const qAll = stripPagingAndType(query);
+  const st = String(qAll.status || "").trim();
+  if (st) {
+    const byType = {};
+    let total = 0;
+    const parts = await Promise.all(
+      types.map(async (type) => {
+        const table = tableForType(type);
+        const n = await countGuestBucketHead(table, type, qAll, null);
+        return { type, n };
+      }),
+    );
+    for (const { type, n } of parts) {
+      byType[type] = {
+        bekliyor: 0,
+        islemde: 0,
+        yapildi: 0,
+        yapilmadi: 0,
+        iptal: 0,
+        toplam: n,
+      };
+      total += n;
+    }
+    return { mode: "filtered", total, byType };
+  }
+  const q0 = { ...qAll };
+  delete q0.status;
+  const byType = {};
+  let bekliyor = 0;
+  let islemde = 0;
+  let yapildi = 0;
+  let yapilmadi = 0;
+  let iptal = 0;
+  let toplam = 0;
+  const perType = await Promise.all(types.map((type) => countFrontTypeStatusGroups(type, q0)));
+  types.forEach((type, i) => {
+    const c = perType[i];
+    byType[type] = c;
+    bekliyor += c.bekliyor;
+    islemde += c.islemde;
+    yapildi += c.yapildi;
+    yapilmadi += c.yapilmadi;
+    iptal += c.iptal || 0;
+    toplam += c.toplam || 0;
+  });
+  return { mode: "full", bekliyor, islemde, yapildi, yapilmadi, iptal, toplam, byType };
+}
+
+const FRONT_SUMMARY_TYPES = new Set(["complaint", "guest_notification", "late_checkout"]);
+
+/** Tek ön büro kovası için durum sayıları (tarih/oda/durum süzgeci listeyle aynı mantık). */
+export async function getFrontOfficeTypeSummary(type, query = {}) {
+  const t = String(type || "").trim();
+  if (!FRONT_SUMMARY_TYPES.has(t)) throw new Error("invalid front summary type");
+  const qAll = stripPagingAndType(query);
+  const st = String(qAll.status || "").trim();
+  if (st) {
+    const table = tableForType(t);
+    const n = await countGuestBucketHead(table, t, qAll, null);
+    return { mode: "filtered", type: t, toplam: n, bekliyor: 0, islemde: 0, yapildi: 0, yapilmadi: 0, iptal: 0 };
+  }
+  const q0 = { ...qAll };
+  delete q0.status;
+  const c = await countFrontTypeStatusGroups(t, q0);
+  return { mode: "full", type: t, ...c };
+}
+
 export async function listSurveySubmissions(query = {}) {
   const paging = parsePaging(query);
   let qb = getSupabase().from("survey_submissions").select("*", { count: "exact" }).order("submitted_at", { ascending: false });

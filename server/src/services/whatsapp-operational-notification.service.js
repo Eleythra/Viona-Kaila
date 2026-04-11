@@ -12,6 +12,11 @@
  * Yönlendirme: arıza → WHATSAPP_TECH_RECIPIENTS | istek → WHATSAPP_HK_RECIPIENTS |
  * şikayet + misafir bildirimi + geç çıkış → WHATSAPP_FRONT_RECIPIENTS (ön büro).
  *
+ * HK istek şablonunda «Visit Website / Dynamic URL» butonu: Meta şablonunda Base URL
+ * (örn. https://viona-admin.eleythra.com/admin/) tanımlı; gövde aynı kalır. İstek kaydı için
+ * `WHATSAPP_HK_PANEL_URL_BUTTON=1` iken Cloud API’ye `components` içine URL butonu eklenir;
+ * dinamik suffix yalnızca `ops-hk.html?id=<guest_requests.uuid>` (kayıt `options.recordId`).
+ *
  * Env: WHATSAPP_ACCESS_TOKEN (veya WHATSAPP_CLOUD_ACCESS_TOKEN), WHATSAPP_PHONE_NUMBER_ID,
  * isteğe bağlı WHATSAPP_BUSINESS_ACCOUNT_ID (referans), WHATSAPP_TEMPLATE_* ile şablon adı override.
  */
@@ -35,6 +40,20 @@ function resolveComplaintTemplateName() {
 }
 
 const PARAM_MAX = 900;
+
+const HK_PANEL_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/**
+ * Meta şablon «Dynamic URL» suffix: base URL’e eklenir. Tam site adresi üretilmez.
+ * @param {string} recordId — guest_requests.id
+ * @returns {string|null}
+ */
+export function buildHkOpsPanelUrlSuffix(recordId) {
+  const id = String(recordId ?? "").trim().toLowerCase();
+  if (!id || !HK_PANEL_UUID_RE.test(id)) return null;
+  return `ops-hk.html?id=${id}`;
+}
 
 const WH_CATEGORY_LABELS = {
   request: {
@@ -661,6 +680,19 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
 
   const bodyParameters = bodyParams.map((text) => ({ type: "text", text: dash(text) }));
 
+  const components = [{ type: "body", parameters: bodyParameters }];
+  const panelSuffix =
+    recordType === "request" ? buildHkOpsPanelUrlSuffix(options.recordId) : null;
+  const panelButtonOn = String(process.env.WHATSAPP_HK_PANEL_URL_BUTTON || "").trim() === "1";
+  if (panelSuffix && panelButtonOn) {
+    components.push({
+      type: "button",
+      sub_type: "url",
+      index: "0",
+      parameters: [{ type: "text", text: panelSuffix }],
+    });
+  }
+
   for (const to of recipients) {
     let res;
     let raw = "";
@@ -678,7 +710,7 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
           template: {
             name: templateName,
             language: { code: lang },
-            components: [{ type: "body", parameters: bodyParameters }],
+            components,
           },
         }),
       });

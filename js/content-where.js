@@ -1,5 +1,6 @@
 /**
- * Neredeyim / Nasıl giderim — premium konum rehberi (liste + ikonlar, harita yok).
+ * Neredeyim — dik kroki + sabit numaralı işaretler; liste seçimi ve pin tıklaması ile kısa konum tarifi.
+ * Düzen: styles.css (#view-module:has(.where-module--kroki-locked), …) — :has() desteklemeyen tarayıcıda yalnızca bu ek stiller uygulanmaz.
  */
 (function () {
   "use strict";
@@ -16,80 +17,8 @@
     return { tr: tr, en: en, de: de, ru: ru };
   }
 
-  var S = ' fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"';
-
-  function whereIconSvg(kind) {
-    var c = "<svg class=\"where-place-card__ico\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"" + S + ">";
-    switch (kind) {
-      case "lobby":
-        c += "<path d=\"M4 20h16\"/><path d=\"M6 20V10l6-4 6 4v10\"/><path d=\"M9 20v-6h6v6\"/>";
-        break;
-      case "sofa":
-        c += "<path d=\"M5 11V9a2 2 0 012-2h10a2 2 0 012 2v2\"/><path d=\"M3 14v3h2\"/><path d=\"M19 14v3h-2\"/><rect x=\"5\" y=\"11\" width=\"14\" height=\"5\" rx=\"1\"/>";
-        break;
-      case "cup":
-        c += "<path d=\"M18 8h1a4 4 0 010 8h-1\"/><path d=\"M2 8h16v5a4 4 0 01-4 4H6a4 4 0 01-4-4V8z\"/><line x1=\"6\" y1=\"2\" x2=\"6\" y2=\"4\"/><line x1=\"10\" y1=\"2\" x2=\"10\" y2=\"4\"/><line x1=\"14\" y1=\"2\" x2=\"14\" y2=\"4\"/>";
-        break;
-      case "bed":
-        c += "<path d=\"M3 10v9\"/><path d=\"M21 10v9\"/><path d=\"M3 14h18\"/><path d=\"M5 10V7a2 2 0 012-2h10a2 2 0 012 2v3\"/>";
-        break;
-      case "users":
-        c += "<path d=\"M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M23 21v-2a4 4 0 00-3-3.87\"/><path d=\"M16 3.13a4 4 0 010 7.75\"/>";
-        break;
-      case "pool":
-        c += "<path d=\"M2 12c2-1 4-1 6 0s4 1 6 0 4-1 6 0\"/><path d=\"M2 17c2-1 4-1 6 0s4 1 6 0 4-1 6 0\"/>";
-        break;
-      case "utensils":
-        c += "<path d=\"M3 2v7c0 1.1.9 2 2 2h0a2 2 0 002-2V2\"/><path d=\"M7 2v20\"/><path d=\"M21 15V2v0a5 5 0 00-5 5v6\"/><path d=\"M21 15v7\"/>";
-        break;
-      case "shop":
-        c += "<circle cx=\"9\" cy=\"21\" r=\"1\"/><circle cx=\"20\" cy=\"21\" r=\"1\"/><path d=\"M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6\"/>";
-        break;
-      case "spa":
-        c += "<path d=\"M12 3c-1.5 3-6 4-6 9a6 6 0 1012 0c0-5-4.5-6-6-9z\"/><path d=\"M8 15h8\"/>";
-        break;
-      case "droplet":
-        c += "<path d=\"M12 2.69l5.66 5.66a8 8 0 11-11.31 0z\"/>";
-        break;
-      case "dumbbell":
-        c += "<path d=\"M6.5 6.5l11 11\"/><path d=\"M21 12l-2 2\"/><path d=\"M3 12l2 2\"/><path d=\"M18 7l3-3\"/><path d=\"M3 21l3-3\"/><path d=\"M14 3l3 3\"/><path d=\"M7 18l-3 3\"/>";
-        break;
-      case "cake":
-        c += "<path d=\"M20 21V10a2 2 0 00-2-2H6a2 2 0 00-2 2v11\"/><path d=\"M4 16s1-1 4-1 4 2 6 2 4-1 4-1\"/><path d=\"M12 7V3\"/><path d=\"M8 3h8\"/>";
-        break;
-      case "fish":
-        c += "<path d=\"M6.5 12c.94-2.46 3.28-4 6.5-4 3.5 0 6 2.5 6 4s-2.5 4-6 4c-3.22 0-5.56-1.54-6.5-4z\"/><path d=\"M6 12h.01\"/><path d=\"M9 9l-3 3 3 3\"/>";
-        break;
-      case "smile":
-        c += "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M8 14s1.5 2 4 2 4-2 4-2\"/><line x1=\"9\" y1=\"9\" x2=\"9.01\" y2=\"9\"/><line x1=\"15\" y1=\"9\" x2=\"15.01\" y2=\"9\"/>";
-        break;
-      case "car":
-        c += "<path d=\"M19 17h2l-1-5H5l-1 5h2\"/><circle cx=\"7.5\" cy=\"17.5\" r=\"2.5\"/><circle cx=\"16.5\" cy=\"17.5\" r=\"2.5\"/><path d=\"M5 12L7 5h10l2 7\"/>";
-        break;
-      case "slide":
-        c += "<path d=\"M4 20h16\"/><path d=\"M6 20V8l6-4 6 4v12\"/><path d=\"M10 12l4 2\"/>";
-        break;
-      case "waves":
-        c += "<path d=\"M2 12c2-1 4-1 6 0s4 1 6 0 4-1 6 0\"/><path d=\"M2 17c2-1 4-1 6 0s4 1 6 0 4-1 6 0\"/><path d=\"M2 7c2-1 4-1 6 0s4 1 6 0 4-1 6 0\"/>";
-        break;
-      case "tunnel":
-        c += "<path d=\"M4 20h16\"/><path d=\"M6 20V10a6 6 0 0112 0v10\"/><path d=\"M9 14h6\"/>";
-        break;
-      case "umbrella":
-        c += "<path d=\"M23 12a11 11 0 00-22 0z\"/><path d=\"M12 12v8a2 2 0 004 0\"/>";
-        break;
-      case "flame":
-        c += "<path d=\"M12 2c2 3 7 5 7 11a7 7 0 11-14 0c0-3 2-6 4-7 0 2 1.5 3.5 3 4z\"/>";
-        break;
-      default:
-        c += "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 16v-4\"/><path d=\"M12 8h.01\"/>";
-    }
-    return c + "</svg>";
-  }
-
   /**
-   * Sıra: sık sorulanlar üstte (lobi, ana restoran, Sinton), ardından kullanıcı listesi.
-   * tier "hero" → büyük vurgulu kart.
+   * Kroki pin sırası (Sinton yok). tier alanı yalnızca veri mirası; arayüzde kullanılmıyor.
    */
   var WHERE_PLACES = [
     {
@@ -124,23 +53,6 @@
         "Open-buffet dining for your main meals.",
         "Offenes Buffet für die Hauptmahlzeiten.",
         "Шведский стол на основные приёмы пищи.",
-      ),
-    },
-    {
-      tier: "hero",
-      icon: "flame",
-      title: L("Sinton Restaurant", "Sinton Restaurant", "Sinton Restaurant", "Ресторан Sinton"),
-      konum: L(
-        "A Blok ana girişinden çıkınca sağda, biraz ileride.",
-        "Step outside Block A’s main entrance, then ahead and to your right.",
-        "Vor dem Haupteingang von Block A hinaus, dann geradeaus und rechts.",
-        "Выйдя из главного входа блока A — чуть вперёд и справа.",
-      ),
-      desc: L(
-        "Ana giriş hattında à la carte restoran.",
-        "À la carte restaurant by the main arrival side.",
-        "À-la-carte-Restaurant in der Nähe des Haupteingangs.",
-        "Ресторан à la carte у зоны главного входа.",
       ),
     },
     {
@@ -357,16 +269,16 @@
       icon: "dumbbell",
       title: L("Fitness Salonu (Fitness)", "Fitness", "Fitness", "Фитнес"),
       konum: L(
-        "A Blok, eksi birinci (-1) kat.",
-        "Basement −1, Block A.",
-        "Untergeschoss −1, Block A.",
-        "Уровень −1, блок A.",
+        "B Blok alt katında, wellness girişi hizasında.",
+        "Lower level of Block B — follow fitness / spa signage.",
+        "Untergeschoss von Block B — Fitness-/Spa-Beschilderung folgen.",
+        "Нижний уровень блока B — по указателям фитнеса / спа.",
       ),
       desc: L(
-        "Kardiyo ve ağırlık alanı.",
-        "Cardio and strength equipment.",
-        "Cardio- und Krafttraining.",
-        "Кардио и силовые тренажёры.",
+        "B Blok alt katında kardiyo ve ağırlık alanı.",
+        "Cardio and strength equipment on Block B’s lower level.",
+        "Cardio und Krafttraining im Untergeschoss von Block B.",
+        "Кардио и силовые тренажёры на нижнем уровне блока B.",
       ),
     },
     {
@@ -614,11 +526,101 @@
     },
   ];
 
+  var KROKI_SRC = "assets/images/where/kroki-portrait.png?v=1";
+
+  /** Sabit pin: Sinton hariç 29 nokta, kroki sol-üst köşeye göre yüzde. */
+  var WHERE_KROKI_FIXED_POSITIONS = [
+    { x: 40.2, y: 53.7 },
+    { x: 72.9, y: 72.3 },
+    { x: 48.3, y: 56.8 },
+    { x: 48.8, y: 50.6 },
+    { x: 47.7, y: 53.6 },
+    { x: 54.4, y: 53.5 },
+    { x: 49.8, y: 72 },
+    { x: 59, y: 69.6 },
+    { x: 61, y: 75.3 },
+    { x: 93.8, y: 72 },
+    { x: 74.6, y: 83.4 },
+    { x: 94.2, y: 78.2 },
+    { x: 91.9, y: 42 },
+    { x: 92.5, y: 46.9 },
+    { x: 93.1, y: 51.3 },
+    { x: 94, y: 66 },
+    { x: 66, y: 33.9 },
+    { x: 66.7, y: 39.1 },
+    { x: 66, y: 44.1 },
+    { x: 28.1, y: 40.4 },
+    { x: 91.5, y: 35.7 },
+    { x: 53.8, y: 23.2 },
+    { x: 69.4, y: 19 },
+    { x: 80.4, y: 11.2 },
+    { x: 87.7, y: 24.6 },
+    { x: 46.3, y: 16.4 },
+    { x: 77.9, y: 87.3 },
+    { x: 54.2, y: 94.3 },
+    { x: 34.4, y: 96.5 },
+  ];
+
+  var WHERE_KROKI_GROUP_A = [0, 2, 3, 4, 5];
+  var WHERE_KROKI_GROUP_B = [1, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+  var WHERE_KROKI_GROUP_C = [17, 18, 19];
+
+  function placeKrokiPinEl(btn, xPct, yPct) {
+    btn.style.left = xPct + "%";
+    btn.style.top = yPct + "%";
+  }
+
+  function krokiPinAria(template, n) {
+    return String(template).replace(/\{n\}/g, String(n));
+  }
+
   function renderWhereModule(container, t) {
     if (!container || !WHERE_PLACES.length) return;
 
+    var nPlaces = WHERE_PLACES.length;
+    if (!WHERE_KROKI_FIXED_POSITIONS || WHERE_KROKI_FIXED_POSITIONS.length !== nPlaces) return;
+
+    var positions = WHERE_KROKI_FIXED_POSITIONS.map(function (p) {
+      return { x: p.x, y: p.y };
+    });
+
+    var selectedIndex = -1;
+
+    function scrollKrokiToPin(pinIx) {
+      if (pinIx < 0 || pinIx >= pinButtons.length) return;
+      var pin = pinButtons[pinIx];
+      if (!pin || !mapRegion) return;
+      var r = mapRegion.getBoundingClientRect();
+      var p = pin.getBoundingClientRect();
+      var pinMidY = p.top + p.height * 0.5;
+      var regionMidY = r.top + mapRegion.clientHeight * 0.5;
+      var nextTop = mapRegion.scrollTop + (pinMidY - regionMidY);
+      var maxY = Math.max(0, mapRegion.scrollHeight - mapRegion.clientHeight);
+      mapRegion.scrollTop = Math.max(0, Math.min(maxY, nextTop));
+
+      var pinMidX = p.left + p.width * 0.5;
+      var regionMidX = r.left + mapRegion.clientWidth * 0.5;
+      var nextLeft = mapRegion.scrollLeft + (pinMidX - regionMidX);
+      var maxX = Math.max(0, mapRegion.scrollWidth - mapRegion.clientWidth);
+      if (maxX > 0) {
+        mapRegion.scrollLeft = Math.max(0, Math.min(maxX, nextLeft));
+      }
+    }
+
+    function scheduleScrollKrokiToSelectedPin() {
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          if (selectedIndex >= 0) scrollKrokiToPin(selectedIndex);
+        });
+      });
+    }
+
+    function onKrokiImgLoad() {
+      if (selectedIndex >= 0) scheduleScrollKrokiToSelectedPin();
+    }
+
     var wrap = document.createElement("div");
-    wrap.className = "where-module where-module--premium";
+    wrap.className = "where-module where-module--premium where-module--kroki-locked";
     wrap.setAttribute("role", "region");
     wrap.setAttribute("aria-labelledby", "where-module-heading");
 
@@ -627,86 +629,216 @@
     pageTitle.className = "where-premium-page-title";
     pageTitle.textContent = t("modWhere");
 
+    var landscapeHero = document.createElement("div");
+    landscapeHero.className = "where-kroki-premium-hero";
+    landscapeHero.setAttribute("role", "status");
+    var landscapeHeroP = document.createElement("p");
+    landscapeHeroP.className = "where-kroki-premium-hero__text";
+    landscapeHeroP.textContent = t("whereKrokiLandscapeLead");
+    landscapeHero.appendChild(landscapeHeroP);
+
+    var blockLegend = document.createElement("div");
+    blockLegend.className = "where-kroki-block-legend";
+    blockLegend.setAttribute("role", "note");
+    var blockP = document.createElement("p");
+    blockP.className = "where-kroki-block-legend__text";
+    blockP.textContent = t("whereKrokiBlockLegend");
+    blockLegend.appendChild(blockP);
+
+    var orientHint = document.createElement("div");
+    orientHint.className = "where-kroki-orient-hint";
+    orientHint.setAttribute("role", "note");
+    var o1 = document.createElement("p");
+    o1.className = "where-kroki-orient-hint__line where-kroki-orient-hint__line--warn";
+    o1.textContent = t("whereKrokiOrientP1");
+    var o2 = document.createElement("p");
+    o2.className = "where-kroki-orient-hint__line";
+    o2.textContent = t("whereKrokiOrientP2");
+    var o3 = document.createElement("p");
+    o3.className = "where-kroki-orient-hint__line";
+    o3.textContent = t("whereKrokiOrientP3");
+    orientHint.appendChild(o1);
+    orientHint.appendChild(o2);
+    orientHint.appendChild(o3);
+
     var lead = document.createElement("p");
     lead.className = "where-premium-lead";
     lead.textContent = t("whereModuleIntro");
 
-    var heroRow = document.createElement("div");
-    heroRow.className = "where-premium-hero-row";
-    heroRow.setAttribute("role", "presentation");
+    var selectWrap = document.createElement("div");
+    selectWrap.className = "where-kroki-select-wrap";
+    var selectLabel = document.createElement("label");
+    selectLabel.className = "where-kroki-select-label";
+    selectLabel.setAttribute("for", "where-kroki-place-select");
+    selectLabel.textContent = t("whereKrokiSelectLabel");
+    var selectEl = document.createElement("select");
+    selectEl.id = "where-kroki-place-select";
+    selectEl.className = "where-kroki-select";
+    selectEl.setAttribute("aria-label", t("whereKrokiSelectLabel"));
 
-    var list = document.createElement("div");
-    list.className = "where-premium-grid";
-    list.setAttribute("role", "list");
+    var optEmpty = document.createElement("option");
+    optEmpty.value = "";
+    optEmpty.textContent = t("whereKrokiSelectPlaceholder");
+    selectEl.appendChild(optEmpty);
 
-    function buildCard(place) {
-      var art = document.createElement("article");
-      art.className =
-        "where-place-card" + (place.tier === "hero" ? " where-place-card--hero" : " where-place-card--standard");
-      art.setAttribute("role", "listitem");
-
-      var iconWrap = document.createElement("div");
-      iconWrap.className = "where-place-card__icon-wrap";
-      iconWrap.innerHTML = whereIconSvg(place.icon);
-
-      var body = document.createElement("div");
-      body.className = "where-place-card__body";
-
-      var h = document.createElement("h3");
-      h.className = "where-place-card__title";
-      h.textContent = T(place.title);
-
-      var loc = document.createElement("div");
-      loc.className = "where-place-card__block";
-      var locLbl = document.createElement("span");
-      locLbl.className = "where-place-card__label";
-      locLbl.textContent = t("whereLocLabel");
-      var locVal = document.createElement("p");
-      locVal.className = "where-place-card__text";
-      locVal.textContent = T(place.konum);
-      loc.appendChild(locLbl);
-      loc.appendChild(locVal);
-
-      var dsc = document.createElement("div");
-      dsc.className = "where-place-card__block where-place-card__block--desc";
-      var dscLbl = document.createElement("span");
-      dscLbl.className = "where-place-card__label";
-      dscLbl.textContent = t("whereDescLabel");
-      var dscVal = document.createElement("p");
-      dscVal.className = "where-place-card__text";
-      dscVal.textContent = T(place.desc);
-      dsc.appendChild(dscLbl);
-      dsc.appendChild(dscVal);
-
-      body.appendChild(h);
-      body.appendChild(loc);
-      body.appendChild(dsc);
-      art.appendChild(iconWrap);
-      art.appendChild(body);
-      return art;
-    }
-
-    for (var i = 0; i < WHERE_PLACES.length; i++) {
-      var p = WHERE_PLACES[i];
-      var card = buildCard(p);
-      if (p.tier === "hero") {
-        heroRow.appendChild(card);
-      } else {
-        list.appendChild(card);
+    function appendOptgroup(labelKey, indices) {
+      var og = document.createElement("optgroup");
+      og.label = t(labelKey);
+      for (var gi = 0; gi < indices.length; gi++) {
+        var ix = indices[gi];
+        var opt = document.createElement("option");
+        opt.value = String(ix + 1);
+        opt.textContent = T(WHERE_PLACES[ix].title);
+        og.appendChild(opt);
       }
+      selectEl.appendChild(og);
     }
 
-    var subHead = document.createElement("h2");
-    subHead.className = "where-premium-subhead";
-    subHead.textContent = t("whereListSectionTitle");
+    appendOptgroup("whereKrokiGroupA", WHERE_KROKI_GROUP_A);
+    appendOptgroup("whereKrokiGroupB", WHERE_KROKI_GROUP_B);
+    appendOptgroup("whereKrokiGroupC", WHERE_KROKI_GROUP_C);
+    var otherIdx = [];
+    for (var oi = 20; oi < nPlaces; oi++) otherIdx.push(oi);
+    appendOptgroup("whereKrokiGroupOther", otherIdx);
+
+    selectWrap.appendChild(selectLabel);
+    selectWrap.appendChild(selectEl);
+
+    var kroki = document.createElement("div");
+    kroki.className = "where-kroki";
+
+    var mapRegion = document.createElement("div");
+    mapRegion.className = "where-kroki__map-region";
+    mapRegion.setAttribute("role", "region");
+    mapRegion.setAttribute("aria-label", t("whereMapViewLabel"));
+
+    var stage = document.createElement("div");
+    stage.className = "where-kroki__stage";
+
+    var frame = document.createElement("div");
+    frame.className = "where-kroki__frame";
+
+    var imgEl = document.createElement("img");
+    imgEl.className = "where-kroki__img";
+    imgEl.src = KROKI_SRC;
+    imgEl.alt = t("whereMapViewLabel");
+    imgEl.loading = "eager";
+    imgEl.decoding = "async";
+    imgEl.draggable = false;
+    if ("fetchPriority" in imgEl) imgEl.fetchPriority = "high";
+    imgEl.addEventListener("load", onKrokiImgLoad);
+
+    var pinsLayer = document.createElement("div");
+    pinsLayer.className = "where-kroki__pins";
+
+    var pinButtons = [];
+    for (var pi = 0; pi < nPlaces; pi++) {
+      var pBtn = document.createElement("button");
+      pBtn.type = "button";
+      pBtn.className = "where-kroki-pin";
+      pBtn.textContent = String(pi + 1);
+      pBtn.setAttribute("aria-label", krokiPinAria(t("whereKrokiPinAria"), pi + 1));
+      placeKrokiPinEl(pBtn, positions[pi].x, positions[pi].y);
+      pinsLayer.appendChild(pBtn);
+      pinButtons.push(pBtn);
+    }
+
+    frame.appendChild(imgEl);
+    frame.appendChild(pinsLayer);
+    stage.appendChild(frame);
+    mapRegion.appendChild(stage);
+
+    var detail = document.createElement("div");
+    detail.className = "where-kroki-detail where-kroki-detail--hidden";
+    detail.setAttribute("role", "status");
+    detail.setAttribute("aria-live", "polite");
+    var detailTitle = document.createElement("h3");
+    detailTitle.className = "where-kroki-detail__title";
+    var detailLoc = document.createElement("p");
+    detailLoc.className = "where-kroki-detail__loc";
+
+    detail.appendChild(detailTitle);
+    detail.appendChild(detailLoc);
+
+    kroki.appendChild(detail);
+    kroki.appendChild(mapRegion);
+
+    function applySelection(ix) {
+      selectedIndex = typeof ix === "number" && ix >= 0 && ix < nPlaces ? ix : -1;
+      for (var si = 0; si < pinButtons.length; si++) {
+        pinButtons[si].classList.toggle("where-kroki-pin--selected", si === selectedIndex);
+        if (si === selectedIndex) {
+          pinButtons[si].setAttribute("aria-current", "true");
+        } else {
+          pinButtons[si].removeAttribute("aria-current");
+        }
+      }
+      if (selectedIndex < 0) {
+        detail.classList.add("where-kroki-detail--hidden");
+        detailTitle.textContent = "";
+        detailLoc.textContent = "";
+        return;
+      }
+      var pl = WHERE_PLACES[selectedIndex];
+      detail.classList.remove("where-kroki-detail--hidden");
+      detailTitle.textContent = T(pl.title);
+      detailLoc.textContent = t("whereLocLabel") + ": " + T(pl.konum);
+      scheduleScrollKrokiToSelectedPin();
+    }
+
+    selectEl.addEventListener("change", function () {
+      var v = selectEl.value;
+      if (!v) {
+        applySelection(-1);
+        return;
+      }
+      var n = parseInt(v, 10);
+      if (isNaN(n) || n < 1 || n > nPlaces) {
+        applySelection(-1);
+        return;
+      }
+      applySelection(n - 1);
+    });
+
+    for (var pj = 0; pj < nPlaces; pj++) {
+      (function (index) {
+        pinButtons[index].addEventListener("click", function () {
+          selectEl.value = String(index + 1);
+          applySelection(index);
+        });
+      })(pj);
+    }
+
+    var controlsCol = document.createElement("div");
+    controlsCol.className = "where-kroki-controls";
+    var controlsScrollHint = document.createElement("p");
+    controlsScrollHint.id = "where-kroki-scroll-hint";
+    controlsScrollHint.className = "visually-hidden";
+    controlsScrollHint.textContent = t("whereMapScrollLabel");
+    controlsCol.setAttribute("aria-describedby", "where-kroki-scroll-hint");
+    controlsCol.appendChild(controlsScrollHint);
+    controlsCol.appendChild(blockLegend);
+    controlsCol.appendChild(orientHint);
+    controlsCol.appendChild(lead);
+    controlsCol.appendChild(selectWrap);
+
+    var layoutRow = document.createElement("div");
+    layoutRow.className = "where-kroki-layout";
+    layoutRow.appendChild(controlsCol);
+    layoutRow.appendChild(kroki);
 
     wrap.appendChild(pageTitle);
-    wrap.appendChild(lead);
-    wrap.appendChild(heroRow);
-    wrap.appendChild(subHead);
-    wrap.appendChild(list);
+    wrap.appendChild(landscapeHero);
+    wrap.appendChild(layoutRow);
     container.appendChild(wrap);
-    container._whereCleanup = function () {};
+
+    if (imgEl.complete && imgEl.naturalWidth > 0) {
+      requestAnimationFrame(onKrokiImgLoad);
+    }
+
+    container._whereCleanup = function () {
+      imgEl.removeEventListener("load", onKrokiImgLoad);
+    };
   }
 
   window.renderWhereModule = renderWhereModule;

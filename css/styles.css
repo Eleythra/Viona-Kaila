@@ -480,6 +480,17 @@ body {
     0 1px 0 rgba(255, 255, 255, 0.04) inset;
 }
 
+#module-inner.glass-block:has(.where-module--kroki-locked) {
+  padding-left: max(12px, env(safe-area-inset-left, 0px));
+  padding-right: max(12px, env(safe-area-inset-right, 0px));
+  padding-top: max(16px, env(safe-area-inset-top, 0px));
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 @keyframes homeReveal {
   from {
     opacity: 0;
@@ -1328,6 +1339,21 @@ body {
   margin: 0 auto;
   box-sizing: border-box;
   width: 100%;
+}
+
+/* Neredeyim: tam ekran yüksekliğinde flex — harita kalan alana oturur; metinler üstte kaydırılır */
+#view-module.view--module:has(.where-module--kroki-locked) {
+  max-width: min(1040px, 100%);
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+#view-module.view--module:has(.where-module--kroki-locked) .btn-back {
+  flex: 0 0 auto;
 }
 
 .btn-back {
@@ -2932,6 +2958,179 @@ body {
   padding-bottom: 10px;
 }
 
+/* Kroki: tek ekranda görseli oturt; uzun metinleri yalnızca üst bölümde kaydır */
+.where-module--premium.where-module--kroki-locked {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  gap: 10px;
+  padding-bottom: 0;
+}
+
+.where-module--premium.where-module--kroki-locked .where-kroki-premium-hero {
+  margin-bottom: 8px;
+}
+
+.where-module--premium.where-module--kroki-locked .where-kroki-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.where-module--premium.where-module--kroki-locked .where-kroki-controls {
+  flex: 0 1 auto;
+  max-height: min(38dvh, 320px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.where-module--premium.where-module--kroki-locked .where-kroki {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  margin: 0;
+  gap: 8px;
+}
+
+.where-module--premium.where-module--kroki-locked .where-kroki-detail:not(.where-kroki-detail--hidden) {
+  flex: 0 1 auto;
+  max-height: min(22dvh, 200px);
+  overflow-y: auto;
+}
+
+/* Görsel tam yükseklikte; taşarsa yalnızca harita kutusunda kaydır — kesme yok */
+.where-module--premium.where-module--kroki-locked .where-kroki__map-region {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: block;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.where-module--premium.where-module--kroki-locked .where-kroki__stage {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.where-module--premium.where-module--kroki-locked .where-kroki__frame {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  line-height: 0;
+}
+
+.where-module--premium.where-module--kroki-locked .where-kroki__img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin: 0;
+  vertical-align: top;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Neredeyim — en üstte premium yatay tutuş cümlesi */
+.where-kroki-premium-hero {
+  margin: 0 0 12px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(46, 184, 199, 0.38);
+  border-left: 4px solid rgba(212, 168, 83, 0.95);
+  background:
+    linear-gradient(118deg, rgba(212, 168, 83, 0.14) 0%, transparent 46%),
+    linear-gradient(165deg, rgba(8, 18, 28, 0.95) 0%, rgba(4, 10, 20, 0.92) 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 12px 36px rgba(0, 0, 0, 0.35);
+}
+
+.where-kroki-premium-hero__text {
+  margin: 0;
+  font-size: clamp(0.95rem, 2.8vw, 1.02rem);
+  font-weight: 600;
+  line-height: 1.55;
+  letter-spacing: 0.01em;
+  color: rgba(248, 250, 252, 0.98);
+  text-wrap: balance;
+}
+
+.where-kroki-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.where-kroki-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+@media (orientation: landscape) {
+  .where-module--premium.where-module--kroki-locked .where-kroki-layout {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .where-module--premium.where-module--kroki-locked .where-kroki-controls {
+    flex: 0 0 min(46vw, 360px);
+    max-height: min(90vh, 720px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 4px;
+  }
+
+  .where-module--premium.where-module--kroki-locked .where-kroki {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-height: min(90vh, 720px);
+    overflow: hidden;
+    margin: 0;
+  }
+
+  .where-module--premium.where-module--kroki-locked .where-kroki__map-region {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: block;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .where-module--premium.where-module--kroki-locked .where-kroki__stage {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-width: none;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .where-module--premium.where-module--kroki-locked .where-kroki-detail {
+    flex: 0 0 auto;
+    max-height: min(26vh, 168px);
+    overflow-y: auto;
+  }
+}
+
 .where-premium-page-title {
   margin: 0 0 4px;
   font-size: 1.22rem;
@@ -2959,6 +3158,334 @@ body {
   line-height: 1.58;
   color: rgba(232, 240, 248, 0.92);
   text-wrap: balance;
+}
+
+/* Neredeyim — blok efsanesi (altın vurgu) */
+.where-kroki-block-legend {
+  margin: 0 0 12px;
+  padding: 12px 14px 12px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(212, 168, 83, 0.35);
+  border-left: 4px solid rgba(212, 168, 83, 0.92);
+  background: linear-gradient(135deg, rgba(24, 18, 8, 0.88) 0%, rgba(8, 10, 16, 0.92) 100%);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.42);
+}
+
+.where-kroki-block-legend__text {
+  margin: 0;
+  font-size: clamp(0.88rem, 2.6vw, 0.95rem);
+  font-weight: 500;
+  line-height: 1.55;
+  color: rgba(244, 232, 210, 0.96);
+  text-wrap: balance;
+}
+
+/* Neredeyim — yatay telefon uyarısı (mercan / turuncu vurgu) */
+.where-kroki-orient-hint {
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 138, 92, 0.35);
+  border-left: 4px solid rgba(255, 120, 72, 0.95);
+  background: rgba(18, 8, 4, 0.94);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+
+.where-kroki-orient-hint__line {
+  margin: 0 0 8px;
+  font-size: clamp(0.88rem, 2.6vw, 0.94rem);
+  font-weight: 500;
+  line-height: 1.52;
+  color: rgba(236, 228, 222, 0.96);
+}
+
+.where-kroki-orient-hint__line--warn {
+  font-weight: 700;
+  color: rgba(255, 196, 160, 0.98);
+  letter-spacing: 0.01em;
+}
+
+.where-kroki-orient-hint__line:last-child {
+  margin-bottom: 0;
+}
+
+@media (orientation: landscape), (min-width: 900px) {
+  .where-kroki-orient-hint {
+    display: none;
+  }
+}
+
+.where-kroki-select-wrap {
+  margin: 0 0 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.where-kroki-select-label {
+  font-size: clamp(0.8rem, 2.4vw, 0.85rem);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(200, 210, 224, 0.82);
+}
+
+.where-kroki-select {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-height: 52px;
+  padding: 14px 44px 14px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(4, 10, 18, 0.92);
+  color: rgba(236, 242, 250, 0.96);
+  font-size: clamp(1rem, 3.2vw, 1.06rem);
+  font-weight: 600;
+  line-height: 1.35;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, rgba(46, 184, 199, 0.65) 50%),
+    linear-gradient(135deg, rgba(46, 184, 199, 0.65) 50%, transparent 50%);
+  background-position: calc(100% - 20px) calc(50% - 3px), calc(100% - 14px) calc(50% - 3px);
+  background-size: 7px 7px, 7px 7px;
+  background-repeat: no-repeat;
+}
+
+.where-kroki-select:focus-visible {
+  outline: none;
+  border-color: rgba(46, 184, 199, 0.55);
+  box-shadow: 0 0 0 3px rgba(46, 184, 199, 0.25);
+}
+
+.where-kroki-detail {
+  margin: 0 0 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(46, 184, 199, 0.22);
+  background: rgba(2, 8, 14, 0.88);
+}
+
+.where-kroki-detail--hidden {
+  display: none;
+}
+
+.where-kroki-detail__title {
+  margin: 0 0 10px;
+  font-size: clamp(1.02rem, 3vw, 1.12rem);
+  font-weight: 700;
+  line-height: 1.35;
+  color: rgba(248, 250, 252, 0.98);
+}
+
+.where-kroki-detail__loc {
+  margin: 0;
+  font-size: clamp(0.95rem, 2.9vw, 1.02rem);
+  font-weight: 500;
+  line-height: 1.55;
+  color: rgba(46, 200, 210, 0.95);
+}
+
+/* Neredeyim — dik kroki + sabit işaretler */
+.where-kroki {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0 0 6px;
+}
+
+.where-kroki__map-region {
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(4, 8, 14, 0.55);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  width: 100%;
+}
+
+/* Eskiden 520px tavandı — mobilde %100 genişlik, geniş ekranda modül genişliğine kadar */
+.where-kroki__stage {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+@media (min-width: 720px) {
+  .where-kroki__stage {
+    max-width: min(100%, 920px);
+  }
+}
+
+.where-kroki__frame {
+  position: relative;
+  width: 100%;
+  line-height: 0;
+}
+
+.where-kroki__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  vertical-align: top;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.where-kroki__pins {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Pin: yatay kapsül — mobilde min. ~44px dokunma yüksekliği (WCAG / iOS HIG) */
+.where-kroki-pin {
+  position: absolute;
+  z-index: 4;
+  box-sizing: border-box;
+  width: auto;
+  min-width: 48px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 14px;
+  margin: 0;
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  border-radius: 999px;
+  background: linear-gradient(145deg, #ff2d6a 0%, #d41450 100%);
+  color: #fff;
+  font-size: clamp(0.88rem, 3.2vw, 0.98rem);
+  font-weight: 800;
+  line-height: 44px;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+  pointer-events: auto;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 4px 14px rgba(0, 0, 0, 0.45);
+  transform: translate(-50%, -50%);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (pointer: coarse) {
+  .where-kroki-pin {
+    min-width: 52px;
+    min-height: 48px;
+    height: 48px;
+    line-height: 48px;
+    padding: 0 16px;
+    font-size: clamp(0.92rem, 3.4vw, 1.02rem);
+  }
+
+  .where-kroki-pin--selected {
+    transform: translate(-50%, -50%) scale(1.06);
+  }
+}
+
+.where-kroki-pin:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(46, 184, 199, 0.65),
+    0 4px 14px rgba(0, 0, 0, 0.45);
+  z-index: 8;
+}
+
+.where-kroki-pin--selected {
+  z-index: 12;
+  border-color: rgba(255, 214, 120, 0.98);
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.45),
+    0 0 0 4px rgba(255, 200, 80, 0.55),
+    0 6px 22px rgba(0, 0, 0, 0.55);
+  transform: translate(-50%, -50%) scale(1.08);
+  background: linear-gradient(145deg, #ff4a7a 0%, #ff9a3d 100%);
+}
+
+.where-kroki-table-outer {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.where-kroki-table-title {
+  margin: 0;
+  padding: 12px 14px 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(46, 184, 199, 0.88);
+}
+
+.where-kroki-table {
+  width: 100%;
+  min-width: 280px;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.where-kroki-table td:nth-child(2) {
+  max-width: 46vw;
+  word-break: break-word;
+  font-weight: 500;
+  color: rgba(236, 242, 250, 0.92);
+}
+
+.where-kroki-table th,
+.where-kroki-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  vertical-align: top;
+}
+
+.where-kroki-table thead th {
+  border-top: none;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(200, 210, 224, 0.85);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.where-kroki-table__num {
+  width: 2.25rem;
+  font-weight: 800;
+  color: rgba(255, 77, 122, 0.95);
+  white-space: nowrap;
+}
+
+.where-kroki-table__mono {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: rgba(232, 240, 248, 0.95);
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .where-kroki-table th,
+  .where-kroki-table td {
+    padding: 7px 8px;
+    font-size: 0.74rem;
+  }
+
+  /* Dar ekranda da pin küçültme — dokunma alanı korunur */
+  .where-kroki-select {
+    min-height: 50px;
+    padding-top: 13px;
+    padding-bottom: 13px;
+  }
 }
 
 .where-premium-hero-row {
@@ -6636,7 +7163,7 @@ select.req-input option {
   }
 }
 
-/* Sürdürülebilirlik — broşür akışı (PDF sayfa sırası, tek sütun, arasız) */
+/* Sürdürülebilirlik — broşür akışı; görseller tam genişlik, kesintisiz sıra (web + mobil) */
 .viona-mod--sustainability .sustainability-intro {
   margin-bottom: 18px;
 }
@@ -6699,6 +7226,9 @@ select.req-input option {
   vertical-align: middle;
   user-select: none;
   pointer-events: none;
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 /* Yakında Ne Var? */

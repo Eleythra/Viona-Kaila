@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { timingSafeEqual } from "node:crypto";
+import { getEnv } from "../../config/env.js";
 import {
   deleteChatObservation,
   deleteChatObservationsBulk,
@@ -9,6 +10,8 @@ import {
   getChatObservationSummary,
   exportChatObservations,
   getSurveyReport,
+  getFrontOfficeOperationSummary,
+  getFrontOfficeTypeSummary,
   listAdminBucket,
   listChatObservations,
   listSurveySubmissions,
@@ -77,6 +80,46 @@ router.get("/requests", async (req, res) => {
     return res.status(200).json({ ok: true, type, ...result });
   } catch (error) {
     return adminErr(res, error, "admin_list_failed");
+  }
+});
+
+router.get("/requests/front-summary", async (req, res) => {
+  try {
+    const summary = await getFrontOfficeOperationSummary(req.query || {});
+    return res.status(200).json({ ok: true, summary });
+  } catch (error) {
+    return adminErr(res, error, "admin_front_summary_failed");
+  }
+});
+
+router.get("/requests/front-type-summary", async (req, res) => {
+  try {
+    const type = String(req.query.type || "");
+    const summary = await getFrontOfficeTypeSummary(type, req.query || {});
+    return res.status(200).json({ ok: true, summary });
+  } catch (error) {
+    return adminErr(res, error, "admin_front_type_summary_failed");
+  }
+});
+
+router.get("/ops-team-entry-urls", (req, res) => {
+  try {
+    const env = getEnv();
+    const page = (file, tok) => {
+      const t = String(tok || "").trim();
+      if (!t) return { href: file, hasToken: false };
+      return { href: `${file}?k=${encodeURIComponent(t)}`, hasToken: true };
+    };
+    return res.status(200).json({
+      ok: true,
+      pages: {
+        hk: page("ops-hk.html", env.opsLinkTokenHk),
+        tech: page("ops-tech.html", env.opsLinkTokenTech),
+        front: page("ops-front.html", env.opsLinkTokenFront),
+      },
+    });
+  } catch (error) {
+    return adminErr(res, error, "admin_ops_urls_failed");
   }
 });
 

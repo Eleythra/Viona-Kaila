@@ -352,26 +352,23 @@
     return s === "new" || s === "pending" || s === "in_progress";
   }
 
-  /** İstek/arıza: Yapıldı · Yapılamadı · Şikayet: Dikkate alındı · alınmadı — kuyruk adımları ayrı etiket. */
+  /** İstek/arıza: Yapılıyor · Yapıldı · Yapılmadı · Şikâyet & misafir bildirimi: Dikkate alındı / alınmadı · Geç çıkış: onay dili. */
   function issueStatusLabel(issueType, status) {
     var s = normalizeBucketStatus(status);
     if (s === "cancelled") return "İptal";
     if (s === "new") return "Yeni";
     if (s === "pending") return "Bekliyor";
     if (s === "in_progress") {
-      if (issueType === "fault") return "Üzerinde";
-      if (issueType === "complaint" || issueType === "guest_notification" || issueType === "late_checkout") {
-        return "İşlemde";
-      }
       return "Yapılıyor";
     }
     if (s === "done") {
       if (issueType === "late_checkout") return "Onaylandı";
-      return issueType === "complaint" || issueType === "guest_notification" ? "Dikkate alındı" : "Yapıldı";
+      if (issueType === "complaint" || issueType === "guest_notification") return "Dikkate alındı";
+      return "Yapıldı";
     }
     if (s === "rejected") {
       if (issueType === "late_checkout") return "Onaylanmadı";
-      return issueType === "complaint" || issueType === "guest_notification" ? "Dikkate alınmadı" : "Yapılamadı";
+      return issueType === "complaint" || issueType === "guest_notification" ? "Dikkate alınmadı" : "Yapılmadı";
     }
     return s;
   }
@@ -402,7 +399,7 @@
       negLabel = "Dikkate alınmadı";
     } else {
       posLabel = "Yapıldı";
-      negLabel = "Yapılamadı";
+      negLabel = "Yapılmadı";
     }
     var h = "";
     function stBtn(stat, label) {
@@ -472,7 +469,7 @@
 
   function typeLabel(type) {
     if (type === "request") return "İstek";
-    if (type === "complaint") return "Şikayet";
+    if (type === "complaint") return "Şikâyet";
     if (type === "guest_notification") return "Misafir bildirimi";
     if (type === "late_checkout") return "Geç çıkış";
     if (type === "fault") return "Arıza";
@@ -954,7 +951,7 @@
     return o ? o : "—";
   }
 
-  /** Şikayet formu: açıklama alanı; bazı kategorilerde zorunlu, diğer not alanı yedek. */
+  /** Şikâyet formu: açıklama alanı; bazı kategorilerde zorunlu, diğer not alanı yedek. */
   function complaintFormDescription(row) {
     var t = String(row && row.description ? row.description : "").replace(/\s+/g, " ").trim();
     if (t) return t;
@@ -2683,7 +2680,7 @@
       '<div class="bucket-stat"><span>Toplam</span><strong>' + esc(totalCount) + "</strong></div>" +
       '<div class="bucket-stat"><span>Beklemede</span><strong>' + esc(open) + "</strong></div>" +
       '<div class="bucket-stat"><span>Yapıldı</span><strong>' + esc(done) + "</strong></div>" +
-      '<div class="bucket-stat"><span>Yapılamadı</span><strong>' + esc(rejected) + "</strong></div>" +
+      '<div class="bucket-stat"><span>Yapılmadı</span><strong>' + esc(rejected) + "</strong></div>" +
       "</div>" +
       '<p class="bucket-help bucket-help--requests">' +
       helpReq +
@@ -2700,7 +2697,7 @@
       '<option value="all">Tüm Durumlar</option>' +
       '<option value="new_pending">Beklemede</option>' +
       '<option value="done">Yapıldı</option>' +
-      '<option value="rejected">Yapılamadı</option>' +
+      '<option value="rejected">Yapılmadı</option>' +
       "</select>" +
       "</div>" +
       '<div class="viona-table-shell glass-block">' +
@@ -2936,14 +2933,14 @@
       '<div class="viona-table-scroll viona-table-scroll--compact">' +
       '<table class="admin-table viona-table admin-table--complaints">' +
       "<thead><tr>" +
-      "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Şikayet konusu</th><th>Açıklama</th>" +
+      "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Şikâyet konusu</th><th>Açıklama</th>" +
       (ro
         ? "<th>Personel notu (salt okunur)</th><th>Durum</th>" + (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
         : "<th>Personel notu</th><th>Durum</th><th>İşlemler</th>") +
       "</tr></thead><tbody>";
 
     if (!rows.length) {
-      html += '<tr><td colspan="9" class="admin-table__empty">Henüz şikayet kaydı yok.</td></tr>';
+      html += '<tr><td colspan="9" class="admin-table__empty">Henüz şikâyet kaydı yok.</td></tr>';
     } else {
       rows.forEach(function (r) {
         var st = normalizeBucketStatus(r.status);
@@ -3586,7 +3583,7 @@
       '<div class="bucket-stat"><span>Toplam</span><strong>' + esc(totalCount) + "</strong></div>" +
       '<div class="bucket-stat"><span>Beklemede</span><strong>' + esc(open) + "</strong></div>" +
       '<div class="bucket-stat"><span>Yapıldı</span><strong>' + esc(done) + "</strong></div>" +
-      '<div class="bucket-stat"><span>Yapılamadı</span><strong>' + esc(rejected) + "</strong></div>" +
+      '<div class="bucket-stat"><span>Yapılmadı</span><strong>' + esc(rejected) + "</strong></div>" +
       "</div>" +
       '<p class="bucket-help bucket-help--faults">' +
       (ro
@@ -3605,7 +3602,7 @@
       '<option value="all">Tüm Durumlar</option>' +
       '<option value="new_pending">Beklemede</option>' +
       '<option value="done">Yapıldı</option>' +
-      '<option value="rejected">Yapılamadı</option>' +
+      '<option value="rejected">Yapılmadı</option>' +
       "</select>" +
       "</div>" +
       '<div class="viona-table-shell glass-block">' +
@@ -3795,7 +3792,9 @@
     var pagination = cfg.pagination;
     var onPage = cfg.onPage;
     var onStatus = cfg.onStatus;
+    var onDelete = cfg.onDelete;
     var buttonLabels = cfg.buttonLabels || ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"];
+    var highlightRowId = cfg.highlightRowId != null ? String(cfg.highlightRowId).trim() : "";
     var summaryRow =
       cfg.summaryRow ||
       function () {
@@ -3807,9 +3806,27 @@
       { v: "done" },
       { v: "rejected" },
     ];
-    function statusButtonsHtml(id, current) {
+    var opStatusBtnVariantClass =
+      bucketType === "complaint" ||
+      bucketType === "guest_notification" ||
+      bucketType === "late_checkout"
+        ? "op-status-btns--front"
+        : "op-status-btns--hktech";
+    var opTableVariantClass =
+      bucketType === "complaint" ||
+      bucketType === "guest_notification" ||
+      bucketType === "late_checkout"
+        ? "op-table--front"
+        : "op-table--hktech";
+    function actionsCellHtml(id, current) {
       var st = normalizeBucketStatus(current);
-      var h = '<div class="op-status-btns" data-op-id="' + esc(id) + '">';
+      var h = '<div class="op-actions-cell">';
+      h +=
+        '<div class="op-status-btns ' +
+        opStatusBtnVariantClass +
+        '" data-op-id="' +
+        esc(id) +
+        '">';
       statVals.forEach(function (opt, i) {
         var on = st === opt.v || (st === "new" && opt.v === "pending");
         h +=
@@ -3822,12 +3839,21 @@
           "</button>";
       });
       h += "</div>";
+      if (typeof onDelete === "function") {
+        h +=
+          '<button type="button" class="btn-small op-del js-op-del" data-op-id="' +
+          esc(id) +
+          '" title="Kaydı kalıcı sil">Sil</button>';
+      }
+      h += "</div>";
       return h;
     }
     var html =
       '<div class="viona-table-shell glass-block">' +
       '<div class="viona-table-scroll viona-table-scroll--ops">' +
-      '<table class="admin-table viona-table op-table">' +
+      '<table class="admin-table viona-table op-table ' +
+      opTableVariantClass +
+      '">' +
       "<thead><tr>" +
       '<th scope="col" class="op-th-time">Kayıt</th>' +
       '<th scope="col" class="op-th-room">Oda</th>' +
@@ -3840,13 +3866,23 @@
     } else {
       rows.forEach(function (r) {
         var st = normalizeBucketStatus(r.status);
-        var trCls = st === "new" ? ' class="ops-row--new"' : "";
+        var trClasses = [];
+        if (st === "new") trClasses.push("ops-row--new");
+        if (
+          highlightRowId &&
+          String(r.id || "").trim().toLowerCase() === highlightRowId.trim().toLowerCase()
+        ) {
+          trClasses.push("ops-row--deep-link");
+        }
+        var trCls = trClasses.length ? ' class="' + esc(trClasses.join(" ")) + '"' : "";
         var sum = String(summaryRow(r) || "—");
         if (sum.length > 140) sum = sum.slice(0, 137) + "…";
         html +=
           "<tr" +
           trCls +
-          "><td>" +
+          ' data-op-row-id="' +
+          esc(String(r.id)) +
+          '"><td>' +
           esc(formatSubmittedAtTr(r.submitted_at)) +
           "</td><td>" +
           esc(r.room_number || "—") +
@@ -3857,7 +3893,7 @@
           '">' +
           esc(issueStatusLabel(bucketType, st)) +
           "</span></td><td>" +
-          statusButtonsHtml(r.id, r.status) +
+          actionsCellHtml(r.id, r.status) +
           "</td></tr>";
       });
     }
@@ -3874,6 +3910,28 @@
           var id = cell.getAttribute("data-op-id");
           var status = btn.getAttribute("data-status");
           var p = onStatus(bucketType, id, status);
+          if (p && typeof p.then === "function") {
+            btn.disabled = true;
+            p.finally(function () {
+              btn.disabled = false;
+            });
+          }
+        });
+      });
+    }
+    if (typeof onDelete === "function") {
+      mountEl.querySelectorAll(".js-op-del").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var id = btn.getAttribute("data-op-id");
+          if (!id) return;
+          if (
+            !window.confirm(
+              "Bu kaydı kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz.",
+            )
+          ) {
+            return;
+          }
+          var p = onDelete(bucketType, id);
           if (p && typeof p.then === "function") {
             btn.disabled = true;
             p.finally(function () {
@@ -3909,46 +3967,235 @@
     return "—";
   }
 
-  function renderOperationFrontImpl(mountEl, packs, handlers) {
+  function renderOperationFrontImpl(mountEl, packs, handlers, summary) {
     if (!mountEl) return;
     packs = packs || {};
     var onStatus = handlers && handlers.onStatus;
     var onPage = handlers && handlers.onPage;
-    function appendBlock(title, bucketType, pack, labels) {
-      pack = pack || { items: [], pagination: null };
-      var section = document.createElement("section");
-      section.className = "op-front-section";
-      section.innerHTML = "<h3 class=\"op-subtitle op-front-section__title\">" + esc(title) + "</h3>";
-      var inner = document.createElement("div");
-      inner.className = "op-front-inner";
-      section.appendChild(inner);
-      renderOperationBucketImpl(inner, {
-        bucketType: bucketType,
-        rows: pack.items || [],
-        pagination: pack.pagination,
+    var onDelete = handlers && handlers.onDelete;
+    var onTabChange = handlers && handlers.onTabChange;
+
+    var TAB_KEY = "viona_op_front_tab";
+    var active = "complaint";
+    try {
+      var st = String(sessionStorage.getItem(TAB_KEY) || "").trim();
+      if (st === "guest_notification" || st === "late_checkout" || st === "complaint") active = st;
+    } catch (_e) {}
+
+    function opFrontRowForType(typeKey) {
+      var bt = summary && summary.byType && summary.byType[typeKey];
+      if (!bt || typeof bt !== "object") {
+        return { filtered: false, bekliyor: 0, islemde: 0, yapildi: 0, yapilmadi: 0, iptal: 0, toplam: 0 };
+      }
+      return {
+        filtered: Boolean(bt.filtered),
+        bekliyor: Number(bt.bekliyor) || 0,
+        islemde: Number(bt.islemde) || 0,
+        yapildi: Number(bt.yapildi) || 0,
+        yapilmadi: Number(bt.yapilmadi) || 0,
+        iptal: Number(bt.iptal) || 0,
+        toplam: Number(bt.toplam) || 0,
+      };
+    }
+    function opFrontOpenCount(row) {
+      return row.bekliyor + row.islemde;
+    }
+    function opFrontStatLabels(typeKey) {
+      if (typeKey === "late_checkout") {
+        return ["Bekliyor", "Yapılıyor", "Onaylandı", "Onaylanmadı"];
+      }
+      if (typeKey === "complaint" || typeKey === "guest_notification") {
+        return ["Bekliyor", "Yapılıyor", "Dikkate alındı", "Dikkate alınmadı"];
+      }
+      return ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"];
+    }
+    function opFrontCatCardHtml(typeKey, title, row) {
+      var labs = opFrontStatLabels(typeKey);
+      if (row && row.filtered) {
+        return (
+          '<article class="op-front-cat-card" data-front-cat="' +
+          esc(typeKey) +
+          '"><h4 class="op-front-cat-card__title">' +
+          esc(title) +
+          '</h4><p class="op-front-cat-card__one"><span class="op-front-cat-card__k">Seçilen duruma göre</span> ' +
+          '<strong class="op-front-cat-card__v">' +
+          esc(String(row.toplam)) +
+          "</strong> kayıt</p></article>"
+        );
+      }
+      return (
+        '<article class="op-front-cat-card" data-front-cat="' +
+        esc(typeKey) +
+        '"><h4 class="op-front-cat-card__title">' +
+        esc(title) +
+        '</h4><dl class="op-front-cat-card__dl">' +
+        "<div><dt>" +
+        esc(labs[0]) +
+        '</dt><dd class="op-front-cat-card__dd--wait">' +
+        esc(String(row.bekliyor)) +
+        "</dd></div>" +
+        "<div><dt>" +
+        esc(labs[1]) +
+        '</dt><dd>' +
+        esc(String(row.islemde)) +
+        "</dd></div>" +
+        "<div><dt>" +
+        esc(labs[2]) +
+        '</dt><dd class="op-front-cat-card__dd--ok">' +
+        esc(String(row.yapildi)) +
+        "</dd></div>" +
+        "<div><dt>" +
+        esc(labs[3]) +
+        '</dt><dd class="op-front-cat-card__dd--no">' +
+        esc(String(row.yapilmadi)) +
+        "</dd></div>" +
+        (row.iptal > 0
+          ? "<div><dt>İptal</dt><dd>" + esc(String(row.iptal)) + "</dd></div>"
+          : "") +
+        '<div class="op-front-cat-card__sum"><dt>Toplam</dt><dd>' +
+        esc(String(row.toplam)) +
+        "</dd></div></dl></article>"
+      );
+    }
+
+    var summaryHtml = "";
+    if (summary && summary.byType) {
+      var anyFiltered = ["complaint", "guest_notification", "late_checkout"].some(function (k) {
+        var r = opFrontRowForType(k);
+        return r.filtered;
+      });
+      var headTitle = anyFiltered ? "Kategori özeti (en az bir süzgeçte durum seçili)" : "Kategori özeti (veritabanı canlı sayım)";
+      var headMeta =
+        "Üç kategori toplamı <strong>" +
+        esc(String(summary.toplam != null ? summary.toplam : "0")) +
+        "</strong> kayıt · Üstteki tek süzgeç yalnız <strong>seçili sekme</strong> listesine uygulanır; diğer iki kategorinin kayıtlı süzgeci ayrı kalır";
+      summaryHtml =
+        '<div class="op-front-summary glass-block" role="status">' +
+        '<div class="op-front-summary__head">' +
+        '<span class="op-front-summary__title">' +
+        esc(headTitle) +
+        '</span><span class="op-front-summary__meta">' +
+        headMeta +
+        "</span></div>" +
+        '<div class="op-front-summary-cards' +
+        (anyFiltered ? " op-front-summary-cards--filtered" : "") +
+        '">' +
+        opFrontCatCardHtml("complaint", "Şikâyetler", opFrontRowForType("complaint")) +
+        opFrontCatCardHtml("guest_notification", "Misafir bildirimleri", opFrontRowForType("guest_notification")) +
+        opFrontCatCardHtml("late_checkout", "Geç çıkış", opFrontRowForType("late_checkout")) +
+        "</div></div>";
+    }
+
+    var tabs = [
+      {
+        key: "complaint",
+        label: "Şikâyetler",
+        labels: ["Bekliyor", "Yapılıyor", "Dikkate alındı", "Dikkate alınmadı"],
+      },
+      {
+        key: "guest_notification",
+        label: "Misafir bildirimleri",
+        labels: ["Bekliyor", "Yapılıyor", "Dikkate alındı", "Dikkate alınmadı"],
+      },
+      { key: "late_checkout", label: "Geç çıkış", labels: ["Bekliyor", "Yapılıyor", "Onaylandı", "Onaylanmadı"] },
+    ];
+    var tabBtns = tabs
+      .map(function (t) {
+        var on = t.key === active ? " is-active" : "";
+        var row = opFrontRowForType(t.key);
+        var oc = opFrontOpenCount(row);
+        var badge =
+          summary && summary.byType && !row.filtered && oc > 0
+            ? '<span class="op-front-tab__badge" title="Bekliyor + işlemde (açık iş)">' + esc(String(oc)) + "</span>"
+            : "";
+        return (
+          '<button type="button" class="btn-small op-front-tab js-op-front-tab' +
+          on +
+          '" role="tab" aria-selected="' +
+          (t.key === active ? "true" : "false") +
+          '" data-front-tab="' +
+          esc(t.key) +
+          '"><span class="op-front-tab__label">' +
+          esc(t.label) +
+          "</span>" +
+          badge +
+          "</button>"
+        );
+      })
+      .join("");
+
+    mountEl.innerHTML =
+      summaryHtml +
+      '<div class="op-front-toolbar">' +
+      '<div class="op-front-tabs" role="tablist">' +
+      tabBtns +
+      "</div></div>" +
+      '<div class="op-front-panels"></div>';
+
+    var panelsRoot = mountEl.querySelector(".op-front-panels");
+    if (!panelsRoot) return;
+
+    tabs.forEach(function (tab) {
+      var wrap = document.createElement("div");
+      wrap.className = "op-front-panel" + (tab.key === active ? "" : " hidden");
+      wrap.setAttribute("role", "tabpanel");
+      wrap.setAttribute("data-front-tab", tab.key);
+      renderOperationBucketImpl(wrap, {
+        bucketType: tab.key,
+        rows: (packs[tab.key] && packs[tab.key].items) || [],
+        pagination: packs[tab.key] ? packs[tab.key].pagination : null,
         onPage:
           typeof onPage === "function"
             ? function (next) {
-                onPage(bucketType, next);
+                onPage(tab.key, next);
               }
             : null,
         onStatus: onStatus,
-        buttonLabels: labels,
+        onDelete:
+          typeof onDelete === "function"
+            ? function (bt, rid) {
+                return onDelete(bt, rid);
+              }
+            : null,
+        buttonLabels: tab.labels,
         summaryRow: function (row) {
-          return operationSummaryForType(bucketType, row);
+          return operationSummaryForType(tab.key, row);
         },
       });
-      mountEl.appendChild(section);
+      panelsRoot.appendChild(wrap);
+    });
+
+    function activateFrontTab(k) {
+      if (!k) return;
+      try {
+        sessionStorage.setItem(TAB_KEY, k);
+      } catch (_e2) {}
+      mountEl.querySelectorAll(".js-op-front-tab").forEach(function (b) {
+        var is = b.getAttribute("data-front-tab") === k;
+        b.classList.toggle("is-active", is);
+        b.setAttribute("aria-selected", is ? "true" : "false");
+      });
+      mountEl.querySelectorAll(".op-front-panel").forEach(function (p) {
+        p.classList.toggle("hidden", p.getAttribute("data-front-tab") !== k);
+      });
     }
-    mountEl.innerHTML = "";
-    appendBlock("Şikâyetler", "complaint", packs.complaint, ["Bekliyor", "İşlemde", "Dikkate alındı", "Alınmadı"]);
-    appendBlock("Misafir bildirimleri", "guest_notification", packs.guest_notification, [
-      "Bekliyor",
-      "İşlemde",
-      "Dikkate alındı",
-      "Alınmadı",
-    ]);
-    appendBlock("Geç çıkış", "late_checkout", packs.late_checkout, ["Bekliyor", "İşlemde", "Onaylandı", "Onaylanmadı"]);
+    function switchFrontTab(k) {
+      if (!k) return;
+      var prevBtn = mountEl.querySelector(".js-op-front-tab.is-active");
+      var prevKey = prevBtn ? prevBtn.getAttribute("data-front-tab") : null;
+      if (typeof onTabChange === "function") onTabChange(prevKey, k);
+      activateFrontTab(k);
+    }
+    mountEl.querySelectorAll(".js-op-front-tab").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        switchFrontTab(btn.getAttribute("data-front-tab"));
+      });
+    });
+    mountEl.querySelectorAll(".op-front-cat-card").forEach(function (card) {
+      card.addEventListener("click", function () {
+        switchFrontTab(card.getAttribute("data-front-cat"));
+      });
+    });
   }
 
   window.AdminUI = {
@@ -4324,7 +4571,7 @@
         return normalizeBucketStatus(r.status) === "rejected";
       }).length;
       var negLabel =
-        type === "complaint" || type === "guest_notification" ? "Dikkate alınmadı" : "Yapılamadı";
+        type === "complaint" || type === "guest_notification" ? "Dikkate alınmadı" : "Yapılmadı";
       var posLabel =
         type === "complaint" || type === "guest_notification" ? "Dikkate alındı" : "Yapıldı";
       var html =
@@ -4347,17 +4594,17 @@
         "</div>" +
         '<p class="bucket-help">' +
         esc(typeLabel(type)) +
-        ": ilk kayıt beklemede. Olumlu / olumsuz durumlar birbirine çevrilebilir; şikayetlerde dikkate alındı / alınmadı. Uygun kayıtlar operasyon WhatsApp grubuna gider; gerekirse satırdaki WhatsApp ile tekrar gönderin.</p>" +
+        ": ilk kayıt beklemede. Olumlu / olumsuz durumlar birbirine çevrilebilir; şikâyet ve misafir bildiriminde dikkate alındı / alınmadı. Uygun kayıtlar operasyon WhatsApp grubuna gider; gerekirse satırdaki WhatsApp ile tekrar gönderin.</p>" +
         '<div class="bucket-toolbar">' +
         '<input class="bucket-search" type="search" placeholder="Oda, misafir veya detay ara..." />' +
         '<select class="bucket-filter-status">' +
         '<option value=\"all\">Tüm Durumlar</option>' +
         '<option value=\"new_pending\">Beklemede</option>' +
         '<option value=\"done\">' +
-        esc(type === "complaint" ? "Dikkate alındı" : "Yapıldı") +
+        esc(type === "complaint" || type === "guest_notification" ? "Dikkate alındı" : "Yapıldı") +
         '</option>' +
         '<option value=\"rejected\">' +
-        esc(type === "complaint" ? "Dikkate alınmadı" : "Yapılamadı") +
+        esc(type === "complaint" || type === "guest_notification" ? "Dikkate alınmadı" : "Yapılmadı") +
         "</option>" +
         "</select>" +
         "</div>" +
@@ -4611,12 +4858,19 @@
       renderOperationBucketImpl(mountEl, cfg);
     },
     /** Ön büro: üç liste. */
-    renderOperationFront: function (mountEl, packs, handlers) {
-      renderOperationFrontImpl(mountEl, packs, handlers);
+    renderOperationFront: function (mountEl, packs, handlers, summary) {
+      renderOperationFrontImpl(mountEl, packs, handlers, summary);
     },
     /** Saha tabloları için kısa özet metni (istek / arıza / şikâyet vb.). */
     operationSummaryForType: function (bucketType, row) {
       return operationSummaryForType(bucketType, row);
+    },
+    /** Durum rozeti metni (ops-hk seçili kayıt paneli vb.). */
+    issueStatusLabel: function (issueType, status) {
+      return issueStatusLabel(issueType, status);
+    },
+    normalizeBucketStatus: function (raw) {
+      return normalizeBucketStatus(raw);
     },
   };
 })();

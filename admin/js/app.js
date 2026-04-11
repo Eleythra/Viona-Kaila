@@ -25,7 +25,7 @@
   /** init() her başarılı girişte çağrılır; wire* yalnızca bir kez bağlanmalı */
   var staticAdminListenersBound = false;
   var logsExportInFlight = false;
-  /** İstek / şikayet / arıza listeleri için sunucu sayfalama. */
+  /** İstek / şikâyet / arıza listeleri için sunucu sayfalama. */
   var BUCKET_LIST_PAGE_SIZE = 100;
   /** Ana sayfa özetinde birleştirilen kayıt üst sınırı (sayfa × getBucketPage boyutu). */
   var BUCKET_MERGE_MAX_PAGES = 100;
@@ -97,7 +97,13 @@
   var opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
   var opFilterHk = { status: "", from: "", to: "", room: "" };
   var opFilterTech = { status: "", from: "", to: "", room: "" };
-  var opFilterFront = { status: "", from: "", to: "", room: "" };
+  var opFilterFrontByType = {
+    complaint: { status: "", from: "", to: "", room: "" },
+    guest_notification: { status: "", from: "", to: "", room: "" },
+    late_checkout: { status: "", from: "", to: "", room: "" },
+  };
+  /** Hangi sekmenin süzgeci formda düzenleniyor (tek filtre çubuğu). */
+  var opFrontFilterActiveType = "complaint";
 
   function opQueryFromFilter(f) {
     var o = {};
@@ -201,6 +207,10 @@
           await adapter.updateStatus(bt, id, status);
           await loadOpHk(opHkPage);
         },
+        onDelete: async function (bt, id) {
+          await adapter.deleteItem(bt, id);
+          await loadOpHk(opHkPage);
+        },
       });
     } catch (e) {
       mount.innerHTML =
@@ -232,9 +242,13 @@
         onPage: function (p) {
           void loadOpTech(p);
         },
-        buttonLabels: ["Bekliyor", "Üzerinde", "Tamam", "Yapılamadı"],
+        buttonLabels: ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"],
         onStatus: async function (bt, id, status) {
           await adapter.updateStatus(bt, id, status);
+          await loadOpTech(opTechPage);
+        },
+        onDelete: async function (bt, id) {
+          await adapter.deleteItem(bt, id);
           await loadOpTech(opTechPage);
         },
       });
@@ -244,20 +258,173 @@
     }
   }
 
+  function normalizeFrontTypeSummary(resp) {
+    if (!resp || typeof resp !== "object") {
+      return { filtered: false, bekliyor: 0, islemde: 0, yapildi: 0, yapilmadi: 0, iptal: 0, toplam: 0 };
+    }
+    if (String(resp.mode || "").trim() === "filtered") {
+      return {
+        filtered: true,
+        bekliyor: 0,
+        islemde: 0,
+        yapildi: 0,
+        yapilmadi: 0,
+        iptal: Number(resp.iptal) || 0,
+        toplam: Number(resp.toplam) || 0,
+      };
+    }
+    return {
+      filtered: false,
+      bekliyor: Number(resp.bekliyor) || 0,
+      islemde: Number(resp.islemde) || 0,
+      yapildi: Number(resp.yapildi) || 0,
+      yapilmadi: Number(resp.yapilmadi) || 0,
+      iptal: Number(resp.iptal) || 0,
+      toplam: Number(resp.toplam) || 0,
+    };
+  }
+
+  function mergeNormFrontTypes(c, gn, lc) {
+    return {
+      mode: c.filtered || gn.filtered || lc.filtered ? "mixed" : "full",
+      bekliyor: c.bekliyor + gn.bekliyor + lc.bekliyor,
+      islemde: c.islemde + gn.islemde + lc.islemde,
+      yapildi: c.yapildi + gn.yapildi + lc.yapildi,
+      yapilmadi: c.yapilmadi + gn.yapilmadi + lc.yapilmadi,
+      iptal: c.iptal + gn.iptal + lc.iptal,
+      toplam: c.toplam + gn.toplam + lc.toplam,
+      byType: {
+        complaint: c,
+        guest_notification: gn,
+        late_checkout: lc,
+      },
+    };
+  }
+
+  /**
+   * Özet API'si 0 veya hata döndüğünde: liste sayımı (pagination.total) doğrudur;
+   * tek sayfada tüm kayıtlar yüklendiyse durum kırılımını aynı sayfadaki satırlardan üret.
+   */
+  function enrichFrontTypeSummaryWithPack(apiRaw, pack) {
+    var n = normalizeFrontTypeSummary(apiRaw);
+    if (!pack || typeof pack !== "object") return n;
+    if (n.filtered) return n;
+    var listTotal = Number((pack.pagination && pack.pagination.total) || 0) || 0;
+    if (listTotal <= 0) return n;
+    if (n.toplam !== listTotal) {
+      n.toplam = listTotal;
+    }
+    var pages = Math.max(1, Number((pack.pagination && pack.pagination.totalPages) || 1));
+    var items = pack.items || [];
+    var apiMissing = apiRaw == null || typeof apiRaw !== "object";
+    var sumParts = n.bekliyor + n.islemde + n.yapildi + n.yapilmadi + n.iptal;
+    if ((apiMissing || sumParts === 0) && pages === 1 && items.length === listTotal) {
+      var k = countOpsKanbanStatus(items);
+      n.bekliyor = k.bekliyor;
+      n.islemde = k.yapiliyor;
+      n.yapildi = k.yapildi;
+      n.yapilmadi = k.yapilmadi;
+      n.iptal = k.iptal;
+    }
+    return n;
+  }
+
+  var OP_FRONT_TAB_KEY = "viona_op_front_tab";
+  var OP_FRONT_SCOPE_LABELS = {
+    complaint: "Şikâyetler",
+    guest_notification: "Misafir bildirimleri",
+    late_checkout: "Geç çıkış",
+  };
+
+  function syncOpFrontFilterFormFromActiveType() {
+    var m = opFilterFrontByType[opFrontFilterActiveType] || { status: "", from: "", to: "", room: "" };
+    var status = document.getElementById("op-front-filter-status");
+    var from = document.getElementById("op-front-filter-from");
+    var to = document.getElementById("op-front-filter-to");
+    var room = document.getElementById("op-front-filter-room");
+    if (status) status.value = m.status || "";
+    if (from) from.value = m.from || "";
+    if (to) to.value = m.to || "";
+    if (room) room.value = m.room || "";
+  }
+
+  function updateOpFrontFilterScopeLabel() {
+    var el = document.getElementById("op-front-filter-scope");
+    if (!el) return;
+    var lab = OP_FRONT_SCOPE_LABELS[opFrontFilterActiveType] || opFrontFilterActiveType;
+    el.textContent =
+      "Aktif sekme: " +
+      lab +
+      " — Bu süzgeç yalnız bu listeye uygulanır. Sekme değişince alanlar o listenin kayıtlı süzgecini gösterir.";
+  }
+
+  function wireOpFrontFilterBarOnce() {
+    var applyBtn = document.getElementById("op-front-filter-apply");
+    var clearBtn = document.getElementById("op-front-filter-clear");
+    if (applyBtn && !applyBtn.dataset.vionaBound) {
+      applyBtn.dataset.vionaBound = "1";
+      applyBtn.addEventListener("click", function () {
+        var next = readOpFilterFromDom("op-front");
+        opFilterFrontByType[opFrontFilterActiveType] = next;
+        opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
+        void loadOpFront();
+        scheduleAutoRefresh();
+      });
+    }
+    if (clearBtn && !clearBtn.dataset.vionaBound) {
+      clearBtn.dataset.vionaBound = "1";
+      clearBtn.addEventListener("click", function () {
+        opFilterFrontByType[opFrontFilterActiveType] = { status: "", from: "", to: "", room: "" };
+        clearOpFilterDom("op-front");
+        opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
+        void loadOpFront();
+        scheduleAutoRefresh();
+      });
+    }
+  }
+
   async function loadOpFront(pageType, page) {
     var mount = document.getElementById("op-front-mount");
     if (!mount) return;
     if (pageType && page != null) opFrontPages[pageType] = page;
     try {
-      var fq = opQueryFromFilter(opFilterFront);
-      var c = await adapter.getBucketPage("complaint", opFrontPages.complaint, OP_ACTION_PAGE_SIZE, fq);
-      var gn = await adapter.getBucketPage(
-        "guest_notification",
-        opFrontPages.guest_notification,
-        OP_ACTION_PAGE_SIZE,
-        fq,
-      );
-      var lc = await adapter.getBucketPage("late_checkout", opFrontPages.late_checkout, OP_ACTION_PAGE_SIZE, fq);
+      try {
+        var tab = String(sessionStorage.getItem(OP_FRONT_TAB_KEY) || "").trim();
+        if (tab === "guest_notification" || tab === "late_checkout" || tab === "complaint") {
+          opFrontFilterActiveType = tab;
+        }
+      } catch (_sk) {}
+      syncOpFrontFilterFormFromActiveType();
+      updateOpFrontFilterScopeLabel();
+      var fqC = opQueryFromFilter(opFilterFrontByType.complaint);
+      var fqGn = opQueryFromFilter(opFilterFrontByType.guest_notification);
+      var fqLc = opQueryFromFilter(opFilterFrontByType.late_checkout);
+      var results = await Promise.all([
+        adapter.getFrontOfficeTypeSummary("complaint", fqC).catch(function () {
+          return null;
+        }),
+        adapter.getFrontOfficeTypeSummary("guest_notification", fqGn).catch(function () {
+          return null;
+        }),
+        adapter.getFrontOfficeTypeSummary("late_checkout", fqLc).catch(function () {
+          return null;
+        }),
+        adapter.getBucketPage("complaint", opFrontPages.complaint, OP_ACTION_PAGE_SIZE, fqC),
+        adapter.getBucketPage(
+          "guest_notification",
+          opFrontPages.guest_notification,
+          OP_ACTION_PAGE_SIZE,
+          fqGn,
+        ),
+        adapter.getBucketPage("late_checkout", opFrontPages.late_checkout, OP_ACTION_PAGE_SIZE, fqLc),
+      ]);
+      var nc = enrichFrontTypeSummaryWithPack(results[0], results[3]);
+      var ngn = enrichFrontTypeSummaryWithPack(results[1], results[4]);
+      var nlc = enrichFrontTypeSummaryWithPack(results[2], results[5]);
+      var summary = mergeNormFrontTypes(nc, ngn, nlc);
+      var c = results[3];
+      var gn = results[4];
+      var lc = results[5];
       ui.renderOperationFront(
         mount,
         { complaint: c, guest_notification: gn, late_checkout: lc },
@@ -270,7 +437,20 @@
             await adapter.updateStatus(bt, id, status);
             await loadOpFront();
           },
+          onDelete: async function (bt, id) {
+            await adapter.deleteItem(bt, id);
+            await loadOpFront();
+          },
+          onTabChange: function (_prevKey, newKey) {
+            if (!newKey) return;
+            var next = readOpFilterFromDom("op-front");
+            opFilterFrontByType[opFrontFilterActiveType] = next;
+            opFrontFilterActiveType = newKey;
+            syncOpFrontFilterFormFromActiveType();
+            updateOpFrontFilterScopeLabel();
+          },
         },
+        summary,
       );
     } catch (e) {
       mount.innerHTML =
@@ -334,48 +514,6 @@
           mergeWarnEl.setAttribute("aria-hidden", "true");
         }
       }
-      var waRoot = document.getElementById("dashboard-whatsapp-status");
-      var waDetail = document.getElementById("dashboard-whatsapp-status-detail");
-      if (waRoot && waDetail) {
-        waRoot.classList.remove(
-          "dashboard-whatsapp-status--ok",
-          "dashboard-whatsapp-status--warn",
-          "dashboard-whatsapp-status--loading",
-          "dashboard-whatsapp-status--unavailable",
-        );
-        waRoot.classList.add("dashboard-whatsapp-status--loading");
-        waDetail.textContent = "Operasyon hattı doğrulanıyor…";
-        try {
-          var waDiag = await adapter.getWhatsappAdminDiagnostics();
-          var op = (waDiag && waDiag.operational) || {};
-          var parts = [];
-          if (op.cloudApiSendReady) {
-            parts.push("WhatsApp Cloud API hazır (token + Phone number ID)");
-            var cc = op.cloudRecipientCounts || {};
-            parts.push(
-              "Alıcı sayısı — Teknik (arıza): " +
-                (cc.tech != null ? cc.tech : "—") +
-                ", HK (istek): " +
-                (cc.hk != null ? cc.hk : "—") +
-                ", Ön büro (şikayet / misafir bildirimi / geç çıkış): " +
-                (cc.front != null ? cc.front : "—"),
-            );
-          } else {
-            parts.push(
-              "WhatsApp gönderimi için eksik ayar: sunucuda WHATSAPP_ACCESS_TOKEN ve WHATSAPP_PHONE_NUMBER_ID",
-            );
-          }
-          waDetail.textContent = parts.join(" · ");
-          var warnWa = !op.cloudApiSendReady;
-          waRoot.classList.remove("dashboard-whatsapp-status--loading");
-          waRoot.classList.add(warnWa ? "dashboard-whatsapp-status--warn" : "dashboard-whatsapp-status--ok");
-        } catch (_e) {
-          waRoot.classList.remove("dashboard-whatsapp-status--loading");
-          waRoot.classList.add("dashboard-whatsapp-status--unavailable", "dashboard-whatsapp-status--warn");
-          waDetail.textContent =
-            "Durum okunamadı. Ağınızı veya sunucu yanıtını kontrol edin; özet kısa süre içinde yenilenecek.";
-        }
-      }
       if (!report || typeof report !== "object") {
         report = {};
       }
@@ -388,15 +526,21 @@
       if (!Array.isArray(uq.topFallbackQuestions)) uq.topFallbackQuestions = [];
       if (!Array.isArray(uq.repeatedUnanswered)) uq.repeatedUnanswered = [];
 
-      var gnMerge = br[3].items.concat(br[4].items);
       var dashData = {
         request: br[0].items,
         complaint: br[1].items,
         fault: br[2].items,
-        guest_notification: gnMerge,
+        guest_notification: br[3].items,
+        late_checkout: br[4].items,
       };
-      renderHomeTopStrip(dashData, report);
+      renderHomeTopStrip(dashData, report, dashTruncated);
       renderDashboardAlerts(dashData);
+      void adapter
+        .getOpsTeamEntryUrls()
+        .then(function (d) {
+          applyOpsTeamEntryUrls(d);
+        })
+        .catch(function () {});
       ui.renderKpis(document.getElementById("kpi-cards"), report.kpis);
       ui.renderMetricRows(document.getElementById("report-chatbot"), [
         { title: "Toplam Sohbet", value: cb.totalChats, desc: "chat_observations satır sayısı (her misafir mesajı için bir kayıt)." },
@@ -878,7 +1022,7 @@
     }).length;
   }
 
-  /** İstek / şikayet / arıza satırı — sayım ve ana sayfa özetleri için tek tip. */
+  /** İstek / şikâyet / arıza satırı — sayım ve ana sayfa özetleri için tek tip. */
   function normAdminIssueStatus(row) {
     var st = String((row && row.status) || "new")
       .trim()
@@ -917,51 +1061,60 @@
     });
   }
 
-  /** Bugünkü kayıt: beklemede, tamamlanan, olumsuz; iptal ve bilinmeyen ayrı (toplama girer). */
-  function countOpsBeklemeYapildi(rows) {
-    var w = 0;
-    var y = 0;
-    var j = 0;
-    var c = 0;
-    var o = 0;
-    rows.forEach(function (r) {
+  /**
+   * Operasyon satırları: Bekliyor (yeni+kuyruk), Yapılıyor, Yapıldı, Yapılmadı; iptal ayrı.
+   * Ana sayfa pano ve şerit için ortak sayım.
+   */
+  function countOpsKanbanStatus(rows) {
+    var bekliyor = 0;
+    var yapiliyor = 0;
+    var yapildi = 0;
+    var yapilmadi = 0;
+    var iptal = 0;
+    var diger = 0;
+    (rows || []).forEach(function (r) {
       var st = normAdminIssueStatus(r);
-      if (st === "done") y++;
-      else if (st === "rejected") j++;
-      else if (st === "new" || st === "pending" || st === "in_progress") w++;
-      else if (st === "cancelled") c++;
-      else o++;
-    });
-    return { wait: w, done: y, rej: j, cancelled: c, other: o };
-  }
-
-  /** Tüm zamanlar: istek+şikayet+arıza birleşik (toplam = tüm durumların toplamı). */
-  function opsGlobalSnapshot(reqRows, comRows, faultRows, notifRows) {
-    var merged = (reqRows || [])
-      .concat(comRows || [])
-      .concat(faultRows || [])
-      .concat(notifRows || []);
-    var open = 0;
-    var done = 0;
-    var rej = 0;
-    var cancelled = 0;
-    var other = 0;
-    merged.forEach(function (r) {
-      var st = normAdminIssueStatus(r);
-      if (st === "done") done++;
-      else if (st === "rejected") rej++;
-      else if (st === "new" || st === "pending" || st === "in_progress") open++;
-      else if (st === "cancelled") cancelled++;
-      else other++;
+      if (st === "new" || st === "pending") bekliyor++;
+      else if (st === "in_progress") yapiliyor++;
+      else if (st === "done") yapildi++;
+      else if (st === "rejected") yapilmadi++;
+      else if (st === "cancelled") iptal++;
+      else diger++;
     });
     return {
-      open: open,
-      done: done,
-      rejected: rej,
-      cancelled: cancelled,
-      other: other,
-      total: merged.length,
+      bekliyor: bekliyor,
+      yapiliyor: yapiliyor,
+      yapildi: yapildi,
+      yapilmadi: yapilmadi,
+      iptal: iptal,
+      diger: diger,
+      toplam: (rows || []).length,
     };
+  }
+
+  function homeOpsPanoCatHtml(title, rows) {
+    var k = countOpsKanbanStatus(rows);
+    var iptalHtml =
+      k.iptal > 0
+        ? '<span class="home-ops-pano__iptal" title="İptal edilen kayıtlar">' + k.iptal + " iptal</span>"
+        : "";
+    return (
+      '<li class="home-ops-pano__cat">' +
+      '<span class="home-ops-pano__cat-title">' +
+      title +
+      '</span><div class="home-ops-pano__metrics" role="group">' +
+      '<span class="home-ops-pano__m"><span class="home-ops-pano__mk">Bekliyor</span><span class="home-ops-pano__mv">' +
+      k.bekliyor +
+      '</span></span><span class="home-ops-pano__m"><span class="home-ops-pano__mk">Yapılıyor</span><span class="home-ops-pano__mv">' +
+      k.yapiliyor +
+      '</span></span><span class="home-ops-pano__m"><span class="home-ops-pano__mk">Yapıldı</span><span class="home-ops-pano__mv">' +
+      k.yapildi +
+      '</span></span><span class="home-ops-pano__m"><span class="home-ops-pano__mk">Yapılmadı</span><span class="home-ops-pano__mv">' +
+      k.yapilmadi +
+      "</span></span>" +
+      iptalHtml +
+      "</div></li>"
+    );
   }
 
   function renderAnalyticsDataSources(report) {
@@ -991,14 +1144,37 @@
     }
   }
 
-  function renderHomeTopStrip(data, report) {
+  function applyOpsTeamEntryUrls(payload) {
+    var pages = payload && payload.pages;
+    if (!pages) return;
+    document.querySelectorAll("a.js-ops-team-link[data-ops-role]").forEach(function (a) {
+      var role = a.getAttribute("data-ops-role");
+      var entry = role && pages[role];
+      if (!entry || !entry.href) return;
+      a.setAttribute("href", entry.href);
+      a.setAttribute("rel", "noopener");
+      if (entry.hasToken) {
+        a.setAttribute("title", "Bağlantıda ekip şifresi taşınır; paylaşırken dikkat edin.");
+      } else {
+        a.setAttribute(
+          "title",
+          "Token yok: sayfa yalnızca bu admin sitesinden veya sunucuda OPS_TRUST_OPS_PAGE_HEADER ile açılabilir.",
+        );
+      }
+    });
+  }
+
+  function renderHomeTopStrip(data, report, stripTruncated) {
     var el = document.getElementById("home-top-strip");
     if (!el) return;
+    stripTruncated = Boolean(stripTruncated);
     var reqRows = data.request || [];
     var comRows = data.complaint || [];
     var faultRows = data.fault || [];
     var notifRows = data.guest_notification || [];
-    var totalRecords = reqRows.length + comRows.length + faultRows.length + notifRows.length;
+    var lcRows = data.late_checkout || [];
+    var allOpRows = reqRows.concat(comRows).concat(faultRows).concat(notifRows).concat(lcRows);
+    var stripAgg = countOpsKanbanStatus(allOpRows);
     var todayIso = todayIsoLocal();
     var todayLabel =
       typeof ui.formatIsoDateDisplayTr === "function" ? ui.formatIsoDateDisplayTr(todayIso) : todayIso;
@@ -1006,24 +1182,6 @@
     var comToday = filterRowsSubmittedOnDay(comRows, todayIso);
     var faultToday = filterRowsSubmittedOnDay(faultRows, todayIso);
     var notifToday = filterRowsSubmittedOnDay(notifRows, todayIso);
-    var reqSp = countOpsBeklemeYapildi(reqToday);
-    var comSp = countOpsBeklemeYapildi(comToday);
-    var faultSp = countOpsBeklemeYapildi(faultToday);
-    var notifSp = countOpsBeklemeYapildi(notifToday);
-    var opsAll = opsGlobalSnapshot(reqRows, comRows, faultRows, notifRows);
-    var opsWaitTotal = reqSp.wait + comSp.wait + faultSp.wait + notifSp.wait;
-    var opsDoneTotal = reqSp.done + comSp.done + faultSp.done + notifSp.done;
-    var opsRejTotal = reqSp.rej + comSp.rej + faultSp.rej + notifSp.rej;
-    var opsExtraToday =
-      reqSp.cancelled +
-      reqSp.other +
-      comSp.cancelled +
-      comSp.other +
-      faultSp.cancelled +
-      faultSp.other +
-      notifSp.cancelled +
-      notifSp.other;
-    var opsExtraAll = opsAll.cancelled + opsAll.other;
     var kpis = report && report.kpis ? report.kpis : {};
     var totalChats = kpis.totalChats != null ? kpis.totalChats : "—";
     var fb = kpis.fallbackRate != null ? kpis.fallbackRate + "%" : "—";
@@ -1035,136 +1193,89 @@
       typeof ui.formatDateTimeDisplayTr === "function"
         ? ui.formatDateTimeDisplayTr(new Date().toISOString())
         : String(new Date().toLocaleString("tr-TR"));
-    var opsLineExtrasAll = opsExtraAll > 0 ? " · İptal/diğer: <strong>" + opsExtraAll + "</strong>" : "";
-    var opsLineExtrasToday = opsExtraToday > 0 ? " · İptal/diğer: <strong>" + opsExtraToday + "</strong>" : "";
+    var mergeNote =
+      '<p class="home-dash-foot home-dash-foot--compact">Her liste en fazla <strong>' +
+      BUCKET_MERGE_MAX_PAGES +
+      "</strong> sayfa çekilir; veritabanındaki tam satır değildir." +
+      (stripTruncated ? " <strong>Kesinti var.</strong>" : "") +
+      " Tam rakamlar için ilgili operasyon sekmesini açın.</p>";
+    var catsAll =
+      '<ul class="home-ops-pano__cats" role="list">' +
+      homeOpsPanoCatHtml("İstekler", reqRows) +
+      homeOpsPanoCatHtml("Şikâyetler", comRows) +
+      homeOpsPanoCatHtml("Arızalar", faultRows) +
+      homeOpsPanoCatHtml("Misafir bildirimleri", notifRows) +
+      "</ul>";
+    var catsToday =
+      '<ul class="home-ops-pano__cats" role="list">' +
+      homeOpsPanoCatHtml("İstekler", reqToday) +
+      homeOpsPanoCatHtml("Şikâyetler", comToday) +
+      homeOpsPanoCatHtml("Arızalar", faultToday) +
+      homeOpsPanoCatHtml("Misafir bildirimleri", notifToday) +
+      "</ul>";
     var globalBar =
-      '<div class="home-top-strip__bar home-top-strip__bar--global">' +
-      '<div class="home-global-grid home-global-grid--single">' +
-      '<div class="home-global-card">' +
-      '<span class="home-global-card__k">İstek · Şikayet · Arıza · Misafir bildirimi + geç çıkış (tüm zamanlar)</span>' +
-      '<p class="home-global-card__body">Beklemede: <strong>' +
-      opsAll.open +
-      "</strong> · Tamamlanan: <strong>" +
-      opsAll.done +
-      "</strong> · Olumsuz: <strong>" +
-      opsAll.rejected +
-      "</strong> · Toplam kayıt: <strong>" +
-      opsAll.total +
-      "</strong>" +
-      opsLineExtrasAll +
-      "</p>" +
-      '<p class="home-global-card__sub">Bugün (kayıt tarihi ' +
+      '<div class="home-top-strip__bar home-top-strip__bar--global home-top-strip__bar--pano">' +
+      '<div class="home-ops-pano__title-row">' +
+      '<h3 class="home-dash-h">Operasyon pano özeti</h3>' +
+      mergeNote +
+      "</div>" +
+      '<div class="home-ops-pano" role="region" aria-label="Operasyon özeti">' +
+      '<section class="home-ops-pano__section" aria-labelledby="home-pano-all-h">' +
+      '<div class="home-ops-pano__head">' +
+      '<h4 id="home-pano-all-h" class="home-ops-pano__h">Tüm zamanlar</h4>' +
+      "</div>" +
+      catsAll +
+      "</section>" +
+      '<section class="home-ops-pano__section home-ops-pano__section--today" aria-labelledby="home-pano-today-h">' +
+      '<div class="home-ops-pano__head">' +
+      '<h4 id="home-pano-today-h" class="home-ops-pano__h">Bugün</h4>' +
+      '<span class="home-ops-pano__sub">Kayıt tarihi: ' +
       todayLabel +
-      "): Beklemede <strong>" +
-      opsWaitTotal +
-      "</strong> · Tamamlanan <strong>" +
-      opsDoneTotal +
-      "</strong> · Olumsuz <strong>" +
-      opsRejTotal +
-      "</strong>" +
-      opsLineExtrasToday +
-      "</p>" +
-      "</div></div>" +
-      '<p class="home-global-hint">Üst özet tüm zamanlar. Alt şerit: bugün oluşturulan istek, şikayet, arıza ve bildirim kayıtları.</p>' +
-      "</div>";
-    var opsTypeItems =
-      '<li class="home-res-venue">' +
-      '<span class="home-res-venue__name">İstekler</span>' +
-      '<div class="home-res-venue__split" role="group" aria-label="İstekler bugün">' +
-      '<span class="home-res-venue__leg"><span class="home-res-venue__leg-k">Beklemede</span> ' +
-      '<span class="home-res-venue__leg-v">' +
-      reqSp.wait +
-      "</span></span>" +
-      '<span class="home-res-venue__leg"><span class="home-res-venue__leg-k">Tamamlanan</span> ' +
-      '<span class="home-res-venue__leg-v">' +
-      reqSp.done +
-      "</span></span>" +
-      '<span class="home-res-venue__leg"><span class="home-res-venue__leg-k">Olumsuz</span> ' +
-      '<span class="home-res-venue__leg-v">' +
-      reqSp.rej +
-      "</span></span></div></li>" +
-      '<li class="home-res-venue">' +
-      '<span class="home-res-venue__name">Şikayetler</span>' +
-      '<div class="home-res-venue__split" role="group" aria-label="Şikayetler bugün">' +
-      '<span class="home-res-venue__leg"><span class="home-res-venue__leg-k">Beklemede</span> ' +
-      '<span class="home-res-venue__leg-v">' +
-      comSp.wait +
-      "</span></span>" +
-      '<span class="home-res-venue__leg"><span class="home-res-venue__leg-k">Dikkate alındı</span> ' +
-      '<span class="home-res-venue__leg-v">' +
-      comSp.done +
-      "</span></span>" +
-      '<span class="home-res-venue__leg"><span class="home-res-venue__leg-k">Alınmadı</span> ' +
-      '<span class="home-res-venue__leg-v">' +
-      comSp.rej +
-      "</span></span></div></li>" +
-      '<li class="home-res-venue">' +
-      '<span class="home-res-venue__name">Arızalar</span>' +
-      '<div class="home-res-venue__split" role="group" aria-label="Arızalar bugün">' +
-      '<span class="home-res-venue__leg"><span class="home-res-venue__leg-k">Beklemede</span> ' +
-      '<span class="home-res-venue__leg-v">' +
-      faultSp.wait +
-      "</span></span>" +
-      '<span class="home-res-venue__leg"><span class="home-res-venue__leg-k">Tamamlanan</span> ' +
-      '<span class="home-res-venue__leg-v">' +
-      faultSp.done +
-      "</span></span>" +
-      '<span class="home-res-venue__leg"><span class="home-res-venue__leg-k">Olumsuz</span> ' +
-      '<span class="home-res-venue__leg-v">' +
-      faultSp.rej +
-      "</span></span></div></li>" +
-      '<li class="home-res-venue">' +
-      '<span class="home-res-venue__name">Bildirim + geç çıkış</span>' +
-      '<div class="home-res-venue__split" role="group" aria-label="Misafir bildirimi ve geç çıkış bugün">' +
-      '<span class="home-res-venue__leg"><span class="home-res-venue__leg-k">Beklemede</span> ' +
-      '<span class="home-res-venue__leg-v">' +
-      notifSp.wait +
-      "</span></span>" +
-      '<span class="home-res-venue__leg"><span class="home-res-venue__leg-k">Dikkate alındı</span> ' +
-      '<span class="home-res-venue__leg-v">' +
-      notifSp.done +
-      "</span></span>" +
-      '<span class="home-res-venue__leg"><span class="home-res-venue__leg-k">Alınmadı</span> ' +
-      '<span class="home-res-venue__leg-v">' +
-      notifSp.rej +
-      "</span></span></div></li>";
-    var opsBar =
-      '<div class="home-top-strip__bar home-top-strip__bar--operations">' +
-      '<div class="home-res-strip">' +
-      '<div class="home-res-strip__row">' +
-      '<p class="home-res-strip__general">' +
-      "<strong>İstek · Şikayet · Arıza · Bildirim</strong> · Bugün (" +
-      todayLabel +
-      ") · Beklemede: <strong>" +
-      opsWaitTotal +
-      "</strong> · Tamamlanan: <strong>" +
-      opsDoneTotal +
-      "</strong> · Olumsuz: <strong>" +
-      opsRejTotal +
-      "</strong>" +
-      opsLineExtrasToday +
-      "</p>" +
-      '<div class="home-ops-strip__actions">' +
-      '<button type="button" class="home-ops-strip__mini js-home-open-op-hk">HK Operasyon →</button>' +
-      '<button type="button" class="home-ops-strip__mini js-home-open-op-front">Ön büro Operasyon →</button>' +
-      '<button type="button" class="home-ops-strip__mini js-home-open-op-tech">Teknik Operasyon →</button>' +
-      '<button type="button" class="home-ops-strip__mini js-home-open-guest-notifications">Salt okuma · Bildirimler →</button>' +
-      "</div></div>" +
-      '<p class="home-res-strip__hint">Bugün gönderilen kayıtlar (' +
-      todayLabel +
-      "). Beklemede: açık. Tamamlanan: olumlu kapanan. Olumsuz: yapılamadı / dikkate alınmadı.</p>" +
-      '<ul class="home-res-strip__chips" role="list">' +
-      opsTypeItems +
-      "</ul></div></div>";
+      "</span>" +
+      "</div>" +
+      catsToday +
+      "</section>" +
+      "</div></div>";
+    var iptalDiger = stripAgg.iptal + stripAgg.diger;
+    var iptalLi =
+      iptalDiger > 0
+        ? '<li class="home-stat home-stat--muted" title="İptal veya tanınmayan durum (yüklü örnekte).">' +
+          '<span class="home-stat__label">İptal / diğer</span>' +
+          '<span class="home-stat__value home-stat__value--compact">' +
+          iptalDiger +
+          "</span></li>"
+        : "";
     el.innerHTML =
+      '<div class="home-top-strip__layout">' +
       globalBar +
       '<div class="home-top-strip__bar home-top-strip__bar--metrics">' +
-      '<ul class="home-top-strip__stats" role="list">' +
-      '<li class="home-stat" title="İstek, şikayet, arıza, misafir bildirimi ve geç çıkış satırlarının toplamı">' +
-      '<span class="home-stat__label">Kayıt (toplam)</span>' +
+      '<ul class="home-top-strip__stats home-top-strip__stats--dense" role="list">' +
+      '<li class="home-stat home-stat--accent" title="İstek, şikâyet, arıza, misafir bildirimi ve geç çıkış: bu yüklemedeki satır sayısı.">' +
+      '<span class="home-stat__label">Toplam operasyon</span>' +
       '<span class="home-stat__value">' +
-      totalRecords +
+      stripAgg.toplam +
+      '</span><span class="home-stat__hint">Özet yükleme</span></li>' +
+      '<li class="home-stat" title="Yeni ve kuyrukta (pending).">' +
+      '<span class="home-stat__label">Bekliyor</span>' +
+      '<span class="home-stat__value">' +
+      stripAgg.bekliyor +
       "</span></li>" +
+      '<li class="home-stat" title="Yapılıyor (in_progress).">' +
+      '<span class="home-stat__label">Yapılıyor</span>' +
+      '<span class="home-stat__value">' +
+      stripAgg.yapiliyor +
+      "</span></li>" +
+      '<li class="home-stat" title="Tamamlanan.">' +
+      '<span class="home-stat__label">Yapıldı</span>' +
+      '<span class="home-stat__value">' +
+      stripAgg.yapildi +
+      "</span></li>" +
+      '<li class="home-stat" title="Olumsuz kapanış.">' +
+      '<span class="home-stat__label">Yapılmadı</span>' +
+      '<span class="home-stat__value">' +
+      stripAgg.yapilmadi +
+      "</span></li>" +
+      iptalLi +
       '<li class="home-stat"><span class="home-stat__label">Sohbet</span><span class="home-stat__value">' +
       totalChats +
       "</span></li>" +
@@ -1174,41 +1285,10 @@
       '<li class="home-stat"><span class="home-stat__label">Memnuniyet (otel / Viona)</span><span class="home-stat__value home-stat__value--compact">' +
       mem +
       "</span></li>" +
-      '<li class="home-stat"><span class="home-stat__label">Güncellendi</span><span class="home-stat__value home-stat__value--time">' +
+      '<li class="home-stat"><span class="home-stat__label">Özet saati</span><span class="home-stat__value home-stat__value--time">' +
       refreshed +
       "</span></li>" +
-      "</ul></div>" +
-      opsBar;
-    function wireOpsOpen(sel, tab, bucket, listElId) {
-      var b = el.querySelector(sel);
-      if (!b) return;
-      b.addEventListener("click", async function () {
-        openTab(tab);
-        await loadBucket(bucket, listElId);
-        scheduleAutoRefresh();
-      });
-    }
-    function wireOpTab(sel, tab, loader) {
-      var b = el.querySelector(sel);
-      if (!b) return;
-      b.addEventListener("click", async function () {
-        openTab(tab);
-        await loader();
-        scheduleAutoRefresh();
-      });
-    }
-    wireOpTab(".js-home-open-op-hk", "op_hk", loadOpHk);
-    wireOpTab(".js-home-open-op-tech", "op_tech", loadOpTech);
-    wireOpTab(".js-home-open-op-front", "op_front", loadOpFront);
-    var bGnHome = el.querySelector(".js-home-open-guest-notifications");
-    if (bGnHome) {
-      bGnHome.addEventListener("click", async function () {
-        guestNotifSubtab = "notifications";
-        openTab("guest_notifications");
-        await loadGuestNotifVisible();
-        scheduleAutoRefresh();
-      });
-    }
+      "</ul></div></div>";
   }
 
   function oldestOpenText(rows) {
@@ -1228,7 +1308,7 @@
 
   function renderReminderCard(opts) {
     var kpiLabel = opts.openKpiLabel != null ? opts.openKpiLabel : "Beklemede";
-    var progLabel = opts.inProgressLabel != null ? opts.inProgressLabel : "Eski · işlemde";
+    var progLabel = opts.inProgressLabel != null ? opts.inProgressLabel : "Yapılıyor";
     var metaLine =
       opts.statusMetaLine != null
         ? opts.statusMetaLine
@@ -1269,7 +1349,7 @@
     var reqRows = data.request || [];
     var comRows = data.complaint || [];
     var faultRows = data.fault || [];
-    var notifRows = data.guest_notification || [];
+    var notifRows = (data.guest_notification || []).concat(data.late_checkout || []);
 
     var req = countPending(reqRows);
     var com = countPending(comRows);
@@ -1292,54 +1372,66 @@
       '<div class="alert-grid">' +
       renderReminderCard({
         title: "İstekler",
-        openKpiLabel: "Beklemede (kuyruk)",
+        openKpiLabel: "Açıkta (iş gerektirir)",
         openCount: req,
         newCount: reqN,
         pendingCount: reqP,
         inProgressCount: reqI,
         statusMetaLine:
-          "Yeni: " + reqN + " · Kuyruk: " + reqP + (reqI > 0 ? " · Eski işlemde: " + reqI : ""),
+          "Yeni kayıt: " +
+          reqN +
+          " · Kuyrukta (bekliyor): " +
+          reqP +
+          (reqI > 0 ? " · Yapılıyor: " + reqI : " · Yapılıyor: 0"),
         oldestOpen: oldestOpenText(reqRows),
         tab: "op_hk",
       }) +
       renderReminderCard({
-        title: "Şikayetler",
-        openKpiLabel: "Beklemede (kuyruk)",
+        title: "Şikâyetler",
+        openKpiLabel: "Açıkta (iş gerektirir)",
         openCount: com,
         newCount: comN,
         pendingCount: comP,
         inProgressCount: comI,
         statusMetaLine:
-          "Yeni: " + comN + " · Kuyruk: " + comP + (comI > 0 ? " · Eski işlemde: " + comI : ""),
+          "Yeni: " +
+          comN +
+          " · Bekliyor (kuyruk): " +
+          comP +
+          (comI > 0 ? " · Yapılıyor: " + comI : " · Yapılıyor: 0"),
         oldestOpen: oldestOpenText(comRows),
         tab: "op_front",
       }) +
       renderReminderCard({
         title: "Arızalar",
-        openKpiLabel: "Beklemede (kuyruk)",
+        openKpiLabel: "Açıkta (iş gerektirir)",
         openCount: fault,
         newCount: faultN,
         pendingCount: faultP,
         inProgressCount: faultI,
         statusMetaLine:
-          "Yeni: " + faultN + " · Kuyruk: " + faultP + (faultI > 0 ? " · Eski işlemde: " + faultI : ""),
+          "Yeni: " +
+          faultN +
+          " · Bekliyor (kuyruk): " +
+          faultP +
+          (faultI > 0 ? " · Yapılıyor: " + faultI : " · Yapılıyor: 0"),
         oldestOpen: oldestOpenText(faultRows),
         tab: "op_tech",
       }) +
       renderReminderCard({
         title: "Misafir bildirimleri + geç çıkış",
-        openKpiLabel: "Beklemede (kuyruk)",
+        openKpiLabel: "Açıkta (iş gerektirir)",
         openCount: notif,
         newCount: notifN,
         pendingCount: notifP,
         inProgressCount: notifI,
         statusMetaLine:
-          "Yeni: " +
+          "İki kova birleşik özet · Yeni: " +
           notifN +
-          " · Kuyruk: " +
+          " · Bekliyor (kuyruk): " +
           notifP +
-          (notifI > 0 ? " · Eski işlemde: " + notifI : "") +
-          " (birleşik liste; sekmede alt görünümler ayrı)",
+          (notifI > 0 ? " · Yapılıyor: " + notifI : " · Yapılıyor: 0") +
+          " · Ön büro sekmesinde bildirim ve geç çıkış ayrı süzülür.",
         oldestOpen: oldestOpenText(notifRows),
         tab: "op_front",
       }) +
@@ -1535,21 +1627,6 @@
     });
   }
 
-  function wireDashboardOpShortcuts() {
-    function bind(sel, tab, loadFn) {
-      document.querySelectorAll(sel).forEach(function (btn) {
-        btn.addEventListener("click", async function () {
-          openTab(tab);
-          await loadFn();
-          scheduleAutoRefresh();
-        });
-      });
-    }
-    bind(".js-dash-open-op-hk", "op_hk", loadOpHk);
-    bind(".js-dash-open-op-tech", "op_tech", loadOpTech);
-    bind(".js-dash-open-op-front", "op_front", loadOpFront);
-  }
-
   function readOpFilterFromDom(prefix) {
     var status = document.getElementById(prefix + "-filter-status");
     var from = document.getElementById(prefix + "-filter-from");
@@ -1609,10 +1686,7 @@
       opTechPage = 1;
       void loadOpTech(1);
     });
-    bindBar("op-front", opFilterFront, function () {
-      opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
-      void loadOpFront();
-    });
+    wireOpFrontFilterBarOnce();
   }
 
   function wireVisibilityRefresh() {
@@ -1626,6 +1700,34 @@
     });
   }
 
+  var OPS_MUTATION_BC = "viona-ops-mutations";
+  var opsMutationDebounce = null;
+  function wireOpsBroadcastRefresh() {
+    try {
+      if (typeof BroadcastChannel === "undefined") return;
+      var bc = new BroadcastChannel(OPS_MUTATION_BC);
+      bc.onmessage = function () {
+        if (document.hidden) return;
+        if (opsMutationDebounce) clearTimeout(opsMutationDebounce);
+        opsMutationDebounce = setTimeout(function () {
+          opsMutationDebounce = null;
+          void (async function () {
+            try {
+              if (activeAdminTab == null) await loadDashboard();
+              else if (activeAdminTab === "requests") await loadBucket("request", "list-requests");
+              else if (activeAdminTab === "complaints") await loadBucket("complaint", "list-complaints");
+              else if (activeAdminTab === "faults") await loadBucket("fault", "list-faults");
+              else if (activeAdminTab === "guest_notifications") await loadGuestNotifVisible();
+              else if (activeAdminTab === "op_hk") await loadOpHk();
+              else if (activeAdminTab === "op_tech") await loadOpTech();
+              else if (activeAdminTab === "op_front") await loadOpFront();
+            } catch (_e) {}
+          })();
+        }, 320);
+      };
+    } catch (_e) {}
+  }
+
   async function init() {
     if (!staticAdminListenersBound) {
       staticAdminListenersBound = true;
@@ -1635,9 +1737,9 @@
       wirePdfReportPanel();
       wireLogsControls();
       wireBackHomeButtons();
-      wireDashboardOpShortcuts();
       wireOpFilterBars();
       wireVisibilityRefresh();
+      wireOpsBroadcastRefresh();
     }
     openTab(null);
     await loadDashboard();

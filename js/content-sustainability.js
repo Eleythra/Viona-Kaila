@@ -48,9 +48,13 @@
       var img = document.createElement("img");
       img.src = href;
       img.alt = i === 1 ? altFirst : "";
-      img.loading = i <= 2 ? "eager" : "lazy";
+      img.loading = i <= 3 ? "eager" : "lazy";
       img.decoding = "async";
       img.draggable = false;
+      if ("fetchPriority" in img) {
+        if (i === 1) img.fetchPriority = "high";
+        else if (i > 3) img.fetchPriority = "low";
+      }
       media.appendChild(img);
       link.appendChild(media);
 

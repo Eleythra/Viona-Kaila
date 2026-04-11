@@ -122,7 +122,7 @@
 
   var ACTIVITY_CARDS = [
     {
-      img: "assets/images/activities/aqua-gym.png",
+      img: "assets/images/activities/aqua-gym.png?v=3",
       alt: {
         tr: "Su jimnastiği havuz etkinliği",
         en: "Water aerobics pool activity",
@@ -147,7 +147,7 @@
       },
     },
     {
-      img: "assets/images/activities/dart.png",
+      img: "assets/images/activities/dart.png?v=3",
       alt: {
         tr: "Dart oyunu etkinliği",
         en: "Darts game activity",
@@ -172,7 +172,7 @@
       },
     },
     {
-      img: "assets/images/activities/water-polo.png",
+      img: "assets/images/activities/water-polo.png?v=3",
       alt: {
         tr: "Su topu havuz etkinliği",
         en: "Water polo pool activity",

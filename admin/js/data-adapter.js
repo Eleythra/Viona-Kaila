@@ -143,6 +143,26 @@
         };
       });
     },
+    getFrontOfficeSummary: function (extraQuery) {
+      var q = buildQuery(extraQuery || {});
+      var url = adminRequestsCollectionUrl() + "/front-summary" + (q ? "?" + q : "");
+      return jfetch(url).then(function (d) {
+        return d.summary || null;
+      });
+    },
+    getFrontOfficeTypeSummary: function (type, extraQuery) {
+      var o = Object.assign({ type: type }, extraQuery || {});
+      var q = buildQuery(o);
+      return jfetch(adminRequestsCollectionUrl() + "/front-type-summary?" + q).then(function (d) {
+        if (!d || typeof d !== "object") return null;
+        if (d.summary != null) return d.summary;
+        if (d.data && d.data.summary != null) return d.data.summary;
+        return null;
+      });
+    },
+    getOpsTeamEntryUrls: function () {
+      return jfetch(getApiBase() + "/admin/ops-team-entry-urls");
+    },
     /** @returns {{ items: array, truncated: boolean }} truncated: sunucudaki toplam sayfa sayısı maxPages üstündeyse. */
     getBucketMergeAll: async function (type, maxPages) {
       var pageSize = 500;
@@ -194,6 +214,15 @@
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: status }),
+      }).then(function (d) {
+        try {
+          if (typeof BroadcastChannel !== "undefined") {
+            var c = new BroadcastChannel("viona-ops-mutations");
+            c.postMessage({ t: Date.now(), v: 1, source: "admin-panel", type: type });
+            c.close();
+          }
+        } catch (_e) {}
+        return d;
       });
     },
     patchSatisfaction: function (type, id, payload) {
@@ -215,7 +244,16 @@
     deleteItem: function (type, id) {
       var endpoint =
         adminRequestsCollectionUrl() + "/" + encodeURIComponent(type) + "/" + encodeURIComponent(id);
-      return jfetch(endpoint, { method: "DELETE" });
+      return jfetch(endpoint, { method: "DELETE" }).then(function (d) {
+        try {
+          if (typeof BroadcastChannel !== "undefined") {
+            var c = new BroadcastChannel("viona-ops-mutations");
+            c.postMessage({ t: Date.now(), v: 1, source: "admin-panel-delete", type: type });
+            c.close();
+          }
+        } catch (_e) {}
+        return d;
+      });
     },
     downloadPdfReport: async function (params) {
       var query = buildQuery(params || {});

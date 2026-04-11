@@ -141,9 +141,9 @@ const I18N = {
     modMeet: "Toplantı Salonları",
     modAlanya: "Alanya'yı Keşfedin",
     sustainabilityIntro:
-      "Aşağıdaki görseller otel bilgilendirme broşürünün sayfa sırasıyla aynı akıştadır; üstten alta tek bir belge gibi ilerler. Bir görsele dokunarak tam boyutta açabilirsiniz.",
+      "Kaila Beach Hotel, sürdürülebilir turizm ve çevre sorumluluğu ilkeleriyle hizmet verir. Enerji verimliliği, atık ayrıştırma ve geri dönüşüm, su tasarrufu ile tek kullanımlık plastiğin azaltılması çalışmalarımızın temelini oluşturur. Aşağıdaki görseller, tesisimizin sürdürülebilirlik yaklaşımı ve doğaya saygılı uygulamaları hakkında kısa bir özettir.",
     sustainabilityDocAria: "Sürdürülebilirlik bilgilendirme görselleri",
-    sustainabilityDocAltFirst: "Sürdürülebilirlik bilgilendirme broşürü",
+    sustainabilityDocAltFirst: "Sürdürülebilirlik ve çevre bilgilendirme görseli",
     sustainabilityOpenImageHint: "Görseli tam boyutta aç",
     comingSoonPlaceholder: "Bu bölüm yakında güncellenecek. İçerik hazırlanıyor.",
     alanyaGuideEyebrow: "İndirilebilir rehber",
@@ -328,11 +328,33 @@ const I18N = {
     whereLocLabel: "Nerede",
     whereDirLabel: "Yön",
     whereDescLabel: "Kısaca",
+    whereKrokiLandscapeLead:
+      "Konum rehberini eksiksiz görmek için telefonunuzu yatay (yan) tutmanızı öneririz; böylece kroki, yer seçimi ve yön özeti aynı bakışta, taşmadan yan yana hizalanır.",
     whereModuleIntro:
-      "Tesis içindeki önemli noktalar tek ekranda. En çok sorulan üç adres en üstte; aşağıda diğer tüm lokasyonlar yer alıyor — her satırda yeri ve kısa bir not bulunur.",
+      "Listeden yer adını seçin veya haritadaki numaraya dokunun; yalnızca kısa konum tarifi görünür. Numaralar kroki görseline göre sabittir.",
     whereListSectionTitle: "Diğer lokasyonlar",
-    whereMapScrollLabel: "Konum listesi — aşağı kaydırın.",
+    whereMapScrollLabel: "Üstteki bilgi ve liste kutusunu kaydırarak tüm metni görebilirsiniz.",
     whereMapViewLabel: "Otel içi konum rehberi",
+    whereKrokiCoordsTitle: "Kroki üzerindeki konumlar (%)",
+    whereKrokiColPin: "#",
+    whereKrokiColPlace: "Lokasyon",
+    whereKrokiColX: "X %",
+    whereKrokiColY: "Y %",
+    whereKrokiPinAria: "Harita işareti {n}, konum tarifi için dokunun",
+    whereKrokiOrientP1:
+      "Önemli: Bu haritayı rahat okumak için telefonunuzu yatay (yan) tutun; kroki ve numaralar bu modda daha geniş görünür.",
+    whereKrokiOrientP2:
+      "Dikey tutuşta görsel daralır; numaraları seçmek zorlaşabilir.",
+    whereKrokiOrientP3:
+      "İşaretler sabit konumludur; yüzdeler kroki görselinin sol üst köşesine göredir.",
+    whereKrokiBlockLegend:
+      "Blok bilgisi (kroki numaraları): A Blok 1, 3, 4, 5, 6. B Blok ve B tarafı 2, 7–16. C Blok 17, 18, 19. 20–29: havuz, aquapark, sahil, alt geçit, otopark ve diğer ortak alanlar.",
+    whereKrokiSelectLabel: "Yeri listeden seçin",
+    whereKrokiSelectPlaceholder: "— Seçiniz —",
+    whereKrokiGroupA: "A Blok",
+    whereKrokiGroupB: "B Blok ve havuz hattı",
+    whereKrokiGroupC: "C Blok",
+    whereKrokiGroupOther: "Diğer ortak alanlar",
 
     reqIntro:
       "İstek, şikayet, oda içi arıza veya beslenme / sağlık / kutlama bildiriminizi buradan iletebilirsiniz. Aşağıdan türü seçin ve formu doldurun; talebiniz otel ekibine iletilir.",
@@ -707,9 +729,9 @@ const I18N = {
     modMeet: "Meeting Rooms",
     modAlanya: "Discover Alanya",
     sustainabilityIntro:
-      "Images follow the same page order as the hotel brochure—scroll as one continuous document. Tap any image to view it full size.",
+      "Kaila Beach Hotel is committed to responsible tourism and environmental stewardship. We prioritise energy efficiency, waste separation and recycling, water conservation, and reducing single-use plastic. The images below summarise our sustainability approach and how we protect the environment.",
     sustainabilityDocAria: "Sustainability information images",
-    sustainabilityDocAltFirst: "Sustainability information brochure",
+    sustainabilityDocAltFirst: "Sustainability and environment information image",
     sustainabilityOpenImageHint: "Open image full size",
     comingSoonPlaceholder: "This section will be updated soon. Content is being prepared.",
     alanyaGuideEyebrow: "Downloadable guide",
@@ -893,11 +915,33 @@ const I18N = {
     whereLocLabel: "Where",
     whereDirLabel: "Directions",
     whereDescLabel: "In brief",
+    whereKrokiLandscapeLead:
+      "Hold your phone in landscape for the full guide—the map, place picker and direction line stay aligned side by side without pushing content off-screen.",
     whereModuleIntro:
-      "Your in-resort directory in one view. The three most-requested spots are highlighted up top; everything else follows below with on-site directions and a short note.",
+      "Pick a place from the list or tap a number on the map — only a short “where to find it” line is shown. Pin positions are fixed on the artwork.",
     whereListSectionTitle: "More places on site",
-    whereMapScrollLabel: "Location list — scroll down.",
+    whereMapScrollLabel: "Scroll the upper panel to read all hints and the full place list.",
     whereMapViewLabel: "In-resort location guide",
+    whereKrokiCoordsTitle: "Pin positions on the map (%)",
+    whereKrokiColPin: "#",
+    whereKrokiColPlace: "Location",
+    whereKrokiColX: "X %",
+    whereKrokiColY: "Y %",
+    whereKrokiPinAria: "Map pin {n}, tap for the location hint",
+    whereKrokiOrientP1:
+      "Important: hold your phone in landscape for a comfortable read — the map and numbers use the full width.",
+    whereKrokiOrientP2:
+      "In portrait the artwork feels narrow; tapping pins accurately is harder.",
+    whereKrokiOrientP3:
+      "Pins use fixed positions; percentages are from the top-left corner of the map image.",
+    whereKrokiBlockLegend:
+      "Block guide (pin numbers): Block A 1, 3, 4, 5, 6. Block B and the B-side strip 2, 7–16. Block C 17, 18, 19. Pins 20–29 cover pools, aquapark, beach, underpass, car park and other shared areas.",
+    whereKrokiSelectLabel: "Choose a place from the list",
+    whereKrokiSelectPlaceholder: "— Choose —",
+    whereKrokiGroupA: "Block A",
+    whereKrokiGroupB: "Block B & pool side",
+    whereKrokiGroupC: "Block C",
+    whereKrokiGroupOther: "Other shared areas",
 
     reqIntro:
       "Send requests, complaints, in-room fault reports, or diet / health / celebration notices here. Pick a type below and complete the form — your message goes to the hotel team.",
@@ -1272,9 +1316,9 @@ const I18N = {
     modMeet: "Tagungsräume",
     modAlanya: "Alanya Entdecken",
     sustainabilityIntro:
-      "Die Bilder entsprechen der Seitenreihenfolge der Hotelbroschüre—wie ein durchgehendes Dokument von oben nach unten. Tippen Sie auf ein Bild, um es in voller Größe zu öffnen.",
+      "Das Kaila Beach Hotel arbeitet nach Grundsätzen nachhaltigen Tourismus und Umweltverantwortung. Im Mittelpunkt stehen Energieeffizienz, Mülltrennung und Recycling, Wassersparen und weniger Einwegplastik. Die folgenden Grafiken fassen unseren Nachhaltigkeitsansatz und den schonenden Umgang mit der Natur kompakt zusammen.",
     sustainabilityDocAria: "Nachhaltigkeits-Infografiken",
-    sustainabilityDocAltFirst: "Nachhaltigkeits-Broschüre",
+    sustainabilityDocAltFirst: "Grafik zu Nachhaltigkeit und Umwelt",
     sustainabilityOpenImageHint: "Bild in voller Größe öffnen",
     comingSoonPlaceholder: "Dieser Bereich wird bald ergänzt. Inhalte werden vorbereitet.",
     alanyaGuideEyebrow: "Reiseführer zum Download",
@@ -1459,11 +1503,33 @@ const I18N = {
     whereLocLabel: "Wo",
     whereDirLabel: "Weg",
     whereDescLabel: "Kurzinfo",
+    whereKrokiLandscapeLead:
+      "Drehen Sie das Smartphone ins Querformat: Plan, Auswahl und Kurzbeschreibung stehen dann nebeneinander und nicht mehr unterhalb des sichtbaren Bereichs.",
     whereModuleIntro:
-      "Alle wichtigen Orte auf der Anlage auf einen Blick. Die drei meistgefragten Ziele stehen oben; darunter folgen alle weiteren Standorte mit Wegbeschreibung und Kurzinfo.",
+      "Wählen Sie einen Ort in der Liste oder tippen Sie auf eine Nummer im Plan — es erscheint nur eine kurze Lageinfo. Die Positionen sind fest im Bild verankert.",
     whereListSectionTitle: "Weitere Orte",
-    whereMapScrollLabel: "Ortsliste — nach unten scrollen.",
+    whereMapScrollLabel: "Im oberen Bereich nach unten scrollen, um alle Hinweise und die vollständige Liste zu lesen.",
     whereMapViewLabel: "Lageplan der Anlage",
+    whereKrokiCoordsTitle: "Marker-Positionen auf dem Plan (%)",
+    whereKrokiColPin: "#",
+    whereKrokiColPlace: "Ort",
+    whereKrokiColX: "X %",
+    whereKrokiColY: "Y %",
+    whereKrokiPinAria: "Kartenmarker {n}, tippen für die Lageinfo",
+    whereKrokiOrientP1:
+      "Wichtig: Halten Sie das Smartphone quer — Plan und Nummern nutzen die volle Breite.",
+    whereKrokiOrientP2:
+      "Im Hochformat wirkt die Karte schmal; die Marker sind schwerer zu treffen.",
+    whereKrokiOrientP3:
+      "Marker sind fest positioniert; Prozente beziehen sich auf die linke obere Ecke des Planbildes.",
+    whereKrokiBlockLegend:
+      "Blöcke (Nummern im Plan): Block A 1, 3, 4, 5, 6. Block B und B-Seite 2, 7–16. Block C 17, 18, 19. 20–29: Pools, Aquapark, Strand, Unterführung, Parkplatz und weitere Bereiche.",
+    whereKrokiSelectLabel: "Ort aus der Liste wählen",
+    whereKrokiSelectPlaceholder: "— Bitte wählen —",
+    whereKrokiGroupA: "Block A",
+    whereKrokiGroupB: "Block B & Poolseite",
+    whereKrokiGroupC: "Block C",
+    whereKrokiGroupOther: "Weitere Bereiche",
 
     reqIntro:
       "Hier senden Sie Wünsche, Beschwerden, Störmeldungen im Zimmer sowie Hinweise zu Ernährung / Gesundheit / Feiern. Typ wählen, Formular ausfüllen — Ihre Nachricht geht an das Hotelteam.",
@@ -1838,9 +1904,9 @@ const I18N = {
     modMeet: "Конференц-залы",
     modAlanya: "Откройте Аланью",
     sustainabilityIntro:
-      "Изображения идут в том же порядке, что и страницы брошюры отеля — как один непрерывный документ сверху вниз. Нажмите на изображение, чтобы открыть его в полном размере.",
+      "Kaila Beach Hotel следует принципам устойчивого туризма и экологической ответственности. Мы уделяем внимание энергоэффективности, раздельному сбору и переработке отходов, экономии воды и сокращению одноразового пластика. Ниже — краткий обзор нашего подхода к устойчивому развитию и заботе об окружающей среде.",
     sustainabilityDocAria: "Иллюстрации по устойчивому развитию",
-    sustainabilityDocAltFirst: "Брошюра об устойчивом развитии",
+    sustainabilityDocAltFirst: "Инфографика: устойчивое развитие и экология",
     sustainabilityOpenImageHint: "Открыть изображение в полном размере",
     comingSoonPlaceholder: "Раздел скоро обновят. Контент готовится.",
     alanyaGuideEyebrow: "Путеводитель для скачивания",
@@ -2022,14 +2088,36 @@ const I18N = {
     chatOpenRestaurantsBars: "Открыть «Рестораны и бары»",
     chatOpenTransfer: "Открыть «Трансфер»",
     chatOpenWhere: "Открыть путеводитель по отелю",
-    whereLocLabel: "Где искать",
+    whereLocLabel: "Место",
     whereDirLabel: "Как пройти",
     whereDescLabel: "Кратко",
+    whereKrokiLandscapeLead:
+      "Для полного просмотра держите телефон горизонтально: схема, список и краткая подсказка останутся рядом и не уедут за нижний край экрана.",
     whereModuleIntro:
-      "Важные точки курорта в одном списке. Три самых популярных места выделены сверху; ниже — остальные объекты с указанием, где они находятся и чем полезны.",
+      "Выберите место в списке или нажмите номер на схеме — показывается только краткая подсказка «где искать». Положение меток зафиксировано на изображении.",
     whereListSectionTitle: "Остальные локации",
-    whereMapScrollLabel: "Список локаций — прокрутите вниз.",
+    whereMapScrollLabel: "Прокрутите верхнюю панель, чтобы прочитать все подсказки и полный список мест.",
     whereMapViewLabel: "Путеводитель по территории отеля",
+    whereKrokiCoordsTitle: "Положение меток на схеме (%)",
+    whereKrokiColPin: "#",
+    whereKrokiColPlace: "Локация",
+    whereKrokiColX: "X %",
+    whereKrokiColY: "Y %",
+    whereKrokiPinAria: "Метка {n} на схеме — нажмите для подсказки",
+    whereKrokiOrientP1:
+      "Важно: держите телефон горизонтально — схема и номера занимают всю ширину экрана.",
+    whereKrokiOrientP2:
+      "В портретном режиме изображение уже; попасть по меткам сложнее.",
+    whereKrokiOrientP3:
+      "Метки закреплены; проценты отсчитываются от левого верхнего угла изображения схемы.",
+    whereKrokiBlockLegend:
+      "Блоки (номера на схеме): блок A — 1, 3, 4, 5, 6. Блок B и зона у B — 2, 7–16. Блок C — 17, 18, 19. 20–29: бассейны, аквапарк, пляж, переход, парковка и другие зоны.",
+    whereKrokiSelectLabel: "Выберите место в списке",
+    whereKrokiSelectPlaceholder: "— Выберите —",
+    whereKrokiGroupA: "Блок A",
+    whereKrokiGroupB: "Блок B и зона бассейнов",
+    whereKrokiGroupC: "Блок C",
+    whereKrokiGroupOther: "Другие зоны",
 
     reqIntro:
       "Здесь можно отправить просьбу, жалобу, заявку о неисправности или уведомление о питании / здоровье / празднике. Выберите тип и заполните форму — сообщение уйдёт команде отеля.",
