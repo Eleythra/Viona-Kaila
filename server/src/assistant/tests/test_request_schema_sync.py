@@ -33,7 +33,7 @@ def test_chat_fallback_localization_keys_exist():
     from assistant.services.localization_service import LocalizationService
 
     loc = LocalizationService()
-    for lang in ("tr", "en", "de", "ru"):
+    for lang in ("tr", "en", "de", "pl"):
         for key in (
             "chat_fallback_throttled",
             "chat_fallback_validation_error",

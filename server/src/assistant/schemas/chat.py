@@ -2,7 +2,7 @@ from typing import Optional, Literal
 from pydantic import BaseModel, Field
 
 
-LangCode = Literal["tr", "en", "de", "ru"]
+LangCode = Literal["tr", "en", "de", "pl"]
 ChannelName = Literal["web", "whatsapp", "unknown", "voice"]
 
 

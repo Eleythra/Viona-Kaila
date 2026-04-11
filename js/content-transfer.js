@@ -7,7 +7,7 @@
     tr: { href: "assets/documents/transfer/tr-Transfer.pdf", file: "Kaila-Transfer-TR.pdf" },
     en: { href: "assets/documents/transfer/en-Transfer-fixed.pdf", file: "Kaila-Transfer-EN.pdf" },
     de: { href: "assets/documents/transfer/de-Transfer-fixed.pdf", file: "Kaila-Transfer-DE.pdf" },
-    ru: { href: "assets/documents/transfer/ru-Transfer-fixed.pdf", file: "Kaila-Transfer-RU.pdf" },
+    pl: { href: "assets/documents/transfer/en-Transfer-fixed.pdf", file: "Kaila-Transfer-EN.pdf" },
   };
 
   var ROWS = [
@@ -22,10 +22,10 @@
   ];
 
   function resolveLang(code) {
-    if (code === "en" || code === "de" || code === "ru" || code === "tr") return code;
+    if (code === "en" || code === "de" || code === "pl" || code === "tr") return code;
     try {
       var c = localStorage.getItem(LANG_KEY);
-      if (c === "en" || c === "de" || c === "ru" || c === "tr") return c;
+      if (c === "en" || c === "de" || c === "pl" || c === "tr") return c;
     } catch (e) {}
     return "tr";
   }

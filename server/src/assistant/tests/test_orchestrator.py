@@ -51,7 +51,7 @@ class DummyRagService:
     def answer(self, message, language):
         self.called = True
         t = (message or "").lower()
-        lang = language if language in ("tr", "en", "de", "ru") else "tr"
+        lang = language if language in ("tr", "en", "de", "pl") else "tr"
         is_wf = any(
             m in t
             for m in (
@@ -70,9 +70,10 @@ class DummyRagService:
                 "wo ist",
                 "wie komme",
                 "wie gelange",
-                "где наход",
-                "как добраться",
-                "расположен",
+                "gdzie jest",
+                "jak dojść",
+                "jak dojsc",
+                "lokalizacja",
             )
         )
         if is_wf:
@@ -81,21 +82,21 @@ class DummyRagService:
                     "tr": "Ana restoran B Block'ta, havuz tarafı teras katındadır.",
                     "en": "The main restaurant is on the pool-side terrace in Block B.",
                     "de": "Das Hauptrestaurant liegt terrassenseitig am Pool in Block B.",
-                    "ru": "Основной ресторан — на террасе у бассейна, блок B.",
+                    "pl": "Główna restauracja jest na tarasie od strony basenu, blok B.",
                 }[lang]
             if "moss" in t:
                 return {
                     "tr": "Moss Bar, alt geçitten sahile çıkıldığında sağ-ileride, sahil alanındadır.",
                     "en": "Moss Bar is on the beach, ahead to the right after the underpass to the shore.",
                     "de": "Die Moss Bar liegt am Strand, rechts-vorne nach dem Durchgang zum Strand.",
-                    "ru": "Moss Bar — на пляже, правее после перехода к морю.",
+                    "pl": "Moss Bar jest na plaży, w prawo za przejściem w stronę morza.",
                 }[lang]
             if "lobi" in t or "lobby" in t:
                 return {
                     "tr": "Lobi (Lobby) A Block giriş katındadır.",
                     "en": "The lobby is on the ground floor at the Block A entrance.",
                     "de": "Die Lobby ist im Erdgeschoss am Eingang von Block A.",
-                    "ru": "Лобби — у входа в блок A.",
+                    "pl": "Lobby jest na parterze przy wejściu do bloku A.",
                 }[lang]
             if "bilinmeyen_test_yeri" in t:
                 return None
@@ -442,7 +443,7 @@ def test_special_need_multilang_examples():
         ("veganım", "tr"),
         ("I am vegetarian", "en"),
         ("Ich bin Vegetarier", "de"),
-        ("я вегетарианец", "ru"),
+        ("jestem wegetarianinem", "pl"),
         ("laktozum var", "tr"),
         ("Ich brauche Rollstuhl Hilfe", "de"),
     ]
@@ -458,12 +459,18 @@ def test_baby_food_need_routes_guest_relations_not_baby_equipment_form():
     for msg, loc in [
         ("mama lazım", "tr"),
         ("I need baby food", "en"),
-        ("мне нужно детское питание", "ru"),
+        ("potrzebuję jedzenia dla niemowląt", "pl"),
     ]:
         res = orch.handle(ChatRequest(message=msg, ui_language=loc, locale=loc))
         assert res.meta.intent == "request", msg
         low = res.message.lower()
-        assert "misafir" in low or "guest relations" in low or "гост" in low or "gästebetreuung" in low, msg
+        assert (
+            "misafir" in low
+            or "guest relations" in low
+            or "gästebetreuung" in low
+            or "gość" in low
+            or "obslug" in low
+        ), msg
 
 
 def test_mama_sandalyesi_lazim_still_baby_equipment_request_form():
@@ -570,7 +577,7 @@ def test_bored_suggests_animation_multilang():
         ("otelde canım sıkıldı", "tr"),
         ("I am bored", "en"),
         ("mir ist langweilig", "de"),
-        ("мне скучно", "ru"),
+        ("nudzi mi się", "pl"),
     ]
     for msg, loc in examples:
         res = orch.handle(ChatRequest(message=msg, ui_language=loc, locale=loc))
@@ -585,9 +592,9 @@ def test_chitchat_multilang():
         ("naber", "tr"),
         ("hello", "en"),
         ("hallo", "de"),
-        ("привет", "ru"),
+        ("cześć", "pl"),
         ("wer bist du", "de"),
-        ("кто ты", "ru"),
+        ("kim jesteś", "pl"),
     ]
     for msg, loc in examples:
         res = orch.handle(ChatRequest(message=msg, ui_language=loc, locale=loc))
@@ -598,7 +605,7 @@ def test_chitchat_multilang():
 
 def test_social_thanks_is_rule_based_without_llm_dependency():
     orch, _, intent = build_orchestrator()
-    for msg, loc in [("teşekkürler", "tr"), ("thanks", "en"), ("danke", "de"), ("спасибо", "ru")]:
+    for msg, loc in [("teşekkürler", "tr"), ("thanks", "en"), ("danke", "de"), ("dziękuję", "pl")]:
         res = orch.handle(ChatRequest(message=msg, ui_language=loc, locale=loc))
         assert res.meta.intent == "chitchat"
         assert res.type == "inform"
@@ -705,9 +712,9 @@ def test_social_variation_respects_selected_language_for_same_meaning():
     assert intent.calls == 0
 
 
-def test_russian_chitchat_multiword_rule():
+def test_polish_chitchat_multiword_rule():
     orch, _, _ = build_orchestrator()
-    res = orch.handle(ChatRequest(message="привет как дела", ui_language="ru", locale="ru"))
+    res = orch.handle(ChatRequest(message="cześć jak się masz", ui_language="pl", locale="pl"))
     assert res.meta.intent == "chitchat"
     assert res.type == "inform"
     assert res.meta.source == "rule"
@@ -808,18 +815,18 @@ def test_typo_iniglizce_konus_is_language_switch():
     assert intent.calls == 0
 
 
-def test_russian_meta_phrase_switch_to_english():
+def test_polish_meta_phrase_switch_to_english():
     orch, _, intent = build_orchestrator()
-    res = orch.handle(ChatRequest(message="говори по-английски", ui_language="ru", locale="ru"))
+    res = orch.handle(ChatRequest(message="mów po angielsku", ui_language="pl", locale="pl"))
     assert res.meta.intent == "chitchat"
     assert res.meta.language == "en"
     assert "English" in res.message
     assert intent.calls == 0
 
 
-def test_russian_short_phrase_po_angliyski():
+def test_polish_short_phrase_po_angielsku():
     orch, _, intent = build_orchestrator()
-    res = orch.handle(ChatRequest(message="по-английски", ui_language="ru", locale="ru"))
+    res = orch.handle(ChatRequest(message="po angielsku", ui_language="pl", locale="pl"))
     assert res.meta.intent == "chitchat"
     assert res.meta.language == "en"
     assert intent.calls == 0
@@ -834,12 +841,12 @@ def test_german_meta_switch_to_english():
     assert intent.calls == 0
 
 
-def test_german_meta_switch_to_russian():
+def test_german_meta_switch_to_polish():
     orch, _, intent = build_orchestrator()
-    res = orch.handle(ChatRequest(message="auf russisch wechseln", ui_language="de", locale="de"))
+    res = orch.handle(ChatRequest(message="auf polnisch wechseln", ui_language="de", locale="de"))
     assert res.meta.intent == "chitchat"
-    assert res.meta.language == "ru"
-    assert "русски" in res.message.lower() or "Далее" in res.message
+    assert res.meta.language == "pl"
+    assert "polski" in res.message.lower() or "polsku" in res.message.lower() or "Polish" in res.message
     assert intent.calls == 0
 
 
@@ -851,9 +858,9 @@ def test_german_sprich_englisch():
     assert intent.calls == 0
 
 
-def test_russian_meta_switch_to_german():
+def test_polish_meta_switch_to_german():
     orch, _, intent = build_orchestrator()
-    res = orch.handle(ChatRequest(message="говори по-немецки", ui_language="ru", locale="ru"))
+    res = orch.handle(ChatRequest(message="mów po niemiecku", ui_language="pl", locale="pl"))
     assert res.meta.intent == "chitchat"
     assert res.meta.language == "de"
     assert "Deutsch" in res.message or "Ich antworte" in res.message
@@ -992,9 +999,9 @@ def test_zoliakie_is_special_need():
     assert res.meta.intent == "guest_notification"
 
 
-def test_russian_towel_request():
+def test_polish_towel_request():
     orch, _, _ = build_orchestrator()
-    res = orch.handle(ChatRequest(message="мне нужно полотенце", ui_language="ru", locale="ru"))
+    res = orch.handle(ChatRequest(message="potrzebuję ręcznika", ui_language="pl", locale="pl"))
     assert res.meta.intent == "request"
 
 
@@ -1266,7 +1273,7 @@ def test_fault_words_block_early_room_supply_and_inventory_request():
 
 
 def test_multilingual_priority_fault_phrases_open_fault_form():
-    """Su basıncı / gider / TV sinyal / ampul / Wi‑Fi bağlantı — EN·DE·RU eşdeğerleri arıza formu."""
+    """Su basıncı / gider / TV sinyal / ampul / Wi‑Fi bağlantı — EN·DE·PL eşdeğerleri arıza formu."""
     orch, _, _ = build_orchestrator()
     cases = [
         ("en", "no hot water"),
@@ -1274,9 +1281,9 @@ def test_multilingual_priority_fault_phrases_open_fault_form():
         ("de", "abfluss verstopft"),
         ("de", "waschbecken verstopft"),
         ("de", "fernseher kein signal"),
-        ("ru", "нет горячей воды"),
-        ("ru", "телевизор нет сигнала"),
-        ("ru", "засор в душе"),
+        ("pl", "brak ciepłej wody"),
+        ("pl", "telewizor brak sygnału"),
+        ("pl", "zatkany prysznic"),
     ]
     for ui, msg in cases:
         res = orch.handle(ChatRequest(message=msg, ui_language=ui, locale=ui))
@@ -1345,10 +1352,16 @@ def test_yarin_after_animation_wins_over_reservation_session_hint():
     assert "gündüz" in low or "animasyon" in low or "resepsiyon" in low or "program" in low
 
 
-def test_russian_animation_program_uses_fixed_animation_not_rag():
+def test_polish_animation_program_uses_fixed_animation_not_rag():
     orch, rag, _ = build_orchestrator()
     res = orch.handle(
-        ChatRequest(message="анимация программа отеля", ui_language="ru", locale="ru", user_id="u-ru-anim", session_id="s-ru")
+        ChatRequest(
+            message="program animacji hotelu",
+            ui_language="pl",
+            locale="pl",
+            user_id="u-pl-anim",
+            session_id="s-pl",
+        )
     )
     assert res.meta.intent == "hotel_info"
     assert rag.called is False
@@ -1864,8 +1877,8 @@ def test_full_operational_routing_matrix():
     assert intent.calls == 0
 
 
-def test_multilingual_operational_routing_matrix_en_de_ru():
-    """İngilizce öncelikli: aynı operasyonel ağaç EN/DE/RU’da doğru niyet + yanıt dili + aksiyon."""
+def test_multilingual_operational_routing_matrix_en_de_pl():
+    """İngilizce öncelikli: aynı operasyonel ağaç EN/DE/PL’de doğru niyet + yanıt dili + aksiyon."""
     n = 0
 
     def run(msg: str, lang: str):
@@ -1993,16 +2006,16 @@ def test_multilingual_operational_routing_matrix_en_de_ru():
     assert r.meta.intent == "guest_notification"
     assert r.meta.action and r.meta.action.kind == "chat_form"
 
-    # —— Russian ——
-    r = run("поздний выезд", "ru")
+    # —— Polish ——
+    r = run("późne wymeldowanie", "pl")
     assert r.meta.intent == "guest_notification"
     assert r.meta.action and r.meta.action.kind == "open_guest_notifications_form"
 
-    r = run("мне нужно полотенце", "ru")
+    r = run("potrzebuję ręcznika", "pl")
     assert r.meta.intent == "request"
     assert r.meta.action and r.meta.action.kind == "chat_form"
 
-    r = run("жалоба на шум", "ru")
+    r = run("skarga na hałas", "pl")
     assert r.meta.intent == "complaint"
     assert r.meta.action and r.meta.action.kind == "open_complaint_form"
 
@@ -2497,10 +2510,11 @@ def test_orch_reply_lang_normalizes_case_and_unknown():
     assert _orch_reply_lang("  EN  ") == "en"
     assert _orch_reply_lang("De") == "de"
     assert _orch_reply_lang("fr") == "tr"
+    assert _orch_reply_lang("pl") == "pl"
 
 
 def test_full_name_ack_prompts_four_locales_consistency():
-    """İstek ön-doldurma / açıklama sonrası / misafir bildirimi — tr en de ru şablonları eksiksiz."""
+    """İstek ön-doldurma / açıklama sonrası / misafir bildirimi — tr en de pl şablonları eksiksiz."""
     from assistant.services.orchestrator import (
         _localized_full_name_prompt_after_description_step,
         _localized_full_name_prompt_guest_notif_skip_description,
@@ -2518,8 +2532,8 @@ def test_full_name_ack_prompts_four_locales_consistency():
     de = _localized_full_name_prompt_request_prefill("kettle", "de")
     assert "wasserkocher" in de.lower() or "anfrage" in de.lower()
 
-    ru = _localized_full_name_prompt_request_prefill("kettle", "ru")
-    assert "чайник" in ru.lower() or "запрос" in ru.lower()
+    pl = _localized_full_name_prompt_request_prefill("kettle", "pl")
+    assert "czajnik" in pl.lower() or "prośb" in pl.lower() or "prosb" in pl.lower()
 
     en_after = _localized_full_name_prompt_after_description_step("request", "kettle", "en")
     assert "we have noted" in en_after.lower()
@@ -2527,8 +2541,8 @@ def test_full_name_ack_prompts_four_locales_consistency():
     de_after = _localized_full_name_prompt_after_description_step("request", "kettle", "de")
     assert "wir haben" in de_after.lower()
 
-    ru_after = _localized_full_name_prompt_after_description_step("request", "kettle", "ru")
-    assert "мы записали" in ru_after.lower()
+    pl_after = _localized_full_name_prompt_after_description_step("request", "kettle", "pl")
+    assert "zapisali" in pl_after.lower()
 
     de_gn = _localized_full_name_prompt_guest_notif_skip_description("pregnancy", "de")
     assert "schwangerschaft" in de_gn.lower()

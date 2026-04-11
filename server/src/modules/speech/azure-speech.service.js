@@ -3,17 +3,17 @@
  * Anahtar yalnızca sunucu ortamında; istemciye sızdırılmaz.
  */
 
-/** Uygulama dil kodu (tr|en|de|ru) → Azure locale + sinir sesi */
+/** Uygulama dil kodu (tr|en|de|pl) → Azure locale + sinir sesi */
 export const LOCALE_VOICE_MAP = {
   tr: { locale: "tr-TR", voice: "tr-TR-EmelNeural" },
   en: { locale: "en-US", voice: "en-US-JennyNeural" },
   de: { locale: "de-DE", voice: "de-DE-KatjaNeural" },
-  ru: { locale: "ru-RU", voice: "ru-RU-SvetlanaNeural" },
+  pl: { locale: "pl-PL", voice: "pl-PL-AgnieszkaNeural" },
 };
 
 function normalizeUiLang(value) {
   const v = String(value || "").toLowerCase().trim();
-  if (v === "en" || v === "de" || v === "ru") return v;
+  if (v === "en" || v === "de" || v === "pl") return v;
   return "tr";
 }
 
@@ -24,7 +24,7 @@ export function resolveVoiceForRequest(localeInput) {
   if (lower.startsWith("tr")) return LOCALE_VOICE_MAP.tr;
   if (lower.startsWith("en")) return LOCALE_VOICE_MAP.en;
   if (lower.startsWith("de")) return LOCALE_VOICE_MAP.de;
-  if (lower.startsWith("ru")) return LOCALE_VOICE_MAP.ru;
+  if (lower.startsWith("pl")) return LOCALE_VOICE_MAP.pl;
   return LOCALE_VOICE_MAP[normalizeUiLang(localeInput)];
 }
 

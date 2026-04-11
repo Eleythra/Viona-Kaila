@@ -7,7 +7,7 @@
 
   var LANG_KEY = "viona_lang";
   /** Deterministik: otomatik dil algılama yok; uygulama dili = STT/TTS locale */
-  var AZURE_LOCALE_BY_APP = { tr: "tr-TR", en: "en-US", de: "de-DE", ru: "ru-RU" };
+  var AZURE_LOCALE_BY_APP = { tr: "tr-TR", en: "en-US", de: "de-DE", pl: "pl-PL" };
 
   var STATE_IDLE = "idle";
   var STATE_LISTENING = "listening";

@@ -20,8 +20,8 @@ def test_sanitize_strips_module_cta_lines_multilingual():
     assert "button below" not in sanitize_message_for_voice(en, "en")
     de = "Kurz. Öffnen Sie ihn über die Schaltfläche unten."
     assert "Schaltfläche unten" not in sanitize_message_for_voice(de, "de")
-    ru = "Кратко. Откройте его кнопкой ниже."
-    assert "кнопкой ниже" not in sanitize_message_for_voice(ru, "ru").lower()
+    pl = "Podsumowanie. Możesz to otworzyć przyciskiem poniżej."
+    assert "przycisk" not in sanitize_message_for_voice(pl, "pl").lower()
 
 
 def test_finalize_empty_message_uses_fallback():

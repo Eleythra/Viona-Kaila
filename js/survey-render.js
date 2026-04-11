@@ -165,34 +165,34 @@
       surveyVionaCommentPlaceholder: "Optional: Notiz zu Viona",
       surveyTabCommentPlaceholder: "Optionaler Kommentar zu {tab}",
     },
-    ru: {
-      modSurvey: "Оцените свой опыт",
-      surveyTitle: "Оцените свой опыт",
+    pl: {
+      modSurvey: "Oceń swoje wrażenia",
+      surveyTitle: "Oceń swoje wrażenia",
       surveyDescription:
-        "Оцените разные стороны проживания по шкале от 1 до 5. Каждый раздел отправляется отдельно; разделы можно пропустить. Короткие комментарии по желанию.",
-      surveyBackToTopics: "Назад к разделам оценки",
-      surveyBackToCategory: "Назад к подразделам",
-      surveySubHubHint: "Выберите зону для оценки; каждая отправляется отдельно.",
-      surveyVionaHubLabel: "Ассистент Viona",
-      surveySubmitButtonText: "Отправить оценку",
-      surveyThankYouMessage: "Спасибо за ваш отзыв.",
-      surveyErrorFillRatings: "Выберите все оценки (1–5) в этом разделе.",
-      surveyErrorMissingTopics: "Не заполнено: {list}.",
+        "Oceń różne aspekty pobytu od 1 do 5. Każda sekcja jest przesyłana osobno; możesz pominąć dowolną sekcję. Krótkie notatki są opcjonalne.",
+      surveyBackToTopics: "Powrót do tematów recenzji",
+      surveyBackToCategory: "Powrót do podtematów",
+      surveySubHubHint: "Wybierz obszar, który chcesz ocenić; każdy jest przesyłany osobno.",
+      surveyVionaHubLabel: "Asystent Viona",
+      surveySubmitButtonText: "Wyślij recenzję",
+      surveyThankYouMessage: "Dziękujemy bardzo za Twoją ocenę.",
+      surveyErrorFillRatings: "Wybierz wszystkie wyniki (1–5) w tej sekcji.",
+      surveyErrorMissingTopics: "Nieukończone sekcje: {list}.",
       surveyHubHint:
-        "Каждый раздел отправляется отдельно: откройте карточку, ответьте на все вопросы (1–5), отправьте. Для еды и напитков, бассейна и пляжа сначала выберите зону.",
+        "Każda sekcja jest wysyłana osobno: otwórz kartę, odpowiedz na wszystkie pytania (1–5), a następnie prześlij. Jeśli chodzi o jedzenie i napoje oraz basen i plażę, najpierw wybierz obszar.",
       surveyThankYouSubtext:
-        "Раздел сохранён. Форма сброшена; при необходимости оцените снова.",
-      surveyConfirmTitle: "Отправить этот раздел?",
+        "Ta sekcja została zapisana. Formularz został wyczyszczony; możesz ponownie ocenić, jeśli chcesz.",
+      surveyConfirmTitle: "Wysłać tę sekcję?",
       surveyConfirmBody:
-        "Оценки по разделу «{tab}» будут сохранены. Остальные разделы можно отправить отдельно.",
-      surveyConfirmSend: "Да, отправить",
-      surveyConfirmCancel: "Назад",
-      surveyConfirmDismiss: "Закрыть подтверждение",
-      surveyErrorSubmit: "Произошла ошибка при отправке.",
-      surveyScaleHint: "из 5",
-      surveyStarWord: "звезд",
-      surveyVionaCommentPlaceholder: "Дополнительный комментарий о Viona",
-      surveyTabCommentPlaceholder: "Дополнительный комментарий о {tab}",
+        "Twoje wyniki dla „{tab}” zostaną zapisane. Inne tematy możesz zgłaszać osobno.",
+      surveyConfirmSend: "Tak, wyślij",
+      surveyConfirmCancel: "Wstecz",
+      surveyConfirmDismiss: "Zamknij potwierdzenie",
+      surveyErrorSubmit: "Wystąpił błąd podczas przesyłania wyników.",
+      surveyScaleHint: "z 5",
+      surveyStarWord: "gwiazdki",
+      surveyVionaCommentPlaceholder: "Opcjonalna uwaga o Viona",
+      surveyTabCommentPlaceholder: "Opcjonalna informacja o {tab}",
     },
   };
 
@@ -206,10 +206,16 @@
 
   function tr(key, fallback) {
     var source = typeof I18N !== "undefined" ? I18N : null;
-    var code = getLangCode();
-    var dict = (source && source[code]) || (source && source.tr) || {};
+    var raw = getLangCode();
+    var code = raw;
+    if (source && !source[raw]) {
+      code = SURVEY_FALLBACK[raw] ? raw : "pl";
+    } else if (!source && !SURVEY_FALLBACK[raw]) {
+      code = "pl";
+    }
+    var dict = (source && source[code]) || (source && source.pl) || (source && source.tr) || {};
     if (dict[key] !== undefined && dict[key] !== key) return dict[key];
-    var localDict = SURVEY_FALLBACK[code] || SURVEY_FALLBACK.tr;
+    var localDict = SURVEY_FALLBACK[code] || SURVEY_FALLBACK.pl || SURVEY_FALLBACK.tr;
     if (localDict[key] !== undefined) return localDict[key];
     return fallback;
   }

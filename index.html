@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -12,28 +12,28 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/styles.css?v=69" />
+    <link rel="stylesheet" href="css/styles.css?v=70" />
     <link rel="stylesheet" href="css/promo-popup.css?v=2" />
   </head>
   <body>
     <div id="app">
       <!-- Dil seçimi -->
-      <section id="view-lang" class="view view--lang" aria-label="Dil seçimi">
+      <section id="view-lang" class="view view--lang" aria-labelledby="lang-screen-heading">
         <div class="lang-bg" aria-hidden="true"></div>
         <div class="lang-overlay"></div>
         <div class="lang-content">
           <div class="lang-content-accent" aria-hidden="true"></div>
           <p class="lang-brand">Viona</p>
-          <h1 class="lang-title" data-i18n="langScreenTitle">Dil seçin</h1>
-          <p class="lang-sub" data-i18n="langScreenSubtitle"></p>
-          <div class="lang-grid" role="group" aria-label="Diller">
+          <h1 id="lang-screen-heading" class="lang-title" data-i18n="langScreenTitle">Choose your language</h1>
+          <p class="lang-sub" data-i18n="langScreenSubtitle">Kaila Beach Hotel · Smart hotel assistant</p>
+          <div class="lang-grid" role="group" aria-label="Available languages">
             <button type="button" class="lang-chip" data-lang="tr" aria-pressed="false">Türkçe</button>
             <button type="button" class="lang-chip" data-lang="en" aria-pressed="false">English</button>
             <button type="button" class="lang-chip" data-lang="de" aria-pressed="false">Deutsch</button>
-            <button type="button" class="lang-chip" data-lang="ru" aria-pressed="false">Русский</button>
+            <button type="button" class="lang-chip" data-lang="pl" aria-pressed="false">Polski</button>
           </div>
           <button type="button" class="btn-primary lang-cta" id="btn-lang-continue" data-i18n="continue" disabled>
-            Devam et
+            Continue
           </button>
         </div>
       </section>
@@ -296,13 +296,13 @@
     <script src="js/calendar-picker.js?v=1"></script>
     <script src="js/content-general.js?v=3"></script>
     <script src="js/content-rest.js?v=4"></script>
-    <script src="js/content-beach.js?v=2"></script>
+    <script src="js/content-beach.js?v=3"></script>
     <script src="js/content-alacarte.js?v=5"></script>
     <script src="js/content-spa.js?v=9"></script>
     <script src="js/content-discount.js?v=1"></script>
     <script src="js/content-activities.js?v=3"></script>
     <script src="js/content-sustainability.js?v=4"></script>
-    <script src="js/nearby-explore.data.js?v=7"></script>
+    <script src="js/nearby-explore.data.js?v=8"></script>
     <script src="js/content-nearby-explore.js?v=12"></script>
     <script src="js/content-miniclub.js?v=1"></script>
     <script src="js/content-meeting.js?v=1"></script>
@@ -319,6 +319,6 @@
     <script src="js/survey-submit.js?v=11"></script>
     <script src="js/survey-render.js?v=3"></script>
     <script src="js/promo-popup.js?v=17"></script>
-    <script src="js/app.js?v=29"></script>
+    <script src="js/app.js?v=30"></script>
   </body>
 </html>

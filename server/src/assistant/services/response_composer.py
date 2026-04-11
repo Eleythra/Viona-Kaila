@@ -37,16 +37,16 @@ DEVICE_LABELS = {
         "minibar": "Minibar",
         "cabinet": "Schrank",
     },
-    "ru": {
-        "television": "Телевизор",
-        "shower": "Душ",
-        "keycard": "Карта",
-        "hvac": "Кондиционер",
-        "lighting": "Свет",
-        "internet": "интернет",
-        "kettle": "чайник",
-        "minibar": "мини-бар",
-        "cabinet": "шкаф",
+    "pl": {
+        "television": "Telewizor",
+        "shower": "Prysznic",
+        "keycard": "Karta",
+        "hvac": "Klimatyzacja",
+        "lighting": "Oświetlenie",
+        "internet": "internet",
+        "kettle": "Czajnik",
+        "minibar": "minibar",
+        "cabinet": "szafa",
     },
 }
 
@@ -135,32 +135,32 @@ SOCIAL_VARIANTS = {
             "Mir geht es gut, danke. Wie kann ich Ihnen bei Ihrem Aufenthalt helfen?",
         ],
     },
-    "ru": {
+    "pl": {
         "greeting": [
-            "Здравствуйте! Я Виона, ваш цифровой ассистент в отеле Kaila Beach. Чем могу помочь?",
-            "Здравствуйте. Я помогу с вопросами по проживанию и услугам Kaila Beach Hotel.",
-            "Добро пожаловать. Я рядом, чтобы помочь по вопросам отеля и проживания.",
+            "Dzień dobry! Jestem Viona, cyfrowa asystentka w hotelu Kaila Beach. W czym mogę pomóc?",
+            "Dzień dobry. Chętnie pomogę w sprawach pobytu i usług Kaila Beach Hotel.",
+            "Witamy. Jestem do dyspozycji w kwestiach hotelu i pobytu.",
         ],
         "thanks": [
-            "Пожалуйста. Если у вас будут ещё вопросы по отелю или проживанию, я помогу.",
-            "Всегда пожалуйста. Я рядом, если вам понадобится помощь по услугам отеля.",
-            "Рада помочь. Если нужно, подскажу и по другим вопросам.",
+            "Proszę bardzo. Jeśli pojawią się kolejne pytania o hotel lub pobyt, chętnie pomogę.",
+            "Cała przyjemność. Jestem dostępna, gdy potrzebujesz wsparcia w sprawach hotelu.",
+            "Cieszę się, że mogłam pomóc. W razie potrzeby odpowiem też na inne pytania.",
         ],
         "farewell": [
-            "До встречи. Если понадобится помощь, я рядом.",
-            "До свидания. Пишите в любое время.",
+            "Do zobaczenia. Gdy będziesz potrzebować pomocy, jestem tutaj.",
+            "Do widzenia. Pisz w dowolnym momencie.",
         ],
         "apology_from_user": [
-            "Ничего страшного. Я с удовольствием продолжу помогать вам.",
-            "Всё в порядке. Давайте продолжим.",
+            "Nic się nie stało. Chętnie dalej pomogę.",
+            "Wszystko w porządku. Możemy kontynuować.",
         ],
         "compliment": [
-            "Спасибо за тёплые слова. Рада, что смогла помочь.",
-            "Благодарю за отзыв. Я всегда готова помочь.",
+            "Dziękuję za miłe słowa. Cieszę się, że mogłam pomóc.",
+            "Dziękuję za feedback. Zawsze chętnie pomogę.",
         ],
         "how_are_you": [
-            "Спасибо, у меня всё хорошо. Я рядом, чтобы помочь с вопросами по Kaila Beach Hotel.",
-            "У меня всё хорошо, спасибо. Чем помочь по вашему проживанию?",
+            "Dziękuję, u mnie wszystko w porządku. Jestem tutaj, by pomóc w sprawach Kaila Beach Hotel.",
+            "U mnie dobrze, dziękuję. W czym mogę pomóc w sprawie pobytu?",
         ],
     },
 }
@@ -307,7 +307,7 @@ class ResponseComposer:
         return choices[idx]
 
     def _chitchat(self, sub_intent: str | None, entity: str | None, language: str, seed_text: str | None = None) -> str:
-        if sub_intent == "language_switch" and entity in ("tr", "en", "de", "ru"):
+        if sub_intent == "language_switch" and entity in ("tr", "en", "de", "pl"):
             return self.i18n.get(f"chitchat_switch_{entity}", language)
         if sub_intent in ("assistant_intro", "identity_question"):
             return self.i18n.get("chitchat_identity_question", language)

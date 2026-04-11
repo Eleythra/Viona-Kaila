@@ -45,7 +45,7 @@
       tr: "Otel misafirlerine özel indirimler",
       en: "Exclusive discounts for hotel guests",
       de: "Exklusive Rabatte für Hotelgäste",
-      ru: "Скидки для гостей отеля",
+      pl: "Ekskluzywne zniżki dla gości hotelu",
     },
     lead: {
       tr:
@@ -54,8 +54,7 @@
         "Your 10% guest discount at Moss Beach and Sinton — explained here. Both venues are open to visitors who are not staying at the hotel; the discount applies only to Kaila Hotels guests.",
       de:
         "Ihr 10 % Gästerabatt bei Moss Beach und Sinton — hier erklärt. Beide sind auch für externe Besucher geöffnet; der Rabatt gilt nur für Kaila-Hotels-Gäste.",
-      ru:
-        "Скидка 10% в Moss Beach и Sinton для гостей отеля — описано здесь. Оба заведения доступны и без проживания; скидка только для гостей Kaila Hotels.",
+      pl: "10% zniżki dla gości w Moss Beach i Sinton — wyjaśnienie poniżej. Oba lokale są dostępne także dla osób spoza hotelu; zniżka dotyczy wyłącznie gości Kaila Hotels.",
     },
   };
 
@@ -63,7 +62,7 @@
     tr: "Kaila Hotels misafirlerine özel %10 indirim",
     en: "10% off for Kaila Hotels guests",
     de: "10 % Rabatt für Kaila-Hotels-Gäste",
-    ru: "Скидка 10% для гостей Kaila Hotels",
+    pl: "10% zniżki dla gości Kaila Hotels",
   };
 
   var ITEMS = [
@@ -75,7 +74,7 @@
             tr: "Moss Beach bar ve deniz manzarası",
             en: "Moss Beach bar and sea view",
             de: "Moss Beach Bar und Meerblick",
-            ru: "Moss Beach и вид на море",
+            pl: "Bar Moss Beach i widok na morze",
           },
         },
         {
@@ -84,7 +83,7 @@
             tr: "Moss Beach restaurant ortamı",
             en: "Moss Beach restaurant atmosphere",
             de: "Atmosphäre Moss Beach Restaurant",
-            ru: "Атмосфера Moss Beach",
+            pl: "Atmosfera restauracji Moss Beach",
           },
         },
       ],
@@ -92,7 +91,7 @@
         tr: "Moss Beach Bar & Restaurant",
         en: "Moss Beach Bar & Restaurant",
         de: "Moss Beach Bar & Restaurant",
-        ru: "Moss Beach Bar & Restaurant",
+        pl: "Moss Beach Bar & Restaurant",
       },
       paras: [
         {
@@ -102,8 +101,7 @@
             "Moss Beach is open 10:00–19:00 — a calm seaside spot for a relaxing break. Enjoy fresh, healthy bowls and light bites with sea air and a laid-back mood.",
           de:
             "Moss Beach hat 10:00–19:00 geöffnet — ruhiger Ort am Meer. Frische Bowls und leichte Snacks mit Meeresbrise.",
-          ru:
-            "Moss Beach работает 10:00–19:00 — спокойное место у моря. Полезные боулы и лёгкие закуски, морской воздух.",
+          pl: "Moss Beach czynne 10:00–19:00 — spokojne miejsce nad morzem na relaks. Świeże, zdrowe miski i lekkie przekąski przy morskim powietrzu i swobodnej atmosferze.",
         },
         {
           tr:
@@ -112,8 +110,7 @@
             "Local alcoholic and soft drinks, tea, coffee, juices and food are available for an extra charge. Kaila Hotels guests enjoy an exclusive 10% discount.",
           de:
             "Lokale alkoholische und alkoholfreie Getränke, Tee, Kaffee, Säfte und Speisen gegen Aufpreis. Kaila-Hotels-Gäste erhalten 10 % Rabatt.",
-          ru:
-            "Местные напитки, чай, кофе, соки и еда — за доплату. Для гостей Kaila Hotels — скидка 10%.",
+          pl: "Lokalne napoje alkoholowe i bezalkoholowe, herbata, kawa, soki i jedzenie są dodatkowo płatne. Goście Kaila Hotels mają ekskluzywną zniżkę 10%.",
         },
       ],
     },
@@ -125,7 +122,7 @@
             tr: "Sinton BBQ Restaurant",
             en: "Sinton BBQ Restaurant",
             de: "Sinton BBQ Restaurant",
-            ru: "Sinton BBQ Restaurant",
+            pl: "Sinton BBQ Restaurant",
           },
         },
         {
@@ -134,7 +131,7 @@
             tr: "Sinton BBQ iç mekân ve servis",
             en: "Sinton BBQ indoor dining",
             de: "Sinton BBQ Innenbereich",
-            ru: "Sinton BBQ — зал",
+            pl: "Sinton BBQ — jadalnia wewnątrz",
           },
         },
       ],
@@ -142,7 +139,7 @@
         tr: "Sinton BBQ Restaurant",
         en: "Sinton BBQ Restaurant",
         de: "Sinton BBQ Restaurant",
-        ru: "Sinton BBQ Restaurant",
+        pl: "Sinton BBQ Restaurant",
       },
       paras: [
         {
@@ -152,8 +149,7 @@
             "Sinton serves bold flavours with American-style smoked meats and carefully crafted burgers — a lively spot where signature cocktails complete the warm, energetic atmosphere.",
           de:
             "Sinton bietet kräftige Aromen mit amerikanisch geräucherten Fleischspezialitäten und Burgern — warme Atmosphäre und Signature-Cocktails.",
-          ru:
-            "Sinton — смелые вкусы: копчёное мясо в американском стиле и бургеры, живая атмосфера и авторские коктейли.",
+          pl: "Sinton serwuje wyraziste smaki: wędzone mięsa w stylu amerykańskim i starannie przygotowane burgery — tętniące miejsce, gdzie koktajle sygnaturowe dopełniają ciepłą, energiczną atmosferę.",
         },
         {
           tr:
@@ -162,8 +158,7 @@
             "Kaila Hotels guests enjoy an exclusive 10% discount. We are open 13:00–22:00 every day except Mondays.",
           de:
             "10 % Rabatt für Kaila-Hotels-Gäste. Geöffnet 13:00–22:00, montags geschlossen.",
-          ru:
-            "Скидка 10% для гостей Kaila Hotels. Режим: 13:00–22:00, выходной — понедельник.",
+          pl: "Goście Kaila Hotels mają ekskluzywną zniżkę 10%. Czynne 13:00–22:00 codziennie z wyjątkiem poniedziałków.",
         },
       ],
     },
@@ -199,7 +194,7 @@
     var root = el("div", "viona-mod viona-mod--discount");
 
     var hero = el("div", "discount-hero discount-hero--premium");
-    hero.appendChild(el("p", "discount-hero__kicker", T({ tr: "%10 misafir avantajı", en: "10% guest benefit", de: "10 % Gästevorteil", ru: "Выгода 10%" })));
+    hero.appendChild(el("p", "discount-hero__kicker", T({ tr: "%10 misafir avantajı", en: "10% guest benefit", de: "10 % Gästevorteil", pl: "10% korzyści dla gości" })));
     hero.appendChild(el("h3", "discount-hero__title", T(HERO.title)));
     hero.appendChild(el("p", "discount-hero__lead", T(HERO.lead)));
     root.appendChild(hero);

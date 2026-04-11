@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Anket raporu: tüm soru kırılımları, kategoriler ve diller (tr/en/de/ru).
+ * Anket raporu: tüm soru kırılımları, kategoriler ve diller (tr/en/de/pl).
  *
  * Varsayılan: doğrudan Supabase üzerinden `getSurveyReport` (kaynak kodla uyumlu).
  * HTTP ile test: SURVEY_VERIFY_REPORT_URL=http://127.0.0.1:3001/api/admin/surveys/report

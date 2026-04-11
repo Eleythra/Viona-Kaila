@@ -271,6 +271,66 @@
     } catch (_e) {}
   }
 
+  /** WhatsApp «panelde aç»: yalnızca tek kayıt kartı; tam liste aynı dosyanın `?id=`suz adresi. */
+  function waPanelCardOnlyShellHtml(surface) {
+    var intro =
+      surface === "hk"
+        ? "Bu sayfa yalnızca WhatsApp’tan açtığınız misafir isteği kaydı içindir. Durumu aşağıda işaretleyebilirsiniz."
+        : surface === "tech"
+          ? "Bu sayfa yalnızca WhatsApp’tan açtığınız arıza kaydı içindir. Durumu aşağıda işaretleyebilirsiniz."
+          : "Bu sayfa yalnızca WhatsApp’tan açtığınız ön büro kaydı içindir. Durumu aşağıda işaretleyebilirsiniz.";
+    return (
+      '<div class="ops-wa-card-only glass-block" role="region" aria-label="Tek operasyon kaydı">' +
+      '<p class="ops-wa-card-only__intro">' +
+      escHtml(intro) +
+      '</p><div id="ops-wa-single-card-host" class="ops-wa-single-card-host"></div>' +
+      '<p class="ops-wa-card-only__actions">' +
+      '<a class="btn-primary btn-small" id="ops-wa-open-full-list" href="#">' +
+      escHtml("Tam operasyon listesi (süzgeç ve tablo)") +
+      "</a></p>" +
+      '<p class="ops-wa-card-only__hint">' +
+      escHtml(
+        "Tam liste aynı sayfadır; adres çubuğunda `?id=` ve `?type=` olmamalı. Aşağıdaki bağlantı tam listeyi açar; yer imine de öyle kaydedin.",
+      ) +
+      "</p></div>"
+    );
+  }
+
+  function wireWaOpenFullListHref() {
+    var a = document.getElementById("ops-wa-open-full-list");
+    if (!a) return;
+    try {
+      a.setAttribute("href", window.location.pathname || "/");
+    } catch (_e) {}
+  }
+
+  function waBucketStatusButtonLabels(bucketType) {
+    if (bucketType === "late_checkout") return ["Bekliyor", "Yapılıyor", "Onaylandı", "Onaylanmadı"];
+    if (bucketType === "complaint" || bucketType === "guest_notification") {
+      return ["Bekliyor", "Yapılıyor", "Dikkate alındı", "Dikkate alınmadı"];
+    }
+    return ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"];
+  }
+
+  function paintWaSingleCard(ui, host, bucketType, item, handlers) {
+    if (!host || !ui || typeof ui.renderOperationBucket !== "function") return;
+    ui.renderOperationBucket(host, {
+      bucketType: bucketType,
+      rows: [item],
+      pagination: null,
+      highlightRowId: String(item.id || ""),
+      editableRowId: String(item.id || ""),
+      layout: "cards",
+      buttonLabels: waBucketStatusButtonLabels(bucketType),
+      summaryRow: function (r) {
+        return typeof ui.operationSummaryForType === "function" ? ui.operationSummaryForType(bucketType, r) : "—";
+      },
+      onPage: null,
+      onStatus: handlers.onStatus,
+      onDelete: handlers.onDelete,
+    });
+  }
+
   function normAdminIssueStatus(row) {
     var st = String((row && row.status) || "new")
       .trim()
@@ -490,8 +550,64 @@
     var ui = window.AdminUI;
     if (!ui || typeof ui.renderBucketTable !== "function") throw new Error("ui_missing");
     if (typeof ui.renderOpsSingleBucketSummary !== "function") throw new Error("ui_missing");
-    var initialHighlightId = hkDeepLinkUuid();
-    if (initialHighlightId) stripOpsDeepQueryKeys(["id"]);
+    var waId = hkDeepLinkUuid();
+    if (waId) stripOpsDeepQueryKeys(["id"]);
+
+    if (waId && typeof ui.renderOperationBucket === "function") {
+      try {
+        var waHk = await opsFetch("/requests/request/" + encodeURIComponent(waId));
+        if (waHk && waHk.item) {
+          try {
+            document.body.classList.add("admin-body--ops-wa-card-only");
+          } catch (_bc) {}
+          mount.innerHTML = waPanelCardOnlyShellHtml("hk");
+          wireWaOpenFullListHref();
+          var hkCardHost = document.getElementById("ops-wa-single-card-host");
+          async function hkRefetchWaCard() {
+            try {
+              var again = await opsFetch("/requests/request/" + encodeURIComponent(waId));
+              if (again && again.item && hkCardHost) {
+                paintWaSingleCard(ui, hkCardHost, "request", again.item, hkWaH);
+              }
+            } catch (_rf) {}
+          }
+          var hkWaH = {
+            onStatus: async function (bt, id, status) {
+              await opsFetch(
+                "/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id) + "/status",
+                {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ status: status }),
+                },
+              );
+              postOpsMutation();
+              await hkRefetchWaCard();
+            },
+            onDelete: async function (bt, id) {
+              await opsFetch("/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id), {
+                method: "DELETE",
+              });
+              postOpsMutation();
+              try {
+                window.location.assign(window.location.pathname || "ops-hk.html");
+              } catch (_as) {}
+            },
+          };
+          paintWaSingleCard(ui, hkCardHost, "request", waHk.item, hkWaH);
+          wireOpsCrossTabListRefresh(function () {
+            void hkRefetchWaCard();
+          });
+          return;
+        }
+      } catch (_wa) {}
+    }
+
+    try {
+      document.body.classList.remove("admin-body--ops-wa-card-only");
+    } catch (_br) {}
+
+    var initialHighlightId = waId || "";
     var warnedMissingDeep = false;
 
     function renderRequestTable(listHost, cfg) {
@@ -638,8 +754,64 @@
     var ui = window.AdminUI;
     if (!ui || typeof ui.renderBucketTable !== "function") throw new Error("ui_missing");
     if (typeof ui.renderOpsSingleBucketSummary !== "function") throw new Error("ui_missing");
-    var initialHighlightId = techDeepLinkUuid();
-    if (initialHighlightId) stripOpsDeepQueryKeys(["id"]);
+    var waTechId = techDeepLinkUuid();
+    if (waTechId) stripOpsDeepQueryKeys(["id"]);
+
+    if (waTechId && typeof ui.renderOperationBucket === "function") {
+      try {
+        var waTech = await opsFetch("/requests/fault/" + encodeURIComponent(waTechId));
+        if (waTech && waTech.item) {
+          try {
+            document.body.classList.add("admin-body--ops-wa-card-only");
+          } catch (_bc2) {}
+          mount.innerHTML = waPanelCardOnlyShellHtml("tech");
+          wireWaOpenFullListHref();
+          var techCardHost = document.getElementById("ops-wa-single-card-host");
+          async function techRefetchWaCard() {
+            try {
+              var againT = await opsFetch("/requests/fault/" + encodeURIComponent(waTechId));
+              if (againT && againT.item && techCardHost) {
+                paintWaSingleCard(ui, techCardHost, "fault", againT.item, techWaH);
+              }
+            } catch (_rft) {}
+          }
+          var techWaH = {
+            onStatus: async function (bt, id, status) {
+              await opsFetch(
+                "/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id) + "/status",
+                {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ status: status }),
+                },
+              );
+              postOpsMutation();
+              await techRefetchWaCard();
+            },
+            onDelete: async function (bt, id) {
+              await opsFetch("/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id), {
+                method: "DELETE",
+              });
+              postOpsMutation();
+              try {
+                window.location.assign(window.location.pathname || "ops-tech.html");
+              } catch (_as2) {}
+            },
+          };
+          paintWaSingleCard(ui, techCardHost, "fault", waTech.item, techWaH);
+          wireOpsCrossTabListRefresh(function () {
+            void techRefetchWaCard();
+          });
+          return;
+        }
+      } catch (_wat) {}
+    }
+
+    try {
+      document.body.classList.remove("admin-body--ops-wa-card-only");
+    } catch (_br2) {}
+
+    var initialHighlightId = waTechId || "";
     var warnedMissingDeepTech = false;
 
     function renderFaultTable(listHost, cfg) {
@@ -795,8 +967,73 @@
         sessionStorage.setItem(OP_FRONT_TAB_KEY, deepLink.type);
       } catch (_s) {}
       pendingFrontHighlight = { type: deepLink.type, id: deepLink.id };
+    }
+
+    if (deepLink && typeof ui.renderOperationBucket === "function") {
+      try {
+        var frWa = await opsFetch(
+          "/requests/" + encodeURIComponent(deepLink.type) + "/" + encodeURIComponent(deepLink.id),
+        );
+        if (frWa && frWa.item) {
+          stripOpsDeepQueryKeys(["id", "type"]);
+          pendingFrontHighlight = null;
+          try {
+            document.body.classList.add("admin-body--ops-wa-card-only");
+          } catch (_s2) {}
+          mount.innerHTML = waPanelCardOnlyShellHtml("front");
+          wireWaOpenFullListHref();
+          var frontWaHost = document.getElementById("ops-wa-single-card-host");
+          var bFront = deepLink.type;
+          var idFront = deepLink.id;
+          async function frontRefetchWaCard() {
+            try {
+              var ag = await opsFetch(
+                "/requests/" + encodeURIComponent(bFront) + "/" + encodeURIComponent(idFront),
+              );
+              if (ag && ag.item && frontWaHost) {
+                paintWaSingleCard(ui, frontWaHost, bFront, ag.item, frontWaHandlers);
+              }
+            } catch (_rff) {}
+          }
+          var frontWaHandlers = {
+            onStatus: async function (bt, id, status) {
+              await opsFetch(
+                "/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id) + "/status",
+                {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ status: status }),
+                },
+              );
+              postOpsMutation();
+              await frontRefetchWaCard();
+            },
+            onDelete: async function (bt, id) {
+              await opsFetch("/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id), {
+                method: "DELETE",
+              });
+              postOpsMutation();
+              try {
+                window.location.assign(window.location.pathname || "ops-front.html");
+              } catch (_af) {}
+            },
+          };
+          paintWaSingleCard(ui, frontWaHost, bFront, frWa.item, frontWaHandlers);
+          wireOpsCrossTabListRefresh(function () {
+            void frontRefetchWaCard();
+          });
+          return;
+        }
+      } catch (_waf) {}
+    }
+
+    if (deepLink) {
       stripOpsDeepQueryKeys(["id", "type"]);
     }
+
+    try {
+      document.body.classList.remove("admin-body--ops-wa-card-only");
+    } catch (_s3) {}
 
     mount.innerHTML = frontFilterBarHtml() + '<div id="op-front-mount" class="ops-hk-mount"></div>';
     var inner = document.getElementById("op-front-mount");

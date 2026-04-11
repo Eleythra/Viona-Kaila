@@ -29,4 +29,4 @@ export const SURVEY_VIONA_QUESTION_IDS = [
   "viona_overall",
 ];
 
-export const SURVEY_TEST_LANGS = ["tr", "en", "de", "ru"];
+export const SURVEY_TEST_LANGS = ["tr", "en", "de", "pl"];

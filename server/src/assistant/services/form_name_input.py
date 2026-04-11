@@ -45,15 +45,19 @@ _HELP_DE = (
     "erklären sie",
     "erklaeren sie",
 )
-_HELP_RU = (
-    "что написать",
-    "что писать",
-    "не понял",
-    "не поняла",
-    "не понимаю",
-    "что значит",
-    "объясните",
-    "пример",
+_HELP_PL = (
+    "co napisać",
+    "co mam napisać",
+    "nie rozumiem",
+    "nie rozumiałem",
+    "nie rozumiałam",
+    "o co chodzi",
+    "co to znaczy",
+    "wyjaśnij",
+    "wytłumacz",
+    "przykład",
+    "możesz wyjaśnić",
+    "możesz wytłumaczyć",
 )
 
 _HELP_EXACT = frozenset(
@@ -69,7 +73,7 @@ _HELP_SINGLE_TOKENS = frozenset(
     {
         "help",
         "hilfe",
-        "помощь",
+        "pomoc",
         "yardım",
         "yardim",
     }
@@ -140,7 +144,7 @@ def is_chat_form_full_name_help_request(text: str) -> bool:
     # Uzun metinlerde «i̇stanbul'da ne yazayım» gibi cümleler nadiren tam isimdir; yine de kısalt.
     if len(t) > 160:
         return False
-    for group in (_HELP_TR, _HELP_EN, _HELP_DE, _HELP_RU):
+    for group in (_HELP_TR, _HELP_EN, _HELP_DE, _HELP_PL):
         if any(h in t for h in group):
             return True
     return False

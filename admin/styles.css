@@ -4886,6 +4886,34 @@
   text-align: center;
 }
 
+/* WhatsApp «panelde aç»: yalnızca tek kayıt kartı (tam liste aynı sayfa, ?id= / ?type= yok) */
+.admin-body--ops-wa-card-only #ops-mount {
+  max-width: 28rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+.ops-wa-card-only {
+  padding: 0.85rem 1rem 1rem;
+}
+.ops-wa-card-only__intro {
+  margin: 0 0 0.85rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--admin-text, #eaf0ff);
+}
+.ops-wa-single-card-host {
+  margin-bottom: 0.85rem;
+}
+.ops-wa-card-only__actions {
+  margin: 0 0 0.4rem;
+}
+.ops-wa-card-only__hint {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--admin-text-muted, #a3b6d4);
+}
+
 .op-card {
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.12);

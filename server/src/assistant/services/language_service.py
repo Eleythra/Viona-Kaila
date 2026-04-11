@@ -28,7 +28,7 @@ class LanguageService:
     def detect(self, text: str, fallback: str = "tr") -> str:
         t = _normalize_for_detection(text)
         if not t:
-            return fallback if fallback in ("tr", "en", "de", "ru") else "tr"
+            return fallback if fallback in ("tr", "en", "de", "pl") else "tr"
         # Explicit language override phrases (user asks to speak a language).
         if any(x in t for x in ["türkçe", "turkce", "türkce", "please speak turkish", "turkish"]):
             return "tr"
@@ -36,10 +36,23 @@ class LanguageService:
             return "en"
         if any(x in t for x in ["deutsch", "auf deutsch", "bitte auf deutsch"]):
             return "de"
-        if any(x in t for x in ["русский", "по-русски", "по русски"]):
-            return "ru"
-        if re.search(r"[а-яё]", t):
-            return "ru"
+        if any(
+            x in t
+            for x in [
+                "po polsku",
+                "popolsku",
+                "proszę po polsku",
+                "prosze po polsku",
+                "polski",
+                "polish",
+                "please speak polish",
+                "auf polnisch",
+                "bitte auf polnisch",
+            ]
+        ):
+            return "pl"
+        if re.search(r"[ąćęłńóśźż]", t) or re.search(r"\b(proszę|dzień dobry|czy|gdzie|potrzebuję|potrzebuje)\b", t):
+            return "pl"
         # Turkish-specific characters should win over ambiguous English markers
         # like "vegan" (e.g., "veganım" contains the Turkish dotless "ı").
         # Turkish-specific characters should win over ambiguous markers.
@@ -137,7 +150,7 @@ class LanguageService:
         # Ambiguous single-token inputs (shared across languages) should follow the UI fallback.
         # This prevents cases like: UI=TR, message="gluten" => EN reply.
         if t in ("gluten", "vegan", "celiac", "allergy"):
-            return fallback if fallback in ("tr", "en", "de", "ru") else "tr"
+            return fallback if fallback in ("tr", "en", "de", "pl") else "tr"
         # Prefer explicit English markers before Turkish fallback.
         # Use word boundaries for short tokens shared with German (e.g. "gluten" inside "glutenfrei").
         en_tokens = [
@@ -232,7 +245,7 @@ class LanguageService:
             ]
         ):
             return "tr"
-        return fallback if fallback in ("tr", "en", "de", "ru") else "tr"
+        return fallback if fallback in ("tr", "en", "de", "pl") else "tr"
 
     def coerce_reply_language(
         self, normalized: str, detected: str, ui_language: str | None
@@ -242,7 +255,7 @@ class LanguageService:
         EN UI: nadiren TR dönen ama açıkça İngilizce otel cümlesi olan metinleri EN'ye çek.
         """
         ui = (ui_language or "tr").lower().strip()
-        if ui not in ("tr", "en", "de", "ru"):
+        if ui not in ("tr", "en", "de", "pl"):
             ui = "tr"
         t = _normalize_for_detection(normalized)
 

@@ -9,12 +9,12 @@
   var SINTON_MENU_PDF = {
     tr: "assets/docs/sinton-menu-tr.pdf",
     en: "assets/docs/sinton-menu-en.pdf",
-    ru: "assets/docs/sinton-menu-ru.pdf",
+    pl: "assets/docs/sinton-menu-en.pdf",
   };
 
   function normLang(code) {
     var c = String(code || "tr").toLowerCase();
-    if (c === "en" || c === "de" || c === "ru") return c;
+    if (c === "en" || c === "de" || c === "pl") return c;
     return "tr";
   }
 
@@ -38,22 +38,21 @@
       "La Terrace and Sinton BBQ are our à la carte venues, each with its own pricing and capacity rhythm. For La Terrace A La Carte in particular, seating and the evening flow are arranged with care through Guest Relations — so you can simply enjoy the moment. Summaries below.",
     de:
       "La Terrace und Sinton BBQ sind unsere À-la-carte-Adressen — mit jeweils eigenen Preisen und Kapazitätslogik. Für La Terrace A La Carte koordiniert unser Guest-Relations-Team Tisch und Ablauf diskret und reibungslos, damit Sie den Abend genießen können. Unten die Kurzinfos.",
-    ru:
-      "La Terrace и Sinton BBQ — наши à la carte площадки с разными ценами и логистикой загрузки. Для La Terrace A La Carte рассадка и вечерний сервис выстраиваются бережно через Guest Relations — вам остаётся только наслаждаться вечером. Кратко ниже.",
+    pl: "La Terrace i Sinton BBQ to nasze restauracje à la carte, każda z własną polityką cen i rytmem pojemności. W przypadku La Terrace A La Carte miejsca i przebieg wieczoru są starannie uzgadniane z Guest Relations — aby Państwo mogli po prostu cieszyć się chwilą. Poniżej skrót.",
   };
 
   var BADGE_PAID = {
     tr: "Ücretli",
     en: "Charged",
     de: "Kostenpflichtig",
-    ru: "Платно",
+    pl: "Płatne",
   };
 
   var BADGE_RES_REQUIRED = {
     tr: "Misafir İlişkileri ile önceden planlanır",
     en: "Arranged in advance with Guest Relations",
     de: "Nach Rücksprache mit dem Guest-Relations-Team",
-    ru: "По предварительной договорённости через Guest Relations",
+    pl: "Uzgodnione wcześniej z Guest Relations",
   };
 
   function renderSlot(slot) {
@@ -89,19 +88,19 @@
         tr: "La Terrace a la carte restoran",
         en: "La Terrace à la carte restaurant",
         de: "Restaurant La Terrace",
-        ru: "Ресторан La Terrace",
+        pl: "Restauracja à la carte La Terrace",
       },
       title: {
         tr: "La Terrace A La Carte Restaurant",
         en: "La Terrace A La Carte Restaurant",
         de: "La Terrace A La Carte Restaurant",
-        ru: "La Terrace A La Carte Restaurant",
+        pl: "La Terrace A La Carte Restaurant",
       },
       sub: {
         tr: "A La Carte · Menü servisi",
         en: "À la carte · Table service",
         de: "À la carte · Menüservice",
-        ru: "À la carte · обслуживание",
+        pl: "À la carte · obsługa przy stoliku",
       },
       slots: [
         {
@@ -109,14 +108,14 @@
             tr: "La Terrace A La Carte Restaurant",
             en: "La Terrace A La Carte Restaurant",
             de: "La Terrace A La Carte Restaurant",
-            ru: "La Terrace A La Carte Restaurant",
+            pl: "La Terrace A La Carte Restaurant",
           },
           time: "18:30 – 20:30",
           format: {
             tr: "A La Carte restoran · Menü servisi",
             en: "À la carte restaurant · Table service",
             de: "À-la-carte-Restaurant · Menüservice",
-            ru: "Ресторан à la carte · обслуживание",
+            pl: "Restauracja à la carte · obsługa przy stoliku",
           },
           charge: BADGE_PAID,
           res: BADGE_RES_REQUIRED,
@@ -124,7 +123,7 @@
             tr: "5 gece ve üzeri konaklamalarda 1 kez ücretsiz. 18:30 – 20:30 arası hizmet verir.",
             en: "One complimentary visit for stays of 5 nights or more. Service hours: 18:30 – 20:30.",
             de: "Bei Aufenthalten ab 5 Nächten einmal kostenfrei. Servicezeit: 18:30 – 20:30.",
-            ru: "При проживании от 5 ночей — один раз бесплатно. Часы работы: 18:30 – 20:30.",
+            pl: "Jedna bezpłatna wizyta przy pobytach od 5 nocy. Godziny serwisu: 18:30 – 20:30.",
           },
         },
       ],
@@ -135,19 +134,19 @@
         tr: "Sinton BBQ Restaurant",
         en: "Sinton BBQ Restaurant",
         de: "Sinton BBQ Restaurant",
-        ru: "Sinton BBQ Restaurant",
+        pl: "Sinton BBQ Restaurant",
       },
       title: {
         tr: "Sinton BBQ Restaurant",
         en: "Sinton BBQ Restaurant",
         de: "Sinton BBQ Restaurant",
-        ru: "Sinton BBQ Restaurant",
+        pl: "Sinton BBQ Restaurant",
       },
       sub: {
         tr: "Amerikan BBQ · Kokteyl",
         en: "American BBQ · Cocktails",
         de: "Amerikanisches BBQ · Cocktails",
-        ru: "Американское BBQ · коктейли",
+        pl: "BBQ w stylu amerykańskim · koktajle",
       },
       menuKey: "sinton",
       slots: [
@@ -156,14 +155,14 @@
             tr: "Sinton BBQ Restaurant",
             en: "Sinton BBQ Restaurant",
             de: "Sinton BBQ Restaurant",
-            ru: "Sinton BBQ Restaurant",
+            pl: "Sinton BBQ Restaurant",
           },
           time: "13:00 – 22:00",
           format: {
             tr: "A La Carte restoran · Menü servisi · Otel misafirleri ve dışarıdan gelenlere açık",
             en: "À la carte restaurant · Table service · Open to hotel guests and visitors",
             de: "À-la-carte-Restaurant · Menüservice · für Hotelgäste und externe Gäste",
-            ru: "Ресторан à la carte · для гостей отеля и посетителей",
+            pl: "Restauracja à la carte · obsługa przy stoliku · dla gości hotelu i osób z zewnątrz",
           },
           charge: BADGE_PAID,
           extraBadges: [
@@ -171,7 +170,7 @@
               tr: "Kaila misafirlerine %10 indirim",
               en: "10% off for Kaila guests",
               de: "10 % Rabatt für Kaila-Gäste",
-              ru: "Скидка 10% для гостей Kaila",
+              pl: "10% zniżki dla gości Kaila",
             },
           ],
           detail: {
@@ -181,8 +180,7 @@
               "American-style smoked meats, burgers and signature cocktails. Open daily except Mondays.",
             de:
               "Amerikanisch geräucherte Fleischspezialitäten, Burger und Signature-Cocktails. Außer montags geöffnet.",
-            ru:
-              "Копчёные блюда в американском стиле, бургеры и авторские коктейли. Выходной — понедельник.",
+            pl: "Wędzone mięsa w stylu amerykańskim, burgery i koktajle sygnaturowe. Czynne codziennie z wyjątkiem poniedziałków.",
           },
         },
       ],

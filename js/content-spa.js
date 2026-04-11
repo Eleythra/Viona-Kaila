@@ -16,7 +16,7 @@
   function currentUiLang() {
     try {
       var c = String(localStorage.getItem("viona_lang") || "tr").toLowerCase();
-      if (c === "en" || c === "de" || c === "ru") return c;
+      if (c === "en" || c === "de" || c === "pl") return c;
       return "tr";
     } catch (e) {
       return "tr";
@@ -67,26 +67,25 @@
         "We invite you to refine your treatment choices in person with our La Serenite Spa team or at the spa reception during opening hours. Current prices and menus are in the PDF — tap the button to download.",
       de:
         "Wählen Sie Ihre Anwendungen gern direkt mit unserem La-Serenite-Team oder an der Spa-Rezeption in den Öffnungszeiten. Aktuelle Preise und Menüs stehen in der PDF — zum Herunterladen tippen.",
-      ru:
-        "Уточнить платные процедуры лучше лично с командой La Serenite Spa или на ресепшене спа в часы работы. Актуальные цены и меню — в PDF; нажмите кнопку, чтобы скачать.",
+      pl: "Zapraszamy do omówienia wyboru zabiegów osobiście z zespołem La Serenite Spa lub w recepcji spa w godzinach otwarcia. Aktualne ceny i menu są w pliku PDF — dotknij przycisku, aby pobrać.",
     },
     btnLabel: {
       tr: "Spa fiyat listesi (PDF)",
       en: "Spa price list (PDF)",
       de: "Spa-Preisliste (PDF)",
-      ru: "Прайс-лист спа (PDF)",
+      pl: "Cennik spa (PDF)",
     },
     href: {
       tr: "assets/docs/spa-price-list-tr.pdf",
       en: "assets/docs/spa-price-list-en.pdf",
       de: "assets/docs/spa-price-list-de.pdf",
-      ru: "assets/docs/spa-price-list-ru.pdf",
+      pl: "assets/docs/spa-price-list-en.pdf",
     },
     download: {
       tr: "kaila-spa-fiyat-listesi-tr.pdf",
       en: "kaila-spa-price-list-en.pdf",
       de: "kaila-spa-preisliste-de.pdf",
-      ru: "kaila-spa-prajs-ru.pdf",
+      pl: "kaila-spa-price-list-en.pdf",
     },
   };
 
@@ -94,7 +93,7 @@
     tr: "Ücretli bakım menüsü",
     en: "Paid treatment menu",
     de: "Kostenpflichtiges Angebotsmenü",
-    ru: "Платное меню процедур",
+    pl: "Płatne menu zabiegów",
   };
 
   var INTRO_PARAS = [
@@ -105,8 +104,7 @@
         "Renew body and mind in our calm spa & wellness area. Relaxing massages, traditional Turkish bath rituals and restorative treatments await. The wellness zone includes sauna, steam room and a heated indoor pool.",
       de:
         "Körper und Geist in ruhiger Atmosphäre erneuern: Massagen, Hamam-Rituale und Pflege. Wellness: Sauna, Dampfbad und beheiztes Hallenbad.",
-      ru:
-        "Обновите тело и дух в спа: массажи, ритуалы хамама и уход. В wellness — сауна, парная и подогреваемый крытый бассейн.",
+      pl: "Odśwież ciało i umysł w naszej spokojnej strefie spa i wellness. Czekają relaksujące masaże, tradycyjne rytuały hammam oraz zabiegi regenerujące. Strefa wellness obejmuje saunę, łaźnię parową i podgrzewany basen kryty.",
     },
     {
       tr:
@@ -115,8 +113,7 @@
         "Whether you seek deep relaxation or renewed energy, our therapists and peaceful setting are here for you.",
       de:
         "Ob tiefe Entspannung oder neue Energie — unsere Therapeuten und die ruhige Atmosphäre begleiten Sie.",
-      ru:
-        "Глубокий отдых или новая энергия — профессиональные терапевты и спокойная атмосфера.",
+      pl: "Niezależnie od tego, czy szukasz głębokiego relaksu, czy nowej energii — nasi terapeuci i spokojna atmosfera są do Państwa dyspozycji.",
     },
     {
       tr:
@@ -125,19 +122,18 @@
         "For paid massages and treatments, our La Serenite specialists will guide you personally on timing, duration and ritual — you are always welcome at the spa reception during spa hours.",
       de:
         "Für kostenpflichtige Massagen und Anwendungen beraten Sie unsere La-Serenite-Spezialistinnen und -Spezialisten persönlich zu Zeit, Dauer und Ritual — die Spa-Rezeption heißt Sie in den Öffnungszeiten willkommen.",
-      ru:
-        "По платным массажам и уходу вас проконсультируют специалисты La Serenite Spa лично — по времени, длительности и ритуалу; ресепшен спа ждёт вас в часы работы.",
+      pl: "W przypadku płatnych masaży i zabiegów specjaliści La Serenite doradzą osobiście w kwestii czasu, długości i rytuału — recepcja spa w godzinach pracy jest zawsze otwarta.",
     },
   ];
 
   var LA_SERENITE = {
     img: "assets/images/spa/spa-hall.png",
-    title: { tr: "La Serenite Spa", en: "La Serenite Spa", de: "La Serenite Spa", ru: "La Serenite Spa" },
+    title: { tr: "La Serenite Spa", en: "La Serenite Spa", de: "La Serenite Spa", pl: "La Serenite Spa" },
     tag: {
       tr: "Spa merkezi · wellness",
       en: "Spa centre · wellness",
       de: "Spa · Wellness",
-      ru: "Спа-центр · wellness",
+      pl: "Centrum spa · wellness",
     },
     note: {
       tr:
@@ -146,25 +142,24 @@
         "Open 09:00 – 19:00. Sauna, Turkish bath, steam room and indoor pool are complimentary; massages and treatments are charged. For therapies, please speak directly with the La Serenite spa reception.",
       de:
         "Geöffnet 09:00 – 19:00. Sauna, Hamam, Dampfbad und Hallenbad inklusive; Massagen kostenpflichtig. Für Therapien wenden Sie sich bitte direkt an die La-Serenite-Spa-Rezeption.",
-      ru:
-        "09:00 – 19:00. Сауна, хамам, парная и бассейн бесплатно; массаж и уход — платно. По процедурам обращайтесь напрямую на ресепшен La Serenite Spa.",
+      pl: "Otwarte 09:00 – 19:00. Sauna, łaźnia turecka, łaźnia parowa i basen kryty są bezpłatne; masaże i zabiegi są płatne. W sprawie terapii prosimy o kontakt bezpośrednio z recepcją La Serenite.",
     },
     kv: [
       {
-        label: { tr: "Genel çalışma saatleri", en: "Opening hours", de: "Öffnungszeiten", ru: "Часы работы" },
+        label: { tr: "Genel çalışma saatleri", en: "Opening hours", de: "Öffnungszeiten", pl: "Godziny otwarcia" },
         value: "09:00 – 19:00",
       },
       {
-        label: { tr: "Konum", en: "Location", de: "Ort", ru: "Место" },
-        value: { tr: "Spa merkezi", en: "Spa centre", de: "Spa-Bereich", ru: "Спа-центр" },
+        label: { tr: "Konum", en: "Location", de: "Ort", pl: "Lokalizacja" },
+        value: { tr: "Spa merkezi", en: "Spa centre", de: "Spa-Bereich", pl: "Centrum spa" },
       },
       {
-        label: { tr: "Hizmet türü", en: "Service type", de: "Leistung", ru: "Тип услуг" },
+        label: { tr: "Hizmet türü", en: "Service type", de: "Leistung", pl: "Rodzaj usługi" },
         value: {
           tr: "Ücretsiz ve ücretli hizmetler",
           en: "Complimentary and paid services",
           de: "Kostenlose und kostenpflichtige Leistungen",
-          ru: "Бесплатные и платные",
+          pl: "Usługi bezpłatne i płatne",
         },
       },
     ],
@@ -173,111 +168,111 @@
   var FREE_FACILITIES = [
     {
       img: "assets/images/beach/kapal_havuz-9e4e184d-4009-4063-9f22-681e94241d68.png",
-      title: { tr: "Kapalı havuz", en: "Indoor pool", de: "Hallenbad", ru: "Крытый бассейн" },
-      tag: { tr: "Spa alanı · ısıtmalı", en: "Spa zone · heated", de: "Spa · beheizt", ru: "Спа · подогрев" },
+      title: { tr: "Kapalı havuz", en: "Indoor pool", de: "Hallenbad", pl: "Basen kryty" },
+      tag: { tr: "Spa alanı · ısıtmalı", en: "Spa zone · heated", de: "Spa · beheizt", pl: "Strefa spa · podgrzewany" },
       kv: [
         {
-          label: { tr: "Saatler", en: "Hours", de: "Zeiten", ru: "Часы" },
+          label: { tr: "Saatler", en: "Hours", de: "Zeiten", pl: "Godziny" },
           value: "08:00 – 19:00",
         },
         {
-          label: { tr: "Ücret", en: "Charge", de: "Preis", ru: "Оплата" },
-          value: { tr: "Ücretsiz", en: "Complimentary", de: "Kostenlos", ru: "Бесплатно" },
+          label: { tr: "Ücret", en: "Charge", de: "Preis", pl: "Opłata" },
+          value: { tr: "Ücretsiz", en: "Complimentary", de: "Kostenlos", pl: "Bezpłatnie" },
         },
         {
-          label: { tr: "Önceden haber", en: "Advance arrangement", de: "Voranmeldung", ru: "Предварительно" },
-          value: { tr: "Gerekmiyor", en: "Not required", de: "Nicht nötig", ru: "Не требуется" },
+          label: { tr: "Önceden haber", en: "Advance arrangement", de: "Voranmeldung", pl: "Rezerwacja z wyprzedzeniem" },
+          value: { tr: "Gerekmiyor", en: "Not required", de: "Nicht nötig", pl: "Nie jest wymagana" },
         },
       ],
     },
     {
       img: "assets/images/spa/sauna.png",
-      title: { tr: "Sauna", en: "Sauna", de: "Sauna", ru: "Сауна" },
-      tag: { tr: "Wellness", en: "Wellness", de: "Wellness", ru: "Wellness" },
+      title: { tr: "Sauna", en: "Sauna", de: "Sauna", pl: "Sauna" },
+      tag: { tr: "Wellness", en: "Wellness", de: "Wellness", pl: "Wellness" },
       kv: [
         {
-          label: { tr: "Saatler", en: "Hours", de: "Zeiten", ru: "Часы" },
+          label: { tr: "Saatler", en: "Hours", de: "Zeiten", pl: "Godziny" },
           value: "09:00 – 19:00",
         },
         {
-          label: { tr: "Ücret", en: "Charge", de: "Preis", ru: "Оплата" },
-          value: { tr: "Ücretsiz", en: "Complimentary", de: "Kostenlos", ru: "Бесплатно" },
+          label: { tr: "Ücret", en: "Charge", de: "Preis", pl: "Opłata" },
+          value: { tr: "Ücretsiz", en: "Complimentary", de: "Kostenlos", pl: "Bezpłatnie" },
         },
         {
-          label: { tr: "Önceden haber", en: "Advance arrangement", de: "Voranmeldung", ru: "Предварительно" },
-          value: { tr: "Gerekmiyor", en: "Not required", de: "Nicht nötig", ru: "Не требуется" },
+          label: { tr: "Önceden haber", en: "Advance arrangement", de: "Voranmeldung", pl: "Rezerwacja z wyprzedzeniem" },
+          value: { tr: "Gerekmiyor", en: "Not required", de: "Nicht nötig", pl: "Nie jest wymagana" },
         },
       ],
     },
     {
       img: "assets/images/spa/hamam.png",
-      title: { tr: "Türk hamamı", en: "Turkish bath", de: "Türkisches Bad", ru: "Турецкая баня" },
-      tag: { tr: "Geleneksel ritüel", en: "Traditional ritual", de: "Traditionell", ru: "Традиция" },
+      title: { tr: "Türk hamamı", en: "Turkish bath", de: "Türkisches Bad", pl: "Łaźnia turecka (hammam)" },
+      tag: { tr: "Geleneksel ritüel", en: "Traditional ritual", de: "Traditionell", pl: "Tradycyjny rytuał" },
       kv: [
         {
-          label: { tr: "Saatler", en: "Hours", de: "Zeiten", ru: "Часы" },
+          label: { tr: "Saatler", en: "Hours", de: "Zeiten", pl: "Godziny" },
           value: "09:00 – 19:00",
         },
         {
-          label: { tr: "Ücret", en: "Charge", de: "Preis", ru: "Оплата" },
-          value: { tr: "Ücretsiz", en: "Complimentary", de: "Kostenlos", ru: "Бесплатно" },
+          label: { tr: "Ücret", en: "Charge", de: "Preis", pl: "Opłata" },
+          value: { tr: "Ücretsiz", en: "Complimentary", de: "Kostenlos", pl: "Bezpłatnie" },
         },
         {
-          label: { tr: "Önceden haber", en: "Advance arrangement", de: "Voranmeldung", ru: "Предварительно" },
-          value: { tr: "Gerekmiyor", en: "Not required", de: "Nicht nötig", ru: "Не требуется" },
+          label: { tr: "Önceden haber", en: "Advance arrangement", de: "Voranmeldung", pl: "Rezerwacja z wyprzedzeniem" },
+          value: { tr: "Gerekmiyor", en: "Not required", de: "Nicht nötig", pl: "Nie jest wymagana" },
         },
       ],
     },
     {
       img: "assets/images/spa/buhar.png",
-      title: { tr: "Buhar odası", en: "Steam room", de: "Dampfbad", ru: "Парная" },
-      tag: { tr: "Spa alanı", en: "Spa area", de: "Spa-Bereich", ru: "Спа-зона" },
+      title: { tr: "Buhar odası", en: "Steam room", de: "Dampfbad", pl: "Łaźnia parowa" },
+      tag: { tr: "Spa alanı", en: "Spa area", de: "Spa-Bereich", pl: "Strefa spa" },
       kv: [
         {
-          label: { tr: "Saatler", en: "Hours", de: "Zeiten", ru: "Часы" },
+          label: { tr: "Saatler", en: "Hours", de: "Zeiten", pl: "Godziny" },
           value: "09:00 – 19:00",
         },
         {
-          label: { tr: "Ücret", en: "Charge", de: "Preis", ru: "Оплата" },
-          value: { tr: "Ücretsiz", en: "Complimentary", de: "Kostenlos", ru: "Бесплатно" },
+          label: { tr: "Ücret", en: "Charge", de: "Preis", pl: "Opłata" },
+          value: { tr: "Ücretsiz", en: "Complimentary", de: "Kostenlos", pl: "Bezpłatnie" },
         },
         {
-          label: { tr: "Önceden haber", en: "Advance arrangement", de: "Voranmeldung", ru: "Предварительно" },
-          value: { tr: "Gerekmiyor", en: "Not required", de: "Nicht nötig", ru: "Не требуется" },
+          label: { tr: "Önceden haber", en: "Advance arrangement", de: "Voranmeldung", pl: "Rezerwacja z wyprzedzeniem" },
+          value: { tr: "Gerekmiyor", en: "Not required", de: "Nicht nötig", pl: "Nie jest wymagana" },
         },
       ],
     },
   ];
 
   var FREE_LIST = {
-    title: { tr: "Ücretsiz hizmetler", en: "Complimentary", de: "Inklusive", ru: "Бесплатно" },
+    title: { tr: "Ücretsiz hizmetler", en: "Complimentary", de: "Inklusive", pl: "Bezpłatnie" },
     items: [
-      { tr: "Sauna", en: "Sauna", de: "Sauna", ru: "Сауна" },
-      { tr: "Kapalı havuz", en: "Indoor pool", de: "Hallenbad", ru: "Крытый бассейн" },
-      { tr: "Türk hamamı", en: "Turkish bath", de: "Hamam", ru: "Хамам" },
-      { tr: "Buhar odası", en: "Steam room", de: "Dampfbad", ru: "Парная" },
+      { tr: "Sauna", en: "Sauna", de: "Sauna", pl: "Sauna" },
+      { tr: "Kapalı havuz", en: "Indoor pool", de: "Hallenbad", pl: "Basen kryty" },
+      { tr: "Türk hamamı", en: "Turkish bath", de: "Hamam", pl: "Łaźnia turecka (hammam)" },
+      { tr: "Buhar odası", en: "Steam room", de: "Dampfbad", pl: "Łaźnia parowa" },
     ],
   };
 
   var PAID_LIST = {
-    title: { tr: "Ücretli hizmetler", en: "Paid services", de: "Kostenpflichtig", ru: "Платно" },
+    title: { tr: "Ücretli hizmetler", en: "Paid services", de: "Kostenpflichtig", pl: "Usługi płatne" },
     items: [
-      { tr: "Masaj", en: "Massage", de: "Massage", ru: "Массаж" },
-      { tr: "Kese", en: "Kese scrub", de: "Kese", ru: "Кесе" },
-      { tr: "Peeling", en: "Peeling", de: "Peeling", ru: "Пилинг" },
-      { tr: "Cilt bakımı", en: "Skin care", de: "Hautpflege", ru: "Уход за кожей" },
-      { tr: "Diğer bakım hizmetleri", en: "Other treatments", de: "Weitere Anwendungen", ru: "Другие процедуры" },
+      { tr: "Masaj", en: "Massage", de: "Massage", pl: "Masaż" },
+      { tr: "Kese", en: "Kese scrub", de: "Kese", pl: "Peeling Kese" },
+      { tr: "Peeling", en: "Peeling", de: "Peeling", pl: "Peeling" },
+      { tr: "Cilt bakımı", en: "Skin care", de: "Hautpflege", pl: "Pielęgnacja skóry" },
+      { tr: "Diğer bakım hizmetleri", en: "Other treatments", de: "Weitere Anwendungen", pl: "Inne zabiegi" },
     ],
   };
 
   var PAID_CARD = {
     img: "assets/images/spa/masaj.png",
-    title: { tr: "Masaj & bakım", en: "Massage & treatments", de: "Massage & Pflege", ru: "Массаж и уход" },
+    title: { tr: "Masaj & bakım", en: "Massage & treatments", de: "Massage & Pflege", pl: "Masaż i zabiegi" },
     tag: {
       tr: "Ücretli · La Serenite ekibiyle doğrudan",
       en: "Paid · Directly with La Serenite",
       de: "Kostenpflichtig · direkt mit La Serenite",
-      ru: "Платно · напрямую с La Serenite",
+      pl: "Płatne · Bezpośrednio z La Serenite",
     },
     text: {
       tr:
@@ -286,8 +281,7 @@
         "Massage, scrub, peeling, skin care and other treatments are charged. Please speak directly with our team at the La Serenite spa reception for timing, availability and personal preferences; current prices are in our PDF menu.",
       de:
         "Massage, Kese, Peeling, Hautpflege und weitere Anwendungen sind kostenpflichtig. Zeitfenster, Auslastung und persönliche Wünsche besprechen Sie bitte direkt an der La-Serenite-Spa-Rezeption; aktuelle Preise finden Sie im PDF-Menü.",
-      ru:
-        "Массаж, кесе, пилинг, уход и другие процедуры платно. Время, загрузку и пожелания уточняйте напрямую на ресепшене La Serenite Spa; актуальные цены — в PDF-меню.",
+      pl: "Masaż, peeling Kese, peeling, pielęgnacja skóry i inne zabiegi są płatne. Prosimy o rozmowę z recepcją La Serenite w sprawie terminów, dostępności i preferencji; aktualne ceny znajdują się w menu PDF.",
     },
   };
 
@@ -376,7 +370,7 @@
             tr: "Menü yüklenemedi. Lütfen sayfayı yenileyin.",
             en: "Menu could not be loaded. Please refresh.",
             de: "Menü konnte nicht geladen werden.",
-            ru: "Не удалось загрузить меню.",
+            pl: "Nie udało się wczytać menu. Odśwież stronę.",
           }),
         ),
       );
@@ -555,7 +549,7 @@
     var h1 = el(
       "h2",
       "rest-section-title rest-section-title--spa",
-      T({ tr: "Spa merkezi", en: "Spa centre", de: "Spa-Bereich", ru: "Спа-центр" })
+      T({ tr: "Spa merkezi", en: "Spa centre", de: "Spa-Bereich", pl: "Centrum spa" })
     );
     root.appendChild(h1);
     root.appendChild(renderLaSerenite());
@@ -567,7 +561,7 @@
         tr: "Ücretsiz kullanım (wellness alanı)",
         en: "Complimentary (wellness area)",
         de: "Inklusive (Wellness-Bereich)",
-        ru: "Бесплатно (wellness)",
+        pl: "Bezpłatnie (strefa wellness)",
       })
     );
     root.appendChild(hFree);
@@ -582,7 +576,7 @@
         tr: "Ücretli bakım hizmetleri",
         en: "Paid treatments",
         de: "Kostenpflichtige Anwendungen",
-        ru: "Платные процедуры",
+        pl: "Zabiegi płatne",
       })
     );
     root.appendChild(hPaid);
@@ -595,7 +589,7 @@
         tr: "Özet: ne ücretsiz, ne ücretli?",
         en: "At a glance: what’s included vs paid",
         de: "Überblick: inklusive / kostenpflichtig",
-        ru: "Кратко: что входит, что платно",
+        pl: "Na pierwszy rzut oka: co w cenie, a co płatne",
       })
     );
     root.appendChild(hSum);

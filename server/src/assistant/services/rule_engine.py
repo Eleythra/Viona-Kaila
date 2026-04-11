@@ -83,20 +83,20 @@ FAULT_WORDS = [
     "blockiert",
     "verstopft",
     "durchgebrannt",
-    # RU
-    "не работает",
-    "сломался",
-    "сломалась",
-    "сломано",
-    "не открывается",
-    "не закрывается",
-    "не включается",
-    "неисправен",
-    "неисправна",
-    "сломалось",
-    "застрял",
-    "засорился",
-    "сгорел",
+    # PL
+    "nie działa",
+    "zepsute",
+    "zepsula sie",
+    "zepsulo sie",
+    "nie otwiera się",
+    "nie otwiera sie",
+    "nie zamyka się",
+    "nie wlacza sie",
+    "awaria",
+    "uszkodzone",
+    "zacięło",
+    "zatkane",
+    "spaliło się",
     # TR — ek arıza / çalışmama kalıpları (genel «sorun var» şikâyet yolunu çalmamak için çok anlamlı ifadeler)
     "hasarlı",
     "hasarli",
@@ -144,7 +144,7 @@ FAULT_WORDS = [
     "kilitlenmiş",
     "kilitlenmis",
     "resetlenmiyor",
-    # EN / DE / RU — kısa teknik kalıplar
+    # EN / DE / PL — kısa teknik kalıplar
     "not responding",
     "no sound",
     "no picture",
@@ -154,9 +154,9 @@ FAULT_WORDS = [
     "kein ton",
     "kein bild",
     "kein signal",
-    "не отвечает",
-    "нет звука",
-    "нет изображения",
+    "nie odpowiada",
+    "brak dźwięku",
+    "brak obrazu",
     "technical problem",
     "technical issue",
 ]
@@ -218,6 +218,10 @@ def text_suggests_service_experience_complaint(text: str) -> bool:
         "oda bekledigim gibi degil",
         "gürültü var",
         "gurultu var",
+        "skarga na hałas",
+        "skarga na halas",
+        "za głośno",
+        "za glosno",
         "oda temizliği yetersiz",
         "oda temizligi yetersiz",
         "temizlik yeterli değil",
@@ -304,15 +308,13 @@ def text_suggests_plumbing_leak_or_flood_fault(text: str) -> bool:
             "decke tropft",
             "überlauf",
             "uberlauf",
-            # RU
-            "течёт вода",
-            "течет вода",
-            "вода течёт",
-            "вода течет",
-            "протечка",
-            "затопило",
-            "лопнула труба",
-            "потоп в ванной",
+            # PL
+            "cieknie woda",
+            "woda cieknie",
+            "przeciek",
+            "zalanie",
+            "peknela rura",
+            "zalanie lazienki",
         )
     ):
         return True
@@ -329,10 +331,10 @@ def text_suggests_plumbing_leak_or_flood_fault(text: str) -> bool:
         "room ",
         " my room",
         "zimmer",
-        "душ",
-        "ванн",
-        "номер",
-        "туалет",
+        "prysznic",
+        "lazienk",
+        "pokoj",
+        "toaleta",
     )
     leakish = (
         "akıtıyor",
@@ -353,10 +355,9 @@ def text_suggests_plumbing_leak_or_flood_fault(text: str) -> bool:
         "läuft",
         "lauft",
         "running water",
-        "протеч",
-        "капа",
-        "течёт",
-        "течет",
+        "przeciek",
+        "kapa",
+        "cieknie",
     )
     if any(r in t for r in roomish) and any(k in t for k in leakish):
         return True
@@ -392,11 +393,11 @@ def text_suggests_electrical_hazard_fault(text: str) -> bool:
             "funken",
             "kurzschluss",
             "brandgeruch",
-            "искра из розетки",
-            "искра в розетке",
-            "запах гари",
-            "короткое замыкание",
-            "искрит розетка",
+            "iskra z gniazdka",
+            "iskra w gnieździe",
+            "zapach palenia",
+            "zwarcie",
+            "iskrzy gniazdko",
         )
     )
 
@@ -440,12 +441,14 @@ def text_suggests_water_supply_or_pressure_fault(text: str) -> bool:
             "niedriger wasserdruck",
             "wasserdruck niedrig",
             "zu wenig wasserdruck",
-            "нет горячей воды",
-            "нет холодной воды",
-            "нет воды из",
-            "нет воды в",
-            "низкое давление воды",
-            "мало давления воды",
+            "brak ciepłej wody",
+            "brak cieplej wody",
+            "brak zimnej wody",
+            "brak wody",
+            "niskie ciśnienie wody",
+            "niskie cisnienie wody",
+            "za niskie ciśnienie",
+            "za niskie cisnienie",
         )
     )
 
@@ -472,10 +475,11 @@ def text_suggests_drain_blockage_fault(text: str) -> bool:
             "shower drain",
             "verstopfter abfluss",
             "abfluss verstopft",
-            "засор слив",
-            "засорился слив",
-            "засор в раковине",
-            "засор в душе",
+            "zatkany odpływ",
+            "zatkany odpływ prysznic",
+            "zatkany zlew",
+            "zatkany prysznic",
+            "zatkana toaleta",
             "waschbecken verstopft",
             "spüle verstopft",
             "verstopfte spüle",
@@ -503,11 +507,11 @@ def text_suggests_drain_blockage_fault(text: str) -> bool:
                 "drain",
                 "sink",
                 "shower",
-                "слив",
-                "сток",
-                "унитаз",
-                "раковин",
-                "душ",
+                "odpływ",
+                "odplyw",
+                "toaleta",
+                "umywalka",
+                "prysznic",
             )
         ):
             return True
@@ -528,8 +532,10 @@ def text_suggests_tv_signal_fault(text: str) -> bool:
             "tv no signal",
             "fernseher signal",
             "fernseher kein signal",
-            "телевизор сигнал",
-            "телевизор нет сигнала",
+            "telewizor brak sygnału",
+            "telewizor brak sygnalu",
+            "brak sygnału telewizji",
+            "brak sygnalu telewizji",
         )
     ):
         return True
@@ -562,19 +568,35 @@ def text_suggests_bulb_or_fixture_break_fault(text: str) -> bool:
             "burned out bulb",
             "kaputt glühbirne",
             "defekte lampe",
-            "перегорела ламп",
-            "лампочка перегор",
+            "przepalona żarówka",
+            "przepalona zarowka",
+            "żarówka nie świeci",
+            "zarowka nie swieci",
         )
     ):
         return True
     if "patlak" in t or "patlamış" in t or "patlamis" in t:
-        if any(x in t for x in ("ampul", "lamba", "ışık", "isik", "bulb", "lampe", "glühb", "gluhb", "ламп", "лампоч")):
+        if any(
+            x in t
+            for x in (
+                "ampul",
+                "lamba",
+                "ışık",
+                "isik",
+                "bulb",
+                "lampe",
+                "glühb",
+                "gluhb",
+                "żarówk",
+                "zarowk",
+            )
+        ):
             return True
     return False
 
 
 def text_suggests_wifi_connectivity_fault(text: str) -> bool:
-    """Wi‑Fi / WLAN / internet — bağlantı sorunu (TR «bağlantı yok» FAULT_WORDS’ta; EN/DE/RU eşdeğer)."""
+    """Wi‑Fi / WLAN / internet — bağlantı sorunu (TR «bağlantı yok» FAULT_WORDS’ta; EN/DE/PL eşdeğer)."""
     t = (text or "").lower()
     has_net = any(
         w in t
@@ -586,8 +608,11 @@ def text_suggests_wifi_connectivity_fault(text: str) -> bool:
             "wireless",
             "internet",
             "i̇nternet",
-            "интернет",
-            "вайфай",
+            "internet nie działa",
+            "internet nie dziala",
+            "brak internetu",
+            "wifi nie działa",
+            "wifi nie dziala",
         )
     )
     if not has_net:
@@ -613,10 +638,10 @@ def text_suggests_wifi_connectivity_fault(text: str) -> bool:
             "nicht verbunden",
             "kein wlan",
             "wlan geht nicht",
-            "не подключается",
-            "нет подключения",
-            "не могу подключиться",
-            "нет интернета",
+            "nie łączy się",
+            "brak połączenia",
+            "nie mogę się połączyć",
+            "brak internetu",
         )
     )
 
@@ -660,9 +685,9 @@ COMPLAINT_WORDS = [
     # DE
     "beschwerde", "unzufrieden", "lärm", "laerm", "schlecht",
     "furchtbar", "enttäuscht", "enttaeuscht", "schlechter service",
-    # RU
-    "жалоба", "шум", "плохо", "недоволен", "недовольна", "ужасно",
-    "разочарован", "разочарована", "плохой сервис", "очень плохо",
+    # PL
+    "reklamacja", "hałas", "halas", "źle", "zle", "niezadowolony", "niezadowolona", "okropnie",
+    "rozczarowany", "rozczarowana", "zła obsługa", "zla obsluga", "bardzo źle", "bardzo zle",
 ]
 REQUEST_WORDS = [
     # Stronger signals: entity/item keywords (keep verbs out to reduce false matches).
@@ -673,29 +698,29 @@ REQUEST_WORDS = [
     "handtuch",
     "handtücher",
     "handtucher",
-    "полотенце",
+    "ręcznik",
     # blanket / battaniye
     "battaniye",
     "blanket",
     "decke",
-    "одеяло",
+    "koc",
     # pillow / yastık
     "yastık",
     "yastik",
     "pillow",
     "kissen",
-    "подушка",
+    "poduszka",
     # water / su
     "su",
     "water",
     "wasser",
-    "вода",
+    "woda",
 ]
 ROUTING_HOUSEKEEPING_WORDS = [
     "oda temizliği", "oda temizligi", "oda düzenle", "oda duzenle",
     "housekeeping", "room cleaning", "clean my room",
     "zimmerreinigung", "reinigung bitte",
-    "уборка номера", "уберите номер",
+    "sprzątanie pokoju", "posprzątajcie pokój",
     "temizlik istiyorum",
     "temizlik istiyoruz",
     "temizliğe ihtiyacım var",
@@ -713,19 +738,19 @@ ROUTING_HOUSEKEEPING_WORDS = [
     "need cleaning",
     "need room cleaning",
     "room cleaned",
-    "уборку в номер",
+    "sprzątanie do pokoju",
 ]
 ROUTING_RECEPTION_WORDS = [
     "resepsiyon", "resepsiyonla görüş", "resepsiyonla gorus",
     "reception", "front desk",
     "rezeption",
-    "ресепшн", "стойка регистрации",
+    "recepcja", "lobby hotelowe",
 ]
 ROUTING_GUEST_RELATIONS_WORDS = [
     "misafir ilişkileri", "misafir iliskileri",
     "guest relations",
     "gästebetreuung", "gaestebetreuung",
-    "служба по работе с гостями",
+    "obsługa gościa",
 ]
 ROUTING_TRANSFER_WORDS = [
     "transfer istiyorum",
@@ -746,9 +771,9 @@ ROUTING_TRANSFER_WORDS = [
     "transfer bitte",
     "flughafentransfer",
     "zum flughafen",
-    "нужен трансфер",
-    "трансфер",
-    "заказать трансфер",
+    "potrzebny transfer",
+    "transfer",
+    "zamówić transfer",
     "transfer",
 ]
 ROUTING_LUNCHBOX_WORDS = [
@@ -758,7 +783,7 @@ ROUTING_GENERIC_COMPLAINT_WORDS = [
     "bir sorunum var", "sorunum var",
     "i have a problem", "problem with service",
     "ich habe ein problem",
-    "у меня проблема",
+    "mam problem",
 ]
 
 # Kayıp eşya → resepsiyon (şikâyet formu / «oda» ile room_condition şikâyeti değil).
@@ -773,15 +798,15 @@ _LOST_FOUND_TOPIC_PHRASES_STRICT = (
     "fundbüro",
     "fundbuero",
     "fundsachen",
-    "бюро находок",
+    "biuro rzeczy znalezionych",
 )
 _LOST_FOUND_POLICY_INFO_MARKERS = (
     "ne kadar",
     "how long",
     "wie lange",
-    "сколько",
-    "хранят",
-    "хранится",
+    "ile",
+    "przechowują",
+    "przechowywane",
     "saklanır",
     "saklanir",
     "süre",
@@ -828,12 +853,12 @@ _LOST_ITEM_LOSS_VERBS = (
     "habe verloren",
     "hab verloren",
     "verlegt",
-    "потерял",
-    "потеряла",
-    "потеряли",
-    "утерял",
-    "утеряла",
-    "потеряно",
+    "zgubiłem",
+    "zgubiłam",
+    "zgubiliśmy",
+    "zgubiłem",
+    "zgubiłam",
+    "zaginione",
 )
 _LOST_ITEM_OBJECT_WORDS = (
     "eşya",
@@ -870,7 +895,7 @@ _LOST_ITEM_CONTEXT_PLACES = (
     "oda",
     "room",
     "zimmer",
-    "номер",
+    "pokój",
     "havuz",
     "pool",
     "plaj",
@@ -926,8 +951,8 @@ RESERVATION_WORDS = [
     "extension",
     "reservierung",
     "früher check-in",
-    "ранний заезд",
-    "бронирование",
+    "wcześniejsze zameldowanie",
+    "rezerwacja",
 ]
 
 
@@ -947,10 +972,10 @@ def _booking_or_reservation_marker_in_text(t: str) -> bool:
             "termin",
             "tisch reserv",
             "appointment",
-            "бронь",
-            "бронирован",
-            "запис на",
-            "запись на",
+            "rezerwacja",
+            "zarezerwowane",
+            "zapis na",
+            "zapis na",
             "reserve a table",
             "book a dinner",
         )
@@ -1052,7 +1077,8 @@ def _matches_late_checkout_guest_notif(normalized_text: str) -> bool:
         "late checkout",
         "später check-out",
         "spater check-out",
-        "поздний выезд",
+        "późne wymeldowanie",
+        "pozne wymeldowanie",
         "delayed checkout",
         "checkout uzat",
     )
@@ -1066,22 +1092,22 @@ CELEBRATION_NOTIF_WORDS = [
     # «doğum günü» burada değil: _fuzzy_has «dolum»≈«doğum» ile minibar dolum taleplerini kutlamaya düşürüyordu.
     "birthday",
     "geburtstag",
-    "день рождения",
+    "urodziny",
     "balayı",
     "balayi",
     "honeymoon",
     "flitterwochen",
-    "медовый месяц",
+    "podróż poślubna",
     "yıldönümü",
     "yildonumu",
     "anniversary",
     "jahrestag",
-    "годовщина",
+    "rocznica",
     "sürpriz",
     "surpriz",
     "surprise",
     "überraschung",
-    "сюрприз",
+    "niespodzianka",
     "nişan",
     "nisn",
     "düğün",
@@ -1108,17 +1134,17 @@ HEALTH_NOTIF_WORDS = [
     "pregnancy",
     "pregnant",
     "schwanger",
-    "беременн",
+    "ciąż",
     "kronik",
     "chronic",
     "chronisch",
-    "хроническ",
+    "przewlekł",
     "ilaç",
     "ilac",
     "ilacım",
     "medication",
     "medikament",
-    "лекарств",
+    "leków",
     "diyabet",
     "diabetes",
     "insulin",
@@ -1136,9 +1162,9 @@ HEALTH_NOTIF_WORDS = [
     "wheelchair",
     "rollstuhl",
     "tekerlekli sandalye",
-    "доступность",
-    "доступ",
-    "коляска",
+    "dostępność",
+    "dostęp",
+    "wózek",
     "engelli",
     "disabled access",
 ]
@@ -1204,7 +1230,7 @@ GENERIC_ROOM_PROBLEM_OR_TECH_FAULT_STRICT_PHRASES = [
     "need technical support",
     "technical help please",
     "technischer support bitte",
-    "нужна техническая поддержка",
+    "potrzebuję wsparcia technicznego",
 ]
 
 SPECIAL_WORDS = [
@@ -1215,21 +1241,21 @@ SPECIAL_WORDS = [
     "vegetarian",
     "vegetarier",
     "vegetari",
-    "вегетариан",
+    "wegetarian",
     # Dietary medical restriction
     "çölya",
     "çölyak",
     "colyak",
     "celiac",
     "zöliakie",
-    "целиакия",
+    "celiakia",
     "gluten",
     "guluten",
     "glutten",
     "glutenfree",
     "gluten free",
     "glutenfrei",
-    "без глютена",
+    "bez glutenu",
     "kein gluten",
     "gluten yiyemem",
     "gluten can not",
@@ -1247,23 +1273,22 @@ SPECIAL_WORDS = [
     "süt dokunuyor",
     "milk",
     "dairy",
-    "лактоz",
-    "лактоз",
-    "молоко",
+    "laktoza",
+    "mleko",
     # Allergy
     "alerji",
     "allergy",
     "allergie",
-    "ист аллерг",
+    "alergia pokarmowa",
     "fıstık",
     "peanut",
     "erdnuss",
-    "арахис",
+    "orzeszki ziemne",
     "nuts",
     # Baby nutrition only (not crib/bed — those go to İstek / bebek ekipmanı kuralı)
     "baby food",
     "babynahrung",
-    "детское питание",
+    "żywność dla niemowląt",
     "bebek maması",
     "bebek mamasi",
 ]
@@ -1314,7 +1339,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
             "yastik",
             "pillow",
             "kissen",
-            "подушка",
+            "poduszka",
         ],
     ),
     (
@@ -1328,7 +1353,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
             "blanket",
             "duvet",
             "decke",
-            "одеяло",
+            "koc",
         ],
     ),
     (
@@ -1347,7 +1372,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
             "room cleaning",
             "clean my room",
             "zimmerreinigung",
-            "уборка номера",
+            "sprzątanie pokoju",
             "genel temizlik",
             "temizlik hizmeti",
         ],
@@ -1377,7 +1402,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
             "bottled water",
             "water bottle",
             "wasserflasche",
-            "бутылка воды",
+            "butelka wody",
         ],
     ),
     (
@@ -1406,7 +1431,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
             "tuvalet kagidi",
             "toilet paper",
             "klopapier",
-            "туалетная бумага",
+            "papier toaletowy",
         ],
     ),
     (
@@ -1431,7 +1456,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
             "klima istiyorum",
             "thermostat",
             "air conditioning",
-            "климат",
+            "klimat",
         ],
     ),
     (
@@ -1450,7 +1475,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
             "terlik",
             "slippers",
             "hausschuhe",
-            "тапочки",
+            "kapcie",
         ],
     ),
     (
@@ -1459,7 +1484,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
             "bornoz",
             "bathrobe",
             "bademantel",
-            "халат",
+            "szlafrok",
         ],
     ),
     (
@@ -1472,7 +1497,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
             "hanger",
             "kleiderbügel",
             "kleiderbugel",
-            "вешалка",
+            "wieszak",
             "oda ekipmanı",
             "oda ekipmani",
             "room equipment",
@@ -1489,7 +1514,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
             "caydanlik",
             "kettle",
             "wasserkocher",
-            "чайник",
+            "czajnik",
         ],
     ),
     (
@@ -1502,7 +1527,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
             "room safe",
             "safe box",
             "tresor",
-            "сейф",
+            "sejf",
         ],
     ),
     (
@@ -1543,7 +1568,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
             "zimmerhandtuch",
             "zimmerhandtücher",
             "zimmerhandtucher",
-            "полотенце для номера",
+            "ręcznik do pokoju",
         ],
     ),
     (
@@ -1562,7 +1587,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
             "handtuch",
             "handtücher",
             "handtucher",
-            "полотенце",
+            "ręcznik",
         ],
     ),
 ]
@@ -1674,8 +1699,8 @@ def extract_request_category_from_text(normalized_text: str) -> str | None:
                     "cleaning",
                     "housekeeping",
                     "zimmerreinigung",
-                    "уборка",
-                    "уборку",
+                    "sprzątanie",
+                    "sprzątanie",
                 )
             ):
                 return "room_cleaning"
@@ -1746,12 +1771,12 @@ def extract_room_supply_request_entity(text: str) -> str | None:
                 "auffüll",
                 "nachfüll",
                 "leer",
-                "пуст",
-                "пополн",
+                "pust",
+                "uzupełn",
             )
         ):
             return False
-        if any(x in t for x in ("var mı", "varmi", "var mi", "is there", "do you have", "haben sie", "есть ли")):
+        if any(x in t for x in ("var mı", "varmi", "var mi", "is there", "do you have", "haben sie", "czy jest")):
             return True
         compact = re.sub(r"[\s?.!]+", " ", t).strip()
         if compact in ("minibar yok", "yok minibar"):
@@ -1796,8 +1821,8 @@ def extract_room_supply_request_entity(text: str) -> str | None:
                 "nachfüll",
                 "leer",
                 "leere",
-                "пуст",
-                "пополн",
+                "pust",
+                "uzupełn",
                 "need minibar",
                 "fill minibar",
                 "minibar refill",
@@ -1823,7 +1848,7 @@ def extract_room_supply_request_entity(text: str) -> str | None:
                 "su ısıtıcı",
                 "su isitici",
                 "wasserkocher",
-                "чайник",
+                "czajnik",
                 "kettele",
                 "ketıl",
                 "ketil",
@@ -1899,7 +1924,7 @@ def _is_baby_formula_guest_relations_request(text: str) -> bool:
             "süt maması",
             "sut mamasi",
             "babynahrung",
-            "детское питание",
+            "żywność dla niemowląt",
         )
     )
     want_markers = _has_strong_service_request_intent(raw) or any(
@@ -1915,7 +1940,7 @@ def _is_baby_formula_guest_relations_request(text: str) -> bool:
             "istiyorum",
             "need",
             "brauche",
-            "нужн",
+            "potrzeb",
         )
     )
     if explicit and want_markers:
@@ -2016,7 +2041,7 @@ def _inventory_yok_implies_strong_supply_request(text: str) -> bool:
             "is there",
             "do you have",
             "haben sie",
-            "есть ли",
+            "czy jest",
         )
     ):
         return False
@@ -2062,8 +2087,10 @@ def _has_strong_service_request_intent(text: str) -> bool:
         "can you bring",
         "can i get",
         "order ",
-        "мне нужно",
-        "нужен ",
+        "potrzebuję",
+        "potrzebuje",
+        "proszę o ",
+        "prosze o ",
         "bitte bring",
         "bitte schick",
         "bestellen",
@@ -2116,9 +2143,9 @@ def _has_strong_service_request_intent(text: str) -> bool:
         "konnten sie bringen",
         "bitte stellen sie",
         "bitte besorgen",
-        "пришлите",
-        "можно принести",
-        "нужно принести",
+        "proszę przysłać",
+        "można przynieść",
+        "trzeba przynieść",
     )
     if any(m in t for m in markers):
         return True
@@ -2219,8 +2246,8 @@ OUTSIDE_HOTEL_WORDS = [
 def _matches_alanya_discover_intent(normalized_text: str) -> bool:
     """Alanya'da gezi / turistik yer soruları → sabit metin + uygulama modülü."""
     tl = (normalized_text or "").lower()
-    has_alanya = "alanya" in tl or "аланья" in tl
-    has_en_de_ru_place = any(
+    has_alanya = "alanya" in tl
+    has_en_de_pl_place = any(
         x in tl
         for x in (
             "visit alanya",
@@ -2234,10 +2261,10 @@ def _matches_alanya_discover_intent(normalized_text: str) -> bool:
             "sehenswürdigkeiten alanya",
             "was kann man in alanya",
             "alanya entdecken",
-            "аланья что посмотреть",
-            "куда сходить в аланье",
-            "в аланье",
-            "достопримечательности аланьи",
+            "co zobaczyć w alanyi",
+            "alanya atrakcje",
+            "w alanyi",
+            "zwiedzanie alanyi",
         )
     )
     tour_markers = (
@@ -2273,16 +2300,15 @@ def _matches_alanya_discover_intent(normalized_text: str) -> bool:
         "sehensw",
         "besicht",
         "unternehm",
-        "что посмотреть",
-        "куда сходить",
-        "достопримечатель",
-        "погулять",
-        "экскурс",
+        "co zobaczyć",
+        "zwiedzanie",
+        "atrakcje",
+        "wyciecz",
     )
     has_tour = any(m in tl for m in tour_markers)
     if has_alanya and has_tour:
         return True
-    if has_en_de_ru_place and (has_tour or "see" in tl or "places" in tl or "things" in tl):
+    if has_en_de_pl_place and (has_tour or "see" in tl or "places" in tl or "things" in tl):
         return True
     return False
 # Oda servisi — ücretli hizmet; şimdilik yalnız bilgi (RAG), istek formu yok.
@@ -2295,8 +2321,8 @@ _ROOM_SERVICE_SUBSTRINGS: tuple[str, ...] = (
     "roomservice",
     "zimmerservice",
     "zimmer service",
-    "обслуживание в номер",
-    "обслуживание номера",
+    "serwis pokojowy",
+    "obsługa pokoju",
     "servizio in camera",
 )
 
@@ -2306,23 +2332,23 @@ HOTEL_INFO_WORDS = [
     "moss beach",
     "lobi",
     "lobby",
-    "лобби",
-    "где лобби",
+    "lobby",
+    "gdzie jest lobby",
     "restoran saatleri",
     "restaurant hours",
     "restaurantzeiten",
-    "часы ресторанов",
+    "godziny restauracji",
     "havuz ve plaj",
     "pool & beach",
     "pool and beach",
     "pool & strand",
-    "бассейн и пляж",
+    "basen i plaża",
     "spa ve wellness",
     "spa und wellness",
     "spa & wellness",
     "spa and wellness",
-    "спа и wellness",
-    "спа и велнес",
+    "spa i wellness",
+    "spa i wellness",
     "animasyon",
     "animasyon ve etkinlikler",
     "akşam aktivitesi",
@@ -2336,7 +2362,7 @@ HOTEL_INFO_WORDS = [
     "animation & events",
     "animation and events",
     "animation & veranstaltungen",
-    "анимация и мероприятия",
+    "program animacji",
     # Check-in/check-out time is handled by a dedicated guard.
 
     # Laundry / cleaning info
@@ -2356,10 +2382,10 @@ HOTEL_INFO_WORDS = [
     "waescherei",
     "bügeln",
     "buegeln",
-    "уборка",
-    "прачечная",
-    "химчистка",
-    "глажка",
+    "sprzątanie",
+    "pralnia",
+    "pralnia chemiczna",
+    "prasowanie",
 
     # "I'm bored" => suggest animations & events
     "canım sıkıldı",
@@ -2369,8 +2395,8 @@ HOTEL_INFO_WORDS = [
     "i am bored",
     "langweilig",
     "mir ist langweilig",
-    "мне скучно",
-    "скучно",
+    "nudzi mi się",
+    "nudno",
 ]
 
 
@@ -2388,12 +2414,12 @@ def _wants_fun_animation_tr_phrase(text: str) -> bool:
 
 
 DEVICE_HINTS = {
-    "television": ["televizyon", "tv", "fernseher", "телевизор"],
-    "shower": ["duş", "dus", "shower", "dusche", "душ"],
-    "keycard": ["kart", "kapı kartı", "key card", "karte", "карта"],
-    "hvac": ["klima", "ac", "air conditioner", "klimaanlage", "кондиционер"],
-    "lighting": ["ışık", "isik", "lamba", "light", "lampe", "свет"],
-    "internet": ["internet", "wifi", "wi-fi", "kablosuz", "wlan", "интернет", "вайфай"],
+    "television": ["televizyon", "tv", "fernseher", "telewizor"],
+    "shower": ["duş", "dus", "shower", "dusche", "prysznic"],
+    "keycard": ["kart", "kapı kartı", "key card", "karte", "karta"],
+    "hvac": ["klima", "ac", "air conditioner", "klimaanlage", "klimatyzacja"],
+    "lighting": ["ışık", "isik", "lamba", "light", "lampe", "światło"],
+    "internet": ["internet", "wifi", "wi-fi", "kablosuz", "wlan", "internet", "wifi"],
     "kettle": [
         "kettle",
         "su ısıtıcısı",
@@ -2401,24 +2427,24 @@ DEVICE_HINTS = {
         "su ısıtıcı",
         "su isitici",
         "wasserkocher",
-        "чайник",
+        "czajnik",
         "kettele",
         "ketıl",
         "ketil",
     ],
     "minibar": ["minibar", "mini bar"],
-    "cabinet": ["dolap", "wardrobe", "schrank", "шкаф"],
+    "cabinet": ["dolap", "wardrobe", "schrank", "szafa"],
     "phone": ["telefon", "phone", "telefon"],
-    "towel": ["havlu", "towel", "towels", "handtuch", "handtücher", "handtucher", "полотенце"],
-    "blanket": ["battaniye", "battiye", "batiye", "battainiye", "batniye", "blanket", "decke", "одеяло"],
-    "pillow": ["yastık", "yastik", "pillow", "kissen", "подушка"],
-    "water": ["su", "water", "wasser", "вода"],
+    "towel": ["havlu", "towel", "towels", "handtuch", "handtücher", "handtucher", "ręcznik"],
+    "blanket": ["battaniye", "battiye", "batiye", "battainiye", "batniye", "blanket", "decke", "koc"],
+    "pillow": ["yastık", "yastik", "pillow", "kissen", "poduszka"],
+    "water": ["su", "water", "wasser", "woda"],
     # Dietary preference
-    "vegan": ["vegan", "веган", "veganım", "i am vegan"],
-    "vegetarian": ["vejetaryen", "vegetarian", "vegetarier", "vejetaryenim", "vejetaryenler", "я вегетарианец", "вегетарианец"],
+    "vegan": ["vegan", "wegan", "veganım", "i am vegan"],
+    "vegetarian": ["vejetaryen", "vegetarian", "vegetarier", "vejetaryenim", "vejetaryenler", "jestem wegetarianinem", "wegetarianin"],
 
     # Dietary medical restriction
-    "celiac": ["çölya", "çölyak", "colyak", "celiac", "zöliakie", "целиакия"],
+    "celiac": ["çölya", "çölyak", "colyak", "celiac", "zöliakie", "celiakia"],
     "gluten_related_restriction": [
         "gluten",
         "kein gluten",
@@ -2429,7 +2455,17 @@ DEVICE_HINTS = {
         "hassasiyeti",
         "gluten hassasiyeti",
     ],
-    "lactose_related_restriction": ["laktoz", "laktose", "lactose", "laktozum", "süt dokunuyor", "milk", "dairy", "лактоз", "лактоза", "молоко", "лактоz"],
+    "lactose_related_restriction": [
+        "laktoz",
+        "laktose",
+        "lactose",
+        "laktozum",
+        "laktoza",
+        "süt dokunuyor",
+        "milk",
+        "dairy",
+        "mleko",
+    ],
 
     # Allergy
     "allergy": [
@@ -2440,7 +2476,7 @@ DEVICE_HINTS = {
         "fıstık",
         "peanut",
         "erdnuss",
-        "арахис",
+        "orzechy arachidowe",
         "nuts",
         "nut allergy",
         "peanut allergy",
@@ -2450,9 +2486,9 @@ DEVICE_HINTS = {
     "baby_need": [
         "baby food",
         "babynahrung",
-        "детское питание",
-        "детям",
-        "мне нужно детское питание",
+        "pokarm dla niemowląt",
+        "pokarm dla niemowlat",
+        "jedzenie dla dziecka",
         "bebek",
         "bebeğim",
         "bebeği",
@@ -2461,19 +2497,53 @@ DEVICE_HINTS = {
     ],
 
     # Accessibility need
-    "accessibility_need": ["accessibility", "erişilebilirlik", "wheelchair", "rollstuhl", "доступность", "доступ", "коляска"],
+    "accessibility_need": [
+        "accessibility",
+        "erişilebilirlik",
+        "wheelchair",
+        "rollstuhl",
+        "dostępność",
+        "dostepnosc",
+        "wózek inwalidzki",
+        "wozek inwalidzki",
+    ],
     "early_checkin": ["erken giriş", "erken giris", "early checkin"],
     "room_change": ["oda değiş", "oda degis", "room change"],
     "reservation_issue": ["rezervasyonum görünmüyor", "rezervasyon görünmüyor", "reservation not found", "reservation issue"],
-    "fixed_restaurant_info": ["restoran saatleri", "restaurant hours", "restaurantzeiten", "часы ресторанов"],
-    "fixed_pool_beach_info": ["havuz ve plaj", "pool & beach", "pool and beach", "pool strand", "бассейн и пляж"],
-    "fixed_spa_info": ["spa ve wellness", "spa & wellness", "spa und wellness", "spa and wellness", "spa wellness", "спа и wellness", "спа и велнес"],
-    "fixed_animation_info": ["animasyon ve etkinlikler", "animation & events", "animation and events", "animation veranstaltungen", "анимация и мероприятия"],
+    "fixed_restaurant_info": [
+        "restoran saatleri",
+        "restaurant hours",
+        "restaurantzeiten",
+        "godziny restauracji",
+    ],
+    "fixed_pool_beach_info": [
+        "havuz ve plaj",
+        "pool & beach",
+        "pool and beach",
+        "pool strand",
+        "basen i plaża",
+        "basen i plaza",
+    ],
+    "fixed_spa_info": [
+        "spa ve wellness",
+        "spa & wellness",
+        "spa und wellness",
+        "spa and wellness",
+        "spa wellness",
+        "spa i wellness",
+    ],
+    "fixed_animation_info": [
+        "animasyon ve etkinlikler",
+        "animation & events",
+        "animation and events",
+        "animation veranstaltungen",
+        "program animacji",
+    ],
 }
 
 
 def _norm_tokens(text: str) -> list[str]:
-    return re.findall(r"[a-zA-ZçğıöşüÇĞİÖŞÜа-яА-ЯёЁ]+", text.lower())
+    return re.findall(r"[a-zA-ZçğıöşüÇĞİÖŞÜąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+", text.lower())
 
 
 def _dl(a: str, b: str) -> int:
@@ -2939,7 +3009,7 @@ class RuleEngine:
 
         # «Animasyon programı» genel soru → sabit metin; yoksa genel anahtar RAG’e düşer, ardından «yarın» bağlamı kopar.
         tl_anim = (normalized_text or "").lower()
-        if ("animasyon" in tl_anim or "animation" in tl_anim or "анимац" in tl_anim) and any(
+        if ("animasyon" in tl_anim or "animation" in tl_anim or "animacj" in tl_anim) and any(
             k in tl_anim
             for k in (
                 "program",
@@ -2947,8 +3017,8 @@ class RuleEngine:
                 "programi",
                 "schedule",
                 "tagesprogramm",
-                "расписан",
-                "програм",
+                "harmonogram",
+                "programu",
             )
         ):
             logger.info("RULE MATCH: hotel_info (animation_program_overview)")
@@ -3474,8 +3544,6 @@ class RuleEngine:
             "bitte turkisch": "tr",
             "auf türkisch": "tr",
             "auf turkisch": "tr",
-            "по-турецки": "tr",
-            "по турецки": "tr",
             # German
             "almanca": "de",
             "almanca konuş": "de",
@@ -3491,35 +3559,31 @@ class RuleEngine:
             "auf deutsch": "de",
             "auf deutsch bitte": "de",
             "german please": "de",
-            # Russian
-            "rusça": "ru",
-            "rusca": "ru",
-            "rusça konuş": "ru",
-            "rusca konus": "ru",
-            "rusçaya geç": "ru",
-            "ruscaya gec": "ru",
-            "please speak russian": "ru",
-            "speak russian": "ru",
-            "switch to russian": "ru",
-            "по-русски": "ru",
-            "по русски": "ru",
-            "по русски пожалуйста": "ru",
-            "bitte auf russisch": "ru",
-            "auf russisch": "ru",
-            "auf russisch bitte": "ru",
-            # Russian (exact) — switch target language
-            "по-английски": "en",
-            "по английски": "en",
-            "по-немецки": "de",
-            "по немецки": "de",
-            "перейди на английский": "en",
-            "перейдите на английский": "en",
-            "перейди на немецкий": "de",
-            "перейдите на немецкий": "de",
-            "перейди на турецкий": "tr",
-            "перейдите на турецкий": "tr",
-            "перейди на русский": "ru",
-            "перейдите на русский": "ru",
+            # Polish
+            "polski": "pl",
+            "po polsku": "pl",
+            "popolsku": "pl",
+            "polska proszę": "pl",
+            "polska prosze": "pl",
+            "proszę po polsku": "pl",
+            "prosze po polsku": "pl",
+            "mów po polsku": "pl",
+            "mow po polsku": "pl",
+            "mów po angielsku": "en",
+            "mow po angielsku": "en",
+            "po angielsku": "en",
+            "mów po niemiecku": "de",
+            "mow po niemiecku": "de",
+            "po niemiecku": "de",
+            "mów po turecku": "tr",
+            "mow po turecku": "tr",
+            "po turecku": "tr",
+            "please speak polish": "pl",
+            "speak polish": "pl",
+            "switch to polish": "pl",
+            "bitte polnisch": "pl",
+            "auf polnisch": "pl",
+            "auf polnisch bitte": "pl",
             # German (exact)
             "bitte englisch": "en",
             "englisch bitte": "en",
@@ -3530,9 +3594,9 @@ class RuleEngine:
             "auf turkisch wechseln": "tr",
             "wechsel zu türkisch": "tr",
             "wechsel zu turkisch": "tr",
-            "auf russisch wechseln": "ru",
-            "wechsel zu russisch": "ru",
-            "bitte russisch": "ru",
+            "auf polnisch wechseln": "pl",
+            "wechsel zu polnisch": "pl",
+            "bitte polnisch": "pl",
         }
         tgt = phrase_to_lang.get(t)
         if tgt:
@@ -3546,37 +3610,8 @@ class RuleEngine:
             return RuleEngine._language_switch_result("tr")
         if re.match(rf"^almanca\s+{_speak_word}\b", t):
             return RuleEngine._language_switch_result("de")
-        if re.match(rf"^rusça\s+{_speak_word}\b", t) or re.match(rf"^rusca\s+{_speak_word}\b", t):
-            return RuleEngine._language_switch_result("ru")
-
-        # Russian: meta phrases (говори по-английски, переключись на немецкий, …)
-        _ru_switch = [
-            (r"^говори(те)?\s+по-английски", "en"),
-            (r"^говори(те)?\s+по английски", "en"),
-            (r"^говори(те)?\s+по-немецки", "de"),
-            (r"^говори(те)?\s+по немецки", "de"),
-            (r"^говори(те)?\s+по-турецки", "tr"),
-            (r"^говори(те)?\s+по турецки", "tr"),
-            (r"^говори(те)?\s+по-русски", "ru"),
-            (r"^говори(те)?\s+по русски", "ru"),
-            (r"^переключ(ись|итесь)\s+на\s+английский", "en"),
-            (r"^переключ(ись|итесь)\s+на\s+немецкий", "de"),
-            (r"^переключ(ись|итесь)\s+на\s+турецкий", "tr"),
-            (r"^переключ(ись|итесь)\s+на\s+русский", "ru"),
-            (r"^перейти\s+на\s+английский", "en"),
-            (r"^перейти\s+на\s+немецкий", "de"),
-            (r"^перейти\s+на\s+турецкий", "tr"),
-            (r"^перейти\s+на\s+русский", "ru"),
-            (r"^давай(те)?\s+по-английски", "en"),
-            (r"^давай(те)?\s+по-немецки", "de"),
-            (r"^на\s+английском\s+пожалуйста", "en"),
-            (r"^на\s+немецком\s+пожалуйста", "de"),
-            (r"^на\s+турецком\s+пожалуйста", "tr"),
-            (r"^на\s+русском\s+пожалуйста", "ru"),
-        ]
-        for pat, lang in _ru_switch:
-            if re.match(pat, t):
-                return RuleEngine._language_switch_result(lang)
+        if re.match(rf"^polski\s+{_speak_word}\b", t) or re.match(rf"^po\s+polsku\s+{_speak_word}\b", t):
+            return RuleEngine._language_switch_result("pl")
 
         # German: longer / polite switch phrases
         _de_switch = [
@@ -3586,11 +3621,11 @@ class RuleEngine:
             (r"^können\s+sie\s+englisch", "en"),
             (r"^sprich\s+(bitte\s+)?türkisch", "tr"),
             (r"^sprich\s+(bitte\s+)?turkisch", "tr"),
-            (r"^sprich\s+(bitte\s+)?russisch", "ru"),
+            (r"^sprich\s+(bitte\s+)?polnisch", "pl"),
             (r"^sprich\s+(bitte\s+)?deutsch", "de"),
             (r"^wechsel\s+zu\s+türkisch", "tr"),
             (r"^wechsel\s+zu\s+turkisch", "tr"),
-            (r"^wechsel\s+zu\s+russisch", "ru"),
+            (r"^wechsel\s+zu\s+polnisch", "pl"),
             (r"^wechsel\s+zu\s+englisch", "en"),
             (r"^wechsel\s+zu\s+deutsch", "de"),
         ]
@@ -3621,18 +3656,17 @@ class RuleEngine:
             "verstehe nicht",
             "versteh nicht",
             "nicht verstanden",
-            "не понял",
-            "не поняла",
-            "не понимаю",
-            "что значит",
-            "что это значит",
+            "nie rozumiem",
+            "nie rozumiemy",
+            "co masz na myśli",
+            "co to znaczy",
         }
     )
 
     @staticmethod
     def _normalize_social_text(text: str) -> str:
         t = (text or "").lower().strip()
-        t = re.sub(r"[^a-zA-ZçğıöşüÇĞİÖŞÜäöüßÄÖÜẞа-яА-ЯёЁ\s'’‘]", " ", t)
+        t = re.sub(r"[^a-zA-ZçğıöşüÇĞİÖŞÜäöüßÄÖÜẞąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s'’‘]", " ", t)
         t = re.sub(r"\s+", " ", t).strip()
         return t
 
@@ -3649,7 +3683,7 @@ class RuleEngine:
                 "sen kimsin", "kimsin", "nesin",
                 "who are you", "what are you",
                 "wer bist du",
-                "кто ты",
+                "kim jesteś",
             },
             "how_are_you": {
                 "nasılsın", "nasilsin", "iyi misin", "naber", "nasıl gidiyor", "nasil gidiyor", "ne haber",
@@ -3657,7 +3691,7 @@ class RuleEngine:
                 "hi how are you", "hello how are you",
                 "wie geht's", "wie geht’s", "wie gehts", "wie geht es dir", "wie läuft's", "wie laeufts", "wie läuft es",
                 "hallo wie gehts", "hallo wie geht es",
-                "как дела", "как идет", "как идёт", "привет как дела", "привет как ты",
+                "jak się masz", "jak leci", "jak leci", "cześć jak się masz", "cześć jak się masz",
             },
             "thanks": {
                 "teşekkürler", "teşekkür ederim", "çok teşekkürler",
@@ -3665,25 +3699,25 @@ class RuleEngine:
                 "sağ ol", "sag ol", "sağ olun", "sag olun",
                 "thanks", "thank you", "thanks a lot", "appreciate it",
                 "danke", "danke schön", "dankeschön", "vielen dank",
-                "спасибо", "большое спасибо", "благодарю",
+                "dziękuję", "bardzo dziękuję", "dziękuję",
             },
             "farewell": {
                 "görüşürüz", "gorusuruz", "hoşça kal", "hosca kal", "iyi günler", "iyi gunler",
                 "bye", "goodbye", "see you",
                 "tschüss", "tschuss", "auf wiedersehen",
-                "пока", "до свидания",
+                "pa", "do widzenia",
             },
             "apology_from_user": {
                 "kusura bakmayın", "kusura bakmayin", "pardon", "özür dilerim", "ozur dilerim",
                 "sorry", "my apologies",
                 "entschuldigung", "tut mir leid",
-                "извините", "прошу прощения",
+                "przepraszam", "bardzo przepraszam",
             },
             "compliment": {
                 "harikasın", "harikasin", "çok iyisin", "cok iyisin",
                 "you are great", "awesome", "very helpful",
                 "du bist toll", "sehr hilfreich",
-                "ты молодец", "очень полезно",
+                "świetna robota", "bardzo pomocne",
             },
             "greeting": {
                 "merhaba", "selam", "günaydın", "gunaydin", "iyi akşamlar", "iyi aksamlar",
@@ -3693,7 +3727,7 @@ class RuleEngine:
                 "bana yardim olur musunuz",
                 "hi", "hello", "good morning", "good evening",
                 "hallo", "guten morgen", "guten abend",
-                "привет", "здравствуйте", "доброе утро", "добрый вечер",
+                "cześć", "dzień dobry", "dzień dobry", "dobry wieczór",
             },
         }
         for intent_name, patterns in social_patterns.items():
@@ -3775,7 +3809,7 @@ class RuleEngine:
             )
         ):
             return True
-        if any(x in t for x in ("во сколько", "когда начинается", "расписание")):
+        if any(x in t for x in ("o której", "kiedy zaczyna się", "harmonogram")):
             return True
         if ("saatleri" in t or "saatler" in t) and any(
             x in t
@@ -3820,7 +3854,7 @@ class RuleEngine:
             if RuleEngine._mentions_animation_or_kids_program_topic(t):
                 return False
             return True
-        if "который час" in t or "сколько времени" in t:
+        if "która jest godzina" in t or "ile jest czasu" in t:
             if RuleEngine._mentions_animation_or_kids_program_topic(t):
                 return False
             return True
@@ -3844,11 +3878,11 @@ class RuleEngine:
     @staticmethod
     def _hotel_info_entity(text: str) -> str | None:
         t = text.lower()
-        if any(k in t for k in ["restoran saatleri", "restaurant hours", "restaurantzeiten", "часы ресторанов"]):
+        if any(k in t for k in ["restoran saatleri", "restaurant hours", "restaurantzeiten", "godziny restauracji"]):
             return "fixed_restaurant_info"
-        if any(k in t for k in ["havuz ve plaj", "pool & beach", "pool and beach", "pool & strand", "pool strand", "бассейн и пляж"]):
+        if any(k in t for k in ["havuz ve plaj", "pool & beach", "pool and beach", "pool & strand", "pool strand", "basen i plaża"]):
             return "fixed_pool_beach_info"
-        if any(k in t for k in ["spa ve wellness", "spa & wellness", "spa und wellness", "spa and wellness", "spa wellness", "спа и wellness", "спа и велнес"]):
+        if any(k in t for k in ["spa ve wellness", "spa & wellness", "spa und wellness", "spa and wellness", "spa wellness", "spa i wellness", "spa i wellness"]):
             return "fixed_spa_info"
         if any(
             k in t
@@ -3858,7 +3892,7 @@ class RuleEngine:
                 "animation and events",
                 "animation & veranstaltungen",
                 "animation veranstaltungen",
-                "анимация и мероприятия",
+                "program animacji",
                 "akşam aktivitesi",
                 "aksam aktivitesi",
                 "yetişkin aktivitesi",
@@ -3875,8 +3909,8 @@ class RuleEngine:
                 "i am bored",
                 "langweilig",
                 "mir ist langweilig",
-                "мне скучно",
-                "скучно",
+                "nudzi mi się",
+                "nudno",
             ]
         ):
             return "fixed_animation_info"
@@ -3893,8 +3927,8 @@ class RuleEngine:
                 "ice-cream",
                 "icecream",
                 "gelato",
-                "мороженое",
-                "мороженого",
+                "lody",
+                "lody",
                 "eiscreme",
                 "eis am stiel",
             )
@@ -3928,7 +3962,7 @@ class RuleEngine:
                 "laundry",
                 "çamaşırhane",
                 "camasirhane",
-                "химчистка",
+                "pralnia chemiczna",
                 "chemische reinigung",
                 "wäscherei",
                 "waescherei",
@@ -3960,7 +3994,7 @@ class RuleEngine:
                 "sikayet",
                 "complaint",
                 "beschwerde",
-                "жалоб",
+                "skarg",
                 "çok kötü",
                 "cok kotu",
                 "berbat",
@@ -4036,10 +4070,10 @@ class RuleEngine:
             "waescherei",
             "bügeln",
             "buegeln",
-            "уборка",
-            "прачечная",
-            "химчистка",
-            "глажка",
+            "sprzątanie",
+            "pralnia",
+            "pralnia chemiczna",
+            "prasowanie",
         ]
         if any(k in t for k in info_terms):
             return True
@@ -4051,7 +4085,7 @@ class RuleEngine:
         t = (text or "").lower().strip()
         if re.search(r"\biptal\s+et\b", t):
             return True
-        if t in ("iptal et", "iptal", "vazgeç", "vazgec", "cancel", "abbrechen", "отмена"):
+        if t in ("iptal et", "iptal", "vazgeç", "vazgec", "cancel", "abbrechen", "anuluj"):
             return True
         return False
 
@@ -4131,11 +4165,11 @@ class RuleEngine:
                 "cilt bakim",
                 "skin care",
                 "hautpflege",
-                "массаж",
-                "хаммам",
-                "спа",
-                "велнес",
-                "пилинг",
+                "masaż",
+                "hamam",
+                "spa",
+                "wellness",
+                "peeling",
             )
         ):
             return False
@@ -4157,12 +4191,12 @@ class RuleEngine:
                 "preise",
                 "kosten",
                 "tariff",
-                "цена",
-                "стоимость",
-                "сколько",
-                "прайс",
-                "тариф",
-                "стоит",
+                "cena",
+                "koszt",
+                "ile",
+                "cennik",
+                "taryfa",
+                "kosztuje",
                 "preisliste",
                 "preis list",
             )
@@ -4188,7 +4222,7 @@ class RuleEngine:
     @staticmethod
     def _menu_word_or_typo_in(t: str) -> bool:
         """«bar mneü», menyu vb. yazım hataları dahil menü sinyali."""
-        if any(x in t for x in ("menü", "menu", "меню", "speisekarte", "menyu")):
+        if any(x in t for x in ("menü", "menu", "karta dań", "speisekarte", "menyu")):
             return True
         if "mneü" in t or "mneu" in t:
             return True
@@ -4225,8 +4259,8 @@ class RuleEngine:
                         "pdf",
                         "link",
                         "application",
-                        "модул",
-                        "приложен",
+                        "moduł",
+                        "aplikacji",
                     )
                 )
                 or re.search(r"(?<![a-zçğıöşü])app(?![a-z])", tl) is not None
@@ -4238,16 +4272,16 @@ class RuleEngine:
                         "restoran saatleri",
                         "restaurant hours",
                         "restaurantzeiten",
-                        "часы ресторанов",
+                        "godziny restauracji",
                     )
                 ):
                     return True
-        _tok = set(re.findall(r"[a-zA-ZçğıöşüÇĞİÖŞÜа-яА-ЯёЁ]+", t))
+        _tok = set(re.findall(r"[a-zA-ZçğıöşüÇĞİÖŞÜąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+", t))
         has_bar_word = "bar" in _tok or "bars" in _tok
         if any(
             k in t
-            for k in ("restoran saatleri", "restaurant hours", "restaurantzeiten", "часы ресторанов")
-        ) and not any(m in t for m in ("menü", "menu", "speisekarte", "меню", "menyu", "pdf", "mneü", "mneu")):
+            for k in ("restoran saatleri", "restaurant hours", "restaurantzeiten", "godziny restauracji")
+        ) and not any(m in t for m in ("menü", "menu", "speisekarte", "karta dań", "menyu", "pdf", "mneü", "mneu")):
             return False
         if has_bar_word and RuleEngine._menu_word_or_typo_in(t):
             return True
@@ -4264,12 +4298,12 @@ class RuleEngine:
                     "food",
                     "speise",
                     "essen",
-                    "еда",
+                    "jedzenie",
                 )
             )
         ):
             return True
-        if ("lobby" in t or "lobi" in t or "лобби" in t) and has_bar_word:
+        if ("lobby" in t or "lobi" in t or "lobby" in t) and has_bar_word:
             if RuleEngine._menu_word_or_typo_in(t) or any(
                 m in t
                 for m in (
@@ -4283,12 +4317,12 @@ class RuleEngine:
                     "liste",
                     "list",
                     "pdf",
-                    "напитк",
-                    "коктейл",
+                    "napoje",
+                    "koktajl",
                 )
             ):
                 return True
-        if has_bar_word or "бар" in t:
+        if has_bar_word:
             if any(
                 m in t
                 for m in (
@@ -4316,11 +4350,11 @@ class RuleEngine:
                     "liste",
                     "list",
                     "tarife",
-                    "меню",
-                    "цена",
-                    "напитк",
-                    "алкогол",
-                    "импорт",
+                    "karta dań",
+                    "cena",
+                    "napoje",
+                    "alkohol",
+                    "import",
                 )
             ):
                 return True
@@ -4337,8 +4371,8 @@ class RuleEngine:
                 "restaurant menu",
                 "hotelmenü",
                 "speisekarte hotel",
-                "меню отеля",
-                "отель меню",
+                "menu hotelu",
+                "menu hotelu",
             )
         ):
             return True
@@ -4427,9 +4461,9 @@ class RuleEngine:
             "frisör",
             "frisor",
             "coiffeur",
-            "парикмахер",
-            "стрижка",
-            "прическа",
+            "fryzjer",
+            "strzyżenie",
+            "fryzura",
         )
         return any(m in t for m in markers)
 
@@ -4446,7 +4480,7 @@ class RuleEngine:
         if _has_any_phrase_strict(text, OUTSIDE_HOTEL_WORDS):
             return False
         # Şehir / havaalanı tek başına — kampüs haritası yerine genel bilgi/RAG
-        if any(x in t for x in ("alanya", "аланья", "havaalanı", "havalimani", "airport", "flughafen", "аэропорт")):
+        if any(x in t for x in ("alanya", "Alanya", "havaalanı", "havalimani", "airport", "flughafen", "lotnisko")):
             return False
         loc_markers = (
             "nerede",
@@ -4481,10 +4515,10 @@ class RuleEngine:
             "wie gelange ich",
             "standort",
             "weg zum",
-            "где наход",
-            "как добраться",
-            "как пройти",
-            "расположен",
+            "gdzie jest",
+            "jak dojść",
+            "jak przejść",
+            "zlokalizowany",
         )
         return any(m in t for m in loc_markers)
 
@@ -4510,8 +4544,8 @@ class RuleEngine:
                 "checkin",
                 "abreise",
                 "anreise",
-                "выезд",
-                "заезд",
+                "wymeldowanie",
+                "zameldowanie",
             }
         ) | multiword_ok
         return raw in singles
@@ -4521,21 +4555,21 @@ class RuleEngine:
         """
         Detect questions like:
         - "giriş saat kaçta", "çıkış saat kaçta"
-        - English/German/Russian equivalents where time is requested.
+        - English/German/Polish (and other) equivalents where time is requested.
         """
         t = (text or "").lower()
 
         # Turkish: "giriş/çıkış" + ("saat" or "kaçta") + "kaç"
-        if any(x in t for x in ["giriş", "giris", "check-in", "check in", "checkin", "заезд"]) and (
-            any(x in t for x in ["saat", "time", "время", "hours"]) or any(x in t for x in ["kaçta", "kac ta", "kac"])  # quick formats
+        if any(x in t for x in ["giriş", "giris", "check-in", "check in", "checkin", "zameldowanie"]) and (
+            any(x in t for x in ["saat", "time", "czas", "hours"]) or any(x in t for x in ["kaçta", "kac ta", "kac"])  # quick formats
         ):
-            if any(x in t for x in ["kaç", "kac", "what", "hangi", "how", "когда", "в какое время"]):
+            if any(x in t for x in ["kaç", "kac", "what", "hangi", "how", "kiedy", "o której godzinie"]):
                 return True
 
-        if any(x in t for x in ["çıkış", "cikis", "check-out", "check out", "checkout", "abreise", "выезд"]) and (
-            any(x in t for x in ["saat", "time", "время", "hours"]) or any(x in t for x in ["kaçta", "kac ta", "kac"])
+        if any(x in t for x in ["çıkış", "cikis", "check-out", "check out", "checkout", "abreise", "wymeldowanie"]) and (
+            any(x in t for x in ["saat", "time", "czas", "hours"]) or any(x in t for x in ["kaçta", "kac ta", "kac"])
         ):
-            if any(x in t for x in ["kaç", "kac", "what", "hangi", "how", "когда", "в какое время"]):
+            if any(x in t for x in ["kaç", "kac", "what", "hangi", "how", "kiedy", "o której godzinie"]):
                 return True
 
         # English quick patterns
@@ -4574,7 +4608,7 @@ class RuleEngine:
                 "sikayet",
                 "complaint",
                 "beschwerde",
-                "жалоба",
+                "skarga",
             }
         )
         if len(parts) == 1 and parts[0] in _bare_complaint:
@@ -4585,7 +4619,8 @@ class RuleEngine:
             or "noise" in text
             or "lärm" in text
             or "laerm" in text
-            or "шум" in text
+            or "hałas" in text
+            or "halas" in text
         ):
             return "noise_complaint"
         if "temizlik" in text or "clean" in text:
@@ -4611,7 +4646,7 @@ class RuleEngine:
                 or "noise" in text
                 or "lärm" in text
                 or "laerm" in text
-                or "шум" in text
+                or "hałas" in text
                 or "rahatsız" in text
                 or "rahatsiz" in text
             ):
@@ -4623,12 +4658,12 @@ class RuleEngine:
                 or "clean" in text
                 or "dirty" in text
                 or "schmutz" in text
-                or "грязн" in text
+                or "brud" in text
             ):
                 return "cleanliness_complaint"
-            if "personel" in text or "staff" in text or "персонал" in text:
+            if "personel" in text or "staff" in text or "personel" in text:
                 return "staff_complaint"
-            if "oda" in text or "room" in text or "zimmer" in text or "номер" in text:
+            if "oda" in text or "room" in text or "zimmer" in text or "pokój" in text:
                 return "room_condition_complaint"
         return "service_complaint"
 

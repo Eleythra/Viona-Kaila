@@ -26,14 +26,14 @@ const SAFE_FALLBACK_BY_LANG = {
   tr: "Bu konuda doğrulanmış bilgiye şu anda erişemiyorum. Size en doğru destek için lütfen resepsiyon ile iletişime geçiniz.",
   en: "I do not have verified information on this right now. For the most accurate assistance, please contact reception.",
   de: "Ich kann dazu derzeit keine verifizierten Informationen bereitstellen. Bitte wenden Sie sich für die sicherste Auskunft an die Rezeption.",
-  ru: "Сейчас у меня нет подтвержденной информации по этому вопросу. Для наиболее точной помощи, пожалуйста, обратитесь на ресепшн.",
+  pl: "Nie mam teraz zweryfikowanych informacji na ten temat. Aby uzyskać najdokładniejszą pomoc, skontaktuj się z recepcją.",
 };
 
 const UPSTREAM_UNAVAILABLE_BY_LANG = {
   tr: "Şu anda asistana kısa süreli erişim sorunu yaşıyorum. Lütfen birkaç saniye sonra tekrar deneyiniz.",
   en: "I am temporarily unavailable at the moment. Please try again in a few seconds.",
   de: "Ich bin momentan kurzzeitig nicht erreichbar. Bitte versuchen Sie es in wenigen Sekunden erneut.",
-  ru: "Сейчас я временно недоступна. Пожалуйста, попробуйте снова через несколько секунд.",
+  pl: "Chwilowo jestem niedostępna. Spróbuj ponownie za kilka sekund.",
 };
 
 const RESERVATION_REDIRECT_BY_LANG = {
@@ -43,8 +43,8 @@ const RESERVATION_REDIRECT_BY_LANG = {
     "For your stay or special table arrangements, our reception or Guest Relations team can help. For restaurant hours, menus and bar information, use the shortcut below to open «Restaurants & bars» in the app.",
   de:
     "Für Ihren Aufenthalt oder besondere Tischwünsche helfen Ihnen Rezeption oder Guest Relations. Für Restaurantzeiten, Speisekarten und Barinfos öffnen Sie über die Schaltfläche unten «Restaurants & Bars» in der App.",
-  ru:
-    "По проживанию и особым столам вам помогут ресепшен или Guest Relations. Часы работы, меню ресторанов и бары — откройте через кнопку ниже раздел «Рестораны и бары» в приложении.",
+  pl:
+    "W sprawie pobytu lub specjalnych stolików pomogą recepcja lub Guest Relations. Godziny, menu i bary — otwórz przyciskiem poniżej sekcję «Restauracje i bary» w aplikacji.",
 };
 
 function isReservationLikeMessage(msg = "") {
@@ -61,7 +61,7 @@ function isReservationLikeMessage(msg = "") {
 
 function normalizeLocale(value = "") {
   const v = String(value || "").toLowerCase().trim();
-  return v === "en" || v === "de" || v === "ru" ? v : "tr";
+  return v === "en" || v === "de" || v === "pl" ? v : "tr";
 }
 
 function safeFallback(locale = "tr", reason = "safe", userMessage = "") {
@@ -557,7 +557,7 @@ app.post("/api/chat", async (req, res) => {
     .toLowerCase()
     .trim();
   const conversationLanguage =
-    rawConv === "en" || rawConv === "de" || rawConv === "ru" || rawConv === "tr"
+    rawConv === "en" || rawConv === "de" || rawConv === "pl" || rawConv === "tr"
       ? rawConv
       : null;
 

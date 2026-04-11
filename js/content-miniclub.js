@@ -20,22 +20,21 @@
       "Our youngest guests can enjoy a full day of laughter, creativity and fun at Jammies Kids Club. With outdoor play and supervised activities, children have a holiday to remember — just like their parents.",
     de:
       "Unsere kleinen Gäste erleben im Jammies Kids Club den ganzen Tag Lachen, Kreativität und Spaß. Mit Aktivitäten im Freien und unter Aufsicht wird der Urlaub für Kinder ebenso unvergesslich wie für die Familie.",
-    ru:
-      "Маленькие гости целый день смеются, творят и веселятся в Jammies Kids Club. Занятия на свежем воздухе под присмотром — и отдых для детей так же яркий, как для родителей.",
+    pl: "Nasi najmłodsi goście mogą spędzić cały dzień pełen śmiechu, kreatywności i zabawy w Jammies Kids Club. Z zabawą na świeżym powietrzu i aktywnościami pod opieką dzieci mają wakacje do zapamiętania — tak jak ich rodzice.",
   };
 
   var BADGE_FREE = {
     tr: "Ücretsiz",
     en: "Included",
     de: "Kostenlos",
-    ru: "Бесплатно",
+    pl: "W cenie",
   };
 
   var BADGE_NO_RES = {
     tr: "Önceden haber gerekmez",
     en: "No advance notice needed",
     de: "Keine Voranmeldung nötig",
-    ru: "Без предварительной договорённости",
+    pl: "Rezerwacja z wyprzedzeniem nie jest wymagana",
   };
 
   function renderSlot(slot) {
@@ -70,29 +69,29 @@
         tr: "Jammies Kids Club iç mekân ve aktivite alanı",
         en: "Jammies Kids Club indoor activity area",
         de: "Jammies Kids Club Innenbereich",
-        ru: "Jammies Kids Club — зона активности",
+        pl: "Jammies Kids Club — strefa aktywności wewnątrz",
       },
       title: {
         tr: "Jammies Kids Club",
         en: "Jammies Kids Club",
         de: "Jammies Kids Club",
-        ru: "Jammies Kids Club",
+        pl: "Jammies Kids Club",
       },
       sub: {
         tr: "Mini Club · Aktivite alanı · 4–12 yaş",
         en: "Mini Club · Activity area · Ages 4–12",
         de: "Mini Club · Aktivitätsbereich · 4–12 Jahre",
-        ru: "Мини-клуб · зона активности · 4–12 лет",
+        pl: "Mini Club · strefa aktywności · wiek 4–12",
       },
       slots: [
         {
-          name: { tr: "Çocuk Kulübü", en: "Kids Club", de: "Kids Club", ru: "Детский клуб" },
+          name: { tr: "Çocuk Kulübü", en: "Kids Club", de: "Kids Club", pl: "Klub dziecięcy" },
           time: "10:00 – 12:30",
           format: {
             tr: "Mini Club · Aktivite alanı",
             en: "Mini Club · Activity area",
             de: "Mini Club · Aktivitätsbereich",
-            ru: "Мини-клуб · зона активности",
+            pl: "Mini Club · strefa aktywności",
           },
           charge: BADGE_FREE,
           res: BADGE_NO_RES,
@@ -100,17 +99,17 @@
             tr: "4–12 yaş çocuklar için mini club aktiviteleri.",
             en: "Mini club activities for children aged 4–12.",
             de: "Mini-Club-Aktivitäten für Kinder von 4–12 Jahren.",
-            ru: "Активности мини-клуба для детей 4–12 лет.",
+            pl: "Aktywności mini clubu dla dzieci w wieku 4–12 lat.",
           },
         },
         {
-          name: { tr: "Çocuk Kulübü", en: "Kids Club", de: "Kids Club", ru: "Детский клуб" },
+          name: { tr: "Çocuk Kulübü", en: "Kids Club", de: "Kids Club", pl: "Klub dziecięcy" },
           time: "14:30 – 17:00",
           format: {
             tr: "Mini Club · Aktivite alanı",
             en: "Mini Club · Activity area",
             de: "Mini Club · Aktivitätsbereich",
-            ru: "Мини-клуб · зона активности",
+            pl: "Mini Club · strefa aktywności",
           },
           charge: BADGE_FREE,
           res: BADGE_NO_RES,
@@ -118,7 +117,7 @@
             tr: "4–12 yaş çocuklar için mini club aktiviteleri.",
             en: "Mini club activities for children aged 4–12.",
             de: "Mini-Club-Aktivitäten für Kinder von 4–12 Jahren.",
-            ru: "Активности мини-клуба для детей 4–12 лет.",
+            pl: "Aktywności mini clubu dla dzieci w wieku 4–12 lat.",
           },
         },
       ],
@@ -129,24 +128,24 @@
         tr: "Mini disko ve gösteri alanı",
         en: "Mini disco and show area",
         de: "Mini-Disco und Showbereich",
-        ru: "Мини-диско и зона шоу",
+        pl: "Mini disco i strefa pokazów",
       },
-      title: { tr: "Mini Disco", en: "Mini Disco", de: "Mini-Disco", ru: "Мини-диско" },
+      title: { tr: "Mini Disco", en: "Mini Disco", de: "Mini-Disco", pl: "Mini Disco" },
       sub: {
         tr: "Amfi / gösteri alanı · Eğlence aktivitesi · 4–12 yaş",
         en: "Amphitheatre / show area · Entertainment · Ages 4–12",
         de: "Amphitheater / Show · Unterhaltung · 4–12 Jahre",
-        ru: "Амфитеатр / шоу · развлечение · 4–12 лет",
+        pl: "Amfiteatr / strefa pokazów · rozrywka · wiek 4–12",
       },
       slots: [
         {
-          name: { tr: "Mini Disco", en: "Mini Disco", de: "Mini-Disco", ru: "Мини-диско" },
+          name: { tr: "Mini Disco", en: "Mini Disco", de: "Mini-Disco", pl: "Mini Disco" },
           time: "20:45 – 21:00",
           format: {
             tr: "Amfi / gösteri alanı · Eğlence aktivitesi",
             en: "Amphitheatre / show area · Entertainment activity",
             de: "Amphitheater · Show · Unterhaltung",
-            ru: "Амфитеатр · развлекательная активность",
+            pl: "Amfiteatr / strefa pokazów · aktywność rozrywkowa",
           },
           charge: BADGE_FREE,
           res: BADGE_NO_RES,
@@ -154,7 +153,7 @@
             tr: "4–12 yaş çocuklar için mini disko etkinliği.",
             en: "Mini disco for children aged 4–12.",
             de: "Mini-Disco für Kinder von 4–12 Jahren.",
-            ru: "Мини-диско для детей 4–12 лет.",
+            pl: "Mini disco dla dzieci w wieku 4–12 lat.",
           },
         },
       ],
@@ -165,19 +164,19 @@
         tr: "Çocuk oyun parkı ve açık alan",
         en: "Children’s playground and outdoor area",
         de: "Kinderspielplatz im Freien",
-        ru: "Детская игровая площадка",
+        pl: "Plac zabaw i strefa na zewnątrz",
       },
       title: {
         tr: "Çocuk oyun parkı",
         en: "Children’s playground",
         de: "Kinderspielplatz",
-        ru: "Детская площадка",
+        pl: "Plac zabaw dla dzieci",
       },
       sub: {
         tr: "Açık alan · Oyun alanı",
         en: "Outdoor · Play area",
         de: "Freiluft · Spielbereich",
-        ru: "Открытая зона · игровая площадка",
+        pl: "Na zewnątrz · strefa zabaw",
       },
       slots: [
         {
@@ -185,14 +184,14 @@
             tr: "Çocuk oyun parkı",
             en: "Children’s playground",
             de: "Kinderspielplatz",
-            ru: "Детская площадка",
+            pl: "Plac zabaw dla dzieci",
           },
           time: "07:00 – 21:00",
           format: {
             tr: "Açık alan · Oyun alanı",
             en: "Outdoor area · Play area",
             de: "Freiluft · Spielbereich",
-            ru: "Открытая зона · игровая площадка",
+            pl: "Strefa na zewnątrz · plac zabaw",
           },
           charge: BADGE_FREE,
           res: BADGE_NO_RES,
@@ -200,7 +199,7 @@
             tr: "Çocuklar su ve oyun ekipmanı yakınında yalnız bırakılmamalıdır.",
             en: "Children must not be left unattended near water or play equipment.",
             de: "Kinder dürfen in Wasser- und Spielnähe nicht unbeaufsichtigt gelassen werden.",
-            ru: "Не оставляйте детей без присмотра у воды и на площадке.",
+            pl: "Dzieci nie mogą pozostawać bez opieki przy wodzie lub na placu zabaw.",
           },
         },
       ],
@@ -235,7 +234,7 @@
     var root = el("div", "viona-mod viona-mod--miniclub");
 
     root.appendChild(
-      el("p", "rest-section-title", T({ tr: "Çocuk ve animasyon aktiviteleri", en: "Kids & animation", de: "Kinder & Animation", ru: "Детям и анимация" }))
+      el("p", "rest-section-title", T({ tr: "Çocuk ve animasyon aktiviteleri", en: "Kids & animation", de: "Kinder & Animation", pl: "Dzieci i animacja" }))
     );
 
     var intro = el("div", "miniclub-intro");

@@ -113,7 +113,7 @@
   function currentUiLanguage() {
     var v = (document.documentElement && document.documentElement.lang) || "tr";
     v = String(v).toLowerCase();
-    if (v !== "tr" && v !== "en" && v !== "de" && v !== "ru") return "tr";
+    if (v !== "tr" && v !== "en" && v !== "de" && v !== "pl") return "tr";
     return v;
   }
 
@@ -175,7 +175,7 @@
     } catch (eLc) {
       var j;
       for (j = 0; j < str.length; j++) {
-        if (/[A-Za-zÀ-žА-Яа-яİıĞğÜüŞşÖöÇç]/.test(str[j])) n++;
+        if (/[A-Za-zÀ-žąćęłńóśźżĄĆĘŁŃÓŚŹŻİıĞğÜüŞşÖöÇç]/.test(str[j])) n++;
       }
     }
     return n;
@@ -210,7 +210,7 @@
       try {
         return /\p{L}/u.test(c);
       } catch (e2) {
-        return /[A-Za-zÀ-žА-Яа-яİıĞğÜüŞşÖöÇç]/.test(c);
+        return /[A-Za-zÀ-žąćęłńóśźżĄĆĘŁŃÓŚŹŻİıĞğÜüŞşÖöÇç]/.test(c);
       }
     });
     if (letters.length < 2) return false;
@@ -242,7 +242,7 @@
     try {
       return /\p{L}/u.test(s);
     } catch (e4) {
-      return /[A-Za-zÀ-žА-Яа-яİıĞğÜüŞşÖöÇç]/.test(s);
+      return /[A-Za-zÀ-žąćęłńóśźżĄĆĘŁŃÓŚŹŻİıĞğÜüŞşÖöÇç]/.test(s);
     }
   }
 
@@ -1631,6 +1631,9 @@
 
   function runSubmit(payload, form, err, success, submitBtn, t, options) {
     options = options || {};
+    var base = payload && typeof payload === "object" ? payload : {};
+    var body = Object.assign({}, base);
+    body.language = currentUiLanguage();
     submitBtn.disabled = true;
     submitBtn.textContent = t("reqSending");
     var fn = window.submitGuestRequest;
@@ -1641,7 +1644,7 @@
       submitBtn.textContent = t("reqSubmit");
       return;
     }
-    fn(payload)
+    fn(body)
       .then(function (res) {
         form.hidden = true;
         success.hidden = false;

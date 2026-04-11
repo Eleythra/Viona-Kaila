@@ -88,7 +88,7 @@ Buton yoksa veya `=1` yapılmış ama şablonda uyumsuzluk varsa Meta hata döne
   "vionaAnswers": { "viona_overall": 5 },
   "vionaComment": "optional",
   "deviceType": "mobile|web",
-  "language": "tr|en|de|ru"
+  "language": "tr|en|de|pl"
 }
 ```
 - Response (201):

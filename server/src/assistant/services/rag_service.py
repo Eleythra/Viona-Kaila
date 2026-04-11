@@ -193,7 +193,10 @@ class RagService:
         # to avoid false rejects from unrelated hotel facts.
         query_tokens = {
             t
-            for t in re.findall(r"[a-zA-ZçğıöşüÇĞİÖŞÜа-яА-ЯёЁ]+", (message or "").lower())
+            for t in re.findall(
+                r"[a-zA-ZçğıöşüÇĞİÖŞÜąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+",
+                (message or "").lower(),
+            )
             if len(t) >= 4
         }
         if not query_tokens:

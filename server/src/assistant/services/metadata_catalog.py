@@ -130,7 +130,7 @@ DEPARTMENT_METADATA: dict[str, DepartmentMetadata] = {
     "reception": {
         "department_id": "reception",
         "name": "Reception",
-        "synonyms": ("reception", "front desk", "resepsiyon", "rezeption", "ресепшн"),
+        "synonyms": ("reception", "front desk", "resepsiyon", "rezeption", "recepcja"),
         "responsibility_tags": ("operations", "triage", "room_support"),
         "escalation_rules": ("route_to_technical_team", "route_to_housekeeping", "route_to_guest_relations"),
         "contact_hint": "Please contact reception for immediate assistance.",
@@ -138,7 +138,13 @@ DEPARTMENT_METADATA: dict[str, DepartmentMetadata] = {
     "guest_relations": {
         "department_id": "guest_relations",
         "name": "Guest Relations",
-        "synonyms": ("guest relations", "misafir ilişkileri", "gästebetreuung", "служба по работе с гостями"),
+        "synonyms": (
+            "guest relations",
+            "misafir ilişkileri",
+            "gästebetreuung",
+            "relacje z gośćmi",
+            "obsługa gości",
+        ),
         "responsibility_tags": ("complaint_resolution", "special_needs", "guest_experience"),
         "escalation_rules": ("route_to_reception_if_unavailable",),
         "contact_hint": "Please contact Guest Relations for personalized support.",
@@ -146,7 +152,7 @@ DEPARTMENT_METADATA: dict[str, DepartmentMetadata] = {
     "housekeeping": {
         "department_id": "housekeeping",
         "name": "Housekeeping",
-        "synonyms": ("housekeeping", "oda temizliği", "zimmerreinigung", "уборка"),
+        "synonyms": ("housekeeping", "oda temizliği", "zimmerreinigung", "sprzątanie", "pokojówka"),
         "responsibility_tags": ("cleaning", "room_order"),
         "escalation_rules": ("route_via_reception",),
         "contact_hint": "Housekeeping requests are coordinated through reception.",
@@ -154,7 +160,7 @@ DEPARTMENT_METADATA: dict[str, DepartmentMetadata] = {
     "technical_team": {
         "department_id": "technical_team",
         "name": "Technical Team",
-        "synonyms": ("technical team", "teknik ekip", "technik", "техническая служба"),
+        "synonyms": ("technical team", "teknik ekip", "technik", "serwis techniczny"),
         "responsibility_tags": ("fault_fix", "room_maintenance"),
         "escalation_rules": ("route_via_reception",),
         "contact_hint": "Technical support is routed via reception.",

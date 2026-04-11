@@ -31,8 +31,8 @@ uvicorn assistant.main:app --app-dir server/src --reload --port 8010
   "meta": {
     "intent": "fault_report | complaint | request | special_need | hotel_info | unknown",
     "confidence": 0.0,
-    "language": "tr|en|de|ru",
-    "ui_language": "tr|en|de|ru",
+    "language": "tr|en|de|pl",
+    "ui_language": "tr|en|de|pl",
     "source": "rule|llm|rag|fallback"
   }
 }

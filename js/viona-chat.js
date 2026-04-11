@@ -31,14 +31,14 @@
   function getConversationLang() {
     try {
       var c = sessionStorage.getItem(CONV_LANG_KEY);
-      if (c === "tr" || c === "en" || c === "de" || c === "ru") return c;
+      if (c === "tr" || c === "en" || c === "de" || c === "pl") return c;
     } catch (e) {}
     return null;
   }
 
   function setConversationLangFromMeta(metaLang) {
     var s = String(metaLang || "").toLowerCase().trim();
-    if (s !== "tr" && s !== "en" && s !== "de" && s !== "ru") return;
+    if (s !== "tr" && s !== "en" && s !== "de" && s !== "pl") return;
     try {
       sessionStorage.setItem(CONV_LANG_KEY, s);
     } catch (e) {}
@@ -49,6 +49,11 @@
       sessionStorage.removeItem(CONV_LANG_KEY);
     } catch (e) {}
   }
+
+  /** app.js `setLang`: site dili değişince eski session «conversation_language» yanıtı yeni UI dilini ezip TR’ye düşmesin. */
+  window.vionaChatAfterSiteLangChange = function () {
+    clearConversationLang();
+  };
 
   function _generateUserId() {
     var rnd = Math.random().toString(36).slice(2, 10);
@@ -425,10 +430,11 @@
         : "http://localhost:3001/api/chat";
     var reqOpts = requestOpts && typeof requestOpts === "object" ? requestOpts : {};
     var conv = getConversationLang();
+    var siteLang = locale || getLang() || "tr";
     var body = {
       message: message,
-      locale: locale || "tr",
-      ui_language: locale || "tr",
+      locale: siteLang,
+      ui_language: siteLang,
       user_id: getOrCreateUserId(),
     };
     body.session_id = getOrCreateSessionId();

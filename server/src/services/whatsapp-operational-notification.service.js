@@ -14,10 +14,10 @@
  *
  * Meta «Visit Website / Dynamic URL» butonu: şablonda Base URL (örn. https://viona-admin.eleythra.com/admin/) tanımlı;
  * gövde aynı kalır. Env ile açılır; suffix sunucu üretir (şablonda URL butonu index 0 ile uyumlu olmalı):
- * - İstek: `WHATSAPP_HK_PANEL_URL_BUTTON=1` → `ops-hk.html?id=<uuid>`
- * - Arıza: `WHATSAPP_TECH_PANEL_URL_BUTTON=1` → `ops-tech.html?id=<uuid>`
+ * - İstek: `WHATSAPP_HK_PANEL_URL_BUTTON=1` → `ops-hk.html?id=<uuid>` (ops-light: yalnızca o kayıt kartı; tam liste aynı dosyanın `?id=`suz URL’si)
+ * - Arıza: `WHATSAPP_TECH_PANEL_URL_BUTTON=1` → `ops-tech.html?id=<uuid>` (aynı mantık)
  * - Ön büro (şikâyet / misafir bildirimi / geç çıkış): `WHATSAPP_FRONT_PANEL_URL_BUTTON=1`
- *   → `ops-front.html?type=<complaint|guest_notification|late_checkout>&id=<uuid>`
+ *   → `ops-front.html?type=<complaint|guest_notification|late_checkout>&id=<uuid>` (aynı mantık)
  *
  * Env: WHATSAPP_ACCESS_TOKEN (veya WHATSAPP_CLOUD_ACCESS_TOKEN), WHATSAPP_PHONE_NUMBER_ID,
  * isteğe bağlı WHATSAPP_BUSINESS_ACCOUNT_ID (referans), WHATSAPP_TEMPLATE_* ile şablon adı override.

@@ -90,8 +90,8 @@ class ResponseService:
             return ChatResponse.model_validate({"type": type_, "message": normalized, "meta": meta})
         except Exception as exc:
             logger.exception("response_validation_failed: %s", exc)
-            safe_lang = language if language in ("tr", "en", "de", "ru") else "tr"
-            safe_ui = ui_language if ui_language in ("tr", "en", "de", "ru") else "tr"
+            safe_lang = language if language in ("tr", "en", "de", "pl") else "tr"
+            safe_ui = ui_language if ui_language in ("tr", "en", "de", "pl") else "tr"
             safe_meta = ChatMeta(
                 intent="unknown",
                 confidence=0.0,

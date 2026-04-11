@@ -4095,6 +4095,41 @@ body {
   color: rgba(212, 168, 83, 0.7);
 }
 
+/* Plaj & havuz — can kurtaran uyarısı (öncelikli) */
+.beach-lifeguard-alert {
+  margin: 0 0 16px;
+  padding: 14px 16px 15px 17px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 150, 72, 0.42);
+  border-left: 4px solid rgba(255, 130, 58, 0.98);
+  background:
+    linear-gradient(115deg, rgba(255, 140, 60, 0.12) 0%, transparent 48%),
+    linear-gradient(168deg, rgba(28, 12, 6, 0.92) 0%, rgba(8, 12, 20, 0.96) 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 12px 32px rgba(0, 0, 0, 0.32);
+}
+
+.beach-lifeguard-alert__kicker {
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1.35;
+  color: rgba(255, 210, 170, 0.98);
+}
+
+.beach-lifeguard-alert__text {
+  margin: 0;
+  font-size: clamp(0.88rem, 2.6vw, 0.96rem);
+  font-weight: 600;
+  line-height: 1.52;
+  letter-spacing: 0.01em;
+  color: rgba(252, 248, 242, 0.96);
+  text-wrap: balance;
+}
+
 /* Plaj & havuz — restaurant modülü ile uyumlu */
 .viona-mod--beach .beach-intro {
   margin-bottom: 14px;

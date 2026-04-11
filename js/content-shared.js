@@ -18,7 +18,7 @@
       if (v) return v;
       v = pickNonEmpty(row.de);
       if (v) return v;
-      v = pickNonEmpty(row.ru);
+      v = pickNonEmpty(row.pl);
       if (v) return v;
       v = pickNonEmpty(row.tr);
       return v || "";

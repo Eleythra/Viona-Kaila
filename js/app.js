@@ -71,6 +71,16 @@
 
   let lang = null;
   let selectedLangCode = null;
+
+  /** Onaylı dil yokken: seçilen chip önizlemesi; hiçbiri yoksa nötr İngilizce (tek dil zorlaması yok). */
+  function activeUiLang() {
+    return lang || selectedLangCode || "en";
+  }
+
+  function pickLocaleTable(code) {
+    if (code && I18N[code]) return I18N[code];
+    return I18N.en || I18N.tr;
+  }
   let carouselTimer = null;
   let carouselIndex = 0;
 
@@ -84,22 +94,26 @@
     tr: "Deneyiminizi Değerlendirin",
     en: "Rate Your Experience",
     de: "Bewerten Sie Ihr Erlebnis",
-    ru: "Оцените свой опыт",
+    pl: "Oceń swoje doświadczenie",
   };
 
   function t(key) {
-    const L = I18N[lang] || I18N.tr;
-    return L[key] !== undefined ? L[key] : I18N.tr[key] || key;
+    const L = pickLocaleTable(activeUiLang());
+    if (L[key] !== undefined) return L[key];
+    const E = I18N.en;
+    if (E && E[key] !== undefined) return E[key];
+    return I18N.tr[key] || key;
   }
 
   function surveyTitleText() {
     const translated = t("modSurvey");
     if (translated !== "modSurvey") return translated;
-    return SURVEY_TITLE_FALLBACK[lang] || SURVEY_TITLE_FALLBACK.tr;
+    const code = activeUiLang();
+    return SURVEY_TITLE_FALLBACK[code] || SURVEY_TITLE_FALLBACK.en;
   }
 
   function applyI18n(root) {
-    const L = I18N[lang] || I18N.tr;
+    const L = pickLocaleTable(activeUiLang());
     const scope = root || document;
     scope.querySelectorAll("[data-i18n]").forEach((node) => {
       const k = node.getAttribute("data-i18n");
@@ -114,6 +128,10 @@
       }
     });
     document.title = t("metaTitle");
+    if (!lang) {
+      const c = activeUiLang();
+      document.documentElement.lang = { tr: "tr", en: "en", de: "de", pl: "pl" }[c] || "en";
+    }
   }
 
   /**
@@ -454,7 +472,7 @@
       };
       const rName = MODULE_RENDERERS[moduleId];
       if (rName && typeof window[rName] === "function") {
-        window[rName](inner, t, lang);
+        window[rName](inner, t, activeUiLang());
         return;
       }
 
@@ -598,8 +616,17 @@
   };
 
   function setLang(code) {
+    let prevLang = null;
+    try {
+      prevLang = localStorage.getItem(LANG_STORAGE_KEY);
+    } catch (_e) {
+      prevLang = null;
+    }
     lang = code;
     localStorage.setItem(LANG_STORAGE_KEY, code);
+    if (prevLang != null && prevLang !== code && typeof window.vionaChatAfterSiteLangChange === "function") {
+      window.vionaChatAfterSiteLangChange();
+    }
     applyI18n(document);
     if (typeof window.vionaChatRefreshI18n === "function") window.vionaChatRefreshI18n();
     if (typeof window.vionaVoiceRefreshI18n === "function") window.vionaVoiceRefreshI18n();
@@ -608,7 +635,7 @@
     if (moduleId) {
       renderModuleContent();
     }
-    const htmlLang = { tr: "tr", en: "en", de: "de", ru: "ru" }[code] || "tr";
+    const htmlLang = { tr: "tr", en: "en", de: "de", pl: "pl" }[code] || "en";
     document.documentElement.lang = htmlLang;
   }
 
@@ -647,6 +674,7 @@
           c.setAttribute("aria-pressed", c === chip ? "true" : "false");
         });
         continueBtn.disabled = !selectedLangCode;
+        applyI18n(document);
       });
     });
 
@@ -717,10 +745,12 @@
       showView("home");
       scheduleDiscountPopup();
     } else {
+      if (validLang(storedLang)) {
+        selectedLangCode = storedLang;
+      }
       applyI18n(document);
       showView("lang");
       if (validLang(storedLang)) {
-        selectedLangCode = storedLang;
         document.querySelectorAll(".lang-chip").forEach((c) => {
           const on = c.dataset.lang === storedLang;
           c.classList.toggle("lang-chip--active", on);

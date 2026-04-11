@@ -40,14 +40,17 @@ DEVICE_MAP_DE = [
     ("telefon", "Telefon"),
 ]
 
-DEVICE_MAP_RU = [
-    ("телевизор", "Телевизор"),
-    ("душ", "Душ"),
-    ("кондиционер", "Кондиционер"),
-    ("карта", "Карта"),
-    ("свет", "Свет"),
-    ("лампа", "Свет"),
-    ("телефон", "Телефон"),
+DEVICE_MAP_PL = [
+    ("telewizor", "Telewizor"),
+    ("tv", "Telewizor"),
+    ("prysznic", "Prysznic"),
+    ("klimatyzacja", "Klimatyzacja"),
+    ("klimat", "Klimatyzacja"),
+    ("karta", "Karta"),
+    ("światło", "Oświetlenie"),
+    ("swiatlo", "Oświetlenie"),
+    ("lampa", "Oświetlenie"),
+    ("telefon", "Telefon"),
 ]
 
 
@@ -58,8 +61,8 @@ class DeviceExtractor:
             return self._extract_from_map(text, DEVICE_MAP_EN)
         if language == "de":
             return self._extract_from_map(text, DEVICE_MAP_DE)
-        if language == "ru":
-            return self._extract_from_map(text, DEVICE_MAP_RU)
+        if language == "pl":
+            return self._extract_from_map(text, DEVICE_MAP_PL)
         return self._extract_from_map(text, DEVICE_MAP)
 
     @staticmethod

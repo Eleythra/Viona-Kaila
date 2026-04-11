@@ -534,6 +534,8 @@ function validate(normalized) {
   if (String(normalized.otherCategoryNote || "").length > GUEST_DESC_MAX_LEN) {
     throw new Error("other category note is too long");
   }
+  const uiLang = cleanText(normalized.language, 8).toLowerCase();
+  normalized.language = ["tr", "en", "de", "pl"].includes(uiLang) ? uiLang : "tr";
 }
 
 function throwSupabaseInsertError(table, error) {

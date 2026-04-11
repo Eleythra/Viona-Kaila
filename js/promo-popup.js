@@ -2,7 +2,7 @@
   "use strict";
 
   /**
-   * Sabit indirim popup — görseller `assets/indirim/indirim-{TR|EN|DE|RU}.png`.
+   * Sabit indirim popup — görseller `assets/indirim/indirim-{TR|EN|DE}.png`; PL için şimdilik EN görseli kullanılır.
    * Güncelleme: dosyayı değiştirin; tarayıcı önbelleğini kırmak için aşağıdaki CACHE_BUST değerini artırın.
    */
   var CACHE_BUST = "1";
@@ -14,7 +14,7 @@
     tr: "assets/indirim/indirim-TR.png?v=" + CACHE_BUST,
     en: "assets/indirim/indirim-EN.png?v=" + CACHE_BUST,
     de: "assets/indirim/indirim-DE.png?v=" + CACHE_BUST,
-    ru: "assets/indirim/indirim-RU.png?v=" + CACHE_BUST,
+    pl: "assets/indirim/indirim-EN.png?v=" + CACHE_BUST,
   };
 
   function getLang() {
@@ -27,7 +27,7 @@
 
   function normalizeLang(code) {
     var c = String(code || "tr").toLowerCase();
-    if (c === "en" || c === "de" || c === "ru") return c;
+    if (c === "en" || c === "de" || c === "pl") return c;
     return "tr";
   }
 
@@ -55,7 +55,7 @@
   function resetVionaPromoDismissForLangScreen() {
     try {
       sessionStorage.removeItem(SEEN_SESSION_KEY);
-      ["tr", "en", "de", "ru"].forEach(function (code) {
+      ["tr", "en", "de", "pl"].forEach(function (code) {
         sessionStorage.removeItem("viona_discount_popup_tab_once_" + code);
       });
     } catch (e) {

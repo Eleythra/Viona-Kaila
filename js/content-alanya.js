@@ -17,19 +17,19 @@
     tr: "Bu bölümde Alanya merkezine yakın gezilebilecek önemli noktalar kısaca anlatılır. Tesisin merkeze yaklaşık mesafesi ve ulaşım: yaklaşık 3 km; toplu taşıma veya taksi ile kolay.",
     en: "Highlights near Alanya centre — short descriptions below. The resort is about 3 km from the centre — easy by taxi or public transport.",
     de: "Sehenswürdigkeiten nahe Alanya — kurz beschrieben. Die Anlage liegt ca. 3 km vom Zentrum — Taxi oder ÖPNV.",
-    ru: "Что посмотреть рядом с центром Аланьи — кратко ниже. Отель около 3 км от центра — такси или общественный транспорт.",
+    pl: "Atrakcje blisko centrum Alanii — krótkie opisy poniżej. Kurort jest ok. 3 km od centrum — wygodnie taksówką lub komunikacją.",
   };
 
   /** Sıra: Dim → Kleopatra → Kızılkule → Kale → Teleferik → Damlataş — görseller dosya adlarıyla eşleşir */
   var ITEMS = [
     {
       img: "assets/images/alanya/dim.png",
-      title: { tr: "Dim Çayı", en: "Dim River", de: "Dim-Fluss", ru: "Река Дим" },
+      title: { tr: "Dim Çayı", en: "Dim River", de: "Dim-Fluss", pl: "Dim River" },
       alt: {
         tr: "Dim Çayı ve doğa",
         en: "Dim River and nature",
         de: "Dim-Fluss und Natur",
-        ru: "Река Дим и природа",
+        pl: "Rzeka Dim i natura",
       },
       text: {
         tr:
@@ -38,8 +38,7 @@
           "Ice-cold water from the Taurus Mountains makes it a favourite summer escape. Eat at restaurants built over the river — a calm, natural setting. Great for picnics and barbecues, especially on hot days.",
         de:
           "Eiskaltes Wasser aus dem Taurus macht den Fluss im Sommer beliebt. Restaurants über dem Wasser, ruhige Natur — ideal zum Picknick und Grillen an heißen Tagen.",
-        ru:
-          "Ледяная вода с Тавра — любимое место прохладиться летом. Рестораны над водой, спокойная природа, пикники и шашлыки в жаркие дни.",
+        pl: "Lodowata woda z Taurusów to ulubiona letnia ucieczka. Restauracje nad rzeką — spokojna, naturalna sceneria. Świetnie na piknik i grilla, zwłaszcza w upały.",
       },
     },
     {
@@ -48,13 +47,13 @@
         tr: "Kleopatra Plajı",
         en: "Cleopatra Beach",
         de: "Kleopatra-Strand",
-        ru: "Пляж Клеопатры",
+        pl: "Cleopatra Beach",
       },
       alt: {
         tr: "Kleopatra plajı ve deniz",
         en: "Cleopatra Beach and sea",
         de: "Kleopatra-Strand und Meer",
-        ru: "Пляж Клеопатры и море",
+        pl: "Plaża Kleopatry i morze",
       },
       text: {
         tr:
@@ -63,18 +62,17 @@
           "One of Alanya’s best-known beaches, famous for fine sand and clear water — legend says Cleopatra swam here. The sea is usually clean and good for swimming. A lovely stroll along the shore; sunsets are especially impressive.",
         de:
           "Einer der bekanntesten Strände Alanyas, feiner Sand und klares Wasser — der Legende nach badete Kleopatra hier. Gutes Schwimmen, schöne Promenade, beeindruckende Sonnenuntergänge.",
-        ru:
-          "Один из самых известных пляжей: мелкий песок и прозрачное море, по легенде здесь купалась Клеопатра. Чистое море, прогулка вдоль берега, закаты впечатляют.",
+        pl: "Jedna z najbardziej znanych plaż Alanii — drobny piasek i czysta woda; legenda łączy ją z kąpielą Kleopatry. Morze zwykle czyste i dobre do pływania. Spacer brzegiem; zachody słońca robią wrażenie.",
       },
     },
     {
       img: "assets/images/alanya/kizilkule.png",
-      title: { tr: "Kızılkule", en: "Red Tower", de: "Roter Turm", ru: "Кызыл-куле" },
+      title: { tr: "Kızılkule", en: "Red Tower", de: "Roter Turm", pl: "Red Tower" },
       alt: {
         tr: "Kızılkule ve liman",
         en: "Red Tower and harbour",
         de: "Roter Turm und Hafen",
-        ru: "Красная башня и гавань",
+        pl: "Czerwona Wieża i port",
       },
       text: {
         tr:
@@ -83,18 +81,17 @@
           "Built in the 13th century by the Seljuks to protect the harbour. Its red brick makes it an Alanya landmark. Climb to the upper levels for harbour views — historic atmosphere and a favourite photo spot.",
         de:
           "Im 13. Jahrhundert von den Seldschuken zum Schutz des Hafens errichtet. Rotes Backstein — Wahrzeichen Alanyas. Oben Hafenblick, eindrucksvolle Geschichte, beliebt für Fotos.",
-        ru:
-          "Построена в XIII веке сельджуками для защиты гавани. Красный кирпич — символ Аланьи. С верхних ярусов вид на порт, атмосфера истории, популярное место для фото.",
+        pl: "Zbudowana w XIII w. przez Seldżuków dla obrony portu. Cegła nadaje jej charakter — z górnych kondygnacji widok na port, klimat historii i ulubione miejsce na zdjęcia.",
       },
     },
     {
       img: "assets/images/alanya/kale.png",
-      title: { tr: "Alanya Kalesi", en: "Alanya Castle", de: "Festung Alanya", ru: "Крепость Алании" },
+      title: { tr: "Alanya Kalesi", en: "Alanya Castle", de: "Festung Alanya", pl: "Alanya Castle" },
       alt: {
         tr: "Alanya Kalesi ve manzara",
         en: "Alanya Castle and view",
         de: "Festung Alanya und Ausblick",
-        ru: "Крепость Аланьи и вид",
+        pl: "Zamek w Alanii i widok",
       },
       text: {
         tr:
@@ -103,8 +100,7 @@
           "A large historic fortress overlooking the town — old houses, mosques and monuments inside. The view is especially beautiful at sunset; one of the best places to see Alanya. History and nature together.",
         de:
           "Große historische Festung über der Stadt — alte Häuser, Moscheen, Denkmäler. Besonders bei Sonnenuntergang ein herrlicher Blick — Geschichte und Natur.",
-        ru:
-          "Большая историческая крепость над городом — старые дома, мечети, памятники. Вид особенно на закате; одно из лучших мест, чтобы увидеть Аланью.",
+        pl: "Rozległa twierdza z widokiem na miasto — wewnątrz stare domy, meczety i zabytki. Widok o zachodzie szczególnie piękny; jedno z najlepszych miejsc na Alanie. Historia i natura razem.",
       },
     },
     {
@@ -113,13 +109,13 @@
         tr: "Alanya Teleferik",
         en: "Alanya Cable Car",
         de: "Alanya-Seilbahn",
-        ru: "Канатная дорога Аланьи",
+        pl: "Alanya Cable Car",
       },
       alt: {
         tr: "Alanya teleferik manzarası",
         en: "Alanya cable car view",
         de: "Seilbahn Alanya",
-        ru: "Канатная дорога Аланьи",
+        pl: "Alanya cable car view",
       },
       text: {
         tr:
@@ -128,8 +124,7 @@
           "A scenic ride from Cleopatra Beach up toward the castle. Short trip with unforgettable views over sea and city — especially popular at sunset. Fun and practical.",
         de:
           "Vom Kleopatra-Strand Richtung Burg — kurze Fahrt mit einzigartigem Meer- und Stadtpanorama, besonders bei Sonnenuntergang. Angenehm und praktisch.",
-        ru:
-          "Канатная дорога от пляжа Клеопатры к крепости — короткая поездка с видами на море и город; на закате особенно красиво. Удобно и живописно.",
+        pl: "Malownicza przejażdżka z plaży Kleopatry w stronę zamku. Krótka trasa z niezapomnianym widokiem na morze i miasto — popularna o zachodzie. Praktycznie i przyjemnie.",
       },
     },
     {
@@ -138,13 +133,13 @@
         tr: "Damlataş Mağarası",
         en: "Damlataş Cave",
         de: "Damlataş-Höhle",
-        ru: "Пещера Дамлаташ",
+        pl: "Damlataş Cave",
       },
       alt: {
         tr: "Damlataş Mağarası içi",
         en: "Inside Damlataş Cave",
         de: "In der Damlataş-Höhle",
-        ru: "Пещера Дамлаташ",
+        pl: "Inside Damlataş Cave",
       },
       text: {
         tr:
@@ -153,8 +148,7 @@
           "A natural cave discovered in 1948, with stalactites and stalagmites. Its humid, steady temperature is distinctive — some say it helps asthma sufferers. Small but memorable.",
         de:
           "Natürliche Höhle, 1948 entdeckt, mit Tropfsteinen. Feuchte, gleichbleibende Temperatur — traditionell auch bei Asthma erwähnt. Klein, aber eindrucksvoll.",
-        ru:
-          "Природная пещера, открытая в 1948 году, сталактиты и сталагмиты. Влажный постоянный микроклимат; говорят, полезен при астме. Небольшая, но запоминающаяся.",
+        pl: "Naturalna jaskinia odkryta w 1948 r., ze stalaktytami i stalagmitami. Stała, wilgotna temperatura jest charakterystyczna — niektórzy mówią o łagodnym wpływie na astmatyków. Niewielka, ale zapadająca w pamięć.",
       },
     },
   ];

@@ -52,6 +52,8 @@ def test_effectively_empty_strips_invisible():
 def test_help_request_phrases():
     assert is_chat_form_full_name_help_request("ne yazayım") is True
     assert is_chat_form_full_name_help_request("what should i write") is True
+    assert is_chat_form_full_name_help_request("co napisać") is True
+    assert is_chat_form_full_name_help_request("pomoc") is True
 
 
 def test_help_single_token_not_substring_false_positive():

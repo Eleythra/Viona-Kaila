@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Tüm anket soruları dolu; her dil (tr/en/de/ru) için 2 varyant = 8 gönderim.
+ * Tüm anket soruları dolu; her dil (tr/en/de/pl) için 2 varyant = 8 gönderim.
  * Sunucu: npm run dev (varsayılan http://127.0.0.1:3001/api/surveys)
  *
  * Silme: node server/scripts/delete-survey-evaluations-seed.mjs
@@ -128,7 +128,7 @@ async function main() {
     }
     console.log("OK", lang, v, "id=", j.id);
   }
-  console.log("\nAdmin → Değerlendirmeler; dil dağılımında TR/EN/DE/RU görünmeli.");
+  console.log("\nAdmin → Değerlendirmeler; dil dağılımında TR/EN/DE/PL görünmeli.");
   console.log("Doğrulama: npm run verify:surveys-report");
   console.log("Silmek için: npm run seed:surveys-test:clean\n");
 }

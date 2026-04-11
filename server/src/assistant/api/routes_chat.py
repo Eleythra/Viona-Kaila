@@ -18,7 +18,7 @@ _LOCALIZATION = LocalizationService()
 
 def _resolve_chat_lang(payload: ChatRequest) -> str:
     for cand in (payload.ui_language, payload.locale):
-        if cand and str(cand).lower().strip() in ("tr", "en", "de", "ru"):
+        if cand and str(cand).lower().strip() in ("tr", "en", "de", "pl"):
             return str(cand).lower().strip()
     return "tr"
 
@@ -31,7 +31,7 @@ def chat(payload: ChatRequest, orchestrator: ChatOrchestrator = Depends(get_orch
             lang = _resolve_chat_lang(payload)
             reply_lang = (
                 response.meta.language
-                if response.meta.language in ("tr", "en", "de", "ru")
+                if response.meta.language in ("tr", "en", "de", "pl")
                 else lang
             )
             response = finalize_voice_channel_response(response, reply_lang)
@@ -40,7 +40,7 @@ def chat(payload: ChatRequest, orchestrator: ChatOrchestrator = Depends(get_orch
         logger.exception("chat_endpoint_failed: %s", exc)
         lang = _resolve_chat_lang(payload)
         message = _LOCALIZATION.canonical_fallback(lang, reason="safe")
-        ui = payload.ui_language if payload.ui_language in ("tr", "en", "de", "ru") else lang
+        ui = payload.ui_language if payload.ui_language in ("tr", "en", "de", "pl") else lang
         safe = ChatResponse(
             type="fallback",
             message=message,

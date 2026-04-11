@@ -29,19 +29,19 @@
       tr: "Astra Ball Room — Toplantı salonu · Organizasyon alanı — Ücretli — Misafir İlişkileri ile önceden planlanır",
       en: "Astra Ball Room — Meeting room · Event space — Charged — Arrange in advance with Guest Relations",
       de: "Astra Ball Room — Tagungsraum · Veranstaltungsfläche — kostenpflichtig — nach Absprache mit Guest Relations",
-      ru: "Astra Ball Room — зал для встреч · площадка — платно — по предварительной договорённости через Guest Relations",
+      pl: "Astra Ball Room — sala konferencyjna · przestrzeń eventowa — płatne — uzgodnij wcześniej z Guest Relations",
     },
     {
       tr: "Function Meeting Room — Toplantı salonu · Organizasyon alanı — Ücretli — Misafir İlişkileri ile önceden planlanır",
       en: "Function Meeting Room — Meeting room · Event space — Charged — Arrange in advance with Guest Relations",
       de: "Function Meeting Room — Tagungsraum · Veranstaltungsfläche — kostenpflichtig — nach Absprache mit Guest Relations",
-      ru: "Function Meeting Room — переговорная · площадка — платно — по предварительной договорённости через Guest Relations",
+      pl: "Function Meeting Room — sala spotkań · przestrzeń eventowa — płatne — uzgodnij wcześniej z Guest Relations",
     },
     {
       tr: "Business Center — İş merkezi · Hizmet alanı — Ücretli",
       en: "Business Center — Business hub · Service area — Charged",
       de: "Business Center — Business-Bereich · Service — kostenpflichtig",
-      ru: "Business Center — деловая зона · сервис — платно",
+      pl: "Business Center — centrum biznesowe · strefa usług — płatne",
     },
   ];
 
@@ -51,14 +51,14 @@
         tr: "1. Kurumsal etkinlikler",
         en: "1. Corporate events",
         de: "1. Firmenveranstaltungen",
-        ru: "1. Корпоративные мероприятия",
+        pl: "1. Corporate events",
       },
       img: "assets/images/meeting/astra-corporate.png",
       alt: {
         tr: "Astra Balo Salonu toplantı ve kurumsal etkinlik düzeni",
         en: "Astra Ballroom set up for meetings and corporate events",
         de: "Astra-Ballsaal für Tagungen und Firmenveranstaltungen",
-        ru: "Бальный зал Astra для встреч и корпоративных мероприятий",
+        pl: "Astra Ballroom przygotowany na spotkania i eventy firmowe",
       },
       paras: [
         {
@@ -68,8 +68,7 @@
             "The Astra Ballroom offers a versatile, fully equipped setting for all kinds of corporate events, including meetings, seminars, international workshops and training programmes. It is designed with modern audio-visual systems, flexible layouts and comfortable seating to support professional events of any scale.",
           de:
             "Der Astra-Ballsaal bietet eine vielseitige, voll ausgestattete Umgebung für sämtliche Firmenveranstaltungen — von Tagungen und Seminaren über internationale Workshops bis zu Schulungen. Moderne Bild- und Tontechnik, flexible Bestuhlung und komfortable Sitzplätze unterstützen professionelle Events jeder Größe.",
-          ru:
-            "Бальный зал Astra — универсальное, полностью оснащённое пространство для корпоративных мероприятий: встреч, семинаров, международных воркшопов и учебных программ. Современная звуко- и видеотехника, гибкая расстановка мебели и удобные места для гостей рассчитаны на профессиональные события любого масштаба.",
+          pl: "Astra Ballroom to elastyczna, w pełni wyposażona przestrzeń na spotkania, seminaria, warsztaty międzynarodowe i szkolenia. Nowoczesny sprzęt AV, układy sal i komfortowe miejsca wspierają wydarzenia każdej skali.",
         },
         {
           tr:
@@ -78,8 +77,7 @@
             "Layouts such as theatre, classroom, banquet, U-shape or square tables can be adapted easily to your group’s needs. Its generous space and on-site group accommodation at Kaila Beach Hotel make it an ideal choice for companies that want to combine business and lodging.",
           de:
             "Theater-, Klassenzimmer-, Bankett-, U- oder Tischgruppenbestuhlung lässt sich flexibel an Ihre Gruppe anpassen. Die großzügige Fläche und Gruppenunterkünfte im Kaila Beach Hotel machen den Saal ideal für Firmen, die Arbeit und Übernachtung kombinieren möchten.",
-          ru:
-            "Расстановка «театр», «класс», банкет, буква U или квадратные столы легко подстраивается под задачи группы. Просторный зал и возможность группового размещения в отеле Kaila Beach делают его удобным для компаний, которые совмещают деловую программу и проживание.",
+          pl: "Układy typu teatr, szkoła, bankiet, U lub stoliki kwadratowe łatwo dopasujemy do grupy. Przestronność i noclegi grupowe w Kaila Beach Hotel to idealne połączenie pracy i zakwaterowania.",
         },
       ],
     },
@@ -88,14 +86,14 @@
         tr: "2. Özel etkinlikler",
         en: "2. Private celebrations",
         de: "2. Private Anlässe",
-        ru: "2. Частные мероприятия",
+        pl: "2. Private celebrations",
       },
       img: "assets/images/meeting/special-event.png",
       alt: {
         tr: "Özel davet ve organizasyon atmosferi",
         en: "Private celebration and event atmosphere",
         de: "Atmosphäre für private Feiern",
-        ru: "Атмосфера частных торжеств",
+        pl: "Klimat prywatnych uroczystości i wydarzeń",
       },
       paras: [
         {
@@ -105,8 +103,7 @@
             "The Astra Ballroom is not only for corporate use — it creates a memorable setting for weddings, engagements, birthdays, gala dinners and other private celebrations. Its elegant architecture and warm ambience provide a stylish backdrop for any special occasion.",
           de:
             "Der Astra-Ballsaal eignet sich nicht nur für Firmen — auch für Hochzeiten, Verlobungen, Geburtstage, Galadinner und private Feiern schafft er eine unvergessliche Atmosphäre. Elegante Architektur und warme Stimmung bilden einen stilvollen Rahmen.",
-          ru:
-            "Зал Astra подходит не только для бизнеса: свадьбы, помолвки, дни рождения, гала-ужины и другие частные праздники проходят здесь в незабываемой атмосфере. Изящная архитектура и уют создают элегантный фон для любого торжества.",
+          pl: "Astra Ballroom to nie tylko eventy firmowe — to miejsce na wesela, zaręczyny, urodziny, kolacje galowe i inne święta. Elegancka architektura i ciepła atmosfera tworzą stylowe tło każdej uroczystości.",
         },
         {
           tr:
@@ -115,8 +112,7 @@
             "Our banquet menus, created by our chefs, are tailored to your needs and expectations for a high-quality dining experience. From décor to technical setup, from live music to entertainment, every detail is planned with care to turn your vision into reality.",
           de:
             "Unsere Bankettmenüs der Küchenchefs werden auf Ihre Wünsche zugeschnitten und bieten ein hochwertiges kulinarisches Erlebnis. Von Dekoration über Technik bis zu Live-Musik und Show — jedes Detail wird sorgfältig geplant.",
-          ru:
-            "Банкетные меню от наших шеф-поваров готовятся под ваши ожидания и дают гостям высокий уровень сервиса. Декор, техника, живая музыка и развлечения — всё продумывается, чтобы воплотить вашу идею.",
+          pl: "Menu bankietowe przygotowane przez szefów kuchni dopasujemy do oczekiwań. Od dekoracji po technikę, od muzyki na żywo po oprawę — każdy detal planujemy z troską, by spełnić Państwa wizję.",
         },
         {
           tr:
@@ -125,8 +121,7 @@
             "With its spacious layout and flexible design, the Astra Ballroom combines style, comfort and attentive service — an ideal venue for every kind of celebration.",
           de:
             "Dank großzügiger Fläche und flexiblem Design vereint der Astra-Ballsaal Stil, Komfort und Service — ideal für jede Art von Feier.",
-          ru:
-            "Простор и гибкая планировка зала Astra сочетают стиль, комфорт и безупречный сервис — идеальное место для любого праздника.",
+          pl: "Przestronny układ i elastyczny design łączą styl, komfort i profesjonalną obsługę — idealna przestrzeń na każdą celebrację.",
         },
       ],
     },
@@ -135,14 +130,14 @@
         tr: "Function Room",
         en: "Function Room",
         de: "Function Room",
-        ru: "Function Room",
+        pl: "Function Room",
       },
       img: "assets/images/meeting/function-room.png",
       alt: {
         tr: "Function Room toplantı ve küçük grup oturumu",
         en: "Function Room for meetings and small groups",
         de: "Function Room für kleine Tagungen",
-        ru: "Function Room для встреч и небольших групп",
+        pl: "Function Room na spotkania i małe grupy",
       },
       paras: [
         {
@@ -152,8 +147,7 @@
             "The Function Room is ideal for small meetings, briefings, training sessions and focused group discussions. Designed for comfort and ease of use, it offers modern audio-visual equipment, flexible seating and a calm atmosphere that supports productive work.",
           de:
             "Der Function Room eignet sich für kleine Tagungen, Briefings, Schulungen und fokussierte Gruppengespräche. Komfort, moderne AV-Technik, flexible Bestuhlung und eine ruhige Atmosphäre fördern produktives Arbeiten.",
-          ru:
-            "Function Room подходит для небольших встреч, брифингов, тренингов и деловых обсуждений. Продуманный комфорт, современная техника, гибкая расстановка и спокойная атмосфера помогают сосредоточиться на задачах.",
+          pl: "Function Room sprawdzi się przy małych spotkaniach, briefingach, szkoleniach i dyskusjach grupowych. Komfort, nowoczesny AV, elastyczne ustawienie krzeseł i spokojna atmosfera sprzyjają produktywnej pracy.",
         },
         {
           tr:
@@ -162,8 +156,7 @@
             "Layouts such as U-shape, classroom or boardroom can be arranged to suit your event. With on-site accommodation and our team’s professional support, the room is a reliable choice for compact but impactful corporate gatherings.",
           de:
             "U-Form, Klassenzimmer- oder Boardroom-Bestuhlung lässt sich flexibel wählen. Unterkunft im Haus und professionelle Betreuung machen den Raum zur verlässlichen Wahl für kompakte, wirkungsvolle Firmenveranstaltungen.",
-          ru:
-            "Расстановка U, «класс» или переговорная настраивается под формат мероприятия. Размещение в отеле и поддержка команды делают зал надёжным выбором для небольших, но результативных деловых встреч.",
+          pl: "Możliwe układy U, szkoła lub boardroom. Nocleg na miejscu i wsparcie zespołu czynią salę solidnym wyborem na zwięzłe, ale ważne spotkania firmowe.",
         },
       ],
     },
@@ -173,13 +166,13 @@
     tr: "Business Center iş ve hizmet alanı",
     en: "Business Center workspace and services",
     de: "Business Center Arbeits- und Servicebereich",
-    ru: "Business Center — рабочая и сервисная зона",
+    pl: "Business Center — przestrzeń robocza i usługi",
   };
 
   function renderMeetingModule(container) {
     var root = el("div", "viona-mod viona-mod--meeting");
 
-    var secTitle = el("p", "rest-section-title", T({ tr: "Toplantı & organizasyon alanları", en: "Meeting & event spaces", de: "Tagungs- & Veranstaltungsbereiche", ru: "Переговорные и площадки" }));
+    var secTitle = el("p", "rest-section-title", T({ tr: "Toplantı & organizasyon alanları", en: "Meeting & event spaces", de: "Tagungs- & Veranstaltungsbereiche", pl: "Meeting & event spaces" }));
     root.appendChild(secTitle);
 
     var lead = el("p", "viona-mod-lead");
@@ -187,7 +180,7 @@
       tr: "Bu bölümde toplantı ve organizasyon salonları ile iş merkezi hakkında bilgi ve kullanım koşulları yer alır.",
       en: "Meeting & event spaces and the business centre — information and fees below.",
       de: "Tagungs- und Veranstaltungsräume sowie Business Center — Informationen und Konditionen unten.",
-      ru: "Переговорные залы и бизнес-центр — информация и условия ниже.",
+      pl: "Sale spotkań i eventów oraz centrum biznesowe — informacje i opłaty poniżej.",
     });
     root.appendChild(lead);
 

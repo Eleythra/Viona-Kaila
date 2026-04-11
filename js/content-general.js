@@ -62,7 +62,7 @@
         tr: "Genel otel bilgileri",
         en: "General hotel information",
         de: "Allgemeine Hotelinformationen",
-        ru: "Общая информация об отеле",
+        pl: "Ogólne informacje o hotelu",
       },
       html: {
         tr:
@@ -71,8 +71,7 @@
           "<p>Kaila Beach Hotel is a modern comfort-focused resort in Alanya, Antalya, directly on the sea. It combines relaxation and entertainment for families, couples and individual travellers. All Inclusive brings dining, activities and leisure together throughout the day.</p><p>The pool area offers three outdoor pools and one heated indoor pool in the spa; the aquapark includes slides and shallow zones for children. Contemporary architecture, generous social areas, aquapark, spa and several restaurant/bar options stand out. Proximity to the town centre and direct beach access ensure a comfortable stay.</p>",
         de:
           "<p>Das Kaila Beach Hotel in Alanya, Antalya, liegt direkt am Meer und bietet modernen Komfort für Familien, Paare und Einzelreisende. All Inclusive vereint Verpflegung, Aktivitäten und Erholung über den Tag.</p><p>Am Pool gibt es drei Außenbecken und im Spa ein beheiztes Hallenbad; im Aquapark Rutschen und flache Bereiche für Kinder. Moderne Architektur, großzügige Bereiche, Aquapark, Spa sowie Restaurants und Bars; zudem Nähe zum Zentrum und Strandzugang.</p>",
-        ru:
-          "<p>Kaila Beach Hotel в Аланье (Анталья) на первой линии моря — современный комфортный курорт для семей, пар и индивидуальных гостей. All Inclusive объединяет питание, активности и отдых.</p><p>Три открытых бассейна и один крытый подогреваемый в спа; в аквапарке горки и мелководье для детей. Современная архитектура, зоны отдыха, аквапарк, спа, рестораны и бары; близко к центру и к пляжу.</p>",
+        pl: "<p>Kaila Beach Hotel to nowoczesny kurort w Alanii (Antalya), bezpośrednio nad morzem. Łączy relaks i rozrywkę dla rodzin, par i podróżujących indywidualnie. Formuła All Inclusive łączy wyżywienie, atrakcje i wypoczynek przez cały dzień.</p><p>W strefie basenów są trzy baseny zewnętrzne oraz jeden podgrzewany basen kryty w spa; w aquaparku zjeżdżalnie i płytkie strefy dla dzieci. Wyróżnia się współczesna architektura, przestronne strefy wypoczynku, aquapark, spa oraz kilka restauracji i barów. Bliskość centrum miasta i bezpośredni dostęp do plaży zapewniają komfortowy pobyt.</p>",
       },
     },
     {
@@ -82,7 +81,7 @@
         tr: "Genel operasyon",
         en: "General operations",
         de: "Allgemeiner Betrieb",
-        ru: "Общая эксплуатация",
+        pl: "Prowadzenie hotelu — informacje praktyczne",
       },
       html: {
         tr:
@@ -95,7 +94,7 @@
           '<p><strong>Kasa (oda içi)</strong></p><ul class="viona-list"><li>Kullanım: şifreli kasa.</li><li>Ücret: gün başına 2 €.</li></ul>' +
           '<p><strong>Havlu kartı / depozito</strong></p><ul class="viona-list"><li>Havlu kart sistemi: mevcuttur.</li><li>Depozito: alınmaz.</li><li>Kayıp halinde: 10 € ücret.</li></ul>' +
           '<p><strong>Telefon</strong></p><ul class="viona-list"><li>Oda içi telefon: dahili aramalar (otel içi).</li></ul>' +
-          '<p><strong>TV / yayın</strong></p><ul class="viona-list"><li>Uluslararası kanallar mevcuttur; Almanya, İngiltere, Rusya ve İskandinav ülkeleri kanalları izlenebilir.</li></ul>' +
+          '<p><strong>TV / yayın</strong></p><ul class="viona-list"><li>Uluslararası kanallar mevcuttur; Almanya, İngiltere, İskandinav ülkeleri ve diğer bölgesel yayınlar izlenebilir.</li></ul>' +
           '<p><strong>Enerji / elektrik kesintisi</strong></p><ul class="viona-list"><li>Jeneratör kapasitesi: 1400 kW.</li><li>Olası kesintilerde jeneratör otomatik devreye girer.</li></ul>' +
           '<p><strong>Havuz ve plaj güvenliği</strong></p><ul class="viona-list"><li>Can kurtaran: havuzlarda ve denizde mevcuttur.</li></ul>',
         en:
@@ -108,7 +107,7 @@
           '<p><strong>In-room safe</strong></p><ul class="viona-list"><li>Type: code lock.</li><li>Fee: €2 per day.</li></ul>' +
           '<p><strong>Towel card / deposit</strong></p><ul class="viona-list"><li>Towel card system: yes.</li><li>Deposit: none.</li><li>If lost: €10 charge.</li></ul>' +
           '<p><strong>Phone</strong></p><ul class="viona-list"><li>In-room phone: internal (in-hotel) calls.</li></ul>' +
-          '<p><strong>TV</strong></p><ul class="viona-list"><li>International channels available, including Germany, UK, Russia and Scandinavia.</li></ul>' +
+          '<p><strong>TV</strong></p><ul class="viona-list"><li>International channels available, including Germany, UK, Scandinavia and other regional stations.</li></ul>' +
           '<p><strong>Power backup</strong></p><ul class="viona-list"><li>Generator capacity: 1400 kW.</li><li>In case of outage, the generator starts automatically.</li></ul>' +
           '<p><strong>Pool &amp; beach safety</strong></p><ul class="viona-list"><li>Lifeguards are present at the pools and on the sea.</li></ul>',
         de:
@@ -121,28 +120,28 @@
           '<p><strong>Safe (Zimmer)</strong></p><ul class="viona-list"><li>Art: Zahlenschloss.</li><li>Gebühr: 2 € pro Tag.</li></ul>' +
           '<p><strong>Handtuchkarte / Kaution</strong></p><ul class="viona-list"><li>Handtuchkartensystem: ja.</li><li>Kaution: nein.</li><li>Bei Verlust: 10 €.</li></ul>' +
           '<p><strong>Telefon</strong></p><ul class="viona-list"><li>Zimmertelefon: interne (hotelinterne) Gespräche.</li></ul>' +
-          '<p><strong>TV</strong></p><ul class="viona-list"><li>Internationale Sender u. a. aus Deutschland, UK, Russland und Skandinavien.</li></ul>' +
+          '<p><strong>TV</strong></p><ul class="viona-list"><li>Internationale Sender u. a. aus Deutschland, UK, Skandinavien und weiteren Regionen.</li></ul>' +
           '<p><strong>Strom / Notstrom</strong></p><ul class="viona-list"><li>Generatorleistung: 1400 kW.</li><li>Bei Ausfall schaltet der Generator automatisch ein.</li></ul>' +
           '<p><strong>Sicherheit Pool &amp; Strand</strong></p><ul class="viona-list"><li>Rettungsschwimmer an Pools und am Meer vorhanden.</li></ul>',
-        ru:
-          '<p><strong>Ранний заезд / поздний выезд</strong></p><ul class="viona-list"><li>Заезд: 14:00</li><li>Выезд: 12:00</li><li>Ранний заезд и поздний выезд зависят от загрузки и операции; уточняйте условия и оплату на ресепшене.</li></ul>' +
-          '<p><strong>Парковка</strong></p><ul class="viona-list"><li>Парковка на территории отеля есть.</li></ul>' +
-          '<p><strong>Трансфер</strong></p><ul class="viona-list"><li>Есть — за дополнительную плату.</li></ul>' +
-          '<p><strong>Бюро находок</strong></p><ul class="viona-list"><li>Ценные вещи хранятся до 1 года, прочие — до 6 месяцев.</li></ul>' +
-          '<p><strong>Браслеты / карты</strong></p><ul class="viona-list"><li>Ношение браслета обязательно.</li><li>All Inclusive: взрослые — чёрный; до 18 лет — белый.</li><li>При утере: отдельной процедуры замены нет (сообщите на ресепшен).</li></ul>' +
-          '<p><strong>Багаж</strong></p><ul class="viona-list"><li>Портье: есть.</li><li>Перевозка багажа: при заезде.</li></ul>' +
-          '<p><strong>Сейф в номере</strong></p><ul class="viona-list"><li>Тип: кодовый замок.</li><li>Оплата: 2 € в сутки.</li></ul>' +
-          '<p><strong>Карта полотенец / залог</strong></p><ul class="viona-list"><li>Система карт на полотенца: да.</li><li>Залог: не взимается.</li><li>При утере: штраф 10 €.</li></ul>' +
-          '<p><strong>Телефон</strong></p><ul class="viona-list"><li>Номерной телефон: внутренние звонки по отелю.</li></ul>' +
-          '<p><strong>ТВ</strong></p><ul class="viona-list"><li>Международные каналы, в т. ч. Германия, Великобритания, Россия и Скандинавия.</li></ul>' +
-          '<p><strong>Электроснабжение</strong></p><ul class="viona-list"><li>Мощность генератора: 1400 кВт.</li><li>При отключении электричества генератор включается автоматически.</li></ul>' +
-          '<p><strong>Безопасность у бассейнов и на пляже</strong></p><ul class="viona-list"><li>Спасатели у бассейнов и на море.</li></ul>',
+        pl:
+          '<p><strong>Wcześniejsze zameldowanie / późniejsze wymeldowanie</strong></p><ul class="viona-list"><li>Zameldowanie: 14:00</li><li>Wymeldowanie: 12:00</li><li>Wcześniejsze zameldowanie i późniejsze wymeldowanie zależą od dostępności i operacji hotelu; opłaty i zgodę uzyskaj w recepcji.</li></ul>' +
+          '<p><strong>Parking</strong></p><ul class="viona-list"><li>Parking na terenie hotelu jest dostępny.</li></ul>' +
+          '<p><strong>Transfer</strong></p><ul class="viona-list"><li>Dostępny — za dodatkową opłatą.</li></ul>' +
+          '<p><strong>Rzeczy znalezione (lost &amp; found)</strong></p><ul class="viona-list"><li>Przedmioty wartościowe przechowujemy do 1 roku, pozostałe do 6 miesięcy.</li></ul>' +
+          '<p><strong>Opaska / karta</strong></p><ul class="viona-list"><li>Noszenie opaski jest obowiązkowe.</li><li>All Inclusive: dorośli — czarna; poniżej 18 lat — biała.</li><li>W razie zgubienia: brak stałej procedury wymiany (zgłoś recepcji).</li></ul>' +
+          '<p><strong>Bagaż</strong></p><ul class="viona-list"><li>Obsługa bagażowa: tak.</li><li>Transport bagażu: przy zameldowaniu.</li></ul>' +
+          '<p><strong>Sejf w pokoju</strong></p><ul class="viona-list"><li>Typ: zamek kodowy.</li><li>Opłata: 2 € za dobę.</li></ul>' +
+          '<p><strong>Karta ręczników / kaucja</strong></p><ul class="viona-list"><li>System kart na ręczniki: tak.</li><li>Kaucja: nie pobieramy.</li><li>W razie zgubienia karty: opłata 10 €.</li></ul>' +
+          '<p><strong>Telefon</strong></p><ul class="viona-list"><li>Telefon w pokoju: połączenia wewnętrzne w hotelu.</li></ul>' +
+          '<p><strong>Telewizja</strong></p><ul class="viona-list"><li>Kanały międzynarodowe, m.in. z Niemiec, Wielkiej Brytanii, krajów skandynawskich i innych regionów.</li></ul>' +
+          '<p><strong>Energia / awaria prądu</strong></p><ul class="viona-list"><li>Moc agregatu: 1400 kW.</li><li>Przy wyłączeniu zasilania agregat włącza się automatycznie.</li></ul>' +
+          '<p><strong>Bezpieczeństwo przy basenach i na plaży</strong></p><ul class="viona-list"><li>Ratownicy przy basenach i nad morzem.</li></ul>',
       },
     },
     {
       icon: IC.map,
       defaultOpen: true,
-      title: { tr: "Konum bilgileri", en: "Location", de: "Lage", ru: "Расположение" },
+      title: { tr: "Konum bilgileri", en: "Location", de: "Lage", pl: "Lokalizacja" },
       html: {
         tr:
           '<ul class="viona-list"><li>Şehir: Antalya</li><li>Bölge: Alanya</li><li>Konum: Obagöl Mevki</li><li>Alanya şehir merkezi: yaklaşık 3 km</li><li>Gazipaşa Havalimanı: yaklaşık 38 km</li><li>Antalya Havalimanı: yaklaşık 125 km</li></ul><p>Tesis, Alanya şehir merkezine yakın konumda olup ulaşım açısından avantajlı bir lokasyonda bulunmaktadır. Toplu taşıma ve taksi ile kolay erişim sağlanabilir.</p>',
@@ -150,8 +149,7 @@
           '<ul class="viona-list"><li>City: Antalya</li><li>Area: Alanya</li><li>Location: Obagöl</li><li>Alanya city centre: approx. 3 km</li><li>Gazipaşa Airport: approx. 38 km</li><li>Antalya Airport: approx. 125 km</li></ul><p>The hotel is close to Alanya centre with good transport links. Public transport and taxis are readily available.</p>',
         de:
           '<ul class="viona-list"><li>Stadt: Antalya</li><li>Region: Alanya</li><li>Lage: Obagöl</li><li>Zentrum Alanya: ca. 3 km</li><li>Flughafen Gazipaşa: ca. 38 km</li><li>Flughafen Antalya: ca. 125 km</li></ul><p>Gute Anbindung; öffentliche Verkehrsmittel und Taxis verfügbar.</p>',
-        ru:
-          '<ul class="viona-list"><li>Город: Анталья</li><li>Район: Аланья</li><li>Место: Обагёль</li><li>Центр Аланьи: около 3 км</li><li>Аэропорт Газипаша: около 38 км</li><li>Аэропорт Антальи: около 125 км</li></ul><p>Удобное расположение; общественный транспорт и такси.</p>',
+        pl: '<ul class="viona-list"><li>Miasto: Antalya</li><li>Region: Alanya</li><li>Lokalizacja: Obagöl</li><li>Centrum Alanii: ok. 3 km</li><li>Lotnisko Gazipaşa: ok. 38 km</li><li>Lotnisko Antalya: ok. 125 km</li></ul><p>Hotel leży blisko centrum Alanii z dogodnymi połączeniami. Dostępny jest transport publiczny i taksówki.</p>',
       },
     },
     {
@@ -161,7 +159,7 @@
         tr: "Tesis genel özellikleri",
         en: "Property overview",
         de: "Anlage im Überblick",
-        ru: "Общие характеристики",
+        pl: "Charakter obiektu",
       },
       html: {
         tr:
@@ -170,8 +168,7 @@
           '<ul class="viona-list"><li>Total area: 10,000 m²</li><li>Buildings: 3</li><li>Rooms: 363</li><li>Beds: 886</li><li>Concept: All Inclusive – 5-star</li><li>Season: summer-focused operation</li><li>Guests: families, couples, individual travellers</li></ul>',
         de:
           '<ul class="viona-list"><li>Gesamtfläche: 10.000 m²</li><li>Gebäude: 3</li><li>Zimmer: 363</li><li>Betten: 886</li><li>Konzept: All Inclusive – 5 Sterne</li><li>Saison: schwerpunktmäßig Sommer</li><li>Gäste: Familien, Paare, Einzelreisende</li></ul>',
-        ru:
-          '<ul class="viona-list"><li>Площадь: 10 000 м²</li><li>Корпусов: 3</li><li>Номеров: 363</li><li>Мест: 886</li><li>Концепция: All Inclusive, 5*</li><li>Сезон: преимущественно лето</li><li>Гости: семьи, пары, индивидуальные</li></ul>',
+        pl: '<ul class="viona-list"><li>Powierzchnia: 10 000 m²</li><li>Budynki: 3</li><li>Pokoje: 363</li><li>Łóżka: 886</li><li>Koncept: All Inclusive – 5 gwiazdek</li><li>Sezon: działalność nastawiona na lato</li><li>Goście: rodziny, pary, podróżni indywidualni</li></ul>',
       },
     },
     {
@@ -181,7 +178,7 @@
         tr: "İletişim ve adres",
         en: "Contact & address",
         de: "Kontakt & Adresse",
-        ru: "Контакты и адрес",
+        pl: "Kontakt i adres",
       },
       html: {
         tr:
@@ -190,14 +187,13 @@
           '<dl class="viona-kv"><dt>Phone</dt><dd>+90 (242) 514 3090 · +90 (242) 514 1171</dd><dt>Email</dt><dd>kailabeach@kailahotels.com</dd><dt>Address</dt><dd>Oba Mah. 25151 Sk. No:4, 07400 Alanya/Antalya</dd><dt>Web</dt><dd>www.kailahotels.com</dd></dl>',
         de:
           '<dl class="viona-kv"><dt>Telefon</dt><dd>+90 (242) 514 3090 · +90 (242) 514 1171</dd><dt>E-Mail</dt><dd>kailabeach@kailahotels.com</dd><dt>Adresse</dt><dd>Oba Mah. 25151 Sk. No:4, 07400 Alanya/Antalya</dd><dt>Web</dt><dd>www.kailahotels.com</dd></dl>',
-        ru:
-          '<dl class="viona-kv"><dt>Телефон</dt><dd>+90 (242) 514 3090 · +90 (242) 514 1171</dd><dt>Email</dt><dd>kailabeach@kailahotels.com</dd><dt>Адрес</dt><dd>Oba Mah. 25151 Sk. No:4, 07400 Alanya/Antalya</dd><dt>Сайт</dt><dd>www.kailahotels.com</dd></dl>',
+        pl: '<dl class="viona-kv"><dt>Telefon</dt><dd>+90 (242) 514 3090 · +90 (242) 514 1171</dd><dt>E-mail</dt><dd>kailabeach@kailahotels.com</dd><dt>Adres</dt><dd>Oba Mah. 25151 Sk. No:4, 07400 Alanya/Antalya</dd><dt>Strona</dt><dd>www.kailahotels.com</dd></dl>',
       },
     },
     {
       icon: IC.waves,
       defaultOpen: false,
-      title: { tr: "Plaj ve deniz", en: "Beach & sea", de: "Strand & Meer", ru: "Пляж и море" },
+      title: { tr: "Plaj ve deniz", en: "Beach & sea", de: "Strand & Meer", pl: "Plaża i morze" },
       html: {
         tr:
           '<ul class="viona-list"><li>Konum: Denize sıfır</li><li>Plaj türü: Kum ve çakıl karışık plaj</li><li>Şezlong: Ücretsiz</li><li>Şemsiye: Ücretsiz</li><li>Plaj havlusu: Ücretsiz</li></ul><p>Plaj alanında misafirlerin gün boyu faydalanabileceği içecek ve snack servis noktaları bulunmaktadır.</p>',
@@ -205,8 +201,7 @@
           '<ul class="viona-list"><li>Location: beachfront</li><li>Beach: sand and pebble mix</li><li>Sun loungers: free</li><li>Parasols: free</li><li>Beach towels: free</li></ul><p>Drink and snack service points are available on the beach during the day.</p>',
         de:
           '<ul class="viona-list"><li>Lage: direkt am Strand</li><li>Strand: Sand und Kies</li><li>Liegen: kostenlos</li><li>Sonnenschirme: kostenlos</li><li>Strandtücher: kostenlos</li></ul><p>Getränke- und Snack-Service am Strand.</p>',
-        ru:
-          '<ul class="viona-list"><li>Расположение: первая линия</li><li>Пляж: песок и галька</li><li>Шезлонги: бесплатно</li><li>Зонты: бесплатно</li><li>Полотенца: бесплатно</li></ul><p>Точки напитков и снеков на пляже в течение дня.</p>',
+        pl: '<ul class="viona-list"><li>Lokalizacja: pierwsza linia plaży</li><li>Plaża: piasek z domieszką żwiru</li><li>Leżaki: bezpłatnie</li><li>Parasole: bezpłatnie</li><li>Ręczniki plażowe: bezpłatnie</li></ul><p>W ciągu dnia na plaży dostępne są punkty z napojami i przekąskami.</p>',
       },
     },
     {
@@ -216,7 +211,7 @@
         tr: "Havuz ve aquapark",
         en: "Pools & aquapark",
         de: "Pools & Aquapark",
-        ru: "Бассейны и аквапарк",
+        pl: "Baseny i aquapark",
       },
       html: {
         tr:
@@ -225,8 +220,7 @@
           '<ul class="viona-list"><li>Outdoor pools: 3</li><li>Indoor pool: 1 (spa, heated)</li><li>Aquapark: yes (slides; shallow areas for children in the outdoor / aquapark zone)</li></ul><p>Loungers and parasols are free at the pool areas. Aquapark hours may vary according to operations.</p>',
         de:
           '<ul class="viona-list"><li>Außenbecken: 3</li><li>Hallenbad: 1 (Spa, beheizt)</li><li>Aquapark: ja (Rutschen; flache Kinderbereiche im Außen- und Aquaparkbereich)</li></ul><p>Liegen und Schirme kostenlos. Aquapark-Zeiten können betriebsbedingt variieren.</p>',
-        ru:
-          '<ul class="viona-list"><li>Открытых бассейнов: 3</li><li>Крытый бассейн: 1 (спа, с подогревом)</li><li>Аквапарк: да (горки; мелководье для детей в зоне аквапарка / открытых бассейнов)</li></ul><p>Шезлонги и зонты бесплатно. Часы аквапарка могут меняться.</p>',
+        pl: '<ul class="viona-list"><li>Baseny zewnętrzne: 3</li><li>Basen kryty: 1 (spa, podgrzewany)</li><li>Aquapark: tak (zjeżdżalnie; płytkie strefy dla dzieci na zewnątrz / w aquaparku)</li></ul><p>Leżaki i parasole przy basenach są bezpłatne. Godziny aquaparku mogą się zmieniać w zależności od operacji hotelu.</p>',
       },
     },
     {
@@ -236,7 +230,7 @@
         tr: "Genel hizmet ve olanaklar",
         en: "Services & facilities",
         de: "Service & Ausstattung",
-        ru: "Услуги и удобства",
+        pl: "Usługi i udogodnienia",
       },
       html: {
         tr:
@@ -245,8 +239,7 @@
           '<ul class="viona-list"><li>24-hour reception</li><li>Lobby</li><li>Free Wi-Fi (public areas and rooms)</li><li>Lifts</li></ul>',
         de:
           '<ul class="viona-list"><li>24h Rezeption</li><li>Lobby</li><li>Kostenloses WLAN (öffentliche Bereiche und Zimmer)</li><li>Aufzüge</li></ul>',
-        ru:
-          '<ul class="viona-list"><li>Круглосуточная стойка</li><li>Лобби</li><li>Бесплатный Wi‑Fi (общие зоны и номера)</li><li>Лифты</li></ul>',
+        pl: '<ul class="viona-list"><li>Recepcja 24h</li><li>Hol</li><li>Bezpłatne Wi-Fi (strefy ogólne i pokoje)</li><li>Windy</li></ul>',
       },
     },
     {
@@ -256,7 +249,7 @@
         tr: "Teknik ve operasyonel bilgiler",
         en: "Technical & operations",
         de: "Technik & Ablauf",
-        ru: "Техническая информация",
+        pl: "Informacje techniczne i operacyjne",
       },
       html: {
         tr:
@@ -265,8 +258,7 @@
           '<ul class="viona-list"><li>Check-in: 14:00</li><li>Check-out: 12:00</li><li>Reception dial: 9</li><li>Cards: Visa and MasterCard</li><li>Electricity: 220 V</li><li>Pets: not accepted</li></ul><p>The hotel may change operating hours and service content.</p>',
         de:
           '<ul class="viona-list"><li>Check-in: 14:00</li><li>Check-out: 12:00</li><li>Rezeption: 9</li><li>Karten: Visa und MasterCard</li><li>Strom: 220 V</li><li>Haustiere: nein</li></ul><p>Änderungen von Zeiten und Leistungen vorbehalten.</p>',
-        ru:
-          '<ul class="viona-list"><li>Заезд: 14:00</li><li>Выезд: 12:00</li><li>Ресепшен: 9</li><li>Карты: Visa и MasterCard</li><li>Сеть: 220 В</li><li>Животные: не принимаются</li></ul><p>Отель оставляет за собой право менять часы и услуги.</p>',
+        pl: '<ul class="viona-list"><li>Zameldowanie: 14:00</li><li>Wymeldowanie: 12:00</li><li>Recepcja (numer wewnętrzny): 9</li><li>Karty: Visa i MasterCard</li><li>Napięcie: 220 V</li><li>Zwierzęta: nie są akceptowane</li></ul><p>Hotel zastrzega sobie prawo do zmiany godzin pracy i zakresu usług.</p>',
       },
     },
     {
@@ -276,7 +268,7 @@
         tr: "Güvenlik ve politikalar",
         en: "Security & policies",
         de: "Sicherheit & Regeln",
-        ru: "Безопасность и правила",
+        pl: "Bezpieczeństwo i zasady",
       },
       html: {
         tr:
@@ -285,8 +277,7 @@
           "<p>Guest safety and comfort are a priority. General security measures apply on the property. Alcoholic drinks are not served to guests under 18.</p>",
         de:
           "<p>Sicherheit und Komfort stehen im Vordergrund. Allgemeine Sicherheitsmaßnahmen. Kein Alkohol unter 18 Jahren.</p>",
-        ru:
-          "<p>Безопасность и комфорт гостей в приоритете. Общие меры безопасности. Алкоголь не подаётся лицам младше 18 лет.</p>",
+        pl: "<p>Bezpieczeństwo i komfort gości są priorytetem. Na terenie obiektu obowiązują ogólne środki bezpieczeństwa. Napojów alkoholowych nie podaje się osobom poniżej 18 roku życia.</p>",
       },
     },
     {
@@ -296,7 +287,7 @@
         tr: "Çevre ve sürdürülebilirlik",
         en: "Environment & sustainability",
         de: "Umwelt & Nachhaltigkeit",
-        ru: "Экология и устойчивость",
+        pl: "Środowisko i zrównoważony rozwój",
       },
       html: {
         tr:
@@ -305,8 +296,7 @@
           "<p>Kaila Beach Hotel is committed to environmental responsibility: solar (GES), waste separation and recycling, water saving, reducing plastic, protecting natural resources and sustainable tourism principles.</p>",
         de:
           "<p>Umweltbewusstsein: Photovoltaik, Mülltrennung und Recycling, Wassersparen, weniger Plastik, Schutz der Ressourcen und nachhaltiger Tourismus.</p>",
-        ru:
-          "<p>Экологическая ответственность: солнечная энергия, раздельный сбор и переработка, экономия воды, сокращение пластика, охрана природы и устойчивый туризм.</p>",
+        pl: "<p>Kaila Beach Hotel dba o środowisko: energia słoneczna (PV), segregacja i recykling odpadów, oszczędzanie wody, ograniczanie plastiku, ochrona zasobów naturalnych oraz zasady zrównoważonej turystyki.</p>",
       },
     },
     {
@@ -316,24 +306,24 @@
         tr: "Dil ve hizmet dilleri",
         en: "Languages",
         de: "Sprachen",
-        ru: "Языки",
+        pl: "Języki",
       },
       html: {
-        tr: "<p>Konuşulan diller: Türkçe, İngilizce, Almanca ve Rusça.</p>",
-        en: "<p>Languages spoken: Turkish, English, German and Russian.</p>",
-        de: "<p>Gesprochene Sprachen: Türkisch, Englisch, Deutsch und Russisch.</p>",
-        ru: "<p>Языки: турецкий, английский, немецкий и русский.</p>",
+        tr: "<p>Konuşulan diller: Türkçe, İngilizce, Almanca ve Lehçe (Polski).</p>",
+        en: "<p>Languages spoken: Turkish, English, German and Polish.</p>",
+        de: "<p>Gesprochene Sprachen: Türkisch, Englisch, Deutsch und Polnisch.</p>",
+        pl: "<p>Języki: turecki, angielski, niemiecki i polski.</p>",
       },
     },
     {
       icon: IC.wifi,
       defaultOpen: false,
-      title: { tr: "İnternet", en: "Internet", de: "Internet", ru: "Интернет" },
+      title: { tr: "İnternet", en: "Internet", de: "Internet", pl: "Internet" },
       html: {
         tr: "<p>Wi-Fi: Tüm alanlarda ücretsiz. Oda içi Wi-Fi: Mevcut.</p>",
         en: "<p>Wi-Fi: free in all areas. In-room Wi-Fi: available.</p>",
         de: "<p>WLAN: überall kostenlos. WLAN im Zimmer: verfügbar.</p>",
-        ru: "<p>Wi‑Fi бесплатно во всех зонах. В номере: доступен.</p>",
+        pl: "<p>Wi-Fi: bezpłatnie we wszystkich strefach. Wi-Fi w pokoju: dostępne.</p>",
       },
     },
     {
@@ -343,7 +333,7 @@
         tr: "Ulaşım ve erişim",
         en: "Transport & access",
         de: "Anreise & Mobilität",
-        ru: "Транспорт и доступ",
+        pl: "Dojazd i dostęp",
       },
       html: {
         tr:
@@ -352,8 +342,7 @@
           '<ul class="viona-list"><li>Public transport: available</li><li>Taxi: 24h</li><li>Car rental: paid</li><li>Antalya Airport: approx. 125 km</li><li>Gazipaşa Airport: approx. 38 km</li><li>Alanya centre: approx. 3 km</li></ul>',
         de:
           '<ul class="viona-list"><li>ÖPNV: vorhanden</li><li>Taxi: 24 h</li><li>Mietwagen: kostenpflichtig</li><li>Flughafen Antalya: ca. 125 km</li><li>Flughafen Gazipaşa: ca. 38 km</li><li>Zentrum Alanya: ca. 3 km</li></ul>',
-        ru:
-          '<ul class="viona-list"><li>Общественный транспорт: есть</li><li>Такси: 24 ч</li><li>Аренда авто: платно</li><li>Аэропорт Антальи: около 125 км</li><li>Аэропорт Газипаша: около 38 км</li><li>Центр Аланьи: около 3 км</li></ul>',
+        pl: '<ul class="viona-list"><li>Komunikacja publiczna: dostępna</li><li>Taksówki: 24h</li><li>Wynajem samochodu: płatny</li><li>Lotnisko Antalya: ok. 125 km</li><li>Lotnisko Gazipaşa: ok. 38 km</li><li>Centrum Alanii: ok. 3 km</li></ul>',
       },
     },
     {
@@ -363,7 +352,7 @@
         tr: "Güvenlik detayları",
         en: "Security details",
         de: "Sicherheitsdetails",
-        ru: "Охрана",
+        pl: "Szczegóły bezpieczeństwa",
       },
       html: {
         tr:
@@ -372,8 +361,7 @@
           '<ul class="viona-list"><li>Security staff: available</li><li>In-room safe: paid (see «General operations» for details)</li></ul>',
         de:
           '<ul class="viona-list"><li>Sicherheitspersonal: vorhanden</li><li>Tresor im Zimmer: kostenpflichtig (Details unter «Allgemeiner Betrieb»)</li></ul>',
-        ru:
-          '<ul class="viona-list"><li>Охрана: есть</li><li>Сейф в номере: платно (подробности — в «Общая эксплуатация»)</li></ul>',
+        pl: '<ul class="viona-list"><li>Personel ochrony: dostępny</li><li>Sejf w pokoju: płatny (szczegóły w sekcji «Prowadzenie hotelu — informacje praktyczne»)</li></ul>',
       },
     },
     {
@@ -383,7 +371,7 @@
         tr: "Sağlık hizmetleri",
         en: "Health services",
         de: "Gesundheit",
-        ru: "Медицина",
+        pl: "Opieka medyczna",
       },
       html: {
         tr:
@@ -392,8 +380,7 @@
           "<p>Doctor and health services are charged. When needed, 24-hour hospital-backed support may be arranged. Doctor: paid / on call. First aid: available.</p>",
         de:
           "<p>Arzt und medizinische Leistungen kostenpflichtig. Bei Bedarf 24h kliniknahe Unterstützung. Arzt: kostenpflichtig / auf Abruf. Erste Hilfe: vorhanden.</p>",
-        ru:
-          "<p>Врач и медуслуги платные. При необходимости — поддержка 24 ч. Врач: платно / вызов. Первая помощь: есть.</p>",
+        pl: "<p>Lekarz i usługi medyczne są płatne. W razie potrzeby możliwe jest wsparcie 24h związane ze szpitalem. Lekarz: płatnie / na wezwanie. Pierwsza pomoc: dostępna.</p>",
       },
     },
     {
@@ -403,13 +390,13 @@
         tr: "Alışveriş ve ticari alanlar",
         en: "Shopping",
         de: "Einkaufen",
-        ru: "Магазины",
+        pl: "Zakupy",
       },
       html: {
         tr: "<p>Market, deri mağazası, fotoğrafçı, kuaför.</p>",
         en: "<p>Market, leather shop, photographer, hairdresser.</p>",
         de: "<p>Markt, Lederwaren, Fotograf, Friseur.</p>",
-        ru: "<p>Маркет, кожаные изделия, фотограф, парикмахерская.</p>",
+        pl: "<p>Sklep spożywczy, galanteria skórzana, fotograf, fryzjer.</p>",
       },
     },
     {
@@ -419,7 +406,7 @@
         tr: "Çocuk / bebek",
         en: "Children & babies",
         de: "Kinder & Babys",
-        ru: "Дети и малыши",
+        pl: "Dzieci i niemowlęta",
       },
       html: {
         tr:
@@ -428,8 +415,7 @@
           '<ul class="viona-list"><li>Baby cot: free</li><li>Babysitting: paid</li><li>High chair: available</li></ul>',
         de:
           '<ul class="viona-list"><li>Babybett: kostenlos</li><li>Babysitter: kostenpflichtig</li><li>Hochstuhl: vorhanden</li></ul>',
-        ru:
-          '<ul class="viona-list"><li>Кроватка: бесплатно</li><li>Няня: платно</li><li>Стульчик: есть</li></ul>',
+        pl: '<ul class="viona-list"><li>Łóżeczko dziecięce: bezpłatnie</li><li>Opieka nad dzieckiem: płatna</li><li>Krzesło do karmienia: dostępne</li></ul>',
       },
     },
     {
@@ -439,7 +425,7 @@
         tr: "Genel operasyon uyarıları",
         en: "Operational notices",
         de: "Betriebshinweise",
-        ru: "Эксплуатация",
+        pl: "Informacje operacyjne",
       },
       html: {
         tr:
@@ -448,8 +434,7 @@
           "<p>The hotel may adjust service hours and offerings. How some services are delivered can follow capacity and operational planning.</p>",
         de:
           "<p>Änderungen von Zeiten und Leistungen vorbehalten. Einige Angebote richten sich nach Kapazität und Betriebsablauf.</p>",
-        ru:
-          "<p>Отель может корректировать часы и услуги. Часть сервисов зависит от вместимости и организации работы.</p>",
+        pl: "<p>Hotel może zmieniać godziny i zakres usług. Sposób świadczenia niektórych usług może zależeć od pojemności i planu operacyjnego.</p>",
       },
     },
     {
@@ -459,7 +444,7 @@
         tr: "Gıda ve alerjen uyarısı",
         en: "Food & allergen notice",
         de: "Lebensmittel & Allergene",
-        ru: "Еда и аллергены",
+        pl: "Żywność i alergeny",
       },
       html: {
         tr:
@@ -468,8 +453,7 @@
           "<p>Some dishes may contain allergens under the Turkish Food Codex. Guests with allergies or special dietary needs should contact guest relations.</p>",
         de:
           "<p>Einige Speisen können Allergene enthalten (türkisches Lebensmittelrecht). Bei Allergien oder Diäten bitte Guest Relations kontaktieren.</p>",
-        ru:
-          "<p>Некоторые блюда могут содержать аллергены. При аллергии или диете обратитесь в guest relations.</p>",
+        pl: "<p>Niektóre dania mogą zawierać alergeny zgodnie z tureckim kodeksem żywnościowym. Goście z alergiami lub specjalnymi wymaganiami dietetycznymi powinni skontaktować się z działem relacji z gośćmi.</p>",
       },
     },
     {
@@ -479,7 +463,7 @@
         tr: "Konsept dışı ürün ve hizmetler",
         en: "Not included in the concept",
         de: "Nicht im Konzept enthalten",
-        ru: "Не входит в концепцию",
+        pl: "Poza konceptem (All Inclusive)",
       },
       html: {
         tr:
@@ -488,8 +472,7 @@
           "<p>The following are not included in all-inclusive and are charged extra:</p><ul class=\"viona-list\"><li>Freshly squeezed juices</li><li>Imported drinks</li><li>Cocktails</li><li>Energy drinks</li></ul>",
         de:
           "<p>Folgendes ist nicht All-inclusive und kostenpflichtig:</p><ul class=\"viona-list\"><li>Frisch gepresste Säfte</li><li>Importgetränke</li><li>Cocktails</li><li>Energydrinks</li></ul>",
-        ru:
-          "<p>Не входит в всё включено, доплата:</p><ul class=\"viona-list\"><li>Свежевыжатые соки</li><li>Импортные напитки</li><li>Коктейли</li><li>Энергетики</li></ul>",
+        pl: "<p>Poniższe nie wchodzą w zakres All Inclusive i są dodatkowo płatne:</p><ul class=\"viona-list\"><li>Świeżo wyciskane soki</li><li>Napoje importowane</li><li>Koktajle</li><li>Napoje energetyzujące</li></ul>",
       },
     },
     {
@@ -499,7 +482,7 @@
         tr: "Önceden haber gerektiren hizmetler",
         en: "Services needing advance notice",
         de: "Leistungen mit Voranmeldung",
-        ru: "Услуги по предварительной договорённости",
+        pl: "Usługi wymagające wcześniejszej rezerwacji",
       },
       html: {
         tr:
@@ -508,8 +491,7 @@
           "<p>À la carte is charged; please arrange in advance with reception or the restaurant. For stays of 5 nights or more, one complimentary visit may apply; advance notice is still requested.</p>",
         de:
           "<p>À la carte kostenpflichtig; bitte vorher bei Rezeption oder Restaurant anmelden. Ab 5 Nächten kann einmal kostenfrei sein; Voranmeldung bleibt erforderlich.</p>",
-        ru:
-          "<p>À la carte платно; заранее договоритесь на ресепшене или в ресторане. От 5 ночей возможно одно бесплатное посещение; предварительная договорённость всё равно нужна.</p>",
+        pl: "<p>Restauracja à la carte jest płatna; prosimy o wcześniejsze uzgodnienie z recepcją lub restauracją. Przy pobytach od 5 nocy może przysługiwać jedna bezpłatna wizyta; nadal prosimy o wcześniejsze zgłoszenie.</p>",
       },
     },
     {
@@ -519,7 +501,7 @@
         tr: "Özel talep (lunch box)",
         en: "Special request (lunch box)",
         de: "Sonderwunsch (Lunchbox)",
-        ru: "Ланч-бокс",
+        pl: "Prośba specjalna (lunch box)",
       },
       html: {
         tr:
@@ -528,8 +510,7 @@
           "<p>Guests who wish to use the lunch box service must inform reception by 20:00 at the latest.</p>",
         de:
           "<p>Für Lunchbox bitte spätestens bis 20:00 Uhr an der Rezeption melden.</p>",
-        ru:
-          "<p>Ланч-бокс: сообщите на ресепшене до 20:00.</p>",
+        pl: "<p>Goście chcący skorzystać z lunch boxa muszą poinformować recepcję najpóźniej do godz. 20:00.</p>",
       },
     },
     {
@@ -539,7 +520,7 @@
         tr: "Yaş ve kullanım kısıtlamaları",
         en: "Age & usage rules",
         de: "Altersregeln",
-        ru: "Возрастные ограничения",
+        pl: "Wiek i zasady korzystania",
       },
       html: {
         tr:
@@ -548,8 +529,7 @@
           "<p>Fitness centre: not permitted for guests under 16. Alcoholic drinks: not served to guests under 18.</p>",
         de:
           "<p>Fitness: nicht unter 16 Jahren. Alkohol: nicht unter 18 Jahren.</p>",
-        ru:
-          "<p>Фитнес: не младше 16 лет. Алкоголь: не младше 18 лет.</p>",
+        pl: "<p>Strefa fitness: niedozwolona dla gości poniżej 16 roku życia. Napoje alkoholowe: nie podawane osobom poniżej 18 roku życia.</p>",
       },
     },
     {
@@ -559,7 +539,7 @@
         tr: "Çocuk güvenliği uyarıları",
         en: "Child safety",
         de: "Kindersicherheit",
-        ru: "Безопасность детей",
+        pl: "Bezpieczeństwo dzieci",
       },
       html: {
         tr:
@@ -568,14 +548,13 @@
           "<p>Please do not leave children unattended in play areas or on water slides.</p>",
         de:
           "<p>Kinder auf Spielplätzen und Rutschen nicht unbeaufsichtigt lassen.</p>",
-        ru:
-          "<p>Не оставляйте детей без присмотра на площадках и горках.</p>",
+        pl: "<p>Prosimy nie zostawiać dzieci bez opieki na placach zabaw i na zjeżdżalniach wodnych.</p>",
       },
     },
     {
       icon: IC.wallet,
       defaultOpen: false,
-      title: { tr: "Ekstra hizmetler", en: "Extra services", de: "Zusatzleistungen", ru: "Доп. услуги" },
+      title: { tr: "Ekstra hizmetler", en: "Extra services", de: "Zusatzleistungen", pl: "Usługi dodatkowe" },
       html: {
         tr:
           "<p>Aşağıdaki hizmetler ücretlidir: oda içi kasa (safe) kullanımı, çamaşırhane (yıkama, ütüleme, kuru temizleme), spa bakımları (masaj, cilt bakımı vb.).</p>",
@@ -583,8 +562,7 @@
           "<p>Charged services include: in-room safe, laundry (wash, iron, dry cleaning), spa treatments (massage, skincare, etc.).</p>",
         de:
           "<p>Kostenpflichtig: Zimmertresor, Wäscherei, Spa-Behandlungen.</p>",
-        ru:
-          "<p>Платно: сейф в номере, прачечная, спа-процедуры.</p>",
+        pl: "<p>Usługi płatne m.in.: sejf w pokoju, pralnia (pranie, prasowanie, chemiczne), zabiegi spa (masaż, pielęgnacja skóry itd.).</p>",
       },
     },
     {
@@ -594,7 +572,7 @@
         tr: "Genel hizmetler (özet)",
         en: "General services (summary)",
         de: "Leistungen (Überblick)",
-        ru: "Услуги (кратко)",
+        pl: "Usługi ogólne (skrót)",
       },
       html: {
         tr:
@@ -603,8 +581,7 @@
           '<ul class="viona-list"><li>Wi-Fi — public areas and rooms — 24h — free</li><li>In-room safe — 24h — paid</li><li>Room service — available, charged</li></ul>',
         de:
           '<ul class="viona-list"><li>WLAN — überall — 24h — kostenlos</li><li>Tresor im Zimmer — 24h — kostenpflichtig</li><li>Zimmerservice — verfügbar, kostenpflichtig</li></ul>',
-        ru:
-          '<ul class="viona-list"><li>Wi‑Fi — везде — 24 ч — бесплатно</li><li>Сейф в номере — 24 ч — платно</li><li>Обслуживание номеров — платно</li></ul>',
+        pl: '<ul class="viona-list"><li>Wi-Fi — strefy ogólne i pokoje — 24h — bezpłatnie</li><li>Sejf w pokoju — 24h — płatny</li><li>Room service — dostępny, płatny</li></ul>',
       },
     },
   ];
@@ -619,7 +596,7 @@
       tr: "Bu bölümde otelle ilgili genel bilgiler konulara göre gruplandırılmıştır. Aşağıdaki başlıklara dokunarak açabilirsiniz.",
       en: "General hotel information grouped by topic — tap a heading to expand.",
       de: "Allgemeine Hotelinformationen nach Themen — zum Öffnen auf die Überschrift tippen.",
-      ru: "Общая информация об отеле по темам — нажмите на заголовок, чтобы раскрыть.",
+      pl: "Ogólne informacje o hotelu pogrupowane według tematów — dotknij nagłówka, aby rozwinąć.",
     });
     wrap.appendChild(lead);
 

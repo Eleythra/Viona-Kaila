@@ -3,9 +3,9 @@
  * Otel ve tüm noktalar Google Haritalar paylaşım linklerinden alınan koordinatlarla eşleştirildi.
  *
  * Sözleşme:
- * - categoryOrder içindeki her id için i18n.js’te nearCat_<id> (tr/en/de/ru) tanımlı olmalı.
+ * - categoryOrder içindeki her id için i18n.js’te nearCat_<id> (tr/en/de/pl) tanımlı olmalı.
  * - place.category değerleri categoryOrder ile uyumlu olmalı.
- * - name / address / description: { tr, en, de, ru }
+ * - name / address / description: { tr, en, de, pl }
  */
 (function () {
   "use strict";
@@ -21,13 +21,13 @@
       tr: "Kaila Beach Otel",
       en: "Kaila Beach Hotel",
       de: "Kaila Beach Hotel",
-      ru: "Kaila Beach Hotel",
+      pl: "Kaila Beach Hotel",
     },
     address: {
       tr: "Oba, 25151 Sk. No:4, 07400 Alanya/Antalya",
       en: "Oba, 25151 St. No:4, 07400 Alanya/Antalya, Türkiye",
       de: "Oba, 25151 Sk. Nr. 4, 07400 Alanya/Antalya, Türkei",
-      ru: "Оба, ул. 25151, д. 4, 07400 Аланья/Анталья",
+      pl: "Oba, 25151 St. No:4, 07400 Alanya/Antalya, Türkiye",
     },
   };
 
@@ -39,18 +39,18 @@
       mapsUrl: "https://maps.app.goo.gl/UBTWNnYctNpeAFk87",
       lat: 36.532001,
       lng: 32.043063,
-      name: { tr: "A101", en: "A101", de: "A101", ru: "A101" },
+      name: { tr: "A101", en: "A101", de: "A101", pl: "A101" },
       address: {
         tr: "Oba, Fatih Cd. No:1, 07000 Alanya/Antalya",
         en: "Oba, Fatih Cd. No:1, 07000 Alanya/Antalya, Türkiye",
         de: "Oba, Fatih Cd. Nr. 1, 07000 Alanya/Antalya, Türkei",
-        ru: "Оба, ул. Фатих, д. 1, 07000 Аланья/Анталья",
+        pl: "Oba, Fatih Cd. No:1, 07000 Alanya/Antalya, Türkiye",
       },
       description: {
         tr: "Market ve günlük alışveriş.",
         en: "Supermarket and daily shopping.",
         de: "Supermarkt für den täglichen Einkauf.",
-        ru: "Супермаркет и повседневные покупки.",
+        pl: "Supermarket and daily shopping.",
       },
     },
     {
@@ -64,19 +64,19 @@
         tr: "Migros",
         en: "Migros",
         de: "Migros",
-        ru: "Migros",
+        pl: "Migros",
       },
       address: {
         tr: "Oba, 8. Sk. No:1A, 07400 Alanya/Antalya",
         en: "Oba, 8th St. No:1A, 07400 Alanya/Antalya, Türkiye",
         de: "Oba, 8. Str. Nr. 1A, 07400 Alanya/Antalya, Türkei",
-        ru: "Оба, 8-я ул., д. 1A, 07400 Аланья/Анталья",
+        pl: "Oba, 8th St. No:1A, 07400 Alanya/Antalya, Türkiye",
       },
       description: {
         tr: "Geniş ürün seçimi ile süpermarket.",
         en: "Supermarket with a wide product range.",
         de: "Supermarkt mit großer Auswahl.",
-        ru: "Супермаркет с широким ассортиментом.",
+        pl: "Supermarket with a wide product range.",
       },
     },
     {
@@ -90,19 +90,19 @@
         tr: "İREM GÖK ECZANESİ",
         en: "İrem Gök Pharmacy",
         de: "Apotheke İrem Gök",
-        ru: "Аптека İrem Gök",
+        pl: "İrem Gök Pharmacy",
       },
       address: {
         tr: "Oba, Dadaşlar Cd. No:2/B, 07400 Alanya/Antalya",
         en: "Oba, Dadaşlar Cd. No:2/B, 07400 Alanya/Antalya, Türkiye",
         de: "Oba, Dadaşlar Cd. Nr. 2/B, 07400 Alanya/Antalya, Türkei",
-        ru: "Оба, ул. Дадашлар, д. 2/B, 07400 Аланья/Анталья",
+        pl: "Oba, Dadaşlar Cd. No:2/B, 07400 Alanya/Antalya, Türkiye",
       },
       description: {
         tr: "Reçeteli ve reçetesiz ürünler; çalışma saatlerini yerinde teyit ediniz.",
         en: "Prescription and OTC products; confirm opening hours on site.",
         de: "Rezept- und frei verkäufliche Artikel; Öffnungszeiten vor Ort prüfen.",
-        ru: "Рецептурные и безрецептурные товары; часы работы уточняйте на месте.",
+        pl: "Prescription and OTC products; confirm opening hours on site.",
       },
     },
     {
@@ -116,19 +116,19 @@
         tr: "Doğa Eczanesi",
         en: "Doğa Pharmacy",
         de: "Apotheke Doğa",
-        ru: "Аптека Doğa",
+        pl: "Doğa Pharmacy",
       },
       address: {
         tr: "Tosmur, 9. Sk. No:3/C, 07400 Alanya/Antalya",
         en: "Tosmur, 9th St. No:3/C, 07400 Alanya/Antalya, Türkiye",
         de: "Tosmur, 9. Str. Nr. 3/C, 07400 Alanya/Antalya, Türkei",
-        ru: "Тосмур, 9-я ул., д. 3/C, 07400 Аланья/Анталья",
+        pl: "Tosmur, 9th St. No:3/C, 07400 Alanya/Antalya, Türkiye",
       },
       description: {
         tr: "Tosmur bölgesinde eczane hizmeti.",
         en: "Pharmacy in the Tosmur area.",
         de: "Apotheke im Viertel Tosmur.",
-        ru: "Аптека в районе Тосмур.",
+        pl: "Pharmacy in the Tosmur area.",
       },
     },
     {
@@ -142,19 +142,19 @@
         tr: "Akbank ATM",
         en: "Akbank ATM",
         de: "Akbank-Geldautomat",
-        ru: "Банкомат Akbank",
+        pl: "Akbank ATM",
       },
       address: {
         tr: "Oba, Sultan Alaaddin Caddesi, 07400 Alanya/Antalya",
         en: "Oba, Sultan Alaaddin Avenue, 07400 Alanya/Antalya, Türkiye",
         de: "Oba, Sultan-Alaaddin-Straße, 07400 Alanya/Antalya, Türkei",
-        ru: "Оба, проспект Султана Алааддина, 07400 Аланья/Анталья",
+        pl: "Oba, Sultan Alaaddin Avenue, 07400 Alanya/Antalya, Türkiye",
       },
       description: {
         tr: "Nakit çekim; komisyonları bankanıza sorunuz.",
         en: "Cash withdrawal; check fees with your bank.",
         de: "Bargeld; Gebühren bei Ihrer Bank erfragen.",
-        ru: "Снятие наличных; комиссию уточняйте в банке.",
+        pl: "Cash withdrawal; check fees with your bank.",
       },
     },
     {
@@ -168,19 +168,19 @@
         tr: "Yapı Kredi Bankası ATM",
         en: "Yapı Kredi Bank ATM",
         de: "Yapı Kredi Bank-Geldautomat",
-        ru: "Банкомат Yapı Kredi",
+        pl: "Yapı Kredi Bank ATM",
       },
       address: {
         tr: "Oba, Dadaşlar Cd., 07400 Alanya/Antalya",
         en: "Oba, Dadaşlar Cd., 07400 Alanya/Antalya, Türkiye",
         de: "Oba, Dadaşlar Cd., 07400 Alanya/Antalya, Türkei",
-        ru: "Оба, ул. Дадашлар, 07400 Аланья/Анталья",
+        pl: "Oba, Dadaşlar Cd., 07400 Alanya/Antalya, Türkiye",
       },
       description: {
         tr: "Alternatif banka ATM noktası.",
         en: "Alternative bank ATM.",
         de: "Weiterer Geldautomat.",
-        ru: "Дополнительный банкомат.",
+        pl: "Alternative bank ATM.",
       },
     },
     {
@@ -194,19 +194,19 @@
         tr: "Kaila Plaj",
         en: "Kaila Beach",
         de: "Kaila Strand",
-        ru: "Пляж Kaila",
+        pl: "Kaila Beach",
       },
       address: {
         tr: "Oba mah., Ahmet Tokuş Blv., Oer-Erkenschwick Cd., 07400 Alanya/Antalya",
         en: "Oba, Ahmet Tokuş Blvd., Oer-Erkenschwick Cd., 07400 Alanya/Antalya, Türkiye",
         de: "Oba, Ahmet-Tokuş-Blvd., Oer-Erkenschwick-Str., 07400 Alanya/Antalya, Türkei",
-        ru: "Оба, бульв. Ахмет Токуш, Oer-Erkenschwick Cd., 07400 Аланья/Анталья",
+        pl: "Oba, Ahmet Tokuş Blvd., Oer-Erkenschwick Cd., 07400 Alanya/Antalya, Türkiye",
       },
       description: {
         tr: "Otel sahil alanı ve plaj keyfi; kullanım otel kurallarına tabidir.",
         en: "Hotel beach area; use subject to hotel rules.",
         de: "Hotelstrand; Nutzung gemäß Hausregeln.",
-        ru: "Пляж отеля; правила — по регламенту отеля.",
+        pl: "Hotel beach area; use subject to hotel rules.",
       },
     },
     {
@@ -220,19 +220,19 @@
         tr: "Moss Beach",
         en: "Moss Beach",
         de: "Moss Beach",
-        ru: "Moss Beach",
+        pl: "Moss Beach",
       },
       address: {
         tr: "Oba, Ahmet Tokuş Blv. No:36, 07460 Alanya/Antalya",
         en: "Oba, Ahmet Tokuş Blvd. No:36, 07460 Alanya/Antalya, Türkiye",
         de: "Oba, Ahmet-Tokuş-Blvd. Nr. 36, 07460 Alanya/Antalya, Türkei",
-        ru: "Оба, бульв. Ахмет Токуш, д. 36, 07460 Аланья/Анталья",
+        pl: "Oba, Ahmet Tokuş Blvd. No:36, 07460 Alanya/Antalya, Türkiye",
       },
       description: {
         tr: "Oba sahilinde plaj ve sosyal alan.",
         en: "Beach and social venue on the Oba coast.",
         de: "Strand und Lokal an der Küste in Oba.",
-        ru: "Пляж и заведение на побережье Оба.",
+        pl: "Beach and social venue on the Oba coast.",
       },
     },
     {
@@ -246,19 +246,19 @@
         tr: "Kızılkule",
         en: "Red Tower (Kızılkule)",
         de: "Roter Turm (Kızılkule)",
-        ru: "Красная башня (Кызылкуле)",
+        pl: "Red Tower (Kızılkule)",
       },
       address: {
         tr: "Çarşı, İskele Cd. No:102, 07400 Alanya/Antalya",
         en: "Çarşı, İskele Cd. No:102, 07400 Alanya/Antalya, Türkiye",
         de: "Çarşı, İskele Cd. Nr. 102, 07400 Alanya/Antalya, Türkei",
-        ru: "Чарши, ул. Искеле, д. 102, 07400 Аланья/Анталья",
+        pl: "Çarşı, İskele Cd. No:102, 07400 Alanya/Antalya, Türkiye",
       },
       description: {
         tr: "Alanya’nın simgesi; giriş ve saatler için güncel bilgiyi kontrol edin.",
         en: "City landmark; check current tickets and hours.",
         de: "Wahrzeichen; Eintritt und Zeiten aktuell prüfen.",
-        ru: "Символ города; билеты и часы уточняйте заранее.",
+        pl: "City landmark; check current tickets and hours.",
       },
     },
     {
@@ -272,19 +272,19 @@
         tr: "Damlataş Mağarası",
         en: "Damlataş Cave",
         de: "Damlataş-Höhle",
-        ru: "Пещера Дамлаташ",
+        pl: "Damlataş Cave",
       },
       address: {
         tr: "Çarşı, Damlataş Cd. No:81, 07400 Alanya/Antalya",
         en: "Çarşı, Damlataş Cd. No:81, 07400 Alanya/Antalya, Türkiye",
         de: "Çarşı, Damlataş Cd. Nr. 81, 07400 Alanya/Antalya, Türkei",
-        ru: "Чарши, ул. Дамлаташ, д. 81, 07400 Аланья/Анталья",
+        pl: "Çarşı, Damlataş Cd. No:81, 07400 Alanya/Antalya, Türkiye",
       },
       description: {
         tr: "Ünlü doğal mağara; bilet ve saatler için resmi kaynaklara bakınız.",
         en: "Famous cave; see official sources for tickets and hours.",
         de: "Bekannte Höhle; Tickets und Zeiten offiziell prüfen.",
-        ru: "Известная пещера; билеты и время — по официальным данным.",
+        pl: "Famous cave; see official sources for tickets and hours.",
       },
     },
     {
@@ -298,45 +298,46 @@
         tr: "SINTON BBQ",
         en: "SINTON BBQ",
         de: "SINTON BBQ",
-        ru: "SINTON BBQ",
+        pl: "SINTON BBQ",
       },
       address: {
         tr: "Oba, 25151 Sk. No:4, 07400 Alanya/Antalya",
         en: "Oba, 25151 St. No:4, 07400 Alanya/Antalya, Türkiye",
         de: "Oba, 25151 Sk. Nr. 4, 07400 Alanya/Antalya, Türkei",
-        ru: "Оба, ул. 25151, д. 4, 07400 Аланья/Анталья",
+        pl: "Oba, 25151 St. No:4, 07400 Alanya/Antalya, Türkiye",
       },
       description: {
         tr: "BBQ ve ızgara seçenekleri; rezervasyon için işletmeyi arayabilirsiniz.",
         en: "BBQ and grill; call ahead for reservations if needed.",
         de: "Grill und BBQ; bei Bedarf reservieren.",
-        ru: "Барбекю и гриль; при необходимости бронируйте заранее.",
+        pl: "BBQ and grill; call ahead for reservations if needed.",
       },
     },
     {
-      id: "food-enberi-cafe",
+      id: "food-moss-beach",
       category: "food",
       isFeatured: false,
-      mapsUrl: "https://maps.app.goo.gl/94WBHkKHNJt9NziW7",
-      lat: 36.5310405,
-      lng: 32.041334,
+      /** Moss plaj hattı — Yeme & İçme listesinde; aynı konum plaj bölümünde de geçer. */
+      mapsUrl: "https://maps.app.goo.gl/rbeiyoHEBPV9yfnH7",
+      lat: 36.5303266,
+      lng: 32.0412181,
       name: {
-        tr: "Enberi Cafe",
-        en: "Enberi Cafe",
-        de: "Enberi Cafe",
-        ru: "Enberi Cafe",
+        tr: "Moss Beach Restaurant & Bar",
+        en: "Moss Beach Restaurant & Bar",
+        de: "Moss Beach Restaurant & Bar",
+        pl: "Moss Beach Restaurant & Bar",
       },
       address: {
-        tr: "Göl Mah., Oba, Oer-Erkenschwick Cd. No:2, 07460 Alanya/Antalya",
-        en: "Göl neighbourhood, Oba, Oer-Erkenschwick Cd. No:2, 07460 Alanya/Antalya, Türkiye",
-        de: "Stadtteil Göl, Oba, Oer-Erkenschwick-Str. Nr. 2, 07460 Alanya/Antalya, Türkei",
-        ru: "Мах. Гёль, Оба, Oer-Erkenschwick Cd., д. 2, 07460 Аланья/Анталья",
+        tr: "Oba, Ahmet Tokuş Blv. No:36, 07460 Alanya/Antalya",
+        en: "Oba, Ahmet Tokuş Blvd. No:36, 07460 Alanya/Antalya, Türkiye",
+        de: "Oba, Ahmet-Tokuş-Blvd. Nr. 36, 07460 Alanya/Antalya, Türkei",
+        pl: "Oba, Ahmet Tokuş Blvd. No:36, 07460 Alanya/Antalya, Türkiye",
       },
       description: {
-        tr: "Kahve ve hafif yemek; çalışma saatlerini yerinde teyit ediniz.",
-        en: "Coffee and light meals; confirm hours on site.",
-        de: "Kaffee und kleine Speisen; Zeiten vor Ort prüfen.",
-        ru: "Кофе и лёгкие закуски; часы уточняйте на месте.",
+        tr: "Oba sahil şeridinde yeme-içme; hafif öğünler, içecekler ve plaj atmosferi. Çalışma saatlerini işletmeden veya resepsiyondan teyit ediniz.",
+        en: "Food and drinks on the Oba beachfront—light meals, beverages and a seaside setting. Confirm hours with the venue or reception.",
+        de: "Essen und Getränke am Strand von Oba—leichte Gerichte, Getränke und Meeresblick. Öffnungszeiten beim Lokal oder an der Rezeption erfragen.",
+        pl: "Food and drinks on the Oba beachfront—light meals, beverages and a seaside setting. Confirm hours with the venue or reception.",
       },
     },
   ];

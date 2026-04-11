@@ -18,22 +18,22 @@
       tr: "Animasyon & aktiviteler",
       en: "Animation & activities",
       de: "Animation & Aktivitäten",
-      ru: "Анимация и активности",
+      pl: "Animacja i aktywności",
     },
     lead: {
       tr: "Aqua havuzda gün boyu animasyon ve su aktiviteleri. Katılım ücretsiz; güncel saatler tabloda.",
       en: "Poolside animation and aqua activities all day at Aqua Pool. Free to join — times below.",
       de: "Den ganzen Tag Animation und Wasseraktivitäten am Aqua Pool. Teilnahme kostenlos — Zeiten in der Tabelle.",
-      ru: "Целый день анимация и активности у бассейна Aqua. Участие бесплатно — расписание в таблице.",
+      pl: "Przy basenie Aqua całodniowa animacja i zajęcia wodne. Udział bezpłatny — godziny poniżej.",
     },
     scheduleTitle: {
       tr: "Günlük program",
       en: "Daily programme",
       de: "Tagesprogramm",
-      ru: "Программа дня",
+      pl: "Program dnia",
     },
-    colTime: { tr: "Saat", en: "Time", de: "Uhrzeit", ru: "Время" },
-    colActivity: { tr: "Etkinlik", en: "Activity", de: "Aktivität", ru: "Активность" },
+    colTime: { tr: "Saat", en: "Time", de: "Uhrzeit", pl: "Time" },
+    colActivity: { tr: "Etkinlik", en: "Activity", de: "Aktivität", pl: "Activity" },
   };
 
   var SCHEDULE = [
@@ -43,7 +43,7 @@
         tr: "Müzik ve Animasyon Başlangıcı",
         en: "Music & Animation Start",
         de: "Musik- & Animationsbeginn",
-        ru: "Начало музыки и анимации",
+        pl: "Start muzyki i animacji",
       },
     },
     {
@@ -52,7 +52,7 @@
         tr: "Su Jimnastiği",
         en: "Aqua Gym",
         de: "Wassergymnastik",
-        ru: "Аквааэробика",
+        pl: "Aqua gym",
       },
     },
     {
@@ -61,7 +61,7 @@
         tr: "Dart Oyunu",
         en: "Darts",
         de: "Dart",
-        ru: "Дартс",
+        pl: "Dart",
       },
     },
     {
@@ -70,7 +70,7 @@
         tr: "Su Topu",
         en: "Water Polo",
         de: "Wasserball",
-        ru: "Водное поло",
+        pl: "Piłka wodna",
       },
     },
     {
@@ -79,7 +79,7 @@
         tr: "Serbest Aktivite Zamanı",
         en: "Free Activity Time",
         de: "Freie Aktivitätszeit",
-        ru: "Свободное время для активностей",
+        pl: "Czas wolnych aktywności",
       },
     },
     {
@@ -88,7 +88,7 @@
         tr: "Su Jimnastiği",
         en: "Aqua Gym",
         de: "Wassergymnastik",
-        ru: "Аквааэробика",
+        pl: "Aqua gym",
       },
     },
     {
@@ -97,7 +97,7 @@
         tr: "Dart Oyunu",
         en: "Darts",
         de: "Dart",
-        ru: "Дартс",
+        pl: "Dart",
       },
     },
     {
@@ -106,7 +106,7 @@
         tr: "Su Topu",
         en: "Water Polo",
         de: "Wasserball",
-        ru: "Водное поло",
+        pl: "Piłka wodna",
       },
     },
     {
@@ -115,7 +115,7 @@
         tr: "Animasyon Programı Kapanışı",
         en: "Animation Program End",
         de: "Animationsprogramm Ende",
-        ru: "Окончание анимационной программы",
+        pl: "Koniec programu animacji",
       },
     },
   ];
@@ -127,13 +127,13 @@
         tr: "Su jimnastiği havuz etkinliği",
         en: "Water aerobics pool activity",
         de: "Wassergymnastik im Pool",
-        ru: "Аквагимнастика в бассейне",
+        pl: "Zajęcia aerobiku wodnego w basenie",
       },
       title: {
         tr: "Su jimnastiği",
         en: "Water aerobics",
         de: "Wassergymnastik",
-        ru: "Аквагимнастика",
+        pl: "Aerobik wodny",
       },
       text: {
         tr:
@@ -142,8 +142,7 @@
           "Just step into the pool. While the natural resistance of water works your body gently, you can enjoy a refreshing workout. This low-impact exercise is comfortable, fun, and suitable for all age groups.",
         de:
           "Steigen Sie einfach ins Becken. Der natürliche Wasserwiderstand trainiert den Körper sanft und sorgt gleichzeitig für Erfrischung. Diese gelenkschonende Übung ist angenehm, unterhaltsam und für alle Altersgruppen geeignet.",
-        ru:
-          "Достаточно зайти в бассейн. Естественное сопротивление воды мягко тренирует тело и одновременно освежает. Это комфортная и веселая активность без лишней нагрузки, подходящая для всех возрастов.",
+        pl: "Wejdź do basenu. Naturalny opór wody delikatnie angażuje ciało, a Ty możesz cieszyć się orzeźwiającym treningiem. To ćwiczenie o niskim obciążeniu jest komfortowe, zabawne i dla każdej grupy wiekowej.",
       },
     },
     {
@@ -152,13 +151,13 @@
         tr: "Dart oyunu etkinliği",
         en: "Darts game activity",
         de: "Dartspiel-Aktivität",
-        ru: "Активность дартс",
+        pl: "Aktywność — gra w darta",
       },
       title: {
         tr: "Dart oyunu",
         en: "Darts game",
         de: "Dartspiel",
-        ru: "Игра в дартс",
+        pl: "Gra w darta",
       },
       text: {
         tr:
@@ -167,8 +166,7 @@
           "Take your dart and focus on the target. This friendly game offers both concentration and fun. Whether you are trying it for the first time or already experienced, everyone can join.",
         de:
           "Nehmen Sie den Dartpfeil und konzentrieren Sie sich auf das Ziel. Dieses freundliche Spiel verbindet Fokus und Spaß. Ob Einsteiger oder erfahrene Gäste: alle können mitmachen.",
-        ru:
-          "Возьмите дротик и сосредоточьтесь на цели. Эта дружеская игра сочетает концентрацию и удовольствие. Подходит и для новичков, и для опытных игроков.",
+        pl: "Weź lotkę i skup się na tarczy. Ta przyjazna gra łączy koncentrację i zabawę. Zarówno początkujący, jak i doświadczeni mogą wziąć udział.",
       },
     },
     {
@@ -177,13 +175,13 @@
         tr: "Su topu havuz etkinliği",
         en: "Water polo pool activity",
         de: "Wasserball im Pool",
-        ru: "Водное поло в бассейне",
+        pl: "Zajęcia — piłka wodna w basenie",
       },
       title: {
         tr: "Su topu",
         en: "Water polo",
         de: "Wasserball",
-        ru: "Водное поло",
+        pl: "Piłka wodna",
       },
       text: {
         tr:
@@ -192,8 +190,7 @@
           "Action starts in the pool. This team game boosts your energy and creates a social, fun atmosphere. Stay active in cool water and enjoy plenty of laughter.",
         de:
           "Im Pool geht es los. Dieses Teamspiel steigert die Energie und bietet ein soziales, unterhaltsames Erlebnis. Bleiben Sie aktiv im kühlen Wasser und genießen Sie viele fröhliche Momente.",
-        ru:
-          "Движение начинается в бассейне. Эта командная игра заряжает энергией и дарит живое общение. Оставайтесь активными в прохладной воде и наслаждайтесь весёлыми моментами.",
+        pl: "Akcja zaczyna się w basenie. Ta gra zespołowa dodaje energii i buduje swobodną, radosną atmosferę. Rób ruch w chłodnej wodzie i śmiej się do woli.",
       },
     },
   ];
@@ -205,13 +202,13 @@
         tr: "Gece programı",
         en: "Night program",
         de: "Abendprogramm",
-        ru: "Вечерняя программа",
+        pl: "Program wieczorny",
       },
       title: {
         tr: "Gece şovları & eğlenceler",
         en: "Evening shows & entertainment",
         de: "Abendshows & Unterhaltung",
-        ru: "Вечерние шоу и развлечения",
+        pl: "Wieczorne pokazy i rozrywka",
       },
       text: {
         tr:
@@ -220,8 +217,7 @@
           "After sunset, Kaila Beach Hotel takes on a different energy. A new entertainment program is offered each evening, including acrobatic dance shows, themed nights, live music, and DJ performances.",
         de:
           "Nach Sonnenuntergang bekommt das Kaila Beach Hotel eine besondere Energie. Jeden Abend gibt es ein anderes Unterhaltungsprogramm: akrobatische Tanzshows, Themenabende, Live-Musik oder DJ-Auftritte.",
-        ru:
-          "После заката в Kaila Beach Hotel царит особая атмосфера. Каждый вечер проходит новая развлекательная программа: акробатические шоу, тематические вечера, живая музыка или DJ-сеты.",
+        pl: "Po zachodzie słońca Kaila Beach Hotel nabiera innej energii. Każdego wieczoru nowy program: pokazy taneczno-akrobatyczne, wieczory tematyczne, muzyka na żyko i DJ.",
       },
       images: [
         {
@@ -230,7 +226,7 @@
             tr: "Gece havuz etkinliği",
             en: "Night pool activity",
             de: "Abendaktivität am Pool",
-            ru: "Вечерняя активность у бассейна",
+            pl: "Wieczorna aktywność przy basenie",
           },
         },
         {
@@ -239,7 +235,7 @@
             tr: "Gece gösterisi",
             en: "Night show",
             de: "Abendshow",
-            ru: "Вечернее шоу",
+            pl: "Pokaz wieczorny",
           },
         },
       ],
@@ -249,7 +245,7 @@
         tr: "Fitness merkezi",
         en: "Fitness centre",
         de: "Fitnessbereich",
-        ru: "Фитнес-центр",
+        pl: "Siłownia / fitness",
       },
       text: {
         tr:
@@ -258,8 +254,7 @@
           "The fully equipped fitness centre includes treadmills, weights, and modern training equipment. It offers a motivating space for guests who want to stay in shape during their holiday.",
         de:
           "Im voll ausgestatteten Fitnessbereich stehen Laufbänder, Gewichte und moderne Trainingsgeräte bereit. Ein motivierender Bereich für Gäste, die auch im Urlaub fit bleiben möchten.",
-        ru:
-          "В полностью оборудованном фитнес-центре есть беговые дорожки, веса и современные тренажёры. Это удобное место для гостей, которые хотят оставаться в форме во время отдыха.",
+        pl: "W pełni wyposażona siłownia: bieżnie, wolne ciężary i nowoczesny sprzęt. Motywująca przestrzeń dla gości, którzy chcą zachować formę w wakacje.",
       },
       images: [
         {
@@ -268,7 +263,7 @@
             tr: "Fitness merkezi",
             en: "Fitness centre",
             de: "Fitnessbereich",
-            ru: "Фитнес-центр",
+            pl: "Siłownia / fitness",
           },
         },
         {
@@ -277,7 +272,7 @@
             tr: "Fitness merkezi ekipmanları",
             en: "Fitness centre equipment",
             de: "Fitnessgeräte im Fitnessbereich",
-            ru: "Оборудование фитнес-центра",
+            pl: "Sprzęt na siłowni",
           },
         },
       ],
@@ -287,7 +282,7 @@
         tr: "Alışveriş alanı",
         en: "Shopping area",
         de: "Einkaufsbereich",
-        ru: "Торговая зона",
+        pl: "Strefa zakupów",
       },
       text: {
         tr:
@@ -296,8 +291,7 @@
           "From 09:00 to 23:00, guests can access photographer, leather shop, market, and hairdresser services.",
         de:
           "Von 09:00 bis 23:00 stehen Fotograf, Ledergeschäft, Markt und Friseur zur Verfügung.",
-        ru:
-          "С 09:00 до 23:00 доступны услуги фотографа, магазина кожи, маркета и парикмахера.",
+        pl: "Od 09:00 do 23:00 goście mogą skorzystać z fotografa, sklepu ze skórą, marketu i fryzjera.",
       },
       images: [],
     },

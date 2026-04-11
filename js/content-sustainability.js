@@ -4,12 +4,13 @@
 (function () {
   "use strict";
 
-  var COUNTS = { tr: 6, en: 6, de: 6, ru: 6 };
+  var COUNTS = { tr: 6, en: 6, de: 6 };
   var BASE = "assets/sustainability/";
 
   function normLang(code) {
     var c = String(code || "tr").toLowerCase();
-    if (c === "en" || c === "de" || c === "ru") return c;
+    if (c === "pl") return "en";
+    if (c === "en" || c === "de") return c;
     return "tr";
   }
 

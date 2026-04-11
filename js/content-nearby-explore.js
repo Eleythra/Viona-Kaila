@@ -17,7 +17,7 @@
 
   function pick(row, lang) {
     if (!row || typeof row !== "object") return "";
-    var L = lang === "en" || lang === "de" || lang === "ru" ? lang : "tr";
+    var L = lang === "en" || lang === "de" || lang === "pl" ? lang : "tr";
     if (row[L]) return row[L];
     if (row.tr) return row.tr;
     if (row.en) return row.en;
@@ -41,12 +41,12 @@
     if (m < 1000) {
       var mR = Math.round(m / 10) * 10;
       if (lang === "de") return "ca. " + mR + " m";
-      if (lang === "ru") return "≈ " + mR + " м";
+      if (lang === "pl") return "≈ " + mR + " m";
       return "≈ " + mR + " m";
     }
     var kmNum = (m / 1000).toFixed(1);
-    if (lang === "en" || lang === "ru") {
-      if (lang === "ru") return "≈ " + kmNum + " км";
+    if (lang === "en" || lang === "pl") {
+      if (lang === "pl") return "≈ " + kmNum + " km";
       return "≈ " + kmNum + " km";
     }
     var kmComma = kmNum.replace(".", ",");
@@ -58,7 +58,7 @@
     if (meters == null || isNaN(meters) || meters < 0) return "—";
     var min = Math.max(1, Math.round(meters / 75));
     if (lang === "de") return "ca. " + min + " Min. zu Fuß";
-    if (lang === "ru") return "≈ " + min + " мин пешком";
+    if (lang === "pl") return "≈ " + min + " min pieszo";
     if (lang === "tr") return "≈ " + min + " dk yürüyüş";
     return "≈ " + min + " min walk";
   }
@@ -103,7 +103,7 @@
   }
 
   function googleMapsHl(Lg) {
-    if (Lg === "en" || Lg === "de" || Lg === "ru") return Lg;
+    if (Lg === "en" || Lg === "de" || Lg === "pl") return Lg;
     return "tr";
   }
 
@@ -168,7 +168,7 @@
   }
 
   function renderNearbyExploreModule(container, t, lang) {
-    var Lg = lang === "en" || lang === "de" || lang === "ru" ? lang : "tr";
+    var Lg = lang === "en" || lang === "de" || lang === "pl" ? lang : "tr";
     var d = DATA();
     var hotel = d.hotel;
     var places = d.places || [];
