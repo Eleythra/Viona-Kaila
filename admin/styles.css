@@ -4378,22 +4378,6 @@
 .admin-tab--op-hk-standalone .ops-hk-mount {
   min-width: 0;
 }
-.ops-hk-deep-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.85rem;
-  padding: 0.65rem 0.85rem;
-}
-.ops-hk-inline-link {
-  color: #93c5fd;
-  text-decoration: underline;
-  font-weight: 600;
-}
-.ops-hk-inline-link:hover {
-  color: #bfdbfe;
-}
 
 /* WhatsApp ?id=: salt okunur satırlar (aynı tablo, düşük vurgu) */
 .op-table tbody tr.ops-row--readonly td {

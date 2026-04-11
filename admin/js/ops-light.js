@@ -300,37 +300,19 @@
     );
   }
 
-  function hkListUrlWithoutId() {
-    try {
-      var u = new URL(window.location.href);
-      u.searchParams.delete("id");
-      var qs = u.searchParams.toString();
-      return u.pathname + (qs ? "?" + qs : "") + (u.hash || "");
-    } catch (_e) {
-      return "ops-hk.html";
-    }
-  }
-
-  function syncHkLead(deepId) {
+  /** Admin HK sekmesiyle aynı üst metin (WhatsApp / ?id= için ayrı metin yok). */
+  function syncHkLead() {
     var lead = document.getElementById("ops-hk-lead");
     if (!lead) return;
-    if (deepId) {
-      lead.innerHTML =
-        "WhatsApp «Panelde Aç» ile açılan kayıt vurguludur; <strong>durum ve silme</strong> yalnızca bu satırda etkindir. Diğer satırlar bağlam için salt okunurdur. Tüm liste ve filtreler için " +
-        '<a class="ops-hk-inline-link" href="' +
-        escHtml(hkListUrlWithoutId()) +
-        '">tam HK görünümüne dön</a>.';
-    } else {
-      lead.innerHTML =
-        "Misafir isteklerinde durum güncellemesi. Aşağıdan süz; salt okunur tam liste için <strong>İstekler</strong> sekmesini kullanın.";
-    }
+    lead.innerHTML =
+      "Misafir isteklerinde durum güncellemesi. Aşağıdan süz; salt okunur tam liste için <strong>İstekler</strong> sekmesini kullanın.";
   }
 
   async function loadHkMount(mount) {
     var ui = window.AdminUI;
     if (!ui || typeof ui.renderOperationBucket !== "function") throw new Error("ui_missing");
     var deepId = hkDeepLinkUuid();
-    syncHkLead(deepId);
+    syncHkLead();
 
     function renderRequestTable(listHost, cfg) {
       ui.renderOperationBucket(listHost, {
@@ -351,53 +333,26 @@
       });
     }
 
-    function normRowId(id) {
-      return String(id || "").trim().toLowerCase();
-    }
-
     if (deepId) {
-      mount.innerHTML =
-        '<div class="ops-hk-deep-toolbar glass-block">' +
-        '<a class="btn-primary btn-small" href="' +
-        escHtml(hkListUrlWithoutId()) +
-        '">Tüm kayıtlar ve filtreler</a>' +
-        "</div>" +
-        '<div id="ops-hk-list-host" class="ops-hk-list-host"></div>';
+      mount.innerHTML = '<div id="ops-hk-list-host" class="ops-hk-list-host"></div>';
       var listHostDeep = mount.querySelector("#ops-hk-list-host");
 
-      async function loadDeepMerged() {
+      async function loadDeepSingle() {
         try {
-          var q =
-            "?" +
-            new URLSearchParams({
-              type: "request",
-              page: "1",
-              pageSize: String(PAGE_SIZE),
-            }).toString();
-          var parts = await Promise.all([
-            opsFetch("/requests/request/" + encodeURIComponent(deepId)),
-            opsFetch("/requests" + q),
-          ]);
-          var row = parts[0] && parts[0].item;
-          var res = parts[1];
+          var one = await opsFetch("/requests/request/" + encodeURIComponent(deepId));
+          var row = one.item;
           if (!row) {
             listHostDeep.innerHTML =
               '<p class="admin-load-error">Bu UUID ile kayıt bulunamadı veya silinmiş olabilir.</p>';
             return;
           }
-          var nid = normRowId(deepId);
-          var others = (res.items || []).filter(function (r) {
-            return normRowId(r.id) !== nid;
-          });
-          var merged = [row].concat(others).slice(0, PAGE_SIZE);
           renderRequestTable(listHostDeep, {
-            rows: merged,
+            rows: [row],
             pagination: null,
             highlightRowId: deepId,
-            editableRowId: deepId,
+            editableRowId: "",
             onPage: null,
             onStatus: async function (bt, id, status) {
-              if (normRowId(id) !== nid) return;
               await opsFetch(
                 "/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id) + "/status",
                 {
@@ -407,10 +362,9 @@
                 },
               );
               postOpsMutation();
-              await loadDeepMerged();
+              await loadDeepSingle();
             },
             onDelete: async function (bt, id) {
-              if (normRowId(id) !== nid) return;
               await opsFetch("/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id), {
                 method: "DELETE",
               });
@@ -422,7 +376,7 @@
                 window.location.href = u.pathname + (qs ? "?" + qs : "") + (u.hash || "");
               } catch (_e2) {
                 listHostDeep.innerHTML =
-                  '<p class="admin-load-error">Kayıt silindi. Tam liste için üstteki bağlantıyı kullanın.</p>';
+                  '<p class="admin-load-error">Kayıt silindi. Tam liste için adres çubuğundan ?id= kaldırıp sayfayı yenileyin.</p>';
               }
             },
           });
@@ -432,9 +386,9 @@
         }
       }
 
-      await loadDeepMerged();
+      await loadDeepSingle();
       wireOpsCrossTabListRefresh(function () {
-        void loadDeepMerged();
+        void loadDeepSingle();
       });
       return;
     }
