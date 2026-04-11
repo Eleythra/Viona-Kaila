@@ -24,7 +24,7 @@
   var ITEMS = [
     {
       img: "assets/images/alanya/dim.png",
-      title: { tr: "Dim Çayı", en: "Dim River", de: "Dim-Fluss", pl: "Dim River" },
+      title: { tr: "Dim Çayı", en: "Dim River", de: "Dim-Fluss", pl: "Rzeka Dim" },
       alt: {
         tr: "Dim Çayı ve doğa",
         en: "Dim River and nature",
@@ -47,7 +47,7 @@
         tr: "Kleopatra Plajı",
         en: "Cleopatra Beach",
         de: "Kleopatra-Strand",
-        pl: "Cleopatra Beach",
+        pl: "Plaża Kleopatry",
       },
       alt: {
         tr: "Kleopatra plajı ve deniz",
@@ -67,7 +67,7 @@
     },
     {
       img: "assets/images/alanya/kizilkule.png",
-      title: { tr: "Kızılkule", en: "Red Tower", de: "Roter Turm", pl: "Red Tower" },
+      title: { tr: "Kızılkule", en: "Red Tower", de: "Roter Turm", pl: "Czerwona Wieża" },
       alt: {
         tr: "Kızılkule ve liman",
         en: "Red Tower and harbour",
@@ -86,7 +86,7 @@
     },
     {
       img: "assets/images/alanya/kale.png",
-      title: { tr: "Alanya Kalesi", en: "Alanya Castle", de: "Festung Alanya", pl: "Alanya Castle" },
+      title: { tr: "Alanya Kalesi", en: "Alanya Castle", de: "Festung Alanya", pl: "Zamek w Alanii" },
       alt: {
         tr: "Alanya Kalesi ve manzara",
         en: "Alanya Castle and view",
@@ -109,13 +109,13 @@
         tr: "Alanya Teleferik",
         en: "Alanya Cable Car",
         de: "Alanya-Seilbahn",
-        pl: "Alanya Cable Car",
+        pl: "Kolejka linowa w Alanii",
       },
       alt: {
         tr: "Alanya teleferik manzarası",
         en: "Alanya cable car view",
         de: "Seilbahn Alanya",
-        pl: "Alanya cable car view",
+        pl: "Widok z kolejki linowej w Alanii",
       },
       text: {
         tr:
@@ -133,13 +133,13 @@
         tr: "Damlataş Mağarası",
         en: "Damlataş Cave",
         de: "Damlataş-Höhle",
-        pl: "Damlataş Cave",
+        pl: "Jaskinia Damlataş",
       },
       alt: {
         tr: "Damlataş Mağarası içi",
         en: "Inside Damlataş Cave",
         de: "In der Damlataş-Höhle",
-        pl: "Inside Damlataş Cave",
+        pl: "Wnętrze jaskini Damlataş",
       },
       text: {
         tr:

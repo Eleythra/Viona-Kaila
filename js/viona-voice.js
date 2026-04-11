@@ -58,6 +58,18 @@
     };
   }
 
+  /** Render’da SPEECH_CLIENT_SECRET ile aynı; boşsa header gönderilmez. */
+  function speechAuthHeaders() {
+    var s = "";
+    try {
+      if (typeof window.__VIONA_SPEECH_CLIENT_SECRET__ === "string") {
+        s = String(window.__VIONA_SPEECH_CLIENT_SECRET__ || "").trim();
+      }
+    } catch (e) {}
+    if (!s) return {};
+    return { "X-Viona-Speech-Secret": s };
+  }
+
   function speechTimeoutMs(key, fallback) {
     var cfg = window.VIONA_CHAT_CONFIG || {};
     var n = Number(cfg[key]);
@@ -435,7 +447,7 @@
           ep.stt + "?locale=" + encodeURIComponent(azureLocale()),
           {
             method: "POST",
-            headers: { "Content-Type": "application/octet-stream" },
+            headers: Object.assign({ "Content-Type": "application/octet-stream" }, speechAuthHeaders()),
             body: wavBlob,
           },
           speechTimeoutMs("speechSttTimeoutMs", 25000),
@@ -490,7 +502,7 @@
       ep.tts,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: Object.assign({ "Content-Type": "application/json" }, speechAuthHeaders()),
         body: JSON.stringify({ text: plainText, locale: azureLocale() }),
       },
       speechTimeoutMs("speechTtsTimeoutMs", 35000),

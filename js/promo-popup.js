@@ -2,10 +2,10 @@
   "use strict";
 
   /**
-   * Sabit indirim popup — görseller `assets/indirim/indirim-{TR|EN|DE}.png`; PL için şimdilik EN görseli kullanılır.
+   * Sabit indirim popup — görseller `assets/indirim/indirim-{TR|EN|DE|PL}.png`.
    * Güncelleme: dosyayı değiştirin; tarayıcı önbelleğini kırmak için aşağıdaki CACHE_BUST değerini artırın.
    */
-  var CACHE_BUST = "1";
+  var CACHE_BUST = "2";
   var POPUP_ID = "discount-promo-popup";
   var SEEN_SESSION_KEY = "viona_indirim_popup_seen_v2";
   var HOME_VISIBLE_MAX_FRAMES = 12;
@@ -14,7 +14,7 @@
     tr: "assets/indirim/indirim-TR.png?v=" + CACHE_BUST,
     en: "assets/indirim/indirim-EN.png?v=" + CACHE_BUST,
     de: "assets/indirim/indirim-DE.png?v=" + CACHE_BUST,
-    pl: "assets/indirim/indirim-EN.png?v=" + CACHE_BUST,
+    pl: "assets/indirim/indirim-PL.png?v=" + CACHE_BUST,
   };
 
   function getLang() {

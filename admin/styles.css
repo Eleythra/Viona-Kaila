@@ -2044,6 +2044,14 @@
   gap: 12px;
   max-width: min(520px, 100%);
 }
+.logs-toolbar__date-hint {
+  grid-column: 1 / -1;
+  margin: -4px 0 0;
+  max-width: min(640px, 100%);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #8fa3c4;
+}
 #tab-logs .logs-field-label {
   display: grid;
   gap: 6px;

@@ -17,7 +17,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/styles.css?v=30" />
-    <link rel="stylesheet" href="styles.css?v=51" />
+    <link rel="stylesheet" href="styles.css?v=52" />
   </head>
   <body class="admin-body">
     <section id="admin-login" class="admin-login">
@@ -56,7 +56,7 @@
             <button type="button" data-tab="guest_notifications" aria-controls="tab-guest-notifications" title="Misafir bildirim kayıtlarını açar">Misafir bildirimleri</button>
             <button type="button" data-tab="evaluations" aria-controls="tab-evaluations" title="Misafir anket özeti">Değerlendirmeler</button>
             <button type="button" data-tab="comments" aria-controls="tab-comments" title="Misafir yorumları — modül yakında">Yorumlar</button>
-            <button type="button" data-tab="logs" aria-controls="tab-logs" title="Sohbet günlükleri ve kalite incelemesi">Loglar</button>
+            <button type="button" data-tab="logs" aria-controls="tab-logs" title="Sohbet günlükleri: filtre, tablo ve dışa aktarım">Loglar</button>
             <button type="button" data-tab="pdf-report" aria-controls="tab-pdf-report" title="PDF rapor oluşturma ekranını açar">Rapor</button>
           </nav>
         </div>
@@ -395,7 +395,7 @@
             <div class="logs-page-title">
               <h2>Sohbet logları</h2>
               <p class="logs-page-title__sub">
-                Asistanın her turda kaydettiği gözlemler: niyet, katman, güven ve fallback bilgisi eğitim ve kalite incelemesi için burada toplanır. Liste ve CSV aynı filtreleri kullanır; CSV en fazla 5000 satır ve en yeni kayıt üsttedir.
+                Asistanın her turda kaydettiği gözlemler: niyet, katman, güven ve fallback bilgisi eğitim, izleme ve raporlama için burada listelenir. Liste ve CSV aynı filtreleri kullanır; CSV en fazla 5000 satır ve en yeni kayıt üsttedir.
               </p>
             </div>
             <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
@@ -466,7 +466,7 @@
               <p class="logs-section__eyebrow">Sorgu</p>
               <h3 class="logs-section__title">Filtreler ve dışa aktarım</h3>
               <p class="logs-section__desc">
-                Tarih, dil, intent ve katman ile daraltın. CSV dosyasının başında Türkçe açıklama ve sütun sözlüğü vardır; ham teknik alan adları açıklama satırlarında parantez içinde verilir. Liste ile aynı filtreler geçerlidir.
+                Tarih, dil, intent ve katman ile daraltın. Başlangıç ve bitiş boşken dönem ana sayfa panosuyla aynıdır (son ~30 gün; test kayıtları hariç). CSV dosyasının başında Türkçe açıklama ve sütun sözlüğü vardır; ham teknik alan adları açıklama satırlarında parantez içinde verilir. Liste ile aynı filtreler geçerlidir.
               </p>
             </header>
             <div class="logs-toolbar">
@@ -475,6 +475,9 @@
                 <label class="logs-field-label">Başlangıç <input id="logs-from" type="date" /></label>
                 <label class="logs-field-label">Bitiş <input id="logs-to" type="date" /></label>
               </div>
+              <p class="logs-toolbar__date-hint" role="note">
+                İki tarih de boşsa sunucu pano ile aynı pencereyi uygular; doldurduğunuzda yalnızca o aralık kullanılır.
+              </p>
               <select id="logs-language" class="logs-toolbar__select" aria-label="Arayüz dili">
                 <option value="">Dil (tümü)</option>
                 <option value="tr">TR</option>
@@ -535,7 +538,7 @@
     <script src="../js/requests/config.js?v=20"></script>
     <script src="../js/hotel-room-numbers.js?v=1"></script>
     <script src="js/data-adapter.js?v=22"></script>
-    <script src="js/ui.js?v=67"></script>
-    <script src="js/app.js?v=54"></script>
+    <script src="js/ui.js?v=70"></script>
+    <script src="js/app.js?v=55"></script>
   </body>
 </html>

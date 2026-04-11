@@ -7,7 +7,7 @@
     tr: { href: "assets/documents/transfer/tr-Transfer.pdf", file: "Kaila-Transfer-TR.pdf" },
     en: { href: "assets/documents/transfer/en-Transfer-fixed.pdf", file: "Kaila-Transfer-EN.pdf" },
     de: { href: "assets/documents/transfer/de-Transfer-fixed.pdf", file: "Kaila-Transfer-DE.pdf" },
-    pl: { href: "assets/documents/transfer/en-Transfer-fixed.pdf", file: "Kaila-Transfer-EN.pdf" },
+    pl: { href: "assets/documents/transfer/pl-Transfer.pdf", file: "Kaila-Transfer-PL.pdf" },
   };
 
   var ROWS = [

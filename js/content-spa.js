@@ -79,13 +79,13 @@
       tr: "assets/docs/spa-price-list-tr.pdf",
       en: "assets/docs/spa-price-list-en.pdf",
       de: "assets/docs/spa-price-list-de.pdf",
-      pl: "assets/docs/spa-price-list-en.pdf",
+      pl: "assets/docs/pl-SpaMenu.pdf",
     },
     download: {
       tr: "kaila-spa-fiyat-listesi-tr.pdf",
       en: "kaila-spa-price-list-en.pdf",
       de: "kaila-spa-preisliste-de.pdf",
-      pl: "kaila-spa-price-list-en.pdf",
+      pl: "pl-SpaMenu.pdf",
     },
   };
 

@@ -4641,9 +4641,9 @@
       var fb = kpis.fallbackRate != null ? kpis.fallbackRate + "%" : "—";
       var cards = [
         {
-          title: "Toplam Sohbet",
+          title: "Toplam sohbet sayısı",
           value: kpis.totalChats != null ? kpis.totalChats : "—",
-          hint: "Kayıtlı bot sohbet adedi",
+          hint: "Tarih boşken pano ile aynı pencere (son ~30 gün); test kayıtları hariç.",
         },
         {
           title: "Fallback Oranı",
@@ -5138,7 +5138,12 @@
       }
       mountEl.innerHTML =
         '<div class="logs-kpi-grid logs-kpi-grid--three" role="list">' +
-        card("logs-kpi-card--total", "Toplam kayıt", String(total), "Seçili tarih ve filtrelerle eşleşen mesaj") +
+        card(
+          "logs-kpi-card--total",
+          "Toplam sohbet sayısı",
+          String(total),
+          "Tarih boşken pano ile aynı pencere (son ~30 gün); test kayıtları hariç. Diğer filtreler uygulanır.",
+        ) +
         card("logs-kpi-card--fallback", "Fallback oranı", String(s.fallbackRate || 0) + "%", "Fallback katmanına düşenlerin payı") +
         card("logs-kpi-card--multi", "Çoklu niyet", String(s.multiIntentRate || 0) + "%", "Birden fazla konu işaretli mesajların payı") +
         "</div>";
@@ -5150,6 +5155,8 @@
         mountEl.innerHTML = '<p class="logs-empty">Bu filtrelerle eşleşen kayıt yok. Tarih aralığını veya arama terimini genişletin.</p>';
         return;
       }
+      var logPageSize =
+        pag && Number(pag.pageSize) > 0 ? Math.floor(Number(pag.pageSize)) : 70;
       var html =
         '<div class="logs-bulk-toolbar" role="toolbar" aria-label="Toplu seçim">' +
         '<label class="logs-bulk-toolbar__check">' +
@@ -5158,7 +5165,9 @@
         "</label>" +
         '<button type="button" class="btn-small logs-bulk-toolbar__btn js-logs-clear-selection">Seçimi kaldır</button>' +
         '<button type="button" class="btn-small logs-bulk-toolbar__btn logs-bulk-toolbar__btn--danger js-logs-bulk-delete">Seçilenleri sil</button>' +
-        '<p class="logs-bulk-toolbar__hint">İstemediğiniz satırların işaretini kaldırın; yalnızca işaretli kayıtlar silinir. Diğer sayfalar için sayfa değiştirip tekrarlayın (tek istekte en fazla 200 kayıt).</p>' +
+        '<p class="logs-bulk-toolbar__hint">Yalnızca işaretli satırlar silinir; bu sayfada en fazla ' +
+        esc(String(logPageSize)) +
+        " seçebilirsiniz. Sunucu tek istekte en fazla 200 kimlik kabul eder; daha fazlası için sayfa değiştirip işlemi yineleyin.</p>" +
         "</div>" +
         '<div class="bucket-table-wrap bucket-table-wrap--logs"><table class="admin-table admin-table--logs"><thead><tr>' +
         '<th class="admin-table__th--check"><span class="sr-only">Seç</span></th>' +

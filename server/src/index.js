@@ -1,5 +1,6 @@
 /** Dotenv + process.env önce yüklensin (diğer modüllerden önce). */
 import { getEnv, getEnvBootstrapDiagnostics } from "./config/env.js";
+import crypto from "node:crypto";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -8,7 +9,12 @@ import guestRequestsRouter from "./modules/guest-requests/guest-requests.router.
 import surveysRouter from "./modules/surveys/surveys.router.js";
 import adminRouter from "./modules/admin/admin.router.js";
 import opsLinkRouter from "./modules/ops-link/ops-link.router.js";
-import { createSpeechRouter, createSttRawMiddleware, handleStt } from "./modules/speech/speech.router.js";
+import {
+  createSpeechRouter,
+  createSttRawMiddleware,
+  handleStt,
+  speechClientAuthMiddleware,
+} from "./modules/speech/speech.router.js";
 import { getSupabase, isSupabaseConfigured, withSupabaseFetchGuard } from "./lib/supabase.js";
 import { createGuestRequest } from "./modules/guest-requests/guest-requests.service.js";
 import {
@@ -303,155 +309,43 @@ async function processCreateGuestRequestAction(data) {
   }
 }
 
-app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    contentSecurityPolicy: false,
-  }),
-);
+/** Meta X-Hub-Signature-256 = sha256(HMAC_SHA256(app_secret, raw_body)). req.body önce Buffer olmalı. */
+function verifyWhatsappWebhookSignature(req, res, next) {
+  const buf = Buffer.isBuffer(req.body) ? req.body : Buffer.from(req.body || [], "utf8");
+  const secret = String(getEnv().whatsappAppSecret || "").trim();
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      // Server-to-server / curl / health-check requests may have no Origin.
-      if (!origin) return callback(null, true);
-      if (isAllowedOrigin(origin)) return callback(null, true);
-      return callback(new Error("cors_not_allowed"));
-    },
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-Admin-Token",
-      "X-Ops-Token",
-      "X-Viona-Ops-Page",
-    ],
-    credentials: false,
-  }),
-);
+  /* Sır yok: eski davranış (Meta çalışmaya devam eder). Sır varken sahte POST’lar reddedilir. */
+  if (!secret) {
+    try {
+      req.body = buf.length ? JSON.parse(buf.toString("utf8")) : {};
+    } catch {
+      return res.status(400).json({ ok: false, error: "invalid_json" });
+    }
+    return next();
+  }
 
-app.use(
-  "/api",
-  rateLimit({
-    windowMs: env.rateLimitWindowMs,
-    max: env.rateLimitMax,
-    standardHeaders: true,
-    legacyHeaders: false,
-  }),
-);
-
-app.use(
-  "/api/admin",
-  rateLimit({
-    windowMs: env.rateLimitWindowMs,
-    max: env.adminRateLimitMax,
-    standardHeaders: true,
-    legacyHeaders: false,
-  }),
-);
-
-app.use(
-  "/api/ops",
-  rateLimit({
-    windowMs: env.rateLimitWindowMs,
-    max: Math.max(env.adminRateLimitMax, 120),
-    standardHeaders: true,
-    legacyHeaders: false,
-  }),
-);
-
-app.use(express.json({ limit: "15mb" }));
-app.use(express.urlencoded({ extended: true, limit: "15mb" }));
-
-/** Tarayıcıda http://localhost:PORT/ açıldığında boş / "Cannot GET /" yerine kısa yönlendirme. */
-app.get("/", (_req, res) => {
-  res
-    .type("text/html; charset=utf-8")
-    .send(
-      `<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Viona API</title></head><body style="font-family:system-ui,sans-serif;padding:1.5rem;max-width:40rem;line-height:1.5">
-<h1>Viona Node API</h1>
-<p>Bu süreç yalnızca REST API sunar; misafir arayüzü ayrı (statik site / domain).</p>
-<p><strong>Test:</strong> <a href="/api/health?pretty=1">/api/health?pretty=1</a> (tarayıcıda okunaklı) — ham JSON: <a href="/api/health">/api/health</a></p>
-<p>Operasyon WhatsApp (Cloud API): <code>WHATSAPP_ACCESS_TOKEN</code>, <code>WHATSAPP_PHONE_NUMBER_ID</code>, <code>WHATSAPP_TECH_RECIPIENTS</code> / <code>WHATSAPP_HK_RECIPIENTS</code> / <code>WHATSAPP_FRONT_RECIPIENTS</code> — ayrıntı <code>server/.env.example</code>.</p>
-</body></html>`,
-    );
-});
-
-function escapeHtmlJsonPreview(s) {
-  return String(s)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
+  const sig = String(req.headers["x-hub-signature-256"] || "").trim();
+  if (!sig.startsWith("sha256=")) {
+    console.warn("whatsapp_webhook_rejected reason=bad_signature_header");
+    return res.status(403).type("text/plain").send("invalid_signature");
+  }
+  const digest = crypto.createHmac("sha256", secret).update(buf).digest("hex");
+  const expected = `sha256=${digest}`;
+  const a = Buffer.from(sig, "utf8");
+  const b = Buffer.from(expected, "utf8");
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+    console.warn("whatsapp_webhook_rejected reason=signature_mismatch");
+    return res.status(403).type("text/plain").send("invalid_signature");
+  }
+  try {
+    req.body = buf.length ? JSON.parse(buf.toString("utf8")) : {};
+  } catch {
+    return res.status(400).json({ ok: false, error: "invalid_json" });
+  }
+  return next();
 }
 
-app.get("/api/health", (req, res) => {
-  const hotelTz = String(process.env.HOTEL_TIMEZONE || process.env.HOTEL_TZ || "Europe/Istanbul").trim();
-  const payload = {
-    ok: true,
-    service: "viona-node-api",
-    envBootstrap: getEnvBootstrapDiagnostics(),
-    adminAuthConfigured: Boolean(env.adminApiToken),
-    hasSupabase: env.hasSupabase,
-    /** TTS/STT için Azure anahtarı yüklü mü (Render’da AZURE_SPEECH_KEY kontrolü). */
-    azureSpeechConfigured: Boolean(String(env.azureSpeechKey || "").trim()),
-    /** Geç çıkış “bugün” eşiği için kullanılan IANA dilimi (varsayılan Europe/Istanbul). */
-    hotelTimezone: hotelTz || "Europe/Istanbul",
-    /** WhatsApp operasyon (Cloud): token/phone id ve alıcı sayıları (numara listelenmez). */
-    whatsappOperational: getWhatsappOperationalHealthSummary(),
-    /** Saha /api/ops: env’de token tanımlı mı (değerler listelenmez). Bu alan yoksa sunucu sürümü /api/ops öncesi. */
-    opsLinkTokensConfigured: {
-      hk: Boolean(String(env.opsLinkTokenHk || "").trim()),
-      tech: Boolean(String(env.opsLinkTokenTech || "").trim()),
-      front: Boolean(String(env.opsLinkTokenFront || "").trim()),
-    },
-    /** 1 iken /api/ops token olmadan yalnızca güvenilir origin + X-Viona-Ops-Page ile açılır (dahili kullanım). */
-    opsTrustOpsPageHeader: Boolean(env.opsTrustOpsPageHeader),
-  };
-  const pretty =
-    String(req.query?.pretty || "") === "1" ||
-    String(req.headers?.accept || "").toLowerCase().includes("text/html");
-  if (pretty) {
-    const body = escapeHtmlJsonPreview(JSON.stringify(payload, null, 2));
-    return res
-      .type("text/html; charset=utf-8")
-      .send(
-        `<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>/api/health</title></head><body style="font-family:ui-monospace,monospace;padding:1rem;font-size:14px;line-height:1.4;background:#fafafa"><pre style="white-space:pre-wrap;word-break:break-word;margin:0">${body}</pre></body></html>`,
-      );
-  }
-  res.json(payload);
-});
-
-app.use("/api/guest-requests", guestRequestsRouter);
-app.use("/api/surveys", surveysRouter);
-app.use("/api/admin", adminRouter);
-app.use("/api/ops", opsLinkRouter);
-app.use("/api", createSpeechRouter());
-app.post("/api/stt", createSttRawMiddleware(), handleStt);
-
-// WhatsApp webhook (Meta Cloud API).
-app.get("/api/webhooks/whatsapp", (req, res) => {
-  try {
-    const mode = req.query["hub.mode"];
-    const token = req.query["hub.verify_token"];
-    const challenge = req.query["hub.challenge"];
-    if (mode !== "subscribe") {
-      return res.status(400).send("invalid_mode");
-    }
-    if (!process.env.WHATSAPP_VERIFY_TOKEN) {
-      return res.status(503).send("verify_token_not_configured");
-    }
-    if (token !== process.env.WHATSAPP_VERIFY_TOKEN) {
-      return res.status(403).send("verification_failed");
-    }
-    return res.status(200).send(String(challenge || ""));
-  } catch (err) {
-    console.error("whatsapp_webhook_verify_failed error=%s", err?.message || err);
-    return res.status(500).send("error");
-  }
-});
-
-app.post("/api/webhooks/whatsapp", async (req, res) => {
-  // Meta Cloud API webhook yapısı: entry -> changes -> value -> messages
+async function handleWhatsappWebhookPost(req, res) {
   try {
     const entry = Array.isArray(req.body?.entry) ? req.body.entry[0] : null;
     const change = entry && Array.isArray(entry.changes) ? entry.changes[0] : null;
@@ -507,11 +401,8 @@ app.post("/api/webhooks/whatsapp", async (req, res) => {
       return res.status(200).json({ ok: false, reason: "upstream_invalid_payload" });
     }
 
-    // Web ile aynı: kayıt createGuestRequest içinde; türe göre operasyon WhatsApp orada tetiklenir.
     await processCreateGuestRequestAction(data);
 
-    // Asistan cevabını WhatsApp üzerinden kullanıcıya geri gönder.
-    // Token: WHATSAPP_ACCESS_TOKEN veya WHATSAPP_CLOUD_ACCESS_TOKEN (operasyon bildirimleri ile aynı).
     try {
       const { token } = resolveWhatsappAccessToken();
       const graphUrl = buildWhatsappGraphMessagesUrl();
@@ -533,16 +424,185 @@ app.post("/api/webhooks/whatsapp", async (req, res) => {
         console.warn("whatsapp_reply_skipped reason=missing_token_or_phone_id");
       }
     } catch (sendErr) {
-      console.warn(
-        "whatsapp_send_message_failed error=%s",
-        sendErr?.message || sendErr,
-      );
+      console.warn("whatsapp_send_message_failed error=%s", sendErr?.message || sendErr);
     }
 
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error("whatsapp_webhook_handler_failed error=%s", err?.message || err);
     return res.status(500).json({ ok: false, error: "internal_error" });
+  }
+}
+
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    contentSecurityPolicy: false,
+  }),
+);
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Server-to-server / curl / health-check requests may have no Origin.
+      if (!origin) return callback(null, true);
+      if (isAllowedOrigin(origin)) return callback(null, true);
+      return callback(new Error("cors_not_allowed"));
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Admin-Token",
+      "X-Ops-Token",
+      "X-Viona-Ops-Page",
+      "X-Viona-Speech-Secret",
+    ],
+    credentials: false,
+  }),
+);
+
+app.use(
+  "/api",
+  rateLimit({
+    windowMs: env.rateLimitWindowMs,
+    max: env.rateLimitMax,
+    standardHeaders: true,
+    legacyHeaders: false,
+  }),
+);
+
+app.use(
+  "/api/admin",
+  rateLimit({
+    windowMs: env.rateLimitWindowMs,
+    max: env.adminRateLimitMax,
+    standardHeaders: true,
+    legacyHeaders: false,
+  }),
+);
+
+app.use(
+  "/api/ops",
+  rateLimit({
+    windowMs: env.rateLimitWindowMs,
+    max: Math.max(env.adminRateLimitMax, 120),
+    standardHeaders: true,
+    legacyHeaders: false,
+  }),
+);
+
+/** Ham gövde + imza; `express.json` önce olmamalı. */
+app.post(
+  "/api/webhooks/whatsapp",
+  express.raw({ limit: "6mb" }),
+  verifyWhatsappWebhookSignature,
+  handleWhatsappWebhookPost,
+);
+
+app.use(express.json({ limit: "15mb" }));
+app.use(express.urlencoded({ extended: true, limit: "15mb" }));
+
+const speechLimiter = rateLimit({
+  windowMs: env.rateLimitWindowMs,
+  max: Math.min(60, Math.max(24, Math.floor(env.rateLimitMax / 4))),
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use("/api/tts", speechLimiter);
+
+/** Tarayıcıda http://localhost:PORT/ açıldığında boş / "Cannot GET /" yerine kısa yönlendirme. */
+app.get("/", (_req, res) => {
+  res
+    .type("text/html; charset=utf-8")
+    .send(
+      `<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Viona API</title></head><body style="font-family:system-ui,sans-serif;padding:1.5rem;max-width:40rem;line-height:1.5">
+<h1>Viona Node API</h1>
+<p>Bu süreç yalnızca REST API sunar; misafir arayüzü ayrı (statik site / domain).</p>
+<p><strong>Test:</strong> <a href="/api/health?pretty=1">/api/health?pretty=1</a> (tarayıcıda okunaklı) — ham JSON: <a href="/api/health">/api/health</a></p>
+<p>Operasyon WhatsApp (Cloud API): <code>WHATSAPP_ACCESS_TOKEN</code>, <code>WHATSAPP_PHONE_NUMBER_ID</code>, <code>WHATSAPP_TECH_RECIPIENTS</code> / <code>WHATSAPP_HK_RECIPIENTS</code> / <code>WHATSAPP_FRONT_RECIPIENTS</code> — ayrıntı <code>server/.env.example</code>.</p>
+</body></html>`,
+    );
+});
+
+function escapeHtmlJsonPreview(s) {
+  return String(s)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+app.get("/api/health", (req, res) => {
+  const hotelTz = String(process.env.HOTEL_TIMEZONE || process.env.HOTEL_TZ || "Europe/Istanbul").trim();
+  const payload = {
+    ok: true,
+    service: "viona-node-api",
+    envBootstrap: getEnvBootstrapDiagnostics(),
+    adminAuthConfigured: Boolean(env.adminApiToken),
+    hasSupabase: env.hasSupabase,
+    /** TTS/STT için Azure anahtarı yüklü mü (Render’da AZURE_SPEECH_KEY kontrolü). */
+    azureSpeechConfigured: Boolean(String(env.azureSpeechKey || "").trim()),
+    /** Geç çıkış “bugün” eşiği için kullanılan IANA dilimi (varsayılan Europe/Istanbul). */
+    hotelTimezone: hotelTz || "Europe/Istanbul",
+    /** WhatsApp operasyon (Cloud): token/phone id ve alıcı sayıları (numara listelenmez). */
+    whatsappOperational: getWhatsappOperationalHealthSummary(),
+    /** Render’da WHATSAPP_APP_SECRET tanımlı mı (değer sızmaz); webhook POST imza kontrolü buna bağlı. */
+    whatsappWebhookSignatureConfigured: Boolean(env.whatsappAppSecret),
+    /** Saha /api/ops: env’de token tanımlı mı (değerler listelenmez). Bu alan yoksa sunucu sürümü /api/ops öncesi. */
+    opsLinkTokensConfigured: {
+      hk: Boolean(String(env.opsLinkTokenHk || "").trim()),
+      tech: Boolean(String(env.opsLinkTokenTech || "").trim()),
+      front: Boolean(String(env.opsLinkTokenFront || "").trim()),
+    },
+    /** 1 iken /api/ops token olmadan yalnızca güvenilir origin + X-Viona-Ops-Page ile açılır (dahili kullanım). */
+    opsTrustOpsPageHeader: Boolean(env.opsTrustOpsPageHeader),
+  };
+  const pretty =
+    String(req.query?.pretty || "") === "1" ||
+    String(req.headers?.accept || "").toLowerCase().includes("text/html");
+  if (pretty) {
+    const body = escapeHtmlJsonPreview(JSON.stringify(payload, null, 2));
+    return res
+      .type("text/html; charset=utf-8")
+      .send(
+        `<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>/api/health</title></head><body style="font-family:ui-monospace,monospace;padding:1rem;font-size:14px;line-height:1.4;background:#fafafa"><pre style="white-space:pre-wrap;word-break:break-word;margin:0">${body}</pre></body></html>`,
+      );
+  }
+  res.json(payload);
+});
+
+app.use("/api/guest-requests", guestRequestsRouter);
+app.use("/api/surveys", surveysRouter);
+app.use("/api/admin", adminRouter);
+app.use("/api/ops", opsLinkRouter);
+app.use("/api", createSpeechRouter());
+app.post(
+  "/api/stt",
+  speechLimiter,
+  speechClientAuthMiddleware,
+  createSttRawMiddleware(),
+  handleStt,
+);
+
+// WhatsApp webhook (Meta Cloud API).
+app.get("/api/webhooks/whatsapp", (req, res) => {
+  try {
+    const mode = req.query["hub.mode"];
+    const token = req.query["hub.verify_token"];
+    const challenge = req.query["hub.challenge"];
+    if (mode !== "subscribe") {
+      return res.status(400).send("invalid_mode");
+    }
+    if (!process.env.WHATSAPP_VERIFY_TOKEN) {
+      return res.status(503).send("verify_token_not_configured");
+    }
+    if (token !== process.env.WHATSAPP_VERIFY_TOKEN) {
+      return res.status(403).send("verification_failed");
+    }
+    return res.status(200).send(String(challenge || ""));
+  } catch (err) {
+    console.error("whatsapp_webhook_verify_failed error=%s", err?.message || err);
+    return res.status(500).send("error");
   }
 });
 

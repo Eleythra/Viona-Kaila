@@ -154,12 +154,24 @@ function isLikelyTestChatObservation(row) {
 const OBS_BATCH = 1000;
 const OBS_BATCH_MAX = 500000;
 
-async function fetchAllChatObservationRowsForSummary(filterQuery) {
-  const cols = "created_at,layer_used,intent,response_type,multi_intent,is_correct";
+/** Pano `getDashboardReports` ile aynı: tarih yoksa son 30 gün (resolveDateRange({})). */
+function normalizeAdminChatLogQuery(query = {}) {
+  const q = { ...query };
+  const fromE = !String(q.from || "").trim();
+  const toE = !String(q.to || "").trim();
+  if (fromE && toE) {
+    const range = resolveDateRange({});
+    q.from = range.from;
+    q.to = range.to;
+  }
+  return q;
+}
+
+async function fetchAllChatObservationBatched(filterQuery, selectCols) {
   const all = [];
   let offset = 0;
   for (;;) {
-    let qb = getSupabase().from("chat_observations").select(cols);
+    let qb = getSupabase().from("chat_observations").select(selectCols);
     qb = applyChatObservationListFilters(qb, filterQuery);
     qb = qb.order("created_at", { ascending: true });
     const { data, error } = await sb(() => qb.range(offset, offset + OBS_BATCH - 1));
@@ -171,6 +183,13 @@ async function fetchAllChatObservationRowsForSummary(filterQuery) {
     if (offset > OBS_BATCH_MAX) break;
   }
   return all;
+}
+
+async function fetchAllChatObservationRowsForSummary(filterQuery) {
+  return fetchAllChatObservationBatched(
+    filterQuery,
+    "id,created_at,layer_used,intent,response_type,multi_intent,is_correct,session_id,user_message",
+  );
 }
 
 async function fetchAllRowsBatched(table, selectCols, dateQuery, dateColumn = "created_at") {
@@ -865,19 +884,25 @@ function stripNonFilterLogQuery(query = {}) {
 
 export async function listChatObservations(query = {}) {
   const paging = parsePaging(query);
-  let qb = getSupabase().from("chat_observations").select("*", { count: "exact" });
-  qb = applyChatObservationListFilters(qb, query);
-  qb = qb.order("created_at", { ascending: false });
-
-  const { data, error, count } = await sb(() => qb.range(paging.from, paging.to));
-  if (error) rethrowSupabaseError(error);
+  const filterQuery = normalizeAdminChatLogQuery(stripNonFilterLogQuery(query));
+  const rawRows = await fetchAllChatObservationBatched(filterQuery, "*");
+  const filtered = rawRows.filter((r) => !isLikelyTestChatObservation(r));
+  filtered.sort((a, b) => {
+    const ta = String(a.created_at || "");
+    const tb = String(b.created_at || "");
+    return tb.localeCompare(ta);
+  });
+  const total = filtered.length;
+  const start = (paging.page - 1) * paging.pageSize;
+  const items = filtered.slice(start, start + paging.pageSize);
+  const ps = Math.max(1, paging.pageSize || 1);
   return {
-    items: data || [],
+    items,
     pagination: {
       page: paging.page,
       pageSize: paging.pageSize,
-      total: count || 0,
-      totalPages: Math.max(1, Math.ceil((count || 0) / paging.pageSize)),
+      total,
+      totalPages: Math.max(1, Math.ceil(total / ps)),
     },
   };
 }
@@ -933,8 +958,9 @@ export async function deleteChatObservationsBulk(ids) {
 }
 
 export async function getChatObservationSummary(query = {}) {
-  const filterQuery = stripNonFilterLogQuery(query);
-  const rows = await fetchAllChatObservationRowsForSummary(filterQuery);
+  const filterQuery = normalizeAdminChatLogQuery(stripNonFilterLogQuery(query));
+  const rowsRaw = await fetchAllChatObservationRowsForSummary(filterQuery);
+  const rows = rowsRaw.filter((r) => !isLikelyTestChatObservation(r));
 
   const summary = {
     total: rows.length,
@@ -1192,11 +1218,12 @@ function buildChatObservationCsvPreamble(query, columns, dataRowCount) {
 }
 
 export async function exportChatObservations(query = {}, format = "csv") {
+  const nq = normalizeAdminChatLogQuery({ ...query });
   let qb = getSupabase().from("chat_observations").select("*").order("created_at", { ascending: false });
-  qb = applyChatObservationListFilters(qb, query);
+  qb = applyChatObservationListFilters(qb, nq);
   const { data, error } = await sb(() => qb.limit(5000));
   if (error) rethrowSupabaseError(error);
-  const rows = data || [];
+  const rows = (data || []).filter((r) => !isLikelyTestChatObservation(r));
   const includeRawPayload = String(query.include_raw_payload || "false") === "true";
   const mapped = rows.map((row) => mapObservationRow(row, includeRawPayload));
   const columns = Object.keys(mapped[0] || mapObservationRow({}, includeRawPayload));

@@ -595,7 +595,11 @@
         .catch(function () {});
       ui.renderKpis(document.getElementById("kpi-cards"), report.kpis);
       ui.renderMetricRows(document.getElementById("report-chatbot"), [
-        { title: "Toplam Sohbet", value: cb.totalChats, desc: "chat_observations satır sayısı (her misafir mesajı için bir kayıt)." },
+        {
+          title: "Toplam sohbet sayısı",
+          value: cb.totalChats,
+          desc: "Ana sayfa KPI ile aynı: son ~30 gün (tarih boşken), test kayıtları hariç; chat_observations satırı.",
+        },
         { title: "Benzersiz oturum", value: cb.uniqueSessions != null ? cb.uniqueSessions : "—", desc: "Farklı session_id (veya bilinmeyen) grupları." },
         { title: "Günlük kullanım (gün)", value: cb.dailyUsage.length, desc: "En az bir kayıt olan takvim günü sayısı." },
         { title: "Oturum başına mesaj", value: cb.avgMessagesPerUser, desc: "Toplam satır ÷ benzersiz oturum." },
@@ -1328,7 +1332,8 @@
       stripAgg.yapilmadi +
       "</span></li>" +
       iptalLi +
-      '<li class="home-stat"><span class="home-stat__label">Sohbet</span><span class="home-stat__value">' +
+      '<li class="home-stat" title="Tarih boşken pano ile aynı pencere (son ~30 gün); test kayıtları hariç.">' +
+      '<span class="home-stat__label">Toplam sohbet sayısı</span><span class="home-stat__value">' +
       totalChats +
       "</span></li>" +
       '<li class="home-stat"><span class="home-stat__label">Fallback</span><span class="home-stat__value">' +

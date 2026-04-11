@@ -9,7 +9,7 @@
   var SINTON_MENU_PDF = {
     tr: "assets/docs/sinton-menu-tr.pdf",
     en: "assets/docs/sinton-menu-en.pdf",
-    pl: "assets/docs/sinton-menu-en.pdf",
+    pl: "assets/docs/sinton-menu-pl.pdf",
   };
 
   function normLang(code) {

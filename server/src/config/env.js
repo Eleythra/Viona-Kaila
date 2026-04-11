@@ -124,6 +124,27 @@ function optionalAny(names, fallback = "") {
   return fallback;
 }
 
+/**
+ * Render/Meta panelinden yapıştırma: UTF-8 BOM, çevreleyen tırnak, fazla boşluk.
+ * İkinci isim: eski dokümantasyonda görülen FACEBOOK_APP_SECRET (aynı App Secret).
+ */
+export function readWhatsappMetaAppSecret() {
+  for (const name of ["WHATSAPP_APP_SECRET", "FACEBOOK_APP_SECRET"]) {
+    const raw = process.env[name];
+    if (raw == null) continue;
+    let s = String(raw).trim();
+    if (s.charCodeAt(0) === 0xfeff) s = s.slice(1).trim();
+    if (
+      s.length >= 2 &&
+      ((s[0] === '"' && s[s.length - 1] === '"') || (s[0] === "'" && s[s.length - 1] === "'"))
+    ) {
+      s = s.slice(1, -1).trim();
+    }
+    if (s) return s;
+  }
+  return "";
+}
+
 function optionalInt(name, fallback) {
   const raw = optional(name, String(fallback));
   const n = Number(raw);
@@ -208,5 +229,14 @@ export function getEnv() {
     rateLimitWindowMs: optionalInt("RATE_LIMIT_WINDOW_MS", 60_000),
     rateLimitMax: optionalInt("RATE_LIMIT_MAX", 180),
     adminRateLimitMax: optionalInt("ADMIN_RATE_LIMIT_MAX", 80),
+    /** Meta WhatsApp App Secret (Render: WHATSAPP_APP_SECRET). Webhook POST imzası; boşsa doğrulama yok. */
+    get whatsappAppSecret() {
+      return readWhatsappMetaAppSecret();
+    },
+    /**
+     * TTS/STT: istemci `X-Viona-Speech-Secret` ile aynı değeri göndermeli. Boşsa kontrol yok (mevcut davranış).
+     * Statik sitede aynı değer `window.__VIONA_SPEECH_CLIENT_SECRET__` ile verilir (kaynak görüntülenebilir; maliyet sınırı).
+     */
+    speechClientSecret: optionalAny(["SPEECH_CLIENT_SECRET", "VIONA_SPEECH_CLIENT_SECRET"], ""),
   };
 }
