@@ -488,25 +488,18 @@
 
   async function loadHkMount(mount) {
     var ui = window.AdminUI;
-    if (!ui || typeof ui.renderOperationBucket !== "function") throw new Error("ui_missing");
+    if (!ui || typeof ui.renderBucketTable !== "function") throw new Error("ui_missing");
     if (typeof ui.renderOpsSingleBucketSummary !== "function") throw new Error("ui_missing");
     var initialHighlightId = hkDeepLinkUuid();
     if (initialHighlightId) stripOpsDeepQueryKeys(["id"]);
+    var warnedMissingDeep = false;
 
     function renderRequestTable(listHost, cfg) {
-      ui.renderOperationBucket(listHost, {
-        bucketType: "request",
-        rows: cfg.rows || [],
+      ui.renderBucketTable(listHost, "request", cfg.rows || [], {
         pagination: cfg.pagination,
+        readOnly: false,
         highlightRowId: cfg.highlightRowId || "",
-        editableRowId: cfg.editableRowId != null ? cfg.editableRowId : "",
         onPage: typeof cfg.onPage === "function" ? cfg.onPage : null,
-        buttonLabels: ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"],
-        summaryRow: function (r) {
-          return typeof ui.operationSummaryForType === "function"
-            ? ui.operationSummaryForType("request", r)
-            : "—";
-        },
         onStatus: cfg.onStatus,
         onDelete: cfg.onDelete,
       });
@@ -563,6 +556,9 @@
 
     async function load(pageNum) {
       page = pageNum != null ? pageNum : page;
+      var deeplinkHint = document.getElementById("ops-deeplink-hint");
+
+      if (summaryHost) summaryHost.classList.remove("hidden");
       var fq = opQueryFromFilter(hkFilterState);
       var q = Object.assign(
         {
@@ -588,6 +584,17 @@
           if (String(itHk[ih].id || "").trim().toLowerCase() === initialHighlightId) {
             highlightRowId = initialHighlightId;
             break;
+          }
+        }
+        if (highlightRowId && deeplinkHint) {
+          deeplinkHint.textContent = "";
+          deeplinkHint.classList.add("hidden");
+        } else if (initialHighlightId && !highlightRowId && !warnedMissingDeep) {
+          warnedMissingDeep = true;
+          if (deeplinkHint) {
+            deeplinkHint.textContent =
+              "Bağlantıdaki kayıt bu sayfada yok; süzgeci sıfırlayın veya sayfalama ile arayın.";
+            deeplinkHint.classList.remove("hidden");
           }
         }
       }
@@ -629,25 +636,18 @@
 
   async function loadTechMount(mount) {
     var ui = window.AdminUI;
-    if (!ui || typeof ui.renderOperationBucket !== "function") throw new Error("ui_missing");
+    if (!ui || typeof ui.renderBucketTable !== "function") throw new Error("ui_missing");
     if (typeof ui.renderOpsSingleBucketSummary !== "function") throw new Error("ui_missing");
     var initialHighlightId = techDeepLinkUuid();
     if (initialHighlightId) stripOpsDeepQueryKeys(["id"]);
+    var warnedMissingDeepTech = false;
 
     function renderFaultTable(listHost, cfg) {
-      ui.renderOperationBucket(listHost, {
-        bucketType: "fault",
-        rows: cfg.rows || [],
+      ui.renderBucketTable(listHost, "fault", cfg.rows || [], {
         pagination: cfg.pagination,
+        readOnly: false,
         highlightRowId: cfg.highlightRowId || "",
-        editableRowId: cfg.editableRowId != null ? cfg.editableRowId : "",
         onPage: typeof cfg.onPage === "function" ? cfg.onPage : null,
-        buttonLabels: ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"],
-        summaryRow: function (r) {
-          return typeof ui.operationSummaryForType === "function"
-            ? ui.operationSummaryForType("fault", r)
-            : "—";
-        },
         onStatus: cfg.onStatus,
         onDelete: cfg.onDelete,
       });
@@ -704,6 +704,9 @@
 
     async function load(pageNum) {
       page = pageNum != null ? pageNum : page;
+      var deeplinkHintT = document.getElementById("ops-deeplink-hint");
+
+      if (techSummaryHost) techSummaryHost.classList.remove("hidden");
       var fq = opQueryFromFilter(techFilterState);
       var q = Object.assign(
         {
@@ -729,6 +732,17 @@
           if (String(itT[it].id || "").trim().toLowerCase() === initialHighlightId) {
             highlightRowId = initialHighlightId;
             break;
+          }
+        }
+        if (highlightRowId && deeplinkHintT) {
+          deeplinkHintT.textContent = "";
+          deeplinkHintT.classList.add("hidden");
+        } else if (initialHighlightId && !highlightRowId && !warnedMissingDeepTech) {
+          warnedMissingDeepTech = true;
+          if (deeplinkHintT) {
+            deeplinkHintT.textContent =
+              "Bağlantıdaki kayıt bu sayfada yok; süzgeci sıfırlayın veya sayfalama ile arayın.";
+            deeplinkHintT.classList.remove("hidden");
           }
         }
       }
@@ -770,7 +784,7 @@
 
   async function loadFrontMount(mount) {
     var ui = window.AdminUI;
-    if (!ui || typeof ui.renderOperationFront !== "function" || typeof ui.renderOperationBucket !== "function") {
+    if (!ui || typeof ui.renderOperationFront !== "function") {
       throw new Error("ui_missing");
     }
 
@@ -851,6 +865,7 @@
       syncOpFrontFilterFormFromActiveType();
       var hiliteForRender = pendingFrontHighlight;
       pendingFrontHighlight = null;
+
       var fqC = opQueryFromFilter(opFilterFrontByType.complaint);
       var fqGn = opQueryFromFilter(opFilterFrontByType.guest_notification);
       var fqLc = opQueryFromFilter(opFilterFrontByType.late_checkout);
@@ -909,10 +924,44 @@
       var c = results[3];
       var gn = results[4];
       var lc = results[5];
+      if (hiliteForRender) {
+        var packByDeepType = {
+          complaint: c,
+          guest_notification: gn,
+          late_checkout: lc,
+        };
+        var deepPack = packByDeepType[hiliteForRender.type];
+        var deepFound = false;
+        var wantId = String(hiliteForRender.id || "")
+          .trim()
+          .toLowerCase();
+        if (wantId && deepPack && Array.isArray(deepPack.items)) {
+          for (var di = 0; di < deepPack.items.length; di++) {
+            if (String(deepPack.items[di].id || "")
+              .trim()
+              .toLowerCase() === wantId) {
+              deepFound = true;
+              break;
+            }
+          }
+        }
+        var hintFront = document.getElementById("ops-deeplink-hint");
+        if (hintFront) {
+          if (!deepFound) {
+            hintFront.textContent =
+              "Bağlantıdaki kayıt bu sayfada yok; süzgeci sıfırlayın veya ilgili sekmede sayfalayın.";
+            hintFront.classList.remove("hidden");
+          } else {
+            hintFront.textContent = "";
+            hintFront.classList.add("hidden");
+          }
+        }
+      }
       ui.renderOperationFront(
         inner,
         { complaint: c, guest_notification: gn, late_checkout: lc },
         {
+          readOnly: false,
           initialHighlight: hiliteForRender,
           onPage: function (bt, p) {
             opFrontPages[bt] = p;

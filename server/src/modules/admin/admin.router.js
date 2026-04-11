@@ -13,6 +13,7 @@ import {
   getFrontOfficeOperationSummary,
   getFrontOfficeTypeSummary,
   getGuestBucketTypeSummary,
+  getAdminBucketItem,
   listAdminBucket,
   listChatObservations,
   listSurveySubmissions,
@@ -81,6 +82,20 @@ router.get("/requests", async (req, res) => {
     return res.status(200).json({ ok: true, type, ...result });
   } catch (error) {
     return adminErr(res, error, "admin_list_failed");
+  }
+});
+
+/** Tek kayıt (WhatsApp «panelde aç» / tam panel derin bağlantı). */
+router.get("/requests/:type/:id", async (req, res) => {
+  try {
+    const type = String(req.params.type || "");
+    const item = await getAdminBucketItem(type, req.params.id);
+    return res.status(200).json({ ok: true, type, item });
+  } catch (error) {
+    const msg = String(error?.message || "");
+    if (msg === "invalid_id") return res.status(400).json({ ok: false, error: "invalid_id" });
+    if (msg === "record_not_found") return res.status(404).json({ ok: false, error: "record_not_found" });
+    return adminErr(res, error, "admin_item_get_failed");
   }
 });
 

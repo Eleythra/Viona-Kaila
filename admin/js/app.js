@@ -193,18 +193,11 @@
       ]);
       var res = pairHk[0];
       paintOpHkTechSummary("op-hk-summary-mount", "request", pairHk[1], res);
-      ui.renderOperationBucket(mount, {
-        bucketType: "request",
-        rows: res.items || [],
+      ui.renderBucketTable(mount, "request", res.items || [], {
         pagination: res.pagination,
+        readOnly: false,
         onPage: function (p) {
           void loadOpHk(p);
-        },
-        buttonLabels: ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"],
-        summaryRow: function (r) {
-          return typeof ui.operationSummaryForType === "function"
-            ? ui.operationSummaryForType("request", r)
-            : "—";
         },
         onStatus: async function (bt, id, status) {
           await adapter.updateStatus(bt, id, status);
@@ -213,6 +206,19 @@
         onDelete: async function (bt, id) {
           await adapter.deleteItem(bt, id);
           await loadOpHk(opHkPage);
+        },
+        onWhatsappResend: async function (itemType, id) {
+          try {
+            await adapter.resendWhatsappOperational(itemType, id);
+            window.alert("Kayıt operasyon WhatsApp (Cloud API) hattına yeniden iletildi.");
+            await loadOpHk(opHkPage);
+          } catch (err) {
+            var msg =
+              err && err.message
+                ? String(err.message)
+                : "WhatsApp iletimi tamamlanamadı. Bağlantıyı veya sunucu yanıtını kontrol edin.";
+            window.alert(msg);
+          }
         },
       });
     } catch (e) {
@@ -241,18 +247,11 @@
       ]);
       var res = pairTech[0];
       paintOpHkTechSummary("op-tech-summary-mount", "fault", pairTech[1], res);
-      ui.renderOperationBucket(mount, {
-        bucketType: "fault",
-        rows: res.items || [],
+      ui.renderBucketTable(mount, "fault", res.items || [], {
         pagination: res.pagination,
+        readOnly: false,
         onPage: function (p) {
           void loadOpTech(p);
-        },
-        buttonLabels: ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"],
-        summaryRow: function (r) {
-          return typeof ui.operationSummaryForType === "function"
-            ? ui.operationSummaryForType("fault", r)
-            : "—";
         },
         onStatus: async function (bt, id, status) {
           await adapter.updateStatus(bt, id, status);
@@ -261,6 +260,19 @@
         onDelete: async function (bt, id) {
           await adapter.deleteItem(bt, id);
           await loadOpTech(opTechPage);
+        },
+        onWhatsappResend: async function (itemType, id) {
+          try {
+            await adapter.resendWhatsappOperational(itemType, id);
+            window.alert("Kayıt operasyon WhatsApp (Cloud API) hattına yeniden iletildi.");
+            await loadOpTech(opTechPage);
+          } catch (err) {
+            var msg =
+              err && err.message
+                ? String(err.message)
+                : "WhatsApp iletimi tamamlanamadı. Bağlantıyı veya sunucu yanıtını kontrol edin.";
+            window.alert(msg);
+          }
         },
       });
     } catch (e) {
@@ -455,6 +467,7 @@
         mount,
         { complaint: c, guest_notification: gn, late_checkout: lc },
         {
+          readOnly: false,
           onPage: function (bt, p) {
             opFrontPages[bt] = p;
             void loadOpFront();
@@ -466,6 +479,19 @@
           onDelete: async function (bt, id) {
             await adapter.deleteItem(bt, id);
             await loadOpFront();
+          },
+          onWhatsappResend: async function (itemType, id) {
+            try {
+              await adapter.resendWhatsappOperational(itemType, id);
+              window.alert("Kayıt operasyon WhatsApp (Cloud API) hattına yeniden iletildi.");
+              await loadOpFront();
+            } catch (err) {
+              var msg =
+                err && err.message
+                  ? String(err.message)
+                  : "WhatsApp iletimi tamamlanamadı. Bağlantıyı veya sunucu yanıtını kontrol edin.";
+              window.alert(msg);
+            }
           },
           onTabChange: function (_prevKey, newKey) {
             if (!newKey) return;

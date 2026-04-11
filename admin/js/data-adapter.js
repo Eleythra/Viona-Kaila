@@ -153,6 +153,18 @@
         return null;
       });
     },
+    /** Tek misafir operasyon kaydı (tam panel / derin bağlantı). */
+    getBucketItem: function (type, id) {
+      var url =
+        adminRequestsCollectionUrl() +
+        "/" +
+        encodeURIComponent(type) +
+        "/" +
+        encodeURIComponent(id);
+      return jfetch(url).then(function (d) {
+        return d && d.item != null ? d.item : null;
+      });
+    },
     getFrontOfficeSummary: function (extraQuery) {
       var q = buildQuery(extraQuery || {});
       var url = adminRequestsCollectionUrl() + "/front-summary" + (q ? "?" + q : "");

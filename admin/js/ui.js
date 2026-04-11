@@ -7,6 +7,28 @@
     return d.innerHTML;
   }
 
+  /** WhatsApp «panelde aç» vb.: tam tabloda ilgili satırı vurgula. */
+  function bucketRowHighlightClass(handlers, rowId) {
+    var hid =
+      handlers && handlers.highlightRowId != null ? String(handlers.highlightRowId).trim().toLowerCase() : "";
+    if (!hid) return "";
+    var rid = String(rowId || "").trim().toLowerCase();
+    return rid === hid ? " ops-row--deep-link" : "";
+  }
+
+  function scrollBucketHighlightIntoView(mountEl) {
+    if (!mountEl) return;
+    var el = mountEl.querySelector("tr.ops-row--deep-link");
+    if (!el || !el.scrollIntoView) return;
+    requestAnimationFrame(function () {
+      try {
+        el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      } catch (_e) {
+        el.scrollIntoView(true);
+      }
+    });
+  }
+
   /** Sunucu: raw_payload.admin.guest_satisfaction */
   function rawPayloadAdminSat(r) {
     try {
@@ -2785,6 +2807,7 @@
         html +=
           '<tr class="bucket-row request-row' +
           (ro && st === "new" ? " ops-row--new" : "") +
+          bucketRowHighlightClass(handlers, r.id) +
           '" data-id="' +
           esc(r.id) +
           '" data-status="' +
@@ -2831,6 +2854,7 @@
     }
 
     wireAdminSatisfaction(mountEl, handlers);
+    scrollBucketHighlightIntoView(mountEl);
 
     var search = mountEl.querySelector(".bucket-search");
     var statusFilter = mountEl.querySelector(".bucket-filter-status");
@@ -3010,6 +3034,7 @@
         html +=
           '<tr class="bucket-row complaint-row' +
           (ro && st === "new" ? " ops-row--new" : "") +
+          bucketRowHighlightClass(handlers, r.id) +
           '" data-id="' +
           esc(r.id) +
           '" data-status="' +
@@ -3054,6 +3079,7 @@
     }
 
     wireAdminSatisfaction(mountEl, handlers);
+    scrollBucketHighlightIntoView(mountEl);
 
     var search = mountEl.querySelector(".bucket-search");
     var statusFilter = mountEl.querySelector(".bucket-filter-status");
@@ -3181,7 +3207,7 @@
       '<p class="bucket-help bucket-help--complaints">' +
       (ro
         ? "Salt izleme; durum ön büro operasyon sayfasından. Misafir memnuniyeti burada kaydedilir."
-        : "Beslenme, sağlık ve kutlama bildirimleri; personel notu yerel olarak tarayıcıda saklanır. Gelen kayıtlar operasyon WhatsApp (Cloud API) hattına düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
+        : "Bildirim konusu ve açıklama misafir formundan gelir; personel notu yerel tarayıcıda saklanır. Gelen kayıtlar operasyon WhatsApp (Cloud API) hattına düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
       "</p>" +
       '<div class="bucket-toolbar bucket-toolbar--complaints">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
@@ -3229,6 +3255,7 @@
         html +=
           '<tr class="bucket-row guest-notif-row' +
           (ro && st === "new" ? " ops-row--new" : "") +
+          bucketRowHighlightClass(handlers, r.id) +
           '" data-id="' +
           esc(r.id) +
           '" data-status="' +
@@ -3278,6 +3305,7 @@
     }
 
     wireAdminSatisfaction(mountEl, handlers);
+    scrollBucketHighlightIntoView(mountEl);
 
     var search = mountEl.querySelector(".bucket-search");
     var statusFilter = mountEl.querySelector(".bucket-filter-status");
@@ -3459,6 +3487,7 @@
         html +=
           '<tr class="bucket-row late-checkout-row' +
           (ro && st === "new" ? " ops-row--new" : "") +
+          bucketRowHighlightClass(handlers, r.id) +
           '" data-id="' +
           esc(r.id) +
           '" data-status="' +
@@ -3509,6 +3538,7 @@
     }
 
     wireAdminSatisfaction(mountEl, handlers);
+    scrollBucketHighlightIntoView(mountEl);
 
     var search = mountEl.querySelector(".bucket-search");
     var statusFilter = mountEl.querySelector(".bucket-filter-status");
@@ -3694,6 +3724,7 @@
         html +=
           '<tr class="bucket-row fault-row' +
           (ro && st === "new" ? " ops-row--new" : "") +
+          bucketRowHighlightClass(handlers, r.id) +
           '" data-id="' +
           esc(r.id) +
           '" data-status="' +
@@ -3740,6 +3771,7 @@
     }
 
     wireAdminSatisfaction(mountEl, handlers);
+    scrollBucketHighlightIntoView(mountEl);
 
     var search = mountEl.querySelector(".bucket-search");
     var statusFilter = mountEl.querySelector(".bucket-filter-status");
@@ -4279,7 +4311,9 @@
     var onPage = handlers && handlers.onPage;
     var onDelete = handlers && handlers.onDelete;
     var onTabChange = handlers && handlers.onTabChange;
-    var useCardLayout = Boolean(handlers && handlers.opsRecordLayout === "cards");
+    var onSat = handlers && handlers.onSatisfaction;
+    var onWa = handlers && handlers.onWhatsappResend;
+    var roFront = Boolean(handlers && handlers.readOnly);
     var initialHl = handlers && handlers.initialHighlight;
     var initialHlType = initialHl && initialHl.type ? String(initialHl.type).trim() : "";
     var initialHlRawId = initialHl && initialHl.id ? String(initialHl.id).trim() : "";
@@ -4449,17 +4483,18 @@
       wrap.className = "op-front-panel" + (tab.key === active ? "" : " hidden");
       wrap.setAttribute("role", "tabpanel");
       wrap.setAttribute("data-front-tab", tab.key);
-      renderOperationBucketImpl(wrap, {
-        bucketType: tab.key,
-        rows: (packs[tab.key] && packs[tab.key].items) || [],
-        pagination: packs[tab.key] ? packs[tab.key].pagination : null,
-        highlightRowId: initialHlRawId && initialHlType === tab.key ? initialHlRawId : "",
+      var pack = packs[tab.key] || {};
+      var items = pack.items || [];
+      var pagination = pack.pagination || null;
+      var tableHandlers = {
+        pagination: pagination,
         onPage:
           typeof onPage === "function"
             ? function (next) {
                 onPage(tab.key, next);
               }
             : null,
+        readOnly: roFront,
         onStatus: onStatus,
         onDelete:
           typeof onDelete === "function"
@@ -4467,12 +4502,21 @@
                 return onDelete(bt, rid);
               }
             : null,
-        buttonLabels: tab.labels,
-        summaryRow: function (row) {
-          return operationSummaryForType(tab.key, row);
-        },
-        layout: useCardLayout ? "cards" : undefined,
-      });
+        highlightRowId: initialHlRawId && initialHlType === tab.key ? initialHlRawId : "",
+      };
+      if (typeof onSat === "function") tableHandlers.onSatisfaction = onSat;
+      if (typeof onWa === "function") tableHandlers.onWhatsappResend = onWa;
+      if (tab.key === "request") {
+        renderRequestsPanel(wrap, items, tableHandlers);
+      } else if (tab.key === "complaint") {
+        renderComplaintsPanel(wrap, items, tableHandlers);
+      } else if (tab.key === "guest_notification") {
+        renderGuestNotificationsPanel(wrap, items, tableHandlers);
+      } else if (tab.key === "late_checkout") {
+        renderLateCheckoutsPanel(wrap, items, tableHandlers);
+      } else {
+        wrap.innerHTML = '<p class="admin-load-error">Bilinmeyen ön büro sekmesi.</p>';
+      }
       panelsRoot.appendChild(wrap);
     });
 
