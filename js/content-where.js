@@ -1,6 +1,6 @@
 /**
  * Neredeyim — dik kroki + sabit numaralı işaretler; liste seçimi ve pin tıklaması ile kısa konum tarifi.
- * Düzen: styles.css — :has() yalnızca geniş modül (max-width) için; iç kaydırma yok, sayfa akışı.
+ * Düzen: styles.css — :has() yalnızca geniş modül (max-width) için; iç kaydırma yok, sayfa akışı. Üstte blok özeti + liste, altta kroki.
  */
 (function () {
   "use strict";
@@ -620,41 +620,57 @@
     pageTitle.className = "where-premium-page-title";
     pageTitle.textContent = t("modWhere");
 
-    var landscapeHero = document.createElement("div");
-    landscapeHero.className = "where-kroki-premium-hero";
-    landscapeHero.setAttribute("role", "status");
-    var landscapeHeroP = document.createElement("p");
-    landscapeHeroP.className = "where-kroki-premium-hero__text";
-    landscapeHeroP.textContent = t("whereKrokiLandscapeLead");
-    landscapeHero.appendChild(landscapeHeroP);
-
     var blockLegend = document.createElement("div");
-    blockLegend.className = "where-kroki-block-legend";
-    blockLegend.setAttribute("role", "note");
-    var blockP = document.createElement("p");
-    blockP.className = "where-kroki-block-legend__text";
-    blockP.textContent = t("whereKrokiBlockLegend");
-    blockLegend.appendChild(blockP);
-
-    var orientHint = document.createElement("div");
-    orientHint.className = "where-kroki-orient-hint";
-    orientHint.setAttribute("role", "note");
-    var o1 = document.createElement("p");
-    o1.className = "where-kroki-orient-hint__line where-kroki-orient-hint__line--warn";
-    o1.textContent = t("whereKrokiOrientP1");
-    var o2 = document.createElement("p");
-    o2.className = "where-kroki-orient-hint__line";
-    o2.textContent = t("whereKrokiOrientP2");
-    var o3 = document.createElement("p");
-    o3.className = "where-kroki-orient-hint__line";
-    o3.textContent = t("whereKrokiOrientP3");
-    orientHint.appendChild(o1);
-    orientHint.appendChild(o2);
-    orientHint.appendChild(o3);
-
-    var lead = document.createElement("p");
-    lead.className = "where-premium-lead";
-    lead.textContent = t("whereModuleIntro");
+    blockLegend.className = "where-kroki-block-legend where-kroki-block-legend--hub";
+    blockLegend.setAttribute("role", "region");
+    blockLegend.setAttribute("aria-labelledby", "where-kroki-block-hub-title");
+    var blockTitle = document.createElement("h3");
+    blockTitle.id = "where-kroki-block-hub-title";
+    blockTitle.className = "where-kroki-block-legend__title";
+    blockTitle.textContent = t("whereKrokiBlockHubTitle");
+    var blockBody = document.createElement("div");
+    blockBody.className = "where-kroki-block-legend__body";
+    var guideKeys = ["whereKrokiBlockGuideP1", "whereKrokiBlockGuideP2", "whereKrokiBlockGuideP3"];
+    for (var gi = 0; gi < guideKeys.length; gi++) {
+      var gp = document.createElement("p");
+      gp.className = "where-kroki-block-legend__para";
+      gp.textContent = t(guideKeys[gi]);
+      blockBody.appendChild(gp);
+    }
+    var matrixWrap = document.createElement("div");
+    matrixWrap.className = "where-kroki-block-legend__matrix";
+    matrixWrap.setAttribute("role", "group");
+    var matrixCap = document.createElement("p");
+    matrixCap.id = "where-kroki-legend-matrix-cap";
+    matrixCap.className = "where-kroki-legend-matrix__caption";
+    matrixCap.textContent = t("whereKrokiLegendMatrixCaption");
+    matrixWrap.setAttribute("aria-labelledby", "where-kroki-legend-matrix-cap");
+    var matrixGrid = document.createElement("div");
+    matrixGrid.className = "where-kroki-legend-matrix__grid";
+    var legendRows = [
+      ["whereKrokiLegendRowALabel", "whereKrokiLegendRowAValues"],
+      ["whereKrokiLegendRowBLabel", "whereKrokiLegendRowBValues"],
+      ["whereKrokiLegendRowCLabel", "whereKrokiLegendRowCValues"],
+      ["whereKrokiLegendRowSharedLabel", "whereKrokiLegendRowSharedValues"],
+    ];
+    for (var ri = 0; ri < legendRows.length; ri++) {
+      var rowEl = document.createElement("div");
+      rowEl.className = "where-kroki-legend-row";
+      var rowLab = document.createElement("span");
+      rowLab.className = "where-kroki-legend-row__label";
+      rowLab.textContent = t(legendRows[ri][0]);
+      var rowVal = document.createElement("span");
+      rowVal.className = "where-kroki-legend-row__values";
+      rowVal.textContent = t(legendRows[ri][1]);
+      rowEl.appendChild(rowLab);
+      rowEl.appendChild(rowVal);
+      matrixGrid.appendChild(rowEl);
+    }
+    matrixWrap.appendChild(matrixCap);
+    matrixWrap.appendChild(matrixGrid);
+    blockLegend.appendChild(blockTitle);
+    blockLegend.appendChild(blockBody);
+    blockLegend.appendChild(matrixWrap);
 
     var selectWrap = document.createElement("div");
     selectWrap.className = "where-kroki-select-wrap";
@@ -809,8 +825,6 @@
     controlsCol.setAttribute("aria-describedby", "where-kroki-scroll-hint");
     controlsCol.appendChild(controlsScrollHint);
     controlsCol.appendChild(blockLegend);
-    controlsCol.appendChild(orientHint);
-    controlsCol.appendChild(lead);
     controlsCol.appendChild(selectWrap);
 
     var layoutRow = document.createElement("div");
@@ -819,7 +833,6 @@
     layoutRow.appendChild(kroki);
 
     wrap.appendChild(pageTitle);
-    wrap.appendChild(landscapeHero);
     wrap.appendChild(layoutRow);
     container.appendChild(wrap);
 

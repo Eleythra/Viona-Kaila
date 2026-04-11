@@ -193,7 +193,7 @@ export async function listAdminBucket(type, query = {}) {
   const paging = parsePaging(query);
   let qb = getSupabase().from(cfg.table).select("*", { count: "exact" }).order("submitted_at", { ascending: false });
   qb = applyDateFilters(qb, query, "submitted_at");
-  if (query.status) qb = qb.eq("status", String(query.status));
+  if (query.status) qb = applyGuestBucketStatusFilter(qb, type, query);
   if (type !== "reservation" && query.room_number) {
     const rn = String(query.room_number || "").trim();
     if (rn) qb = qb.eq("room_number", rn);
@@ -236,13 +236,25 @@ export async function getAdminBucketItem(type, id) {
   return data;
 }
 
+const GUEST_BUCKET_TYPES_WITH_NEW = new Set(["request", "fault", "complaint", "guest_notification", "late_checkout"]);
+
+/** Süzgeçte «Bekliyor» (pending) hem eski `new` hem `pending` satırlarını kapsar. */
+function applyGuestBucketStatusFilter(qb, type, query = {}) {
+  const st = String(query?.status || "").trim();
+  if (!st) return qb;
+  if (st === "pending" && GUEST_BUCKET_TYPES_WITH_NEW.has(String(type || ""))) {
+    return qb.in("status", ["new", "pending"]);
+  }
+  return qb.eq("status", st);
+}
+
 function applyGuestBucketListFilters(qb, type, query = {}) {
   let q = applyDateFilters(qb, query, "submitted_at");
   if (type !== "reservation" && query.room_number) {
     const rn = String(query.room_number || "").trim();
     if (rn) q = q.eq("room_number", rn);
   }
-  if (query.status) q = q.eq("status", String(query.status));
+  if (query.status) q = applyGuestBucketStatusFilter(q, type, query);
   return q;
 }
 

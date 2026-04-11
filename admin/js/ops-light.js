@@ -406,7 +406,6 @@
       '<label class="op-filter-field"><span class="op-filter-field__lbl">Durum</span>' +
       '<select id="op-hk-filter-status" class="op-filter-input">' +
       '<option value="">Tüm kayıtlar</option>' +
-      '<option value="new">Yeni</option>' +
       '<option value="pending">Bekliyor</option>' +
       '<option value="in_progress">Yapılıyor</option>' +
       '<option value="done">Yapıldı</option>' +
@@ -427,15 +426,10 @@
     );
   }
 
-  /** Admin HK sekmesiyle aynı üst metin; derin linkte teknik sayfadaki gibi WhatsApp notu. */
-  function syncHkLead(isDeep) {
+  /** Admin HK sekmesiyle aynı üst metin (derin link / WhatsApp’tan açılışta da aynı, sade). */
+  function syncHkLead() {
     var lead = document.getElementById("ops-hk-lead");
     if (!lead) return;
-    if (isDeep) {
-      lead.innerHTML =
-        "WhatsApp «Panelde Aç» ile gelen tek istek kaydı. Tam liste ve süzgeçler için adres çubuğundan <code class=\"ops-light-code\">?id=</code> kaldırıp yenileyin.";
-      return;
-    }
     lead.innerHTML =
       "Misafir isteklerinde durum güncellemesi. Aşağıdan süz; salt okunur tam liste için <strong>İstekler</strong> sekmesini kullanın.";
   }
@@ -448,7 +442,6 @@
       '<label class="op-filter-field"><span class="op-filter-field__lbl">Durum</span>' +
       '<select id="op-tech-filter-status" class="op-filter-input">' +
       '<option value="">Tüm kayıtlar</option>' +
-      '<option value="new">Yeni</option>' +
       '<option value="pending">Bekliyor</option>' +
       '<option value="in_progress">Yapılıyor</option>' +
       '<option value="done">Yapıldı</option>' +
@@ -469,14 +462,9 @@
     );
   }
 
-  function syncTechLead(isDeep) {
+  function syncTechLead() {
     var lead = document.getElementById("ops-tech-lead");
     if (!lead) return;
-    if (isDeep) {
-      lead.innerHTML =
-        "WhatsApp «Panelde Aç» ile gelen tek arıza kaydı. Tam liste ve süzgeçler için adres çubuğundan <code class=\"ops-light-code\">?id=</code> kaldırıp yenileyin.";
-      return;
-    }
     lead.innerHTML =
       "Arıza kayıtlarında durum güncellemesi. Aşağıdan süz; salt okunur tam liste için <strong>Arızalar</strong> sekmesini kullanın.";
   }
@@ -489,7 +477,6 @@
       '<label class="op-filter-field"><span class="op-filter-field__lbl">Durum</span>' +
       '<select id="op-front-filter-status" class="op-filter-input">' +
       '<option value="">Tüm kayıtlar</option>' +
-      '<option value="new">Yeni</option>' +
       '<option value="pending">Bekliyor</option>' +
       '<option value="in_progress">Yapılıyor</option>' +
       '<option value="done">Tamamlandı</option>' +
@@ -514,7 +501,7 @@
     var ui = window.AdminUI;
     if (!ui || typeof ui.renderOperationBucket !== "function") throw new Error("ui_missing");
     var deepId = hkDeepLinkUuid();
-    syncHkLead(Boolean(deepId));
+    syncHkLead();
     if (!deepId && typeof ui.renderOpsSingleBucketSummary !== "function") throw new Error("ui_missing");
 
     function renderRequestTable(listHost, cfg) {
@@ -579,7 +566,7 @@
                 window.location.href = u.pathname + (qs ? "?" + qs : "") + (u.hash || "");
               } catch (_e2) {
                 listHostDeep.innerHTML =
-                  '<p class="admin-load-error">Kayıt silindi. Tam liste için adres çubuğundan ?id= kaldırıp sayfayı yenileyin.</p>';
+                  '<p class="admin-load-error">Kayıt silindi. Tam listeyi görmek için sayfayı yenileyin.</p>';
               }
             },
           });
@@ -705,7 +692,7 @@
     var ui = window.AdminUI;
     if (!ui || typeof ui.renderOperationBucket !== "function") throw new Error("ui_missing");
     var deepId = techDeepLinkUuid();
-    syncTechLead(Boolean(deepId));
+    syncTechLead();
     if (!deepId && typeof ui.renderOpsSingleBucketSummary !== "function") throw new Error("ui_missing");
 
     function renderFaultTable(listHost, cfg) {
@@ -770,7 +757,7 @@
                 window.location.href = u.pathname + (qs ? "?" + qs : "") + (u.hash || "");
               } catch (_e2) {
                 listHostDeep.innerHTML =
-                  '<p class="admin-load-error">Kayıt silindi. Tam liste için adres çubuğundan ?id= kaldırıp sayfayı yenileyin.</p>';
+                  '<p class="admin-load-error">Kayıt silindi. Tam listeyi görmek için sayfayı yenileyin.</p>';
               }
             },
           });
@@ -904,26 +891,18 @@
       } catch (_s) {}
     }
 
-    function syncFrontLead(isDeep) {
+    function syncFrontLead() {
       var lead = document.getElementById("ops-front-lead");
       if (!lead) return;
-      if (isDeep && deep) {
-        var lab = OP_FRONT_SCOPE_LABELS[deep.type] || deep.type;
-        lead.innerHTML =
-          "WhatsApp «Panelde Aç» ile gelen tek kayıt: <strong>" +
-          escHtml(lab) +
-          '</strong> · Tam üç liste için adres çubuğundan <code class="ops-light-code">?type=</code> ve ' +
-          '<code class="ops-light-code">?id=</code> kaldırıp yenileyin.';
-        return;
-      }
       lead.innerHTML =
         "Üstteki rakamlar sunucudan canlı sayılır. Tek süzgeç alanı vardır: alttaki sekmelerden hangi liste seçiliyse " +
         "(Şikâyetler, Misafir bildirimleri, Geç çıkış) <strong>Uygula</strong> yalnız o kategoriye uygulanır; diğer " +
         "ikisinin kayıtlı süzgeci ayrı kalır.";
     }
 
+    syncFrontLead();
+
     if (deep) {
-      syncFrontLead(true);
       mount.innerHTML = '<div id="ops-front-deep-list" class="ops-hk-mount"></div>';
       var listHostDeep = mount.querySelector("#ops-front-deep-list");
       var tabLabels =
@@ -978,7 +957,7 @@
                 window.location.href = u.pathname + (qs ? "?" + qs : "") + (u.hash || "");
               } catch (_e2) {
                 listHostDeep.innerHTML =
-                  '<p class="admin-load-error">Kayıt silindi. Tam liste için adres çubuğundan derin parametreleri kaldırıp sayfayı yenileyin.</p>';
+                  '<p class="admin-load-error">Kayıt silindi. Tam listeyi görmek için sayfayı yenileyin.</p>';
               }
             },
           });
@@ -994,7 +973,6 @@
       return;
     }
 
-    syncFrontLead(false);
     mount.innerHTML =
       '<p id="op-front-filter-scope" class="op-filter-scope" role="status"></p>' +
       frontFilterBarHtml() +

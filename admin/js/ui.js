@@ -356,8 +356,7 @@
   function issueStatusLabel(issueType, status) {
     var s = normalizeBucketStatus(status);
     if (s === "cancelled") return "İptal";
-    if (s === "new") return "Yeni";
-    if (s === "pending") return "Bekliyor";
+    if (s === "new" || s === "pending") return "Bekliyor";
     if (s === "in_progress") {
       return "Yapılıyor";
     }
@@ -419,13 +418,13 @@
       h += stBtn("done", posLabel);
       h += stBtn("rejected", negLabel);
     } else if (st === "done") {
-      h += stBtn("new", "Beklemede");
+      h += stBtn("new", "Bekliyor");
       h += stBtn("rejected", negLabel);
     } else if (st === "rejected") {
-      h += stBtn("new", "Beklemede");
+      h += stBtn("new", "Bekliyor");
       h += stBtn("done", posLabel);
     } else {
-      h += stBtn("new", "Beklemede");
+      h += stBtn("new", "Bekliyor");
     }
     h +=
       '<button type="button" class="btn-small btn-wa-resend js-wa-resend" data-type="' +
@@ -1402,7 +1401,7 @@
     if (reservationIsWaitStatus(s)) return "Beklemede";
     if (s === "done") return "Onaylandi";
     if (s === "rejected") return "Onaylanmadi";
-    return pdfLatinize(String((row && row.status) || "Yeni"));
+    return pdfLatinize(String((row && row.status) || "Beklemede"));
   }
 
   /** PDF tablosu: mekan/hizmet tek satirda, kirilma minimum (mutfak ciktisi). */
@@ -2670,7 +2669,7 @@
 
     var helpReq = ro
       ? "Salt izleme: durum güncellemesi HK operasyon sayfasından yapılır. Misafir memnuniyeti (1–5 + not) yalnızca burada sunucuya kaydedilir."
-      : "Kategori = talep grubu (form başlığı). Tür = seçilen satır. Adet = yalnızca adetli türlerde; diğerinde «-». Açıklama = misafir notu. Yeni kayıtlar operasyon WhatsApp (Cloud API) hattına düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.";
+      : "Kategori = talep grubu (form başlığı). Tür = seçilen satır. Adet = yalnızca adetli türlerde; diğerinde «-». Açıklama = misafir notu. Gelen kayıtlar operasyon WhatsApp (Cloud API) hattına düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.";
 
     var html =
       '<div class="bucket-shell bucket-shell--requests">' +
@@ -2912,7 +2911,7 @@
       '<p class="bucket-help bucket-help--complaints">' +
       (ro
         ? "Salt izleme: durum güncellemesi ön büro operasyon sayfasından yapılır. Misafir memnuniyeti burada kaydedilir."
-        : "Kategori ve açıklama misafir formundan. Personel notu dahilidir. Yeni kayıtlar operasyon WhatsApp (Cloud API) hattına düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
+        : "Kategori ve açıklama misafir formundan. Personel notu dahilidir. Gelen kayıtlar operasyon WhatsApp (Cloud API) hattına düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
       "</p>" +
       '<div class="bucket-toolbar bucket-toolbar--complaints">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
@@ -3131,7 +3130,7 @@
       '<p class="bucket-help bucket-help--complaints">' +
       (ro
         ? "Salt izleme; durum ön büro operasyon sayfasından. Misafir memnuniyeti burada kaydedilir."
-        : "Beslenme, sağlık ve kutlama bildirimleri; personel notu yerel olarak tarayıcıda saklanır. Yeni kayıtlar operasyon WhatsApp (Cloud API) hattına düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
+        : "Beslenme, sağlık ve kutlama bildirimleri; personel notu yerel olarak tarayıcıda saklanır. Gelen kayıtlar operasyon WhatsApp (Cloud API) hattına düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
       "</p>" +
       '<div class="bucket-toolbar bucket-toolbar--complaints">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
@@ -3588,7 +3587,7 @@
       '<p class="bucket-help bucket-help--faults">' +
       (ro
         ? "Salt izleme; durum teknik operasyon sayfasından. Misafir memnuniyeti burada kaydedilir."
-        : "Kategori, lokasyon, aciliyet ve açıklama formdan. Personel notu dahilidir. Yeni kayıtlar operasyon WhatsApp (Cloud API) hattına düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
+        : "Kategori, lokasyon, aciliyet ve açıklama formdan. Personel notu dahilidir. Gelen kayıtlar operasyon WhatsApp (Cloud API) hattına düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
       "</p>" +
       '<div class="bucket-toolbar bucket-toolbar--faults">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
@@ -3795,7 +3794,7 @@
     var onDelete = cfg.onDelete;
     var buttonLabels = cfg.buttonLabels || ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"];
     var highlightRowId = cfg.highlightRowId != null ? String(cfg.highlightRowId).trim() : "";
-    /** Doluysa yalnızca bu satırda durum / sil düğmeleri etkin (ör. WhatsApp ?id= derin bağlantı). */
+    /** Doluysa yalnızca bu satırda durum / sil düğmeleri etkin (tek kayıt / salt seçili satır modu). */
     var editableRowId = cfg.editableRowId != null ? String(cfg.editableRowId).trim() : "";
     function rowActionsEditable(rowId) {
       if (!editableRowId) return true;

@@ -1255,7 +1255,7 @@
       '<span class="home-stat__value">' +
       stripAgg.toplam +
       '</span><span class="home-stat__hint">Özet yükleme</span></li>' +
-      '<li class="home-stat" title="Yeni ve kuyrukta (pending).">' +
+      '<li class="home-stat" title="Bekliyor: veritabanında new veya pending durumundaki kayıtlar.">' +
       '<span class="home-stat__label">Bekliyor</span>' +
       '<span class="home-stat__value">' +
       stripAgg.bekliyor +
@@ -1312,10 +1312,8 @@
     var metaLine =
       opts.statusMetaLine != null
         ? opts.statusMetaLine
-        : "Yeni: " +
-          opts.newCount +
-          " · Kuyruk (pending): " +
-          opts.pendingCount +
+        : "Bekliyor: " +
+          (Number(opts.newCount || 0) + Number(opts.pendingCount || 0)) +
           " · " +
           progLabel +
           ": " +
@@ -1378,10 +1376,8 @@
         pendingCount: reqP,
         inProgressCount: reqI,
         statusMetaLine:
-          "Yeni kayıt: " +
-          reqN +
-          " · Kuyrukta (bekliyor): " +
-          reqP +
+          "Bekliyor: " +
+          (reqN + reqP) +
           (reqI > 0 ? " · Yapılıyor: " + reqI : " · Yapılıyor: 0"),
         oldestOpen: oldestOpenText(reqRows),
         tab: "op_hk",
@@ -1394,10 +1390,8 @@
         pendingCount: comP,
         inProgressCount: comI,
         statusMetaLine:
-          "Yeni: " +
-          comN +
-          " · Bekliyor (kuyruk): " +
-          comP +
+          "Bekliyor: " +
+          (comN + comP) +
           (comI > 0 ? " · Yapılıyor: " + comI : " · Yapılıyor: 0"),
         oldestOpen: oldestOpenText(comRows),
         tab: "op_front",
@@ -1410,10 +1404,8 @@
         pendingCount: faultP,
         inProgressCount: faultI,
         statusMetaLine:
-          "Yeni: " +
-          faultN +
-          " · Bekliyor (kuyruk): " +
-          faultP +
+          "Bekliyor: " +
+          (faultN + faultP) +
           (faultI > 0 ? " · Yapılıyor: " + faultI : " · Yapılıyor: 0"),
         oldestOpen: oldestOpenText(faultRows),
         tab: "op_tech",
@@ -1426,10 +1418,8 @@
         pendingCount: notifP,
         inProgressCount: notifI,
         statusMetaLine:
-          "İki kova birleşik özet · Yeni: " +
-          notifN +
-          " · Bekliyor (kuyruk): " +
-          notifP +
+          "İki kova birleşik özet · Bekliyor: " +
+          (notifN + notifP) +
           (notifI > 0 ? " · Yapılıyor: " + notifI : " · Yapılıyor: 0") +
           " · Ön büro sekmesinde bildirim ve geç çıkış ayrı süzülür.",
         oldestOpen: oldestOpenText(notifRows),

@@ -569,7 +569,7 @@ async function insertSimple(table, normalized) {
     other_category_note: normalized.otherCategoryNote || null,
     source: normalized.source,
     submitted_at: normalized.submittedAt,
-    status: "new",
+    status: "pending",
     raw_payload: normalized,
   };
   if (
@@ -671,7 +671,7 @@ async function insertLateCheckout(normalized) {
     details: normalized.details || {},
     source: normalized.source,
     submitted_at: normalized.submittedAt,
-    status: "new",
+    status: "pending",
     raw_payload: normalized,
   };
   const { data, error } = await withSupabaseFetchGuard(() =>

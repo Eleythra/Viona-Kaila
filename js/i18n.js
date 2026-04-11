@@ -328,13 +328,9 @@ const I18N = {
     whereLocLabel: "Nerede",
     whereDirLabel: "Yön",
     whereDescLabel: "Kısaca",
-    whereKrokiLandscapeLead:
-      "Konum rehberini eksiksiz görmek için telefonunuzu yatay (yan) tutmanızı öneririz; böylece kroki, yer seçimi ve yön özeti aynı bakışta, taşmadan yan yana hizalanır.",
-    whereModuleIntro:
-      "Listeden yer adını seçin veya haritadaki numaraya dokunun; yalnızca kısa konum tarifi görünür. Numaralar kroki görseline göre sabittir.",
     whereListSectionTitle: "Diğer lokasyonlar",
     whereMapScrollLabel:
-      "Önce blok rehberi, yönlendirme metinleri ve yer listesi; ardından tam genişlikte kroki haritası gelir. Haritaya ulaşmak için gerekirse sayfayı kaydırın.",
+      "Önce blok özeti ve kullanım notları, ardından yer listesi; altta tam kroki planı. Gerekirse sayfayı kaydırın.",
     whereMapViewLabel: "Otel içi konum rehberi",
     whereKrokiCoordsTitle: "Kroki üzerindeki konumlar (%)",
     whereKrokiColPin: "#",
@@ -342,14 +338,22 @@ const I18N = {
     whereKrokiColX: "X %",
     whereKrokiColY: "Y %",
     whereKrokiPinAria: "Harita işareti {n}, konum tarifi için dokunun",
-    whereKrokiOrientP1:
-      "Önemli: Bu haritayı rahat okumak için telefonunuzu yatay (yan) tutun; kroki ve numaralar bu modda daha geniş görünür.",
-    whereKrokiOrientP2:
-      "Dikey tutuşta görsel daralır; numaraları seçmek zorlaşabilir.",
-    whereKrokiOrientP3:
-      "İşaretler sabit konumludur; yüzdeler kroki görselinin sol üst köşesine göredir.",
-    whereKrokiBlockLegend:
-      "Blok bilgisi (kroki numaraları): A Blok 1, 3, 4, 5, 6. B Blok ve B tarafı 2, 7–16. C Blok 17, 18, 19. 20–29: havuz, aquapark, sahil, alt geçit, otopark ve diğer ortak alanlar.",
+    whereKrokiBlockHubTitle: "Blok ve plan özeti",
+    whereKrokiBlockGuideP1:
+      "Bu kart, kroki üzerindeki numaraların A, B ve C blokları ile ortak alanlarla nasıl eşleştiğini tek bakışta özetler.",
+    whereKrokiBlockGuideP2:
+      "Hedefinizi aşağıdaki gruplu listeden seçin veya plandaki numaraya dokunun; karşınıza yalnızca kısa ve net bir konum tarifi çıkar.",
+    whereKrokiBlockGuideP3:
+      "İşaretler çizime sabitlenmiştir; her ziyarette aynı güvenilir referansı sunar.",
+    whereKrokiLegendMatrixCaption: "Kroki numaraları — blok eşlemesi",
+    whereKrokiLegendRowALabel: "A bloku",
+    whereKrokiLegendRowAValues: "1 · 3 · 4 · 5 · 6",
+    whereKrokiLegendRowBLabel: "B + havuz hattı",
+    whereKrokiLegendRowBValues: "2 · 7 – 16",
+    whereKrokiLegendRowCLabel: "C bloku",
+    whereKrokiLegendRowCValues: "17 · 18 · 19",
+    whereKrokiLegendRowSharedLabel: "Paylaşımlı alanlar",
+    whereKrokiLegendRowSharedValues: "20 – 29 · havuzlar, aquapark, sahil geçidi, otopark ve diğer ortak noktalar",
     whereKrokiSelectLabel: "Yeri listeden seçin",
     whereKrokiSelectPlaceholder: "— Seçiniz —",
     whereKrokiGroupA: "A Blok",
@@ -916,13 +920,9 @@ const I18N = {
     whereLocLabel: "Where",
     whereDirLabel: "Directions",
     whereDescLabel: "In brief",
-    whereKrokiLandscapeLead:
-      "Hold your phone in landscape for the full guide—the map, place picker and direction line stay aligned side by side without pushing content off-screen.",
-    whereModuleIntro:
-      "Pick a place from the list or tap a number on the map — only a short “where to find it” line is shown. Pin positions are fixed on the artwork.",
     whereListSectionTitle: "More places on site",
     whereMapScrollLabel:
-      "Block guide, orientation hints and the place list come first; the full-width ground plan follows below. Scroll the page if you need to reach the map.",
+      "Block summary and how-to notes first, then the place list; the full ground plan sits below. Scroll the page if you need to reach the map.",
     whereMapViewLabel: "In-resort location guide",
     whereKrokiCoordsTitle: "Pin positions on the map (%)",
     whereKrokiColPin: "#",
@@ -930,14 +930,22 @@ const I18N = {
     whereKrokiColX: "X %",
     whereKrokiColY: "Y %",
     whereKrokiPinAria: "Map pin {n}, tap for the location hint",
-    whereKrokiOrientP1:
-      "Important: hold your phone in landscape for a comfortable read — the map and numbers use the full width.",
-    whereKrokiOrientP2:
-      "In portrait the artwork feels narrow; tapping pins accurately is harder.",
-    whereKrokiOrientP3:
-      "Pins use fixed positions; percentages are from the top-left corner of the map image.",
-    whereKrokiBlockLegend:
-      "Block guide (pin numbers): Block A 1, 3, 4, 5, 6. Block B and the B-side strip 2, 7–16. Block C 17, 18, 19. Pins 20–29 cover pools, aquapark, beach, underpass, car park and other shared areas.",
+    whereKrokiBlockHubTitle: "Block & map key",
+    whereKrokiBlockGuideP1:
+      "This card lines up every number on the plan with Block A, B, C and the resort’s shared spaces — at a glance.",
+    whereKrokiBlockGuideP2:
+      "Pick your destination from the grouped list, or tap its pin on the map; a concise “where to head” line appears instantly.",
+    whereKrokiBlockGuideP3:
+      "Pins stay locked to the artwork for a consistent, premium reference every time you look.",
+    whereKrokiLegendMatrixCaption: "Pin numbers — block map",
+    whereKrokiLegendRowALabel: "Block A",
+    whereKrokiLegendRowAValues: "1 · 3 · 4 · 5 · 6",
+    whereKrokiLegendRowBLabel: "Block B & pool strip",
+    whereKrokiLegendRowBValues: "2 · 7 – 16",
+    whereKrokiLegendRowCLabel: "Block C",
+    whereKrokiLegendRowCValues: "17 · 18 · 19",
+    whereKrokiLegendRowSharedLabel: "Shared zones",
+    whereKrokiLegendRowSharedValues: "20 – 29 · pools, aquapark, beach underpass, car park & other resort hubs",
     whereKrokiSelectLabel: "Choose a place from the list",
     whereKrokiSelectPlaceholder: "— Choose —",
     whereKrokiGroupA: "Block A",
@@ -1505,13 +1513,9 @@ const I18N = {
     whereLocLabel: "Wo",
     whereDirLabel: "Weg",
     whereDescLabel: "Kurzinfo",
-    whereKrokiLandscapeLead:
-      "Drehen Sie das Smartphone ins Querformat: Plan, Auswahl und Kurzbeschreibung stehen dann nebeneinander und nicht mehr unterhalb des sichtbaren Bereichs.",
-    whereModuleIntro:
-      "Wählen Sie einen Ort in der Liste oder tippen Sie auf eine Nummer im Plan — es erscheint nur eine kurze Lageinfo. Die Positionen sind fest im Bild verankert.",
     whereListSectionTitle: "Weitere Orte",
     whereMapScrollLabel:
-      "Zuerst Blockhinweise, Orientierungstipps und die Ortsliste; darunter der vollständige Lageplan. Bei Bedarf die Seite scrollen, um den Plan zu erreichen.",
+      "Zuerst Blocküberblick und Kurzanleitung, dann die Ortsliste; darunter der vollständige Lageplan. Bei Bedarf die Seite scrollen.",
     whereMapViewLabel: "Lageplan der Anlage",
     whereKrokiCoordsTitle: "Marker-Positionen auf dem Plan (%)",
     whereKrokiColPin: "#",
@@ -1519,14 +1523,22 @@ const I18N = {
     whereKrokiColX: "X %",
     whereKrokiColY: "Y %",
     whereKrokiPinAria: "Kartenmarker {n}, tippen für die Lageinfo",
-    whereKrokiOrientP1:
-      "Wichtig: Halten Sie das Smartphone quer — Plan und Nummern nutzen die volle Breite.",
-    whereKrokiOrientP2:
-      "Im Hochformat wirkt die Karte schmal; die Marker sind schwerer zu treffen.",
-    whereKrokiOrientP3:
-      "Marker sind fest positioniert; Prozente beziehen sich auf die linke obere Ecke des Planbildes.",
-    whereKrokiBlockLegend:
-      "Blöcke (Nummern im Plan): Block A 1, 3, 4, 5, 6. Block B und B-Seite 2, 7–16. Block C 17, 18, 19. 20–29: Pools, Aquapark, Strand, Unterführung, Parkplatz und weitere Bereiche.",
+    whereKrokiBlockHubTitle: "Blöcke & Lageplan-Schlüssel",
+    whereKrokiBlockGuideP1:
+      "Diese Karte ordnet jede Nummer auf dem Plan den Blöcken A, B, C sowie den gemeinschaftlichen Bereichen der Anlage zu — klar und kompakt.",
+    whereKrokiBlockGuideP2:
+      "Wählen Sie Ihr Ziel in der gruppierten Liste oder tippen Sie die Nummer im Plan; es erscheint eine kurze, präzise Wegbeschreibung.",
+    whereKrokiBlockGuideP3:
+      "Die Marker sind fest im Bild verankert — ein zuverlässiger Premium-Referenzpunkt bei jedem Aufruf.",
+    whereKrokiLegendMatrixCaption: "Plan-Nummern — Block-Zuordnung",
+    whereKrokiLegendRowALabel: "Block A",
+    whereKrokiLegendRowAValues: "1 · 3 · 4 · 5 · 6",
+    whereKrokiLegendRowBLabel: "Block B & Poolseite",
+    whereKrokiLegendRowBValues: "2 · 7 – 16",
+    whereKrokiLegendRowCLabel: "Block C",
+    whereKrokiLegendRowCValues: "17 · 18 · 19",
+    whereKrokiLegendRowSharedLabel: "Gemeinschaftsbereiche",
+    whereKrokiLegendRowSharedValues: "20 – 29 · Pools, Aquapark, Strand-Unterführung, Parkplatz & weitere Bereiche",
     whereKrokiSelectLabel: "Ort aus der Liste wählen",
     whereKrokiSelectPlaceholder: "— Bitte wählen —",
     whereKrokiGroupA: "Block A",
@@ -2094,13 +2106,9 @@ const I18N = {
     whereLocLabel: "Место",
     whereDirLabel: "Как пройти",
     whereDescLabel: "Кратко",
-    whereKrokiLandscapeLead:
-      "Для полного просмотра держите телефон горизонтально: схема, список и краткая подсказка останутся рядом и не уедут за нижний край экрана.",
-    whereModuleIntro:
-      "Выберите место в списке или нажмите номер на схеме — показывается только краткая подсказка «где искать». Положение меток зафиксировано на изображении.",
     whereListSectionTitle: "Остальные локации",
     whereMapScrollLabel:
-      "Сначала подсказки по блокам, ориентация и список мест; ниже полная схема. При необходимости прокрутите страницу, чтобы дойти до схемы.",
+      "Сначала краткий обзор блоков и подсказка по использованию, затем список мест; ниже полная схема. При необходимости прокрутите страницу.",
     whereMapViewLabel: "Путеводитель по территории отеля",
     whereKrokiCoordsTitle: "Положение меток на схеме (%)",
     whereKrokiColPin: "#",
@@ -2108,14 +2116,22 @@ const I18N = {
     whereKrokiColX: "X %",
     whereKrokiColY: "Y %",
     whereKrokiPinAria: "Метка {n} на схеме — нажмите для подсказки",
-    whereKrokiOrientP1:
-      "Важно: держите телефон горизонтально — схема и номера занимают всю ширину экрана.",
-    whereKrokiOrientP2:
-      "В портретном режиме изображение уже; попасть по меткам сложнее.",
-    whereKrokiOrientP3:
-      "Метки закреплены; проценты отсчитываются от левого верхнего угла изображения схемы.",
-    whereKrokiBlockLegend:
-      "Блоки (номера на схеме): блок A — 1, 3, 4, 5, 6. Блок B и зона у B — 2, 7–16. Блок C — 17, 18, 19. 20–29: бассейны, аквапарк, пляж, переход, парковка и другие зоны.",
+    whereKrokiBlockHubTitle: "Блоки и ключ к схеме",
+    whereKrokiBlockGuideP1:
+      "Этот блок сопоставляет номера на плане с корпусами A, B, C и общими зонами курорта — всё наглядно и без лишних слов.",
+    whereKrokiBlockGuideP2:
+      "Выберите точку в сгруппированном списке или нажмите номер на схеме — появится короткая и ясная подсказка, куда идти.",
+    whereKrokiBlockGuideP3:
+      "Метки зафиксированы на изображении схемы — стабильная премиальная опора при каждом обращении.",
+    whereKrokiLegendMatrixCaption: "Номера на схеме — привязка к блокам",
+    whereKrokiLegendRowALabel: "Блок A",
+    whereKrokiLegendRowAValues: "1 · 3 · 4 · 5 · 6",
+    whereKrokiLegendRowBLabel: "Блок B и зона бассейнов",
+    whereKrokiLegendRowBValues: "2 · 7 – 16",
+    whereKrokiLegendRowCLabel: "Блок C",
+    whereKrokiLegendRowCValues: "17 · 18 · 19",
+    whereKrokiLegendRowSharedLabel: "Общие зоны",
+    whereKrokiLegendRowSharedValues: "20 – 29 · бассейны, аквапарк, пляжный переход, парковка и др. точки курорта",
     whereKrokiSelectLabel: "Выберите место в списке",
     whereKrokiSelectPlaceholder: "— Выберите —",
     whereKrokiGroupA: "Блок A",
