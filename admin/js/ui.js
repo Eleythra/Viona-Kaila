@@ -3795,6 +3795,12 @@
     var onDelete = cfg.onDelete;
     var buttonLabels = cfg.buttonLabels || ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"];
     var highlightRowId = cfg.highlightRowId != null ? String(cfg.highlightRowId).trim() : "";
+    /** Doluysa yalnızca bu satırda durum / sil düğmeleri etkin (ör. WhatsApp ?id= derin bağlantı). */
+    var editableRowId = cfg.editableRowId != null ? String(cfg.editableRowId).trim() : "";
+    function rowActionsEditable(rowId) {
+      if (!editableRowId) return true;
+      return String(rowId || "").trim().toLowerCase() === editableRowId.toLowerCase();
+    }
     var summaryRow =
       cfg.summaryRow ||
       function () {
@@ -3818,8 +3824,10 @@
       bucketType === "late_checkout"
         ? "op-table--front"
         : "op-table--hktech";
-    function actionsCellHtml(id, current) {
+    function actionsCellHtml(id, current, actionsOn) {
       var st = normalizeBucketStatus(current);
+      var dis = actionsOn ? "" : " disabled";
+      var roTitle = actionsOn ? "" : ' title="Bu bağlantıda yalnızca açılan kayıt değiştirilebilir"';
       var h = '<div class="op-actions-cell">';
       h +=
         '<div class="op-status-btns ' +
@@ -3832,7 +3840,10 @@
         h +=
           '<button type="button" class="btn-small op-st js-op-st' +
           (on ? " is-active" : "") +
-          '" data-status="' +
+          '"' +
+          dis +
+          roTitle +
+          ' data-status="' +
           esc(opt.v) +
           '">' +
           esc(buttonLabels[i] || opt.v) +
@@ -3840,10 +3851,15 @@
       });
       h += "</div>";
       if (typeof onDelete === "function") {
+        var delTitle = actionsOn ? "Kaydı kalıcı sil" : "Bu bağlantıda yalnızca açılan kayıt silinebilir";
         h +=
           '<button type="button" class="btn-small op-del js-op-del" data-op-id="' +
           esc(id) +
-          '" title="Kaydı kalıcı sil">Sil</button>';
+          '"' +
+          dis +
+          ' title="' +
+          esc(delTitle) +
+          '">Sil</button>';
       }
       h += "</div>";
       return h;
@@ -3874,6 +3890,9 @@
         ) {
           trClasses.push("ops-row--deep-link");
         }
+        if (editableRowId && !rowActionsEditable(r.id)) {
+          trClasses.push("ops-row--readonly");
+        }
         var trCls = trClasses.length ? ' class="' + esc(trClasses.join(" ")) + '"' : "";
         var sum = String(summaryRow(r) || "—");
         if (sum.length > 140) sum = sum.slice(0, 137) + "…";
@@ -3893,7 +3912,7 @@
           '">' +
           esc(issueStatusLabel(bucketType, st)) +
           "</span></td><td>" +
-          actionsCellHtml(r.id, r.status) +
+          actionsCellHtml(r.id, r.status, rowActionsEditable(r.id)) +
           "</td></tr>";
       });
     }

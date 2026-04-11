@@ -333,7 +333,8 @@ const I18N = {
     whereModuleIntro:
       "Listeden yer adını seçin veya haritadaki numaraya dokunun; yalnızca kısa konum tarifi görünür. Numaralar kroki görseline göre sabittir.",
     whereListSectionTitle: "Diğer lokasyonlar",
-    whereMapScrollLabel: "Üstteki bilgi ve liste kutusunu kaydırarak tüm metni görebilirsiniz.",
+    whereMapScrollLabel:
+      "Önce blok rehberi, yönlendirme metinleri ve yer listesi; ardından tam genişlikte kroki haritası gelir. Haritaya ulaşmak için gerekirse sayfayı kaydırın.",
     whereMapViewLabel: "Otel içi konum rehberi",
     whereKrokiCoordsTitle: "Kroki üzerindeki konumlar (%)",
     whereKrokiColPin: "#",
@@ -920,7 +921,8 @@ const I18N = {
     whereModuleIntro:
       "Pick a place from the list or tap a number on the map — only a short “where to find it” line is shown. Pin positions are fixed on the artwork.",
     whereListSectionTitle: "More places on site",
-    whereMapScrollLabel: "Scroll the upper panel to read all hints and the full place list.",
+    whereMapScrollLabel:
+      "Block guide, orientation hints and the place list come first; the full-width ground plan follows below. Scroll the page if you need to reach the map.",
     whereMapViewLabel: "In-resort location guide",
     whereKrokiCoordsTitle: "Pin positions on the map (%)",
     whereKrokiColPin: "#",
@@ -1508,7 +1510,8 @@ const I18N = {
     whereModuleIntro:
       "Wählen Sie einen Ort in der Liste oder tippen Sie auf eine Nummer im Plan — es erscheint nur eine kurze Lageinfo. Die Positionen sind fest im Bild verankert.",
     whereListSectionTitle: "Weitere Orte",
-    whereMapScrollLabel: "Im oberen Bereich nach unten scrollen, um alle Hinweise und die vollständige Liste zu lesen.",
+    whereMapScrollLabel:
+      "Zuerst Blockhinweise, Orientierungstipps und die Ortsliste; darunter der vollständige Lageplan. Bei Bedarf die Seite scrollen, um den Plan zu erreichen.",
     whereMapViewLabel: "Lageplan der Anlage",
     whereKrokiCoordsTitle: "Marker-Positionen auf dem Plan (%)",
     whereKrokiColPin: "#",
@@ -2096,7 +2099,8 @@ const I18N = {
     whereModuleIntro:
       "Выберите место в списке или нажмите номер на схеме — показывается только краткая подсказка «где искать». Положение меток зафиксировано на изображении.",
     whereListSectionTitle: "Остальные локации",
-    whereMapScrollLabel: "Прокрутите верхнюю панель, чтобы прочитать все подсказки и полный список мест.",
+    whereMapScrollLabel:
+      "Сначала подсказки по блокам, ориентация и список мест; ниже полная схема. При необходимости прокрутите страницу, чтобы дойти до схемы.",
     whereMapViewLabel: "Путеводитель по территории отеля",
     whereKrokiCoordsTitle: "Положение меток на схеме (%)",
     whereKrokiColPin: "#",

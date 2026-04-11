@@ -16,9 +16,9 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/styles.css?v=30" />
-    <link rel="stylesheet" href="styles.css?v=32" />
+    <link rel="stylesheet" href="styles.css?v=42" />
   </head>
-  <body class="admin-body" data-viona-ops-role="hk">
+  <body class="admin-body admin-body--ops-hk-page" data-viona-ops-role="hk">
     <section id="ops-login" class="admin-login">
       <div id="ops-login-busy" class="glass-block admin-login__card ops-login-busy hidden" aria-live="polite" aria-busy="true">
         <h1 id="ops-login-busy-title" class="ops-login-busy__title">HK Operasyon</h1>
@@ -34,8 +34,8 @@
           Paylaşılan linkte <code class="ops-light-code">#</code> sonrası veya
           <code class="ops-light-code">?k=</code> ile gelen değer, sunucudaki
           <code class="ops-light-code">OPS_LINK_TOKEN_HK</code> ile aynı olmalıdır. WhatsApp # kaybederse
-          <code class="ops-light-code">…/ops-hk.html?k=…</code> kullanın. Tek kayıt paneli için
-          <code class="ops-light-code">?id=</code> ile misafir isteği UUID’si eklenebilir (girişten sonra da korunur).
+          <code class="ops-light-code">…/ops-hk.html?k=…</code> kullanın. WhatsApp «Panelde Aç» ile gelen bağlantıda
+          <code class="ops-light-code">?id=</code> ile kayıt UUID’si bulunur (girişten sonra da korunur).
         </p>
         <p id="ops-deeplink-hint" class="ops-light-intro ops-light-intro--warn hidden" role="status"></p>
         <label for="ops-password">Ekip şifresi</label>
@@ -48,24 +48,25 @@
       </form>
     </section>
 
-    <main id="ops-app" class="ops-light-app hidden" aria-label="HK operasyon listesi">
-      <header class="ops-light-head glass-block">
-        <div class="ops-light-head__row">
-          <h1 id="ops-app-title" class="ops-light-head__title">HK Operasyon</h1>
+    <main id="ops-app" class="admin-main hidden" aria-label="HK operasyon">
+      <section class="admin-tab admin-tab--op-hk-standalone" aria-labelledby="ops-hk-heading">
+        <div class="section-head">
+          <h2 id="ops-hk-heading">HK Operasyon</h2>
           <button type="button" id="ops-logout" class="btn-small">Çıkış</button>
         </div>
-        <p class="ops-light-note">
-          Bu sayfa yalnızca HK iş akışı içindir. Rapor, log veya diğer operasyon sekmelerine erişim yoktur.
+        <p id="ops-hk-lead" class="section-lead">
+          Misafir isteklerinde durum güncellemesi. Aşağıdan süz; salt okunur tam liste için <strong>İstekler</strong> sekmesini
+          kullanın.
         </p>
-      </header>
-      <div id="ops-mount" class="ops-light-mount"></div>
+        <div id="ops-mount" class="ops-hk-mount"></div>
+      </section>
     </main>
 
     <script src="../js/viona-backend-url.js?v=11"></script>
     <script src="../js/viona-api-resolve.js?v=12"></script>
     <script src="../js/api-config.js?v=13"></script>
     <script src="../js/hotel-room-numbers.js?v=1"></script>
-    <script src="js/ui.js?v=52"></script>
-    <script src="js/ops-light.js?v=7"></script>
+    <script src="js/ui.js?v=53"></script>
+    <script src="js/ops-light.js?v=10"></script>
   </body>
 </html>

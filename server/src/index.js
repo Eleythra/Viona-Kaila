@@ -363,7 +363,7 @@ app.use(
 app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
-/** Tarayıcıda http://localhost:PORT/ açıldığında boş / "Cannot GET /" yerine yönlendirme. */
+/** Tarayıcıda http://localhost:PORT/ açıldığında boş / "Cannot GET /" yerine kısa yönlendirme. */
 app.get("/", (_req, res) => {
   res
     .type("text/html; charset=utf-8")

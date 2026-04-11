@@ -1,6 +1,6 @@
 /**
  * Neredeyim — dik kroki + sabit numaralı işaretler; liste seçimi ve pin tıklaması ile kısa konum tarifi.
- * Düzen: styles.css (#view-module:has(.where-module--kroki-locked), …) — :has() desteklemeyen tarayıcıda yalnızca bu ek stiller uygulanmaz.
+ * Düzen: styles.css — :has() yalnızca geniş modül (max-width) için; iç kaydırma yok, sayfa akışı.
  */
 (function () {
   "use strict";
@@ -586,24 +586,15 @@
 
     var selectedIndex = -1;
 
+    /** Harita kutusunda scroll yok; seçili pin görünür alana taşınır (tarayıcı / modül dış kaydırma). */
     function scrollKrokiToPin(pinIx) {
       if (pinIx < 0 || pinIx >= pinButtons.length) return;
       var pin = pinButtons[pinIx];
-      if (!pin || !mapRegion) return;
-      var r = mapRegion.getBoundingClientRect();
-      var p = pin.getBoundingClientRect();
-      var pinMidY = p.top + p.height * 0.5;
-      var regionMidY = r.top + mapRegion.clientHeight * 0.5;
-      var nextTop = mapRegion.scrollTop + (pinMidY - regionMidY);
-      var maxY = Math.max(0, mapRegion.scrollHeight - mapRegion.clientHeight);
-      mapRegion.scrollTop = Math.max(0, Math.min(maxY, nextTop));
-
-      var pinMidX = p.left + p.width * 0.5;
-      var regionMidX = r.left + mapRegion.clientWidth * 0.5;
-      var nextLeft = mapRegion.scrollLeft + (pinMidX - regionMidX);
-      var maxX = Math.max(0, mapRegion.scrollWidth - mapRegion.clientWidth);
-      if (maxX > 0) {
-        mapRegion.scrollLeft = Math.max(0, Math.min(maxX, nextLeft));
+      if (!pin) return;
+      try {
+        pin.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+      } catch (err) {
+        pin.scrollIntoView(true);
       }
     }
 

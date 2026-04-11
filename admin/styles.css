@@ -4366,6 +4366,45 @@
   color: var(--admin-text-muted);
 }
 
+/* ops-hk.html — admin HK sekmesiyle aynı kart / dış boşluk */
+.admin-body--ops-hk-page #ops-app.admin-main {
+  max-width: 1680px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  padding: max(18px, env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px))
+    max(18px, env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
+}
+.admin-tab--op-hk-standalone .ops-hk-mount {
+  min-width: 0;
+}
+.ops-hk-deep-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+  padding: 0.65rem 0.85rem;
+}
+.ops-hk-inline-link {
+  color: #93c5fd;
+  text-decoration: underline;
+  font-weight: 600;
+}
+.ops-hk-inline-link:hover {
+  color: #bfdbfe;
+}
+
+/* WhatsApp ?id=: salt okunur satırlar (aynı tablo, düşük vurgu) */
+.op-table tbody tr.ops-row--readonly td {
+  opacity: 0.78;
+}
+.op-table tbody tr.ops-row--readonly .op-st:disabled,
+.op-table tbody tr.ops-row--readonly .op-del:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* Birleşik veri tabloları — sade, düşük kontrast */
 .admin-body .viona-table-scroll {
   overflow: auto;

@@ -194,6 +194,11 @@
     var app = document.getElementById("ops-app");
     if (login) login.classList.remove("hidden");
     if (app) app.classList.add("hidden");
+    if (getRole() === "hk") {
+      try {
+        document.body.classList.remove("admin-body--app");
+      } catch (_e) {}
+    }
   }
 
   function showApp() {
@@ -201,6 +206,11 @@
     var app = document.getElementById("ops-app");
     if (login) login.classList.add("hidden");
     if (app) app.classList.remove("hidden");
+    if (getRole() === "hk") {
+      try {
+        document.body.classList.add("admin-body--app");
+      } catch (_e2) {}
+    }
   }
 
   async function validateRole() {
@@ -228,106 +238,91 @@
     }
   }
 
-  function hkFormatCategories(row) {
-    if (!row) return "—";
-    var c = row.categories;
-    if (Array.isArray(c) && c.length) return c.join(", ");
-    if (c && typeof c === "object" && !Array.isArray(c)) {
-      try {
-        return JSON.stringify(c);
-      } catch (_e2) {
-        return "—";
-      }
-    }
-    if (c != null && String(c).trim()) return String(c).trim();
-    return row.category ? String(row.category) : "—";
+  function opQueryFromFilter(f) {
+    var o = {};
+    if (f.status) o.status = f.status;
+    if (f.from) o.from = f.from;
+    if (f.to) o.to = f.to;
+    if (f.room && String(f.room).trim()) o.room_number = String(f.room).trim();
+    return o;
   }
 
-  function renderHkSelectedPanel(panelEl, row, reloadList) {
-    var ui = window.AdminUI;
-    if (!panelEl || !row) return;
-    var id = String(row.id || "");
-    var st = ui && ui.normalizeBucketStatus ? ui.normalizeBucketStatus(row.status) : String(row.status || "new");
-    var stLabel = ui && ui.issueStatusLabel ? ui.issueStatusLabel("request", st) : st;
-    var stats = [
-      { k: "Misafir", v: row.guest_name || "—" },
-      { k: "Oda", v: row.room_number || "—" },
-      { k: "Kategori / seçimler", v: hkFormatCategories(row) },
-      { k: "Açıklama", v: String(row.description || "").trim() || "—" },
-      { k: "Durum", v: stLabel },
-    ];
-    var dl = stats
-      .map(function (x) {
-        return (
-          "<div><dt>" + escHtml(x.k) + "</dt><dd>" + escHtml(String(x.v)) + "</dd></div>"
-        );
-      })
-      .join("");
-    var btns = ["pending", "in_progress", "done", "rejected"].map(function (stat, i) {
-      var labels = ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"];
-      var on = st === stat || (st === "new" && stat === "pending");
-      return (
-        '<button type="button" class="btn-small op-st js-op-hk-selected-st' +
-        (on ? " is-active" : "") +
-        '" data-status="' +
-        escHtml(stat) +
-        '">' +
-        escHtml(labels[i]) +
-        "</button>"
-      );
-    });
-    panelEl.innerHTML =
-      '<section class="ops-hk-selected glass-block" aria-label="Seçili kayıt">' +
-      '<div class="ops-hk-selected__head"><h2 class="ops-hk-selected__title">Seçili kayıt</h2>' +
-      '<p class="ops-hk-selected__hint">WhatsApp bağlantısıyla bu kayıt açıldı. Durumu buradan veya aşağıdaki tablodan güncelleyebilirsiniz.</p></div>' +
-      '<dl class="ops-hk-selected__dl">' +
-      dl +
-      "</dl>" +
-      '<div class="ops-hk-selected__actions"><span class="ops-hk-selected__act-lbl">İşlem</span>' +
-      '<div class="op-actions-cell"><div class="op-status-btns op-status-btns--hktech" data-op-id="' +
-      escHtml(id) +
-      '">' +
-      btns.join("") +
-      '</div><button type="button" class="btn-small op-del js-op-hk-selected-del" data-op-id="' +
-      escHtml(id) +
-      '">Sil</button></div></div></section>';
+  function readOpFilterFromDom(prefix) {
+    var status = document.getElementById(prefix + "-filter-status");
+    var from = document.getElementById(prefix + "-filter-from");
+    var to = document.getElementById(prefix + "-filter-to");
+    var room = document.getElementById(prefix + "-filter-room");
+    return {
+      status: status && status.value ? status.value : "",
+      from: from && from.value ? from.value : "",
+      to: to && to.value ? to.value : "",
+      room: room && room.value ? String(room.value).trim() : "",
+    };
+  }
 
-    panelEl.querySelectorAll(".js-op-hk-selected-st").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        var stat = btn.getAttribute("data-status");
-        var p = opsFetch(
-          "/requests/" + encodeURIComponent("request") + "/" + encodeURIComponent(id) + "/status",
-          {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: stat }),
-          },
-        );
-        btn.disabled = true;
-        p.then(function () {
-          postOpsMutation();
-          void reloadList();
-        }).finally(function () {
-          btn.disabled = false;
-        });
-      });
-    });
-    var del = panelEl.querySelector(".js-op-hk-selected-del");
-    if (del) {
-      del.addEventListener("click", function () {
-        if (!window.confirm("Bu kaydı kalıcı olarak silmek istediğinize emin misiniz?")) return;
-        del.disabled = true;
-        opsFetch("/requests/" + encodeURIComponent("request") + "/" + encodeURIComponent(id), {
-          method: "DELETE",
-        })
-          .then(function () {
-            postOpsMutation();
-            void reloadList();
-          })
-          .finally(function () {
-            del.disabled = false;
-          });
-      });
+  function clearOpFilterDom(prefix) {
+    var status = document.getElementById(prefix + "-filter-status");
+    var from = document.getElementById(prefix + "-filter-from");
+    var to = document.getElementById(prefix + "-filter-to");
+    var room = document.getElementById(prefix + "-filter-room");
+    if (status) status.value = "";
+    if (from) from.value = "";
+    if (to) to.value = "";
+    if (room) room.value = "";
+  }
+
+  /** Admin «tab-op-hk» ile aynı filtre çubuğu (id’ler app.js ile uyumlu). */
+  function hkFilterBarHtml() {
+    return (
+      '<div class="op-filter-bar glass-block" id="op-hk-filters" role="search" aria-label="HK operasyon filtreleri">' +
+      '<div class="op-filter-bar__row">' +
+      '<label class="op-filter-field"><span class="op-filter-field__lbl">Durum</span>' +
+      '<select id="op-hk-filter-status" class="op-filter-input">' +
+      '<option value="">Tüm kayıtlar</option>' +
+      '<option value="new">Yeni</option>' +
+      '<option value="pending">Bekliyor</option>' +
+      '<option value="in_progress">Yapılıyor</option>' +
+      '<option value="done">Yapıldı</option>' +
+      '<option value="rejected">Yapılmadı</option>' +
+      '<option value="cancelled">İptal</option>' +
+      "</select></label>" +
+      '<label class="op-filter-field"><span class="op-filter-field__lbl">Kayıt başlangıç</span>' +
+      '<input id="op-hk-filter-from" type="date" class="op-filter-input" autocomplete="off" /></label>' +
+      '<label class="op-filter-field"><span class="op-filter-field__lbl">Kayıt bitiş</span>' +
+      '<input id="op-hk-filter-to" type="date" class="op-filter-input" autocomplete="off" /></label>' +
+      '<label class="op-filter-field op-filter-field--room"><span class="op-filter-field__lbl">Oda</span>' +
+      '<input id="op-hk-filter-room" type="text" class="op-filter-input" placeholder="Tam eşleşme" autocomplete="off" /></label>' +
+      '<div class="op-filter-actions">' +
+      '<button type="button" class="btn-primary btn-small" id="op-hk-filter-apply">Uygula</button>' +
+      '<button type="button" class="btn-small" id="op-hk-filter-clear">Sıfırla</button>' +
+      "</div></div>" +
+      '<p class="op-filter-hint">Filtreler sunucuda uygulanır; <strong>Uygula</strong> ile listeyi yenilersiniz.</p></div>'
+    );
+  }
+
+  function hkListUrlWithoutId() {
+    try {
+      var u = new URL(window.location.href);
+      u.searchParams.delete("id");
+      var qs = u.searchParams.toString();
+      return u.pathname + (qs ? "?" + qs : "") + (u.hash || "");
+    } catch (_e) {
+      return "ops-hk.html";
+    }
+  }
+
+  function syncHkLead(deepId) {
+    var lead = document.getElementById("ops-hk-lead");
+    if (!lead) return;
+    if (deepId) {
+      lead.innerHTML =
+        "WhatsApp «Panelde Aç» ile açılan kayıt vurguludur; <strong>durum ve silme</strong> yalnızca bu satırda etkindir. Diğer satırlar bağlam için salt okunurdur. Tüm liste ve filtreler için " +
+        '<a class="ops-hk-inline-link" href="' +
+        escHtml(hkListUrlWithoutId()) +
+        '">tam HK görünümüne dön</a>.';
+    } else {
+      lead.innerHTML =
+        "Misafir isteklerinde durum güncellemesi. Aşağıdan süz; salt okunur tam liste için <strong>İstekler</strong> sekmesini kullanın.";
     }
   }
 
@@ -335,53 +330,162 @@
     var ui = window.AdminUI;
     if (!ui || typeof ui.renderOperationBucket !== "function") throw new Error("ui_missing");
     var deepId = hkDeepLinkUuid();
-    mount.innerHTML =
-      '<div id="ops-hk-selected-host" class="ops-hk-selected-host"></div><div id="ops-hk-list-host" class="ops-hk-list-host"></div>';
-    var selHost = mount.querySelector("#ops-hk-selected-host");
-    var listHost = mount.querySelector("#ops-hk-list-host");
-    if (!deepId && selHost) selHost.innerHTML = "";
+    syncHkLead(deepId);
 
-    var page = 1;
-
-    async function paintSelected(reloadList) {
-      if (!deepId || !selHost) return;
-      try {
-        var one = await opsFetch("/requests/request/" + encodeURIComponent(deepId));
-        var row = one.item;
-        if (!row) {
-          selHost.innerHTML = '<p class="ops-hk-selected-error">Kayıt bulunamadı.</p>';
-          return;
-        }
-        renderHkSelectedPanel(selHost, row, reloadList);
-      } catch (e) {
-        selHost.innerHTML =
-          '<p class="ops-hk-selected-error">' + escHtml(formatErr(e)) + "</p>";
-      }
-    }
-
-    async function load(pageNum) {
-      page = pageNum != null ? pageNum : page;
-      var q =
-        "?" +
-        new URLSearchParams({
-          type: "request",
-          page: String(page),
-          pageSize: String(PAGE_SIZE),
-        }).toString();
-      var res = await opsFetch("/requests" + q);
+    function renderRequestTable(listHost, cfg) {
       ui.renderOperationBucket(listHost, {
         bucketType: "request",
-        rows: res.items || [],
-        pagination: res.pagination,
-        highlightRowId: deepId,
-        onPage: function (p) {
-          void load(p);
-        },
+        rows: cfg.rows || [],
+        pagination: cfg.pagination,
+        highlightRowId: cfg.highlightRowId || "",
+        editableRowId: cfg.editableRowId != null ? cfg.editableRowId : "",
+        onPage: typeof cfg.onPage === "function" ? cfg.onPage : null,
         buttonLabels: ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"],
         summaryRow: function (r) {
           return typeof ui.operationSummaryForType === "function"
             ? ui.operationSummaryForType("request", r)
             : "—";
+        },
+        onStatus: cfg.onStatus,
+        onDelete: cfg.onDelete,
+      });
+    }
+
+    function normRowId(id) {
+      return String(id || "").trim().toLowerCase();
+    }
+
+    if (deepId) {
+      mount.innerHTML =
+        '<div class="ops-hk-deep-toolbar glass-block">' +
+        '<a class="btn-primary btn-small" href="' +
+        escHtml(hkListUrlWithoutId()) +
+        '">Tüm kayıtlar ve filtreler</a>' +
+        "</div>" +
+        '<div id="ops-hk-list-host" class="ops-hk-list-host"></div>';
+      var listHostDeep = mount.querySelector("#ops-hk-list-host");
+
+      async function loadDeepMerged() {
+        try {
+          var q =
+            "?" +
+            new URLSearchParams({
+              type: "request",
+              page: "1",
+              pageSize: String(PAGE_SIZE),
+            }).toString();
+          var parts = await Promise.all([
+            opsFetch("/requests/request/" + encodeURIComponent(deepId)),
+            opsFetch("/requests" + q),
+          ]);
+          var row = parts[0] && parts[0].item;
+          var res = parts[1];
+          if (!row) {
+            listHostDeep.innerHTML =
+              '<p class="admin-load-error">Bu UUID ile kayıt bulunamadı veya silinmiş olabilir.</p>';
+            return;
+          }
+          var nid = normRowId(deepId);
+          var others = (res.items || []).filter(function (r) {
+            return normRowId(r.id) !== nid;
+          });
+          var merged = [row].concat(others).slice(0, PAGE_SIZE);
+          renderRequestTable(listHostDeep, {
+            rows: merged,
+            pagination: null,
+            highlightRowId: deepId,
+            editableRowId: deepId,
+            onPage: null,
+            onStatus: async function (bt, id, status) {
+              if (normRowId(id) !== nid) return;
+              await opsFetch(
+                "/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id) + "/status",
+                {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ status: status }),
+                },
+              );
+              postOpsMutation();
+              await loadDeepMerged();
+            },
+            onDelete: async function (bt, id) {
+              if (normRowId(id) !== nid) return;
+              await opsFetch("/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id), {
+                method: "DELETE",
+              });
+              postOpsMutation();
+              try {
+                var u = new URL(window.location.href);
+                u.searchParams.delete("id");
+                var qs = u.searchParams.toString();
+                window.location.href = u.pathname + (qs ? "?" + qs : "") + (u.hash || "");
+              } catch (_e2) {
+                listHostDeep.innerHTML =
+                  '<p class="admin-load-error">Kayıt silindi. Tam liste için üstteki bağlantıyı kullanın.</p>';
+              }
+            },
+          });
+        } catch (e) {
+          listHostDeep.innerHTML =
+            '<p class="admin-load-error">' + escHtml(formatErr(e)) + "</p>";
+        }
+      }
+
+      await loadDeepMerged();
+      wireOpsCrossTabListRefresh(function () {
+        void loadDeepMerged();
+      });
+      return;
+    }
+
+    mount.innerHTML = hkFilterBarHtml() + '<div id="ops-hk-list-host" class="ops-hk-list-host"></div>';
+    var listHost = mount.querySelector("#ops-hk-list-host");
+    var hkFilterState = { status: "", from: "", to: "", room: "" };
+    var page = 1;
+
+    var applyBtn = document.getElementById("op-hk-filter-apply");
+    var clearBtn = document.getElementById("op-hk-filter-clear");
+    if (applyBtn) {
+      applyBtn.addEventListener("click", function () {
+        var next = readOpFilterFromDom("op-hk");
+        hkFilterState.status = next.status;
+        hkFilterState.from = next.from;
+        hkFilterState.to = next.to;
+        hkFilterState.room = next.room;
+        page = 1;
+        void load(1);
+      });
+    }
+    if (clearBtn) {
+      clearBtn.addEventListener("click", function () {
+        hkFilterState.status = "";
+        hkFilterState.from = "";
+        hkFilterState.to = "";
+        hkFilterState.room = "";
+        clearOpFilterDom("op-hk");
+        page = 1;
+        void load(1);
+      });
+    }
+
+    async function load(pageNum) {
+      page = pageNum != null ? pageNum : page;
+      var q = Object.assign(
+        {
+          type: "request",
+          page: String(page),
+          pageSize: String(PAGE_SIZE),
+        },
+        opQueryFromFilter(hkFilterState),
+      );
+      var res = await opsFetch("/requests?" + new URLSearchParams(q).toString());
+      renderRequestTable(listHost, {
+        rows: res.items || [],
+        pagination: res.pagination,
+        highlightRowId: "",
+        onPage: function (p) {
+          void load(p);
         },
         onStatus: async function (bt, id, status) {
           await opsFetch(
@@ -403,18 +507,8 @@
           await load(page);
         },
       });
-      requestAnimationFrame(function () {
-        requestAnimationFrame(function () {
-          var tr = listHost.querySelector("tr.ops-row--deep-link");
-          if (tr && typeof tr.scrollIntoView === "function") {
-            tr.scrollIntoView({ block: "nearest", behavior: "smooth" });
-          }
-        });
-      });
-      await paintSelected(function () {
-        void load(page);
-      });
     }
+
     await load(1);
     wireOpsCrossTabListRefresh(function () {
       void load(page);

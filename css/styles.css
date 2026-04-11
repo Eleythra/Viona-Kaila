@@ -484,11 +484,6 @@ body {
   padding-left: max(12px, env(safe-area-inset-left, 0px));
   padding-right: max(12px, env(safe-area-inset-right, 0px));
   padding-top: max(16px, env(safe-area-inset-top, 0px));
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 @keyframes homeReveal {
@@ -1341,19 +1336,9 @@ body {
   width: 100%;
 }
 
-/* Neredeyim: tam ekran yüksekliğinde flex — harita kalan alana oturur; metinler üstte kaydırılır */
+/* Neredeyim: geniş ekranda modül genişliği (iç kaydırma yok — sayfa tek akış) */
 #view-module.view--module:has(.where-module--kroki-locked) {
   max-width: min(1040px, 100%);
-  display: flex;
-  flex-direction: column;
-  min-height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-#view-module.view--module:has(.where-module--kroki-locked) .btn-back {
-  flex: 0 0 auto;
 }
 
 .btn-back {
@@ -2958,63 +2943,37 @@ body {
   padding-bottom: 10px;
 }
 
-/* Kroki: tek ekranda görseli oturt; uzun metinleri yalnızca üst bölümde kaydır */
+/* Kroki: iç içe kaydırma yok; bloklar doğal akış, harita tam genişlik tam yükseklik (sayfa kayar) */
 .where-module--premium.where-module--kroki-locked {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-  gap: 10px;
-  padding-bottom: 0;
+  gap: 14px;
+  padding-bottom: 12px;
 }
 
 .where-module--premium.where-module--kroki-locked .where-kroki-premium-hero {
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 
 .where-module--premium.where-module--kroki-locked .where-kroki-layout {
-  flex: 1 1 auto;
-  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
 }
 
 .where-module--premium.where-module--kroki-locked .where-kroki-controls {
-  flex: 0 1 auto;
-  max-height: min(38dvh, 320px);
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-right: 4px;
-  scrollbar-gutter: stable;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(0, 0, 0, 0.15);
+  flex: 0 0 auto;
+  overflow: visible;
 }
 
 .where-module--premium.where-module--kroki-locked .where-kroki {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
+  flex: 0 0 auto;
+  overflow: visible;
   margin: 0;
-  gap: 8px;
+  gap: 12px;
 }
 
 .where-module--premium.where-module--kroki-locked .where-kroki-detail:not(.where-kroki-detail--hidden) {
-  flex: 0 1 auto;
-  max-height: min(22dvh, 200px);
-  overflow-y: auto;
-}
-
-/* Görsel tam yükseklikte; taşarsa yalnızca harita kutusunda kaydır — kesme yok */
-.where-module--premium.where-module--kroki-locked .where-kroki__map-region {
-  flex: 1 1 auto;
-  min-height: 0;
-  display: block;
-  overflow-x: hidden;
-  overflow-y: auto;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
+  max-height: none;
 }
 
 .where-module--premium.where-module--kroki-locked .where-kroki__stage {
@@ -3089,11 +3048,8 @@ body {
 
   .where-module--premium.where-module--kroki-locked .where-kroki-controls {
     flex: 0 0 min(46vw, 360px);
-    max-height: min(90vh, 720px);
-    overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-right: 4px;
+    max-height: none;
+    overflow: visible;
   }
 
   .where-module--premium.where-module--kroki-locked .where-kroki {
@@ -3101,24 +3057,19 @@ body {
     flex-direction: column;
     flex: 1 1 auto;
     min-width: 0;
-    max-height: min(90vh, 720px);
-    overflow: hidden;
+    max-height: none;
+    overflow: visible;
     margin: 0;
   }
 
   .where-module--premium.where-module--kroki-locked .where-kroki__map-region {
-    flex: 1 1 auto;
-    min-height: 0;
+    flex: 0 0 auto;
     display: block;
-    overflow-x: hidden;
-    overflow-y: auto;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
+    overflow: visible;
   }
 
   .where-module--premium.where-module--kroki-locked .where-kroki__stage {
-    flex: 1 1 auto;
-    min-height: 0;
+    flex: 0 0 auto;
     max-width: none;
     width: 100%;
     margin: 0 auto;
@@ -3126,8 +3077,8 @@ body {
 
   .where-module--premium.where-module--kroki-locked .where-kroki-detail {
     flex: 0 0 auto;
-    max-height: min(26vh, 168px);
-    overflow-y: auto;
+    max-height: none;
+    overflow: visible;
   }
 }
 
@@ -3302,6 +3253,13 @@ body {
   background: rgba(4, 8, 14, 0.55);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
   width: 100%;
+}
+
+/* Kroki modülü: iç kaydırma yok, görsel kesilmesin (genel .where-kroki__map-region overflow:hidden üstüne) */
+.where-module--premium.where-module--kroki-locked .where-kroki__map-region {
+  display: block;
+  width: 100%;
+  overflow: visible;
 }
 
 /* Eskiden 520px tavandı — mobilde %100 genişlik, geniş ekranda modül genişliğine kadar */

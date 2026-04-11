@@ -19,15 +19,19 @@ stop_all() {
 }
 
 start_all() {
-  echo "1) Asistan 8010..."
-  cd "$ROOT"
-  .venv-assistant/bin/python -m uvicorn assistant.main:app --app-dir server/src --host 127.0.0.1 --port 8010 &
-  sleep 2
-  echo "2) Node 3001..."
+  if [[ -x "$ROOT/.venv-assistant/bin/python" ]]; then
+    echo "1) Asistan 8010..."
+    cd "$ROOT"
+    .venv-assistant/bin/python -m uvicorn assistant.main:app --app-dir server/src --host 127.0.0.1 --port 8010 &
+    sleep 2
+  else
+    echo "1) Asistan atlandı (yok: $ROOT/.venv-assistant) — sohbet için venv kurulumu gerekir."
+  fi
+  echo "2) Node API 3001..."
   cd "$ROOT/server"
   node src/index.js &
-  sleep 3
-  echo "3) Ön yüz 8080..."
+  sleep 2
+  echo "3) Ön yüz + admin 8080 (repo kökü)..."
   cd "$ROOT"
   python3 -m http.server 8080 --bind 127.0.0.1 &
   echo ""
@@ -39,11 +43,10 @@ start_all() {
     echo "  Eski süreç portu tutuyor olabilir. Çözüm (bir kez, kendi terminalinde):"
     echo "    sudo fuser -k 3001/tcp"
     echo "  Sonra: cd \"${ROOT}/server\" && node src/index.js"
-    echo "  Teşhis: ./scripts/local-dev-check.sh"
+    echo "  Teşhis: curl -s http://127.0.0.1:3001/api/health"
   fi
   echo ""
   echo "Arka planda başlatıldı. Kontrol:"
-  echo "  ./scripts/local-dev-check.sh"
   echo "  curl -s http://127.0.0.1:3001/api/health | head -c 400"
   echo "  Tarayıcı: http://127.0.0.1:8080/  ve  http://127.0.0.1:8080/admin/"
 }
