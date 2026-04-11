@@ -47,6 +47,13 @@
     front: "Ön büro Operasyon",
   };
 
+  var OP_FRONT_TAB_KEY = "viona_op_front_tab";
+  var OP_FRONT_SCOPE_LABELS = {
+    complaint: "Şikâyetler",
+    guest_notification: "Misafir bildirimleri",
+    late_checkout: "Geç çıkış",
+  };
+
   function sessionKey() {
     return "viona_ops_link_" + getRole();
   }
@@ -194,11 +201,9 @@
     var app = document.getElementById("ops-app");
     if (login) login.classList.remove("hidden");
     if (app) app.classList.add("hidden");
-    if (getRole() === "hk") {
-      try {
-        document.body.classList.remove("admin-body--app");
-      } catch (_e) {}
-    }
+    try {
+      document.body.classList.remove("admin-body--app");
+    } catch (_e) {}
   }
 
   function showApp() {
@@ -206,11 +211,9 @@
     var app = document.getElementById("ops-app");
     if (login) login.classList.add("hidden");
     if (app) app.classList.remove("hidden");
-    if (getRole() === "hk") {
-      try {
-        document.body.classList.add("admin-body--app");
-      } catch (_e2) {}
-    }
+    try {
+      document.body.classList.add("admin-body--app");
+    } catch (_e2) {}
   }
 
   async function validateRole() {
@@ -222,9 +225,9 @@
     return true;
   }
 
-  function hkDeepLinkUuid() {
+  function parseDeepUuidQuery(paramName) {
     try {
-      var id = String(new URL(window.location.href).searchParams.get("id") || "").trim();
+      var id = String(new URL(window.location.href).searchParams.get(paramName || "id") || "").trim();
       if (
         !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
           id,
@@ -232,10 +235,134 @@
       ) {
         return "";
       }
-      return id;
+      return id.toLowerCase();
     } catch (_e) {
       return "";
     }
+  }
+
+  function hkDeepLinkUuid() {
+    return parseDeepUuidQuery("id");
+  }
+
+  function techDeepLinkUuid() {
+    return parseDeepUuidQuery("id");
+  }
+
+  function frontDeepLinkParams() {
+    try {
+      var u = new URL(window.location.href);
+      var type = String(u.searchParams.get("type") || "")
+        .trim()
+        .toLowerCase();
+      if (type !== "complaint" && type !== "guest_notification" && type !== "late_checkout") return null;
+      var id = parseDeepUuidQuery("id");
+      if (!id) return null;
+      return { type: type, id: id };
+    } catch (_e2) {
+      return null;
+    }
+  }
+
+  function normAdminIssueStatus(row) {
+    var st = String((row && row.status) || "new")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "_");
+    if (st === "inprogress") return "in_progress";
+    return st;
+  }
+
+  function countOpsKanbanStatus(rows) {
+    var bekliyor = 0;
+    var yapiliyor = 0;
+    var yapildi = 0;
+    var yapilmadi = 0;
+    var iptal = 0;
+    (rows || []).forEach(function (r) {
+      var st = normAdminIssueStatus(r);
+      if (st === "new" || st === "pending") bekliyor++;
+      else if (st === "in_progress") yapiliyor++;
+      else if (st === "done") yapildi++;
+      else if (st === "rejected") yapilmadi++;
+      else if (st === "cancelled") iptal++;
+    });
+    return {
+      bekliyor: bekliyor,
+      yapiliyor: yapiliyor,
+      yapildi: yapildi,
+      yapilmadi: yapilmadi,
+      iptal: iptal,
+      diger: 0,
+      toplam: (rows || []).length,
+    };
+  }
+
+  function normalizeFrontTypeSummary(resp) {
+    if (!resp || typeof resp !== "object") {
+      return { filtered: false, bekliyor: 0, islemde: 0, yapildi: 0, yapilmadi: 0, iptal: 0, toplam: 0 };
+    }
+    if (String(resp.mode || "").trim() === "filtered") {
+      return {
+        filtered: true,
+        bekliyor: 0,
+        islemde: 0,
+        yapildi: 0,
+        yapilmadi: 0,
+        iptal: Number(resp.iptal) || 0,
+        toplam: Number(resp.toplam) || 0,
+      };
+    }
+    return {
+      filtered: false,
+      bekliyor: Number(resp.bekliyor) || 0,
+      islemde: Number(resp.islemde) || 0,
+      yapildi: Number(resp.yapildi) || 0,
+      yapilmadi: Number(resp.yapilmadi) || 0,
+      iptal: Number(resp.iptal) || 0,
+      toplam: Number(resp.toplam) || 0,
+    };
+  }
+
+  function mergeNormFrontTypes(c, gn, lc) {
+    return {
+      mode: c.filtered || gn.filtered || lc.filtered ? "mixed" : "full",
+      bekliyor: c.bekliyor + gn.bekliyor + lc.bekliyor,
+      islemde: c.islemde + gn.islemde + lc.islemde,
+      yapildi: c.yapildi + gn.yapildi + lc.yapildi,
+      yapilmadi: c.yapilmadi + gn.yapilmadi + lc.yapilmadi,
+      iptal: c.iptal + gn.iptal + lc.iptal,
+      toplam: c.toplam + gn.toplam + lc.toplam,
+      byType: {
+        complaint: c,
+        guest_notification: gn,
+        late_checkout: lc,
+      },
+    };
+  }
+
+  function enrichFrontTypeSummaryWithPack(apiRaw, pack) {
+    var n = normalizeFrontTypeSummary(apiRaw);
+    if (!pack || typeof pack !== "object") return n;
+    if (n.filtered) return n;
+    var listTotal = Number((pack.pagination && pack.pagination.total) || 0) || 0;
+    if (listTotal <= 0) return n;
+    if (n.toplam !== listTotal) {
+      n.toplam = listTotal;
+    }
+    var pages = Math.max(1, Number((pack.pagination && pack.pagination.totalPages) || 1));
+    var items = pack.items || [];
+    var apiMissing = apiRaw == null || typeof apiRaw !== "object";
+    var sumParts = n.bekliyor + n.islemde + n.yapildi + n.yapilmadi + n.iptal;
+    if ((apiMissing || sumParts === 0) && pages === 1 && items.length === listTotal) {
+      var k = countOpsKanbanStatus(items);
+      n.bekliyor = k.bekliyor;
+      n.islemde = k.yapiliyor;
+      n.yapildi = k.yapildi;
+      n.yapilmadi = k.yapilmadi;
+      n.iptal = k.iptal;
+    }
+    return n;
   }
 
   function opQueryFromFilter(f) {
@@ -300,19 +427,95 @@
     );
   }
 
-  /** Admin HK sekmesiyle aynı üst metin (WhatsApp / ?id= için ayrı metin yok). */
-  function syncHkLead() {
+  /** Admin HK sekmesiyle aynı üst metin; derin linkte teknik sayfadaki gibi WhatsApp notu. */
+  function syncHkLead(isDeep) {
     var lead = document.getElementById("ops-hk-lead");
     if (!lead) return;
+    if (isDeep) {
+      lead.innerHTML =
+        "WhatsApp «Panelde Aç» ile gelen tek istek kaydı. Tam liste ve süzgeçler için adres çubuğundan <code class=\"ops-light-code\">?id=</code> kaldırıp yenileyin.";
+      return;
+    }
     lead.innerHTML =
       "Misafir isteklerinde durum güncellemesi. Aşağıdan süz; salt okunur tam liste için <strong>İstekler</strong> sekmesini kullanın.";
+  }
+
+  /** Admin «tab-op-tech» ile aynı filtre çubuğu. */
+  function techFilterBarHtml() {
+    return (
+      '<div class="op-filter-bar glass-block" id="op-tech-filters" role="search" aria-label="Teknik operasyon filtreleri">' +
+      '<div class="op-filter-bar__row">' +
+      '<label class="op-filter-field"><span class="op-filter-field__lbl">Durum</span>' +
+      '<select id="op-tech-filter-status" class="op-filter-input">' +
+      '<option value="">Tüm kayıtlar</option>' +
+      '<option value="new">Yeni</option>' +
+      '<option value="pending">Bekliyor</option>' +
+      '<option value="in_progress">Yapılıyor</option>' +
+      '<option value="done">Yapıldı</option>' +
+      '<option value="rejected">Yapılmadı</option>' +
+      '<option value="cancelled">İptal</option>' +
+      "</select></label>" +
+      '<label class="op-filter-field"><span class="op-filter-field__lbl">Kayıt başlangıç</span>' +
+      '<input id="op-tech-filter-from" type="date" class="op-filter-input" autocomplete="off" /></label>' +
+      '<label class="op-filter-field"><span class="op-filter-field__lbl">Kayıt bitiş</span>' +
+      '<input id="op-tech-filter-to" type="date" class="op-filter-input" autocomplete="off" /></label>' +
+      '<label class="op-filter-field op-filter-field--room"><span class="op-filter-field__lbl">Oda</span>' +
+      '<input id="op-tech-filter-room" type="text" class="op-filter-input" placeholder="Tam eşleşme" autocomplete="off" /></label>' +
+      '<div class="op-filter-actions">' +
+      '<button type="button" class="btn-primary btn-small" id="op-tech-filter-apply">Uygula</button>' +
+      '<button type="button" class="btn-small" id="op-tech-filter-clear">Sıfırla</button>' +
+      "</div></div>" +
+      '<p class="op-filter-hint">Filtreler sunucuda uygulanır; <strong>Uygula</strong> ile listeyi yenilersiniz.</p></div>'
+    );
+  }
+
+  function syncTechLead(isDeep) {
+    var lead = document.getElementById("ops-tech-lead");
+    if (!lead) return;
+    if (isDeep) {
+      lead.innerHTML =
+        "WhatsApp «Panelde Aç» ile gelen tek arıza kaydı. Tam liste ve süzgeçler için adres çubuğundan <code class=\"ops-light-code\">?id=</code> kaldırıp yenileyin.";
+      return;
+    }
+    lead.innerHTML =
+      "Arıza kayıtlarında durum güncellemesi. Aşağıdan süz; salt okunur tam liste için <strong>Arızalar</strong> sekmesini kullanın.";
+  }
+
+  /** Admin «tab-op-front» ile aynı filtre çubuğu + kapsam satırı üstte ayrı üretilir. */
+  function frontFilterBarHtml() {
+    return (
+      '<div class="op-filter-bar glass-block" id="op-front-filters" role="search" aria-label="Ön büro operasyon filtreleri">' +
+      '<div class="op-filter-bar__row">' +
+      '<label class="op-filter-field"><span class="op-filter-field__lbl">Durum</span>' +
+      '<select id="op-front-filter-status" class="op-filter-input">' +
+      '<option value="">Tüm kayıtlar</option>' +
+      '<option value="new">Yeni</option>' +
+      '<option value="pending">Bekliyor</option>' +
+      '<option value="in_progress">Yapılıyor</option>' +
+      '<option value="done">Tamamlandı</option>' +
+      '<option value="rejected">Olumsuz</option>' +
+      '<option value="cancelled">İptal</option>' +
+      "</select></label>" +
+      '<label class="op-filter-field"><span class="op-filter-field__lbl">Kayıt başlangıç</span>' +
+      '<input id="op-front-filter-from" type="date" class="op-filter-input" autocomplete="off" /></label>' +
+      '<label class="op-filter-field"><span class="op-filter-field__lbl">Kayıt bitiş</span>' +
+      '<input id="op-front-filter-to" type="date" class="op-filter-input" autocomplete="off" /></label>' +
+      '<label class="op-filter-field op-filter-field--room"><span class="op-filter-field__lbl">Oda</span>' +
+      '<input id="op-front-filter-room" type="text" class="op-filter-input" placeholder="Tam eşleşme" autocomplete="off" /></label>' +
+      '<div class="op-filter-actions">' +
+      '<button type="button" class="btn-primary btn-small" id="op-front-filter-apply">Uygula</button>' +
+      '<button type="button" class="btn-small" id="op-front-filter-clear">Sıfırla</button>' +
+      "</div></div>" +
+      '<p class="op-filter-hint">Sekmeyi değiştirdiğinizde alanlar o sekmenin son süzgecini gösterir.</p></div>'
+    );
   }
 
   async function loadHkMount(mount) {
     var ui = window.AdminUI;
     if (!ui || typeof ui.renderOperationBucket !== "function") throw new Error("ui_missing");
     var deepId = hkDeepLinkUuid();
-    syncHkLead();
+    syncHkLead(Boolean(deepId));
+    if (!deepId && typeof ui.renderOpsSingleBucketSummary !== "function") throw new Error("ui_missing");
 
     function renderRequestTable(listHost, cfg) {
       ui.renderOperationBucket(listHost, {
@@ -334,7 +537,7 @@
     }
 
     if (deepId) {
-      mount.innerHTML = '<div id="ops-hk-list-host" class="ops-hk-list-host"></div>';
+      mount.innerHTML = '<div id="ops-hk-list-host" class="ops-hk-mount"></div>';
       var listHostDeep = mount.querySelector("#ops-hk-list-host");
 
       async function loadDeepSingle() {
@@ -393,10 +596,29 @@
       return;
     }
 
-    mount.innerHTML = hkFilterBarHtml() + '<div id="ops-hk-list-host" class="ops-hk-list-host"></div>';
+    mount.innerHTML =
+      '<div id="ops-hk-summary-mount" class="ops-hk-mount"></div>' +
+      hkFilterBarHtml() +
+      '<div id="ops-hk-list-host" class="ops-hk-mount"></div>';
+    var summaryHost = document.getElementById("ops-hk-summary-mount");
     var listHost = mount.querySelector("#ops-hk-list-host");
     var hkFilterState = { status: "", from: "", to: "", room: "" };
     var page = 1;
+
+    function paintHkSummary(rawApi, listPack) {
+      if (!summaryHost || typeof ui.renderOpsSingleBucketSummary !== "function") return;
+      try {
+        var raw = rawApi && rawApi.summary != null ? rawApi.summary : null;
+        var pack = listPack || { items: [], pagination: null };
+        var enriched = enrichFrontTypeSummaryWithPack(raw, pack);
+        ui.renderOpsSingleBucketSummary(summaryHost, { bucketType: "request", row: enriched });
+      } catch (e) {
+        summaryHost.innerHTML =
+          '<div class="op-front-summary glass-block" role="status"><p class="admin-load-error">' +
+          escHtml(formatErr(e)) +
+          "</p></div>";
+      }
+    }
 
     var applyBtn = document.getElementById("op-hk-filter-apply");
     var clearBtn = document.getElementById("op-hk-filter-clear");
@@ -425,15 +647,24 @@
 
     async function load(pageNum) {
       page = pageNum != null ? pageNum : page;
+      var fq = opQueryFromFilter(hkFilterState);
       var q = Object.assign(
         {
           type: "request",
           page: String(page),
           pageSize: String(PAGE_SIZE),
         },
-        opQueryFromFilter(hkFilterState),
+        fq,
       );
-      var res = await opsFetch("/requests?" + new URLSearchParams(q).toString());
+      var sumQ = new URLSearchParams(Object.assign({ type: "request" }, fq)).toString();
+      var pair = await Promise.all([
+        opsFetch("/requests?" + new URLSearchParams(q).toString()),
+        opsFetch("/requests/bucket-type-summary?" + sumQ).catch(function () {
+          return null;
+        }),
+      ]);
+      var res = pair[0];
+      var sumRaw = pair[1];
       renderRequestTable(listHost, {
         rows: res.items || [],
         pagination: res.pagination,
@@ -461,6 +692,7 @@
           await load(page);
         },
       });
+      paintHkSummary(sumRaw, res);
     }
 
     await load(1);
@@ -472,25 +704,164 @@
   async function loadTechMount(mount) {
     var ui = window.AdminUI;
     if (!ui || typeof ui.renderOperationBucket !== "function") throw new Error("ui_missing");
+    var deepId = techDeepLinkUuid();
+    syncTechLead(Boolean(deepId));
+    if (!deepId && typeof ui.renderOpsSingleBucketSummary !== "function") throw new Error("ui_missing");
+
+    function renderFaultTable(listHost, cfg) {
+      ui.renderOperationBucket(listHost, {
+        bucketType: "fault",
+        rows: cfg.rows || [],
+        pagination: cfg.pagination,
+        highlightRowId: cfg.highlightRowId || "",
+        editableRowId: cfg.editableRowId != null ? cfg.editableRowId : "",
+        onPage: typeof cfg.onPage === "function" ? cfg.onPage : null,
+        buttonLabels: ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"],
+        summaryRow: function (r) {
+          return typeof ui.operationSummaryForType === "function"
+            ? ui.operationSummaryForType("fault", r)
+            : "—";
+        },
+        onStatus: cfg.onStatus,
+        onDelete: cfg.onDelete,
+      });
+    }
+
+    if (deepId) {
+      mount.innerHTML = '<div id="ops-tech-list-host" class="ops-hk-mount"></div>';
+      var listHostDeep = mount.querySelector("#ops-tech-list-host");
+
+      async function loadDeepSingle() {
+        try {
+          var one = await opsFetch("/requests/fault/" + encodeURIComponent(deepId));
+          var row = one.item;
+          if (!row) {
+            listHostDeep.innerHTML =
+              '<p class="admin-load-error">Bu UUID ile kayıt bulunamadı veya silinmiş olabilir.</p>';
+            return;
+          }
+          renderFaultTable(listHostDeep, {
+            rows: [row],
+            pagination: null,
+            highlightRowId: deepId,
+            editableRowId: "",
+            onPage: null,
+            onStatus: async function (bt, id, status) {
+              await opsFetch(
+                "/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id) + "/status",
+                {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ status: status }),
+                },
+              );
+              postOpsMutation();
+              await loadDeepSingle();
+            },
+            onDelete: async function (bt, id) {
+              await opsFetch("/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id), {
+                method: "DELETE",
+              });
+              postOpsMutation();
+              try {
+                var u = new URL(window.location.href);
+                u.searchParams.delete("id");
+                var qs = u.searchParams.toString();
+                window.location.href = u.pathname + (qs ? "?" + qs : "") + (u.hash || "");
+              } catch (_e2) {
+                listHostDeep.innerHTML =
+                  '<p class="admin-load-error">Kayıt silindi. Tam liste için adres çubuğundan ?id= kaldırıp sayfayı yenileyin.</p>';
+              }
+            },
+          });
+        } catch (e) {
+          listHostDeep.innerHTML = '<p class="admin-load-error">' + escHtml(formatErr(e)) + "</p>";
+        }
+      }
+
+      await loadDeepSingle();
+      wireOpsCrossTabListRefresh(function () {
+        void loadDeepSingle();
+      });
+      return;
+    }
+
+    mount.innerHTML =
+      '<div id="ops-tech-summary-mount" class="ops-hk-mount"></div>' +
+      techFilterBarHtml() +
+      '<div id="ops-tech-list-host" class="ops-hk-mount"></div>';
+    var techSummaryHost = document.getElementById("ops-tech-summary-mount");
+    var listHost = mount.querySelector("#ops-tech-list-host");
+    var techFilterState = { status: "", from: "", to: "", room: "" };
     var page = 1;
+
+    function paintTechSummary(rawApi, listPack) {
+      if (!techSummaryHost || typeof ui.renderOpsSingleBucketSummary !== "function") return;
+      try {
+        var raw = rawApi && rawApi.summary != null ? rawApi.summary : null;
+        var pack = listPack || { items: [], pagination: null };
+        var enriched = enrichFrontTypeSummaryWithPack(raw, pack);
+        ui.renderOpsSingleBucketSummary(techSummaryHost, { bucketType: "fault", row: enriched });
+      } catch (e) {
+        techSummaryHost.innerHTML =
+          '<div class="op-front-summary glass-block" role="status"><p class="admin-load-error">' +
+          escHtml(formatErr(e)) +
+          "</p></div>";
+      }
+    }
+
+    var applyBtn = document.getElementById("op-tech-filter-apply");
+    var clearBtn = document.getElementById("op-tech-filter-clear");
+    if (applyBtn) {
+      applyBtn.addEventListener("click", function () {
+        var next = readOpFilterFromDom("op-tech");
+        techFilterState.status = next.status;
+        techFilterState.from = next.from;
+        techFilterState.to = next.to;
+        techFilterState.room = next.room;
+        page = 1;
+        void load(1);
+      });
+    }
+    if (clearBtn) {
+      clearBtn.addEventListener("click", function () {
+        techFilterState.status = "";
+        techFilterState.from = "";
+        techFilterState.to = "";
+        techFilterState.room = "";
+        clearOpFilterDom("op-tech");
+        page = 1;
+        void load(1);
+      });
+    }
+
     async function load(pageNum) {
       page = pageNum != null ? pageNum : page;
-      var q =
-        "?" +
-        new URLSearchParams({
+      var fq = opQueryFromFilter(techFilterState);
+      var q = Object.assign(
+        {
           type: "fault",
           page: String(page),
           pageSize: String(PAGE_SIZE),
-        }).toString();
-      var res = await opsFetch("/requests" + q);
-      ui.renderOperationBucket(mount, {
-        bucketType: "fault",
+        },
+        fq,
+      );
+      var sumQ = new URLSearchParams(Object.assign({ type: "fault" }, fq)).toString();
+      var pair = await Promise.all([
+        opsFetch("/requests?" + new URLSearchParams(q).toString()),
+        opsFetch("/requests/bucket-type-summary?" + sumQ).catch(function () {
+          return null;
+        }),
+      ]);
+      var res = pair[0];
+      var sumRaw = pair[1];
+      renderFaultTable(listHost, {
         rows: res.items || [],
         pagination: res.pagination,
+        highlightRowId: "",
         onPage: function (p) {
           void load(p);
         },
-        buttonLabels: ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"],
         onStatus: async function (bt, id, status) {
           await opsFetch(
             "/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id) + "/status",
@@ -511,7 +882,9 @@
           await load(page);
         },
       });
+      paintTechSummary(sumRaw, res);
     }
+
     await load(1);
     wireOpsCrossTabListRefresh(function () {
       void load(page);
@@ -520,48 +893,252 @@
 
   async function loadFrontMount(mount) {
     var ui = window.AdminUI;
-    if (!ui || typeof ui.renderOperationFront !== "function") throw new Error("ui_missing");
-    var pages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
+    if (!ui || typeof ui.renderOperationFront !== "function" || typeof ui.renderOperationBucket !== "function") {
+      throw new Error("ui_missing");
+    }
+
+    var deep = frontDeepLinkParams();
+    if (deep) {
+      try {
+        sessionStorage.setItem(OP_FRONT_TAB_KEY, deep.type);
+      } catch (_s) {}
+    }
+
+    function syncFrontLead(isDeep) {
+      var lead = document.getElementById("ops-front-lead");
+      if (!lead) return;
+      if (isDeep && deep) {
+        var lab = OP_FRONT_SCOPE_LABELS[deep.type] || deep.type;
+        lead.innerHTML =
+          "WhatsApp «Panelde Aç» ile gelen tek kayıt: <strong>" +
+          escHtml(lab) +
+          '</strong> · Tam üç liste için adres çubuğundan <code class="ops-light-code">?type=</code> ve ' +
+          '<code class="ops-light-code">?id=</code> kaldırıp yenileyin.';
+        return;
+      }
+      lead.innerHTML =
+        "Üstteki rakamlar sunucudan canlı sayılır. Tek süzgeç alanı vardır: alttaki sekmelerden hangi liste seçiliyse " +
+        "(Şikâyetler, Misafir bildirimleri, Geç çıkış) <strong>Uygula</strong> yalnız o kategoriye uygulanır; diğer " +
+        "ikisinin kayıtlı süzgeci ayrı kalır.";
+    }
+
+    if (deep) {
+      syncFrontLead(true);
+      mount.innerHTML = '<div id="ops-front-deep-list" class="ops-hk-mount"></div>';
+      var listHostDeep = mount.querySelector("#ops-front-deep-list");
+      var tabLabels =
+        deep.type === "late_checkout"
+          ? ["Bekliyor", "Yapılıyor", "Onaylandı", "Onaylanmadı"]
+          : ["Bekliyor", "Yapılıyor", "Dikkate alındı", "Dikkate alınmadı"];
+
+      async function loadDeepSingle() {
+        try {
+          var one = await opsFetch("/requests/" + encodeURIComponent(deep.type) + "/" + encodeURIComponent(deep.id));
+          var row = one.item;
+          if (!row) {
+            listHostDeep.innerHTML =
+              '<p class="admin-load-error">Bu UUID ile kayıt bulunamadı veya silinmiş olabilir.</p>';
+            return;
+          }
+          ui.renderOperationBucket(listHostDeep, {
+            bucketType: deep.type,
+            rows: [row],
+            pagination: null,
+            highlightRowId: deep.id,
+            editableRowId: "",
+            onPage: null,
+            buttonLabels: tabLabels,
+            summaryRow: function (r) {
+              return typeof ui.operationSummaryForType === "function"
+                ? ui.operationSummaryForType(deep.type, r)
+                : "—";
+            },
+            onStatus: async function (bt, id, status) {
+              await opsFetch(
+                "/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id) + "/status",
+                {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ status: status }),
+                },
+              );
+              postOpsMutation();
+              await loadDeepSingle();
+            },
+            onDelete: async function (bt, id) {
+              await opsFetch("/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id), {
+                method: "DELETE",
+              });
+              postOpsMutation();
+              try {
+                var u = new URL(window.location.href);
+                u.searchParams.delete("id");
+                u.searchParams.delete("type");
+                var qs = u.searchParams.toString();
+                window.location.href = u.pathname + (qs ? "?" + qs : "") + (u.hash || "");
+              } catch (_e2) {
+                listHostDeep.innerHTML =
+                  '<p class="admin-load-error">Kayıt silindi. Tam liste için adres çubuğundan derin parametreleri kaldırıp sayfayı yenileyin.</p>';
+              }
+            },
+          });
+        } catch (e) {
+          listHostDeep.innerHTML = '<p class="admin-load-error">' + escHtml(formatErr(e)) + "</p>";
+        }
+      }
+
+      await loadDeepSingle();
+      wireOpsCrossTabListRefresh(function () {
+        void loadDeepSingle();
+      });
+      return;
+    }
+
+    syncFrontLead(false);
+    mount.innerHTML =
+      '<p id="op-front-filter-scope" class="op-filter-scope" role="status"></p>' +
+      frontFilterBarHtml() +
+      '<div id="op-front-mount" class="ops-hk-mount"></div>';
+    var inner = document.getElementById("op-front-mount");
+    if (!inner) return;
+
+    var opFrontFilterActiveType = "complaint";
+    try {
+      var u0 = new URL(window.location.href);
+      var qpT = String(u0.searchParams.get("type") || "").trim();
+      if (qpT === "guest_notification" || qpT === "late_checkout" || qpT === "complaint") {
+        try {
+          sessionStorage.setItem(OP_FRONT_TAB_KEY, qpT);
+        } catch (_ss) {}
+      }
+    } catch (_u) {}
+    try {
+      var tab0 = String(sessionStorage.getItem(OP_FRONT_TAB_KEY) || "").trim();
+      if (tab0 === "guest_notification" || tab0 === "late_checkout" || tab0 === "complaint") {
+        opFrontFilterActiveType = tab0;
+      }
+    } catch (_sk) {}
+
+    var opFilterFrontByType = {
+      complaint: { status: "", from: "", to: "", room: "" },
+      guest_notification: { status: "", from: "", to: "", room: "" },
+      late_checkout: { status: "", from: "", to: "", room: "" },
+    };
+    var opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
+
+    function updateOpFrontFilterScopeLabel() {
+      var el = document.getElementById("op-front-filter-scope");
+      if (!el) return;
+      var lab = OP_FRONT_SCOPE_LABELS[opFrontFilterActiveType] || opFrontFilterActiveType;
+      el.textContent =
+        "Aktif sekme: " +
+        lab +
+        " — Bu süzgeç yalnız bu listeye uygulanır. Sekme değişince alanlar o listenin kayıtlı süzgecini gösterir.";
+    }
+
+    function syncOpFrontFilterFormFromActiveType() {
+      var m = opFilterFrontByType[opFrontFilterActiveType] || { status: "", from: "", to: "", room: "" };
+      var status = document.getElementById("op-front-filter-status");
+      var from = document.getElementById("op-front-filter-from");
+      var to = document.getElementById("op-front-filter-to");
+      var room = document.getElementById("op-front-filter-room");
+      if (status) status.value = m.status || "";
+      if (from) from.value = m.from || "";
+      if (to) to.value = m.to || "";
+      if (room) room.value = m.room || "";
+    }
+
+    var applyBtn = document.getElementById("op-front-filter-apply");
+    var clearBtn = document.getElementById("op-front-filter-clear");
+    if (applyBtn && !applyBtn.dataset.vionaBound) {
+      applyBtn.dataset.vionaBound = "1";
+      applyBtn.addEventListener("click", function () {
+        var next = readOpFilterFromDom("op-front");
+        opFilterFrontByType[opFrontFilterActiveType] = next;
+        opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
+        void loadAll();
+      });
+    }
+    if (clearBtn && !clearBtn.dataset.vionaBound) {
+      clearBtn.dataset.vionaBound = "1";
+      clearBtn.addEventListener("click", function () {
+        opFilterFrontByType[opFrontFilterActiveType] = { status: "", from: "", to: "", room: "" };
+        clearOpFilterDom("op-front");
+        opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
+        void loadAll();
+      });
+    }
+
+    syncOpFrontFilterFormFromActiveType();
+    updateOpFrontFilterScopeLabel();
+
     async function loadAll() {
-      var parts = await Promise.all([
-        opsFetch("/requests/front-summary").catch(function () {
-          return { summary: null };
+      syncOpFrontFilterFormFromActiveType();
+      updateOpFrontFilterScopeLabel();
+      var fqC = opQueryFromFilter(opFilterFrontByType.complaint);
+      var fqGn = opQueryFromFilter(opFilterFrontByType.guest_notification);
+      var fqLc = opQueryFromFilter(opFilterFrontByType.late_checkout);
+      var tc = new URLSearchParams(Object.assign({ type: "complaint" }, fqC)).toString();
+      var tgn = new URLSearchParams(Object.assign({ type: "guest_notification" }, fqGn)).toString();
+      var tlc = new URLSearchParams(Object.assign({ type: "late_checkout" }, fqLc)).toString();
+      var results = await Promise.all([
+        opsFetch("/requests/front-type-summary?" + tc).catch(function () {
+          return null;
+        }),
+        opsFetch("/requests/front-type-summary?" + tgn).catch(function () {
+          return null;
+        }),
+        opsFetch("/requests/front-type-summary?" + tlc).catch(function () {
+          return null;
         }),
         opsFetch(
           "/requests?" +
-            new URLSearchParams({
-              type: "complaint",
-              page: String(pages.complaint),
-              pageSize: String(PAGE_SIZE),
-            }).toString(),
+            new URLSearchParams(
+              Object.assign(
+                { type: "complaint", page: String(opFrontPages.complaint), pageSize: String(PAGE_SIZE) },
+                fqC,
+              ),
+            ).toString(),
         ),
         opsFetch(
           "/requests?" +
-            new URLSearchParams({
-              type: "guest_notification",
-              page: String(pages.guest_notification),
-              pageSize: String(PAGE_SIZE),
-            }).toString(),
+            new URLSearchParams(
+              Object.assign(
+                {
+                  type: "guest_notification",
+                  page: String(opFrontPages.guest_notification),
+                  pageSize: String(PAGE_SIZE),
+                },
+                fqGn,
+              ),
+            ).toString(),
         ),
         opsFetch(
           "/requests?" +
-            new URLSearchParams({
-              type: "late_checkout",
-              page: String(pages.late_checkout),
-              pageSize: String(PAGE_SIZE),
-            }).toString(),
+            new URLSearchParams(
+              Object.assign(
+                { type: "late_checkout", page: String(opFrontPages.late_checkout), pageSize: String(PAGE_SIZE) },
+                fqLc,
+              ),
+            ).toString(),
         ),
       ]);
-      var summary = parts[0] && parts[0].summary != null ? parts[0].summary : null;
-      var c = parts[1];
-      var gn = parts[2];
-      var lc = parts[3];
+      var rawC = results[0] && results[0].summary != null ? results[0].summary : null;
+      var rawGn = results[1] && results[1].summary != null ? results[1].summary : null;
+      var rawLc = results[2] && results[2].summary != null ? results[2].summary : null;
+      var nc = enrichFrontTypeSummaryWithPack(rawC, results[3]);
+      var ngn = enrichFrontTypeSummaryWithPack(rawGn, results[4]);
+      var nlc = enrichFrontTypeSummaryWithPack(rawLc, results[5]);
+      var summary = mergeNormFrontTypes(nc, ngn, nlc);
+      var c = results[3];
+      var gn = results[4];
+      var lc = results[5];
       ui.renderOperationFront(
-        mount,
+        inner,
         { complaint: c, guest_notification: gn, late_checkout: lc },
         {
           onPage: function (bt, p) {
-            pages[bt] = p;
+            opFrontPages[bt] = p;
             void loadAll();
           },
           onStatus: async function (bt, id, status) {
@@ -583,10 +1160,19 @@
             postOpsMutation();
             await loadAll();
           },
+          onTabChange: function (_prevKey, newKey) {
+            if (!newKey) return;
+            var next = readOpFilterFromDom("op-front");
+            opFilterFrontByType[opFrontFilterActiveType] = next;
+            opFrontFilterActiveType = newKey;
+            syncOpFrontFilterFormFromActiveType();
+            updateOpFrontFilterScopeLabel();
+          },
         },
         summary,
       );
     }
+
     await loadAll();
     wireOpsCrossTabListRefresh(function () {
       void loadAll();

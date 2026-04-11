@@ -12,10 +12,12 @@
  * Yönlendirme: arıza → WHATSAPP_TECH_RECIPIENTS | istek → WHATSAPP_HK_RECIPIENTS |
  * şikayet + misafir bildirimi + geç çıkış → WHATSAPP_FRONT_RECIPIENTS (ön büro).
  *
- * HK istek şablonunda «Visit Website / Dynamic URL» butonu: Meta şablonunda Base URL
- * (örn. https://viona-admin.eleythra.com/admin/) tanımlı; gövde aynı kalır. İstek kaydı için
- * `WHATSAPP_HK_PANEL_URL_BUTTON=1` iken Cloud API’ye `components` içine URL butonu eklenir;
- * dinamik suffix yalnızca `ops-hk.html?id=<guest_requests.uuid>` (kayıt `options.recordId`).
+ * Meta «Visit Website / Dynamic URL» butonu: şablonda Base URL (örn. https://viona-admin.eleythra.com/admin/) tanımlı;
+ * gövde aynı kalır. Env ile açılır; suffix sunucu üretir (şablonda URL butonu index 0 ile uyumlu olmalı):
+ * - İstek: `WHATSAPP_HK_PANEL_URL_BUTTON=1` → `ops-hk.html?id=<uuid>`
+ * - Arıza: `WHATSAPP_TECH_PANEL_URL_BUTTON=1` → `ops-tech.html?id=<uuid>`
+ * - Ön büro (şikâyet / misafir bildirimi / geç çıkış): `WHATSAPP_FRONT_PANEL_URL_BUTTON=1`
+ *   → `ops-front.html?type=<complaint|guest_notification|late_checkout>&id=<uuid>`
  *
  * Env: WHATSAPP_ACCESS_TOKEN (veya WHATSAPP_CLOUD_ACCESS_TOKEN), WHATSAPP_PHONE_NUMBER_ID,
  * isteğe bağlı WHATSAPP_BUSINESS_ACCOUNT_ID (referans), WHATSAPP_TEMPLATE_* ile şablon adı override.
@@ -53,6 +55,26 @@ export function buildHkOpsPanelUrlSuffix(recordId) {
   const id = String(recordId ?? "").trim().toLowerCase();
   if (!id || !HK_PANEL_UUID_RE.test(id)) return null;
   return `ops-hk.html?id=${id}`;
+}
+
+/** Arıza kaydı → teknik operasyon paneli (guest_faults.id). */
+export function buildTechOpsPanelUrlSuffix(recordId) {
+  const id = String(recordId ?? "").trim().toLowerCase();
+  if (!id || !HK_PANEL_UUID_RE.test(id)) return null;
+  return `ops-tech.html?id=${id}`;
+}
+
+const FRONT_PANEL_TYPES = new Set(["complaint", "guest_notification", "late_checkout"]);
+
+/** Ön büro kaydı → `type` + `id` ile panel. */
+export function buildFrontOpsPanelUrlSuffix(recordType, recordId) {
+  const t = String(recordType ?? "")
+    .trim()
+    .toLowerCase();
+  if (!FRONT_PANEL_TYPES.has(t)) return null;
+  const id = String(recordId ?? "").trim().toLowerCase();
+  if (!id || !HK_PANEL_UUID_RE.test(id)) return null;
+  return `ops-front.html?type=${encodeURIComponent(t)}&id=${id}`;
 }
 
 const WH_CATEGORY_LABELS = {
@@ -562,6 +584,12 @@ export function getWhatsappOperationalHealthSummary() {
     },
     /** Şikayet + misafir bildirimi + geç çıkış → WHATSAPP_FRONT_RECIPIENTS */
     guestRelationRecipientCount: frontN,
+    /** Meta şablonunda «Dynamic URL» butonu env ile açıksa (suffix sunucu üretir). */
+    panelUrlButtons: {
+      hk: String(process.env.WHATSAPP_HK_PANEL_URL_BUTTON || "").trim() === "1",
+      tech: String(process.env.WHATSAPP_TECH_PANEL_URL_BUTTON || "").trim() === "1",
+      front: String(process.env.WHATSAPP_FRONT_PANEL_URL_BUTTON || "").trim() === "1",
+    },
   };
 }
 
@@ -611,6 +639,7 @@ function parseMetaError(raw) {
  * @param {object} payload — normalize edilmiş misafir kaydı
  * @param {string} [intentFallback]
  * @param {{ recordId?: string, resend?: boolean }} [options]
+ * @returns {Promise<{ ok: boolean, skipped?: boolean, channel: string, reason?: string, recipients?: number, deliveredCount?: number }>} — erken çıkışlar `skipped`/`reason` ile döner; tüm numaralar hata verirse `ok: false`, `reason: all_recipients_failed`.
  */
 export async function sendOperationalWhatsappNotification(payload, intentFallback = "unknown", options = {}) {
   const recordType = normalizeGuestType(payload, intentFallback);
@@ -623,12 +652,12 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
       "[whatsapp_ops] notify_skipped reason=missing_credentials record_type=%s detail=set_WHATSAPP_ACCESS_TOKEN_or_WHATSAPP_CLOUD_ACCESS_TOKEN_and_WHATSAPP_PHONE_NUMBER_ID",
       recordType,
     );
-    return;
+    return { ok: false, skipped: true, channel: "cloud", reason: "missing_credentials" };
   }
 
   if (!isOperationalRecordType(recordType)) {
     console.info("[whatsapp_ops] notify_skipped reason=not_operational_type record_type=%s", recordType);
-    return;
+    return { ok: false, skipped: true, channel: "cloud", reason: "not_operational_type" };
   }
 
   let templateName = "";
@@ -651,7 +680,7 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
       templateName,
       listName,
     );
-    return;
+    return { ok: false, skipped: true, channel: "cloud", reason: "empty_recipient_list" };
   }
 
   const now = new Date();
@@ -681,9 +710,18 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
   const bodyParameters = bodyParams.map((text) => ({ type: "text", text: dash(text) }));
 
   const components = [{ type: "body", parameters: bodyParameters }];
-  const panelSuffix =
-    recordType === "request" ? buildHkOpsPanelUrlSuffix(options.recordId) : null;
-  const panelButtonOn = String(process.env.WHATSAPP_HK_PANEL_URL_BUTTON || "").trim() === "1";
+  let panelSuffix = null;
+  let panelButtonOn = false;
+  if (recordType === "request") {
+    panelSuffix = buildHkOpsPanelUrlSuffix(options.recordId);
+    panelButtonOn = String(process.env.WHATSAPP_HK_PANEL_URL_BUTTON || "").trim() === "1";
+  } else if (recordType === "fault") {
+    panelSuffix = buildTechOpsPanelUrlSuffix(options.recordId);
+    panelButtonOn = String(process.env.WHATSAPP_TECH_PANEL_URL_BUTTON || "").trim() === "1";
+  } else if (FRONT_PANEL_TYPES.has(recordType)) {
+    panelSuffix = buildFrontOpsPanelUrlSuffix(recordType, options.recordId);
+    panelButtonOn = String(process.env.WHATSAPP_FRONT_PANEL_URL_BUTTON || "").trim() === "1";
+  }
   if (panelSuffix && panelButtonOn) {
     components.push({
       type: "button",
@@ -693,6 +731,7 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
     });
   }
 
+  let deliveredCount = 0;
   for (const to of recipients) {
     let res;
     let raw = "";
@@ -727,6 +766,7 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
     }
 
     if (res.ok) {
+      deliveredCount += 1;
       let msgId = "";
       try {
         const j = JSON.parse(raw);
@@ -758,7 +798,21 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
       detail.slice(0, 1000),
     );
   }
-  return { ok: true, channel: "cloud", recipients: recipients.length };
+  if (deliveredCount === 0) {
+    return {
+      ok: false,
+      skipped: false,
+      channel: "cloud",
+      reason: "all_recipients_failed",
+      recipients: recipients.length,
+    };
+  }
+  return {
+    ok: true,
+    channel: "cloud",
+    recipients: recipients.length,
+    deliveredCount,
+  };
 }
 
 /** Geriye dönük uyum: önceki import adı. */

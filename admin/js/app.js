@@ -819,7 +819,7 @@
         bucketHandlers.onWhatsappResend = async function (itemType, id) {
           try {
             await adapter.resendWhatsappOperational(itemType, id);
-            window.alert("Kayıt operasyon WhatsApp grubuna yeniden iletildi.");
+            window.alert("Kayıt operasyon WhatsApp (Cloud API) hattına yeniden iletildi.");
             await loadBucket(type, mountId, undefined, { rethrow: true });
           } catch (err) {
             var msg =

@@ -16,6 +16,8 @@
 # Operasyon WhatsApp (Cloud API, bireysel numaralar; grup botu / whatsapp-web.js yok):
 #   WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID
 #   WHATSAPP_TECH_RECIPIENTS, WHATSAPP_HK_RECIPIENTS, WHATSAPP_FRONT_RECIPIENTS (virgülle)
+#   İsteğe bağlı şablon «Panelde Aç» URL butonu (Meta şablonu uyumlu olmalı, ayrıntı server/.env.example):
+#   WHATSAPP_HK_PANEL_URL_BUTTON, WHATSAPP_TECH_PANEL_URL_BUTTON, WHATSAPP_FRONT_PANEL_URL_BUTTON
 # Eski grup oturumu env anahtarlarını Dashboard’dan silin (kafa karıştırır).
 # Opsiyonel (misafir istek/arıza Telegram):
 #   TELEGRAM_TEKNIK_BOT_TOKEN, TELEGRAM_TEKNIK_CHAT_ID, TELEGRAM_HK_BOT_TOKEN, TELEGRAM_HK_CHAT_ID

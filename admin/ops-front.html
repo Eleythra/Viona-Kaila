@@ -16,9 +16,9 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/styles.css?v=30" />
-    <link rel="stylesheet" href="styles.css?v=36" />
+    <link rel="stylesheet" href="styles.css?v=44" />
   </head>
-  <body class="admin-body" data-viona-ops-role="front">
+  <body class="admin-body admin-body--ops-front-page" data-viona-ops-role="front">
     <section id="ops-login" class="admin-login">
       <div id="ops-login-busy" class="glass-block admin-login__card ops-login-busy hidden" aria-live="polite" aria-busy="true">
         <h1 id="ops-login-busy-title" class="ops-login-busy__title">Ön büro Operasyon</h1>
@@ -27,12 +27,15 @@
       <form id="ops-login-form" class="glass-block admin-login__card">
         <h1 id="ops-login-heading">Ön büro Operasyon</h1>
         <p class="ops-light-intro">
-          Şikâyet, misafir bildirimi ve geç çıkış kayıtlarında durum işaretlemek için ekip şifresini girin. Tam yönetim paneli
-          bu sayfada yoktur.
+          Şikâyet, misafir bildirimi ve geç çıkış kayıtlarında durum işaretlemek için ekip şifresini girin. Tam yönetim
+          paneli bu sayfada yoktur; yalnızca listelenen kayıtlar güncellenir.
         </p>
         <p class="ops-light-intro ops-light-intro--muted">
-          <code class="ops-light-code">#</code> veya <code class="ops-light-code">?k=</code> —
-          <code class="ops-light-code">OPS_LINK_TOKEN_FRONT</code> ile aynı. Türkçe harfler için
+          Paylaşılan linkte <code class="ops-light-code">#</code> sonrası veya
+          <code class="ops-light-code">?k=</code> ile gelen değer, sunucudaki
+          <code class="ops-light-code">OPS_LINK_TOKEN_FRONT</code> ile aynı olmalıdır. WhatsApp «Panelde Aç» ile gelen
+          bağlantıda <code class="ops-light-code">?type=</code> (şikâyet / misafir bildirimi / geç çıkış) ve
+          <code class="ops-light-code">?id=</code> kayıt UUID’si bulunur (girişten sonra da korunur). Türkçe harfler için
           <code class="ops-light-code">?k=%C3%B6nb%C3%BCro</code> gibi kodlama kullanın.
         </p>
         <p id="ops-deeplink-hint" class="ops-light-intro ops-light-intro--warn hidden" role="status"></p>
@@ -46,24 +49,26 @@
       </form>
     </section>
 
-    <main id="ops-app" class="ops-light-app hidden" aria-label="Ön büro operasyon listeleri">
-      <header class="ops-light-head glass-block">
-        <div class="ops-light-head__row">
-          <h1 id="ops-app-title" class="ops-light-head__title">Ön büro Operasyon</h1>
+    <main id="ops-app" class="admin-main hidden" aria-label="Ön büro operasyon">
+      <section class="admin-tab admin-tab--op-front-standalone" aria-labelledby="ops-front-heading">
+        <div class="section-head">
+          <h2 id="ops-front-heading">Ön büro Operasyon</h2>
           <button type="button" id="ops-logout" class="btn-small">Çıkış</button>
         </div>
-        <p class="ops-light-note">
-          Bu sayfa yalnızca ön büro iş akışı içindir. HK / teknik veya tam panele erişim yoktur.
+        <p id="ops-front-lead" class="section-lead">
+          Üstteki rakamlar sunucudan canlı sayılır. Tek süzgeç alanı vardır: alttaki sekmelerden hangi liste seçiliyse
+          (Şikâyetler, Misafir bildirimleri, Geç çıkış) <strong>Uygula</strong> yalnız o kategoriye uygulanır; diğer
+          ikisinin kayıtlı süzgeci ayrı kalır.
         </p>
-      </header>
-      <div id="ops-mount" class="ops-light-mount"></div>
+        <div id="ops-mount" class="ops-hk-mount"></div>
+      </section>
     </main>
 
     <script src="../js/viona-backend-url.js?v=11"></script>
     <script src="../js/viona-api-resolve.js?v=12"></script>
     <script src="../js/api-config.js?v=13"></script>
     <script src="../js/hotel-room-numbers.js?v=1"></script>
-    <script src="js/ui.js?v=52"></script>
-    <script src="js/ops-light.js?v=7"></script>
+    <script src="js/ui.js?v=55"></script>
+    <script src="js/ops-light.js?v=14"></script>
   </body>
 </html>

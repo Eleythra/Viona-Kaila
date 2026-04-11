@@ -185,7 +185,7 @@
         body: JSON.stringify(payload || {}),
       });
     },
-    /** Operasyon WhatsApp grubuna kaydı yeniden ilet (istek / şikâyet / arıza / misafir bildirimi / geç çıkış). */
+    /** Operasyon WhatsApp (Cloud API) numaralarına kaydı yeniden ilet (istek / şikâyet / arıza / misafir bildirimi / geç çıkış). */
     resendWhatsappOperational: function (type, id) {
       var url =
         adminRequestsCollectionUrl() +

@@ -14,6 +14,29 @@ Kayıt `createGuestRequest` ile Supabase’e yazıldıktan sonra aynı `type` il
 
 Web formları (`js/render-requests-module.js` vb.) ve sohbetten gelen `create_guest_request` eylemi aynı Node API’yi kullanır; Render’da `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` ve yukarıdaki listeler dolu olmalı.
 
+### Meta Cloud API — gönderim uç noktası
+
+- **HTTP:** `POST https://graph.facebook.com/{WHATSAPP_GRAPH_API_VERSION|v21.0}/{WHATSAPP_PHONE_NUMBER_ID}/messages`
+- **Kimlik:** `Authorization: Bearer` + `WHATSAPP_ACCESS_TOKEN` veya `WHATSAPP_CLOUD_ACCESS_TOKEN`
+- **Gövde:** `type: "template"`, `template.name` türe göre (`WHATSAPP_TEMPLATE_*` ile override), `template.language.code` genelde `tr`
+- **Alıcı:** Şablon mesajı her numaraya ayrı POST (grup sohbeti yok); numaralar `WHATSAPP_*_RECIPIENTS` içinde virgül/noktalı virgül/satır sonu ile
+
+### «Panelde Aç» (Dynamic URL) butonu
+
+Şablonda **Visit Website / Dynamic URL** tanımlıysa ve Base URL admin kökü (örn. `https://viona-admin.eleythra.com/admin/`) ise, sunucu isteğe bağlı olarak `components` içine URL butonu ekler (`index: "0"` — şablondaki ilk URL butonu ile uyumlu olmalı):
+
+| Env (`=1` açık) | Dinamik suffix (Base’e eklenir) |
+|------------------|----------------------------------|
+| `WHATSAPP_HK_PANEL_URL_BUTTON` | `ops-hk.html?id=<uuid>` (istek) |
+| `WHATSAPP_TECH_PANEL_URL_BUTTON` | `ops-tech.html?id=<uuid>` (arıza) |
+| `WHATSAPP_FRONT_PANEL_URL_BUTTON` | `ops-front.html?type=` + (`complaint` / `guest_notification` / `late_checkout`) + `&id=<uuid>` |
+
+Buton yoksa veya `=1` yapılmış ama şablonda uyumsuzluk varsa Meta hata döner; bu durumda env’yi `0`/boş bırakın.
+
+### `/api/health` özeti
+
+`whatsappOperational` içinde `cloudRecipientCounts`, `panelUrlButtons` (`hk` / `tech` / `front` boolean) ve kimlik yapılandırma bayrakları yer alır (gizli anahtar sızdırmaz).
+
 ---
 
 ## Public write endpoints

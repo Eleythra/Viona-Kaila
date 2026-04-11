@@ -102,7 +102,7 @@
       '<div class="admin-wa-modal__backdrop" data-wa-modal-backdrop tabindex="-1"></div>' +
       '<div class="admin-wa-modal__card glass-block">' +
       '<h3 id="admin-wa-resend-modal-title" class="admin-wa-modal__title">Operasyon WhatsApp’a yeniden iletilsin mi?</h3>' +
-      '<p class="admin-wa-modal__body">Bu kayıt <strong>operasyon WhatsApp grubuna</strong> bir kez daha gönderilir. Yanlışlıkla açtıysanız <strong>İptal</strong> ile kapatın. Onay sonrası sunucu mesajı yollar; lütfen çift gönderim yapmayın.</p>' +
+      '<p class="admin-wa-modal__body">Bu kayıt <strong>operasyon WhatsApp hattına</strong> (Meta Cloud API, .env’deki numaralar) bir kez daha gönderilir. Yanlışlıkla açtıysanız <strong>İptal</strong> ile kapatın. Onay sonrası sunucu mesajı yollar; lütfen çift gönderim yapmayın.</p>' +
       '<div class="admin-wa-modal__actions">' +
       '<button type="button" class="btn-small" data-wa-modal-cancel>İptal</button>' +
       '<button type="button" class="btn-primary btn-small" data-wa-modal-confirm>WhatsApp’a ilet</button>' +
@@ -432,7 +432,7 @@
       esc(type) +
       '" data-id="' +
       esc(id) +
-      '" title="Operasyon WhatsApp grubuna yeniden ilet">WhatsApp</button>';
+      '" title="Operasyon WhatsApp (Cloud API) numaralarına yeniden ilet">WhatsApp</button>';
     h += '<button type="button" class="btn-small js-delete" data-id="' + esc(id) + '" data-type="' + esc(type) + '">Sil</button>';
     return h;
   }
@@ -2670,7 +2670,7 @@
 
     var helpReq = ro
       ? "Salt izleme: durum güncellemesi HK operasyon sayfasından yapılır. Misafir memnuniyeti (1–5 + not) yalnızca burada sunucuya kaydedilir."
-      : "Kategori = talep grubu (form başlığı). Tür = seçilen satır. Adet = yalnızca adetli türlerde; diğerinde «-». Açıklama = misafir notu. Yeni kayıtlar operasyon WhatsApp grubuna düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.";
+      : "Kategori = talep grubu (form başlığı). Tür = seçilen satır. Adet = yalnızca adetli türlerde; diğerinde «-». Açıklama = misafir notu. Yeni kayıtlar operasyon WhatsApp (Cloud API) hattına düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.";
 
     var html =
       '<div class="bucket-shell bucket-shell--requests">' +
@@ -2912,7 +2912,7 @@
       '<p class="bucket-help bucket-help--complaints">' +
       (ro
         ? "Salt izleme: durum güncellemesi ön büro operasyon sayfasından yapılır. Misafir memnuniyeti burada kaydedilir."
-        : "Kategori ve açıklama misafir formundan. Personel notu dahilidir. Yeni kayıtlar operasyon WhatsApp grubuna düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
+        : "Kategori ve açıklama misafir formundan. Personel notu dahilidir. Yeni kayıtlar operasyon WhatsApp (Cloud API) hattına düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
       "</p>" +
       '<div class="bucket-toolbar bucket-toolbar--complaints">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
@@ -3131,7 +3131,7 @@
       '<p class="bucket-help bucket-help--complaints">' +
       (ro
         ? "Salt izleme; durum ön büro operasyon sayfasından. Misafir memnuniyeti burada kaydedilir."
-        : "Beslenme, sağlık ve kutlama bildirimleri; personel notu yerel olarak tarayıcıda saklanır. Yeni kayıtlar operasyon WhatsApp grubuna düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
+        : "Beslenme, sağlık ve kutlama bildirimleri; personel notu yerel olarak tarayıcıda saklanır. Yeni kayıtlar operasyon WhatsApp (Cloud API) hattına düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
       "</p>" +
       '<div class="bucket-toolbar bucket-toolbar--complaints">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
@@ -3353,7 +3353,7 @@
       '<p class="bucket-help bucket-help--late-checkout">' +
       (ro
         ? "Salt izleme; onay ön büro operasyon sayfasından. Memnuniyet burada kaydedilir."
-        : "Web formundan gelen geç çıkış talepleri; misafir bildirimi şablonu ile iletilir ve operasyon WhatsApp grubuna düşer. Personel notu yerel tarayıcıda saklanır; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
+        : "Web formundan gelen geç çıkış talepleri; misafir bildirimi şablonu ile iletilir ve operasyon WhatsApp (Cloud API) hattına düşer. Personel notu yerel tarayıcıda saklanır; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
       "</p>" +
       '<div class="bucket-toolbar bucket-toolbar--complaints">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
@@ -3588,7 +3588,7 @@
       '<p class="bucket-help bucket-help--faults">' +
       (ro
         ? "Salt izleme; durum teknik operasyon sayfasından. Misafir memnuniyeti burada kaydedilir."
-        : "Kategori, lokasyon, aciliyet ve açıklama formdan. Personel notu dahilidir. Yeni kayıtlar operasyon WhatsApp grubuna düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
+        : "Kategori, lokasyon, aciliyet ve açıklama formdan. Personel notu dahilidir. Yeni kayıtlar operasyon WhatsApp (Cloud API) hattına düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
       "</p>" +
       '<div class="bucket-toolbar bucket-toolbar--faults">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
@@ -4217,6 +4217,86 @@
     });
   }
 
+  /** HK / Teknik ops-light: ön büro özet kartıyla aynı sınıflar, tek kova. */
+  function renderOpsSingleBucketSummaryImpl(mountEl, cfg) {
+    if (!mountEl) return;
+    cfg = cfg || {};
+    var bucketType = String(cfg.bucketType || "request").trim();
+    var row = cfg.row || {};
+    var filtered = Boolean(row.filtered);
+    var title =
+      bucketType === "fault"
+        ? "Arıza kayıtları"
+        : bucketType === "request"
+          ? "Misafir istekleri"
+          : "Özet";
+    var labs = ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"];
+    var headTitle = filtered ? "Özet (seçilen duruma göre)" : "Özet (veritabanı canlı sayım)";
+    var headMeta =
+      bucketType === "fault"
+        ? "Teknik liste ile aynı süzgeç ve canlı sayım. Tablodan durum güncelleyince kart yenilenir."
+        : "HK listesi ile aynı süzgeç ve canlı sayım. Tablodan durum güncelleyince kart yenilenir.";
+    var cardsClass = "op-front-summary-cards" + (filtered ? " op-front-summary-cards--filtered" : "");
+    var cardHtml;
+    if (filtered) {
+      cardHtml =
+        '<article class="op-front-cat-card" data-ops-sum="' +
+        esc(bucketType) +
+        '"><h4 class="op-front-cat-card__title">' +
+        esc(title) +
+        '</h4><p class="op-front-cat-card__one"><span class="op-front-cat-card__k">Seçilen duruma göre</span> ' +
+        '<strong class="op-front-cat-card__v">' +
+        esc(String(row.toplam != null ? row.toplam : "0")) +
+        "</strong> kayıt</p></article>";
+    } else {
+      cardHtml =
+        '<article class="op-front-cat-card" data-ops-sum="' +
+        esc(bucketType) +
+        '"><h4 class="op-front-cat-card__title">' +
+        esc(title) +
+        '</h4><dl class="op-front-cat-card__dl">' +
+        "<div><dt>" +
+        esc(labs[0]) +
+        '</dt><dd class="op-front-cat-card__dd--wait">' +
+        esc(String(row.bekliyor != null ? row.bekliyor : "0")) +
+        "</dd></div>" +
+        "<div><dt>" +
+        esc(labs[1]) +
+        '</dt><dd>' +
+        esc(String(row.islemde != null ? row.islemde : "0")) +
+        "</dd></div>" +
+        "<div><dt>" +
+        esc(labs[2]) +
+        '</dt><dd class="op-front-cat-card__dd--ok">' +
+        esc(String(row.yapildi != null ? row.yapildi : "0")) +
+        "</dd></div>" +
+        "<div><dt>" +
+        esc(labs[3]) +
+        '</dt><dd class="op-front-cat-card__dd--no">' +
+        esc(String(row.yapilmadi != null ? row.yapilmadi : "0")) +
+        "</dd></div>" +
+        (row.iptal > 0
+          ? "<div><dt>İptal</dt><dd>" + esc(String(row.iptal)) + "</dd></div>"
+          : "") +
+        '<div class="op-front-cat-card__sum"><dt>Toplam</dt><dd>' +
+        esc(String(row.toplam != null ? row.toplam : "0")) +
+        "</dd></div></dl></article>";
+    }
+    mountEl.innerHTML =
+      '<div class="op-front-summary glass-block" role="status">' +
+      '<div class="op-front-summary__head">' +
+      '<span class="op-front-summary__title">' +
+      esc(headTitle) +
+      '</span><span class="op-front-summary__meta">' +
+      esc(headMeta) +
+      "</span></div>" +
+      '<div class="' +
+      cardsClass +
+      '">' +
+      cardHtml +
+      "</div></div>";
+  }
+
   window.AdminUI = {
     renderKpis: function (el, kpis) {
       if (!el) return;
@@ -4613,7 +4693,7 @@
         "</div>" +
         '<p class="bucket-help">' +
         esc(typeLabel(type)) +
-        ": ilk kayıt beklemede. Olumlu / olumsuz durumlar birbirine çevrilebilir; şikâyet ve misafir bildiriminde dikkate alındı / alınmadı. Uygun kayıtlar operasyon WhatsApp grubuna gider; gerekirse satırdaki WhatsApp ile tekrar gönderin.</p>" +
+        ": ilk kayıt beklemede. Olumlu / olumsuz durumlar birbirine çevrilebilir; şikâyet ve misafir bildiriminde dikkate alındı / alınmadı. Uygun kayıtlar operasyon WhatsApp (Cloud API) hattına gider; gerekirse satırdaki WhatsApp ile tekrar gönderin.</p>" +
         '<div class="bucket-toolbar">' +
         '<input class="bucket-search" type="search" placeholder="Oda, misafir veya detay ara..." />' +
         '<select class="bucket-filter-status">' +
@@ -4879,6 +4959,10 @@
     /** Ön büro: üç liste. */
     renderOperationFront: function (mountEl, packs, handlers, summary) {
       renderOperationFrontImpl(mountEl, packs, handlers, summary);
+    },
+    /** HK / Teknik ops-light: tek özet kartı (`row`: normalizeFrontTypeSummary + isteğe bağlı enrich). */
+    renderOpsSingleBucketSummary: function (mountEl, cfg) {
+      renderOpsSingleBucketSummaryImpl(mountEl, cfg);
     },
     /** Saha tabloları için kısa özet metni (istek / arıza / şikâyet vb.). */
     operationSummaryForType: function (bucketType, row) {

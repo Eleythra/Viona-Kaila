@@ -4366,8 +4366,10 @@
   color: var(--admin-text-muted);
 }
 
-/* ops-hk.html — admin HK sekmesiyle aynı kart / dış boşluk */
-.admin-body--ops-hk-page #ops-app.admin-main {
+/* ops-hk.html / ops-tech.html / ops-front.html — admin ilgili sekmeyle aynı kart / dış boşluk */
+.admin-body--ops-hk-page #ops-app.admin-main,
+.admin-body--ops-tech-page #ops-app.admin-main,
+.admin-body--ops-front-page #ops-app.admin-main {
   max-width: 1680px;
   margin: 0 auto;
   width: 100%;
@@ -4375,7 +4377,9 @@
   padding: max(18px, env(safe-area-inset-top, 0px)) max(18px, env(safe-area-inset-right, 0px))
     max(18px, env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
 }
-.admin-tab--op-hk-standalone .ops-hk-mount {
+.admin-tab--op-hk-standalone .ops-hk-mount,
+.admin-tab--op-tech-standalone .ops-hk-mount,
+.admin-tab--op-front-standalone .ops-hk-mount {
   min-width: 0;
 }
 

@@ -6,6 +6,7 @@ import {
   getAdminBucketItem,
   getFrontOfficeOperationSummary,
   getFrontOfficeTypeSummary,
+  getGuestBucketTypeSummary,
   listAdminBucket,
   updateAdminItemStatus,
 } from "../admin/admin.service.js";
@@ -211,14 +212,30 @@ router.get("/requests/front-type-summary", async (req, res) => {
   }
 });
 
-/** HK pilot: WhatsApp derin bağlantı — tek istek kaydı (liste sayfasında olmasa bile). */
-router.get("/requests/:type/:id", async (req, res) => {
+/** HK / Teknik: tek kova canlı özet (ön büro kartlarıyla aynı sayım mantığı). */
+router.get("/requests/bucket-type-summary", async (req, res) => {
   try {
-    if (req.opsRole !== "hk") {
+    const type = String(req.query.type || "");
+    const allowed = BUCKETS_BY_ROLE[req.opsRole];
+    if (!allowed || !allowed.has(type)) {
       return res.status(403).json({ ok: false, error: "forbidden_bucket" });
     }
+    const summary = await getGuestBucketTypeSummary(type, req.query || {});
+    return res.status(200).json({ ok: true, summary });
+  } catch (error) {
+    return adminErr(res, error, "ops_bucket_type_summary_failed");
+  }
+});
+
+/**
+ * WhatsApp «Panelde Aç» derin bağlantı: rolün kovasındaki tek kayıt (liste sayfasında olmasa bile).
+ * hk → request | tech → fault | front → complaint | guest_notification | late_checkout
+ */
+router.get("/requests/:type/:id", async (req, res) => {
+  try {
     const type = String(req.params.type || "");
-    if (type !== "request") {
+    const allowed = BUCKETS_BY_ROLE[req.opsRole];
+    if (!allowed || !allowed.has(type)) {
       return res.status(403).json({ ok: false, error: "forbidden_bucket" });
     }
     const item = await getAdminBucketItem(type, req.params.id);

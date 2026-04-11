@@ -333,10 +333,21 @@ export async function getFrontOfficeOperationSummary(query = {}) {
 
 const FRONT_SUMMARY_TYPES = new Set(["complaint", "guest_notification", "late_checkout"]);
 
-/** Tek ön büro kovası için durum sayıları (tarih/oda/durum süzgeci listeyle aynı mantık). */
-export async function getFrontOfficeTypeSummary(type, query = {}) {
+const GUEST_BUCKET_SUMMARY_TYPES = new Set([
+  "request",
+  "fault",
+  "complaint",
+  "guest_notification",
+  "late_checkout",
+]);
+
+/**
+ * Tek misafir kovası için durum sayıları (tarih/oda/durum süzgeci listeyle aynı mantık).
+ * HK (`request`), teknik (`fault`) ve ön büro tipleri için kullanılır.
+ */
+export async function getGuestBucketTypeSummary(type, query = {}) {
   const t = String(type || "").trim();
-  if (!FRONT_SUMMARY_TYPES.has(t)) throw new Error("invalid front summary type");
+  if (!GUEST_BUCKET_SUMMARY_TYPES.has(t)) throw new Error("invalid bucket summary type");
   const qAll = stripPagingAndType(query);
   const st = String(qAll.status || "").trim();
   if (st) {
@@ -348,6 +359,13 @@ export async function getFrontOfficeTypeSummary(type, query = {}) {
   delete q0.status;
   const c = await countFrontTypeStatusGroups(t, q0);
   return { mode: "full", type: t, ...c };
+}
+
+/** Tek ön büro kovası için durum sayıları (tarih/oda/durum süzgeci listeyle aynı mantık). */
+export async function getFrontOfficeTypeSummary(type, query = {}) {
+  const t = String(type || "").trim();
+  if (!FRONT_SUMMARY_TYPES.has(t)) throw new Error("invalid front summary type");
+  return getGuestBucketTypeSummary(t, query);
 }
 
 export async function listSurveySubmissions(query = {}) {

@@ -3299,24 +3299,24 @@ body {
   pointer-events: none;
 }
 
-/* Pin: yatay kapsül — mobilde min. ~44px dokunma yüksekliği (WCAG / iOS HIG) */
+/* Pin: yatay kapsül — masaüstü rahat; dar ekranda daha küçük (haritada üst üste binme azalır) */
 .where-kroki-pin {
   position: absolute;
   z-index: 4;
   box-sizing: border-box;
   width: auto;
-  min-width: 48px;
-  height: 44px;
-  min-height: 44px;
-  padding: 0 14px;
+  min-width: 44px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 12px;
   margin: 0;
   border: 2px solid rgba(255, 255, 255, 0.95);
   border-radius: 999px;
   background: linear-gradient(145deg, #ff2d6a 0%, #d41450 100%);
   color: #fff;
-  font-size: clamp(0.88rem, 3.2vw, 0.98rem);
+  font-size: clamp(0.82rem, 2.4vw, 0.95rem);
   font-weight: 800;
-  line-height: 44px;
+  line-height: 40px;
   white-space: nowrap;
   cursor: pointer;
   touch-action: manipulation;
@@ -3332,18 +3332,39 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-@media (pointer: coarse) {
+/* Telefon: mümkün olduğunca küçük kapsül (liste ile seçim de var) */
+@media (max-width: 767.98px) {
   .where-kroki-pin {
-    min-width: 52px;
-    min-height: 48px;
-    height: 48px;
-    line-height: 48px;
-    padding: 0 16px;
-    font-size: clamp(0.92rem, 3.4vw, 1.02rem);
+    min-width: 26px;
+    height: 22px;
+    min-height: 22px;
+    padding: 0 3px;
+    line-height: 22px;
+    border-width: 1px;
+    font-size: clamp(0.58rem, 2.2vw, 0.68rem);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.28),
+      0 1px 5px rgba(0, 0, 0, 0.38);
   }
 
   .where-kroki-pin--selected {
-    transform: translate(-50%, -50%) scale(1.06);
+    transform: translate(-50%, -50%) scale(1.02);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.4),
+      0 0 0 2px rgba(255, 200, 80, 0.55),
+      0 2px 8px rgba(0, 0, 0, 0.48);
+  }
+}
+
+/* Tablet / geniş dokunmatik: biraz daha geniş hedef (dar telefona uygulanmaz) */
+@media (pointer: coarse) and (min-width: 768px) {
+  .where-kroki-pin {
+    min-width: 48px;
+    min-height: 44px;
+    height: 44px;
+    line-height: 44px;
+    padding: 0 14px;
+    font-size: clamp(0.88rem, 2.2vw, 0.98rem);
   }
 }
 
@@ -3362,8 +3383,14 @@ body {
     0 0 0 2px rgba(0, 0, 0, 0.45),
     0 0 0 4px rgba(255, 200, 80, 0.55),
     0 6px 22px rgba(0, 0, 0, 0.55);
-  transform: translate(-50%, -50%) scale(1.08);
   background: linear-gradient(145deg, #ff4a7a 0%, #ff9a3d 100%);
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+@media (pointer: coarse) and (min-width: 768px) {
+  .where-kroki-pin--selected {
+    transform: translate(-50%, -50%) scale(1.06);
+  }
 }
 
 .where-kroki-table-outer {
