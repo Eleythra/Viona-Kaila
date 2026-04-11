@@ -364,6 +364,7 @@ body {
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.2;
+  text-rendering: optimizeLegibility;
   overflow-wrap: break-word;
   word-wrap: break-word;
   background: linear-gradient(100deg, #f8fafc 0%, #e8d8a8 38%, #b8e4ea 72%, #f2f4f8 100%);
@@ -892,6 +893,8 @@ body {
   font: inherit;
   text-align: left;
   cursor: pointer;
+  contain: layout style;
+  -webkit-tap-highlight-color: transparent;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 10px 32px rgba(0, 0, 0, 0.16);
   transition:
     transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
@@ -953,6 +956,8 @@ body {
   min-width: 0;
   overflow-wrap: anywhere;
   hyphens: auto;
+  text-wrap: balance;
+  text-rendering: optimizeLegibility;
 }
 
 .site-footer {

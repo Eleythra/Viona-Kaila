@@ -336,6 +336,16 @@
     late_checkout: "Geç çıkış",
   };
 
+  function updateOpFrontFilterScopeLabel() {
+    var el = document.getElementById("op-front-filter-scope");
+    if (!el) return;
+    var lab = OP_FRONT_SCOPE_LABELS[opFrontFilterActiveType] || opFrontFilterActiveType;
+    el.textContent =
+      "Aktif sekme: " +
+      lab +
+      " — Bu süzgeç yalnız bu listeye uygulanır. Sekme değişince alanlar o listenin kayıtlı süzgecini gösterir.";
+  }
+
   function syncOpFrontFilterFormFromActiveType() {
     var m = opFilterFrontByType[opFrontFilterActiveType] || { status: "", from: "", to: "", room: "" };
     var status = document.getElementById("op-front-filter-status");
@@ -346,16 +356,6 @@
     if (from) from.value = m.from || "";
     if (to) to.value = m.to || "";
     if (room) room.value = m.room || "";
-  }
-
-  function updateOpFrontFilterScopeLabel() {
-    var el = document.getElementById("op-front-filter-scope");
-    if (!el) return;
-    var lab = OP_FRONT_SCOPE_LABELS[opFrontFilterActiveType] || opFrontFilterActiveType;
-    el.textContent =
-      "Aktif sekme: " +
-      lab +
-      " — Bu süzgeç yalnız bu listeye uygulanır. Sekme değişince alanlar o listenin kayıtlı süzgecini gösterir.";
   }
 
   function wireOpFrontFilterBarOnce() {

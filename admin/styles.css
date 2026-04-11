@@ -4858,3 +4858,180 @@
   background: rgba(61, 108, 255, 0.1);
   outline: none;
 }
+
+/* —— Operasyon kart listesi (mobil / ops-light + saha sekmeleri layout=cards) —— */
+.op-cards-shell {
+  padding: 0.55rem 0.5rem 0.85rem;
+  border-radius: var(--admin-radius, 14px);
+}
+.op-cards-shell + .admin-pager {
+  margin-top: 0.75rem;
+}
+.op-cards--ops {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 100%;
+  max-width: 26rem;
+  margin: 0 auto;
+}
+.op-cards-empty {
+  margin: 0.5rem 0;
+  text-align: center;
+}
+.op-card {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(165deg, rgba(22, 32, 52, 0.92) 0%, rgba(15, 23, 42, 0.72) 100%);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+  padding: 0.95rem 1rem 1rem;
+}
+.op-card--fresh {
+  border-color: rgba(99, 102, 241, 0.35);
+}
+.op-card--deep {
+  outline: 2px solid rgba(56, 189, 248, 0.55);
+  outline-offset: 2px;
+}
+.op-card--readonly {
+  opacity: 0.72;
+}
+.op-card__top {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+.op-card__badge {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.op-card__dl {
+  margin: 0;
+}
+.op-card__kv {
+  margin: 0 0 0.55rem;
+}
+.op-card__kv:last-child {
+  margin-bottom: 0;
+}
+.op-card__kv dt {
+  margin: 0 0 0.12rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(226, 232, 240, 0.55);
+}
+.op-card__kv dd {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  font-weight: 500;
+  color: #f1f5f9;
+  word-break: break-word;
+}
+.op-card__dd--long {
+  max-height: 10.5rem;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+  -webkit-overflow-scrolling: touch;
+}
+.op-card__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.op-status-btns--cards {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  width: 100%;
+  flex-wrap: unset !important;
+}
+.op-status-btns--cards .op-st {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.45rem 0.35rem;
+  font-size: 0.76rem;
+  line-height: 1.15;
+  white-space: normal;
+}
+.op-del--card {
+  width: 100%;
+  min-height: 2.55rem;
+  font-weight: 600;
+}
+
+.op-card--palette-front .status-badge.status-new,
+.op-card--palette-front .status-badge.status-pending {
+  border: 1px solid rgba(56, 189, 248, 0.85);
+  background: rgba(14, 165, 233, 0.28);
+  color: #f0f9ff;
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
+}
+.op-card--palette-front .status-badge.status-in_progress {
+  border: 1px solid rgba(167, 139, 250, 0.9);
+  background: rgba(124, 58, 237, 0.32);
+  color: #faf5ff;
+  box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.28);
+}
+.op-card--palette-front .status-badge.status-done {
+  border: 1px solid rgba(52, 211, 153, 0.88);
+  background: rgba(5, 150, 105, 0.32);
+  color: #ecfdf5;
+  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.25);
+}
+.op-card--palette-front .status-badge.status-rejected {
+  border: 1px solid rgba(251, 113, 133, 0.9);
+  background: rgba(225, 29, 72, 0.3);
+  color: #fff1f2;
+  box-shadow: 0 0 0 1px rgba(251, 113, 133, 0.28);
+}
+.op-card--palette-front .status-badge.status-cancelled {
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(51, 65, 85, 0.35);
+  color: #e2e8f0;
+  box-shadow: none;
+}
+
+.op-card--palette-hktech .status-badge.status-new,
+.op-card--palette-hktech .status-badge.status-pending {
+  border: 1px solid rgba(99, 102, 241, 0.88);
+  background: rgba(67, 56, 202, 0.32);
+  color: #eef2ff;
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.28);
+}
+.op-card--palette-hktech .status-badge.status-in_progress {
+  border: 1px solid rgba(251, 146, 60, 0.92);
+  background: rgba(234, 88, 12, 0.32);
+  color: #fff7ed;
+  box-shadow: 0 0 0 1px rgba(251, 146, 60, 0.3);
+}
+.op-card--palette-hktech .status-badge.status-done {
+  border: 1px solid rgba(45, 212, 191, 0.9);
+  background: rgba(15, 118, 110, 0.34);
+  color: #f0fdfa;
+  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.28);
+}
+.op-card--palette-hktech .status-badge.status-rejected {
+  border: 1px solid rgba(248, 113, 113, 0.92);
+  background: rgba(185, 28, 28, 0.32);
+  color: #fef2f2;
+  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.28);
+}
+.op-card--palette-hktech .status-badge.status-cancelled {
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(51, 65, 85, 0.35);
+  color: #e2e8f0;
+  box-shadow: none;
+}
+
+@media (min-width: 900px) {
+  .op-cards--ops {
+    max-width: 32rem;
+  }
+}

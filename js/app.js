@@ -14,7 +14,7 @@
     { id: "alacarte", i18nKey: "modAlacarte", icon: "plate" },
     { id: "animation", i18nKey: "modAnim", icon: "spark" },
     { id: "sustainability", i18nKey: "modSustainability", icon: "leaf" },
-    { id: "coming_soon", i18nKey: "modComingSoon", icon: "pin" },
+    { id: "coming_soon", i18nKey: "modComingSoon", icon: "map" },
     { id: "miniclub", i18nKey: "modMini", icon: "smile" },
     { id: "discount", i18nKey: "modDiscount", icon: "percent" },
     { id: "meeting", i18nKey: "modMeet", icon: "users" },
@@ -186,6 +186,7 @@
       img.alt = "";
       img.decoding = "async";
       img.loading = i === 0 ? "eager" : "lazy";
+      if (i === 0 && "fetchPriority" in img) img.fetchPriority = "high";
       slide.appendChild(img);
       track.appendChild(slide);
     });
@@ -203,6 +204,9 @@
     stopCarousel();
     const slides = document.querySelectorAll(".carousel-slide");
     if (slides.length < 2) return;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
     carouselTimer = setInterval(() => {
       slides[carouselIndex].classList.remove("carousel-slide--active");
       slides[carouselIndex].setAttribute("aria-hidden", "true");

@@ -3783,9 +3783,210 @@
     applyFilters();
   }
 
+  /** Ops kart görünümü: kovaya göre etiket / değer (mobil; içerik türüne göre alanlar). */
+  function operationOpsCardFields(bucketType, r) {
+    var out = [];
+    var gn = String(r.guest_name || "").trim();
+    var nat = String(r.nationality || "").trim();
+    out.push({ k: "Kayıt", v: formatSubmittedAtTr(r.submitted_at) });
+    out.push({ k: "Oda", v: String(r.room_number || "").trim() ? String(r.room_number) : "—" });
+    if (gn) out.push({ k: "Misafir", v: gn });
+    if (nat) out.push({ k: "Uyruk", v: nat });
+    if (bucketType === "request") {
+      var g = requestFormGroupLabel(r);
+      var t = requestFormTypeLabel(r);
+      var d = requestFormDescription(r);
+      if (g) out.push({ k: "Grup", v: g });
+      if (t) out.push({ k: "Tür", v: t });
+      if (d) out.push({ k: "Açıklama", v: d, long: true });
+    } else if (bucketType === "fault") {
+      var c = categoryText("fault", r.categories, r.category);
+      if (c) out.push({ k: "Kategori", v: c });
+      var fd = faultFormDescription(r);
+      if (fd) out.push({ k: "Açıklama", v: fd, long: true });
+    } else if (bucketType === "complaint" || bucketType === "guest_notification") {
+      var c2 = categoryText(bucketType, r.categories, r.category);
+      if (c2) out.push({ k: "Konu", v: c2 });
+      var cd = complaintFormDescription(r);
+      if (cd) out.push({ k: "Detay", v: cd, long: true });
+    } else if (bucketType === "late_checkout") {
+      if (r.checkout_date) out.push({ k: "Çıkış tarihi", v: String(r.checkout_date) });
+      if (r.checkout_time) out.push({ k: "Çıkış saati", v: String(r.checkout_time) });
+      var lcd = complaintFormDescription(r);
+      if (lcd) out.push({ k: "Not", v: lcd, long: true });
+    }
+    return out;
+  }
+
+  /** Mobil öncelikli kart listesi (`cfg.layout === "cards"`). */
+  function renderOperationBucketCardsImpl(mountEl, cfg) {
+    if (!mountEl || !cfg) return;
+    var bucketType = cfg.bucketType;
+    var rows = cfg.rows || [];
+    var pagination = cfg.pagination;
+    var onPage = cfg.onPage;
+    var onStatus = cfg.onStatus;
+    var onDelete = cfg.onDelete;
+    var buttonLabels = cfg.buttonLabels || ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"];
+    var highlightRowId = cfg.highlightRowId != null ? String(cfg.highlightRowId).trim() : "";
+    var editableRowId = cfg.editableRowId != null ? String(cfg.editableRowId).trim() : "";
+    function rowActionsEditable(rowId) {
+      if (!editableRowId) return true;
+      return String(rowId || "").trim().toLowerCase() === editableRowId.toLowerCase();
+    }
+    var statVals = [
+      { v: "pending" },
+      { v: "in_progress" },
+      { v: "done" },
+      { v: "rejected" },
+    ];
+    var opStatusBtnVariantClass =
+      bucketType === "complaint" ||
+      bucketType === "guest_notification" ||
+      bucketType === "late_checkout"
+        ? "op-status-btns--front op-status-btns--cards"
+        : "op-status-btns--hktech op-status-btns--cards";
+    function actionsBlockHtml(id, current, actionsOn) {
+      var st = normalizeBucketStatus(current);
+      var dis = actionsOn ? "" : " disabled";
+      var roTitle = actionsOn ? "" : ' title="Bu bağlantıda yalnızca açılan kayıt değiştirilebilir"';
+      var h = '<div class="op-status-btns ' + opStatusBtnVariantClass + '" data-op-id="' + esc(id) + '">';
+      statVals.forEach(function (opt, i) {
+        var on = st === opt.v || (st === "new" && opt.v === "pending");
+        h +=
+          '<button type="button" class="btn-small op-st js-op-st' +
+          (on ? " is-active" : "") +
+          '"' +
+          dis +
+          roTitle +
+          ' data-status="' +
+          esc(opt.v) +
+          '">' +
+          esc(buttonLabels[i] || opt.v) +
+          "</button>";
+      });
+      h += "</div>";
+      if (typeof onDelete === "function") {
+        var delTitle = actionsOn ? "Kaydı kalıcı sil" : "Bu bağlantıda yalnızca açılan kayıt silinebilir";
+        h +=
+          '<button type="button" class="btn-small op-del op-del--card js-op-del" data-op-id="' +
+          esc(id) +
+          '"' +
+          dis +
+          ' title="' +
+          esc(delTitle) +
+          '">Sil</button>';
+      }
+      return h;
+    }
+    var html = '<div class="op-cards-shell glass-block"><div class="op-cards op-cards--ops">';
+    if (!rows.length) {
+      html += '<p class="op-cards-empty admin-table__empty">Kayıt yok.</p>';
+    } else {
+      rows.forEach(function (r) {
+        var st = normalizeBucketStatus(r.status);
+        var paletteClass =
+          bucketType === "complaint" ||
+          bucketType === "guest_notification" ||
+          bucketType === "late_checkout"
+            ? "op-card--palette-front"
+            : "op-card--palette-hktech";
+        var cardClasses = ["op-card", paletteClass];
+        if (st === "new" || st === "pending") cardClasses.push("op-card--fresh");
+        if (
+          highlightRowId &&
+          String(r.id || "").trim().toLowerCase() === highlightRowId.trim().toLowerCase()
+        ) {
+          cardClasses.push("op-card--deep");
+        }
+        if (editableRowId && !rowActionsEditable(r.id)) {
+          cardClasses.push("op-card--readonly");
+        }
+        var fields = operationOpsCardFields(bucketType, r);
+        var dl = '<dl class="op-card__dl">';
+        fields.forEach(function (f) {
+          var ddClass = f.long ? "op-card__dd op-card__dd--long" : "op-card__dd";
+          dl +=
+            '<div class="op-card__kv"><dt>' +
+            esc(f.k) +
+            '</dt><dd class="' +
+            esc(ddClass) +
+            '">' +
+            esc(f.v) +
+            "</dd></div>";
+        });
+        dl += "</dl>";
+        html +=
+          '<article class="' +
+          esc(cardClasses.join(" ")) +
+          '" data-op-row-id="' +
+          esc(String(r.id)) +
+          '">' +
+          '<div class="op-card__top">' +
+          '<span class="status-badge status-' +
+          esc(st) +
+          ' op-card__badge">' +
+          esc(issueStatusLabel(bucketType, st)) +
+          "</span></div>" +
+          dl +
+          '<div class="op-card__actions">' +
+          actionsBlockHtml(r.id, r.status, rowActionsEditable(r.id)) +
+          "</div></article>";
+      });
+    }
+    html += "</div></div>";
+    mountEl.innerHTML = html;
+    if (pagination && typeof onPage === "function") {
+      attachAdminPager(mountEl, pagination, rows, onPage);
+    }
+    if (typeof onStatus === "function") {
+      mountEl.querySelectorAll(".js-op-st").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var cell = btn.closest(".op-status-btns");
+          if (!cell) return;
+          var id = cell.getAttribute("data-op-id");
+          var status = btn.getAttribute("data-status");
+          var p = onStatus(bucketType, id, status);
+          if (p && typeof p.then === "function") {
+            btn.disabled = true;
+            p.finally(function () {
+              btn.disabled = false;
+            });
+          }
+        });
+      });
+    }
+    if (typeof onDelete === "function") {
+      mountEl.querySelectorAll(".js-op-del").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var id = btn.getAttribute("data-op-id");
+          if (!id) return;
+          if (
+            !window.confirm(
+              "Bu kaydı kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz.",
+            )
+          ) {
+            return;
+          }
+          var p = onDelete(bucketType, id);
+          if (p && typeof p.then === "function") {
+            btn.disabled = true;
+            p.finally(function () {
+              btn.disabled = false;
+            });
+          }
+        });
+      });
+    }
+  }
+
   /** Saha sekmeleri: hızlı durum düğmeleri (admin oturumu ile). */
   function renderOperationBucketImpl(mountEl, cfg) {
     if (!mountEl || !cfg) return;
+    if (cfg.layout === "cards") {
+      renderOperationBucketCardsImpl(mountEl, cfg);
+      return;
+    }
     var bucketType = cfg.bucketType;
     var rows = cfg.rows || [];
     var pagination = cfg.pagination;
@@ -3992,6 +4193,7 @@
     var onPage = handlers && handlers.onPage;
     var onDelete = handlers && handlers.onDelete;
     var onTabChange = handlers && handlers.onTabChange;
+    var useCardLayout = Boolean(handlers && handlers.opsRecordLayout === "cards");
 
     var TAB_KEY = "viona_op_front_tab";
     var active = "complaint";
@@ -4179,6 +4381,7 @@
         summaryRow: function (row) {
           return operationSummaryForType(tab.key, row);
         },
+        layout: useCardLayout ? "cards" : undefined,
       });
       panelsRoot.appendChild(wrap);
     });

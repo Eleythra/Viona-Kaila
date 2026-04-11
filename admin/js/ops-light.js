@@ -48,11 +48,6 @@
   };
 
   var OP_FRONT_TAB_KEY = "viona_op_front_tab";
-  var OP_FRONT_SCOPE_LABELS = {
-    complaint: "Şikâyetler",
-    guest_notification: "Misafir bildirimleri",
-    late_checkout: "Geç çıkış",
-  };
 
   function sessionKey() {
     return "viona_ops_link_" + getRole();
@@ -421,17 +416,8 @@
       '<div class="op-filter-actions">' +
       '<button type="button" class="btn-primary btn-small" id="op-hk-filter-apply">Uygula</button>' +
       '<button type="button" class="btn-small" id="op-hk-filter-clear">Sıfırla</button>' +
-      "</div></div>" +
-      '<p class="op-filter-hint">Filtreler sunucuda uygulanır; <strong>Uygula</strong> ile listeyi yenilersiniz.</p></div>'
+      "</div></div></div>"
     );
-  }
-
-  /** Admin HK sekmesiyle aynı üst metin (derin link / WhatsApp’tan açılışta da aynı, sade). */
-  function syncHkLead() {
-    var lead = document.getElementById("ops-hk-lead");
-    if (!lead) return;
-    lead.innerHTML =
-      "Misafir isteklerinde durum güncellemesi. Aşağıdan süz; salt okunur tam liste için <strong>İstekler</strong> sekmesini kullanın.";
   }
 
   /** Admin «tab-op-tech» ile aynı filtre çubuğu. */
@@ -457,16 +443,8 @@
       '<div class="op-filter-actions">' +
       '<button type="button" class="btn-primary btn-small" id="op-tech-filter-apply">Uygula</button>' +
       '<button type="button" class="btn-small" id="op-tech-filter-clear">Sıfırla</button>' +
-      "</div></div>" +
-      '<p class="op-filter-hint">Filtreler sunucuda uygulanır; <strong>Uygula</strong> ile listeyi yenilersiniz.</p></div>'
+      "</div></div></div>"
     );
-  }
-
-  function syncTechLead() {
-    var lead = document.getElementById("ops-tech-lead");
-    if (!lead) return;
-    lead.innerHTML =
-      "Arıza kayıtlarında durum güncellemesi. Aşağıdan süz; salt okunur tam liste için <strong>Arızalar</strong> sekmesini kullanın.";
   }
 
   /** Admin «tab-op-front» ile aynı filtre çubuğu + kapsam satırı üstte ayrı üretilir. */
@@ -492,8 +470,7 @@
       '<div class="op-filter-actions">' +
       '<button type="button" class="btn-primary btn-small" id="op-front-filter-apply">Uygula</button>' +
       '<button type="button" class="btn-small" id="op-front-filter-clear">Sıfırla</button>' +
-      "</div></div>" +
-      '<p class="op-filter-hint">Sekmeyi değiştirdiğinizde alanlar o sekmenin son süzgecini gösterir.</p></div>'
+      "</div></div></div>"
     );
   }
 
@@ -501,12 +478,12 @@
     var ui = window.AdminUI;
     if (!ui || typeof ui.renderOperationBucket !== "function") throw new Error("ui_missing");
     var deepId = hkDeepLinkUuid();
-    syncHkLead();
     if (!deepId && typeof ui.renderOpsSingleBucketSummary !== "function") throw new Error("ui_missing");
 
     function renderRequestTable(listHost, cfg) {
       ui.renderOperationBucket(listHost, {
         bucketType: "request",
+        layout: "cards",
         rows: cfg.rows || [],
         pagination: cfg.pagination,
         highlightRowId: cfg.highlightRowId || "",
@@ -692,12 +669,12 @@
     var ui = window.AdminUI;
     if (!ui || typeof ui.renderOperationBucket !== "function") throw new Error("ui_missing");
     var deepId = techDeepLinkUuid();
-    syncTechLead();
     if (!deepId && typeof ui.renderOpsSingleBucketSummary !== "function") throw new Error("ui_missing");
 
     function renderFaultTable(listHost, cfg) {
       ui.renderOperationBucket(listHost, {
         bucketType: "fault",
+        layout: "cards",
         rows: cfg.rows || [],
         pagination: cfg.pagination,
         highlightRowId: cfg.highlightRowId || "",
@@ -891,17 +868,6 @@
       } catch (_s) {}
     }
 
-    function syncFrontLead() {
-      var lead = document.getElementById("ops-front-lead");
-      if (!lead) return;
-      lead.innerHTML =
-        "Üstteki rakamlar sunucudan canlı sayılır. Tek süzgeç alanı vardır: alttaki sekmelerden hangi liste seçiliyse " +
-        "(Şikâyetler, Misafir bildirimleri, Geç çıkış) <strong>Uygula</strong> yalnız o kategoriye uygulanır; diğer " +
-        "ikisinin kayıtlı süzgeci ayrı kalır.";
-    }
-
-    syncFrontLead();
-
     if (deep) {
       mount.innerHTML = '<div id="ops-front-deep-list" class="ops-hk-mount"></div>';
       var listHostDeep = mount.querySelector("#ops-front-deep-list");
@@ -921,6 +887,7 @@
           }
           ui.renderOperationBucket(listHostDeep, {
             bucketType: deep.type,
+            layout: "cards",
             rows: [row],
             pagination: null,
             highlightRowId: deep.id,
@@ -973,10 +940,7 @@
       return;
     }
 
-    mount.innerHTML =
-      '<p id="op-front-filter-scope" class="op-filter-scope" role="status"></p>' +
-      frontFilterBarHtml() +
-      '<div id="op-front-mount" class="ops-hk-mount"></div>';
+    mount.innerHTML = frontFilterBarHtml() + '<div id="op-front-mount" class="ops-hk-mount"></div>';
     var inner = document.getElementById("op-front-mount");
     if (!inner) return;
 
@@ -1003,16 +967,6 @@
       late_checkout: { status: "", from: "", to: "", room: "" },
     };
     var opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
-
-    function updateOpFrontFilterScopeLabel() {
-      var el = document.getElementById("op-front-filter-scope");
-      if (!el) return;
-      var lab = OP_FRONT_SCOPE_LABELS[opFrontFilterActiveType] || opFrontFilterActiveType;
-      el.textContent =
-        "Aktif sekme: " +
-        lab +
-        " — Bu süzgeç yalnız bu listeye uygulanır. Sekme değişince alanlar o listenin kayıtlı süzgecini gösterir.";
-    }
 
     function syncOpFrontFilterFormFromActiveType() {
       var m = opFilterFrontByType[opFrontFilterActiveType] || { status: "", from: "", to: "", room: "" };
@@ -1048,11 +1002,9 @@
     }
 
     syncOpFrontFilterFormFromActiveType();
-    updateOpFrontFilterScopeLabel();
 
     async function loadAll() {
       syncOpFrontFilterFormFromActiveType();
-      updateOpFrontFilterScopeLabel();
       var fqC = opQueryFromFilter(opFilterFrontByType.complaint);
       var fqGn = opQueryFromFilter(opFilterFrontByType.guest_notification);
       var fqLc = opQueryFromFilter(opFilterFrontByType.late_checkout);
@@ -1115,6 +1067,7 @@
         inner,
         { complaint: c, guest_notification: gn, late_checkout: lc },
         {
+          opsRecordLayout: "cards",
           onPage: function (bt, p) {
             opFrontPages[bt] = p;
             void loadAll();
@@ -1144,7 +1097,6 @@
             opFilterFrontByType[opFrontFilterActiveType] = next;
             opFrontFilterActiveType = newKey;
             syncOpFrontFilterFormFromActiveType();
-            updateOpFrontFilterScopeLabel();
           },
         },
         summary,
