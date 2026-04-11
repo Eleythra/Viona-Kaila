@@ -12,6 +12,7 @@ import {
   getSurveyReport,
   getFrontOfficeOperationSummary,
   getFrontOfficeTypeSummary,
+  getGuestBucketTypeSummary,
   listAdminBucket,
   listChatObservations,
   listSurveySubmissions,
@@ -99,6 +100,17 @@ router.get("/requests/front-type-summary", async (req, res) => {
     return res.status(200).json({ ok: true, summary });
   } catch (error) {
     return adminErr(res, error, "admin_front_type_summary_failed");
+  }
+});
+
+/** HK / Teknik ops listesi ile aynı süzgeçte canlı durum sayımı (ops-light ile uyumlu). */
+router.get("/requests/bucket-type-summary", async (req, res) => {
+  try {
+    const type = String(req.query.type || "");
+    const summary = await getGuestBucketTypeSummary(type, req.query || {});
+    return res.status(200).json({ ok: true, summary });
+  } catch (error) {
+    return adminErr(res, error, "admin_bucket_type_summary_failed");
   }
 });
 

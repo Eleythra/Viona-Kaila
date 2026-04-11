@@ -259,6 +259,18 @@
     }
   }
 
+  /** WhatsApp derin URL: tam listeye geçince adres çubuğunu sadeleştirir. */
+  function stripOpsDeepQueryKeys(keys) {
+    try {
+      var u = new URL(window.location.href);
+      (keys || []).forEach(function (k) {
+        if (k) u.searchParams.delete(String(k));
+      });
+      var qs = u.searchParams.toString();
+      history.replaceState(null, "", u.pathname + (qs ? "?" + qs : "") + (u.hash || ""));
+    } catch (_e) {}
+  }
+
   function normAdminIssueStatus(row) {
     var st = String((row && row.status) || "new")
       .trim()
@@ -477,13 +489,13 @@
   async function loadHkMount(mount) {
     var ui = window.AdminUI;
     if (!ui || typeof ui.renderOperationBucket !== "function") throw new Error("ui_missing");
-    var deepId = hkDeepLinkUuid();
-    if (!deepId && typeof ui.renderOpsSingleBucketSummary !== "function") throw new Error("ui_missing");
+    if (typeof ui.renderOpsSingleBucketSummary !== "function") throw new Error("ui_missing");
+    var initialHighlightId = hkDeepLinkUuid();
+    if (initialHighlightId) stripOpsDeepQueryKeys(["id"]);
 
     function renderRequestTable(listHost, cfg) {
       ui.renderOperationBucket(listHost, {
         bucketType: "request",
-        layout: "cards",
         rows: cfg.rows || [],
         pagination: cfg.pagination,
         highlightRowId: cfg.highlightRowId || "",
@@ -498,66 +510,6 @@
         onStatus: cfg.onStatus,
         onDelete: cfg.onDelete,
       });
-    }
-
-    if (deepId) {
-      mount.innerHTML = '<div id="ops-hk-list-host" class="ops-hk-mount"></div>';
-      var listHostDeep = mount.querySelector("#ops-hk-list-host");
-
-      async function loadDeepSingle() {
-        try {
-          var one = await opsFetch("/requests/request/" + encodeURIComponent(deepId));
-          var row = one.item;
-          if (!row) {
-            listHostDeep.innerHTML =
-              '<p class="admin-load-error">Bu UUID ile kayıt bulunamadı veya silinmiş olabilir.</p>';
-            return;
-          }
-          renderRequestTable(listHostDeep, {
-            rows: [row],
-            pagination: null,
-            highlightRowId: deepId,
-            editableRowId: "",
-            onPage: null,
-            onStatus: async function (bt, id, status) {
-              await opsFetch(
-                "/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id) + "/status",
-                {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ status: status }),
-                },
-              );
-              postOpsMutation();
-              await loadDeepSingle();
-            },
-            onDelete: async function (bt, id) {
-              await opsFetch("/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id), {
-                method: "DELETE",
-              });
-              postOpsMutation();
-              try {
-                var u = new URL(window.location.href);
-                u.searchParams.delete("id");
-                var qs = u.searchParams.toString();
-                window.location.href = u.pathname + (qs ? "?" + qs : "") + (u.hash || "");
-              } catch (_e2) {
-                listHostDeep.innerHTML =
-                  '<p class="admin-load-error">Kayıt silindi. Tam listeyi görmek için sayfayı yenileyin.</p>';
-              }
-            },
-          });
-        } catch (e) {
-          listHostDeep.innerHTML =
-            '<p class="admin-load-error">' + escHtml(formatErr(e)) + "</p>";
-        }
-      }
-
-      await loadDeepSingle();
-      wireOpsCrossTabListRefresh(function () {
-        void loadDeepSingle();
-      });
-      return;
     }
 
     mount.innerHTML =
@@ -629,10 +581,20 @@
       ]);
       var res = pair[0];
       var sumRaw = pair[1];
+      var highlightRowId = "";
+      if (initialHighlightId && page === 1) {
+        var itHk = res.items || [];
+        for (var ih = 0; ih < itHk.length; ih++) {
+          if (String(itHk[ih].id || "").trim().toLowerCase() === initialHighlightId) {
+            highlightRowId = initialHighlightId;
+            break;
+          }
+        }
+      }
       renderRequestTable(listHost, {
         rows: res.items || [],
         pagination: res.pagination,
-        highlightRowId: "",
+        highlightRowId: highlightRowId,
         onPage: function (p) {
           void load(p);
         },
@@ -668,13 +630,13 @@
   async function loadTechMount(mount) {
     var ui = window.AdminUI;
     if (!ui || typeof ui.renderOperationBucket !== "function") throw new Error("ui_missing");
-    var deepId = techDeepLinkUuid();
-    if (!deepId && typeof ui.renderOpsSingleBucketSummary !== "function") throw new Error("ui_missing");
+    if (typeof ui.renderOpsSingleBucketSummary !== "function") throw new Error("ui_missing");
+    var initialHighlightId = techDeepLinkUuid();
+    if (initialHighlightId) stripOpsDeepQueryKeys(["id"]);
 
     function renderFaultTable(listHost, cfg) {
       ui.renderOperationBucket(listHost, {
         bucketType: "fault",
-        layout: "cards",
         rows: cfg.rows || [],
         pagination: cfg.pagination,
         highlightRowId: cfg.highlightRowId || "",
@@ -689,65 +651,6 @@
         onStatus: cfg.onStatus,
         onDelete: cfg.onDelete,
       });
-    }
-
-    if (deepId) {
-      mount.innerHTML = '<div id="ops-tech-list-host" class="ops-hk-mount"></div>';
-      var listHostDeep = mount.querySelector("#ops-tech-list-host");
-
-      async function loadDeepSingle() {
-        try {
-          var one = await opsFetch("/requests/fault/" + encodeURIComponent(deepId));
-          var row = one.item;
-          if (!row) {
-            listHostDeep.innerHTML =
-              '<p class="admin-load-error">Bu UUID ile kayıt bulunamadı veya silinmiş olabilir.</p>';
-            return;
-          }
-          renderFaultTable(listHostDeep, {
-            rows: [row],
-            pagination: null,
-            highlightRowId: deepId,
-            editableRowId: "",
-            onPage: null,
-            onStatus: async function (bt, id, status) {
-              await opsFetch(
-                "/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id) + "/status",
-                {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ status: status }),
-                },
-              );
-              postOpsMutation();
-              await loadDeepSingle();
-            },
-            onDelete: async function (bt, id) {
-              await opsFetch("/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id), {
-                method: "DELETE",
-              });
-              postOpsMutation();
-              try {
-                var u = new URL(window.location.href);
-                u.searchParams.delete("id");
-                var qs = u.searchParams.toString();
-                window.location.href = u.pathname + (qs ? "?" + qs : "") + (u.hash || "");
-              } catch (_e2) {
-                listHostDeep.innerHTML =
-                  '<p class="admin-load-error">Kayıt silindi. Tam listeyi görmek için sayfayı yenileyin.</p>';
-              }
-            },
-          });
-        } catch (e) {
-          listHostDeep.innerHTML = '<p class="admin-load-error">' + escHtml(formatErr(e)) + "</p>";
-        }
-      }
-
-      await loadDeepSingle();
-      wireOpsCrossTabListRefresh(function () {
-        void loadDeepSingle();
-      });
-      return;
     }
 
     mount.innerHTML =
@@ -819,10 +722,20 @@
       ]);
       var res = pair[0];
       var sumRaw = pair[1];
+      var highlightRowId = "";
+      if (initialHighlightId && page === 1) {
+        var itT = res.items || [];
+        for (var it = 0; it < itT.length; it++) {
+          if (String(itT[it].id || "").trim().toLowerCase() === initialHighlightId) {
+            highlightRowId = initialHighlightId;
+            break;
+          }
+        }
+      }
       renderFaultTable(listHost, {
         rows: res.items || [],
         pagination: res.pagination,
-        highlightRowId: "",
+        highlightRowId: highlightRowId,
         onPage: function (p) {
           void load(p);
         },
@@ -861,83 +774,14 @@
       throw new Error("ui_missing");
     }
 
-    var deep = frontDeepLinkParams();
-    if (deep) {
+    var deepLink = frontDeepLinkParams();
+    var pendingFrontHighlight = null;
+    if (deepLink) {
       try {
-        sessionStorage.setItem(OP_FRONT_TAB_KEY, deep.type);
+        sessionStorage.setItem(OP_FRONT_TAB_KEY, deepLink.type);
       } catch (_s) {}
-    }
-
-    if (deep) {
-      mount.innerHTML = '<div id="ops-front-deep-list" class="ops-hk-mount"></div>';
-      var listHostDeep = mount.querySelector("#ops-front-deep-list");
-      var tabLabels =
-        deep.type === "late_checkout"
-          ? ["Bekliyor", "Yapılıyor", "Onaylandı", "Onaylanmadı"]
-          : ["Bekliyor", "Yapılıyor", "Dikkate alındı", "Dikkate alınmadı"];
-
-      async function loadDeepSingle() {
-        try {
-          var one = await opsFetch("/requests/" + encodeURIComponent(deep.type) + "/" + encodeURIComponent(deep.id));
-          var row = one.item;
-          if (!row) {
-            listHostDeep.innerHTML =
-              '<p class="admin-load-error">Bu UUID ile kayıt bulunamadı veya silinmiş olabilir.</p>';
-            return;
-          }
-          ui.renderOperationBucket(listHostDeep, {
-            bucketType: deep.type,
-            layout: "cards",
-            rows: [row],
-            pagination: null,
-            highlightRowId: deep.id,
-            editableRowId: "",
-            onPage: null,
-            buttonLabels: tabLabels,
-            summaryRow: function (r) {
-              return typeof ui.operationSummaryForType === "function"
-                ? ui.operationSummaryForType(deep.type, r)
-                : "—";
-            },
-            onStatus: async function (bt, id, status) {
-              await opsFetch(
-                "/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id) + "/status",
-                {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ status: status }),
-                },
-              );
-              postOpsMutation();
-              await loadDeepSingle();
-            },
-            onDelete: async function (bt, id) {
-              await opsFetch("/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id), {
-                method: "DELETE",
-              });
-              postOpsMutation();
-              try {
-                var u = new URL(window.location.href);
-                u.searchParams.delete("id");
-                u.searchParams.delete("type");
-                var qs = u.searchParams.toString();
-                window.location.href = u.pathname + (qs ? "?" + qs : "") + (u.hash || "");
-              } catch (_e2) {
-                listHostDeep.innerHTML =
-                  '<p class="admin-load-error">Kayıt silindi. Tam listeyi görmek için sayfayı yenileyin.</p>';
-              }
-            },
-          });
-        } catch (e) {
-          listHostDeep.innerHTML = '<p class="admin-load-error">' + escHtml(formatErr(e)) + "</p>";
-        }
-      }
-
-      await loadDeepSingle();
-      wireOpsCrossTabListRefresh(function () {
-        void loadDeepSingle();
-      });
-      return;
+      pendingFrontHighlight = { type: deepLink.type, id: deepLink.id };
+      stripOpsDeepQueryKeys(["id", "type"]);
     }
 
     mount.innerHTML = frontFilterBarHtml() + '<div id="op-front-mount" class="ops-hk-mount"></div>';
@@ -1005,6 +849,8 @@
 
     async function loadAll() {
       syncOpFrontFilterFormFromActiveType();
+      var hiliteForRender = pendingFrontHighlight;
+      pendingFrontHighlight = null;
       var fqC = opQueryFromFilter(opFilterFrontByType.complaint);
       var fqGn = opQueryFromFilter(opFilterFrontByType.guest_notification);
       var fqLc = opQueryFromFilter(opFilterFrontByType.late_checkout);
@@ -1067,7 +913,7 @@
         inner,
         { complaint: c, guest_notification: gn, late_checkout: lc },
         {
-          opsRecordLayout: "cards",
+          initialHighlight: hiliteForRender,
           onPage: function (bt, p) {
             opFrontPages[bt] = p;
             void loadAll();

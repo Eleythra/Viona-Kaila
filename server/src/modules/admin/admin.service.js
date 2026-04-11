@@ -35,10 +35,30 @@ function parsePaging(query = {}) {
   return { page, pageSize, from, to };
 }
 
+function isoCalendarDateOnly(v) {
+  const s = String(v ?? "").trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : "";
+}
+
+/** Takvim `YYYY-MM-DD` → UTC günü [00:00, ertesi gün 00:00); tam gün kapsar. Saat içeren değerler olduğu gibi gte/lt. */
 function applyDateFilters(qb, query = {}, column = "submitted_at") {
   let out = qb;
-  if (query.from) out = out.gte(column, query.from);
-  if (query.to) out = out.lte(column, query.to);
+  const fromD = isoCalendarDateOnly(query.from);
+  const fromRaw = fromD ? "" : String(query.from || "").trim();
+  if (fromD) out = out.gte(column, `${fromD}T00:00:00.000Z`);
+  else if (fromRaw) out = out.gte(column, fromRaw);
+
+  const toD = isoCalendarDateOnly(query.to);
+  const toRaw = toD ? "" : String(query.to || "").trim();
+  if (toD) {
+    const [y, m, d] = toD.split("-").map(Number);
+    const next = new Date(Date.UTC(y, m - 1, d + 1));
+    const ny = next.getUTCFullYear();
+    const nm = String(next.getUTCMonth() + 1).padStart(2, "0");
+    const nd = String(next.getUTCDate()).padStart(2, "0");
+    out = out.lt(column, `${ny}-${nm}-${nd}T00:00:00.000Z`);
+  } else if (toRaw) out = out.lte(column, toRaw);
+
   return out;
 }
 

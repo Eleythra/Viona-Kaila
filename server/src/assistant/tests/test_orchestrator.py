@@ -271,6 +271,7 @@ def test_kettle_prefilled_from_message_skips_redundant_description_asks_name():
     low = res.message.lower()
     assert "neye ihtiyaç duyduğunuzu" not in low
     assert "adınızı" in low or "soyadınızı" in low
+    assert "talebiniz" in low or "aldık" in res.message or "su ısıtıcı" in res.message.lower()
     assert res.meta.action and res.meta.action.step == "full_name"
 
 
@@ -2486,4 +2487,50 @@ def test_request_form_category_step_minibar_price_leaves_for_hotel_info():
     )
     assert r.meta.intent == "hotel_info"
     assert rag.called is True
+
+
+def test_orch_reply_lang_normalizes_case_and_unknown():
+    from assistant.services.orchestrator import _orch_reply_lang
+
+    assert _orch_reply_lang(None) == "tr"
+    assert _orch_reply_lang("") == "tr"
+    assert _orch_reply_lang("  EN  ") == "en"
+    assert _orch_reply_lang("De") == "de"
+    assert _orch_reply_lang("fr") == "tr"
+
+
+def test_full_name_ack_prompts_four_locales_consistency():
+    """İstek ön-doldurma / açıklama sonrası / misafir bildirimi — tr en de ru şablonları eksiksiz."""
+    from assistant.services.orchestrator import (
+        _localized_full_name_prompt_after_description_step,
+        _localized_full_name_prompt_guest_notif_skip_description,
+        _localized_full_name_prompt_request_prefill,
+    )
+
+    tr = _localized_full_name_prompt_request_prefill("kettle", "tr")
+    assert "aldık" in tr or "aldik" in tr.lower()
+    assert "su ısıtıcı" in tr.lower() or "Su ısıtıcı" in tr
+
+    en = _localized_full_name_prompt_request_prefill("kettle", "en")
+    assert "kettle" in en.lower()
+    assert "full name" in en.lower()
+
+    de = _localized_full_name_prompt_request_prefill("kettle", "de")
+    assert "wasserkocher" in de.lower() or "anfrage" in de.lower()
+
+    ru = _localized_full_name_prompt_request_prefill("kettle", "ru")
+    assert "чайник" in ru.lower() or "запрос" in ru.lower()
+
+    en_after = _localized_full_name_prompt_after_description_step("request", "kettle", "en")
+    assert "we have noted" in en_after.lower()
+
+    de_after = _localized_full_name_prompt_after_description_step("request", "kettle", "de")
+    assert "wir haben" in de_after.lower()
+
+    ru_after = _localized_full_name_prompt_after_description_step("request", "kettle", "ru")
+    assert "мы записали" in ru_after.lower()
+
+    de_gn = _localized_full_name_prompt_guest_notif_skip_description("pregnancy", "de")
+    assert "schwangerschaft" in de_gn.lower()
+    assert "mitteilung" in de_gn.lower() or "erhalten" in de_gn.lower()
 

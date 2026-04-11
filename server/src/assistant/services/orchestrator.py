@@ -433,6 +433,95 @@ def _request_description_lead(category_id: str, reply_language: str) -> str:
     return f"«{cat_lbl}» talebiniz için lütfen kısaca neye ihtiyaç duyduğunuzu yazın."
 
 
+def _orch_reply_lang(lang: str | None) -> str:
+    """Form şablon dalları: yalnız tr/en/de/ru; diğer veya büyük harf UI kodları → tr."""
+    l = (lang or "tr").strip().lower()
+    if l in ("en", "de", "ru"):
+        return l
+    return "tr"
+
+
+def _form_category_display_label(operation: str, category_id: str, reply_language: str) -> str:
+    cid = (category_id or "").strip()
+    if not cid:
+        return ""
+    intent_map = {
+        "request": "request",
+        "guest_notification": "guest_notification",
+        "fault": "fault",
+        "complaint": "complaint",
+    }
+    cat_intent = intent_map.get(operation, "request")
+    return (category_label(cat_intent, cid, reply_language) or "").strip()
+
+
+def _localized_full_name_prompt_request_prefill(category_id: str, reply_language: str) -> str:
+    """Adet/zaman adımı yokken ilk mesaj açıklama sayılır — havlu akışındaki gibi talep türü + onay."""
+    lang = _orch_reply_lang(reply_language)
+    cat_lbl = _form_category_display_label("request", category_id, reply_language)
+    if not cat_lbl:
+        if lang == "en":
+            return "Thank you — we've noted your request. May I have your full name?"
+        if lang == "de":
+            return "Danke — wir haben Ihre Anfrage erfasst. Wie ist Ihr vollständiger Name?"
+        if lang == "ru":
+            return "Спасибо — мы зафиксировали ваш запрос. Напишите, пожалуйста, имя и фамилию."
+        return "Teşekkürler — talebinizi aldık. Adınızı ve soyadınızı yazar mısınız?"
+    if lang == "en":
+        return f'We have received your «{cat_lbl}» request. Thank you. May I have your full name?'
+    if lang == "de":
+        return f'Wir haben Ihre Anfrage «{cat_lbl}» erhalten. Vielen Dank. Wie ist Ihr vollständiger Name?'
+    if lang == "ru":
+        return f'Мы получили ваш запрос «{cat_lbl}». Спасибо. Напишите, пожалуйста, имя и фамилию.'
+    return f"«{cat_lbl}» talebinizi aldık. Teşekkürler. Adınızı ve soyadınızı yazar mısınız?"
+
+
+def _localized_full_name_prompt_after_description_step(
+    operation: str, category_id: str, reply_language: str
+) -> str:
+    """Açıklama yazıldıktan sonra isim adımı — kısa not alındı onayı (kategori görünür)."""
+    lang = _orch_reply_lang(reply_language)
+    cat_lbl = _form_category_display_label(operation, category_id, reply_language)
+    if not cat_lbl:
+        if lang == "en":
+            return "Thank you. May I have your full name?"
+        if lang == "de":
+            return "Danke. Wie ist Ihr vollständiger Name?"
+        if lang == "ru":
+            return "Спасибо. Напишите, пожалуйста, ваше имя и фамилию."
+        return "Teşekkürler. Adınızı ve soyadınızı yazar mısınız?"
+    if lang == "en":
+        return f'Thank you — we have noted your message for «{cat_lbl}». May I have your full name?'
+    if lang == "de":
+        return f'Vielen Dank — wir haben Ihre Angaben zu «{cat_lbl}» notiert. Wie ist Ihr vollständiger Name?'
+    if lang == "ru":
+        return f'Спасибо — мы записали ваше сообщение по «{cat_lbl}». Напишите, пожалуйста, имя и фамилию.'
+    return f"Teşekkürler — «{cat_lbl}» için notunuzu aldım. Adınızı ve soyadınızı yazar mısınız?"
+
+
+def _localized_full_name_prompt_guest_notif_skip_description(
+    category_id: str, reply_language: str
+) -> str:
+    """Misafir bildirimi: açıklama zorunlu değilse ilk mesaj kullanılır — bildirim türü + onay."""
+    lang = _orch_reply_lang(reply_language)
+    cat_lbl = _form_category_display_label("guest_notification", category_id, reply_language)
+    if not cat_lbl:
+        if lang == "en":
+            return "Thank you. May I have your full name?"
+        if lang == "de":
+            return "Danke. Wie ist Ihr vollständiger Name?"
+        if lang == "ru":
+            return "Спасибо. Напишите, пожалуйста, ваше имя и фамилию."
+        return "Teşekkürler. Adınızı ve soyadınızı yazar mısınız?"
+    if lang == "en":
+        return f'We have received your «{cat_lbl}» notification. Thank you. May I have your full name?'
+    if lang == "de":
+        return f'Wir haben Ihre Mitteilung «{cat_lbl}» erhalten. Vielen Dank. Wie ist Ihr vollständiger Name?'
+    if lang == "ru":
+        return f'Мы получили ваше уведомление «{cat_lbl}». Спасибо. Напишите, пожалуйста, имя и фамилию.'
+    return f"«{cat_lbl}» bildiriminizi aldık. Teşekkürler. Adınızı ve soyadınızı yazar mısınız?"
+
+
 def _initial_message_substantive_for_request_prefill(msg: str) -> bool:
     """Kategori numarası veya çok kısa yanıtları açıklama ön-doldurma için kullanma."""
     s = (msg or "").strip()
@@ -1150,9 +1239,7 @@ class ChatOrchestrator:
         openai_path_used = False
         vector_store_used = False
         normalized = normalize_text(payload.message)
-        ui_language = payload.ui_language or "tr"
-        if ui_language not in ("tr", "en", "de", "ru"):
-            ui_language = "tr"
+        ui_language = _orch_reply_lang(payload.ui_language or "tr")
         conv = _valid_conversation_language(payload.conversation_language)
         # Primary reply language must follow selected session/app language.
         # Message-level detection is only a backup when selected language is absent.
@@ -1163,6 +1250,7 @@ class ChatOrchestrator:
             reply_base = msg_detect
         else:
             reply_base = selected_lang if selected_lang in ("tr", "en", "de", "ru") else msg_detect
+        reply_base = _orch_reply_lang(reply_base)
 
         if self.throttle_service.is_limited(payload.user_id):
             decision_path.append("throttle")
@@ -2155,14 +2243,7 @@ class ChatOrchestrator:
             state.step = "full_name"
             state.description = first_turn
             self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
-            if reply_language == "en":
-                msg = "Thank you. May I have your full name?"
-            elif reply_language == "de":
-                msg = "Danke. Wie ist Ihr vollständiger Name?"
-            elif reply_language == "ru":
-                msg = "Спасибо. Напишите, пожалуйста, ваше имя и фамилию."
-            else:
-                msg = "Teşekkürler. Adınızı ve soyadınızı yazar mısınız?"
+            msg = _localized_full_name_prompt_request_prefill(chosen_category, reply_language)
             return self.response_service.build(
                 "inform",
                 msg,
@@ -3142,14 +3223,7 @@ class ChatOrchestrator:
                     state.description = (state.initial_message or "").strip()
                     state.step = "full_name"
                     self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
-                    if reply_language == "en":
-                        msg = "Thank you. May I have your full name?"
-                    elif reply_language == "de":
-                        msg = "Danke. Wie ist Ihr vollständiger Name?"
-                    elif reply_language == "ru":
-                        msg = "Спасибо. Напишите, пожалуйста, ваше имя и фамилию."
-                    else:
-                        msg = "Teşekkürler. Adınızı ve soyadınızı yazar mısınız?"
+                    msg = _localized_full_name_prompt_guest_notif_skip_description(cat, reply_language)
                     return self.response_service.build(
                         "inform",
                         msg,
@@ -3191,14 +3265,7 @@ class ChatOrchestrator:
             state.description = text
             state.step = "full_name"
             self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
-            if reply_language == "en":
-                msg = "Thank you. May I have your full name?"
-            elif reply_language == "de":
-                msg = "Danke. Wie ist Ihr vollständiger Name?"
-            elif reply_language == "ru":
-                msg = "Спасибо. Напишите, пожалуйста, ваше имя и фамилию."
-            else:
-                msg = "Teşekkürler. Adınızı ve soyadınızı yazar mısınız?"
+            msg = _localized_full_name_prompt_after_description_step(state.operation, cat, reply_language)
             return self.response_service.build(
                 "inform",
                 msg,
@@ -3699,6 +3766,41 @@ class ChatOrchestrator:
                 ui_language,
                 "fallback",
                 action=None,
+            )
+        lang_fb = _orch_reply_lang(reply_language)
+        _explicit_chat_fallbacks = {
+            "throttled": "chat_fallback_throttled",
+            "validation_error": "chat_fallback_validation_error",
+            "chat_form_invalid_state": "chat_form_invalid_state_hint",
+        }
+        fb_key = _explicit_chat_fallbacks.get(fallback_reason)
+        if fb_key:
+            text = self.localization_service.get(fb_key, lang_fb)
+            if not text or text == fb_key:
+                text = self.localization_service.get(fb_key, "tr")
+            meta_intent = (
+                "unknown"
+                if intent
+                not in (
+                    "recommendation",
+                    "hotel_info",
+                    "fault_report",
+                    "complaint",
+                    "request",
+                    "reservation",
+                    "special_need",
+                    "guest_notification",
+                )
+                else intent
+            )
+            return self.response_service.build(
+                "fallback",
+                text,
+                meta_intent,
+                confidence,
+                reply_language,
+                ui_language,
+                "fallback",
             )
         return self.response_service.build(
             "fallback",

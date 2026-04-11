@@ -227,6 +227,8 @@
       if (m.role === "assistant" && m.options && Array.isArray(m.options) && m.options.length) {
         var optWrap = document.createElement("div");
         optWrap.className = "viona-chat__options";
+        optWrap.setAttribute("role", "group");
+        optWrap.setAttribute("aria-label", t("chatFormOptionsIntro"));
         m.options.forEach(function (opt) {
           if (opt.value === "__open_reservation_form__") {
             appendChatCtaButton(optWrap, opt, "viona-chat__option-btn--cta-restaurant", SVG_CHAT_CTA_UTENSILS);
@@ -333,10 +335,10 @@
         });
         trimHistory();
       })
-      .catch(function () {
+      .catch(function (err) {
         state.messages.push({
           role: "assistant",
-          content: getClientErrorReply(),
+          content: getClientErrorReply(err),
           error: true,
         });
         trimHistory();
@@ -379,10 +381,18 @@
     }
   }
 
-  function getClientErrorReply() {
+  function getClientErrorReply(err) {
     var cfg = window.VIONA_CHAT_CONFIG || {};
     if (typeof cfg.errorReply === "string" && cfg.errorReply.trim()) {
       return cfg.errorReply.trim();
+    }
+    if (err) {
+      if (err.name === "AbortError") return t("chatErrorTimeout");
+      var msg = String(err.message || "");
+      if (msg === "bad_json") return t("chatErrorBadJson");
+      if (msg === "empty_reply") return t("chatErrorEmpty");
+      if (/^http_5\d\d$/.test(msg)) return t("chatErrorServer");
+      if (/^http_4\d\d$/.test(msg)) return t("chatErrorClient");
     }
     return t("chatError");
   }
@@ -449,7 +459,14 @@
     } finally {
       clearTimeout(timer);
     }
-    var data = await response.json();
+    var data;
+    try {
+      data = await response.json();
+    } catch (jsonErr) {
+      var parseErr = new Error("bad_json");
+      parseErr.cause = jsonErr;
+      throw parseErr;
+    }
     // Compatibility: new assistant shape {type,message,meta} + legacy {reply,locale}
     var reply = "";
     if (data && typeof data.message === "string") {
@@ -541,7 +558,9 @@
         }
       });
       if (opts.length) {
-        reply = newLines.join("\n");
+        var introLine = t("chatFormOptionsIntro");
+        var bodyOnly = newLines.join("\n").trim();
+        reply = bodyOnly ? introLine + "\n\n" + bodyOnly : introLine;
         options = opts;
       }
     }
@@ -588,10 +607,10 @@
         });
         trimHistory();
       })
-      .catch(function () {
+      .catch(function (err) {
         state.messages.push({
           role: "assistant",
-          content: getClientErrorReply(),
+          content: getClientErrorReply(err),
           error: true,
         });
         trimHistory();
@@ -759,7 +778,7 @@
     } catch (e) {
       state.messages.push({
         role: "assistant",
-        content: getClientErrorReply(),
+        content: getClientErrorReply(e),
         error: true,
       });
       trimHistory();

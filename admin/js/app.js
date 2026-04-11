@@ -184,12 +184,15 @@
     if (!mount) return;
     if (page != null) opHkPage = page;
     try {
-      var res = await adapter.getBucketPage(
-        "request",
-        opHkPage,
-        OP_ACTION_PAGE_SIZE,
-        opQueryFromFilter(opFilterHk),
-      );
+      var fqHk = opQueryFromFilter(opFilterHk);
+      var pairHk = await Promise.all([
+        adapter.getBucketPage("request", opHkPage, OP_ACTION_PAGE_SIZE, fqHk),
+        adapter.getBucketTypeSummary("request", fqHk).catch(function () {
+          return null;
+        }),
+      ]);
+      var res = pairHk[0];
+      paintOpHkTechSummary("op-hk-summary-mount", "request", pairHk[1], res);
       ui.renderOperationBucket(mount, {
         bucketType: "request",
         rows: res.items || [],
@@ -229,12 +232,15 @@
     if (!mount) return;
     if (page != null) opTechPage = page;
     try {
-      var res = await adapter.getBucketPage(
-        "fault",
-        opTechPage,
-        OP_ACTION_PAGE_SIZE,
-        opQueryFromFilter(opFilterTech),
-      );
+      var fqTech = opQueryFromFilter(opFilterTech);
+      var pairTech = await Promise.all([
+        adapter.getBucketPage("fault", opTechPage, OP_ACTION_PAGE_SIZE, fqTech),
+        adapter.getBucketTypeSummary("fault", fqTech).catch(function () {
+          return null;
+        }),
+      ]);
+      var res = pairTech[0];
+      paintOpHkTechSummary("op-tech-summary-mount", "fault", pairTech[1], res);
       ui.renderOperationBucket(mount, {
         bucketType: "fault",
         rows: res.items || [],
@@ -243,6 +249,11 @@
           void loadOpTech(p);
         },
         buttonLabels: ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"],
+        summaryRow: function (r) {
+          return typeof ui.operationSummaryForType === "function"
+            ? ui.operationSummaryForType("fault", r)
+            : "—";
+        },
         onStatus: async function (bt, id, status) {
           await adapter.updateStatus(bt, id, status);
           await loadOpTech(opTechPage);
@@ -327,6 +338,21 @@
       n.iptal = k.iptal;
     }
     return n;
+  }
+
+  function paintOpHkTechSummary(hostId, bucketType, sumRaw, listPack) {
+    var host = document.getElementById(hostId);
+    if (!host) return;
+    if (typeof ui.renderOpsSingleBucketSummary !== "function") return;
+    try {
+      var enriched = enrichFrontTypeSummaryWithPack(sumRaw, listPack);
+      ui.renderOpsSingleBucketSummary(host, { bucketType: bucketType, row: enriched });
+    } catch (e) {
+      host.innerHTML =
+        '<div class="op-front-summary glass-block" role="status"><p class="admin-load-error">' +
+        escHtml(formatAdminBucketLoadError(e)) +
+        "</p></div>";
+    }
   }
 
   var OP_FRONT_TAB_KEY = "viona_op_front_tab";

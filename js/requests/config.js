@@ -53,6 +53,7 @@
     /**
      * İstek formu: gruplu düz seçim (sunucu category = id).
      * Sohbet asistanı sırası: `server/src/assistant/services/form_schema.py` → REQUEST_CATEGORY_CHAT_SECTIONS ile senkron tutun.
+     * CI: `PYTHONPATH=src pytest src/assistant/tests/test_request_schema_sync.py`.
      */
     requestSections: [
       {

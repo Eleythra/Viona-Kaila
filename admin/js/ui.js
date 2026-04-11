@@ -900,25 +900,54 @@
     return String(loadFaultStaffNotes()[String(id)] || "");
   }
 
+  /** Satır + raw_payload.details birleşimi (eski / yedek kolon setleri). */
+  function faultMergedDetails(row) {
+    var raw = row && row.raw_payload && typeof row.raw_payload === "object" ? row.raw_payload : {};
+    var dRaw = raw.details && typeof raw.details === "object" ? raw.details : {};
+    var dRow = row && row.details && typeof row.details === "object" ? row.details : {};
+    var out = {};
+    Object.keys(dRaw).forEach(function (k) {
+      out[k] = dRaw[k];
+    });
+    Object.keys(dRow).forEach(function (k) {
+      out[k] = dRow[k];
+    });
+    return out;
+  }
+
+  /** Kategori: kolonlar boşsa raw_payload’tan. */
+  function faultEffectiveCategories(row) {
+    if (!row || typeof row !== "object") return [];
+    if (Array.isArray(row.categories) && row.categories.length) {
+      return row.categories
+        .map(function (x) {
+          return String(x || "").trim();
+        })
+        .filter(Boolean);
+    }
+    var c = String(row.category || "").trim();
+    if (c) return [c];
+    var raw = row.raw_payload && typeof row.raw_payload === "object" ? row.raw_payload : {};
+    if (Array.isArray(raw.categories) && raw.categories.length) {
+      return raw.categories
+        .map(function (x) {
+          return String(x || "").trim();
+        })
+        .filter(Boolean);
+    }
+    var rc = String(raw.category || "").trim();
+    return rc ? [rc] : [];
+  }
+
   function faultRawLocation(row) {
     var raw = row && row.raw_payload && typeof row.raw_payload === "object" ? row.raw_payload : {};
-    var details =
-      row && row.details && typeof row.details === "object"
-        ? row.details
-        : raw.details && typeof raw.details === "object"
-          ? raw.details
-          : {};
+    var details = faultMergedDetails(row);
     return String(row.location || raw.location || details.location || "").trim();
   }
 
   function faultRawUrgency(row) {
     var raw = row && row.raw_payload && typeof row.raw_payload === "object" ? row.raw_payload : {};
-    var details =
-      row && row.details && typeof row.details === "object"
-        ? row.details
-        : raw.details && typeof raw.details === "object"
-          ? raw.details
-          : {};
+    var details = faultMergedDetails(row);
     return String(row.urgency || raw.urgency || details.urgency || "").trim();
   }
 
@@ -942,12 +971,30 @@
     return urg ? urgMap[urg] || urg : "—";
   }
 
-  /** Arıza formu: açıklama; kategori/lokasyon diğer ise zorunlu olabilir. */
+  /** Arıza formu: açıklama; kolon boşsa details / raw_payload yedeği. */
   function faultFormDescription(row) {
-    var t = String(row && row.description ? row.description : "").replace(/\s+/g, " ").trim();
+    if (!row || typeof row !== "object") return "—";
+    var raw = row.raw_payload && typeof row.raw_payload === "object" ? row.raw_payload : {};
+    var details = faultMergedDetails(row);
+    var t = String(row.description || "").replace(/\s+/g, " ").trim();
     if (t) return t;
-    var o = String(row && row.other_category_note ? row.other_category_note : "").replace(/\s+/g, " ").trim();
+    t = String(raw.description || details.description || "").replace(/\s+/g, " ").trim();
+    if (t) return t;
+    var o = String(
+      row.other_category_note || raw.otherCategoryNote || raw.other_category_note || "",
+    )
+      .replace(/\s+/g, " ")
+      .trim();
     return o ? o : "—";
+  }
+
+  /** Misafir adı: kolon boşsa raw_payload.name / guest_name (yedek veya eski kayıt). */
+  function operationGuestName(row) {
+    if (!row || typeof row !== "object") return "";
+    var g = String(row.guest_name || "").replace(/\s+/g, " ").trim();
+    if (g) return g;
+    var raw = row.raw_payload && typeof row.raw_payload === "object" ? row.raw_payload : {};
+    return String(raw.name || raw.guest_name || "").replace(/\s+/g, " ").trim();
   }
 
   /** Şikâyet formu: açıklama alanı; bazı kategorilerde zorunlu, diğer not alanı yedek. */
@@ -984,7 +1031,11 @@
     }
     if (type === "fault") {
       var outFault = [];
-      outFault.push("Kategori: " + categoryText("fault", row.categories, row.category));
+      var fce = faultEffectiveCategories(row);
+      var fse = String(row.category || "").trim() || (fce.length ? fce[0] : "");
+      var rawE = row.raw_payload && typeof row.raw_payload === "object" ? row.raw_payload : {};
+      if (!fse) fse = String(rawE.category || "").trim();
+      outFault.push("Kategori: " + categoryText("fault", fce, fse || null));
       var locL = faultLocationLabel(row);
       if (locL !== "—") outFault.push("Lokasyon: " + locL);
       var urgL = faultUrgencyLabel(row);
@@ -3619,14 +3670,18 @@
     } else {
       rows.forEach(function (r) {
         var st = normalizeBucketStatus(r.status);
-        var catLabel = categoryText("fault", r.categories, r.category);
+        var fCatsR = faultEffectiveCategories(r);
+        var fSingR = String(r.category || "").trim() || (fCatsR.length ? fCatsR[0] : "");
+        var rawR = r.raw_payload && typeof r.raw_payload === "object" ? r.raw_payload : {};
+        if (!fSingR) fSingR = String(rawR.category || "").trim();
+        var catLabel = categoryText("fault", fCatsR, fSingR || null);
         var locLabel = faultLocationLabel(r);
         var urgLabel = faultUrgencyLabel(r);
         var descFull = faultFormDescription(r);
         var staffNote = getFaultStaffNote(r.id);
         var rowSearchText = [
           String(r.room_number || ""),
-          String(r.guest_name || ""),
+          operationGuestName(r),
           String(r.nationality || ""),
           catLabel,
           locLabel,
@@ -3650,7 +3705,7 @@
           '">';
         html += "<td>" + esc(formatSubmittedAtTr(r.submitted_at)) + "</td>";
         html += "<td>" + esc(r.room_number || "-") + "</td>";
-        html += "<td>" + esc(r.guest_name || "-") + "</td>";
+        html += "<td>" + esc(operationGuestName(r) || "-") + "</td>";
         html += "<td>" + esc(r.nationality || "-") + "</td>";
         html += '<td><span class="cat-badge cat-badge--fault">' + esc(catLabel) + "</span></td>";
         html += '<td class="fault-cell-loc">' + esc(locLabel) + "</td>";
@@ -3717,14 +3772,18 @@
         }
       }
       if (!row) return;
-      var catLabel = categoryText("fault", row.categories, row.category);
+      var fCatsS = faultEffectiveCategories(row);
+      var fSingS = String(row.category || "").trim() || (fCatsS.length ? fCatsS[0] : "");
+      var rawS = row.raw_payload && typeof row.raw_payload === "object" ? row.raw_payload : {};
+      if (!fSingS) fSingS = String(rawS.category || "").trim();
+      var catLabel = categoryText("fault", fCatsS, fSingS || null);
       var locLabel = faultLocationLabel(row);
       var urgLabel = faultUrgencyLabel(row);
       var descFull = faultFormDescription(row);
       var staffNote = String(ta.value || "");
       var rowSearchText = [
         String(row.room_number || ""),
-        String(row.guest_name || ""),
+        operationGuestName(row),
         String(row.nationality || ""),
         catLabel,
         locLabel,
@@ -3786,7 +3845,7 @@
   /** Ops kart görünümü: kovaya göre etiket / değer (mobil; içerik türüne göre alanlar). */
   function operationOpsCardFields(bucketType, r) {
     var out = [];
-    var gn = String(r.guest_name || "").trim();
+    var gn = operationGuestName(r);
     var nat = String(r.nationality || "").trim();
     out.push({ k: "Kayıt", v: formatSubmittedAtTr(r.submitted_at) });
     out.push({ k: "Oda", v: String(r.room_number || "").trim() ? String(r.room_number) : "—" });
@@ -3800,8 +3859,16 @@
       if (t) out.push({ k: "Tür", v: t });
       if (d) out.push({ k: "Açıklama", v: d, long: true });
     } else if (bucketType === "fault") {
-      var c = categoryText("fault", r.categories, r.category);
-      if (c) out.push({ k: "Kategori", v: c });
+      var fc = faultEffectiveCategories(r);
+      var fs = String(r.category || "").trim() || (fc.length ? fc[0] : "");
+      var rwf = r.raw_payload && typeof r.raw_payload === "object" ? r.raw_payload : {};
+      if (!fs) fs = String(rwf.category || "").trim();
+      var c = categoryText("fault", fc, fs || null);
+      if (c && c !== "-" && c !== "—") out.push({ k: "Kategori", v: c });
+      var locC = faultLocationLabel(r);
+      if (locC && locC !== "—") out.push({ k: "Lokasyon", v: locC });
+      var urgC = faultUrgencyLabel(r);
+      if (urgC && urgC !== "—") out.push({ k: "Aciliyet", v: urgC });
       var fd = faultFormDescription(r);
       if (fd) out.push({ k: "Açıklama", v: fd, long: true });
     } else if (bucketType === "complaint" || bucketType === "guest_notification") {
@@ -4003,8 +4070,12 @@
     }
     var summaryRow =
       cfg.summaryRow ||
-      function () {
-        return "—";
+      function (r) {
+        try {
+          return operationSummaryForType(bucketType, r);
+        } catch (_e) {
+          return "—";
+        }
       };
     var statVals = [
       { v: "pending" },
@@ -4173,7 +4244,22 @@
         .join(" · ");
     }
     if (bucketType === "fault") {
-      return [categoryText("fault", r.categories, r.category), faultFormDescription(r)].filter(Boolean).join(" · ");
+      var fcats = faultEffectiveCategories(r);
+      var fsingle = String(r.category || "").trim() || (fcats.length ? fcats[0] : "");
+      var rawF = r.raw_payload && typeof r.raw_payload === "object" ? r.raw_payload : {};
+      if (!fsingle) fsingle = String(rawF.category || "").trim();
+      var partsOp = [];
+      var gnf = operationGuestName(r);
+      if (gnf) partsOp.push(gnf);
+      var catLab = categoryText("fault", fcats, fsingle || null);
+      if (catLab && catLab !== "-" && catLab !== "—") partsOp.push(catLab);
+      var locLf = faultLocationLabel(r);
+      if (locLf && locLf !== "—") partsOp.push(locLf);
+      var urgLf = faultUrgencyLabel(r);
+      if (urgLf && urgLf !== "—") partsOp.push(urgLf);
+      var descF = faultFormDescription(r);
+      if (descF && descF !== "—") partsOp.push(descF);
+      return partsOp.length ? partsOp.join(" · ") : "—";
     }
     if (bucketType === "complaint" || bucketType === "guest_notification") {
       return [categoryText(bucketType, r.categories, r.category), complaintFormDescription(r)]
@@ -4194,6 +4280,9 @@
     var onDelete = handlers && handlers.onDelete;
     var onTabChange = handlers && handlers.onTabChange;
     var useCardLayout = Boolean(handlers && handlers.opsRecordLayout === "cards");
+    var initialHl = handlers && handlers.initialHighlight;
+    var initialHlType = initialHl && initialHl.type ? String(initialHl.type).trim() : "";
+    var initialHlRawId = initialHl && initialHl.id ? String(initialHl.id).trim() : "";
 
     var TAB_KEY = "viona_op_front_tab";
     var active = "complaint";
@@ -4364,6 +4453,7 @@
         bucketType: tab.key,
         rows: (packs[tab.key] && packs[tab.key].items) || [],
         pagination: packs[tab.key] ? packs[tab.key].pagination : null,
+        highlightRowId: initialHlRawId && initialHlType === tab.key ? initialHlRawId : "",
         onPage:
           typeof onPage === "function"
             ? function (next) {
@@ -4917,9 +5007,19 @@
           var st = normalizeBucketStatus(r.status);
           var typeText = typeLabel(type);
           var detailText = issueDetailText(r, type);
+          var catCell;
+          if (type === "fault") {
+            var fcg = faultEffectiveCategories(r);
+            var fsg = String(r.category || "").trim() || (fcg.length ? fcg[0] : "");
+            var rawg = r.raw_payload && typeof r.raw_payload === "object" ? r.raw_payload : {};
+            if (!fsg) fsg = String(rawg.category || "").trim();
+            catCell = categoryText("fault", fcg, fsg || null);
+          } else {
+            catCell = categoryText(type, r.categories, r.category);
+          }
           var rowSearchText = [
             String(r.room_number || ""),
-            String(r.guest_name || ""),
+            operationGuestName(r),
             String(detailText || ""),
           ]
             .join(" ")
@@ -4928,9 +5028,9 @@
           html += "<td>" + esc(formatSubmittedAtTr(r.submitted_at)) + "</td>";
           html += "<td>" + esc(typeText) + "</td>";
           html += "<td>" + esc(r.room_number || "-") + "</td>";
-          html += "<td>" + esc(r.guest_name || "-") + "</td>";
+          html += "<td>" + esc(operationGuestName(r) || "-") + "</td>";
           html += "<td>" + esc(r.nationality || "-") + "</td>";
-          html += "<td>" + esc(categoryText(type, r.categories, r.category)) + "</td>";
+          html += "<td>" + esc(catCell) + "</td>";
           html += "<td>" + esc(detailText) + "</td>";
           html += '<td><span class="status-badge status-' + esc(st) + '">' + esc(issueStatusLabel(type, st)) + "</span></td>";
           html += '<td><div class="row-actions">';

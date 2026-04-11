@@ -67,6 +67,13 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "reception_fallback_message": "İsteğinizi şu anda tam işleyemedim. Dilerseniz sorunuzu daha kısa şekilde tekrar yazabilirsiniz; size yardımcı olmaya devam edebilirim.",
         "canonical_fallback_safe": "Bu konuda doğrulanmış bilgiye şu anda erişemiyorum. Size en doğru destek için lütfen resepsiyon ile iletişime geçiniz.",
         "canonical_fallback_unavailable": "Şu anda asistana kısa süreli erişim sorunu yaşıyorum. Lütfen birkaç saniye sonra tekrar deneyiniz.",
+        "chat_fallback_throttled": (
+            "Çok kısa sürede çok fazla mesaj gönderildi. Lütfen birkaç saniye bekleyip tekrar deneyiniz; acil durumda resepsiyon her zaman yardımcı olabilir."
+        ),
+        "chat_fallback_validation_error": "Boş bir mesaj gönderilemez. Lütfen isteğinizi veya sorunuzu kısaca yazınız.",
+        "chat_form_invalid_state_hint": (
+            "Form akışı beklenmedik şekilde kesildi; kayıt tamamlanmadı. Talebinizi veya bildiriminizi baştan kısaca yazarak yeniden başlayabilirsiniz; resepsiyon da yardımcı olur."
+        ),
         "recommendation_fish": "Balık ve deniz ürünleri için Moss Beach Restaurant & Bar (plajda, ücretli à la carte) ve ana restoranı değerlendirebilirsiniz. La Terrace A La Carte à la carte kullanımında rezervasyon gerektirir.",
         "recommendation_meat": "Et veya BBQ tercih ediyorsanız Sinton BBQ Restaurant iyi bir seçenektir. A la carte restoranlar için rezervasyon gerekir.",
         "recommendation_pizza_snack": "Pizza veya atıştırmalık için Dolphin Snack, Gusto Snack ve Beach Imbiss uygun seçeneklerdir.",
@@ -219,6 +226,13 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "reception_fallback_message": "I couldn't fully process that right now. You can try asking again in a shorter way, and I'll keep helping.",
         "canonical_fallback_safe": "I do not have verified information on this right now. For the most accurate assistance, please contact reception.",
         "canonical_fallback_unavailable": "I am temporarily unavailable at the moment. Please try again in a few seconds.",
+        "chat_fallback_throttled": (
+            "You're sending messages very quickly. Please wait a few seconds and try again, or contact reception if you need help right away."
+        ),
+        "chat_fallback_validation_error": "I can't process an empty message. Please type a short question or request.",
+        "chat_form_invalid_state_hint": (
+            "Something interrupted the form — nothing was saved. Please briefly describe your request again to restart, or ask reception for help."
+        ),
         "recommendation_fish": "For fish and seafood, consider Moss Beach Restaurant & Bar on the beach (paid à la carte) and the main restaurant. La Terrace A La Carte requires a reservation for à la carte.",
         "recommendation_meat": "If you prefer meat or BBQ, Sinton BBQ Restaurant is a great match. A la carte restaurants require a reservation.",
         "recommendation_pizza_snack": "For pizza or snacks, Dolphin Snack, Gusto Snack, and Beach Imbiss are good options.",
@@ -371,6 +385,13 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "reception_fallback_message": "Ich konnte Ihre Anfrage gerade nicht vollständig verarbeiten. Versuchen Sie es gern noch einmal in kürzerer Form.",
         "canonical_fallback_safe": "Ich kann dazu derzeit keine verifizierten Informationen bereitstellen. Bitte wenden Sie sich für die sicherste Auskunft an die Rezeption.",
         "canonical_fallback_unavailable": "Ich bin momentan kurzzeitig nicht erreichbar. Bitte versuchen Sie es in wenigen Sekunden erneut.",
+        "chat_fallback_throttled": (
+            "Sie senden sehr schnell viele Nachrichten. Bitte warten Sie einige Sekunden und versuchen Sie es erneut — die Rezeption hilft bei dringenden Fragen gern sofort."
+        ),
+        "chat_fallback_validation_error": "Eine leere Nachricht kann ich nicht verarbeiten. Bitte schreiben Sie kurz Ihr Anliegen.",
+        "chat_form_invalid_state_hint": (
+            "Der Formularablauf wurde unerwartet unterbrochen; es wurde nichts gespeichert. Bitte beginnen Sie mit einer kurzen Beschreibung erneut oder wenden Sie sich an die Rezeption."
+        ),
         "recommendation_fish": "Für Fisch und Meeresfrüchte eignen sich Moss Beach Restaurant & Bar am Strand (kostenpflichtiges À-la-carte) und das Hauptrestaurant. Für La Terrace A La Carte ist eine Reservierung erforderlich.",
         "recommendation_meat": "Wenn Sie Fleisch oder BBQ bevorzugen, passt das Sinton BBQ Restaurant sehr gut. Für A-la-carte-Restaurants ist eine Reservierung erforderlich.",
         "recommendation_pizza_snack": "Für Pizza oder Snacks sind Dolphin Snack, Gusto Snack und Beach Imbiss passende Optionen.",
@@ -521,6 +542,13 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "reception_fallback_message": "Сейчас я не смогла полностью обработать ваш запрос. Попробуйте, пожалуйста, написать его короче, и я продолжу помогать.",
         "canonical_fallback_safe": "Сейчас у меня нет подтвержденной информации по этому вопросу. Для наиболее точной помощи, пожалуйста, обратитесь на ресепшн.",
         "canonical_fallback_unavailable": "Сейчас я временно недоступна. Пожалуйста, попробуйте снова через несколько секунд.",
+        "chat_fallback_throttled": (
+            "Сообщения отправляются слишком часто. Подождите несколько секунд и попробуйте снова; при срочном вопросе обратитесь на ресепшн."
+        ),
+        "chat_fallback_validation_error": "Пустое сообщение обработать нельзя. Напишите, пожалуйста, короткий вопрос или запрос.",
+        "chat_form_invalid_state_hint": (
+            "Работа формы прервалась неожиданно; запись не сохранена. Кратко опишите запрос заново или обратитесь на ресепшн за помощью."
+        ),
         "recommendation_fish": "Рыбу и морепродукты можно заказать в Moss Beach Restaurant & Bar на пляже (платное à la carte) и в основном ресторане. Для La Terrace A La Carte нужна предварительная бронь.",
         "recommendation_meat": "Если вы предпочитаете мясо или BBQ, Sinton BBQ Restaurant отлично подойдет. Для a la carte ресторанов требуется бронирование.",
         "recommendation_pizza_snack": "Для пиццы и закусок подойдут Dolphin Snack, Gusto Snack и Beach Imbiss.",

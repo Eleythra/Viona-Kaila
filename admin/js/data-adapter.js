@@ -143,6 +143,16 @@
         };
       });
     },
+    /** HK / Teknik operasyon üst özet kartı; liste ile aynı süzgeç parametreleri (from, to, room_number, status). */
+    getBucketTypeSummary: function (type, extraQuery) {
+      var o = Object.assign({ type: type }, extraQuery || {});
+      var q = buildQuery(o);
+      var url = adminRequestsCollectionUrl() + "/bucket-type-summary" + (q ? "?" + q : "");
+      return jfetch(url).then(function (d) {
+        if (d && d.summary != null) return d.summary;
+        return null;
+      });
+    },
     getFrontOfficeSummary: function (extraQuery) {
       var q = buildQuery(extraQuery || {});
       var url = adminRequestsCollectionUrl() + "/front-summary" + (q ? "?" + q : "");

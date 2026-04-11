@@ -1,6 +1,7 @@
 /**
  * Misafir formları / API ad soyad doğrulaması.
  * Python `assistant/services/form_name_input.py` (`validate_chat_form_full_name`) ile aynı kurallar — değişince iki yeri güncelleyin.
+ * Regresyon: `PYTHONPATH=src pytest src/assistant/tests/test_form_name_input.py`.
  */
 
 export const GUEST_NAME_MAX_LEN = 120;
