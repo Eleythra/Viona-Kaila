@@ -5,7 +5,7 @@
    * Sabit indirim popup — görseller `assets/indirim/indirim-{TR|EN|DE|PL}.png`.
    * Güncelleme: dosyayı değiştirin; tarayıcı önbelleğini kırmak için aşağıdaki CACHE_BUST değerini artırın.
    */
-  var CACHE_BUST = "2";
+  var CACHE_BUST = "3";
   var POPUP_ID = "discount-promo-popup";
   var SEEN_SESSION_KEY = "viona_indirim_popup_seen_v2";
   var HOME_VISIBLE_MAX_FRAMES = 12;

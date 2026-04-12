@@ -2922,11 +2922,13 @@
           handlers.onStatus(btn.getAttribute("data-type"), btn.getAttribute("data-id"), btn.getAttribute("data-status"));
         });
       });
-      mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+      if (handlers && typeof handlers.onDelete === "function") {
+        mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+          });
         });
-      });
+      }
       wireWhatsappResendButtons(mountEl, handlers);
     }
 
@@ -3143,11 +3145,13 @@
           handlers.onStatus(btn.getAttribute("data-type"), btn.getAttribute("data-id"), btn.getAttribute("data-status"));
         });
       });
-      mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+      if (handlers && typeof handlers.onDelete === "function") {
+        mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+          });
         });
-      });
+      }
       wireWhatsappResendButtons(mountEl, handlers);
     }
 
@@ -3369,11 +3373,13 @@
           handlers.onStatus(btn.getAttribute("data-type"), btn.getAttribute("data-id"), btn.getAttribute("data-status"));
         });
       });
-      mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+      if (handlers && typeof handlers.onDelete === "function") {
+        mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+          });
         });
-      });
+      }
       wireWhatsappResendButtons(mountEl, handlers);
     }
 
@@ -3604,11 +3610,13 @@
           handlers.onStatus(btn.getAttribute("data-type"), btn.getAttribute("data-id"), btn.getAttribute("data-status"));
         });
       });
-      mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+      if (handlers && typeof handlers.onDelete === "function") {
+        mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+          });
         });
-      });
+      }
       wireWhatsappResendButtons(mountEl, handlers);
     }
 
@@ -3843,11 +3851,13 @@
           handlers.onStatus(btn.getAttribute("data-type"), btn.getAttribute("data-id"), btn.getAttribute("data-status"));
         });
       });
-      mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+      if (handlers && typeof handlers.onDelete === "function") {
+        mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+          });
         });
-      });
+      }
       wireWhatsappResendButtons(mountEl, handlers);
     }
 
@@ -5094,11 +5104,13 @@
           handlers.onStatus(btn.getAttribute("data-type"), btn.getAttribute("data-id"), btn.getAttribute("data-status"));
         });
       });
-      mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+      if (handlers && typeof handlers.onDelete === "function") {
+        mountEl.querySelectorAll(".js-delete").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            handlers.onDelete(btn.getAttribute("data-type"), btn.getAttribute("data-id"));
+          });
         });
-      });
+      }
       wireWhatsappResendButtons(mountEl, handlers);
 
       var search = mountEl.querySelector(".bucket-search");

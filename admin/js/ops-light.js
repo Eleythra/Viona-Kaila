@@ -130,6 +130,21 @@
     });
   }
 
+  function opsWhatsappResend(itemType, id) {
+    return opsFetch(
+      "/requests/" +
+        encodeURIComponent(itemType) +
+        "/" +
+        encodeURIComponent(id) +
+        "/whatsapp-resend",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      },
+    );
+  }
+
   /** # sonrası tam metin OPS_LINK_TOKEN_* ile birebir aynı olmalı (kısa veya uzun fark etmez). */
   function absorbHashToken() {
     var h = String(window.location.hash || "");
@@ -303,7 +318,6 @@
       },
       onPage: null,
       onStatus: handlers.onStatus,
-      onDelete: handlers.onDelete,
     });
   }
 
@@ -559,15 +573,6 @@
               postOpsMutation();
               await hkRefetchWaCard();
             },
-            onDelete: async function (bt, id) {
-              await opsFetch("/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id), {
-                method: "DELETE",
-              });
-              postOpsMutation();
-              try {
-                window.location.assign(window.location.pathname || "ops-hk.html");
-              } catch (_as) {}
-            },
           };
           paintWaSingleCard(ui, hkCardHost, "request", waHk.item, hkWaH);
           wireOpsCrossTabListRefresh(function () {
@@ -593,6 +598,7 @@
         onPage: typeof cfg.onPage === "function" ? cfg.onPage : null,
         onStatus: cfg.onStatus,
         onDelete: cfg.onDelete,
+        onWhatsappResend: cfg.onWhatsappResend,
       });
     }
 
@@ -715,6 +721,16 @@
           postOpsMutation();
           await load(page);
         },
+        onWhatsappResend: async function (itemType, id) {
+          try {
+            await opsWhatsappResend(itemType, id);
+            postOpsMutation();
+            window.alert("Kayıt operasyon WhatsApp (Cloud API) hattına yeniden iletildi.");
+            await load(page);
+          } catch (e) {
+            window.alert(formatErr(e));
+          }
+        },
       });
       paintHkSummary(sumRaw, res);
     }
@@ -762,15 +778,6 @@
               postOpsMutation();
               await techRefetchWaCard();
             },
-            onDelete: async function (bt, id) {
-              await opsFetch("/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id), {
-                method: "DELETE",
-              });
-              postOpsMutation();
-              try {
-                window.location.assign(window.location.pathname || "ops-tech.html");
-              } catch (_as2) {}
-            },
           };
           paintWaSingleCard(ui, techCardHost, "fault", waTech.item, techWaH);
           wireOpsCrossTabListRefresh(function () {
@@ -796,6 +803,7 @@
         onPage: typeof cfg.onPage === "function" ? cfg.onPage : null,
         onStatus: cfg.onStatus,
         onDelete: cfg.onDelete,
+        onWhatsappResend: cfg.onWhatsappResend,
       });
     }
 
@@ -918,6 +926,16 @@
           postOpsMutation();
           await load(page);
         },
+        onWhatsappResend: async function (itemType, id) {
+          try {
+            await opsWhatsappResend(itemType, id);
+            postOpsMutation();
+            window.alert("Kayıt operasyon WhatsApp (Cloud API) hattına yeniden iletildi.");
+            await load(page);
+          } catch (e) {
+            window.alert(formatErr(e));
+          }
+        },
       });
       paintTechSummary(sumRaw, res);
     }
@@ -980,15 +998,6 @@
               );
               postOpsMutation();
               await frontRefetchWaCard();
-            },
-            onDelete: async function (bt, id) {
-              await opsFetch("/requests/" + encodeURIComponent(bt) + "/" + encodeURIComponent(id), {
-                method: "DELETE",
-              });
-              postOpsMutation();
-              try {
-                window.location.assign(window.location.pathname || "ops-front.html");
-              } catch (_af) {}
             },
           };
           paintWaSingleCard(ui, frontWaHost, bFront, frWa.item, frontWaHandlers);
@@ -1195,6 +1204,16 @@
             });
             postOpsMutation();
             await loadAll();
+          },
+          onWhatsappResend: async function (itemType, id) {
+            try {
+              await opsWhatsappResend(itemType, id);
+              postOpsMutation();
+              window.alert("Kayıt operasyon WhatsApp (Cloud API) hattına yeniden iletildi.");
+              await loadAll();
+            } catch (e) {
+              window.alert(formatErr(e));
+            }
           },
           onTabChange: function (_prevKey, newKey) {
             if (!newKey) return;

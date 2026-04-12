@@ -8,6 +8,7 @@ import {
   getFrontOfficeTypeSummary,
   getGuestBucketTypeSummary,
   listAdminBucket,
+  resendWhatsappForAdminItem,
   updateAdminItemStatus,
 } from "../admin/admin.service.js";
 
@@ -259,6 +260,20 @@ router.patch("/requests/:type/:id/status", async (req, res) => {
     return res.status(200).json({ ok: true, item: data });
   } catch (error) {
     return adminErr(res, error, "ops_status_update_failed");
+  }
+});
+
+router.post("/requests/:type/:id/whatsapp-resend", async (req, res) => {
+  try {
+    const type = String(req.params.type || "");
+    const allowed = BUCKETS_BY_ROLE[req.opsRole];
+    if (!allowed || !allowed.has(type)) {
+      return res.status(403).json({ ok: false, error: "forbidden_bucket" });
+    }
+    const data = await resendWhatsappForAdminItem(type, req.params.id);
+    return res.status(200).json({ ok: true, ...data });
+  } catch (error) {
+    return adminErr(res, error, "ops_whatsapp_resend_failed");
   }
 });
 
