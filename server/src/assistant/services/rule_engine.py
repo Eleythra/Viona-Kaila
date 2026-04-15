@@ -950,8 +950,15 @@ def lost_item_object_mentioned(t: str) -> bool:
     return any(s in t for s in _LOST_ITEM_OBJECT_STEMS)
 
 
-# «kayboldu» / «kaybıoldu» (ı/o); «kayboldum», «kaybolduk» son ekler.
-_LOST_ITEM_KAYBOL_TYPO_RE = re.compile(r"kayb[ıi]?oldu(?:m|k|mu|mus|muz|sunuz)?")
+# «kayboldu» ailesi: kaybıoldu / kaybldu; «ayboldu» «kyboldu» (k veya a düşmüş); son ekler.
+# (?<!\w): «mayboldu» içindeki «ayboldu» yanlış pozitif olmasın.
+_LOST_ITEM_KAYBOL_TYPO_RE = re.compile(
+    r"(?:"
+    r"kayb(?:[ıi]?oldu|ldu)"
+    r"|"
+    r"(?<!\w)(?:kay|ay|ky)boldu"
+    r")(?:m|k|mu|mus|muz|sunuz)?"
+)
 # «bulamıyorum» / «bulamiyorum» / «bulamyorum» (m–y arası ı düşmüş).
 _LOST_ITEM_BULAMIYORUM_RE = re.compile(r"bulam[ıi]?yorum")
 # «kaybettim» / «kaybettım»; «kaybettik».
@@ -972,7 +979,8 @@ def matches_lost_found_policy_info_query(normalized_text: str) -> bool:
 
 def text_suggests_lost_property_not_room_complaint(text: str) -> bool:
     """«Oda» geçti diye kayıp eşya cümlesi room_condition şikâyet formuna düşmesin."""
-    t = (text or "").lower().strip().strip("*").strip()
+    t = (text or "").lower().strip()
+    t = t.strip(" \t-*–—•·")
     if lost_found_topic_in_text(t):
         return True
     if matches_lost_found_policy_info_query(t):

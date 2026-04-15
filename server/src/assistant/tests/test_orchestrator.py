@@ -2433,6 +2433,39 @@ def test_lost_property_kayboldu_typo_kaybioldu_not_diet_guest_notification():
     assert "beslenme" not in low and "hassasiyet:" not in low
 
 
+def test_lost_property_kayboldu_typo_kaybldu_leading_hyphen_opens_complaint_form():
+    """«kaybldu» (o düşmüş) ve baştaki «-»; misafir bildirimi diyet listesine düşmesin."""
+    orch, _, _ = build_orchestrator()
+    r = orch.handle(ChatRequest(message="-gözlüğüm kaybldu", ui_language="tr", locale="tr"))
+    assert r.meta.intent == "complaint"
+    assert r.meta.action and r.meta.action.kind == "open_complaint_form"
+    low = r.message.lower()
+    assert "beslenme" not in low and "hassasiyet:" not in low
+
+
+def test_lost_property_kayboldu_typo_ayboldu_opens_complaint_form():
+    """«k» düşmüş «ayboldu» yazımı."""
+    orch, _, _ = build_orchestrator()
+    r = orch.handle(ChatRequest(message="gözlüğüm ayboldu", ui_language="tr", locale="tr"))
+    assert r.meta.intent == "complaint"
+    assert r.meta.action and r.meta.action.kind == "open_complaint_form"
+
+
+def test_lost_property_kayboldu_typo_kyboldu_opens_complaint_form():
+    """«a» düşmüş «kyboldu» yazımı."""
+    orch, _, _ = build_orchestrator()
+    r = orch.handle(ChatRequest(message="kyboldu kolyem", ui_language="tr", locale="tr"))
+    assert r.meta.intent == "complaint"
+    assert r.meta.action and r.meta.action.kind == "open_complaint_form"
+
+
+def test_lost_property_kaybol_regex_avoids_mayboldu_substring_false_positive():
+    from assistant.services.rule_engine import text_suggests_lost_property_not_room_complaint
+    from assistant.utils.text_normalizer import normalize_text
+
+    assert not text_suggests_lost_property_not_room_complaint(normalize_text("mayboldu gözlük"))
+
+
 def test_lost_property_place_only_kaybioldu_opens_complaint_form():
     """Nesne adı yokken yer + «kaybıoldu» yine kayıp eşya (deniz/plaj vb.)."""
     orch, _, _ = build_orchestrator()
