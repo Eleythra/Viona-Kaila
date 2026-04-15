@@ -772,9 +772,7 @@ ROUTING_TRANSFER_WORDS = [
     "flughafentransfer",
     "zum flughafen",
     "potrzebny transfer",
-    "transfer",
     "zamówić transfer",
-    "transfer",
 ]
 ROUTING_LUNCHBOX_WORDS = [
     "lunch box", "lunchbox", "öğle paketi", "ogle paketi", "paket kahvaltı", "paket kahvalti",
@@ -831,6 +829,7 @@ _LOST_FOUND_POLICY_INFO_MARKERS = (
 _LOST_ITEM_LOSS_VERBS = (
     "kaybettim",
     "kayboldu",
+    "kayboldum",
     "kayıp var",
     "kayip var",
     "kaybettik",
@@ -842,6 +841,7 @@ _LOST_ITEM_LOSS_VERBS = (
     "cannot find",
     "cant find",
     "bulamıyorum",
+    "bulamiyorum",
     "missing",
     "misplaced",
     "was stolen",
@@ -856,9 +856,11 @@ _LOST_ITEM_LOSS_VERBS = (
     "zgubiłem",
     "zgubiłam",
     "zgubiliśmy",
-    "zgubiłem",
-    "zgubiłam",
     "zaginione",
+    "nie mogę znaleźć",
+    "nie moge znalezc",
+    "zginęło",
+    "zginelo",
 )
 _LOST_ITEM_OBJECT_WORDS = (
     "eşya",
@@ -890,6 +892,38 @@ _LOST_ITEM_OBJECT_WORDS = (
     "jewelry",
     "laptop",
     "tablet",
+    "kolye",
+    "necklace",
+    "bracelet",
+    "bilezik",
+    "zegarek",
+    "okulary",
+)
+# Türkçe iyelik / çekimle tam kelime eşleşmez («gözlük» ⊄ «gözlüğüm»); kök + yaygın nesneler.
+_LOST_ITEM_OBJECT_STEMS = (
+    "gözlü",
+    "gozlu",
+    "kolye",
+    "bilezik",
+    "telefon",
+    "cüzdan",
+    "saat",
+    "yüzük",
+    "yuzuk",
+    "kulaklık",
+    "kulaklik",
+    "çantam",
+    "cantam",
+    "kartım",
+    "kartim",
+    "anahtarım",
+    "anahtarim",
+    "cüzdanım",
+    "cuzdanim",
+    "telefonum",
+    "saatim",
+    "kimliğim",
+    "kimligim",
 )
 _LOST_ITEM_CONTEXT_PLACES = (
     "oda",
@@ -900,11 +934,28 @@ _LOST_ITEM_CONTEXT_PLACES = (
     "pool",
     "plaj",
     "beach",
+    "deniz",
+    "sea",
     "lobi",
     "lobby",
     "otel",
     "hotel",
 )
+
+
+def lost_item_object_mentioned(t: str) -> bool:
+    """Tam kelime veya TR iyelik kökü (gözlüğüm, saatim, …) ile eşleşme."""
+    if any(o in t for o in _LOST_ITEM_OBJECT_WORDS):
+        return True
+    return any(s in t for s in _LOST_ITEM_OBJECT_STEMS)
+
+
+# «kayboldu» / «kaybıoldu» (ı/o); «kayboldum», «kaybolduk» son ekler.
+_LOST_ITEM_KAYBOL_TYPO_RE = re.compile(r"kayb[ıi]?oldu(?:m|k|mu|mus|muz|sunuz)?")
+# «bulamıyorum» / «bulamiyorum» / «bulamyorum» (m–y arası ı düşmüş).
+_LOST_ITEM_BULAMIYORUM_RE = re.compile(r"bulam[ıi]?yorum")
+# «kaybettim» / «kaybettım»; «kaybettik».
+_LOST_ITEM_KAYBETTIM_RE = re.compile(r"kaybett[ıi][mk]")
 
 
 def lost_found_topic_in_text(text: str) -> bool:
@@ -921,14 +972,28 @@ def matches_lost_found_policy_info_query(normalized_text: str) -> bool:
 
 def text_suggests_lost_property_not_room_complaint(text: str) -> bool:
     """«Oda» geçti diye kayıp eşya cümlesi room_condition şikâyet formuna düşmesin."""
-    t = (text or "").lower()
-    if lost_found_topic_in_text(text):
+    t = (text or "").lower().strip().strip("*").strip()
+    if lost_found_topic_in_text(t):
         return True
-    if matches_lost_found_policy_info_query(text):
+    if matches_lost_found_policy_info_query(t):
         return True
-    if any(v in t for v in _LOST_ITEM_LOSS_VERBS) and any(o in t for o in _LOST_ITEM_OBJECT_WORDS):
+    if any(v in t for v in _LOST_ITEM_LOSS_VERBS) and lost_item_object_mentioned(t):
         return True
     if any(v in t for v in _LOST_ITEM_LOSS_VERBS) and any(p in t for p in _LOST_ITEM_CONTEXT_PLACES):
+        return True
+    # Yazım hatası «kaybıoldu» vb. _LOST_ITEM_LOSS_VERBS’te yok; nesne veya yer + kaybol ailesi → kayıp eşya.
+    if _LOST_ITEM_KAYBOL_TYPO_RE.search(t) and (
+        lost_item_object_mentioned(t) or any(p in t for p in _LOST_ITEM_CONTEXT_PLACES)
+    ):
+        return True
+    # «bulamıyorum» yazımı; nesne veya yer ile birlikte (yalnız «bulamıyorum» LLM’ye kalabilir).
+    if _LOST_ITEM_BULAMIYORUM_RE.search(t) and (
+        lost_item_object_mentioned(t) or any(p in t for p in _LOST_ITEM_CONTEXT_PLACES)
+    ):
+        return True
+    if _LOST_ITEM_KAYBETTIM_RE.search(t) and (
+        lost_item_object_mentioned(t) or any(p in t for p in _LOST_ITEM_CONTEXT_PLACES)
+    ):
         return True
     return False
 
@@ -2332,7 +2397,6 @@ HOTEL_INFO_WORDS = [
     "moss beach",
     "lobi",
     "lobby",
-    "lobby",
     "gdzie jest lobby",
     "restoran saatleri",
     "restaurant hours",
@@ -2594,6 +2658,18 @@ def _has_any_phrase(text: str, phrases: list[str]) -> bool:
 def _has_any_phrase_strict(text: str, phrases: list[str]) -> bool:
     lowered = (text or "").lower()
     return any(str(p).lower() in lowered for p in phrases)
+
+
+# «transferred» içinde «transfer» alt dizgisi var; yalnızca tam kelime kabul et.
+_ROUTING_TRANSFER_STANDALONE_RE = re.compile(r"\btransfer\b", re.IGNORECASE)
+
+
+def _text_matches_transfer_routing_intent(text: str) -> bool:
+    """Havalimanı / talep kalıpları + tek başına «transfer» (kelime sınırı)."""
+    tl = (text or "").lower()
+    if _has_any_phrase_strict(tl, ROUTING_TRANSFER_WORDS):
+        return True
+    return bool(_ROUTING_TRANSFER_STANDALONE_RE.search(tl))
 
 
 class RuleEngine:
@@ -3114,7 +3190,7 @@ class RuleEngine:
                 confidence=1.0,
                 source="rule",
             )
-        if _has_any_phrase_strict(normalized_text, ROUTING_TRANSFER_WORDS):
+        if _text_matches_transfer_routing_intent(normalized_text):
             logger.info("RULE MATCH: hotel_info (transfer_module_hint)")
             return IntentResult(
                 intent="hotel_info",
@@ -3234,7 +3310,9 @@ class RuleEngine:
                 source="rule",
             )
 
-        if _has_any_phrase_strict(normalized_text, GENERIC_ROOM_PROBLEM_OR_TECH_FAULT_STRICT_PHRASES):
+        if _has_any_phrase_strict(
+            normalized_text, GENERIC_ROOM_PROBLEM_OR_TECH_FAULT_STRICT_PHRASES
+        ) and not text_suggests_lost_property_not_room_complaint(normalized_text):
             entity = self._extract_entity(normalized_text)
             sub = self._fault_sub_intent(entity)
             logger.info("RULE MATCH: fault_report (generic_room_problem_or_tech_strict)")
@@ -3270,10 +3348,13 @@ class RuleEngine:
         missing_part_fault = "eksik parça" in tl_f or "eksik parca" in tl_f
         strict_fault_sub = any(p in tl_f for p in FAULT_STRICT_SUBSTRING_PHRASES)
         if (
-            any(_fuzzy_has(normalized_text, w) for w in FAULT_WORDS)
-            or priority_fault
-            or missing_part_fault
-            or strict_fault_sub
+            not text_suggests_lost_property_not_room_complaint(normalized_text)
+            and (
+                any(_fuzzy_has(normalized_text, w) for w in FAULT_WORDS)
+                or priority_fault
+                or missing_part_fault
+                or strict_fault_sub
+            )
         ):
             entity = self._extract_entity(normalized_text)
             if text_suggests_tv_signal_fault(normalized_text) and entity in (None, "water"):

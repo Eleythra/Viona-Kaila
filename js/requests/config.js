@@ -124,8 +124,8 @@
         { id: "general_areas", key: "reqCatComplaintGeneralAreas" },
         { id: "hygiene", key: "reqCatComplaintHygiene" },
         { id: "internet_tv", key: "reqCatComplaintInternetTv" },
-        { id: "lost_property", key: "reqCatComplaintLostProperty" },
         { id: "other", key: "reqCatOther" },
+        { id: "lost_property", key: "reqCatComplaintLostProperty" },
       ],
       fault: [
         { id: "hvac", key: "reqCatFaultHvac" },

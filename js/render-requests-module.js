@@ -690,6 +690,74 @@
     return { wrap: wrap, chips: chips };
   }
 
+  /** Şikâyet: kayıp eşya ayrı blok + kısa açıklama (oda arızası kategorileriyle karışmasın). */
+  function buildComplaintCategoryField(t, nameAttr) {
+    nameAttr = nameAttr || "complaintCategory";
+    var cfg = getCfg();
+    var full = (cfg.categories.complaint || []).slice();
+    var lostItem = null;
+    var main = [];
+    full.forEach(function (c) {
+      if (c.id === "lost_property") lostItem = c;
+      else main.push(c);
+    });
+    var wrap = document.createElement("div");
+    wrap.className = "req-field";
+    var leg = document.createElement("span");
+    leg.className = "req-label";
+    leg.textContent = t("reqLabelComplaintCategory");
+    var chips = document.createElement("div");
+    chips.className = "req-chips";
+    chips.setAttribute("role", "radiogroup");
+    chips.setAttribute("aria-label", t("reqLabelComplaintCategory"));
+    main.forEach(function (c, idx) {
+      var lab = document.createElement("label");
+      lab.className = "req-chip";
+      var radio = document.createElement("input");
+      radio.type = "radio";
+      radio.name = nameAttr;
+      radio.value = c.id;
+      radio.required = idx === 0;
+      var span = document.createElement("span");
+      span.className = "req-chip__text";
+      span.textContent = t(c.key);
+      lab.appendChild(radio);
+      lab.appendChild(span);
+      chips.appendChild(lab);
+    });
+    wrap.appendChild(leg);
+    wrap.appendChild(chips);
+    if (lostItem) {
+      var split = document.createElement("div");
+      split.className = "req-lost-property-split";
+      var hint = document.createElement("p");
+      hint.className = "req-lost-property-hint";
+      hint.textContent = t("reqComplaintLostPropertyHint");
+      var subLeg = document.createElement("span");
+      subLeg.className = "req-label req-label--sub";
+      subLeg.textContent = t("reqComplaintLostPropertyBlockTitle");
+      split.appendChild(hint);
+      split.appendChild(subLeg);
+      var lostRow = document.createElement("div");
+      lostRow.className = "req-chips req-chips--lost-property";
+      var llab = document.createElement("label");
+      llab.className = "req-chip req-chip--lost-property";
+      var lrad = document.createElement("input");
+      lrad.type = "radio";
+      lrad.name = nameAttr;
+      lrad.value = lostItem.id;
+      var lsp = document.createElement("span");
+      lsp.className = "req-chip__text";
+      lsp.textContent = t(lostItem.key);
+      llab.appendChild(lrad);
+      llab.appendChild(lsp);
+      lostRow.appendChild(llab);
+      split.appendChild(lostRow);
+      wrap.appendChild(split);
+    }
+    return { wrap: wrap, chips: chips };
+  }
+
   function getRequestCategorySections() {
     var cfg = getCfg();
     if (cfg.requestSections && cfg.requestSections.length) return cfg.requestSections;
@@ -979,7 +1047,7 @@
     form.appendChild(guestSection.section);
 
     var detailSection = resSection("reqSectionRequestDetails", t);
-    var categoryField = buildSingleCategoryField("complaint", "reqLabelComplaintCategory", t, "complaintCategory");
+    var categoryField = buildComplaintCategoryField(t, "complaintCategory");
     detailSection.inner.appendChild(categoryField.wrap);
     form.appendChild(detailSection.section);
 

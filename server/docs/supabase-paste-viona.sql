@@ -4,6 +4,7 @@
 --       → özet view’lar → şikâyet/arıza kolonları → 8a istek category CHECK → 8b kova status CHECK
 --       → guest_reservations revizyonu
 --       → rezervasyon status (rejected = admin “Onaylanmadı”) → guest_notifications → guest_late_checkouts (geç çıkış)
+--       → platform_reviews (harici platform yorumları; isteğe bağlı tablo)
 --
 -- NOT: CHECK eklenirken "violates check constraint" alırsanız, aşağıdaki
 --      "OPSİYONEL: CHECK öncesi veri temizliği" bölümünü sırayla çalıştırın.
@@ -735,9 +736,48 @@ alter table if exists public.guest_late_checkouts
 
 alter table if exists public.guest_late_checkouts enable row level security;
 
+-- -----------------------------------------------------------------------------
+-- 12) platform_reviews — harici platform yorumları (upsert: source + external_review_id)
+--     NOT: Yorum satırları SQL ile -- ile başlamalıdır; tek tire (-) syntax hatası verir.
+-- -----------------------------------------------------------------------------
+create table if not exists public.platform_reviews (
+  id uuid primary key default gen_random_uuid(),
+  source text not null check (source = any (array['google'::text, 'tripadvisor'::text, 'booking'::text])),
+  external_review_id text not null,
+  external_location_id text,
+  location_name text,
+  hotel_name text not null default 'Kaila Beach',
+  reviewer_name text,
+  reviewer_photo_url text,
+  rating smallint check (rating is null or (rating >= 1 and rating <= 5)),
+  comment text,
+  review_created_at timestamptz,
+  review_updated_at timestamptz,
+  reply_comment text,
+  reply_updated_at timestamptz,
+  is_replied boolean not null default false,
+  raw_payload_json jsonb,
+  synced_at timestamptz not null default now(),
+  first_ingested_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint platform_reviews_source_external_unique unique (source, external_review_id)
+);
+
+create index if not exists platform_reviews_source_review_created_idx
+  on public.platform_reviews (source, review_created_at desc nulls last);
+
+create index if not exists platform_reviews_source_synced_idx
+  on public.platform_reviews (source, synced_at desc nulls last);
+
+create index if not exists platform_reviews_rating_idx
+  on public.platform_reviews (source, rating);
+
+comment on table public.platform_reviews is 'Harici platform yorumları; upsert anahtarı (source, external_review_id).';
+
 -- =============================================================================
 -- Bitti. chat_observations, view’lar; istek/şikâyet/arıza kolonları + 8a category + 8b status;
--- guest_reservations; guest_notifications (bölüm 10); guest_late_checkouts (bölüm 11).
+-- guest_reservations; guest_notifications (bölüm 10); guest_late_checkouts (bölüm 11); platform_reviews (bölüm 12).
 --
 -- Node API (guest-requests.service.js) kolon eşlemesi — şema sapması insert hatası verir:
 --   guest_notifications: guest_name, room_number, nationality, description, categories (jsonb),

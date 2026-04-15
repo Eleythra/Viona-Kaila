@@ -1503,6 +1503,36 @@ def test_routing_housekeeping_transfer_and_lunch_box():
     assert intent.calls == 0
 
 
+def test_transfer_module_not_opened_for_english_transferred():
+    """«transferred» içinde «transfer» alt dizgisi vardı; yanlışlıkla transfer modülü açılmasın."""
+    orch, _, intent = build_orchestrator()
+    r = orch.handle(
+        ChatRequest(
+            message="I was transferred to another room",
+            ui_language="en",
+            locale="en",
+        )
+    )
+    kind = getattr(r.meta.action, "kind", None) if r.meta.action else None
+    assert kind != "open_transfer_module"
+
+
+def test_transfer_routing_helper_rejects_transferred_substring():
+    from assistant.services.rule_engine import _text_matches_transfer_routing_intent
+    from assistant.utils.text_normalizer import normalize_text
+
+    assert not _text_matches_transfer_routing_intent(normalize_text("I was transferred to another room"))
+    assert _text_matches_transfer_routing_intent(normalize_text("transfer"))
+    assert _text_matches_transfer_routing_intent(normalize_text("transfer istiyorum"))
+
+
+def test_transfer_standalone_word_still_opens_transfer_module():
+    orch, _, intent = build_orchestrator()
+    r = orch.handle(ChatRequest(message="transfer", ui_language="tr", locale="tr"))
+    assert r.meta.action and r.meta.action.kind == "open_transfer_module"
+    assert intent.calls == 0
+
+
 def test_routing_guest_relations_contact_and_generic_problem():
     orch, _, intent = build_orchestrator()
     gr = orch.handle(ChatRequest(message="misafir ilişkilerine bağlanmak istiyorum", ui_language="tr", locale="tr"))
@@ -2383,6 +2413,53 @@ def test_lost_property_routes_complaint_form_with_policy_text():
     assert "6 ay" in low
     assert "misafir" in low or "resepsiyon" in low
     assert "şikâyet" in low or "şikayet" in low
+
+
+def test_lost_property_turkish_inflected_glasses_opens_complaint_form():
+    """«gözlük» kökü «gözlüğüm» içinde alt dizgi olarak yok; yine de kayıp eşya akışına düşmeli."""
+    orch, _, _ = build_orchestrator()
+    r = orch.handle(ChatRequest(message="gözlüğüm kayboldu", ui_language="tr", locale="tr"))
+    assert r.meta.intent == "complaint"
+    assert r.meta.action and r.meta.action.kind == "open_complaint_form"
+
+
+def test_lost_property_kayboldu_typo_kaybioldu_not_diet_guest_notification():
+    """«kaybıoldu» (ı/o) sözlükte yoktu → kural eşleşmezdi, LLM yanlışlıkla beslenme bildirimi veriyordu."""
+    orch, _, _ = build_orchestrator()
+    r = orch.handle(ChatRequest(message="*gözlüğüm kaybıoldu", ui_language="tr", locale="tr"))
+    assert r.meta.intent == "complaint"
+    assert r.meta.action and r.meta.action.kind == "open_complaint_form"
+    low = r.message.lower()
+    assert "beslenme" not in low and "hassasiyet:" not in low
+
+
+def test_lost_property_place_only_kaybioldu_opens_complaint_form():
+    """Nesne adı yokken yer + «kaybıoldu» yine kayıp eşya (deniz/plaj vb.)."""
+    orch, _, _ = build_orchestrator()
+    r = orch.handle(ChatRequest(message="denizde kaybıoldu", ui_language="tr", locale="tr"))
+    assert r.meta.intent == "complaint"
+    assert r.meta.action and r.meta.action.kind == "open_complaint_form"
+
+
+def test_lost_property_bulamyorum_typo_opens_complaint_form():
+    orch, _, _ = build_orchestrator()
+    r = orch.handle(ChatRequest(message="bulamyorum gözlüğüm", ui_language="tr", locale="tr"))
+    assert r.meta.intent == "complaint"
+    assert r.meta.action and r.meta.action.kind == "open_complaint_form"
+
+
+def test_lost_property_necklace_beach_turkish_opens_complaint_form():
+    orch, _, _ = build_orchestrator()
+    r = orch.handle(ChatRequest(message="kolyem denizde kayboldu", ui_language="tr", locale="tr"))
+    assert r.meta.intent == "complaint"
+    assert r.meta.action and r.meta.action.kind == "open_complaint_form"
+
+
+def test_lost_property_watch_cant_find_turkish_opens_complaint_form():
+    orch, _, _ = build_orchestrator()
+    r = orch.handle(ChatRequest(message="saatimi bulamıyorum", ui_language="tr", locale="tr"))
+    assert r.meta.intent == "complaint"
+    assert r.meta.action and r.meta.action.kind == "open_complaint_form"
 
 
 def test_lost_and_found_phrase_opens_complaint_form():

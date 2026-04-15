@@ -49,7 +49,12 @@ TRANSLATIONS_PL: Dict[str, str] = {
     'complaint_noise': 'Najpierw zgłoś tę reklamację do Guest Relations. W razie potrzeby recepcja też może pomóc w eskalacji.',
     'complaint_cleanliness': 'Najpierw zgłoś problem ze sprzątaniem do Guest Relations; recepcja też może wesprzeć.',
     'complaint_default': 'W tej reklamacji najpierw skontaktuj się z Guest Relations. Możesz też zgłosić sprawę przez recepcję.',
-    'complaint_lost_property': 'Zgubione rzeczy — przedmioty wartościowe przechowujemy do roku, pozostałe do sześciu miesięcy.\n\nAby uzyskać najlepszą pomoc, udaj się do Guest Relations lub recepcji. Możesz też wypełnić poniższy formularz reklamacji i opisać sytuację na piśmie — zespół zadba o Twój wpis.',
+    'complaint_lost_property': (
+        'Zgubione rzeczy — przedmioty wartościowe przechowujemy do roku, pozostałe do sześciu miesięcy.\n\n'
+        'Zwroty w stylu «zgubiłem», «nie mogę znaleźć», «zginęło» dotyczące rzeczy osobistych (okulary, telefon, zegarek, biżuteria) '
+        'to nie awaria pokoju — w poniższym formularzu reklamacji wybierz «Zgubione rzeczy».\n\n'
+        'Aby uzyskać najlepszą pomoc, udaj się do Guest Relations lub recepcji. Możesz też wypełnić poniższy formularz reklamacji i opisać sytuację na piśmie — zespół zadba o Twój wpis.'
+    ),
     'request_towel': 'W sprawie ręczników skontaktuj się z recepcją.',
     'request_blanket': 'W sprawie dodatkowego koca skontaktuj się z recepcją.',
     'request_water': 'Aby dowieźć wodę lub wodę pitną do pokoju, skontaktuj się z recepcją — zespół zorganizuje dostawę.',

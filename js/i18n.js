@@ -567,6 +567,9 @@ const I18N = {
     reqCatComplaintHygiene: "Hijyen",
     reqCatComplaintInternetTv: "Internet / TV",
     reqCatComplaintLostProperty: "Kayıp eşya",
+    reqComplaintLostPropertyBlockTitle: "Kayıp veya bulunamayan kişisel eşya",
+    reqComplaintLostPropertyHint:
+      "Gözlük, telefon, saat, takı vb. kayboldu / bulamıyorum ifadeleri oda arızası değildir; kaydı buradan iletin.",
     reqCatFaultHvac: "Klima / ısıtma",
     reqCatFaultElectric: "Elektrik",
     reqCatFaultWaterBathroom: "Su / banyo",
@@ -1165,6 +1168,9 @@ const I18N = {
     reqCatComplaintHygiene: "Hygiene",
     reqCatComplaintInternetTv: "Internet / TV",
     reqCatComplaintLostProperty: "Lost property",
+    reqComplaintLostPropertyBlockTitle: "Lost or missing personal item",
+    reqComplaintLostPropertyHint:
+      "Glasses, phone, watch, jewellery, etc. — “lost”, “can’t find”, “missing” are not room faults; use this option.",
     reqCatFaultHvac: "HVAC / heating",
     reqCatFaultElectric: "Electricity",
     reqCatFaultWaterBathroom: "Water / bathroom",
@@ -1764,6 +1770,9 @@ const I18N = {
     reqCatComplaintHygiene: "Hygiene",
     reqCatComplaintInternetTv: "Internet / TV",
     reqCatComplaintLostProperty: "Fundsachen / verlorenes Eigentum",
+    reqComplaintLostPropertyBlockTitle: "Verlorener oder nicht auffindbarer Gegenstand",
+    reqComplaintLostPropertyHint:
+      "Brille, Handy, Uhr, Schmuck usw. — «verloren», «finde nicht», «weg» ist kein Zimmerdefekt; bitte hier melden.",
     reqCatFaultHvac: "Klima / Heizung",
     reqCatFaultElectric: "Elektrik",
     reqCatFaultWaterBathroom: "Wasser / Bad",
@@ -2310,6 +2319,9 @@ const I18N = {
     reqCatComplaintHygiene: "Higiena",
     reqCatComplaintInternetTv: "Internet / TV",
     reqCatComplaintLostProperty: "Zgubione rzeczy",
+    reqComplaintLostPropertyBlockTitle: "Zgubiona lub niewidoczna rzecz osobista",
+    reqComplaintLostPropertyHint:
+      "Okulary, telefon, zegarek, biżuteria itd. — to nie awaria pokoju; zgłoś tutaj.",
     reqCatFaultHvac: "Klimatyzacja / ogrzewanie",
     reqCatFaultElectric: "Instalacja elektryczna",
     reqCatFaultWaterBathroom: "Woda / łazienka",

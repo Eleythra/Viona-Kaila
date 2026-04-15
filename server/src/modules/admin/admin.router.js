@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { timingSafeEqual } from "node:crypto";
 import { getEnv } from "../../config/env.js";
+import { extractAdminToken, getAdminApiToken, isAdminTokenValid } from "../../lib/admin-auth.js";
 import {
   deleteChatObservation,
   deleteChatObservationsBulk,
@@ -23,25 +23,7 @@ import {
   resendWhatsappForAdminItem,
 } from "./admin.service.js";
 const router = Router();
-const ADMIN_API_TOKEN = String(process.env.ADMIN_API_TOKEN || "").trim();
-
-function extractAdminToken(req) {
-  const bearer = String(req.headers?.authorization || "").trim();
-  if (bearer.toLowerCase().startsWith("bearer ")) {
-    const token = bearer.slice(7).trim();
-    if (token) return token;
-  }
-  const headerToken = String(req.headers?.["x-admin-token"] || "").trim();
-  return headerToken || "";
-}
-
-function isAdminTokenValid(candidate = "") {
-  if (!ADMIN_API_TOKEN) return false;
-  const left = Buffer.from(String(candidate || ""), "utf8");
-  const right = Buffer.from(ADMIN_API_TOKEN, "utf8");
-  if (left.length !== right.length) return false;
-  return timingSafeEqual(left, right);
-}
+const ADMIN_API_TOKEN = getAdminApiToken();
 
 router.get("/auth/validate", (req, res) => {
   if (!ADMIN_API_TOKEN) {

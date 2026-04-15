@@ -90,6 +90,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "complaint_default": "Bu şikayet için öncelikle Misafir İlişkileri ile iletişime geçiniz. Dilerseniz resepsiyon üzerinden de iletebilirsiniz.",
         "complaint_lost_property": (
             "Kayıp Eşya Yönetimi — Değerli eşyalar en fazla 1 yıl, diğer eşyalar en fazla 6 ay saklanmaktadır.\n\n"
+            "«Kayboldu», «kaybettim», «bulamıyorum», «nerede» gibi ifadelerle kişisel eşya (gözlük, telefon, saat, takı vb.) "
+            "arıza değildir; aşağıdaki şikâyet formunda «Kayıp eşya» seçeneğini kullanabilirsiniz.\n\n"
             "Eşyanızı aramak veya kaydı netleştirmek için öncelikle Misafir İlişkileri veya resepsiyon ekibimize başvurabilirsiniz. "
             "İsterseniz aşağıdaki şikâyet formunu da doldurarak ayrıntıları yazılı iletebilirsiniz; ekibimiz kaydınızı özenle değerlendirir."
         ),
@@ -249,6 +251,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "complaint_default": "For this complaint, please contact Guest Relations first. You may also report it via reception.",
         "complaint_lost_property": (
             "Lost & found — Valuables may be kept for up to one year; other items for up to six months.\n\n"
+            "Phrases like “lost”, “can’t find”, “missing”, “misplaced” for personal items (glasses, phone, watch, jewellery) "
+            "are not room faults; in the complaint form below, choose “Lost property”.\n\n"
             "For the most attentive assistance, please visit Guest Relations or reception. "
             "You may also complete the complaint form below to share details in writing — our team will handle your record with care."
         ),
@@ -408,6 +412,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "complaint_default": "Bitte wenden Sie sich bei dieser Beschwerde zuerst an die Gästebetreuung. Alternativ kann die Rezeption unterstützen.",
         "complaint_lost_property": (
             "Fundsachen — Wertgegenstände werden bis zu einem Jahr, übrige Gegenstände bis zu sechs Monaten aufbewahrt.\n\n"
+            "Formulierungen wie «verloren», «finde nicht», «weg», «vermisst» für persönliche Gegenstände (Brille, Handy, Uhr, Schmuck) "
+            "sind kein Zimmerdefekt; im Beschwerdeformular unten «Fundsachen / verlorenes Eigentum» wählen.\n\n"
             "Für eine persönliche Betreuung wenden Sie sich bitte an die Gästebetreuung oder die Rezeption. "
             "Optional können Sie unten das Beschwerdeformular ausfüllen und die Details schriftlich mitteilen — unser Team bearbeitet Ihren Eintrag aufmerksam."
         ),
