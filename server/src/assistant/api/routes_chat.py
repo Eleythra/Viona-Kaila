@@ -6,6 +6,7 @@ from assistant.schemas.response import ChatResponse, ChatMeta
 from assistant.services.orchestrator import ChatOrchestrator
 from assistant.services.localization_service import LocalizationService
 from assistant.bootstrap import get_orchestrator
+from assistant.core.chatbot_languages import CHATBOT_UI_LANG_SET
 from assistant.core.logger import get_logger
 from assistant.services.voice_channel_layer import finalize_voice_channel_response
 
@@ -18,7 +19,7 @@ _LOCALIZATION = LocalizationService()
 
 def _resolve_chat_lang(payload: ChatRequest) -> str:
     for cand in (payload.ui_language, payload.locale):
-        if cand and str(cand).lower().strip() in ("tr", "en", "de", "pl"):
+        if cand and str(cand).lower().strip() in CHATBOT_UI_LANG_SET:
             return str(cand).lower().strip()
     return "tr"
 
@@ -31,7 +32,7 @@ def chat(payload: ChatRequest, orchestrator: ChatOrchestrator = Depends(get_orch
             lang = _resolve_chat_lang(payload)
             reply_lang = (
                 response.meta.language
-                if response.meta.language in ("tr", "en", "de", "pl")
+                if response.meta.language in CHATBOT_UI_LANG_SET
                 else lang
             )
             response = finalize_voice_channel_response(response, reply_lang)
@@ -40,7 +41,11 @@ def chat(payload: ChatRequest, orchestrator: ChatOrchestrator = Depends(get_orch
         logger.exception("chat_endpoint_failed: %s", exc)
         lang = _resolve_chat_lang(payload)
         message = _LOCALIZATION.canonical_fallback(lang, reason="safe")
-        ui = payload.ui_language if payload.ui_language in ("tr", "en", "de", "pl") else lang
+        ui = (
+            payload.ui_language
+            if payload.ui_language and str(payload.ui_language).lower().strip() in CHATBOT_UI_LANG_SET
+            else lang
+        )
         safe = ChatResponse(
             type="fallback",
             message=message,

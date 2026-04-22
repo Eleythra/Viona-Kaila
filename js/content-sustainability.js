@@ -8,9 +8,13 @@
   var BASE = "assets/sustainability/";
 
   function normLang(code) {
-    var c = String(code || "tr").toLowerCase();
+    var c = String(code || "tr").toLowerCase().slice(0, 2);
+    if (window.VIONA_LANG && typeof window.VIONA_LANG.normalizeToUiLang === "function") {
+      c = window.VIONA_LANG.normalizeToUiLang(c);
+    }
     if (c === "pl") return "en";
     if (c === "en" || c === "de") return c;
+    if (c !== "tr") return "en";
     return "tr";
   }
 

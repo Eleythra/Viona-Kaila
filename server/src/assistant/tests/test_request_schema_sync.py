@@ -6,6 +6,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
+from assistant.core.chatbot_languages import CHATBOT_UI_LANGS  # noqa: E402
+from assistant.schemas.chat import ChatRequest  # noqa: E402
 from assistant.services.form_schema import request_categories_for_chat_ui  # noqa: E402
 
 
@@ -29,11 +31,19 @@ def test_request_chat_category_order_matches_js_requests_config():
     assert js_ids == py_ids, f"requestSections order mismatch:\n  js ({len(js_ids)}): {js_ids}\n  py ({len(py_ids)}): {py_ids}"
 
 
+def test_chat_request_accepts_client_channel_alias_for_voice():
+    """İstemci (viona-chat) sesli turda `client_channel`; şema birleşik `channel` kullanır."""
+    r = ChatRequest.model_validate(
+        {"message": "hello", "client_channel": "voice", "ui_language": "en", "locale": "en"}
+    )
+    assert r.channel == "voice"
+
+
 def test_chat_fallback_localization_keys_exist():
     from assistant.services.localization_service import LocalizationService
 
     loc = LocalizationService()
-    for lang in ("tr", "en", "de", "pl"):
+    for lang in CHATBOT_UI_LANGS:
         for key in (
             "chat_fallback_throttled",
             "chat_fallback_validation_error",

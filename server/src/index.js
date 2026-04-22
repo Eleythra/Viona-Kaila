@@ -17,6 +17,7 @@ import {
 } from "./modules/speech/speech.router.js";
 import { getSupabase, isSupabaseConfigured, withSupabaseFetchGuard } from "./lib/supabase.js";
 import { createGuestRequest } from "./modules/guest-requests/guest-requests.service.js";
+import { normalizeVionaUiLanguage, VIONA_UI_LANGUAGE_CODES } from "./lib/viona-ui-languages.js";
 import {
   buildWhatsappGraphMessagesUrl,
   getWhatsappOperationalHealthSummary,
@@ -66,8 +67,12 @@ function isReservationLikeMessage(msg = "") {
 }
 
 function normalizeLocale(value = "") {
-  const v = String(value || "").toLowerCase().trim();
-  return v === "en" || v === "de" || v === "pl" ? v : "tr";
+  return normalizeVionaUiLanguage(value);
+}
+
+function pickChatLangMessage(map, lang) {
+  const code = normalizeLocale(lang);
+  return map[code] || map.en || map.tr;
 }
 
 function safeFallback(locale = "tr", reason = "safe", userMessage = "") {
@@ -76,7 +81,7 @@ function safeFallback(locale = "tr", reason = "safe", userMessage = "") {
 
   // Konaklama / masa / restoran bağlamında: resepsiyon + MI yönlendirmesi ve Restaurant & barlar kısayolu (open_reservation_form istemci tarafında bu modüle map edilir).
   if (isReservationLike) {
-    const text = RESERVATION_REDIRECT_BY_LANG[lang] || RESERVATION_REDIRECT_BY_LANG.tr;
+    const text = pickChatLangMessage(RESERVATION_REDIRECT_BY_LANG, lang);
     return {
       type: "inform",
       message: text,
@@ -97,8 +102,8 @@ function safeFallback(locale = "tr", reason = "safe", userMessage = "") {
 
   const message =
     reason === "upstream_unavailable"
-      ? UPSTREAM_UNAVAILABLE_BY_LANG[lang]
-      : SAFE_FALLBACK_BY_LANG[lang];
+      ? pickChatLangMessage(UPSTREAM_UNAVAILABLE_BY_LANG, lang)
+      : pickChatLangMessage(SAFE_FALLBACK_BY_LANG, lang);
   return {
     type: "fallback",
     message,
@@ -616,10 +621,7 @@ app.post("/api/chat", async (req, res) => {
   const rawConv = String(req.body?.conversation_language || "")
     .toLowerCase()
     .trim();
-  const conversationLanguage =
-    rawConv === "en" || rawConv === "de" || rawConv === "pl" || rawConv === "tr"
-      ? rawConv
-      : null;
+  const conversationLanguage = VIONA_UI_LANGUAGE_CODES.includes(rawConv) ? rawConv : null;
 
   if (!message) {
     const fb = safeFallback(locale, "validation_error", message);
@@ -702,11 +704,10 @@ app.post("/api/chat", async (req, res) => {
       const isResLike = isReservationLikeMessage(userText);
       const lang = locale || "tr";
       const normalizedLang = normalizeLocale(lang);
-      const safeFallbackText = SAFE_FALLBACK_BY_LANG[normalizedLang] || SAFE_FALLBACK_BY_LANG.tr;
+      const safeFallbackText = pickChatLangMessage(SAFE_FALLBACK_BY_LANG, normalizedLang);
       const rawMsg = String(data?.message || "").trim();
       if (isResLike && rawMsg === safeFallbackText) {
-        const redirectText =
-          RESERVATION_REDIRECT_BY_LANG[normalizedLang] || RESERVATION_REDIRECT_BY_LANG.tr;
+        const redirectText = pickChatLangMessage(RESERVATION_REDIRECT_BY_LANG, normalizedLang);
         data = {
           type: "inform",
           message: redirectText,

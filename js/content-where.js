@@ -9,7 +9,12 @@
   function T(row) {
     if (typeof row === "string") return row;
     if (typeof P === "function") return P(row || {});
-    if (row && typeof row === "object") return row.tr || row.en || row.de || row.pl || "";
+    if (row && typeof row === "object") {
+      if (window.VIONA_LANG && typeof window.VIONA_LANG.pickFromLangRow === "function") {
+        return window.VIONA_LANG.pickFromLangRow(row);
+      }
+      return row.tr || row.en || row.de || row.pl || "";
+    }
     return row || "";
   }
 

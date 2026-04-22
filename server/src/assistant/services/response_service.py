@@ -1,4 +1,5 @@
 from assistant.schemas.response import ChatMeta, ChatResponse
+from assistant.core.chatbot_languages import normalize_chatbot_lang
 from assistant.core.logger import get_logger
 from assistant.services.localization_service import LocalizationService
 import re
@@ -90,8 +91,8 @@ class ResponseService:
             return ChatResponse.model_validate({"type": type_, "message": normalized, "meta": meta})
         except Exception as exc:
             logger.exception("response_validation_failed: %s", exc)
-            safe_lang = language if language in ("tr", "en", "de", "pl") else "tr"
-            safe_ui = ui_language if ui_language in ("tr", "en", "de", "pl") else "tr"
+            safe_lang = normalize_chatbot_lang(language)
+            safe_ui = normalize_chatbot_lang(ui_language)
             safe_meta = ChatMeta(
                 intent="unknown",
                 confidence=0.0,

@@ -2,20 +2,30 @@
   "use strict";
 
   /**
-   * Sabit indirim popup — görseller `assets/indirim/indirim-{TR|EN|DE|PL}.png`.
-   * Güncelleme: dosyayı değiştirin; tarayıcı önbelleğini kırmak için aşağıdaki CACHE_BUST değerini artırın.
+   * Sabit indirim popup — görseller `assets/indirim/indirim-{TR|EN|DE|PL|RU|DA|CS|RO|NL|SK}.png`.
+   * Yeni dil görseli eklerken `PROMO_IMAGES` + CACHE_BUST artırın.
    */
-  var CACHE_BUST = "3";
+  var CACHE_BUST = "11";
   var POPUP_ID = "discount-promo-popup";
   var SEEN_SESSION_KEY = "viona_indirim_popup_seen_v2";
   var HOME_VISIBLE_MAX_FRAMES = 12;
 
+  var EN_PROMO_SRC = "assets/indirim/indirim-EN.png?v=" + CACHE_BUST;
   var PROMO_IMAGES = {
     tr: "assets/indirim/indirim-TR.png?v=" + CACHE_BUST,
-    en: "assets/indirim/indirim-EN.png?v=" + CACHE_BUST,
+    en: EN_PROMO_SRC,
     de: "assets/indirim/indirim-DE.png?v=" + CACHE_BUST,
     pl: "assets/indirim/indirim-PL.png?v=" + CACHE_BUST,
+    ru: "assets/indirim/indirim-RU.png?v=" + CACHE_BUST,
+    da: "assets/indirim/indirim-DA.png?v=" + CACHE_BUST,
+    cs: "assets/indirim/indirim-CS.png?v=" + CACHE_BUST,
+    ro: "assets/indirim/indirim-RO.png?v=" + CACHE_BUST,
+    nl: "assets/indirim/indirim-NL.png?v=" + CACHE_BUST,
+    sk: "assets/indirim/indirim-SK.png?v=" + CACHE_BUST,
   };
+
+  /** Ana sayfaya ilk geçişte indirim penceresi otomatik açılmasın (manuel tetik yoksa). */
+  var DISABLE_PROMO_AUTO_OPEN = true;
 
   function getLang() {
     try {
@@ -26,13 +36,19 @@
   }
 
   function normalizeLang(code) {
-    var c = String(code || "tr").toLowerCase();
+    var c = String(code || "tr").toLowerCase().slice(0, 2);
+    if (window.VIONA_LANG && typeof window.VIONA_LANG.normalizeToUiLang === "function") {
+      return window.VIONA_LANG.normalizeToUiLang(c);
+    }
     if (c === "en" || c === "de" || c === "pl") return c;
     return "tr";
   }
 
   function imageSrcForLang(lang) {
-    return PROMO_IMAGES[normalizeLang(lang)] || PROMO_IMAGES.tr;
+    var n = normalizeLang(lang);
+    if (PROMO_IMAGES[n]) return PROMO_IMAGES[n];
+    if (n !== "tr" && PROMO_IMAGES.en) return PROMO_IMAGES.en;
+    return PROMO_IMAGES.tr;
   }
 
   function isDismissedThisSession() {
@@ -55,7 +71,11 @@
   function resetVionaPromoDismissForLangScreen() {
     try {
       sessionStorage.removeItem(SEEN_SESSION_KEY);
-      ["tr", "en", "de", "pl"].forEach(function (code) {
+      var codes =
+        window.VIONA_LANG && window.VIONA_LANG.ALL
+          ? window.VIONA_LANG.ALL
+          : ["tr", "en", "de", "pl", "ru", "da", "cs", "ro", "nl", "sk"];
+      codes.forEach(function (code) {
         sessionStorage.removeItem("viona_discount_popup_tab_once_" + code);
       });
     } catch (e) {
@@ -117,6 +137,7 @@
   }
 
   async function showDiscountPopup() {
+    if (DISABLE_PROMO_AUTO_OPEN) return;
     for (var f = 0; f < HOME_VISIBLE_MAX_FRAMES && !isHomeVisible(); f++) {
       await waitFrame();
     }

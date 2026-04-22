@@ -3,9 +3,9 @@
  * Otel ve tüm noktalar Google Haritalar paylaşım linklerinden alınan koordinatlarla eşleştirildi.
  *
  * Sözleşme:
- * - categoryOrder içindeki her id için i18n.js’te nearCat_<id> (tr/en/de/pl) tanımlı olmalı.
+ * - categoryOrder içindeki her id için i18n.js’te nearCat_<id> (tüm UI dilleri; eksik anahtar en/tr yedeği) tanımlı olmalı.
  * - place.category değerleri categoryOrder ile uyumlu olmalı.
- * - name / address / description: { tr, en, de, pl }
+ * - name / address / description: en az { tr, en, de, pl }; yeni dil kodları için metin yoksa pick zinciri en/tr’ye düşer.
  */
 (function () {
   "use strict";

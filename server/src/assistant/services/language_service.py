@@ -1,6 +1,8 @@
 import re
 import unicodedata
 
+from assistant.core.chatbot_languages import CHATBOT_UI_LANG_SET, UI_LANGS_COERCE_CLEAR_ENGLISH_FROM_TR_DETECT
+
 
 def _en_token_matches(text: str, token: str) -> bool:
     """Avoid substring false positives (e.g. 'time' in 'sometimes', 'my' inside words)."""
@@ -28,7 +30,7 @@ class LanguageService:
     def detect(self, text: str, fallback: str = "tr") -> str:
         t = _normalize_for_detection(text)
         if not t:
-            return fallback if fallback in ("tr", "en", "de", "pl") else "tr"
+            return fallback if fallback in CHATBOT_UI_LANG_SET else "tr"
         # Explicit language override phrases (user asks to speak a language).
         if any(x in t for x in ["türkçe", "turkce", "türkce", "please speak turkish", "turkish"]):
             return "tr"
@@ -150,7 +152,7 @@ class LanguageService:
         # Ambiguous single-token inputs (shared across languages) should follow the UI fallback.
         # This prevents cases like: UI=TR, message="gluten" => EN reply.
         if t in ("gluten", "vegan", "celiac", "allergy"):
-            return fallback if fallback in ("tr", "en", "de", "pl") else "tr"
+            return fallback if fallback in CHATBOT_UI_LANG_SET else "tr"
         # Prefer explicit English markers before Turkish fallback.
         # Use word boundaries for short tokens shared with German (e.g. "gluten" inside "glutenfrei").
         en_tokens = [
@@ -245,17 +247,17 @@ class LanguageService:
             ]
         ):
             return "tr"
-        return fallback if fallback in ("tr", "en", "de", "pl") else "tr"
+        return fallback if fallback in CHATBOT_UI_LANG_SET else "tr"
 
     def coerce_reply_language(
         self, normalized: str, detected: str, ui_language: str | None
     ) -> str:
         """
         TR UI: loanword/kısa token yüzünden EN sanılırsa şablonu TR'ye çek.
-        EN UI: nadiren TR dönen ama açıkça İngilizce otel cümlesi olan metinleri EN'ye çek.
+        EN ve ekstra UI (ru, da, …): nadiren TR dönen ama açık İngilizce otel cümlesi olan metinleri EN'ye çek.
         """
         ui = (ui_language or "tr").lower().strip()
-        if ui not in ("tr", "en", "de", "pl"):
+        if ui not in CHATBOT_UI_LANG_SET:
             ui = "tr"
         t = _normalize_for_detection(normalized)
 
@@ -284,8 +286,8 @@ class LanguageService:
                 return "tr"
             return detected
 
-        # --- English UI: prefer English replies for clear English hotel phrasing (no TR letters / TR words) ---
-        if ui == "en" and detected == "tr":
+        # --- EN / ekstra UI: açık İngilizce otel ifadesi varken yanlış TR algısını EN'ye çek (implicit drift + loglar).
+        if ui in UI_LANGS_COERCE_CLEAR_ENGLISH_FROM_TR_DETECT and detected == "tr":
             if re.search(r"[çğıöşü]", t):
                 return "tr"
             if any(

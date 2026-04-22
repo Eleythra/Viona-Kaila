@@ -96,6 +96,14 @@
     de: "Bewerten Sie Ihr Erlebnis",
     pl: "Oceń swoje doświadczenie",
   };
+  (function extendSurveyTitleFallback() {
+    const VL = window.VIONA_LANG;
+    if (!VL || !VL.EXTRA) return;
+    const ref = SURVEY_TITLE_FALLBACK.en;
+    VL.EXTRA.forEach((code) => {
+      if (!SURVEY_TITLE_FALLBACK[code]) SURVEY_TITLE_FALLBACK[code] = ref;
+    });
+  })();
 
   function t(key) {
     const L = pickLocaleTable(activeUiLang());
@@ -113,24 +121,23 @@
   }
 
   function applyI18n(root) {
-    const L = pickLocaleTable(activeUiLang());
     const scope = root || document;
     scope.querySelectorAll("[data-i18n]").forEach((node) => {
       const k = node.getAttribute("data-i18n");
-      if (k && L[k] !== undefined) {
-        node.textContent = L[k];
-      }
+      if (k) node.textContent = t(k);
     });
     scope.querySelectorAll("[data-i18n-aria]").forEach((node) => {
       const k = node.getAttribute("data-i18n-aria");
-      if (k && L[k] !== undefined) {
-        node.setAttribute("aria-label", L[k]);
-      }
+      if (k) node.setAttribute("aria-label", t(k));
     });
     document.title = t("metaTitle");
     if (!lang) {
       const c = activeUiLang();
-      document.documentElement.lang = { tr: "tr", en: "en", de: "de", pl: "pl" }[c] || "en";
+      document.documentElement.lang =
+        window.VIONA_LANG && typeof window.VIONA_LANG.htmlLangFor === "function"
+          ? window.VIONA_LANG.htmlLangFor(c)
+          : { tr: "tr", en: "en", de: "de", pl: "pl", ru: "ru", da: "da", cs: "cs", ro: "ro", nl: "nl", sk: "sk" }[c] ||
+              "en";
     }
   }
 
@@ -265,6 +272,8 @@
       '<svg class="rate-link__svg" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.7" aria-hidden="true"><path d="M12 3l2 5h5l-4 3 2 6-5-3-5 3 2-6-4-3h5l2-5z"/></svg>',
     hotels:
       '<svg class="rate-link__svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 20V10l8-4 8 4v10"/><path d="M9 20v-6h6v6"/><path d="M9 10h.01M15 10h.01"/></svg>',
+    loveholidays:
+      '<svg class="rate-link__svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="#e91e8c" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>',
     instagram:
       '<svg class="rate-link__svg rate-link__svg--ig" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="rateIg" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#f09433"/><stop offset="50%" stop-color="#e6683c"/><stop offset="100%" stop-color="#bc1888"/></linearGradient></defs><rect x="2" y="2" width="20" height="20" rx="5" fill="url(#rateIg)"/><circle cx="12" cy="12" r="4.2" fill="none" stroke="#fff" stroke-width="1.4"/><circle cx="17.4" cy="6.6" r="1.2" fill="#fff"/></svg>',
     booking:
@@ -635,7 +644,11 @@
     if (moduleId) {
       renderModuleContent();
     }
-    const htmlLang = { tr: "tr", en: "en", de: "de", pl: "pl" }[code] || "en";
+    const htmlLang =
+      window.VIONA_LANG && typeof window.VIONA_LANG.htmlLangFor === "function"
+        ? window.VIONA_LANG.htmlLangFor(code)
+        : { tr: "tr", en: "en", de: "de", pl: "pl", ru: "ru", da: "da", cs: "cs", ro: "ro", nl: "nl", sk: "sk" }[code] ||
+            "en";
     document.documentElement.lang = htmlLang;
   }
 

@@ -196,6 +196,15 @@
     },
   };
 
+  (function aliasExtraSurveyFallback() {
+    var VL = typeof window !== "undefined" ? window.VIONA_LANG : null;
+    if (!VL || !VL.EXTRA) return;
+    var ref = SURVEY_FALLBACK.en;
+    VL.EXTRA.forEach(function (code) {
+      if (!SURVEY_FALLBACK[code]) SURVEY_FALLBACK[code] = ref;
+    });
+  })();
+
   function getLangCode() {
     try {
       return localStorage.getItem("viona_lang") || "tr";

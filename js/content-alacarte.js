@@ -13,7 +13,10 @@
   };
 
   function normLang(code) {
-    var c = String(code || "tr").toLowerCase();
+    var c = String(code || "tr").toLowerCase().slice(0, 2);
+    if (window.VIONA_LANG && typeof window.VIONA_LANG.normalizeToUiLang === "function") {
+      return window.VIONA_LANG.normalizeToUiLang(c);
+    }
     if (c === "en" || c === "de" || c === "pl") return c;
     return "tr";
   }
@@ -21,6 +24,7 @@
   function sintonMenuHref(lang) {
     var L = normLang(lang);
     if (L === "de") L = "en";
+    else if (window.VIONA_LANG && window.VIONA_LANG.EXTRA && window.VIONA_LANG.EXTRA.indexOf(L) !== -1) L = "en";
     return SINTON_MENU_PDF[L] || SINTON_MENU_PDF.tr;
   }
 

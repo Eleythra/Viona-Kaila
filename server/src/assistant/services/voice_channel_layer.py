@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 
+from assistant.core.chatbot_languages import voice_dict_lang
 from assistant.schemas.response import ChatResponse
 
 # Talep / şikâyet / arıza / misafir bildirimi — sesli kanalda form yok; zarif yönlendirme (premium ton).
@@ -106,7 +107,7 @@ def sanitize_message_for_voice(text: str, lang: str) -> str:
     s = (text or "").strip()
     s = re.sub(r"\*\*([^*]+)\*\*", r"\1", s)
     s = re.sub(r"\n{3,}", "\n\n", s)
-    lg = (lang or "tr").lower() if (lang or "").lower() in ("tr", "en", "de", "pl") else "tr"
+    lg = voice_dict_lang(lang)
     for phrase in _VOICE_STRIP_BY_LANG.get(lg, _VOICE_STRIP_BY_LANG["tr"]):
         s = s.replace(phrase, "").strip()
     s = re.sub(r"\n{3,}", "\n\n", s)
@@ -115,7 +116,7 @@ def sanitize_message_for_voice(text: str, lang: str) -> str:
 
 def finalize_voice_channel_response(response: ChatResponse, reply_lang: str) -> ChatResponse:
     """Sesli kanal çıkışı: söylenebilir metin, UI aksiyonları kaldırılır."""
-    lg = (reply_lang or "tr").lower() if (reply_lang or "").lower() in ("tr", "en", "de", "pl") else "tr"
+    lg = voice_dict_lang(reply_lang)
     msg = sanitize_message_for_voice(response.message, lg)
     if not msg.strip():
         msg = VOICE_EMPTY_FALLBACK.get(lg, VOICE_EMPTY_FALLBACK["tr"])

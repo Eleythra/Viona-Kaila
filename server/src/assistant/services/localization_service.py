@@ -1,5 +1,6 @@
 from typing import Dict
 
+from assistant.core.chatbot_languages import EXTRA_CHATBOT_UI_LANGS
 from assistant.services.localization_pl import TRANSLATIONS_PL
 
 
@@ -489,11 +490,34 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
     "pl": TRANSLATIONS_PL,
 }
 
+_CHITCHAT_SWITCH_EXTRA_NATIVE: dict[str, str] = {
+    "ru": "Отныне отвечаю по-русски. Чем могу помочь?",
+    "da": "Fremover svarer jeg på dansk. Hvordan kan jeg hjælpe?",
+    "cs": "Odteď odpovídám česky. Jak vám mohu pomoci?",
+    "ro": "De acum răspund în română. Cu ce vă pot ajuta?",
+    "nl": "Ik antwoord voortaan in het Nederlands. Waarmee kan ik helpen?",
+    "sk": "Odteraz budem odpovedať po slovensky. Ako vám môžem pomôcť?",
+}
+
+_en_bundle = TRANSLATIONS["en"]
+for _code in EXTRA_CHATBOT_UI_LANGS:
+    TRANSLATIONS[_code] = dict(_en_bundle)
+    TRANSLATIONS[_code][f"chitchat_switch_{_code}"] = _CHITCHAT_SWITCH_EXTRA_NATIVE[_code]
+
 
 class LocalizationService:
     def get(self, key: str, language: str) -> str:
         lang = self.normalize_lang(language)
-        return TRANSLATIONS[lang].get(key, TRANSLATIONS["tr"].get(key, key))
+        bundle = TRANSLATIONS[lang]
+        v = bundle.get(key)
+        if v is not None and str(v).strip() != "":
+            return str(v)
+        # Ekstra UI dilleri: eksik anahtarda önce İngilizce (otel metinleri), sonra Türkçe.
+        if lang in EXTRA_CHATBOT_UI_LANGS:
+            en_v = TRANSLATIONS["en"].get(key)
+            if en_v is not None and str(en_v).strip() != "":
+                return str(en_v)
+        return TRANSLATIONS["tr"].get(key, key)
 
     @staticmethod
     def normalize_lang(language: str | None) -> str:

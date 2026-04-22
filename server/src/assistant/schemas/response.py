@@ -36,8 +36,8 @@ class ChatMeta(BaseModel):
 
     intent: IntentName
     confidence: float
-    language: Literal["tr", "en", "de", "pl"]
-    ui_language: Literal["tr", "en", "de", "pl"]
+    language: Literal["tr", "en", "de", "pl", "ru", "da", "cs", "ro", "nl", "sk"]
+    ui_language: Literal["tr", "en", "de", "pl", "ru", "da", "cs", "ro", "nl", "sk"]
     source: SourceName
     multi_intent: bool = False
     action: ChatAction | None = None

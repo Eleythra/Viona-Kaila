@@ -7,7 +7,18 @@
 
   var LANG_KEY = "viona_lang";
   /** Deterministik: otomatik dil algılama yok; uygulama dili = STT/TTS locale */
-  var AZURE_LOCALE_BY_APP = { tr: "tr-TR", en: "en-US", de: "de-DE", pl: "pl-PL" };
+  var AZURE_LOCALE_BY_APP = {
+    tr: "tr-TR",
+    en: "en-US",
+    de: "de-DE",
+    pl: "pl-PL",
+    ru: "ru-RU",
+    da: "da-DK",
+    cs: "cs-CZ",
+    ro: "ro-RO",
+    nl: "nl-NL",
+    sk: "sk-SK",
+  };
 
   var STATE_IDLE = "idle";
   var STATE_LISTENING = "listening";
@@ -34,8 +45,16 @@
 
   function getAppLang() {
     try {
-      var c = localStorage.getItem(LANG_KEY);
-      if (c && I18N[c]) return c;
+      var raw = localStorage.getItem(LANG_KEY);
+      if (!raw) return "tr";
+      var c = String(raw).trim();
+      if (window.VIONA_LANG && typeof window.VIONA_LANG.normalizeToUiLang === "function") {
+        c = window.VIONA_LANG.normalizeToUiLang(c);
+      } else {
+        c = String(raw).toLowerCase().slice(0, 2);
+      }
+      if (I18N[c]) return c;
+      if (I18N.en) return "en";
     } catch (e) {}
     return "tr";
   }
@@ -46,7 +65,8 @@
   }
 
   function azureLocale() {
-    return AZURE_LOCALE_BY_APP[getAppLang()] || "tr-TR";
+    var g = getAppLang();
+    return AZURE_LOCALE_BY_APP[g] || AZURE_LOCALE_BY_APP.en || "tr-TR";
   }
 
   function speechEndpoints() {

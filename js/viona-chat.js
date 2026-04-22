@@ -22,23 +22,32 @@
 
   function getLang() {
     try {
-      var c = localStorage.getItem(LANG_KEY);
-      if (c && I18N[c]) return c;
+      var raw = localStorage.getItem(LANG_KEY);
+      if (!raw) return "tr";
+      var c = String(raw).trim();
+      if (window.VIONA_LANG && typeof window.VIONA_LANG.normalizeToUiLang === "function") {
+        c = window.VIONA_LANG.normalizeToUiLang(c);
+      } else {
+        c = String(raw).toLowerCase().slice(0, 2);
+      }
+      if (I18N[c]) return c;
+      if (I18N.en) return "en";
     } catch (e) {}
     return "tr";
   }
 
   function getConversationLang() {
     try {
-      var c = sessionStorage.getItem(CONV_LANG_KEY);
-      if (c === "tr" || c === "en" || c === "de" || c === "pl") return c;
+      var c = String(sessionStorage.getItem(CONV_LANG_KEY) || "").toLowerCase().slice(0, 2);
+      if (window.VIONA_LANG && window.VIONA_LANG.ALL && window.VIONA_LANG.ALL.indexOf(c) !== -1) return c;
     } catch (e) {}
     return null;
   }
 
   function setConversationLangFromMeta(metaLang) {
-    var s = String(metaLang || "").toLowerCase().trim();
-    if (s !== "tr" && s !== "en" && s !== "de" && s !== "pl") return;
+    var s = String(metaLang || "").toLowerCase().replace(/_/g, "-");
+    if (s.length > 2 && s.indexOf("-") !== -1) s = s.slice(0, 2);
+    if (window.VIONA_LANG && window.VIONA_LANG.ALL && window.VIONA_LANG.ALL.indexOf(s) === -1) return;
     try {
       sessionStorage.setItem(CONV_LANG_KEY, s);
     } catch (e) {}
@@ -439,7 +448,10 @@
     };
     body.session_id = getOrCreateSessionId();
     if (conv) body.conversation_language = conv;
-    if (reqOpts.clientChannel === "voice") body.client_channel = "voice";
+    if (reqOpts.clientChannel === "voice") {
+      body.channel = "voice";
+      body.client_channel = "voice";
+    }
     var timeoutMs = Number(cfg.timeoutMs || 15000);
     if (!Number.isFinite(timeoutMs) || timeoutMs < 3000) timeoutMs = 15000;
     var maxCap = 60000;

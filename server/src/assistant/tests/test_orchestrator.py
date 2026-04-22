@@ -4,6 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
+from assistant.core.chatbot_languages import CHATBOT_UI_LANG_SET  # noqa: E402
 from assistant.core.config import Settings  # noqa: E402
 from assistant.schemas.chat import ChatRequest  # noqa: E402
 from assistant.services.device_extractor import DeviceExtractor  # noqa: E402
@@ -51,7 +52,7 @@ class DummyRagService:
     def answer(self, message, language):
         self.called = True
         t = (message or "").lower()
-        lang = language if language in ("tr", "en", "de", "pl") else "tr"
+        lang = language if language in CHATBOT_UI_LANG_SET else "tr"
         is_wf = any(
             m in t
             for m in (
@@ -447,8 +448,16 @@ def test_special_need_multilang_examples():
         ("laktozum var", "tr"),
         ("Ich brauche Rollstuhl Hilfe", "de"),
     ]
-    for msg, loc in examples:
-        res = orch.handle(ChatRequest(message=msg, ui_language=loc, locale=loc))
+    for i, (msg, loc) in enumerate(examples):
+        res = orch.handle(
+            ChatRequest(
+                message=msg,
+                ui_language=loc,
+                locale=loc,
+                user_id=f"u-sp-need-{i}",
+                session_id=f"s-sp-need-{i}",
+            )
+        )
         assert res.meta.intent == "guest_notification"
         assert res.meta.language == loc
         assert res.meta.action and res.meta.action.kind == "chat_form"

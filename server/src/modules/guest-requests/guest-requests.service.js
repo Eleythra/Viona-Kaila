@@ -8,6 +8,7 @@ import {
   GUEST_DESC_MAX_LEN,
 } from "../../lib/guest-full-name.js";
 import { sendOperationalWhatsappNotification } from "../../services/whatsapp-operational-notification.service.js";
+import { normalizeVionaUiLanguage } from "../../lib/viona-ui-languages.js";
 
 const SIMPLE_TYPES = new Set(["request", "complaint", "fault", "guest_notification"]);
 const RESERVATION_TYPES = new Set(["reservation_alacarte", "reservation_spa"]);
@@ -535,7 +536,7 @@ function validate(normalized) {
     throw new Error("other category note is too long");
   }
   const uiLang = cleanText(normalized.language, 8).toLowerCase();
-  normalized.language = ["tr", "en", "de", "pl"].includes(uiLang) ? uiLang : "tr";
+  normalized.language = normalizeVionaUiLanguage(uiLang);
 }
 
 function throwSupabaseInsertError(table, error) {

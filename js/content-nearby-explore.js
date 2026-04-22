@@ -17,7 +17,11 @@
 
   function pick(row, lang) {
     if (!row || typeof row !== "object") return "";
-    var L = lang === "en" || lang === "de" || lang === "pl" ? lang : "tr";
+    if (window.VIONA_LANG && typeof window.VIONA_LANG.pickFromLangRow === "function") {
+      return window.VIONA_LANG.pickFromLangRow(row, lang);
+    }
+    var L = String(lang || "tr").toLowerCase().slice(0, 2);
+    if (window.VIONA_LANG && window.VIONA_LANG.ALL && window.VIONA_LANG.ALL.indexOf(L) === -1) L = "tr";
     if (row[L]) return row[L];
     if (row.tr) return row.tr;
     if (row.en) return row.en;
@@ -103,7 +107,10 @@
   }
 
   function googleMapsHl(Lg) {
-    if (Lg === "en" || Lg === "de" || Lg === "pl") return Lg;
+    if (window.VIONA_LANG && typeof window.VIONA_LANG.isUiLang === "function" && window.VIONA_LANG.isUiLang(Lg)) {
+      return Lg;
+    }
+    if (window.VIONA_LANG && window.VIONA_LANG.ALL && window.VIONA_LANG.ALL.indexOf(Lg) !== -1) return Lg;
     return "tr";
   }
 
@@ -168,7 +175,14 @@
   }
 
   function renderNearbyExploreModule(container, t, lang) {
-    var Lg = lang === "en" || lang === "de" || lang === "pl" ? lang : "tr";
+    var Lg =
+      window.VIONA_LANG && typeof window.VIONA_LANG.normalizeToUiLang === "function"
+        ? window.VIONA_LANG.normalizeToUiLang(lang)
+        : (function (x) {
+            x = String(x || "tr").toLowerCase().slice(0, 2);
+            if (window.VIONA_LANG && window.VIONA_LANG.ALL && window.VIONA_LANG.ALL.indexOf(x) !== -1) return x;
+            return "tr";
+          })(lang);
     var d = DATA();
     var hotel = d.hotel;
     var places = d.places || [];

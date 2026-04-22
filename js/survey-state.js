@@ -39,7 +39,11 @@
 
   function getLanguage() {
     try {
-      return localStorage.getItem("viona_lang") || "tr";
+      var s = localStorage.getItem("viona_lang") || "tr";
+      if (window.VIONA_LANG && typeof window.VIONA_LANG.normalizeToUiLang === "function") {
+        return window.VIONA_LANG.normalizeToUiLang(s);
+      }
+      return s;
     } catch (e) {
       return "tr";
     }

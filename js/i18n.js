@@ -1,5 +1,7 @@
 /**
- * Viona — Kaila Beach Hotel — çok dilli metinler (TR / EN / DE / PL)
+ * Viona — Kaila Beach Hotel — çok dilli metinler.
+ * Tam çeviri: tr, en, de, pl. Ek UI dilleri (ru, da, cs, ro, nl, sk) `js/lang-registry.js` + `i18n-extra-locales.js` ile eklenir;
+ * sözlük girdisi yoksa `app.js` içindeki t() önce en, sonra tr anahtarlarına düşer.
  */
 const I18N = {
   tr: {
@@ -73,6 +75,7 @@ const I18N = {
     linkTripTr: "Tripadvisor · Türkçe",
     linkTripEn: "Tripadvisor · English",
     linkHotels: "Hotels.com",
+    linkLoveholidays: "Loveholidays",
     linkHoliday: "HolidayCheck",
     linkCorendon: "Corendon",
     linkZoover: "Zoover",
@@ -90,6 +93,8 @@ const I18N = {
     hintCorendon: "Hollanda merkezli tur operatörü; otel sayfasında «Beoordelingen» sekmesinden puan ve yorumlar.",
     hintZoover: "Hollanda merkezli tatil yorum sitesinde deneyiminizi paylaşın.",
     hintHotels: "Konaklama sonrası puan ve yorum paylaşımı.",
+    hintLoveholidays:
+      "Loveholidays’taki otel sayfası; rezervasyonunuz üzerinden değerlendirme veya yorum bırakabilirsiniz.",
     hintInstagram: "Fotoğraflar, duyurular ve günlük paylaşımlar.",
     hintBooking: "Otelin resmi web sitesine yönlendirir (konaklama ve bilgi).",
 
@@ -675,6 +680,7 @@ const I18N = {
     linkTripTr: "Tripadvisor · Turkish",
     linkTripEn: "Tripadvisor · English",
     linkHotels: "Hotels.com",
+    linkLoveholidays: "Loveholidays",
     linkHoliday: "HolidayCheck",
     linkCorendon: "Corendon",
     linkZoover: "Zoover",
@@ -692,6 +698,8 @@ const I18N = {
     hintCorendon: "Dutch tour operator — hotel page with guest scores and the Reviews tab.",
     hintZoover: "Share your stay on this Dutch holiday review platform.",
     hintHotels: "Rate your stay after check-out.",
+    hintLoveholidays:
+      "Loveholidays hotel listing — leave feedback or a review via your booking.",
     hintInstagram: "Photos, news and daily updates.",
     hintBooking: "Opens the hotel’s official website (stays and information).",
 
@@ -1276,6 +1284,7 @@ const I18N = {
     linkTripTr: "Tripadvisor · Türkisch",
     linkTripEn: "Tripadvisor · Englisch",
     linkHotels: "Hotels.com",
+    linkLoveholidays: "Loveholidays",
     linkHoliday: "HolidayCheck",
     linkCorendon: "Corendon",
     linkZoover: "Zoover",
@@ -1293,6 +1302,8 @@ const I18N = {
     hintCorendon: "Niederländischer Reiseveranstalter — Hotelseite mit Gästebewertungen (Tab «Beoordelingen»).",
     hintZoover: "Bewertung auf der niederländischen Urlaubsbewertungsplattform Zoover.",
     hintHotels: "Bewertung nach dem Aufenthalt auf Hotels.com.",
+    hintLoveholidays:
+      "Loveholidays-Hotel — Feedback oder Bewertung über Ihre Buchung.",
     hintInstagram: "Fotos, Neuigkeiten und tägliche Impressionen.",
     hintBooking: "Öffnet die offizielle Website des Hotels (Aufenthalt und Infos).",
 
@@ -1857,6 +1868,7 @@ const I18N = {
     linkTripTr: "Tripadvisor · Turecki",
     linkTripEn: "Tripadvisor · Angielski",
     linkHotels: "Hotels.com",
+    linkLoveholidays: "Loveholidays",
     linkHoliday: "HolidayCheck",
     linkCorendon: "Corendon",
     linkZoover: "Zoover",
@@ -1873,6 +1885,8 @@ const I18N = {
     hintCorendon: "Holenderski touroperator — strona hotelu z ocenami gości i zakładką Recenzje.",
     hintZoover: "Udostępnij swój pobyt na tej holenderskiej platformie recenzji świąt.",
     hintHotels: "Oceń swój pobyt po wymeldowaniu.",
+    hintLoveholidays:
+      "Strona hotelu na Loveholidays — opinia lub ocena przez rezerwację.",
     hintInstagram: "Zdjęcia, wiadomości i codzienne aktualizacje.",
     hintBooking: "Otwiera oficjalną stronę internetową hotelu (pobyty i informacje).",
     modGeneral: "Ogólne informacje o hotelu",
@@ -2417,6 +2431,13 @@ const RATE_MODAL_BLOCKS = [
         hintKey: "hintHotels",
         badge: "review",
         icon: "hotels",
+      },
+      {
+        key: "linkLoveholidays",
+        href: "https://www.loveholidays.com/holidays/l/?masterId=372352&date=2027-04-08&nights=7&departureAirports=&rooms=2",
+        hintKey: "hintLoveholidays",
+        badge: "review",
+        icon: "loveholidays",
       },
       {
         key: "linkCorendon",

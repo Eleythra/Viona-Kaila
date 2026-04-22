@@ -22,10 +22,20 @@
   ];
 
   function resolveLang(code) {
-    if (code === "en" || code === "de" || code === "pl" || code === "tr") return code;
+    if (code != null && code !== "") {
+      var a = String(code).toLowerCase().slice(0, 2);
+      if (window.VIONA_LANG && typeof window.VIONA_LANG.normalizeToUiLang === "function") {
+        return window.VIONA_LANG.normalizeToUiLang(a);
+      }
+      if (window.VIONA_LANG && window.VIONA_LANG.ALL && window.VIONA_LANG.ALL.indexOf(a) !== -1) return a;
+    }
     try {
       var c = localStorage.getItem(LANG_KEY);
-      if (c === "en" || c === "de" || c === "pl" || c === "tr") return c;
+      if (window.VIONA_LANG && typeof window.VIONA_LANG.normalizeToUiLang === "function") {
+        return window.VIONA_LANG.normalizeToUiLang(c);
+      }
+      c = String(c || "tr").toLowerCase().slice(0, 2);
+      if (window.VIONA_LANG && window.VIONA_LANG.ALL && window.VIONA_LANG.ALL.indexOf(c) !== -1) return c;
     } catch (e) {}
     return "tr";
   }
@@ -49,7 +59,7 @@
     root.appendChild(hero);
 
     var lang = resolveLang(langFromApp);
-    var pdf = PDF_BY_LANG[lang] || PDF_BY_LANG.tr;
+    var pdf = PDF_BY_LANG[lang] || PDF_BY_LANG.en || PDF_BY_LANG.tr;
     var pdfA = document.createElement("a");
     pdfA.className = "transfer-mod__pdf btn-transfer-pdf";
     pdfA.href = pdf.href;

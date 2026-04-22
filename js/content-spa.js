@@ -15,8 +15,11 @@
 
   function currentUiLang() {
     try {
-      var c = String(localStorage.getItem("viona_lang") || "tr").toLowerCase();
-      if (c === "en" || c === "de" || c === "pl") return c;
+      var c = String(localStorage.getItem("viona_lang") || "tr").toLowerCase().slice(0, 2);
+      if (window.VIONA_LANG && typeof window.VIONA_LANG.normalizeToUiLang === "function") {
+        return window.VIONA_LANG.normalizeToUiLang(c);
+      }
+      if (window.VIONA_LANG && window.VIONA_LANG.ALL && window.VIONA_LANG.ALL.indexOf(c) !== -1) return c;
       return "tr";
     } catch (e) {
       return "tr";
@@ -26,6 +29,9 @@
   function pickByLang(row) {
     if (!row || typeof row !== "object") return "";
     var lang = currentUiLang();
+    if (window.VIONA_LANG && typeof window.VIONA_LANG.pickFromLangRow === "function") {
+      return window.VIONA_LANG.pickFromLangRow(row, lang);
+    }
     if (row[lang] != null && String(row[lang]).trim() !== "") return String(row[lang]);
     if (row.tr != null && String(row.tr).trim() !== "") return String(row.tr);
     if (row.en != null && String(row.en).trim() !== "") return String(row.en);

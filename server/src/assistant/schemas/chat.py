@@ -1,8 +1,8 @@
 from typing import Optional, Literal
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 
 
-LangCode = Literal["tr", "en", "de", "pl"]
+LangCode = Literal["tr", "en", "de", "pl", "ru", "da", "cs", "ro", "nl", "sk"]
 ChannelName = Literal["web", "whatsapp", "unknown", "voice"]
 
 
@@ -25,8 +25,10 @@ class ChatRequest(BaseModel):
     )
     channel: ChannelName = Field(
         default="web",
+        validation_alias=AliasChoices("channel", "client_channel"),
         description=(
-            "İstek kanalı: web chatbot, WhatsApp, sesli asistan (voice: yalnızca bilgi katmanı, form yok) vb."
+            "İstek kanalı: web chatbot, WhatsApp, sesli asistan (voice: yalnızca bilgi katmanı, form yok) vb. "
+            "İstemci uyumluluğu: `client_channel` alanı da kabul edilir (sesli tur)."
         ),
     )
 

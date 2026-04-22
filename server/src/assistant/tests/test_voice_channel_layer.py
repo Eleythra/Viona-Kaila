@@ -38,6 +38,24 @@ def test_finalize_empty_message_uses_fallback():
     assert "yazılı" in fin.message or "sohbet" in fin.message
 
 
+def test_extra_ui_lang_voice_maps_to_english_voice_assets():
+    """ru/nl vb. sözlükte yok: voice_dict_lang → en (TTS tutarlı, TR sürpriz yok)."""
+    nl = "Info. Use the button below to open it."
+    out = sanitize_message_for_voice(nl, "nl")
+    assert "button below" not in out.lower()
+    meta = ChatMeta(
+        intent="hotel_info",
+        confidence=1.0,
+        language="nl",
+        ui_language="nl",
+        source="rule",
+    )
+    resp = ChatResponse(type="inform", message="", meta=meta)
+    fin = finalize_voice_channel_response(resp, "nl")
+    assert fin.message.strip()
+    assert "text chat" in fin.message.lower() or "chat" in fin.message.lower()
+
+
 def test_finalize_clears_action_and_exit_timer():
     meta = ChatMeta(
         intent="reservation",

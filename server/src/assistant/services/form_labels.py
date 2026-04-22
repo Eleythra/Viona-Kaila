@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Literal, Dict
 
+from assistant.core.chatbot_languages import CHATBOT_UI_LANG_SET, FORM_LABEL_FALLBACK_ORDER
+
 Lang = Literal["tr", "en", "de", "pl"]
 
 
@@ -526,28 +528,51 @@ VALUE_LABELS: Dict[str, Dict[str, Dict[Lang, str]]] = {
 }
 
 
-def _normalize_lang(lang: str | None) -> Lang:
-    if lang in ("en", "de", "pl"):
-        return lang  # type: ignore[return-value]
-    return "tr"
+def _label_from_row(row: Dict[str, str], lang: str | None) -> str:
+    code = (lang or "tr").strip().lower()
+    if code not in CHATBOT_UI_LANG_SET:
+        code = "tr"
+    chain: list[str] = [code]
+    for alt in FORM_LABEL_FALLBACK_ORDER:
+        if alt != code and alt not in chain:
+            chain.append(alt)
+    for k in chain:
+        v = row.get(k)
+        if v is not None and str(v).strip() != "":
+            return str(v).strip()
+    for k in CHATBOT_UI_LANG_SET:
+        if k in chain:
+            continue
+        v = row.get(k)
+        if v is not None and str(v).strip() != "":
+            return str(v).strip()
+    return ""
 
 
 def category_label(intent: str, category: str, lang: str | None) -> str:
-    l = _normalize_lang(lang)
-    return CATEGORY_LABELS.get(intent, {}).get(category, {}).get(l, category)
+    row = CATEGORY_LABELS.get(intent, {}).get(category, {})
+    if not row:
+        return category
+    return _label_from_row(row, lang) or category
 
 
 def request_section_label(section_key: str, lang: str | None) -> str:
-    l = _normalize_lang(lang)
-    return REQUEST_SECTION_LABELS.get(section_key, {}).get(l, section_key)
+    row = REQUEST_SECTION_LABELS.get(section_key, {})
+    if not row:
+        return section_key
+    return _label_from_row(row, lang) or section_key
 
 
 def field_label(field: str, lang: str | None) -> str:
-    l = _normalize_lang(lang)
-    return FIELD_LABELS.get(field, {}).get(l, field)
+    row = FIELD_LABELS.get(field, {})
+    if not row:
+        return field
+    return _label_from_row(row, lang) or field
 
 
 def value_label(field: str, value: str, lang: str | None) -> str:
-    l = _normalize_lang(lang)
-    return VALUE_LABELS.get(field, {}).get(value, {}).get(l, value)
+    row = VALUE_LABELS.get(field, {}).get(value, {})
+    if not row:
+        return value
+    return _label_from_row(row, lang) or value
 

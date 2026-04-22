@@ -1998,6 +1998,11 @@ def _is_baby_formula_guest_relations_request(text: str) -> bool:
             "sut mamasi",
             "babynahrung",
             "żywność dla niemowląt",
+            "żywnosc dla niemowlat",
+            "jedzenia dla niemowląt",
+            "jedzenia dla niemowlat",
+            "pokarm dla niemowląt",
+            "pokarm dla niemowlat",
         )
     )
     want_markers = _has_strong_service_request_intent(raw) or any(
@@ -3686,6 +3691,52 @@ class RuleEngine:
             "auf polnisch wechseln": "pl",
             "wechsel zu polnisch": "pl",
             "bitte polnisch": "pl",
+            # Russian
+            "русский": "ru",
+            "русском": "ru",
+            "по-русски": "ru",
+            "по русски": "ru",
+            "speak russian": "ru",
+            "please speak russian": "ru",
+            "switch to russian": "ru",
+            "russian please": "ru",
+            # Danish
+            "dansk": "da",
+            "på dansk": "da",
+            "pa dansk": "da",
+            "speak danish": "da",
+            "please speak danish": "da",
+            "switch to danish": "da",
+            # Czech
+            "česky": "cs",
+            "cesky": "cs",
+            "česky prosím": "cs",
+            "cesky prosim": "cs",
+            "speak czech": "cs",
+            "please speak czech": "cs",
+            "switch to czech": "cs",
+            # Romanian
+            "română": "ro",
+            "romana": "ro",
+            "în română": "ro",
+            "in romana": "ro",
+            "speak romanian": "ro",
+            "please speak romanian": "ro",
+            "switch to romanian": "ro",
+            # Dutch
+            "nederlands": "nl",
+            "spreek nederlands": "nl",
+            "speak dutch": "nl",
+            "please speak dutch": "nl",
+            "switch to dutch": "nl",
+            # Slovak
+            "slovensky": "sk",
+            "po slovensky": "sk",
+            "slovenčina": "sk",
+            "slovencina": "sk",
+            "speak slovak": "sk",
+            "please speak slovak": "sk",
+            "switch to slovak": "sk",
         }
         tgt = phrase_to_lang.get(t)
         if tgt:

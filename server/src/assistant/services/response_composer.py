@@ -1,3 +1,4 @@
+from assistant.core.chatbot_languages import CHATBOT_UI_LANG_SET, orchestrator_branch_lang
 from assistant.services.localization_service import LocalizationService
 from datetime import datetime
 import re
@@ -198,7 +199,8 @@ class ResponseComposer:
 
     def _fault(self, sub_intent: str | None, entity: str | None, language: str) -> str:
         # Prefer explicit entity mapping when available.
-        device = (DEVICE_LABELS.get(language, DEVICE_LABELS["tr"]).get(entity or "", None))
+        _dl = orchestrator_branch_lang(language)
+        device = (DEVICE_LABELS.get(_dl, DEVICE_LABELS["tr"]).get(entity or "", None))
         if device:
             return self.i18n.get("fault_template_with_device", language).format(device=device)
 
@@ -212,7 +214,7 @@ class ResponseComposer:
         }
         device_entity = sub_to_device_entity.get(sub_intent or "")
         if device_entity:
-            device = (DEVICE_LABELS.get(language, DEVICE_LABELS["tr"]).get(device_entity, None))
+            device = (DEVICE_LABELS.get(_dl, DEVICE_LABELS["tr"]).get(device_entity, None))
             if device:
                 return self.i18n.get("fault_template_with_device", language).format(device=device)
 
@@ -296,7 +298,9 @@ class ResponseComposer:
         return self.i18n.get("special_need_default", language)
 
     def _pick_social_variant(self, language: str, intent_key: str, seed_text: str | None) -> str | None:
-        lang = language if language in SOCIAL_VARIANTS else "tr"
+        lang = orchestrator_branch_lang(language)
+        if lang not in SOCIAL_VARIANTS:
+            lang = "en"
         choices = SOCIAL_VARIANTS.get(lang, {}).get(intent_key, [])
         if not choices:
             return None
@@ -307,7 +311,7 @@ class ResponseComposer:
         return choices[idx]
 
     def _chitchat(self, sub_intent: str | None, entity: str | None, language: str, seed_text: str | None = None) -> str:
-        if sub_intent == "language_switch" and entity in ("tr", "en", "de", "pl"):
+        if sub_intent == "language_switch" and entity in CHATBOT_UI_LANG_SET:
             return self.i18n.get(f"chitchat_switch_{entity}", language)
         if sub_intent in ("assistant_intro", "identity_question"):
             return self.i18n.get("chitchat_identity_question", language)

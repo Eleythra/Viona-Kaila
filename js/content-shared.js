@@ -6,6 +6,9 @@
     },
     pick: function (row) {
       if (!row || typeof row !== "object") return "";
+      if (window.VIONA_LANG && typeof window.VIONA_LANG.pickFromLangRow === "function") {
+        return window.VIONA_LANG.pickFromLangRow(row, window.VionaContent.lang());
+      }
       var c = window.VionaContent.lang();
       function pickNonEmpty(v) {
         if (v == null) return "";

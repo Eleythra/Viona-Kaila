@@ -3,28 +3,38 @@
  * Anahtar yalnızca sunucu ortamında; istemciye sızdırılmaz.
  */
 
-/** Uygulama dil kodu (tr|en|de|pl) → Azure locale + sinir sesi */
+/** Uygulama dil kodu → Azure locale + sinir sesi (`js/lang-registry.js` EXTRA ile uyumlu). */
 export const LOCALE_VOICE_MAP = {
   tr: { locale: "tr-TR", voice: "tr-TR-EmelNeural" },
   en: { locale: "en-US", voice: "en-US-JennyNeural" },
   de: { locale: "de-DE", voice: "de-DE-KatjaNeural" },
   pl: { locale: "pl-PL", voice: "pl-PL-AgnieszkaNeural" },
+  ru: { locale: "ru-RU", voice: "ru-RU-SvetlanaNeural" },
+  da: { locale: "da-DK", voice: "da-DK-ChristelNeural" },
+  cs: { locale: "cs-CZ", voice: "cs-CZ-VlastaNeural" },
+  ro: { locale: "ro-RO", voice: "ro-RO-AlinaNeural" },
+  nl: { locale: "nl-NL", voice: "nl-NL-ColetteNeural" },
+  sk: { locale: "sk-SK", voice: "sk-SK-ViktoriaNeural" },
 };
 
 function normalizeUiLang(value) {
-  const v = String(value || "").toLowerCase().trim();
-  if (v === "en" || v === "de" || v === "pl") return v;
+  const v = String(value || "")
+    .toLowerCase()
+    .trim();
+  if (LOCALE_VOICE_MAP[v]) return v;
   return "tr";
 }
 
 /** İstemci veya tam locale (tr-TR) → { locale, voice } */
 export function resolveVoiceForRequest(localeInput) {
   const raw = String(localeInput || "").trim();
-  const lower = raw.toLowerCase();
-  if (lower.startsWith("tr")) return LOCALE_VOICE_MAP.tr;
-  if (lower.startsWith("en")) return LOCALE_VOICE_MAP.en;
-  if (lower.startsWith("de")) return LOCALE_VOICE_MAP.de;
-  if (lower.startsWith("pl")) return LOCALE_VOICE_MAP.pl;
+  const lower = raw.toLowerCase().replace(/_/g, "-");
+  for (const key of Object.keys(LOCALE_VOICE_MAP)) {
+    const spec = LOCALE_VOICE_MAP[key];
+    if (lower === spec.locale.toLowerCase()) return spec;
+  }
+  const short = lower.slice(0, 2);
+  if (LOCALE_VOICE_MAP[short]) return LOCALE_VOICE_MAP[short];
   return LOCALE_VOICE_MAP[normalizeUiLang(localeInput)];
 }
 

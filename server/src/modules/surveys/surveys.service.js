@@ -1,4 +1,5 @@
 import { getSupabase, throwIfSupabaseDatastoreDnsError, withSupabaseFetchGuard } from "../../lib/supabase.js";
+import { normalizeVionaUiLanguage } from "../../lib/viona-ui-languages.js";
 
 function cleanText(value, maxLen = 5000) {
   return String(value || "").trim().slice(0, maxLen);
@@ -15,7 +16,7 @@ function normalize(payload) {
     vionaAnswers: payload?.vionaAnswers || {},
     vionaComment: cleanText(payload?.vionaComment, 4000),
     deviceType: cleanText(payload?.deviceType, 30),
-    language: cleanText(payload?.language, 10),
+    language: normalizeVionaUiLanguage(cleanText(payload?.language, 10)),
     source: "viona_web",
     rawPayload: payload || {},
   };

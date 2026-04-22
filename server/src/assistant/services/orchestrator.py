@@ -19,6 +19,12 @@ from assistant.services.metadata_catalog import domain_for_intent, metadata_for_
 from assistant.utils.text_normalizer import normalize_text
 from assistant.core.config import Settings
 from assistant.core.logger import get_logger
+from assistant.core.chatbot_languages import (
+    CHATBOT_UI_LANG_SET,
+    normalize_chatbot_lang,
+    orchestrator_branch_lang as _tpl_lang,
+    voice_dict_lang,
+)
 import re
 
 from assistant.services.chat_form_state import ChatFormState, InMemoryChatFormStore, OperationType
@@ -83,21 +89,21 @@ GUEST_NOTIF_DESC_REQUIRED = frozenset(
 def _guest_notification_description_lead(category: str, reply_language: str) -> str:
     """Kategori seçiminden sonra açıklama adımı: zorunlu / isteğe bağlı (web formu ile aynı mantık)."""
     need = (category or "") in GUEST_NOTIF_DESC_REQUIRED
-    if reply_language == "en":
+    if _tpl_lang(reply_language) == "en":
         if need:
             return "Please write a short description for this notice category (required)."
         return (
             "Optional: add any details for the team. If you have nothing to add, reply with “-” or “no”; "
             "your first message in this chat may also be kept as context."
         )
-    if reply_language == "de":
+    if _tpl_lang(reply_language) == "de":
         if need:
             return "Bitte eine kurze Beschreibung zu dieser Kategorie (erforderlich)."
         return (
             "Optional: ergänzen Sie Details. Wenn nichts hinzukommt, antworten Sie mit „-“ oder „nein“; "
             "Ihre erste Nachricht in diesem Chat kann als Kontext dienen."
         )
-    if reply_language == "pl":
+    if _tpl_lang(reply_language) == "pl":
         if need:
             return "Proszę krótko opisać wybraną kategorię (wymagane)."
         return (
@@ -112,7 +118,9 @@ def _guest_notification_description_lead(category: str, reply_language: str) -> 
     )
 
 
-_VALID_LANG = frozenset({"tr", "en", "de", "pl"})
+_VALID_LANG = CHATBOT_UI_LANG_SET
+
+
 def _valid_conversation_language(value: str | None) -> str | None:
     if not value:
         return None
@@ -234,7 +242,7 @@ _LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_TEXT: dict[str, str] = {
 
 
 def _guest_notification_category_prompt(notif_group: str | None, reply_language: str) -> str:
-    if reply_language == "en":
+    if _tpl_lang(reply_language) == "en":
         heads = {
             "diet": "Diet / sensitivity:",
             "health": "Health / special situation:",
@@ -242,7 +250,7 @@ def _guest_notification_category_prompt(notif_group: str | None, reply_language:
             "reception": "Front desk / reception:",
         }
         lead = "Please choose a category (reply with the number):\n"
-    elif reply_language == "de":
+    elif _tpl_lang(reply_language) == "de":
         heads = {
             "diet": "Ernährung / Unverträglichkeit:",
             "health": "Gesundheit / besondere Situation:",
@@ -250,7 +258,7 @@ def _guest_notification_category_prompt(notif_group: str | None, reply_language:
             "reception": "Rezeption:",
         }
         lead = "Bitte wählen Sie eine Kategorie (Antwort mit Nummer):\n"
-    elif reply_language == "pl":
+    elif _tpl_lang(reply_language) == "pl":
         heads = {
             "diet": "Dieta / wrażliwość:",
             "health": "Zdrowie / szczególna sytuacja:",
@@ -295,33 +303,33 @@ def _localized_request_detail_int_prompt(
     cat_lbl = category_label("request", cat_raw, reply_language) if cat_raw else ""
     if not cat_lbl:
         if positive_only_invalid:
-            if reply_language == "en":
+            if _tpl_lang(reply_language) == "en":
                 return f"Please enter a positive number for {fld_label}."
-            if reply_language == "de":
+            if _tpl_lang(reply_language) == "de":
                 return f"Bitte geben Sie eine positive Zahl für {fld_label} ein."
-            if reply_language == "pl":
+            if _tpl_lang(reply_language) == "pl":
                 return f"Proszę podać dodatnią liczbę dla pola {fld_label}."
             return f"Lütfen {fld_label} için pozitif bir sayı giriniz."
-        if reply_language == "en":
+        if _tpl_lang(reply_language) == "en":
             return f"Please enter a number for {fld_label}."
-        if reply_language == "de":
+        if _tpl_lang(reply_language) == "de":
             return f"Bitte geben Sie eine Zahl für {fld_label} ein."
-        if reply_language == "pl":
+        if _tpl_lang(reply_language) == "pl":
             return f"Proszę podać liczbę dla pola {fld_label}."
         return f"Lütfen {fld_label} için bir sayı giriniz."
     if positive_only_invalid:
-        if reply_language == "en":
+        if _tpl_lang(reply_language) == "en":
             return f"Please enter a positive number for {fld_label} («{cat_lbl}»)."
-        if reply_language == "de":
+        if _tpl_lang(reply_language) == "de":
             return f"Bitte geben Sie eine positive Zahl für {fld_label} ein («{cat_lbl}»)."
-        if reply_language == "pl":
+        if _tpl_lang(reply_language) == "pl":
             return f"Proszę podać dodatnią liczbę dla {fld_label} («{cat_lbl}»)."
         return f"Lütfen «{cat_lbl}» için {fld_label} alanına pozitif bir sayı giriniz."
-    if reply_language == "en":
+    if _tpl_lang(reply_language) == "en":
         return f"For «{cat_lbl}», please enter a number for {fld_label}."
-    if reply_language == "de":
+    if _tpl_lang(reply_language) == "de":
         return f"Für «{cat_lbl}» bitte eine Zahl für {fld_label} eingeben."
-    if reply_language == "pl":
+    if _tpl_lang(reply_language) == "pl":
         return f"Dla „{cat_lbl}” podaj liczbę dla pola {fld_label}."
     return f"«{cat_lbl}» talebi için lütfen {fld_label} olarak bir sayı giriniz."
 
@@ -337,19 +345,19 @@ def _request_chat_category_prompt(reply_language: str) -> str:
             lines.append(f"{n}. {lbl}")
             n += 1
     body = "\n".join(lines)
-    if reply_language == "en":
+    if _tpl_lang(reply_language) == "en":
         lead = (
             "Please choose a request type (reply with the number). "
             "You may also type the item name (e.g. bathrobe, pillow). "
             "Groups match the Requests tab in the app:\n\n"
         )
-    elif reply_language == "de":
+    elif _tpl_lang(reply_language) == "de":
         lead = (
             "Bitte wählen Sie eine Art der Anfrage (Antwort mit Nummer). "
             "Sie können auch den Namen nennen (z. B. Bademantel, Kissen). "
             "Die Gruppen entsprechen dem Reiter «Anfragen» in der App:\n\n"
         )
-    elif reply_language == "pl":
+    elif _tpl_lang(reply_language) == "pl":
         lead = (
             "Wybierz rodzaj prośby (odpowiedz numerem). "
             "Możesz napisać nazwę (np. szlafrok, poduszka). "
@@ -416,27 +424,26 @@ def _request_description_lead(category_id: str, reply_language: str) -> str:
     """İstek formu açıklama adımı — seçilen türü hatırlatır."""
     cid = (category_id or "").strip()
     if not cid:
-        if reply_language == "en":
+        if _tpl_lang(reply_language) == "en":
             return "Please briefly describe what you need."
-        if reply_language == "de":
+        if _tpl_lang(reply_language) == "de":
             return "Bitte beschreiben Sie kurz, was Sie benötigen."
-        if reply_language == "pl":
+        if _tpl_lang(reply_language) == "pl":
             return "Krótko opisz, czego potrzebujesz."
         return "Lütfen kısaca neye ihtiyaç duyduğunuzu yazın."
     cat_lbl = category_label("request", cid, reply_language)
-    if reply_language == "en":
+    if _tpl_lang(reply_language) == "en":
         return f"For «{cat_lbl}», please briefly describe what you need."
-    if reply_language == "de":
+    if _tpl_lang(reply_language) == "de":
         return f"Zu «{cat_lbl}»: Bitte beschreiben Sie kurz, was Sie benötigen."
-    if reply_language == "pl":
+    if _tpl_lang(reply_language) == "pl":
         return f"W prośbie „{cat_lbl}” krótko opisz, czego potrzebujesz."
     return f"«{cat_lbl}» talebiniz için lütfen kısaca neye ihtiyaç duyduğunuzu yazın."
 
 
 def _orch_reply_lang(lang: str | None) -> str:
-    """Orchestrator içi yanıt / form dili: ``_VALID_LANG`` dışı veya boş → ``tr``."""
-    l = (lang or "tr").strip().lower()
-    return l if l in _VALID_LANG else "tr"
+    """Orchestrator içi yanıt / form dili: geçersiz veya boş → ``tr``."""
+    return normalize_chatbot_lang(lang)
 
 
 def _form_category_display_label(operation: str, category_id: str, reply_language: str) -> str:
@@ -458,18 +465,18 @@ def _localized_full_name_prompt_request_prefill(category_id: str, reply_language
     lang = _orch_reply_lang(reply_language)
     cat_lbl = _form_category_display_label("request", category_id, reply_language)
     if not cat_lbl:
-        if lang == "en":
+        if _tpl_lang(lang) == "en":
             return "Thank you — we've noted your request. May I have your full name?"
-        if lang == "de":
+        if _tpl_lang(lang) == "de":
             return "Danke — wir haben Ihre Anfrage erfasst. Wie ist Ihr vollständiger Name?"
-        if lang == "pl":
+        if _tpl_lang(lang) == "pl":
             return "Dziękujemy — zapisaliśmy Twoją prośbę. Napisz proszę imię i nazwisko."
         return "Teşekkürler — talebinizi aldık. Adınızı ve soyadınızı yazar mısınız?"
-    if lang == "en":
+    if _tpl_lang(lang) == "en":
         return f'We have received your «{cat_lbl}» request. Thank you. May I have your full name?'
-    if lang == "de":
+    if _tpl_lang(lang) == "de":
         return f'Wir haben Ihre Anfrage «{cat_lbl}» erhalten. Vielen Dank. Wie ist Ihr vollständiger Name?'
-    if lang == "pl":
+    if _tpl_lang(lang) == "pl":
         return f'Otrzymaliśmy Twoją prośbę „{cat_lbl}”. Dziękujemy. Napisz proszę imię i nazwisko.'
     return f"«{cat_lbl}» talebinizi aldık. Teşekkürler. Adınızı ve soyadınızı yazar mısınız?"
 
@@ -481,18 +488,18 @@ def _localized_full_name_prompt_after_description_step(
     lang = _orch_reply_lang(reply_language)
     cat_lbl = _form_category_display_label(operation, category_id, reply_language)
     if not cat_lbl:
-        if lang == "en":
+        if _tpl_lang(lang) == "en":
             return "Thank you. May I have your full name?"
-        if lang == "de":
+        if _tpl_lang(lang) == "de":
             return "Danke. Wie ist Ihr vollständiger Name?"
-        if lang == "pl":
+        if _tpl_lang(lang) == "pl":
             return "Dziękujemy. Napisz proszę imię i nazwisko."
         return "Teşekkürler. Adınızı ve soyadınızı yazar mısınız?"
-    if lang == "en":
+    if _tpl_lang(lang) == "en":
         return f'Thank you — we have noted your message for «{cat_lbl}». May I have your full name?'
-    if lang == "de":
+    if _tpl_lang(lang) == "de":
         return f'Vielen Dank — wir haben Ihre Angaben zu «{cat_lbl}» notiert. Wie ist Ihr vollständiger Name?'
-    if lang == "pl":
+    if _tpl_lang(lang) == "pl":
         return f'Dziękujemy — zapisaliśmy wiadomość dla „{cat_lbl}”. Napisz proszę imię i nazwisko.'
     return f"Teşekkürler — «{cat_lbl}» için notunuzu aldım. Adınızı ve soyadınızı yazar mısınız?"
 
@@ -504,18 +511,18 @@ def _localized_full_name_prompt_guest_notif_skip_description(
     lang = _orch_reply_lang(reply_language)
     cat_lbl = _form_category_display_label("guest_notification", category_id, reply_language)
     if not cat_lbl:
-        if lang == "en":
+        if _tpl_lang(lang) == "en":
             return "Thank you. May I have your full name?"
-        if lang == "de":
+        if _tpl_lang(lang) == "de":
             return "Danke. Wie ist Ihr vollständiger Name?"
-        if lang == "pl":
+        if _tpl_lang(lang) == "pl":
             return "Dziękujemy. Napisz proszę imię i nazwisko."
         return "Teşekkürler. Adınızı ve soyadınızı yazar mısınız?"
-    if lang == "en":
+    if _tpl_lang(lang) == "en":
         return f'We have received your «{cat_lbl}» notification. Thank you. May I have your full name?'
-    if lang == "de":
+    if _tpl_lang(lang) == "de":
         return f'Wir haben Ihre Mitteilung «{cat_lbl}» erhalten. Vielen Dank. Wie ist Ihr vollständiger Name?'
-    if lang == "pl":
+    if _tpl_lang(lang) == "pl":
         return f'Otrzymaliśmy Twoje powiadomienie „{cat_lbl}”. Dziękujemy. Napisz proszę imię i nazwisko.'
     return f"«{cat_lbl}» bildiriminizi aldık. Teşekkürler. Adınızı ve soyadınızı yazar mısınız?"
 
@@ -650,21 +657,21 @@ def _request_rule_uses_reception_redirect_not_chat_form(sub_intent: str | None, 
 
 def _form_record_type_label(kind: str, reply_language: str) -> str:
     k = (kind or "").strip()
-    if reply_language == "en":
+    if _tpl_lang(reply_language) == "en":
         m = {
             "fault": "Fault report",
             "request": "Room request",
             "complaint": "Complaint",
             "guest_notification": "Guest notice",
         }
-    elif reply_language == "de":
+    elif _tpl_lang(reply_language) == "de":
         m = {
             "fault": "Störmeldung",
             "request": "Zimmeranfrage",
             "complaint": "Beschwerde",
             "guest_notification": "Gästemeldung",
         }
-    elif reply_language == "pl":
+    elif _tpl_lang(reply_language) == "pl":
         m = {
             "fault": "Zgłoszenie awarii",
             "request": "Prośba do pokoju",
@@ -1015,7 +1022,9 @@ class ChatOrchestrator:
 
     def _voice_operational_redirect(self, reply_lang: str, ui_language: str):
         """Sesli kanal: form / kayıt yok; yazılı kanala yönlendirme metni."""
-        text = VOICE_OPERATIONAL_USE_TEXT.get(reply_lang, VOICE_OPERATIONAL_USE_TEXT["tr"])
+        text = VOICE_OPERATIONAL_USE_TEXT.get(
+            voice_dict_lang(reply_lang), VOICE_OPERATIONAL_USE_TEXT["tr"]
+        )
         return self.response_service.build(
             "inform",
             text,
@@ -1247,7 +1256,7 @@ class ChatOrchestrator:
         if self.settings.allow_implicit_language_drift:
             reply_base = msg_detect
         else:
-            reply_base = selected_lang if selected_lang in ("tr", "en", "de", "pl") else msg_detect
+            reply_base = selected_lang if selected_lang in CHATBOT_UI_LANG_SET else msg_detect
         reply_base = _orch_reply_lang(reply_base)
 
         if self.throttle_service.is_limited(payload.user_id):
@@ -1301,11 +1310,17 @@ class ChatOrchestrator:
         ):
             if payload.channel == "voice":
                 if RuleEngine.is_spa_reservation_handoff(normalized):
-                    vtext = VOICE_SPA_BOOKING_HINT.get(reply_base, VOICE_SPA_BOOKING_HINT["tr"])
+                    vtext = VOICE_SPA_BOOKING_HINT.get(
+                        voice_dict_lang(reply_base), VOICE_SPA_BOOKING_HINT["tr"]
+                    )
                 elif RuleEngine.is_ala_carte_reservation_handoff(normalized):
-                    vtext = VOICE_ALACARTE_RESERVATION_HINT.get(reply_base, VOICE_ALACARTE_RESERVATION_HINT["tr"])
+                    vtext = VOICE_ALACARTE_RESERVATION_HINT.get(
+                        voice_dict_lang(reply_base), VOICE_ALACARTE_RESERVATION_HINT["tr"]
+                    )
                 else:
-                    vtext = VOICE_RECEPTION_RESERVATION_HINT.get(reply_base, VOICE_RECEPTION_RESERVATION_HINT["tr"])
+                    vtext = VOICE_RECEPTION_RESERVATION_HINT.get(
+                        voice_dict_lang(reply_base), VOICE_RECEPTION_RESERVATION_HINT["tr"]
+                    )
                 return self.response_service.build(
                     "inform",
                     vtext,
@@ -1445,7 +1460,7 @@ class ChatOrchestrator:
                 and
                 rule_intent.intent == "chitchat"
                 and rule_intent.sub_intent == "language_switch"
-                and rule_intent.entity in ("tr", "en", "de", "pl")
+                and rule_intent.entity in CHATBOT_UI_LANG_SET
             ):
                 reply_lang = rule_intent.entity
             if (
@@ -1569,7 +1584,9 @@ class ChatOrchestrator:
                 if rule_intent.intent == "reservation" and _is_early_checkin_reception_handoff(
                     normalized, rule_intent.sub_intent, rule_intent.entity
                 ):
-                    text = _EARLY_CHECKIN_RECEPTION_TEXT.get(reply_lang, _EARLY_CHECKIN_RECEPTION_TEXT["tr"])
+                    text = _EARLY_CHECKIN_RECEPTION_TEXT.get(
+                        _tpl_lang(reply_lang), _EARLY_CHECKIN_RECEPTION_TEXT["tr"]
+                    )
                     response = self.response_service.build(
                         "inform",
                         text,
@@ -1753,7 +1770,9 @@ class ChatOrchestrator:
         if llm_intent.intent == "reservation" and _is_early_checkin_reception_handoff(
             normalized, llm_intent.sub_intent, llm_intent.entity
         ):
-            text = _EARLY_CHECKIN_RECEPTION_TEXT.get(reply_base, _EARLY_CHECKIN_RECEPTION_TEXT["tr"])
+            text = _EARLY_CHECKIN_RECEPTION_TEXT.get(
+                _tpl_lang(reply_base), _EARLY_CHECKIN_RECEPTION_TEXT["tr"]
+            )
             response = self.response_service.build(
                 "inform",
                 text,
@@ -1863,10 +1882,12 @@ class ChatOrchestrator:
                 text = self.localization_service.get("complaint_lost_property", reply_language)
             elif (sub_intent or "") == "service_complaint":
                 text = _COMPLAINT_GUIDANCE_TEXT_GENERIC.get(
-                    reply_language, _COMPLAINT_GUIDANCE_TEXT_GENERIC["tr"]
+                    _tpl_lang(reply_language), _COMPLAINT_GUIDANCE_TEXT_GENERIC["tr"]
                 )
             else:
-                text = _COMPLAINT_GUIDANCE_TEXT.get(reply_language, _COMPLAINT_GUIDANCE_TEXT["tr"])
+                text = _COMPLAINT_GUIDANCE_TEXT.get(
+                    _tpl_lang(reply_language), _COMPLAINT_GUIDANCE_TEXT["tr"]
+                )
             return self.response_service.build(
                 "inform",
                 text,
@@ -1935,7 +1956,7 @@ class ChatOrchestrator:
         if policy == "compose_guest_notification":
             if self.rule_engine.matches_late_checkout_guest_notif(normalize_text(message)):
                 text = _LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_TEXT.get(
-                    reply_language, _LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_TEXT["tr"]
+                    _tpl_lang(reply_language), _LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_TEXT["tr"]
                 )
                 return self.response_service.build(
                     "inform",
@@ -2179,11 +2200,11 @@ class ChatOrchestrator:
             self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
             opts = _enum_options_for_detail(state, chosen_category, "location", reply_language)
             lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts] or []
-            if reply_language == "en":
+            if _tpl_lang(reply_language) == "en":
                 msg = "Where is the fault located?\n" + "\n".join(lines)
-            elif reply_language == "de":
+            elif _tpl_lang(reply_language) == "de":
                 msg = "Wo befindet sich die Störung?\n" + "\n".join(lines)
-            elif reply_language == "pl":
+            elif _tpl_lang(reply_language) == "pl":
                 msg = "Gdzie znajduje się awaria?\n" + "\n".join(lines)
             else:
                 msg = "Arızanın bulunduğu yeri seçiniz:\n" + "\n".join(lines)
@@ -2208,11 +2229,11 @@ class ChatOrchestrator:
                 opts = _enum_options_for_detail(state, chosen_category, next_field, reply_language)
                 lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts] or []
                 fld_label = field_label(next_field, reply_language)
-                if reply_language == "en":
+                if _tpl_lang(reply_language) == "en":
                     msg = f"Please choose an option for {fld_label}:\n" + "\n".join(lines)
-                elif reply_language == "de":
+                elif _tpl_lang(reply_language) == "de":
                     msg = f"Bitte wählen Sie eine Option für {fld_label}:\n" + "\n".join(lines)
-                elif reply_language == "pl":
+                elif _tpl_lang(reply_language) == "pl":
                     msg = f"Proszę wybrać opcję dla {fld_label}:\n" + "\n".join(lines)
                 else:
                     msg = f"Lütfen {fld_label} için bir seçim yapınız:\n" + "\n".join(lines)
@@ -2267,11 +2288,11 @@ class ChatOrchestrator:
             msg = _guest_notification_description_lead(chosen_category, reply_language)
         elif state.operation == "request":
             msg = _request_description_lead(chosen_category, reply_language)
-        elif reply_language == "en":
+        elif _tpl_lang(reply_language) == "en":
             msg = "Please briefly describe your request/issue."
-        elif reply_language == "de":
+        elif _tpl_lang(reply_language) == "de":
             msg = "Bitte beschreiben Sie Ihr Anliegen kurz."
-        elif reply_language == "pl":
+        elif _tpl_lang(reply_language) == "pl":
             msg = "Proszę krótko opisać prośbę lub problem."
         else:
             msg = "Lütfen talebinizi veya sorununuzu kısaca açıklayın."
@@ -2307,7 +2328,7 @@ class ChatOrchestrator:
 
         if op == "guest_notification" and notif_group == "reception":
             text = _LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_TEXT.get(
-                reply_language, _LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_TEXT["tr"]
+                _tpl_lang(reply_language), _LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_TEXT["tr"]
             )
             return self.response_service.build(
                 "inform",
@@ -2368,11 +2389,11 @@ class ChatOrchestrator:
                 label = category_label(cat_intent, cat, reply_language)
                 options.append(f"{idx}. {label}")
 
-            if reply_language == "en":
+            if _tpl_lang(reply_language) == "en":
                 prompt = "Please choose a category:\n" + "\n".join(options)
-            elif reply_language == "de":
+            elif _tpl_lang(reply_language) == "de":
                 prompt = "Bitte wählen Sie eine Kategorie:\n" + "\n".join(options)
-            elif reply_language == "pl":
+            elif _tpl_lang(reply_language) == "pl":
                 prompt = "Proszę wybrać kategorię:\n" + "\n".join(options)
             else:
                 prompt = "Lütfen bir kategori seçiniz:\n" + "\n".join(options)
@@ -2550,7 +2571,7 @@ class ChatOrchestrator:
                             self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
                             self._session_on_form_abandoned_clear_cancel_context(payload)
                             text = _EARLY_CHECKIN_RECEPTION_TEXT.get(
-                                reply_language, _EARLY_CHECKIN_RECEPTION_TEXT["tr"]
+                                _tpl_lang(reply_language), _EARLY_CHECKIN_RECEPTION_TEXT["tr"]
                             )
                             return self.response_service.build(
                                 "inform",
@@ -2654,11 +2675,11 @@ class ChatOrchestrator:
                 cat_intent = "fault" if op == "fault" else "complaint"
                 lbl = category_label(cat_intent, cat, reply_language)
                 lines.append(f"{idx}. {lbl}")
-            if reply_language == "en":
+            if _tpl_lang(reply_language) == "en":
                 return "Please choose a category:\n" + "\n".join(lines)
-            if reply_language == "de":
+            if _tpl_lang(reply_language) == "de":
                 return "Bitte wählen Sie eine Kategorie:\n" + "\n".join(lines)
-            if reply_language == "pl":
+            if _tpl_lang(reply_language) == "pl":
                 return "Proszę wybrać kategorię:\n" + "\n".join(lines)
             return "Lütfen bir kategori seçiniz:\n" + "\n".join(lines)
 
@@ -2739,11 +2760,11 @@ class ChatOrchestrator:
                 self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
                 if state.operation == "request":
                     msg = _request_description_lead(category, reply_language)
-                elif reply_language == "en":
+                elif _tpl_lang(reply_language) == "en":
                     msg = "Please briefly describe your request/issue."
-                elif reply_language == "de":
+                elif _tpl_lang(reply_language) == "de":
                     msg = "Bitte beschreiben Sie Ihr Anliegen kurz."
-                elif reply_language == "pl":
+                elif _tpl_lang(reply_language) == "pl":
                     msg = "Proszę krótko opisać prośbę lub problem."
                 else:
                     msg = "Lütfen talebinizi veya sorununuzu kısaca açıklayın."
@@ -2761,11 +2782,11 @@ class ChatOrchestrator:
             if not text:
                 lines = [f"{idx}. {lbl}" for idx, _val, lbl in options]
                 fld_label = field_label(field_name, reply_language)
-                if reply_language == "en":
+                if _tpl_lang(reply_language) == "en":
                     msg = f"Please choose an option for {fld_label}:\n" + "\n".join(lines)
-                elif reply_language == "de":
+                elif _tpl_lang(reply_language) == "de":
                     msg = f"Bitte wählen Sie eine Option für {fld_label}:\n" + "\n".join(lines)
-                elif reply_language == "pl":
+                elif _tpl_lang(reply_language) == "pl":
                     msg = f"Proszę wybrać opcję dla pola {fld_label}:\n" + "\n".join(lines)
                 else:
                     msg = f"Lütfen {fld_label} için bir seçim yapınız:\n" + "\n".join(lines)
@@ -2793,11 +2814,11 @@ class ChatOrchestrator:
                 # Geçersiz seçim, aynı listeyi tekrar göster.
                 lines = [f"{idx}. {lbl}" for idx, _val, lbl in options]
                 fld_label = field_label(field_name, reply_language)
-                if reply_language == "en":
+                if _tpl_lang(reply_language) == "en":
                     msg = f"Please choose a valid option for {fld_label}:\n" + "\n".join(lines)
-                elif reply_language == "de":
+                elif _tpl_lang(reply_language) == "de":
                     msg = f"Bitte wählen Sie eine gültige Option für {fld_label}:\n" + "\n".join(lines)
-                elif reply_language == "pl":
+                elif _tpl_lang(reply_language) == "pl":
                     msg = f"Proszę wybrać dozwoloną opcję dla pola {fld_label}:\n" + "\n".join(lines)
                 else:
                     msg = f"Lütfen {fld_label} için geçerli bir seçim yapınız:\n" + "\n".join(lines)
@@ -2825,11 +2846,11 @@ class ChatOrchestrator:
                     opts = _enum_options_for_detail(state, state.category or "", next_field, reply_language)
                     lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts] or []
                     fld_label = field_label(next_field, reply_language)
-                    if reply_language == "en":
+                    if _tpl_lang(reply_language) == "en":
                         msg = f"Please choose an option for {fld_label}:\n" + "\n".join(lines)
-                    elif reply_language == "de":
+                    elif _tpl_lang(reply_language) == "de":
                         msg = f"Bitte wählen Sie eine Option für {fld_label}:\n" + "\n".join(lines)
-                    elif reply_language == "pl":
+                    elif _tpl_lang(reply_language) == "pl":
                         msg = f"Proszę wybrać opcję dla pola {fld_label}:\n" + "\n".join(lines)
                     else:
                         msg = f"Lütfen {fld_label} için bir seçim yapınız:\n" + "\n".join(lines)
@@ -2857,11 +2878,11 @@ class ChatOrchestrator:
                 self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
                 opts = _enum_options_for_detail(state, state.category or "", "location", reply_language)
                 lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts] or []
-                if reply_language == "en":
+                if _tpl_lang(reply_language) == "en":
                     msg = "Where is the fault located?\n" + "\n".join(lines)
-                elif reply_language == "de":
+                elif _tpl_lang(reply_language) == "de":
                     msg = "Wo befindet sich die Störung?\n" + "\n".join(lines)
-                elif reply_language == "pl":
+                elif _tpl_lang(reply_language) == "pl":
                     msg = "Gdzie znajduje się awaria?\n" + "\n".join(lines)
                 else:
                     msg = "Arızanın bulunduğu yeri seçiniz:\n" + "\n".join(lines)
@@ -2878,11 +2899,11 @@ class ChatOrchestrator:
 
             state.step = "description"
             self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
-            if reply_language == "en":
+            if _tpl_lang(reply_language) == "en":
                 msg = "Please briefly describe your request/issue."
-            elif reply_language == "de":
+            elif _tpl_lang(reply_language) == "de":
                 msg = "Bitte beschreiben Sie Ihr Anliegen kurz."
-            elif reply_language == "pl":
+            elif _tpl_lang(reply_language) == "pl":
                 msg = "Proszę krótko opisać prośbę lub problem."
             else:
                 msg = "Lütfen talebinizi veya sorununuzu kısaca açıklayın."
@@ -2948,11 +2969,11 @@ class ChatOrchestrator:
                     opts = _enum_options_for_detail(state, state.category or "", next_field, reply_language)
                     lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts] or []
                     fld_label = field_label(next_field, reply_language)
-                    if reply_language == "en":
+                    if _tpl_lang(reply_language) == "en":
                         msg = f"Please choose an option for {fld_label}:\n" + "\n".join(lines)
-                    elif reply_language == "de":
+                    elif _tpl_lang(reply_language) == "de":
                         msg = f"Bitte wählen Sie eine Option für {fld_label}:\n" + "\n".join(lines)
-                    elif reply_language == "pl":
+                    elif _tpl_lang(reply_language) == "pl":
                         msg = f"Proszę wybrać opcję dla pola {fld_label}:\n" + "\n".join(lines)
                     else:
                         msg = f"Lütfen {fld_label} için bir seçim yapınız:\n" + "\n".join(lines)
@@ -2979,11 +3000,11 @@ class ChatOrchestrator:
                 self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
                 opts = _enum_options_for_detail(state, state.category or "", "location", reply_language)
                 lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts] or []
-                if reply_language == "en":
+                if _tpl_lang(reply_language) == "en":
                     msg = "Where is the fault located?\n" + "\n".join(lines)
-                elif reply_language == "de":
+                elif _tpl_lang(reply_language) == "de":
                     msg = "Wo befindet sich die Störung?\n" + "\n".join(lines)
-                elif reply_language == "pl":
+                elif _tpl_lang(reply_language) == "pl":
                     msg = "Gdzie znajduje się awaria?\n" + "\n".join(lines)
                 else:
                     msg = "Arızanın bulunduğu yeri seçiniz:\n" + "\n".join(lines)
@@ -3000,11 +3021,11 @@ class ChatOrchestrator:
 
             state.step = "description"
             self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
-            if reply_language == "en":
+            if _tpl_lang(reply_language) == "en":
                 msg = "Please briefly describe your request/issue."
-            elif reply_language == "de":
+            elif _tpl_lang(reply_language) == "de":
                 msg = "Bitte beschreiben Sie Ihr Anliegen kurz."
-            elif reply_language == "pl":
+            elif _tpl_lang(reply_language) == "pl":
                 msg = "Proszę krótko opisać prośbę lub problem."
             else:
                 msg = "Lütfen talebinizi veya sorununuzu kısaca açıklayın."
@@ -3025,11 +3046,11 @@ class ChatOrchestrator:
             if not opts:
                 state.step = "description"
                 self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
-                if reply_language == "en":
+                if _tpl_lang(reply_language) == "en":
                     msg = "Please briefly describe your request/issue."
-                elif reply_language == "de":
+                elif _tpl_lang(reply_language) == "de":
                     msg = "Bitte beschreiben Sie Ihr Anliegen kurz."
-                elif reply_language == "pl":
+                elif _tpl_lang(reply_language) == "pl":
                     msg = "Proszę krótko opisać prośbę lub problem."
                 else:
                     msg = "Lütfen talebinizi veya sorununuzu kısaca açıklayın."
@@ -3045,11 +3066,11 @@ class ChatOrchestrator:
                 )
             if not text:
                 lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts]
-                if reply_language == "en":
+                if _tpl_lang(reply_language) == "en":
                     msg = "Where is the fault located?\n" + "\n".join(lines)
-                elif reply_language == "de":
+                elif _tpl_lang(reply_language) == "de":
                     msg = "Wo befindet sich die Störung?\n" + "\n".join(lines)
-                elif reply_language == "pl":
+                elif _tpl_lang(reply_language) == "pl":
                     msg = "Gdzie znajduje się awaria?\n" + "\n".join(lines)
                 else:
                     msg = "Arızanın bulunduğu yeri seçiniz:\n" + "\n".join(lines)
@@ -3074,11 +3095,11 @@ class ChatOrchestrator:
                 chosen = None
             if not chosen:
                 lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts]
-                if reply_language == "en":
+                if _tpl_lang(reply_language) == "en":
                     msg = "Please choose a valid location:\n" + "\n".join(lines)
-                elif reply_language == "de":
+                elif _tpl_lang(reply_language) == "de":
                     msg = "Bitte wählen Sie einen gültigen Ort:\n" + "\n".join(lines)
-                elif reply_language == "pl":
+                elif _tpl_lang(reply_language) == "pl":
                     msg = "Proszę wybrać dozwoloną lokalizację:\n" + "\n".join(lines)
                 else:
                     msg = "Lütfen geçerli bir lokasyon seçiniz:\n" + "\n".join(lines)
@@ -3098,11 +3119,11 @@ class ChatOrchestrator:
             self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
             uopts = _enum_options_for_detail(state, state.category or "", "urgency", reply_language)
             lines = [f"{idx}. {lbl}" for idx, _val, lbl in uopts] or []
-            if reply_language == "en":
+            if _tpl_lang(reply_language) == "en":
                 msg = "How urgent is the fault?\n" + "\n".join(lines)
-            elif reply_language == "de":
+            elif _tpl_lang(reply_language) == "de":
                 msg = "Wie dringend ist die Störung?\n" + "\n".join(lines)
-            elif reply_language == "pl":
+            elif _tpl_lang(reply_language) == "pl":
                 msg = "Jak pilna jest ta awaria?\n" + "\n".join(lines)
             else:
                 msg = "Arızanın aciliyetini seçiniz:\n" + "\n".join(lines)
@@ -3123,11 +3144,11 @@ class ChatOrchestrator:
             if not opts:
                 state.step = "description"
                 self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
-                if reply_language == "en":
+                if _tpl_lang(reply_language) == "en":
                     msg = "Please briefly describe your request/issue."
-                elif reply_language == "de":
+                elif _tpl_lang(reply_language) == "de":
                     msg = "Bitte beschreiben Sie Ihr Anliegen kurz."
-                elif reply_language == "pl":
+                elif _tpl_lang(reply_language) == "pl":
                     msg = "Proszę krótko opisać prośbę lub problem."
                 else:
                     msg = "Lütfen talebinizi veya sorununuzu kısaca açıklayın."
@@ -3143,11 +3164,11 @@ class ChatOrchestrator:
                 )
             if not text:
                 lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts]
-                if reply_language == "en":
+                if _tpl_lang(reply_language) == "en":
                     msg = "How urgent is the fault?\n" + "\n".join(lines)
-                elif reply_language == "de":
+                elif _tpl_lang(reply_language) == "de":
                     msg = "Wie dringend ist die Störung?\n" + "\n".join(lines)
-                elif reply_language == "pl":
+                elif _tpl_lang(reply_language) == "pl":
                     msg = "Jak pilna jest ta awaria?\n" + "\n".join(lines)
                 else:
                     msg = "Arızanın aciliyetini seçiniz:\n" + "\n".join(lines)
@@ -3172,11 +3193,11 @@ class ChatOrchestrator:
                 chosen = None
             if not chosen:
                 lines = [f"{idx}. {lbl}" for idx, _val, lbl in opts]
-                if reply_language == "en":
+                if _tpl_lang(reply_language) == "en":
                     msg = "Please choose a valid urgency:\n" + "\n".join(lines)
-                elif reply_language == "de":
+                elif _tpl_lang(reply_language) == "de":
                     msg = "Bitte wählen Sie eine gültige Dringlichkeit:\n" + "\n".join(lines)
-                elif reply_language == "pl":
+                elif _tpl_lang(reply_language) == "pl":
                     msg = "Proszę wybrać dozwoloną pilność:\n" + "\n".join(lines)
                 else:
                     msg = "Lütfen geçerli bir aciliyet seçiniz:\n" + "\n".join(lines)
@@ -3194,11 +3215,11 @@ class ChatOrchestrator:
             state.details["urgency"] = chosen
             state.step = "description"
             self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
-            if reply_language == "en":
+            if _tpl_lang(reply_language) == "en":
                 msg = "Please briefly describe your request/issue."
-            elif reply_language == "de":
+            elif _tpl_lang(reply_language) == "de":
                 msg = "Bitte beschreiben Sie Ihr Anliegen kurz."
-            elif reply_language == "pl":
+            elif _tpl_lang(reply_language) == "pl":
                 msg = "Proszę krótko opisać prośbę lub problem."
             else:
                 msg = "Lütfen talebinizi veya sorununuzu kısaca açıklayın."
@@ -3242,11 +3263,11 @@ class ChatOrchestrator:
                     )
                 if state.operation == "guest_notification" and cat in GUEST_NOTIF_DESC_REQUIRED:
                     msg = _guest_notification_description_lead(cat, reply_language)
-                elif reply_language == "en":
+                elif _tpl_lang(reply_language) == "en":
                     msg = "Please write a short description so I can help you."
-                elif reply_language == "de":
+                elif _tpl_lang(reply_language) == "de":
                     msg = "Bitte schreiben Sie eine kurze Beschreibung, damit ich Ihnen helfen kann."
-                elif reply_language == "pl":
+                elif _tpl_lang(reply_language) == "pl":
                     msg = "Proszę napisać krótki opis, abym mogła pomóc."
                 else:
                     msg = "Size yardımcı olabilmem için lütfen kısa bir açıklama yazın."
@@ -3285,11 +3306,11 @@ class ChatOrchestrator:
 
         if state.step == "full_name":
             if not text or is_full_name_input_effectively_empty(text):
-                if reply_language == "en":
+                if _tpl_lang(reply_language) == "en":
                     msg = "Please write your full name."
-                elif reply_language == "de":
+                elif _tpl_lang(reply_language) == "de":
                     msg = "Bitte schreiben Sie Ihren vollständigen Namen."
-                elif reply_language == "pl":
+                elif _tpl_lang(reply_language) == "pl":
                     msg = "Proszę napisać imię i nazwisko."
                 else:
                     msg = "Lütfen adınızı ve soyadınızı yazın."
@@ -3308,19 +3329,19 @@ class ChatOrchestrator:
                     },
                 )
             if is_chat_form_full_name_help_request(text):
-                if reply_language == "en":
+                if _tpl_lang(reply_language) == "en":
                     msg = (
                         "Please type your first and last name as shown on your ID or passport "
                         "(letters, spaces, hyphens and apostrophes are fine). "
                         "Do not use digits in this field—I will ask for your room number in the next step."
                     )
-                elif reply_language == "de":
+                elif _tpl_lang(reply_language) == "de":
                     msg = (
                         "Bitte geben Sie Vor- und Nachnamen wie im Ausweis/Reisepass ein "
                         "(Buchstaben, Leerzeichen, Bindestriche und Apostrophe sind in Ordnung). "
                         "Keine Ziffern im Namen—die Zimmernummer erfrage ich im nächsten Schritt."
                     )
-                elif reply_language == "pl":
+                elif _tpl_lang(reply_language) == "pl":
                     msg = (
                         "Podaj imię i nazwisko jak w dokumencie "
                         "(dozwolone litery, spacje, myślniki i apostrof). "
@@ -3349,29 +3370,29 @@ class ChatOrchestrator:
             name_err = validate_chat_form_full_name(text)
             if name_err:
                 if name_err == "has_digit":
-                    if reply_language == "en":
+                    if _tpl_lang(reply_language) == "en":
                         msg = "Names cannot contain digits. Please use letters only (first and last name)."
-                    elif reply_language == "de":
+                    elif _tpl_lang(reply_language) == "de":
                         msg = "Namen dürfen keine Ziffern enthalten. Bitte nur Buchstaben (Vor- und Nachname)."
-                    elif reply_language == "pl":
+                    elif _tpl_lang(reply_language) == "pl":
                         msg = "W imieniu nie powinno być cyfr. Podaj imię i nazwisko literami."
                     else:
                         msg = "Ad ve soyadda rakam kullanılamaz. Lütfen yalnızca harflerle yazın."
                 elif name_err == "no_letters":
-                    if reply_language == "en":
+                    if _tpl_lang(reply_language) == "en":
                         msg = "Please enter a readable first and last name using letters."
-                    elif reply_language == "de":
+                    elif _tpl_lang(reply_language) == "de":
                         msg = "Bitte geben Sie einen lesbaren Vor- und Nachnamen mit Buchstaben ein."
-                    elif reply_language == "pl":
+                    elif _tpl_lang(reply_language) == "pl":
                         msg = "Proszę podać imię i nazwisko literami."
                     else:
                         msg = "Lütfen harflerle okunabilir bir ad ve soyad yazın."
                 elif name_err == "need_first_last":
-                    if reply_language == "en":
+                    if _tpl_lang(reply_language) == "en":
                         msg = "Please type your first name and last name as two words (e.g. Jane Smith), as on your ID."
-                    elif reply_language == "de":
+                    elif _tpl_lang(reply_language) == "de":
                         msg = "Bitte schreiben Sie Vor- und Nachname in zwei Wörtern (z. B. Anna Müller), wie im Ausweis."
-                    elif reply_language == "pl":
+                    elif _tpl_lang(reply_language) == "pl":
                         msg = "Podaj imię i nazwisko dwoma słowami (np. Anna Kowalska), jak w dokumencie."
                     else:
                         msg = (
@@ -3379,29 +3400,29 @@ class ChatOrchestrator:
                             "(örnek: Ayşe Yılmaz). Tek harf veya tek kelime yeterli değildir."
                         )
                 elif name_err == "too_short":
-                    if reply_language == "en":
+                    if _tpl_lang(reply_language) == "en":
                         msg = "That looks too short. Please write your first and last name."
-                    elif reply_language == "de":
+                    elif _tpl_lang(reply_language) == "de":
                         msg = "Das ist zu kurz. Bitte schreiben Sie Vor- und Nachname."
-                    elif reply_language == "pl":
+                    elif _tpl_lang(reply_language) == "pl":
                         msg = "Zbyt krótko. Napisz imię i nazwisko."
                     else:
                         msg = "Çok kısa görünüyor. Lütfen adınızı ve soyadınızı yazın."
                 elif name_err == "too_long":
-                    if reply_language == "en":
+                    if _tpl_lang(reply_language) == "en":
                         msg = "Please shorten your name to first and last name only (max. 120 characters)."
-                    elif reply_language == "de":
+                    elif _tpl_lang(reply_language) == "de":
                         msg = "Bitte kürzen Sie auf Vor- und Nachname (max. 120 Zeichen)."
-                    elif reply_language == "pl":
+                    elif _tpl_lang(reply_language) == "pl":
                         msg = "Skróć do imienia i nazwiska (nie więcej niż 120 znaków)."
                     else:
                         msg = "Lütfen yalnızca ad ve soyadınızı yazın (en fazla 120 karakter)."
                 else:
-                    if reply_language == "en":
+                    if _tpl_lang(reply_language) == "en":
                         msg = "Please write your first and last name."
-                    elif reply_language == "de":
+                    elif _tpl_lang(reply_language) == "de":
                         msg = "Bitte schreiben Sie Vor- und Nachname."
-                    elif reply_language == "pl":
+                    elif _tpl_lang(reply_language) == "pl":
                         msg = "Napisz imię i nazwisko."
                     else:
                         msg = "Lütfen adınızı ve soyadınızı yazın."
@@ -3422,11 +3443,11 @@ class ChatOrchestrator:
             state.full_name = normalize_full_name_for_storage(text)
             state.step = "room"
             self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
-            if reply_language == "en":
+            if _tpl_lang(reply_language) == "en":
                 msg = "Finally, could you share your room number?"
-            elif reply_language == "de":
+            elif _tpl_lang(reply_language) == "de":
                 msg = "Zum Schluss: Wie lautet Ihre Zimmernummer?"
-            elif reply_language == "pl":
+            elif _tpl_lang(reply_language) == "pl":
                 msg = "Na koniec napisz proszę numer swojego pokoju."
             else:
                 msg = "Son olarak oda numaranızı yazar mısınız?"
@@ -3447,11 +3468,11 @@ class ChatOrchestrator:
 
         if state.step == "room":
             if not text:
-                if reply_language == "en":
+                if _tpl_lang(reply_language) == "en":
                     msg = "Please write your room number."
-                elif reply_language == "de":
+                elif _tpl_lang(reply_language) == "de":
                     msg = "Bitte schreiben Sie Ihre Zimmernummer."
-                elif reply_language == "pl":
+                elif _tpl_lang(reply_language) == "pl":
                     msg = "Proszę podać numer pokoju."
                 else:
                     msg = "Lütfen oda numaranızı yazın."
@@ -3472,17 +3493,17 @@ class ChatOrchestrator:
             room_clean = text.strip()
             if not is_valid_hotel_room_number(room_clean):
                 self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
-                if reply_language == "en":
+                if _tpl_lang(reply_language) == "en":
                     err = (
                         "That room number is not valid for this hotel. "
                         "Please enter your four-digit room number as on your key card."
                     )
-                elif reply_language == "de":
+                elif _tpl_lang(reply_language) == "de":
                     err = (
                         "Diese Zimmernummer ist in diesem Hotel ungültig. "
                         "Bitte geben Sie Ihre vierstellige Zimmernummer wie auf der Schlüsselkarte ein."
                     )
-                elif reply_language == "pl":
+                elif _tpl_lang(reply_language) == "pl":
                     err = (
                         "Taki numer pokoju w tym hotelu jest nieważny. "
                         "Podaj czterocyfrowy numer jak na karcie pokojowej."
@@ -3533,7 +3554,7 @@ class ChatOrchestrator:
             type_display = _form_record_type_label(guest_type, reply_language)
 
             # Özet metni (kayıt açılmadan önce).
-            if reply_language == "en":
+            if _tpl_lang(reply_language) == "en":
                 header = "Please confirm the record details:\n"
                 type_label = "Type"
                 cat_label = "Category"
@@ -3543,7 +3564,7 @@ class ChatOrchestrator:
                 name_label = "Name"
                 room_label = "Room"
                 confirm_line = "\nPlease choose:\n1. Confirm and create record\n2. Cancel"
-            elif reply_language == "de":
+            elif _tpl_lang(reply_language) == "de":
                 header = "Bitte bestätigen Sie die folgenden Angaben:\n"
                 type_label = "Typ"
                 cat_label = "Kategorie"
@@ -3553,7 +3574,7 @@ class ChatOrchestrator:
                 name_label = "Name"
                 room_label = "Zimmer"
                 confirm_line = "\nBitte wählen Sie:\n1. Bestätigen und Eintrag erstellen\n2. Abbrechen"
-            elif reply_language == "pl":
+            elif _tpl_lang(reply_language) == "pl":
                 header = "Proszę potwierdzić podsumowanie zgłoszenia:\n"
                 type_label = "Typ"
                 cat_label = "Kategoria"
@@ -3607,11 +3628,11 @@ class ChatOrchestrator:
         if state.step == "confirm":
             # Kullanıcının onayı: 1/Evet -> kayıt aç, 2/Hayır -> formu iptal et.
             if not text:
-                if reply_language == "en":
+                if _tpl_lang(reply_language) == "en":
                     msg = "Please choose:\n1. Confirm and create record\n2. Cancel"
-                elif reply_language == "de":
+                elif _tpl_lang(reply_language) == "de":
                     msg = "Bitte wählen Sie:\n1. Bestätigen und Eintrag erstellen\n2. Abbrechen"
-                elif reply_language == "pl":
+                elif _tpl_lang(reply_language) == "pl":
                     msg = "Wybierz:\n1. Potwierdź i utwórz wpis\n2. Anuluj"
                 else:
                     msg = "Lütfen seçin:\n1. Onayla ve kayıt aç\n2. İptal et"
@@ -3704,11 +3725,11 @@ class ChatOrchestrator:
                 payload.channel, payload.user_id, payload.session_id
             ).mark_form_submitted(state.operation or "")
 
-            if reply_language == "en":
+            if _tpl_lang(reply_language) == "en":
                 msg = "Thank you. I have recorded your request and will forward it to the relevant team."
-            elif reply_language == "de":
+            elif _tpl_lang(reply_language) == "de":
                 msg = "Vielen Dank. Ich habe Ihr Anliegen erfasst und leite es an das zuständige Team weiter."
-            elif reply_language == "pl":
+            elif _tpl_lang(reply_language) == "pl":
                 msg = "Dziękuję. Zapisałam Twoją prośbę i przekażę ją odpowiedniemu zespołowi."
             else:
                 msg = "Teşekkürler. Talebinizi kaydettim ve ilgili ekibe iletiyorum."

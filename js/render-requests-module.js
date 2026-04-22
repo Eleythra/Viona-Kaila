@@ -111,14 +111,25 @@
   }
 
   function currentUiLanguage() {
-    var v = (document.documentElement && document.documentElement.lang) || "tr";
-    v = String(v).toLowerCase();
-    if (v !== "tr" && v !== "en" && v !== "de" && v !== "pl") return "tr";
-    return v;
+    var raw = "tr";
+    try {
+      raw = localStorage.getItem("viona_lang") || raw;
+    } catch (_e) {
+      raw = "tr";
+    }
+    raw = String(raw).toLowerCase().slice(0, 2);
+    if (window.VIONA_LANG && typeof window.VIONA_LANG.normalizeToUiLang === "function") {
+      return window.VIONA_LANG.normalizeToUiLang(raw);
+    }
+    if (window.VIONA_LANG && window.VIONA_LANG.ALL && window.VIONA_LANG.ALL.indexOf(raw) !== -1) return raw;
+    return "tr";
   }
 
   function pickLangObj(row) {
     if (!row || typeof row !== "object") return "";
+    if (window.VIONA_LANG && typeof window.VIONA_LANG.pickFromLangRow === "function") {
+      return window.VIONA_LANG.pickFromLangRow(row, currentUiLanguage());
+    }
     var lang = currentUiLanguage();
     if (row[lang] != null && String(row[lang]).trim() !== "") return String(row[lang]).trim();
     if (row.tr != null && String(row.tr).trim() !== "") return String(row.tr).trim();
