@@ -186,14 +186,15 @@
       return jfetch(getApiBase() + "/admin/ops-team-entry-urls");
     },
     /** @returns {{ items: array, truncated: boolean }} truncated: sunucudaki toplam sayfa sayısı maxPages üstündeyse. */
-    getBucketMergeAll: async function (type, maxPages) {
+    getBucketMergeAll: async function (type, maxPages, extraQuery) {
       var pageSize = 500;
       var cap = typeof maxPages === "number" && maxPages > 0 ? maxPages : 100;
+      var q = extraQuery && typeof extraQuery === "object" ? extraQuery : {};
       var all = [];
       var page = 1;
       var totalPages = 1;
       do {
-        var d = await this.getBucketPage(type, page, pageSize);
+        var d = await this.getBucketPage(type, page, pageSize, q);
         all = all.concat(d.items || []);
         totalPages = (d.pagination && d.pagination.totalPages) || 1;
         page++;

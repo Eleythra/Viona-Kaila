@@ -221,9 +221,8 @@
     var app = document.getElementById("ops-app");
     if (login) login.classList.add("hidden");
     if (app) app.classList.remove("hidden");
-    try {
-      document.body.classList.add("admin-body--app");
-    } catch (_e2) {}
+    /* admin-body--app: yalnızca index.html kabuğu (sidebar + ana içerik ızgarası) içindir.
+     * ops-*.html'de eklenirse body height:100dvh + overflow:hidden olur; mobilde sayfa aşağı kaymaz. */
   }
 
   async function validateRole() {

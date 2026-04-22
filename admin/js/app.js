@@ -7,6 +7,8 @@
   /** Aynı sayfada app.js iki kez çalışırsa (üretim CDN/şablon hatası) tüm dinleyiciler çoğalır; Loglar CSV/JSON ardı arkasına iner. */
   if (window.__VIONA_ADMIN_APP_BOOTED) return;
   window.__VIONA_ADMIN_APP_BOOTED = true;
+  /** Operasyon PDF: cift tik / yaris kosusunda tek indirme. */
+  var opsPdfDownloadInFlight = false;
   var LOGIN_OK_KEY = "viona_admin_login_ok";
   var LOGIN_USER_KEY = "viona_admin_login_user";
   /** Girişte zorunlu; büyük-küçük harf duyarlı tek değer */
@@ -104,6 +106,280 @@
   /** Hangi sekmenin süzgeci formda düzenleniyor (tek filtre çubuğu). */
   var opFrontFilterActiveType = "complaint";
 
+  /** Operasyon sekmeleri: tek takvim günü (otel saati İstanbul). */
+  var OP_HOTEL_TZ = "Europe/Istanbul";
+  var OP_DAY_STRIP_COUNT = 14;
+  var OP_DAY_STORAGE_KEY = "viona_op_selected_calendar_day";
+  var OP_FOLLOW_TODAY_STORAGE_KEY = "viona_op_follow_hotel_today";
+  var opSelectedCalendarDay = "";
+  var opFollowHotelToday = true;
+
+  function hotelCalendarYmd(date) {
+    try {
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: OP_HOTEL_TZ,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(date);
+    } catch (_e) {
+      return new Date().toISOString().slice(0, 10);
+    }
+  }
+
+  /** Son N takvim günü (İstanbul), bugünden geriye; DST için küçük adımlarla tarama. */
+  function enumerateOpStripDays(count) {
+    var want = Math.max(1, Math.min(31, Number(count) || 14));
+    var out = [];
+    var t = Date.now();
+    var guard = 0;
+    while (out.length < want && guard < 2000) {
+      var ymd = hotelCalendarYmd(new Date(t));
+      if (out.length === 0 || ymd !== out[out.length - 1]) {
+        out.push(ymd);
+      }
+      t -= 4 * 60 * 60 * 1000;
+      guard++;
+    }
+    return out;
+  }
+
+  function opDayChipSecondaryLine(ymd, todayYmd, yesterdayYmd) {
+    if (ymd === todayYmd) return "Bugün";
+    if (ymd === yesterdayYmd) return "Dün";
+    try {
+      var p = ymd.split("-").map(Number);
+      var d = new Date(Date.UTC(p[0], p[1] - 1, p[2], 12, 0, 0));
+      return new Intl.DateTimeFormat("tr-TR", {
+        timeZone: OP_HOTEL_TZ,
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+      }).format(d);
+    } catch (_e2) {
+      return ymd;
+    }
+  }
+
+  function persistOpDayState() {
+    try {
+      sessionStorage.setItem(OP_DAY_STORAGE_KEY, opSelectedCalendarDay);
+      sessionStorage.setItem(OP_FOLLOW_TODAY_STORAGE_KEY, opFollowHotelToday ? "1" : "0");
+    } catch (_e) {}
+  }
+
+  function initOpDayStripFromStorage() {
+    var today = hotelCalendarYmd(new Date());
+    var strip = enumerateOpStripDays(OP_DAY_STRIP_COUNT);
+    var allowed = {};
+    strip.forEach(function (s) {
+      allowed[s] = true;
+    });
+    try {
+      var sy = String(sessionStorage.getItem(OP_DAY_STORAGE_KEY) || "").trim();
+      var sf = String(sessionStorage.getItem(OP_FOLLOW_TODAY_STORAGE_KEY) || "1");
+      if (sy && /^\d{4}-\d{2}-\d{2}$/.test(sy) && allowed[sy]) {
+        opFollowHotelToday = sf !== "0";
+        opSelectedCalendarDay = opFollowHotelToday ? today : sy;
+        return;
+      }
+    } catch (_e) {}
+    opSelectedCalendarDay = today;
+    opFollowHotelToday = true;
+  }
+
+  /** «Bugün» takibinde yeni otel gününe geçiş (otomatik yenileme / sekme açılışı). */
+  function maybeAdvanceOpHotelToday() {
+    var today = hotelCalendarYmd(new Date());
+    if (opFollowHotelToday && opSelectedCalendarDay !== today) {
+      opSelectedCalendarDay = today;
+      persistOpDayState();
+      syncOpFiltersAndDomFromSelectedDay();
+    }
+  }
+
+  function syncOpFiltersAndDomFromSelectedDay() {
+    var y = String(opSelectedCalendarDay || "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(y)) {
+      y = hotelCalendarYmd(new Date());
+      opSelectedCalendarDay = y;
+    }
+    opFilterHk.from = y;
+    opFilterHk.to = y;
+    opFilterTech.from = y;
+    opFilterTech.to = y;
+    opFilterFrontByType.complaint.from = y;
+    opFilterFrontByType.complaint.to = y;
+    opFilterFrontByType.guest_notification.from = y;
+    opFilterFrontByType.guest_notification.to = y;
+    opFilterFrontByType.late_checkout.from = y;
+    opFilterFrontByType.late_checkout.to = y;
+    ["op-hk", "op-tech", "op-front"].forEach(function (prefix) {
+      var fromEl = document.getElementById(prefix + "-filter-from");
+      var toEl = document.getElementById(prefix + "-filter-to");
+      if (fromEl) fromEl.value = y;
+      if (toEl) toEl.value = y;
+    });
+  }
+
+  function ensureOpSelectedDayInStrip() {
+    var days = enumerateOpStripDays(OP_DAY_STRIP_COUNT);
+    var ok = {};
+    days.forEach(function (d) {
+      ok[d] = true;
+    });
+    var y = String(opSelectedCalendarDay || "").trim();
+    if (!y || !ok[y]) {
+      opSelectedCalendarDay = days[0] || hotelCalendarYmd(new Date());
+      opFollowHotelToday = true;
+      persistOpDayState();
+      syncOpFiltersAndDomFromSelectedDay();
+    }
+  }
+
+  function renderOpDayStrips() {
+    ensureOpSelectedDayInStrip();
+    var stripIds = ["op-hk-day-strip", "op-tech-day-strip", "op-front-day-strip"];
+    var days = enumerateOpStripDays(OP_DAY_STRIP_COUNT);
+    var todayY = days[0] || hotelCalendarYmd(new Date());
+    var yesterdayY = days.length > 1 ? days[1] : "";
+    var sel = String(opSelectedCalendarDay || "").trim();
+    if (!sel) sel = todayY;
+    var htmlParts = [];
+    days.forEach(function (ymd) {
+      var active = ymd === sel;
+      var sub = opDayChipSecondaryLine(ymd, todayY, yesterdayY);
+      htmlParts.push(
+        '<button type="button" class="op-day-strip__chip' +
+          (active ? " is-active" : "") +
+          '" data-op-day="' +
+          escHtml(ymd) +
+          '" role="option" aria-selected="' +
+          (active ? "true" : "false") +
+          '">' +
+          '<span class="op-day-strip__chip-date">' +
+          escHtml(ymd) +
+          "</span>" +
+          '<span class="op-day-strip__chip-sub">' +
+          escHtml(sub) +
+          "</span></button>",
+      );
+    });
+    var html = htmlParts.join("");
+    stripIds.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.innerHTML = html;
+    });
+  }
+
+  function selectOpCalendarDay(ymd, followTodayFlag) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(ymd || ""))) return;
+    opSelectedCalendarDay = String(ymd);
+    opFollowHotelToday = followTodayFlag === true;
+    persistOpDayState();
+    syncOpFiltersAndDomFromSelectedDay();
+    renderOpDayStrips();
+    opHkPage = 1;
+    opTechPage = 1;
+    opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
+    if (activeAdminTab === "op_hk") void loadOpHk(1);
+    else if (activeAdminTab === "op_tech") void loadOpTech(1);
+    else if (activeAdminTab === "op_front") void loadOpFront();
+  }
+
+  function clearOpFilterDomStatusRoom(prefix) {
+    var status = document.getElementById(prefix + "-filter-status");
+    var room = document.getElementById(prefix + "-filter-room");
+    if (status) status.value = "";
+    if (room) room.value = "";
+  }
+
+  function wireOpDayStripLayoutClick() {
+    var layout = document.getElementById("admin-layout");
+    if (!layout || layout.dataset.vionaOpDayStripBound) return;
+    layout.dataset.vionaOpDayStripBound = "1";
+    layout.addEventListener("click", function (ev) {
+      var chip = ev.target && ev.target.closest ? ev.target.closest(".op-day-strip__chip") : null;
+      if (!chip || !layout.contains(chip)) return;
+      var ymd = chip.getAttribute("data-op-day") || "";
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return;
+      var todayY = hotelCalendarYmd(new Date());
+      selectOpCalendarDay(ymd, ymd === todayY);
+      scheduleAutoRefresh();
+    });
+  }
+
+  /** PDF ve API: ekrandaki tarih alani ile secili gun (serit) birebir; gerekirse otel bugunu. */
+  function readOpsReportYmdForPdf(variant) {
+    maybeAdvanceOpHotelToday();
+    syncOpFiltersAndDomFromSelectedDay();
+    renderOpDayStrips();
+    var prefixes =
+      variant === "hk"
+        ? ["op-hk", "op-tech", "op-front"]
+        : variant === "tech"
+          ? ["op-tech", "op-hk", "op-front"]
+          : ["op-front", "op-hk", "op-tech"];
+    for (var i = 0; i < prefixes.length; i++) {
+      var el = document.getElementById(prefixes[i] + "-filter-from");
+      var v = el && el.value ? String(el.value).trim() : "";
+      if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+    }
+    var y = String(opSelectedCalendarDay || "").trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(y)) return y;
+    return hotelCalendarYmd(new Date());
+  }
+
+  async function downloadOpsDayPdf(variant) {
+    if (opsPdfDownloadInFlight) return;
+    if (!window.VionaOpsDayPdf || typeof window.VionaOpsDayPdf.download !== "function") {
+      window.alert("PDF modulu yuklenemedi; sayfayi yenileyin.");
+      return;
+    }
+    var id =
+      variant === "hk" ? "op-hk-pdf" : variant === "tech" ? "op-tech-pdf" : variant === "front" ? "op-front-pdf" : "";
+    var btn = id ? document.getElementById(id) : null;
+    opsPdfDownloadInFlight = true;
+    var ymdPdf = readOpsReportYmdForPdf(variant);
+    try {
+      if (btn) btn.disabled = true;
+      await window.VionaOpsDayPdf.download({
+        variant: variant,
+        ymd: ymdPdf,
+        adapter: adapter,
+      });
+    } catch (e) {
+      var m = e && e.message ? String(e.message) : "bilinmeyen hata";
+      window.alert("PDF olusturulamadi: " + m);
+    } finally {
+      opsPdfDownloadInFlight = false;
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  function wireOpPdfButtonsOnce() {
+    [
+      ["op-hk-pdf", "hk"],
+      ["op-tech-pdf", "tech"],
+      ["op-front-pdf", "front"],
+    ].forEach(function (pair) {
+      var el = document.getElementById(pair[0]);
+      if (!el || el.dataset.vionaPdfBound) return;
+      el.dataset.vionaPdfBound = "1";
+      el.addEventListener(
+        "click",
+        function (ev) {
+          if (ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+          }
+          void downloadOpsDayPdf(pair[1]);
+        },
+        false,
+      );
+    });
+  }
+
   function opQueryFromFilter(f) {
     var o = {};
     if (f.status) o.status = f.status;
@@ -182,6 +458,9 @@
     var mount = document.getElementById("op-hk-mount");
     if (!mount) return;
     if (page != null) opHkPage = page;
+    maybeAdvanceOpHotelToday();
+    syncOpFiltersAndDomFromSelectedDay();
+    renderOpDayStrips();
     try {
       var fqHk = opQueryFromFilter(opFilterHk);
       var pairHk = await Promise.all([
@@ -236,6 +515,9 @@
     var mount = document.getElementById("op-tech-mount");
     if (!mount) return;
     if (page != null) opTechPage = page;
+    maybeAdvanceOpHotelToday();
+    syncOpFiltersAndDomFromSelectedDay();
+    renderOpDayStrips();
     try {
       var fqTech = opQueryFromFilter(opFilterTech);
       var pairTech = await Promise.all([
@@ -402,7 +684,16 @@
       applyBtn.dataset.vionaBound = "1";
       applyBtn.addEventListener("click", function () {
         var next = readOpFilterFromDom("op-front");
+        next.from = opSelectedCalendarDay;
+        next.to = opSelectedCalendarDay;
         opFilterFrontByType[opFrontFilterActiveType] = next;
+        ["complaint", "guest_notification", "late_checkout"].forEach(function (k) {
+          if (k === opFrontFilterActiveType) return;
+          var o = opFilterFrontByType[k] || { status: "", from: "", to: "", room: "" };
+          o.from = opSelectedCalendarDay;
+          o.to = opSelectedCalendarDay;
+          opFilterFrontByType[k] = o;
+        });
         opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
         void loadOpFront();
         scheduleAutoRefresh();
@@ -411,8 +702,12 @@
     if (clearBtn && !clearBtn.dataset.vionaBound) {
       clearBtn.dataset.vionaBound = "1";
       clearBtn.addEventListener("click", function () {
-        opFilterFrontByType[opFrontFilterActiveType] = { status: "", from: "", to: "", room: "" };
-        clearOpFilterDom("op-front");
+        var y = opSelectedCalendarDay;
+        opFilterFrontByType.complaint = { status: "", from: y, to: y, room: "" };
+        opFilterFrontByType.guest_notification = { status: "", from: y, to: y, room: "" };
+        opFilterFrontByType.late_checkout = { status: "", from: y, to: y, room: "" };
+        clearOpFilterDomStatusRoom("op-front");
+        syncOpFiltersAndDomFromSelectedDay();
         opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
         void loadOpFront();
         scheduleAutoRefresh();
@@ -424,6 +719,9 @@
     var mount = document.getElementById("op-front-mount");
     if (!mount) return;
     if (pageType && page != null) opFrontPages[pageType] = page;
+    maybeAdvanceOpHotelToday();
+    syncOpFiltersAndDomFromSelectedDay();
+    renderOpDayStrips();
     try {
       try {
         var tab = String(sessionStorage.getItem(OP_FRONT_TAB_KEY) || "").trim();
@@ -1636,6 +1934,11 @@
         if (tab === "evaluations") await loadEvaluations();
         if (tab === "pdf-report") setPdfCustomRangeUi(Boolean(document.getElementById("pdf-custom-range") && document.getElementById("pdf-custom-range").checked));
         if (tab === "logs") await loadLogs();
+        if (tab === "op_hk" || tab === "op_tech" || tab === "op_front") {
+          maybeAdvanceOpHotelToday();
+          syncOpFiltersAndDomFromSelectedDay();
+          renderOpDayStrips();
+        }
         if (tab === "op_hk") await loadOpHk();
         if (tab === "op_tech") await loadOpTech();
         if (tab === "op_front") await loadOpFront();
@@ -1699,6 +2002,8 @@
       if (applyBtn) {
         applyBtn.addEventListener("click", function () {
           var next = readOpFilterFromDom(prefix);
+          next.from = opSelectedCalendarDay;
+          next.to = opSelectedCalendarDay;
           filterObj.status = next.status;
           filterObj.from = next.from;
           filterObj.to = next.to;
@@ -1710,10 +2015,11 @@
       if (clearBtn) {
         clearBtn.addEventListener("click", function () {
           filterObj.status = "";
-          filterObj.from = "";
-          filterObj.to = "";
           filterObj.room = "";
-          clearOpFilterDom(prefix);
+          filterObj.from = opSelectedCalendarDay;
+          filterObj.to = opSelectedCalendarDay;
+          clearOpFilterDomStatusRoom(prefix);
+          syncOpFiltersAndDomFromSelectedDay();
           applyPage();
           scheduleAutoRefresh();
         });
@@ -1759,9 +2065,19 @@
               else if (activeAdminTab === "complaints") await loadBucket("complaint", "list-complaints");
               else if (activeAdminTab === "faults") await loadBucket("fault", "list-faults");
               else if (activeAdminTab === "guest_notifications") await loadGuestNotifVisible();
-              else if (activeAdminTab === "op_hk") await loadOpHk();
-              else if (activeAdminTab === "op_tech") await loadOpTech();
-              else if (activeAdminTab === "op_front") await loadOpFront();
+              else if (activeAdminTab === "op_hk") {
+                maybeAdvanceOpHotelToday();
+                renderOpDayStrips();
+                await loadOpHk();
+              } else if (activeAdminTab === "op_tech") {
+                maybeAdvanceOpHotelToday();
+                renderOpDayStrips();
+                await loadOpTech();
+              } else if (activeAdminTab === "op_front") {
+                maybeAdvanceOpHotelToday();
+                renderOpDayStrips();
+                await loadOpFront();
+              }
             } catch (_e) {}
           })();
         }, 320);
@@ -1779,9 +2095,15 @@
       wireLogsControls();
       wireBackHomeButtons();
       wireOpFilterBars();
+      wireOpDayStripLayoutClick();
+      wireOpPdfButtonsOnce();
       wireVisibilityRefresh();
       wireOpsBroadcastRefresh();
     }
+    initOpDayStripFromStorage();
+    maybeAdvanceOpHotelToday();
+    syncOpFiltersAndDomFromSelectedDay();
+    renderOpDayStrips();
     openTab(null);
     await loadDashboard();
     scheduleAutoRefresh();

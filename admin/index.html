@@ -17,7 +17,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/styles.css?v=30" />
-    <link rel="stylesheet" href="styles.css?v=52" />
+    <link rel="stylesheet" href="styles.css?v=54" />
   </head>
   <body class="admin-body">
     <section id="admin-login" class="admin-login">
@@ -182,6 +182,21 @@
             <h2>HK Operasyon</h2>
             <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
           </div>
+          <div class="op-day-strip-wrap glass-block" aria-label="Kayıt günü">
+            <div class="op-day-strip-wrap__head">
+              <div class="op-day-strip-wrap__head-text">
+                <span class="op-day-strip-wrap__title">Gün seçimi</span>
+                <span class="op-day-strip-wrap__tz">Otel günü · İstanbul</span>
+              </div>
+              <button type="button" class="btn-small op-day-pdf-btn" id="op-hk-pdf" title="Seçili günün HK özeti PDF">
+                PDF indir
+              </button>
+            </div>
+            <p class="op-day-strip-wrap__hint">
+              Yalnızca seçilen günde oluşturulan kayıtlar listelenir. <strong>Bugün</strong> seçiliyken tarih otomatik güncellenir; geçmiş bir gün seçince o gün sabit kalır.
+            </p>
+            <div id="op-hk-day-strip" class="op-day-strip__scroll" role="listbox" aria-label="Gün şeridi"></div>
+          </div>
           <div class="op-filter-bar glass-block" id="op-hk-filters" role="search" aria-label="HK operasyon filtreleri">
             <div class="op-filter-bar__row">
               <label class="op-filter-field"
@@ -222,6 +237,21 @@
             <h2>Teknik Operasyon</h2>
             <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
           </div>
+          <div class="op-day-strip-wrap glass-block" aria-label="Kayıt günü">
+            <div class="op-day-strip-wrap__head">
+              <div class="op-day-strip-wrap__head-text">
+                <span class="op-day-strip-wrap__title">Gün seçimi</span>
+                <span class="op-day-strip-wrap__tz">Otel günü · İstanbul</span>
+              </div>
+              <button type="button" class="btn-small op-day-pdf-btn" id="op-tech-pdf" title="Seçili günün teknik özeti PDF">
+                PDF indir
+              </button>
+            </div>
+            <p class="op-day-strip-wrap__hint">
+              Yalnızca seçilen günde oluşturulan kayıtlar listelenir. <strong>Bugün</strong> seçiliyken tarih otomatik güncellenir; geçmiş bir gün seçince o gün sabit kalır.
+            </p>
+            <div id="op-tech-day-strip" class="op-day-strip__scroll" role="listbox" aria-label="Gün şeridi"></div>
+          </div>
           <div class="op-filter-bar glass-block" id="op-tech-filters" role="search" aria-label="Teknik operasyon filtreleri">
             <div class="op-filter-bar__row">
               <label class="op-filter-field"
@@ -261,6 +291,21 @@
           <div class="section-head">
             <h2>Ön büro Operasyon</h2>
             <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
+          </div>
+          <div class="op-day-strip-wrap glass-block" aria-label="Kayıt günü">
+            <div class="op-day-strip-wrap__head">
+              <div class="op-day-strip-wrap__head-text">
+                <span class="op-day-strip-wrap__title">Gün seçimi</span>
+                <span class="op-day-strip-wrap__tz">Otel günü · İstanbul</span>
+              </div>
+              <button type="button" class="btn-small op-day-pdf-btn" id="op-front-pdf" title="Seçili günün ön büro özeti PDF">
+                PDF indir
+              </button>
+            </div>
+            <p class="op-day-strip-wrap__hint">
+              Üç sekme (şikâyet, misafir bildirimi, geç çıkış) aynı güne göre süzülür. <strong>Bugün</strong> seçiliyken tarih otomatik güncellenir.
+            </p>
+            <div id="op-front-day-strip" class="op-day-strip__scroll" role="listbox" aria-label="Gün şeridi"></div>
           </div>
           <p id="op-front-filter-scope" class="op-filter-scope" role="status"></p>
           <div class="op-filter-bar glass-block" id="op-front-filters" role="search" aria-label="Ön büro operasyon filtreleri">
@@ -524,8 +569,9 @@
     <script src="../js/api-config.js?v=13"></script>
     <script src="../js/requests/config.js?v=20"></script>
     <script src="../js/hotel-room-numbers.js?v=1"></script>
-    <script src="js/data-adapter.js?v=23"></script>
+    <script src="js/data-adapter.js?v=24"></script>
     <script src="js/ui.js?v=72"></script>
-    <script src="js/app.js?v=58"></script>
+    <script src="js/ops-day-pdf.js?v=4"></script>
+    <script src="js/app.js?v=62"></script>
   </body>
 </html>
