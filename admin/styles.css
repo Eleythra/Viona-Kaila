@@ -4398,36 +4398,46 @@
   width: 100%;
 }
 
-/* Gün şeridi chip altı: Aç / Bit / Ol + sayılar */
+/* Gün şeridi chip altı: Bekleyen · Yapılıyor · Yapıldı + sayılar */
 .op-chip-stats {
   display: inline-flex;
-  align-items: baseline;
+  align-items: flex-end;
   justify-content: center;
-  flex-wrap: nowrap;
-  gap: 0.12rem 0.18rem;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.28rem;
   font-size: 0.58rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   color: #b8cfe8;
-  line-height: 1.2;
+  line-height: 1.15;
+}
+.op-chip-stats--triple {
+  max-width: 100%;
 }
 .op-chip-stats__it {
   display: inline-flex;
-  align-items: baseline;
-  gap: 0.08rem;
-  white-space: nowrap;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.06rem;
+  min-width: 2.85rem;
+  max-width: 4.2rem;
 }
-.op-chip-stats__it abbr {
-  text-decoration: none;
+.op-chip-stats__lbl {
+  display: block;
+  font-size: 0.52rem;
   font-weight: 700;
-  font-size: 0.56rem;
-  color: #8ea6c4;
-  letter-spacing: 0.04em;
+  color: #9eb4d4;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+  text-align: center;
 }
 .op-chip-stats__it strong {
   font-weight: 800;
+  font-size: 0.72rem;
   font-variant-numeric: tabular-nums;
   color: #e8f0ff;
+  line-height: 1;
 }
 .op-chip-stats__sep {
   opacity: 0.45;
@@ -4522,8 +4532,8 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  min-width: 5.2rem;
-  max-width: 9.25rem;
+  min-width: 6.85rem;
+  max-width: 11.5rem;
   padding: 0.45rem 0.55rem;
   border-radius: 10px;
   border: 1px solid rgba(51, 72, 96, 0.95);
@@ -4572,7 +4582,8 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
   color: #b8cfe8;
-  white-space: nowrap;
+  white-space: normal;
+  line-height: 1.25;
 }
 
 /* ops-hk.html / ops-tech.html / ops-front.html — admin ilgili sekmeyle aynı kart / dış boşluk */

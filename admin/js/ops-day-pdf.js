@@ -225,7 +225,8 @@
     if (!DocCtor) {
       throw new Error("jspdf_missing");
     }
-    var doc = new DocCtor({ orientation: "portrait", unit: "pt", format: "a4" });
+    /* Yatay: operasyon tabloları 8–10 sütun; dikeyde taşma/kayma riski yüksek. */
+    var doc = new DocCtor({ orientation: "landscape", unit: "pt", format: "a4" });
     if (typeof doc.autoTable !== "function") {
       throw new Error("autotable_missing");
     }
@@ -368,7 +369,7 @@
     return y + 30;
   }
 
-  function pdfSummaryCell(row, type) {
+  function pdfSummaryCellFallback(row, type) {
     var oz = "";
     try {
       if (window.AdminUI && typeof window.AdminUI.operationSummaryForType === "function") {
@@ -385,23 +386,97 @@
     return pdfText(oz);
   }
 
+  function clampPdfCellText(s, maxLen) {
+    var t = String(s == null ? "" : s).replace(/\s+/g, " ").trim();
+    var m = typeof maxLen === "number" && maxLen > 8 ? maxLen : 380;
+    if (t.length <= m) return t;
+    return t.slice(0, m - 1) + "…";
+  }
+
   function buildRowsForTable(rows, type) {
     var body = [];
     var buckets = [];
+    var ui = window.AdminUI;
+    var useUi =
+      ui &&
+      typeof ui.operationPdfTableHeaders === "function" &&
+      typeof ui.operationPdfRowCells === "function";
+    var labels = useUi ? ui.operationPdfTableHeaders(type) : ["Tarih", "Oda", "Misafir", "Özet", "Durum"];
+    var head = [labels.map(function (h) {
+      return pdfText(h);
+    })];
+    var statusColIndex = labels.length > 0 ? labels.length - 1 : 0;
     (rows || []).forEach(function (r) {
       buckets.push(rowStatusBucket(r));
-      body.push([
-        pdfText(formatSubmittedPdfTr(r.submitted_at)),
-        pdfText(String(r.room_number || "-")),
-        pdfText(operationGuestName(r) || "-"),
-        pdfSummaryCell(r, type),
-        statusLabelPdf(r, type),
-      ]);
+      if (useUi) {
+        var rawCells = ui.operationPdfRowCells(type, r) || [];
+        var rowOut = [];
+        for (var ci = 0; ci < labels.length; ci++) {
+          var v = ci < rawCells.length ? rawCells[ci] : "—";
+          var maxC = ci === statusColIndex ? 40 : 1800;
+          rowOut.push(pdfText(clampPdfCellText(v, maxC)));
+        }
+        body.push(rowOut);
+      } else {
+        body.push([
+          pdfText(formatSubmittedPdfTr(r.submitted_at)),
+          pdfText(String(r.room_number || "-")),
+          pdfText(operationGuestName(r) || "-"),
+          pdfSummaryCellFallback(r, type),
+          statusLabelPdf(r, type),
+        ]);
+      }
     });
-    return { body: body, buckets: buckets };
+    if (!useUi) {
+      statusColIndex = 4;
+    }
+    return { body: body, buckets: buckets, head: head, statusColIndex: statusColIndex };
   }
 
-  function autoTableBlock(doc, M, pageW, pageH, startY, head, body, buckets) {
+  /** Sabit + bir “auto” geniş sütun; toplam ≈ iç genişlik → taşma/kayma azalır. */
+  function operationPdfColumnStyles(ncol, innerW) {
+    innerW = Math.max(480, innerW);
+    function mk(base, autoIdx) {
+      var fixed = 0;
+      var i;
+      for (i = 0; i < base.length; i++) {
+        if (i !== autoIdx) fixed += base[i];
+      }
+      var autoW = Math.max(96, innerW - fixed - 8);
+      var out = {};
+      for (i = 0; i < base.length; i++) {
+        var w = i === autoIdx ? autoW : base[i];
+        out[i] = { cellWidth: w, valign: "middle" };
+      }
+      return out;
+    }
+    if (ncol === 10) {
+      var b10 = [76, 34, 74, 30, 76, 76, 28, 0, 84, 58];
+      var cs10 = mk(b10, 7);
+      cs10[1].halign = "center";
+      cs10[6].halign = "center";
+      cs10[9].halign = "center";
+      return cs10;
+    }
+    if (ncol === 9) {
+      var b9 = [72, 52, 40, 34, 72, 28, 0, 86, 58];
+      var cs9 = mk(b9, 6);
+      cs9[2].halign = "center";
+      cs9[5].halign = "center";
+      cs9[8].halign = "center";
+      return cs9;
+    }
+    if (ncol === 8) {
+      var b8 = [74, 34, 74, 30, 88, 0, 90, 58];
+      var cs8 = mk(b8, 5);
+      cs8[3].halign = "center";
+      cs8[7].halign = "center";
+      return cs8;
+    }
+    return null;
+  }
+
+  function autoTableBlock(doc, M, pageW, pageH, startY, head, body, buckets, tableOpts) {
     if (!body.length) {
       setPdfFont(doc, "italic");
       doc.setFontSize(10);
@@ -409,46 +484,55 @@
       doc.text(pdfText("Bu gün için kayıt bulunmuyor."), M, startY + 8);
       return startY + 28;
     }
-    doc.autoTable({
+    var tOpts = tableOpts || {};
+    var ncol = head && head[0] && head[0].length ? head[0].length : 1;
+    var statusIdx =
+      typeof tOpts.statusColIndex === "number" && tOpts.statusColIndex >= 0 && tOpts.statusColIndex < ncol
+        ? tOpts.statusColIndex
+        : ncol - 1;
+    var innerW = pageW - 2 * M;
+    var fs = ncol >= 9 ? 7 : ncol >= 7 ? 7.2 : 8;
+    var colStyles = operationPdfColumnStyles(ncol, innerW);
+    var atOpts = {
       startY: startY,
       head: head,
       body: body,
       theme: "grid",
+      tableWidth: innerW,
       styles: {
         font: activePdfFont(),
-        fontSize: 8.5,
-        cellPadding: { top: 5, bottom: 5, left: 4, right: 4 },
+        fontSize: fs,
+        cellPadding: { top: 3.5, bottom: 3.5, left: 3, right: 3 },
         overflow: "linebreak",
         valign: "middle",
         textColor: [30, 41, 59],
         lineColor: [203, 213, 225],
-        lineWidth: 0.35,
+        lineWidth: 0.28,
       },
       headStyles: {
         font: activePdfFont(),
         fillColor: [30, 64, 110],
         textColor: [248, 250, 252],
         fontStyle: "bold",
-        fontSize: 9,
+        fontSize: Math.min(7.8, fs + 0.35),
         halign: "left",
         valign: "middle",
+        overflow: "linebreak",
       },
-      bodyStyles: { minCellHeight: 13, textColor: [30, 41, 59] },
-      columnStyles: {
-        0: { cellWidth: 50 },
-        1: { cellWidth: 28, halign: "center" },
-        2: { cellWidth: 64 },
-        3: { cellWidth: "auto" },
-        4: { cellWidth: 58, halign: "center", fontStyle: "bold" },
-      },
+      bodyStyles: { minCellHeight: Math.max(12, fs + 7), textColor: [30, 41, 59] },
       margin: { left: M, right: M },
       didParseCell: function (data) {
+        if (data.section === "head") {
+          data.cell.styles.overflow = "linebreak";
+          data.cell.styles.minCellHeight = 16;
+          return;
+        }
         if (data.section !== "body" || !buckets || data.row == null) return;
         var ri = typeof data.row.index === "number" ? data.row.index : -1;
         if (ri < 0 || ri >= buckets.length) return;
         var bucket = buckets[ri];
         if (typeof data.column.index !== "number") return;
-        if (data.column.index === 4) {
+        if (data.column.index === statusIdx) {
           var pill = statusPillStyle(bucket);
           data.cell.styles.fillColor = pill.fill;
           data.cell.styles.textColor = pill.text;
@@ -467,7 +551,11 @@
         doc.text(foot, M, pageH - 20);
         doc.text(pdfText("Sayfa ") + data.pageNumber, pageW - M, pageH - 20, { align: "right" });
       },
-    });
+    };
+    if (colStyles) {
+      atOpts.columnStyles = colStyles;
+    }
+    doc.autoTable(atOpts);
     return doc.lastAutoTable.finalY + 14;
   }
 
@@ -534,24 +622,17 @@
     doc.setTextColor(51, 65, 85);
     doc.text(
       pdfText(
-        "Tablo: satır zemini durum grubunu, Durum sütunu renkli rozet olarak gösterir (İstanbul günü ile süzülmüş kayıtlar).",
+        "Tablo, admin panelindeki liste ile aynı sütunlardır (İşlemler yok). Sayfa yatay A4; Türkçe için DejaVu yüklenir. Satır zemini durum grubunu, son sütun renkli rozet gösterir.",
       ),
       M,
       y1,
       { maxWidth: contentW },
     );
     y1 += 22;
-    var head = [
-      [
-        pdfText("Zaman"),
-        pdfText("Oda"),
-        pdfText("Misafir"),
-        pdfText("Özet"),
-        pdfText("Durum"),
-      ],
-    ];
     var pack = buildRowsForTable(rows, type);
-    return autoTableBlock(doc, M, pageW, pageH, y1, head, pack.body, pack.buckets);
+    return autoTableBlock(doc, M, pageW, pageH, y1, pack.head, pack.body, pack.buckets, {
+      statusColIndex: pack.statusColIndex,
+    });
   }
 
   async function download(opts) {
@@ -668,7 +749,9 @@
       doc.setFontSize(9);
       doc.setTextColor(51, 65, 85);
       doc.text(
-        pdfText("Her bölüm ayrı tablodur; satır zemini ve Durum rozetleri aynı renk mantığını kullanır."),
+        pdfText(
+          "Üç bölüm ayrı tablodur (şikâyet / misafir bildirimi / geç çıkış). Yatay A4, sütunlar panel ile aynı; Türkçe için DejaVu yüklenir.",
+        ),
         M,
         y,
         { maxWidth: contentW },
@@ -676,17 +759,8 @@
       y += 22;
 
       y = drawSectionTitle(doc, M, y, pdfText("Şikâyetler (" + String((packC.items || []).length) + ")"));
-      var head = [
-        [
-          pdfText("Zaman"),
-          pdfText("Oda"),
-          pdfText("Misafir"),
-          pdfText("Özet"),
-          pdfText("Durum"),
-        ],
-      ];
       var p1 = buildRowsForTable(packC.items, "complaint");
-      y = autoTableBlock(doc, M, pageW, pageH, y, head, p1.body, p1.buckets);
+      y = autoTableBlock(doc, M, pageW, pageH, y, p1.head, p1.body, p1.buckets, { statusColIndex: p1.statusColIndex });
       if (y > pageH - 120) {
         doc.addPage();
         y = M + 10;
@@ -694,7 +768,7 @@
 
       y = drawSectionTitle(doc, M, y, pdfText("Misafir bildirimleri (" + String((packG.items || []).length) + ")"));
       var p2 = buildRowsForTable(packG.items, "guest_notification");
-      y = autoTableBlock(doc, M, pageW, pageH, y, head, p2.body, p2.buckets);
+      y = autoTableBlock(doc, M, pageW, pageH, y, p2.head, p2.body, p2.buckets, { statusColIndex: p2.statusColIndex });
       if (y > pageH - 120) {
         doc.addPage();
         y = M + 10;
@@ -702,7 +776,7 @@
 
       y = drawSectionTitle(doc, M, y, pdfText("Geç çıkış (" + String((packL.items || []).length) + ")"));
       var p3 = buildRowsForTable(packL.items, "late_checkout");
-      autoTableBlock(doc, M, pageW, pageH, y, head, p3.body, p3.buckets);
+      autoTableBlock(doc, M, pageW, pageH, y, p3.head, p3.body, p3.buckets, { statusColIndex: p3.statusColIndex });
 
       var trunc = packC.truncated || packG.truncated || packL.truncated;
       if (trunc) {

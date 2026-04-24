@@ -4275,6 +4275,134 @@
     }
   }
 
+  /** Geç çıkış: panel tablosu ile aynı çıkış tarihi gösterimi. */
+  function operationPdfLateCheckoutCheckoutDateDisp(r) {
+    var raw = String((r && r.checkout_date) || "").slice(0, 10);
+    if (raw.length === 10) return formatIsoDateDisplayTr(raw);
+    return raw || "—";
+  }
+
+  /** Günlük operasyon PDF: admin tablosu ile aynı başlıklar (İşlemler sütunu yok). */
+  function operationPdfTableHeaders(bucketType) {
+    if (bucketType === "request") {
+      return ["Tarih", "Oda", "Misafir", "Milliyet", "Kategori", "Tür", "Adet", "Açıklama", "Personel notu", "Durum"];
+    }
+    if (bucketType === "fault") {
+      return [
+        "Tarih",
+        "Oda",
+        "Misafir",
+        "Milliyet",
+        "Arıza kategorisi",
+        "Lokasyon",
+        "Aciliyet",
+        "Açıklama",
+        "Personel notu",
+        "Durum",
+      ];
+    }
+    if (bucketType === "complaint") {
+      return ["Tarih", "Oda", "Misafir", "Milliyet", "Şikâyet konusu", "Açıklama", "Personel notu", "Durum"];
+    }
+    if (bucketType === "guest_notification") {
+      return ["Tarih", "Oda", "Misafir", "Milliyet", "Bildirim konusu", "Açıklama", "Personel notu", "Durum"];
+    }
+    if (bucketType === "late_checkout") {
+      return [
+        "Kayıt",
+        "Çıkış tarihi",
+        "Çıkış saati",
+        "Oda",
+        "Misafir",
+        "Milliyet",
+        "Misafir notu",
+        "Personel notu",
+        "Durum",
+      ];
+    }
+    return ["Tarih", "Oda", "Misafir", "Durum"];
+  }
+
+  /** Günlük operasyon PDF: panel tablosu ile aynı metinler (yerel personel notları dahil). */
+  function operationPdfRowCells(bucketType, r) {
+    if (!r || typeof r !== "object") return [];
+    var st = normalizeBucketStatus(r.status);
+    if (bucketType === "request") {
+      return [
+        formatSubmittedAtTr(r.submitted_at),
+        String(r.room_number || "-"),
+        String(r.guest_name || "-"),
+        String(r.nationality || "-"),
+        requestFormGroupLabel(r),
+        requestFormTypeLabel(r),
+        requestFormQuantityDisplay(r),
+        requestFormDescription(r),
+        getRequestStaffNote(r.id),
+        issueStatusLabel("request", st),
+      ];
+    }
+    if (bucketType === "fault") {
+      var fCatsR = faultEffectiveCategories(r);
+      var fSingR = String(r.category || "").trim() || (fCatsR.length ? fCatsR[0] : "");
+      var rawR = r.raw_payload && typeof r.raw_payload === "object" ? r.raw_payload : {};
+      if (!fSingR) fSingR = String(rawR.category || "").trim();
+      var catLabel = categoryText("fault", fCatsR, fSingR || null);
+      return [
+        formatSubmittedAtTr(r.submitted_at),
+        String(r.room_number || "-"),
+        String(operationGuestName(r) || "-"),
+        String(r.nationality || "-"),
+        catLabel,
+        faultLocationLabel(r),
+        faultUrgencyLabel(r),
+        faultFormDescription(r),
+        getFaultStaffNote(r.id),
+        issueStatusLabel("fault", st),
+      ];
+    }
+    if (bucketType === "complaint") {
+      var catC = categoryText("complaint", r.categories, r.category);
+      return [
+        formatSubmittedAtTr(r.submitted_at),
+        String(r.room_number || "-"),
+        String(r.guest_name || "-"),
+        String(r.nationality || "-"),
+        catC,
+        complaintFormDescription(r),
+        getComplaintStaffNote(r.id),
+        issueStatusLabel("complaint", st),
+      ];
+    }
+    if (bucketType === "guest_notification") {
+      var catG = categoryText("guest_notification", r.categories, r.category);
+      return [
+        formatSubmittedAtTr(r.submitted_at),
+        String(r.room_number || "-"),
+        String(r.guest_name || "-"),
+        String(r.nationality || "-"),
+        catG,
+        complaintFormDescription(r),
+        getGuestNotifStaffNote(r.id),
+        issueStatusLabel("guest_notification", st),
+      ];
+    }
+    if (bucketType === "late_checkout") {
+      var coTime = String(r.checkout_time || "").trim() || "—";
+      return [
+        formatSubmittedAtTr(r.submitted_at),
+        operationPdfLateCheckoutCheckoutDateDisp(r),
+        coTime,
+        String(r.room_number || "-"),
+        String(r.guest_name || "-"),
+        String(r.nationality || "-"),
+        complaintFormDescription(r),
+        getLateCheckoutStaffNote(r.id),
+        issueStatusLabel("late_checkout", st),
+      ];
+    }
+    return [];
+  }
+
   function operationSummaryForType(bucketType, r) {
     if (bucketType === "request") {
       return [
@@ -5334,6 +5462,14 @@
     /** Saha tabloları için kısa özet metni (istek / arıza / şikâyet vb.). */
     operationSummaryForType: function (bucketType, row) {
       return operationSummaryForType(bucketType, row);
+    },
+    /** Günlük operasyon PDF başlık satırı (admin tam tablo; İşlemler yok). */
+    operationPdfTableHeaders: function (bucketType) {
+      return operationPdfTableHeaders(bucketType);
+    },
+    /** Günlük operasyon PDF veri hücreleri (panel ile aynı kaynak). */
+    operationPdfRowCells: function (bucketType, row) {
+      return operationPdfRowCells(bucketType, row);
     },
     /** Durum rozeti metni (ops-hk seçili kayıt paneli vb.). */
     issueStatusLabel: function (issueType, status) {

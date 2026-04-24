@@ -628,25 +628,25 @@
     }
   }
 
-  function opStripChipStatsHtmlSl(open, yap, red) {
-    var o = Number(open) || 0;
+  function opStripChipStatsHtmlSl(bek, isl, yap) {
+    var b = Number(bek) || 0;
+    var i = Number(isl) || 0;
     var y = Number(yap) || 0;
-    var r = Number(red) || 0;
     return (
-      '<span class="op-chip-stats">' +
-      '<span class="op-chip-stats__it" title="Açık: bekleyen + işlemde">' +
-      '<abbr title="Bekleyen + işlemde">Aç</abbr><strong>' +
-      String(o) +
+      '<span class="op-chip-stats op-chip-stats--triple">' +
+      '<span class="op-chip-stats__it" title="Bekleyen kayıtlar">' +
+      '<span class="op-chip-stats__lbl">Bekleyen</span><strong>' +
+      String(b) +
       "</strong></span>" +
       '<span class="op-chip-stats__sep" aria-hidden="true">·</span>' +
-      '<span class="op-chip-stats__it" title="Yapıldı">' +
-      '<abbr title="Yapıldı">Bit</abbr><strong>' +
+      '<span class="op-chip-stats__it" title="Şu an işlemde">' +
+      '<span class="op-chip-stats__lbl">Yapılıyor</span><strong>' +
+      String(i) +
+      "</strong></span>" +
+      '<span class="op-chip-stats__sep" aria-hidden="true">·</span>' +
+      '<span class="op-chip-stats__it" title="Tamamlanan">' +
+      '<span class="op-chip-stats__lbl">Yapıldı</span><strong>' +
       String(y) +
-      "</strong></span>" +
-      '<span class="op-chip-stats__sep" aria-hidden="true">·</span>' +
-      '<span class="op-chip-stats__it" title="Yapılmadı / olumsuz">' +
-      '<abbr title="Yapılmadı">Ol</abbr><strong>' +
-      String(r) +
       "</strong></span>" +
       "</span>"
     );
@@ -671,32 +671,56 @@
     var isl = Number(sum.islemde) || 0;
     var yap = Number(sum.yapildi) || 0;
     var red = Number(sum.yapilmadi) || 0;
-    var open = bek + isl;
+    var ipt = Number(sum.iptal) || 0;
     return {
-      line: open + " · " + yap + " · " + red,
-      lineHtml: opStripChipStatsHtmlSl(open, yap, red),
-      title: "Bekleyen + işlemde: " + open + " · Yapıldı: " + yap + " · Yapılmadı: " + red,
+      line: bek + " · " + isl + " · " + yap,
+      lineHtml: opStripChipStatsHtmlSl(bek, isl, yap),
+      title:
+        "Bekleyen: " +
+        bek +
+        " · Yapılıyor: " +
+        isl +
+        " · Yapıldı: " +
+        yap +
+        " · Yapılmadı: " +
+        red +
+        (ipt ? " · İptal: " + ipt : ""),
     };
   }
 
   function mergeFrontStripLineSl(c, gn, lc) {
     function parts(s) {
-      if (!s || typeof s !== "object") return [0, 0, 0];
-      if (String(s.mode || "").trim() === "filtered") return [0, 0, 0];
-      var bek = Number(s.bekliyor) || 0;
-      var isl = Number(s.islemde) || 0;
-      return [bek + isl, Number(s.yapildi) || 0, Number(s.yapilmadi) || 0];
+      if (!s || typeof s !== "object") return [0, 0, 0, 0, 0];
+      if (String(s.mode || "").trim() === "filtered") return [0, 0, 0, 0, 0];
+      return [
+        Number(s.bekliyor) || 0,
+        Number(s.islemde) || 0,
+        Number(s.yapildi) || 0,
+        Number(s.yapilmadi) || 0,
+        Number(s.iptal) || 0,
+      ];
     }
     var a = parts(c);
     var b = parts(gn);
     var d = parts(lc);
-    var o = a[0] + b[0] + d[0];
-    var y = a[1] + b[1] + d[1];
-    var r = a[2] + b[2] + d[2];
+    var bT = a[0] + b[0] + d[0];
+    var iT = a[1] + b[1] + d[1];
+    var yT = a[2] + b[2] + d[2];
+    var rT = a[3] + b[3] + d[3];
+    var iptT = a[4] + b[4] + d[4];
     return {
-      line: o + " · " + y + " · " + r,
-      lineHtml: opStripChipStatsHtmlSl(o, y, r),
-      title: "Ön büro (şikâyet + bildirim + geç çıkış): bekleyen+işlemde · yapıldı · yapılmadı",
+      line: bT + " · " + iT + " · " + yT,
+      lineHtml: opStripChipStatsHtmlSl(bT, iT, yT),
+      title:
+        "Ön büro toplamı — Bekleyen: " +
+        bT +
+        " · Yapılıyor: " +
+        iT +
+        " · Yapıldı: " +
+        yT +
+        " · Yapılmadı: " +
+        rT +
+        (iptT ? " · İptal: " + iptT : ""),
     };
   }
 
@@ -861,7 +885,7 @@
       rolePrefix +
       '-day-strip" class="op-day-strip__scroll" role="listbox" aria-label="Gün şeridi"></div>' +
       '<p class="op-day-strip-wrap__legend">' +
-      "Şerit özeti: <strong>Aç</strong> açık (bekleyen + işlemde) · <strong>Bit</strong> yapıldı · <strong>Ol</strong> yapılmadı." +
+      "Şerit: sırayla <strong>Bekleyen</strong>, <strong>Yapılıyor</strong>, <strong>Yapıldı</strong> sayıları. Yapılmadı ve iptal chip üzerinde imleç bekletince açıklamada görünür." +
       "</p></div>"
     );
   }
