@@ -23,6 +23,7 @@ import {
   getWhatsappOperationalHealthSummary,
   resolveWhatsappAccessToken,
 } from "./services/whatsapp-operational-notification.service.js";
+import { runDailyOperationReportJob, ymdTodayInHotelTz } from "./modules/admin/reporting/daily-operation-report.job.js";
 const env = getEnv();
 const app = express();
 
@@ -508,6 +509,26 @@ app.post(
 app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
+/** Günlük operasyon PDF + WhatsApp; dış cron veya manuel test: `Authorization: Bearer $CRON_SECRET`. */
+app.post("/api/internal/daily-operation-report", async (req, res) => {
+  try {
+    const secret = String(process.env.CRON_SECRET || "").trim();
+    const auth = String(req.headers.authorization || "").trim();
+    if (!secret || auth !== `Bearer ${secret}`) {
+      return res.status(401).json({ ok: false, error: "unauthorized" });
+    }
+    const body = req.body && typeof req.body === "object" ? req.body : {};
+    const ymd = String(body.date || body.ymd || "").trim() || ymdTodayInHotelTz();
+    const force = body.force === true || String(body.force || "") === "1";
+    const out = await runDailyOperationReportJob({ ymd, force, source: "http" });
+    const status = out.ok || out.skipped ? 200 : 500;
+    return res.status(status).json(out);
+  } catch (e) {
+    console.error("[daily_operation_report] http_handler", e);
+    return res.status(500).json({ ok: false, error: String(e?.message || e) });
+  }
+});
+
 const speechLimiter = rateLimit({
   windowMs: env.rateLimitWindowMs,
   max: Math.min(60, Math.max(24, Math.floor(env.rateLimitMax / 4))),
@@ -772,6 +793,62 @@ app.use((err, _req, res, next) => {
 
 const httpServer = app.listen(env.port, () => {
   console.log(`Server running on http://localhost:${env.port}`);
+
+  if (String(process.env.DAILY_OPERATION_REPORT_ENABLED || "").trim() === "1") {
+    const tz = String(
+      process.env.DAILY_OPERATION_REPORT_TZ || process.env.HOTEL_TIMEZONE || "Europe/Istanbul",
+    ).trim();
+    const cronExpr = String(process.env.DAILY_OPERATION_REPORT_CRON || "30 21 * * *").trim();
+    const cronParts = cronExpr.split(/\s+/);
+    const parsedMin = Number(cronParts[0]);
+    const parsedHour = Number(cronParts[1]);
+    const rawEnvHour = Number(process.env.DAILY_OPERATION_REPORT_HOUR);
+    const rawEnvMin = Number(process.env.DAILY_OPERATION_REPORT_MINUTE);
+    const targetHour =
+      Number.isFinite(rawEnvHour) && rawEnvHour >= 0 && rawEnvHour <= 23
+        ? rawEnvHour
+        : Number.isFinite(parsedHour) && parsedHour >= 0 && parsedHour <= 23
+          ? parsedHour
+          : 21;
+    const targetMin =
+      Number.isFinite(rawEnvMin) && rawEnvMin >= 0 && rawEnvMin <= 59
+        ? rawEnvMin
+        : Number.isFinite(parsedMin) && parsedMin >= 0 && parsedMin <= 59
+          ? parsedMin
+          : 30;
+    const tickMs = Math.min(120_000, Math.max(20_000, Number(process.env.DAILY_OPERATION_REPORT_TICK_MS) || 45_000));
+    let lastFiredYmd = "";
+    setInterval(() => {
+      try {
+        const ymd = ymdTodayInHotelTz();
+        const parts = new Intl.DateTimeFormat("en-GB", {
+          timeZone: tz,
+          hour: "2-digit",
+          minute: "2-digit",
+          hourCycle: "h23",
+        }).formatToParts(new Date());
+        const h = Number(parts.find((p) => p.type === "hour")?.value);
+        const mi = Number(parts.find((p) => p.type === "minute")?.value);
+        if (h !== targetHour) return;
+        if (mi < targetMin || mi > targetMin + 9) return;
+        if (lastFiredYmd === ymd) return;
+        lastFiredYmd = ymd;
+        runDailyOperationReportJob({ ymd, source: "cron" }).catch((e) =>
+          console.error("[daily_operation_report] cron", e),
+        );
+      } catch (e) {
+        console.error("[daily_operation_report] cron_tick", e);
+      }
+    }, tickMs).unref();
+    console.info(
+      "[daily_operation_report] scheduler_on tz=%s time=%02d:%02d expr=%s tick_ms=%d",
+      tz,
+      targetHour,
+      targetMin,
+      cronExpr,
+      tickMs,
+    );
+  }
 });
 httpServer.on("error", (err) => {
   if (err && err.code === "EADDRINUSE") {

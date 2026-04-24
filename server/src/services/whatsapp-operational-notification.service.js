@@ -509,7 +509,7 @@ function buildLateCheckoutBodyParams(payload) {
   ];
 }
 
-function templateLanguageCode() {
+export function templateLanguageCode() {
   return (
     String(process.env.WHATSAPP_TEMPLATE_LANGUAGE || process.env.WHATSAPP_OPERATIONAL_TEMPLATE_LANGUAGE || "tr").trim() ||
     "tr"
@@ -584,6 +584,19 @@ export function getWhatsappOperationalHealthSummary() {
     },
     /** Şikayet + misafir bildirimi + geç çıkış → WHATSAPP_FRONT_RECIPIENTS */
     guestRelationRecipientCount: frontN,
+    /** Günlük PDF: HK / teknik / ön büro (önce DAILY_REPORT_* sonra operasyon listeleri; yedek: WHATSAPP_DAILY_REPORT_RECIPIENTS). */
+    dailyReportRecipientCounts: {
+      hk: parseOperationalRecipients(
+        process.env.WHATSAPP_DAILY_REPORT_HK_RECIPIENTS || process.env.WHATSAPP_HK_RECIPIENTS || "",
+      ).length,
+      tech: parseOperationalRecipients(
+        process.env.WHATSAPP_DAILY_REPORT_TECH_RECIPIENTS || process.env.WHATSAPP_TECH_RECIPIENTS || "",
+      ).length,
+      front: parseOperationalRecipients(
+        process.env.WHATSAPP_DAILY_REPORT_FRONT_RECIPIENTS || process.env.WHATSAPP_FRONT_RECIPIENTS || "",
+      ).length,
+      fallbackAll: parseOperationalRecipients(process.env.WHATSAPP_DAILY_REPORT_RECIPIENTS || "").length,
+    },
     /** Meta şablonunda «Dynamic URL» butonu env ile açıksa (suffix sunucu üretir). */
     panelUrlButtons: {
       hk: String(process.env.WHATSAPP_HK_PANEL_URL_BUTTON || "").trim() === "1",
@@ -593,7 +606,7 @@ export function getWhatsappOperationalHealthSummary() {
   };
 }
 
-function parseMetaError(raw) {
+export function parseMetaError(raw) {
   let detail = String(raw || "").slice(0, 1200);
   let code = "";
   let sub = "";

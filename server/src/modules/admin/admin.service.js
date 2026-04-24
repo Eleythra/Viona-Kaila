@@ -48,6 +48,12 @@ function applyDateFilters(qb, query = {}, column = "submitted_at") {
   if (fromD) out = out.gte(column, `${fromD}T00:00:00.000Z`);
   else if (fromRaw) out = out.gte(column, fromRaw);
 
+  const toLt = String(query.to_lt || "").trim();
+  if (toLt) {
+    out = out.lt(column, toLt);
+    return out;
+  }
+
   const toD = isoCalendarDateOnly(query.to);
   const toRaw = toD ? "" : String(query.to || "").trim();
   if (toD) {

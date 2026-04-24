@@ -112,3 +112,29 @@ export async function renderVionaPdfBuffer(reportData) {
     await page.close();
   }
 }
+
+/** Günlük operasyon raporu (HTML tam sayfa; UTF-8 tablolar). */
+export async function renderDailyOperationPdfBuffer(htmlString) {
+  const browser = await getBrowser();
+  const page = await browser.newPage();
+  try {
+    await page.setContent(String(htmlString || ""), {
+      waitUntil: "domcontentloaded",
+      timeout: SET_CONTENT_TIMEOUT_MS,
+    });
+    await page.emulateMediaType("screen");
+    return await page.pdf({
+      format: "A4",
+      landscape: true,
+      printBackground: true,
+      preferCSSPageSize: true,
+      margin: { top: "8mm", right: "8mm", bottom: "8mm", left: "8mm" },
+      timeout: 90_000,
+    });
+  } catch (err) {
+    console.error("[pdf] renderDailyOperationPdfBuffer failed:", err?.message || err);
+    throw err;
+  } finally {
+    await page.close();
+  }
+}

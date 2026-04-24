@@ -375,3 +375,62 @@ export function formatOperationalTemplatePreviewText(recordType, payload) {
 
   return lines.join("\n");
 }
+
+function mergeRowPayloadDetails(row) {
+  const r = row && typeof row === "object" ? row : {};
+  const details = r.details && typeof r.details === "object" ? r.details : {};
+  const raw = r.raw_payload && typeof r.raw_payload === "object" ? r.raw_payload : {};
+  const rd = raw.details && typeof raw.details === "object" ? raw.details : {};
+  return { ...rd, ...details };
+}
+
+/** Günlük operasyon PDF — HK istek satırı «form bölümü». */
+export function opReportRequestSection(row) {
+  const r = coerceOperationalPayload("request", row);
+  return requestSectionLabelTr(normalizeRequestCategoryKey(r.category));
+}
+
+/** Günlük operasyon PDF — HK «talep türü». */
+export function opReportRequestTypeLine(row) {
+  const r = coerceOperationalPayload("request", row);
+  return buildRequestTypeLineTr(normalizeRequestCategoryKey(r.category), mergeRowPayloadDetails(r));
+}
+
+/** Günlük operasyon PDF — HK adet (yoksa «—»). */
+export function opReportRequestQuantityDisplay(row) {
+  const r = coerceOperationalPayload("request", row);
+  const q = buildRequestQuantityLine(normalizeRequestCategoryKey(r.category), mergeRowPayloadDetails(r));
+  return q != null ? q : "—";
+}
+
+export function opReportFaultCategory(row) {
+  const r = coerceOperationalPayload("fault", row);
+  return categoryLabel("fault", r.category);
+}
+
+export function opReportFaultLocation(row) {
+  const r = coerceOperationalPayload("fault", row);
+  const d = mergeRowPayloadDetails(r);
+  return locLabel(r.location || d.location);
+}
+
+export function opReportFaultUrgency(row) {
+  const r = coerceOperationalPayload("fault", row);
+  const d = mergeRowPayloadDetails(r);
+  return urgLabel(r.urgency || d.urgency);
+}
+
+export function opReportComplaintSubject(row) {
+  const r = coerceOperationalPayload("complaint", row);
+  return categoryLabel("complaint", r.category);
+}
+
+export function opReportGuestNotificationMain(row) {
+  const r = coerceOperationalPayload("guest_notification", row);
+  return guestNotificationMainCategoryLabel(r.category);
+}
+
+export function opReportGuestNotificationSub(row) {
+  const r = coerceOperationalPayload("guest_notification", row);
+  return categoryLabel("guest_notification", r.category);
+}

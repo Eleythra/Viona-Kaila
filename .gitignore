@@ -11,6 +11,8 @@ server/.cache/
 .wwebjs_cache/
 server/.wwebjs_cache/
 server/runtime/
+# Günlük operasyon raporu idempotency bayrakları (yerel disk)
+server/.data/
 .env
 .env.*
 !.env.example

@@ -1,0 +1,218 @@
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { parseOperationalRecipients } from "../../../services/whatsapp-operational-notification.service.js";
+import { sendDailyOperationReportPdfTemplate } from "../../../services/whatsapp-daily-operation-report.service.js";
+import {
+  buildDailyReportWhatsappHotelLine,
+  formatDailyReportBodyDateTr,
+} from "./daily-operation-report-template.js";
+import { buildDailyOperationReportPdfBuffer } from "./daily-operation-report.service.js";
+
+const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** HK → Teknik → Ön büro; her biri kendi PDF’i + alıcı listesi. */
+const SEGMENTS = [
+  {
+    key: "hk",
+    envKeys: ["WHATSAPP_DAILY_REPORT_HK_RECIPIENTS", "WHATSAPP_HK_RECIPIENTS"],
+    fileSlug: "hk",
+  },
+  {
+    key: "tech",
+    envKeys: ["WHATSAPP_DAILY_REPORT_TECH_RECIPIENTS", "WHATSAPP_TECH_RECIPIENTS"],
+    fileSlug: "tech",
+  },
+  {
+    key: "front",
+    envKeys: ["WHATSAPP_DAILY_REPORT_FRONT_RECIPIENTS", "WHATSAPP_FRONT_RECIPIENTS"],
+    fileSlug: "front",
+  },
+];
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+function betweenSendsMs() {
+  const n = Number(process.env.DAILY_OPERATION_REPORT_BETWEEN_SENDS_MS);
+  return Number.isFinite(n) && n >= 0 ? Math.min(n, 120_000) : 2000;
+}
+
+export function ymdTodayInHotelTz() {
+  const tz = String(
+    process.env.DAILY_OPERATION_REPORT_TZ || process.env.HOTEL_TIMEZONE || "Europe/Istanbul",
+  ).trim();
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const y = parts.find((p) => p.type === "year")?.value;
+  const mo = parts.find((p) => p.type === "month")?.value;
+  const d = parts.find((p) => p.type === "day")?.value;
+  if (!y || !mo || !d) return new Date().toISOString().slice(0, 10);
+  return `${y}-${mo}-${d}`;
+}
+
+function sentFlagPath(ymd, fileSlug) {
+  return path.join(process.cwd(), ".data", "daily-operation-report", `${ymd}.${fileSlug}.sent`);
+}
+
+function markSent(ymd, fileSlug) {
+  const dir = path.join(process.cwd(), ".data", "daily-operation-report");
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(sentFlagPath(ymd, fileSlug), `${new Date().toISOString()}\n`, "utf8");
+}
+
+function recipientsForSegment(envKeys) {
+  for (const k of envKeys) {
+    const list = parseOperationalRecipients(process.env[k] || "");
+    if (list.length) return { list, envKey: k };
+  }
+  const fallback = parseOperationalRecipients(process.env.WHATSAPP_DAILY_REPORT_RECIPIENTS || "");
+  return { list: fallback, envKey: fallback.length ? "WHATSAPP_DAILY_REPORT_RECIPIENTS" : "" };
+}
+
+function allSegmentsAlreadySent(ymd) {
+  return SEGMENTS.every(({ fileSlug }) => existsSync(sentFlagPath(ymd, fileSlug)));
+}
+
+/**
+ * @param {{ ymd?: string, force?: boolean, source?: string }} opts
+ */
+export async function runDailyOperationReportJob(opts = {}) {
+  const ymd = String(opts.ymd || "").trim() || ymdTodayInHotelTz();
+  if (!YMD_RE.test(ymd)) {
+    return { ok: false, error: "invalid_report_ymd", ymd };
+  }
+
+  const force = Boolean(opts.force);
+  const source = String(opts.source || "").trim() || "-";
+
+  if (!force && allSegmentsAlreadySent(ymd)) {
+    console.info("[daily_operation_report] skipped reason=all_segments_sent ymd=%s source=%s", ymd, source);
+    return { ok: true, skipped: true, reason: "all_segments_sent", ymd };
+  }
+
+  const hotelName = String(process.env.DAILY_OPERATION_REPORT_HOTEL_NAME || "Otel").trim() || "Otel";
+  const reportDateText = formatDailyReportBodyDateTr(ymd);
+  const pauseMs = betweenSendsMs();
+
+  const results = [];
+  let anyFailure = false;
+  let pauseBeforeNextSend = false;
+
+  for (const seg of SEGMENTS) {
+    if (!force && existsSync(sentFlagPath(ymd, seg.fileSlug))) {
+      console.info(
+        "[daily_operation_report] segment_skip reason=already_sent ymd=%s segment=%s source=%s",
+        ymd,
+        seg.key,
+        source,
+      );
+      results.push({ segment: seg.key, skipped: true, reason: "already_sent" });
+      continue;
+    }
+
+    const { list: recipients, envKey } = recipientsForSegment(seg.envKeys);
+    if (!recipients.length) {
+      console.warn(
+        "[daily_operation_report] segment_skip reason=empty_recipients ymd=%s segment=%s tried_env=%s source=%s",
+        ymd,
+        seg.key,
+        seg.envKeys.join("|"),
+        source,
+      );
+      results.push({ segment: seg.key, skipped: true, reason: "empty_recipients" });
+      continue;
+    }
+
+    if (pauseBeforeNextSend && pauseMs > 0) {
+      await sleep(pauseMs);
+    }
+
+    const pdfBuffer = await buildDailyOperationReportPdfBuffer({
+      ymd,
+      hotelName,
+      segment: seg.key,
+    });
+    const filename = `Gunluk-${seg.fileSlug}-${ymd}.pdf`;
+    const hotelLine2 = buildDailyReportWhatsappHotelLine({ segment: seg.key, hotelName });
+
+    const wa = await sendDailyOperationReportPdfTemplate({
+      pdfBuffer,
+      filename,
+      reportDateText,
+      hotelName: hotelLine2,
+      recipients,
+    });
+
+    if (wa.skipped) {
+      console.warn(
+        "[daily_operation_report] whatsapp_skipped ymd=%s segment=%s reason=%s env=%s source=%s",
+        ymd,
+        seg.key,
+        wa.reason || "-",
+        envKey || "-",
+        source,
+      );
+      results.push({ segment: seg.key, skipped: true, whatsapp: wa });
+      anyFailure = true;
+      pauseBeforeNextSend = true;
+      continue;
+    }
+    if (!wa.ok) {
+      console.warn(
+        "[daily_operation_report] whatsapp_failed ymd=%s segment=%s reason=%s delivered=%s/%s source=%s",
+        ymd,
+        seg.key,
+        wa.reason || "-",
+        wa.deliveredCount ?? 0,
+        recipients.length,
+        source,
+      );
+      results.push({ segment: seg.key, ok: false, whatsapp: wa });
+      anyFailure = true;
+      pauseBeforeNextSend = true;
+      continue;
+    }
+
+    markSent(ymd, seg.fileSlug);
+    console.info(
+      "[daily_operation_report] segment_done ymd=%s segment=%s delivered=%d/%s env=%s source=%s",
+      ymd,
+      seg.key,
+      wa.deliveredCount ?? 0,
+      recipients.length,
+      envKey || "-",
+      source,
+    );
+    results.push({ segment: seg.key, ok: true, whatsapp: wa });
+    pauseBeforeNextSend = true;
+  }
+
+  const hadDelivery = results.some((r) => r.ok);
+  const allNoRecipients =
+    results.length > 0 &&
+    results.every((r) => r.reason === "empty_recipients" || r.reason === "already_sent");
+
+  if (!hadDelivery && allNoRecipients && !results.some((r) => r.reason === "already_sent")) {
+    return {
+      ok: false,
+      ymd,
+      source,
+      reason: "no_recipients_configured",
+      segments: results,
+      betweenSendsMs: pauseMs,
+    };
+  }
+
+  return {
+    ok: !anyFailure,
+    ymd,
+    source,
+    segments: results,
+    betweenSendsMs: pauseMs,
+  };
+}
