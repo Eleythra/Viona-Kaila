@@ -105,16 +105,6 @@ const SEGMENT_TITLE = {
 };
 
 /**
- * WhatsApp şablonu {{2}}: bölüm + tesis (örn. «HK · Viona Kaila Beach Hotel»).
- * @param {{ segment: DailyReportSegment, hotelName: string }} p
- */
-export function buildDailyReportWhatsappHotelLine(p) {
-  const hotel = String(p.hotelName || "").trim() || "Otel";
-  const prefix = p.segment === "hk" ? "HK" : p.segment === "tech" ? "Teknik" : "Ön büro";
-  return `${prefix} · ${hotel}`;
-}
-
-/**
  * @param {{
  *   segment: DailyReportSegment,
  *   reportYmd: string,

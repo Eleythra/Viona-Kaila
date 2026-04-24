@@ -2,10 +2,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { parseOperationalRecipients } from "../../../services/whatsapp-operational-notification.service.js";
 import { sendDailyOperationReportPdfTemplate } from "../../../services/whatsapp-daily-operation-report.service.js";
-import {
-  buildDailyReportWhatsappHotelLine,
-  formatDailyReportBodyDateTr,
-} from "./daily-operation-report-template.js";
+import { formatDailyReportBodyDateTr } from "./daily-operation-report-template.js";
 import { buildDailyOperationReportPdfBuffer } from "./daily-operation-report.service.js";
 
 const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -138,14 +135,14 @@ export async function runDailyOperationReportJob(opts = {}) {
       segment: seg.key,
     });
     const filename = `Gunluk-${seg.fileSlug}-${ymd}.pdf`;
-    const hotelLine2 = buildDailyReportWhatsappHotelLine({ segment: seg.key, hotelName });
 
     const wa = await sendDailyOperationReportPdfTemplate({
       pdfBuffer,
       filename,
       reportDateText,
-      hotelName: hotelLine2,
+      hotelName,
       recipients,
+      segment: seg.key,
     });
 
     if (wa.skipped) {

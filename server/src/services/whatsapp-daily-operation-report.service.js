@@ -1,6 +1,7 @@
 /**
- * Günlük operasyon PDF’i: Graph `/{phone-id}/media` yükleme + şablon `daily_operation_report_pdf`
- * (belge başlığı + gövde {{1}} tarih metni, {{2}} tesis adı).
+ * Günlük operasyon PDF’i: Graph `/{phone-id}/media` yükleme + departman şablonu
+ * (`daily_operation_report_hk` | `daily_operation_report_tech` | `daily_operation_report_front`).
+ * Belge başlığı: PDF; gövde {{1}} tarih, {{2}} tesis adı (DAILY_OPERATION_REPORT_HOTEL_NAME).
  */
 
 import {
@@ -21,10 +22,27 @@ function buildWhatsappGraphMediaUrl() {
   return `https://graph.facebook.com/${graphVer}/${phoneNumberId}/media`;
 }
 
-function resolveDailyReportTemplateName() {
-  return (
-    String(process.env.WHATSAPP_TEMPLATE_DAILY_OPERATION_REPORT || "").trim() || "daily_operation_report_pdf"
-  );
+const DEFAULT_TEMPLATE_BY_SEGMENT = {
+  hk: "daily_operation_report_hk",
+  tech: "daily_operation_report_tech",
+  front: "daily_operation_report_front",
+};
+
+const TEMPLATE_ENV_BY_SEGMENT = {
+  hk: "WHATSAPP_TEMPLATE_DAILY_OPERATION_HK",
+  tech: "WHATSAPP_TEMPLATE_DAILY_OPERATION_TECH",
+  front: "WHATSAPP_TEMPLATE_DAILY_OPERATION_FRONT",
+};
+
+function resolveDailyReportTemplateName(segment) {
+  const s = String(segment || "").trim();
+  if (!["hk", "tech", "front"].includes(s)) {
+    throw new Error("invalid_daily_report_whatsapp_segment");
+  }
+  const envKey = TEMPLATE_ENV_BY_SEGMENT[s];
+  const fromEnv = String(process.env[envKey] || "").trim();
+  if (fromEnv) return fromEnv;
+  return DEFAULT_TEMPLATE_BY_SEGMENT[s];
 }
 
 function clipText(t, max = PARAM_MAX) {
@@ -63,13 +81,19 @@ async function uploadPdfMedia(token, pdfBuffer, filename) {
 }
 
 /**
- * @param {{ pdfBuffer: Buffer, filename: string, reportDateText: string, hotelName: string, recipients: string[] }} opts
- * @returns {Promise<{ ok: boolean, skipped?: boolean, reason?: string, deliveredCount?: number, recipients?: number, mediaId?: string }>}
+ * @param {{ pdfBuffer: Buffer, filename: string, reportDateText: string, hotelName: string, recipients: string[], segment: 'hk'|'tech'|'front' }} opts
+ * @returns {Promise<{ ok: boolean, skipped?: boolean, reason?: string, deliveredCount?: number, recipients?: number, mediaId?: string, templateName?: string }>}
  */
 export async function sendDailyOperationReportPdfTemplate(opts = {}) {
   const { token, envKey: tokenEnvKey } = resolveWhatsappAccessToken();
   const phoneNumberId = resolveWhatsappPhoneNumberId();
   const recipients = Array.isArray(opts.recipients) ? opts.recipients.filter(Boolean) : [];
+  const segment = String(opts.segment || "").trim();
+
+  if (!["hk", "tech", "front"].includes(segment)) {
+    console.warn("[whatsapp_daily_report] skipped reason=invalid_segment segment=%s", segment || "-");
+    return { ok: false, skipped: true, reason: "invalid_segment" };
+  }
 
   if (!token || !phoneNumberId) {
     console.warn(
@@ -91,7 +115,7 @@ export async function sendDailyOperationReportPdfTemplate(opts = {}) {
   const filename = String(opts.filename || "rapor.pdf").trim() || "rapor.pdf";
   const reportDateText = clipText(opts.reportDateText || "—", 900);
   const hotelName = clipText(opts.hotelName || "—", 900);
-  const templateName = resolveDailyReportTemplateName();
+  const templateName = resolveDailyReportTemplateName(segment);
   const lang = templateLanguageCode();
   const graphUrl = buildWhatsappGraphMessagesUrl();
 
@@ -123,7 +147,8 @@ export async function sendDailyOperationReportPdfTemplate(opts = {}) {
   ];
 
   console.info(
-    "[whatsapp_daily_report] send_start template=%s language=%s recipient_count=%d media_id=%s",
+    "[whatsapp_daily_report] send_start segment=%s template=%s language=%s recipient_count=%d media_id=%s",
+    segment,
     templateName,
     lang,
     recipients.length,
@@ -181,6 +206,7 @@ export async function sendDailyOperationReportPdfTemplate(opts = {}) {
       reason: "all_recipients_failed",
       recipients: recipients.length,
       mediaId,
+      templateName,
     };
   }
   if (deliveredCount < recipients.length) {
@@ -190,8 +216,9 @@ export async function sendDailyOperationReportPdfTemplate(opts = {}) {
       recipients: recipients.length,
       deliveredCount,
       mediaId,
+      templateName,
     };
   }
 
-  return { ok: true, recipients: recipients.length, deliveredCount, mediaId };
+  return { ok: true, recipients: recipients.length, deliveredCount, mediaId, templateName };
 }

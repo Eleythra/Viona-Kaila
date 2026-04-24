@@ -371,6 +371,22 @@
     }
   }
 
+  function isOperasyonAdminTab(t) {
+    return t === "op_hk" || t === "op_tech" || t === "op_front";
+  }
+
+  /** HK ↔ Teknik ↔ Ön büro arasında geçince takvim günü paylaşımı yüzünden eski gün kalmasın; otele göre bugüne döner. */
+  function resetOpCalendarToHotelToday() {
+    var today = hotelCalendarYmd(new Date());
+    opSelectedCalendarDay = today;
+    opFollowHotelToday = true;
+    persistOpDayState();
+    syncOpFiltersAndDomFromSelectedDay();
+    opHkPage = 1;
+    opTechPage = 1;
+    opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
+  }
+
   function syncOpFiltersAndDomFromSelectedDay() {
     var y = String(opSelectedCalendarDay || "").trim();
     if (!/^\d{4}-\d{2}-\d{2}$/.test(y)) {
@@ -2052,7 +2068,11 @@
     el.querySelectorAll(".alert-openbtn[data-go-tab]").forEach(function (btn) {
       btn.addEventListener("click", async function () {
         var tab = btn.getAttribute("data-go-tab");
+        var prevTab = activeAdminTab;
         openTab(tab);
+        if (isOperasyonAdminTab(tab) && isOperasyonAdminTab(prevTab) && tab !== prevTab) {
+          resetOpCalendarToHotelToday();
+        }
         if (tab === "requests") await loadBucket("request", "list-requests");
         if (tab === "complaints") await loadBucket("complaint", "list-complaints");
         if (tab === "faults") await loadBucket("fault", "list-faults");
@@ -2204,6 +2224,9 @@
         if (tab === "evaluations") await loadEvaluations();
         if (tab === "pdf-report") setPdfCustomRangeUi(Boolean(document.getElementById("pdf-custom-range") && document.getElementById("pdf-custom-range").checked));
         if (tab === "logs") await loadLogs();
+        if (isOperasyonAdminTab(tab) && isOperasyonAdminTab(previousActive) && tab !== previousActive) {
+          resetOpCalendarToHotelToday();
+        }
         if (tab === "op_hk" || tab === "op_tech" || tab === "op_front") {
           maybeAdvanceOpHotelToday();
           syncOpFiltersAndDomFromSelectedDay();
