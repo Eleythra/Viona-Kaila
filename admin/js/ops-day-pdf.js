@@ -6,6 +6,12 @@
   "use strict";
 
   var MERGE_MAX_PAGES = 40;
+  var PDF_FONT_FAMILY = "DejaVuSans";
+  var DEJAVU_URL = "https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf";
+  var DEJAVU_BOLD_URL = "https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf";
+  var _gPdfUtf8 = false;
+  var _dejavuNormalB64 = "";
+  var _dejavuBoldB64 = "";
 
   function pdfLatinize(s) {
     return String(s == null ? "" : s)
@@ -21,6 +27,62 @@
       .replace(/Ö/g, "O")
       .replace(/ç/g, "c")
       .replace(/Ç/g, "C");
+  }
+
+  function uint8ToBinaryString(u8) {
+    var CHUNK = 0x8000;
+    var out = [];
+    for (var i = 0; i < u8.length; i += CHUNK) {
+      out.push(String.fromCharCode.apply(null, u8.subarray(i, Math.min(i + CHUNK, u8.length))));
+    }
+    return out.join("");
+  }
+
+  async function ensurePdfUnicodeFont(doc) {
+    if (doc.__vionaPdfFontOk) {
+      _gPdfUtf8 = true;
+      return true;
+    }
+    try {
+      if (!_dejavuNormalB64) {
+        var rb = await fetch(DEJAVU_URL, { mode: "cors", cache: "force-cache" });
+        if (!rb.ok) throw new Error("font_fetch");
+        _dejavuNormalB64 = btoa(uint8ToBinaryString(new Uint8Array(await rb.arrayBuffer())));
+      }
+      doc.addFileToVFS("DejaVuSans.ttf", _dejavuNormalB64);
+      doc.addFont("DejaVuSans.ttf", PDF_FONT_FAMILY, "normal");
+      if (!_dejavuBoldB64) {
+        try {
+          var rb2 = await fetch(DEJAVU_BOLD_URL, { mode: "cors", cache: "force-cache" });
+          if (rb2.ok) {
+            _dejavuBoldB64 = btoa(uint8ToBinaryString(new Uint8Array(await rb2.arrayBuffer())));
+          }
+        } catch (_e2) {}
+      }
+      if (_dejavuBoldB64) {
+        doc.addFileToVFS("DejaVuSans-Bold.ttf", _dejavuBoldB64);
+        doc.addFont("DejaVuSans-Bold.ttf", PDF_FONT_FAMILY, "bold");
+      }
+      doc.__vionaPdfFontOk = true;
+      _gPdfUtf8 = true;
+      doc.setFont(PDF_FONT_FAMILY, "normal");
+      return true;
+    } catch (_e) {
+      _gPdfUtf8 = false;
+      return false;
+    }
+  }
+
+  function pdfText(s) {
+    return _gPdfUtf8 ? String(s == null ? "" : s) : pdfLatinize(s);
+  }
+
+  function activePdfFont() {
+    return _gPdfUtf8 ? PDF_FONT_FAMILY : "helvetica";
+  }
+
+  function setPdfFont(doc, style) {
+    doc.setFont(activePdfFont(), style || "normal");
   }
 
   function normAdminIssueStatus(row) {
@@ -125,31 +187,32 @@
   }
 
   function drawStatusLegend(doc, M, y, contentW) {
+    var boxH = 38;
     doc.setFillColor(248, 250, 252);
-    doc.roundedRect(M, y, contentW, 30, 4, 4, "F");
+    doc.roundedRect(M, y, contentW, boxH, 4, 4, "F");
     doc.setDrawColor(226, 232, 240);
-    doc.roundedRect(M, y, contentW, 30, 4, 4, "S");
+    doc.roundedRect(M, y, contentW, boxH, 4, 4, "S");
     var items = [
-      { b: "bekliyor", l: "Bekl." },
-      { b: "yapiliyor", l: "Yapr." },
-      { b: "yapildi", l: "Bitti" },
-      { b: "yapilmadi", l: "Red" },
-      { b: "iptal", l: "Iptal" },
+      { b: "bekliyor", l: "Bekleyen" },
+      { b: "yapiliyor", l: "İşlemde" },
+      { b: "yapildi", l: "Tamamlandı" },
+      { b: "yapilmadi", l: "Olumsuz" },
+      { b: "iptal", l: "İptal" },
     ];
-    var slot = Math.min(104, (contentW - 16) / items.length);
+    var slot = Math.min(118, (contentW - 16) / items.length);
     var x0 = M + 8;
     var pill = 8;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
+    setPdfFont(doc, "normal");
+    doc.setFontSize(6.6);
     items.forEach(function (it, i) {
       var x = x0 + i * slot;
       var st = statusPillStyle(it.b);
       doc.setFillColor(st.fill[0], st.fill[1], st.fill[2]);
-      doc.roundedRect(x, y + 9, pill, pill, 2, 2, "F");
+      doc.roundedRect(x, y + 10, pill, pill, 2, 2, "F");
       doc.setTextColor(51, 65, 85);
-      doc.text(pdfLatinize(it.l), x + pill + 3, y + 16);
+      doc.text(pdfText(it.l), x + pill + 3, y + 18, { maxWidth: slot - pill - 6 });
     });
-    return y + 36;
+    return y + boxH + 10;
   }
 
   function createPdfDocument() {
@@ -183,6 +246,22 @@
     return s.length >= 16 ? s.slice(0, 16).replace("T", " ") : s.slice(0, 10);
   }
 
+  /** PDF tablosu: gg.aa.yyyy ss:dd */
+  function formatSubmittedPdfTr(iso) {
+    var s = String(iso || "");
+    if (!s) return "-";
+    var d = new Date(s);
+    if (!Number.isNaN(d.getTime())) {
+      var dd = String(d.getDate()).padStart(2, "0");
+      var mm = String(d.getMonth() + 1).padStart(2, "0");
+      var yyyy = String(d.getFullYear());
+      var hh = String(d.getHours()).padStart(2, "0");
+      var mi = String(d.getMinutes()).padStart(2, "0");
+      return dd + "." + mm + "." + yyyy + " " + hh + ":" + mi;
+    }
+    return s.length >= 16 ? s.slice(0, 16).replace("T", " ") : s.slice(0, 10);
+  }
+
   function operationGuestName(row) {
     if (!row || typeof row !== "object") return "";
     var g = String(row.guest_name || "").replace(/\s+/g, " ").trim();
@@ -200,25 +279,34 @@
     if (c) bits.push(c);
     if (d) bits.push(d);
     var t = bits.join(" — ") || "-";
-    return pdfLatinize(t.length > 220 ? t.slice(0, 217) + "..." : t);
+    t = t.length > 220 ? t.slice(0, 217) + "…" : t;
+    return pdfText(t);
   }
 
   function statusLabelPdf(row, type) {
     var st = normAdminIssueStatus(row);
     if (type === "complaint" || type === "guest_notification") {
-      if (st === "done") return pdfLatinize("Dikkate alindi");
-      if (st === "rejected") return pdfLatinize("Dikkate alinmadi");
-      if (st === "in_progress") return pdfLatinize("Islemde");
-      if (st === "new" || st === "pending") return pdfLatinize("Bekliyor");
-      if (st === "cancelled") return pdfLatinize("Iptal");
-      return pdfLatinize(st);
+      if (st === "done") return pdfText("Dikkate alındı");
+      if (st === "rejected") return pdfText("Dikkate alınmadı");
+      if (st === "in_progress") return pdfText("İşlemde");
+      if (st === "new" || st === "pending") return pdfText("Bekliyor");
+      if (st === "cancelled") return pdfText("İptal");
+      return pdfText(st);
     }
-    if (st === "done") return pdfLatinize("Yapildi");
-    if (st === "rejected") return pdfLatinize("Yapilmadi");
-    if (st === "in_progress") return pdfLatinize("Yapiliyor");
-    if (st === "new" || st === "pending") return pdfLatinize("Bekliyor");
-    if (st === "cancelled") return pdfLatinize("Iptal");
-    return pdfLatinize(st);
+    if (type === "late_checkout") {
+      if (st === "done") return pdfText("Onaylandı");
+      if (st === "rejected") return pdfText("Onaylanmadı");
+      if (st === "in_progress") return pdfText("İşlemde");
+      if (st === "new" || st === "pending") return pdfText("Bekliyor");
+      if (st === "cancelled") return pdfText("İptal");
+      return pdfText(st);
+    }
+    if (st === "done") return pdfText("Yapıldı");
+    if (st === "rejected") return pdfText("Yapılmadı");
+    if (st === "in_progress") return pdfText("Yapılıyor");
+    if (st === "new" || st === "pending") return pdfText("Bekliyor");
+    if (st === "cancelled") return pdfText("İptal");
+    return pdfText(st);
   }
 
   function drawPremiumHeader(doc, M, pageW, title, subtitle, reportDayYmd) {
@@ -233,19 +321,20 @@
     doc.setFillColor(212, 175, 85);
     doc.rect(M, 82, Math.min(200, pageW - 2 * M), 1.4, "F");
     doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
+    setPdfFont(doc, "bold");
     doc.setFontSize(18);
-    doc.text(pdfLatinize(title), M, 36);
-    doc.setFont("helvetica", "normal");
+    doc.text(pdfText(title), M, 36);
+    setPdfFont(doc, "normal");
     doc.setFontSize(9.5);
     doc.setTextColor(200, 212, 235);
-    var sub = pdfLatinize(subtitle);
-    doc.text(sub, M, 54, { maxWidth: pageW - 2 * M });
+    doc.text(pdfText(subtitle), M, 54, { maxWidth: pageW - 2 * M });
     if (reportDayYmd && /^\d{4}-\d{2}-\d{2}$/.test(reportDayYmd)) {
-      doc.setFont("helvetica", "bold");
+      var p = reportDayYmd.split("-");
+      var disp = p.length === 3 ? p[2] + "." + p[1] + "." + p[0] : reportDayYmd;
+      setPdfFont(doc, "bold");
       doc.setFontSize(11);
       doc.setTextColor(255, 248, 220);
-      doc.text(pdfLatinize("Rapor gunu: ") + reportDayYmd, M, 72);
+      doc.text(pdfText("Rapor günü: ") + disp, M, 72);
     }
     doc.setTextColor(28, 38, 52);
     return 98;
@@ -253,11 +342,11 @@
 
   function drawStatCards(doc, M, y, counts, contentW) {
     var items = [
-      { k: "bekliyor", l: "Bekliyor", rgb: [245, 158, 11] },
-      { k: "yapiliyor", l: "Yapiliyor", rgb: [59, 130, 246] },
-      { k: "yapildi", l: "Yapildi", rgb: [34, 197, 94] },
-      { k: "yapilmadi", l: "Yapilmadi", rgb: [239, 68, 68] },
-      { k: "iptal", l: "Iptal", rgb: [100, 116, 139] },
+      { k: "bekliyor", l: "Bekleyen", rgb: [245, 158, 11] },
+      { k: "yapiliyor", l: "İşlemde", rgb: [59, 130, 246] },
+      { k: "yapildi", l: "Tamamlandı", rgb: [34, 197, 94] },
+      { k: "yapilmadi", l: "Olumsuz", rgb: [239, 68, 68] },
+      { k: "iptal", l: "İptal", rgb: [100, 116, 139] },
     ];
     var gap = 7;
     var n = items.length;
@@ -270,14 +359,14 @@
       doc.setDrawColor(it.rgb[0], it.rgb[1], it.rgb[2]);
       doc.setLineWidth(2.2);
       doc.line(x + 5, y + 10, x + 5, y + h - 10);
-      doc.setFont("helvetica", "bold");
+      setPdfFont(doc, "bold");
       doc.setFontSize(15);
       doc.setTextColor(15, 23, 42);
       doc.text(String(counts[it.k] != null ? counts[it.k] : 0), x + w / 2, y + 28, { align: "center" });
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7.8);
+      setPdfFont(doc, "normal");
+      doc.setFontSize(7.2);
       doc.setTextColor(71, 85, 105);
-      doc.text(pdfLatinize(it.l), x + w / 2, y + 44, { align: "center" });
+      doc.text(pdfText(it.l), x + w / 2, y + 44, { align: "center", maxWidth: w - 6 });
     });
     return y + h + 16;
   }
@@ -285,10 +374,10 @@
   function drawSectionTitle(doc, M, y, text) {
     doc.setFillColor(241, 245, 249);
     doc.roundedRect(M, y, doc.internal.pageSize.getWidth() - 2 * M, 22, 4, 4, "F");
-    doc.setFont("helvetica", "bold");
+    setPdfFont(doc, "bold");
     doc.setFontSize(11);
     doc.setTextColor(30, 41, 59);
-    doc.text(pdfLatinize(text), M + 10, y + 14);
+    doc.text(pdfText(text), M + 10, y + 14);
     return y + 30;
   }
 
@@ -298,10 +387,10 @@
     (rows || []).forEach(function (r) {
       buckets.push(rowStatusBucket(r));
       body.push([
-        pdfLatinize(formatSubmittedShort(r.submitted_at)),
-        pdfLatinize(String(r.room_number || "-")),
-        pdfLatinize(operationGuestName(r) || "-"),
-        pdfLatinize(String(r.category || (r.categories && r.categories[0]) || "-")),
+        pdfText(formatSubmittedPdfTr(r.submitted_at)),
+        pdfText(String(r.room_number || "-")),
+        pdfText(operationGuestName(r) || "-"),
+        pdfText(String(r.category || (r.categories && r.categories[0]) || "-")),
         pdfDetailShort(r, type),
         statusLabelPdf(r, type),
       ]);
@@ -311,10 +400,10 @@
 
   function autoTableBlock(doc, M, pageW, pageH, startY, head, body, buckets) {
     if (!body.length) {
-      doc.setFont("helvetica", "italic");
+      setPdfFont(doc, "italic");
       doc.setFontSize(10);
       doc.setTextColor(100, 116, 139);
-      doc.text(pdfLatinize("Bu gun icin kayit bulunmuyor."), M, startY + 8);
+      doc.text(pdfText("Bu gün için kayıt bulunmuyor."), M, startY + 8);
       return startY + 28;
     }
     doc.autoTable({
@@ -323,7 +412,7 @@
       body: body,
       theme: "grid",
       styles: {
-        font: "helvetica",
+        font: activePdfFont(),
         fontSize: 8.5,
         cellPadding: { top: 5, bottom: 5, left: 4, right: 4 },
         overflow: "linebreak",
@@ -333,6 +422,7 @@
         lineWidth: 0.35,
       },
       headStyles: {
+        font: activePdfFont(),
         fillColor: [30, 64, 110],
         textColor: [248, 250, 252],
         fontStyle: "bold",
@@ -368,12 +458,12 @@
         }
       },
       didDrawPage: function (data) {
-        doc.setFont("helvetica", "normal");
+        setPdfFont(doc, "normal");
         doc.setFontSize(7.5);
         doc.setTextColor(100, 116, 139);
-        var foot = pdfLatinize("Viona · Kaila Beach Hotel  |  Olusturma: " + formatSubmittedShort(new Date().toISOString()));
+        var foot = pdfText("Viona · Kaila Beach Hotel  |  Oluşturma: " + formatSubmittedPdfTr(new Date().toISOString()));
         doc.text(foot, M, pageH - 20);
-        doc.text(pdfLatinize("Sayfa ") + data.pageNumber, pageW - M, pageH - 20, { align: "right" });
+        doc.text(pdfText("Sayfa ") + data.pageNumber, pageW - M, pageH - 20, { align: "right" });
       },
     });
     return doc.lastAutoTable.finalY + 14;
@@ -405,28 +495,30 @@
     var pageH = doc.internal.pageSize.getHeight();
     var M = 36;
     var contentW = pageW - 2 * M;
+    var p = String(ymd || "").split("-");
+    var ymdDisp = p.length === 3 ? p[2] + "." + p[1] + "." + p[0] : ymd;
     var sub =
-      pdfLatinize("Operasyon gunu (Istanbul takvimi): ") +
-      ymd +
-      pdfLatinize("  |  Kayit sayisi: ") +
+      pdfText("Operasyon günü (İstanbul takvimi): ") +
+      ymdDisp +
+      pdfText("  |  Kayıt sayısı: ") +
       String((rows || []).length);
     var y0 = drawPremiumHeader(doc, M, pageW, typeTitle, sub + " · " + variantTitle, ymd);
     var k = countOpsKanbanStatus(rows);
     var y1 = drawStatCards(doc, M, y0, k, contentW);
     y1 = drawStatusLegend(doc, M, y1, contentW);
     if (k.diger > 0) {
-      doc.setFont("helvetica", "italic");
+      setPdfFont(doc, "italic");
       doc.setFontSize(8);
       doc.setTextColor(100, 116, 139);
-      doc.text(pdfLatinize("Not: ") + String(k.diger) + pdfLatinize(" kayit standart disi durum kodunda."), M, y1);
+      doc.text(pdfText("Not: ") + String(k.diger) + pdfText(" kayıt standart dışı durum kodunda."), M, y1);
       y1 += 12;
     }
-    doc.setFont("helvetica", "normal");
+    setPdfFont(doc, "normal");
     doc.setFontSize(9);
     doc.setTextColor(51, 65, 85);
     doc.text(
-      pdfLatinize(
-        "Tablo: satir zemini durum grubunu, Durum sutunu renkli rozet olarak gosterir (Istanbul gunu ile filtrelenmis kayitlar).",
+      pdfText(
+        "Tablo: satır zemini durum grubunu, Durum sütunu renkli rozet olarak gösterir (İstanbul günü ile süzülmüş kayıtlar).",
       ),
       M,
       y1,
@@ -435,12 +527,12 @@
     y1 += 22;
     var head = [
       [
-        pdfLatinize("Zaman"),
-        pdfLatinize("Oda"),
-        pdfLatinize("Misafir"),
-        pdfLatinize("Kategori"),
-        pdfLatinize("Detay"),
-        pdfLatinize("Durum"),
+        pdfText("Zaman"),
+        pdfText("Oda"),
+        pdfText("Misafir"),
+        pdfText("Kategori"),
+        pdfText("Detay"),
+        pdfText("Durum"),
       ],
     ];
     var pack = buildRowsForTable(rows, type);
@@ -463,10 +555,15 @@
       throw new Error("invalid_date");
     }
     var doc = createPdfDocument();
+    _gPdfUtf8 = false;
+    await ensurePdfUnicodeFont(doc);
+    if (!_gPdfUtf8) {
+      doc.setFont("helvetica", "normal");
+    }
 
     if (variant === "hk") {
       var packHk = await fetchDay(adapter, "request", ymd);
-      oneSectionPdf(doc, pdfLatinize("HK operasyon"), pdfLatinize("Gunluk HK talep raporu"), ymd, packHk.items || [], "request");
+      oneSectionPdf(doc, pdfText("HK operasyon"), pdfText("Günlük HK talep raporu"), ymd, packHk.items || [], "request");
       if (packHk.truncated) {
         var ph = doc.internal.pageSize.getHeight();
         var pw = doc.internal.pageSize.getWidth();
@@ -476,11 +573,11 @@
           doc.addPage();
           fy = 36;
         }
-        doc.setFont("helvetica", "bold");
+        setPdfFont(doc, "bold");
         doc.setFontSize(8.5);
         doc.setTextColor(180, 83, 9);
         doc.text(
-          pdfLatinize("Not: Sayfa limiti nedeniyle liste kesilmis olabilir; tam liste icin panelden kontrol edin."),
+          pdfText("Not: Sayfa limiti nedeniyle liste kesilmiş olabilir; tam liste için panelden kontrol edin."),
           36,
           fy,
           { maxWidth: pw - 72 },
@@ -492,7 +589,7 @@
 
     if (variant === "tech") {
       var packT = await fetchDay(adapter, "fault", ymd);
-      oneSectionPdf(doc, pdfLatinize("Teknik operasyon"), pdfLatinize("Gunluk ariza raporu"), ymd, packT.items || [], "fault");
+      oneSectionPdf(doc, pdfText("Teknik operasyon"), pdfText("Günlük arıza raporu"), ymd, packT.items || [], "fault");
       if (packT.truncated) {
         var ph2 = doc.internal.pageSize.getHeight();
         var pw2 = doc.internal.pageSize.getWidth();
@@ -502,11 +599,11 @@
           doc.addPage();
           fy2 = 36;
         }
-        doc.setFont("helvetica", "bold");
+        setPdfFont(doc, "bold");
         doc.setFontSize(8.5);
         doc.setTextColor(180, 83, 9);
         doc.text(
-          pdfLatinize("Not: Sayfa limiti nedeniyle liste kesilmis olabilir; tam liste icin panelden kontrol edin."),
+          pdfText("Not: Sayfa limiti nedeniyle liste kesilmiş olabilir; tam liste için panelden kontrol edin."),
           36,
           fy2,
           { maxWidth: pw2 - 72 },
@@ -525,17 +622,19 @@
       var M = 36;
       var contentW = pageW - 2 * M;
       var total = (packC.items || []).length + (packG.items || []).length + (packL.items || []).length;
+      var pd = String(ymd || "").split("-");
+      var ymdDispF = pd.length === 3 ? pd[2] + "." + pd[1] + "." + pd[0] : ymd;
       var sub =
-        pdfLatinize("Operasyon gunu: ") +
-        ymd +
-        pdfLatinize("  |  Toplam kayit: ") +
+        pdfText("Operasyon günü: ") +
+        ymdDispF +
+        pdfText("  |  Toplam kayıt: ") +
         String(total);
       var y = drawPremiumHeader(
         doc,
         M,
         pageW,
-        pdfLatinize("Gunluk on buro operasyon raporu"),
-        sub + pdfLatinize(" · Sikayet, misafir bildirimi, gec cikis"),
+        pdfText("Günlük ön büro operasyon raporu"),
+        sub + pdfText(" · Şikâyet, misafir bildirimi, geç çıkış"),
         ymd,
       );
       var allRows = (packC.items || []).concat(packG.items || []).concat(packL.items || []);
@@ -543,32 +642,32 @@
       y = drawStatCards(doc, M, y, kAll, contentW);
       y = drawStatusLegend(doc, M, y, contentW);
       if (kAll.diger > 0) {
-        doc.setFont("helvetica", "italic");
+        setPdfFont(doc, "italic");
         doc.setFontSize(8);
         doc.setTextColor(100, 116, 139);
-        doc.text(pdfLatinize("Not: ") + String(kAll.diger) + pdfLatinize(" kayit standart disi durum kodunda."), M, y);
+        doc.text(pdfText("Not: ") + String(kAll.diger) + pdfText(" kayıt standart dışı durum kodunda."), M, y);
         y += 12;
       }
-      doc.setFont("helvetica", "normal");
+      setPdfFont(doc, "normal");
       doc.setFontSize(9);
       doc.setTextColor(51, 65, 85);
       doc.text(
-        pdfLatinize("Her bolum ayri tablodur; satir zemini ve Durum rozetleri ayni renk mantigini kullanir."),
+        pdfText("Her bölüm ayrı tablodur; satır zemini ve Durum rozetleri aynı renk mantığını kullanır."),
         M,
         y,
         { maxWidth: contentW },
       );
       y += 22;
 
-      y = drawSectionTitle(doc, M, y, pdfLatinize("Sikayetler (" + String((packC.items || []).length) + ")"));
+      y = drawSectionTitle(doc, M, y, pdfText("Şikâyetler (" + String((packC.items || []).length) + ")"));
       var head = [
         [
-          pdfLatinize("Zaman"),
-          pdfLatinize("Oda"),
-          pdfLatinize("Misafir"),
-          pdfLatinize("Kategori"),
-          pdfLatinize("Detay"),
-          pdfLatinize("Durum"),
+          pdfText("Zaman"),
+          pdfText("Oda"),
+          pdfText("Misafir"),
+          pdfText("Kategori"),
+          pdfText("Detay"),
+          pdfText("Durum"),
         ],
       ];
       var p1 = buildRowsForTable(packC.items, "complaint");
@@ -578,7 +677,7 @@
         y = M + 10;
       }
 
-      y = drawSectionTitle(doc, M, y, pdfLatinize("Misafir bildirimleri (" + String((packG.items || []).length) + ")"));
+      y = drawSectionTitle(doc, M, y, pdfText("Misafir bildirimleri (" + String((packG.items || []).length) + ")"));
       var p2 = buildRowsForTable(packG.items, "guest_notification");
       y = autoTableBlock(doc, M, pageW, pageH, y, head, p2.body, p2.buckets);
       if (y > pageH - 120) {
@@ -586,7 +685,7 @@
         y = M + 10;
       }
 
-      y = drawSectionTitle(doc, M, y, pdfLatinize("Gec cikis (" + String((packL.items || []).length) + ")"));
+      y = drawSectionTitle(doc, M, y, pdfText("Geç çıkış (" + String((packL.items || []).length) + ")"));
       var p3 = buildRowsForTable(packL.items, "late_checkout");
       autoTableBlock(doc, M, pageW, pageH, y, head, p3.body, p3.buckets);
 
@@ -600,11 +699,11 @@
           doc.addPage();
           fy = 40;
         }
-        doc.setFont("helvetica", "bold");
+        setPdfFont(doc, "bold");
         doc.setFontSize(8.5);
         doc.setTextColor(180, 83, 9);
         doc.text(
-          pdfLatinize("Not: Sayfa limiti nedeniyle bazi listeler kesilmis olabilir; tam liste icin panelden filtre ile kontrol edin."),
+          pdfText("Not: Sayfa limiti nedeniyle bazı listeler kesilmiş olabilir; tam liste için panelden filtre ile kontrol edin."),
           M,
           fy,
           { maxWidth: contentW },
@@ -617,6 +716,7 @@
     throw new Error("unknown_variant");
     } finally {
       download._vionaPdfBusy = false;
+      _gPdfUtf8 = false;
     }
   }
 

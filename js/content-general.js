@@ -586,21 +586,40 @@
     },
   ];
 
-  function renderGeneralModule(container) {
+  function getGeneralSectionsMerged() {
+    var extra = window.VionaGeneralLocalesExtra;
+    if (!extra || !Array.isArray(extra) || extra.length !== SECTIONS.length) return SECTIONS;
+    return SECTIONS.map(function (sec, i) {
+      var e = extra[i];
+      if (!e || !e.title) return sec;
+      return {
+        icon: sec.icon,
+        defaultOpen: sec.defaultOpen,
+        title: Object.assign({}, sec.title, e.title),
+        html: e.html ? Object.assign({}, sec.html, e.html) : sec.html,
+      };
+    });
+  }
+
+  function renderGeneralModule(container, t) {
     var wrap = document.createElement("div");
     wrap.className = "viona-mod viona-mod--general";
 
     var lead = document.createElement("p");
     lead.className = "viona-mod-lead";
-    lead.textContent = P({
-      tr: "Bu bölümde otelle ilgili genel bilgiler konulara göre gruplandırılmıştır. Aşağıdaki başlıklara dokunarak açabilirsiniz.",
-      en: "General hotel information grouped by topic — tap a heading to expand.",
-      de: "Allgemeine Hotelinformationen nach Themen — zum Öffnen auf die Überschrift tippen.",
-      pl: "Ogólne informacje o hotelu pogrupowane według tematów — dotknij nagłówka, aby rozwinąć.",
-    });
+    lead.textContent =
+      typeof t === "function"
+        ? t("modGeneralLead")
+        : P({
+            tr: "Bu bölümde otelle ilgili genel bilgiler konulara göre gruplandırılmıştır. Aşağıdaki başlıklara dokunarak açabilirsiniz.",
+            en: "General hotel information grouped by topic — tap a heading to expand.",
+            de: "Allgemeine Hotelinformationen nach Themen — zum Öffnen auf die Überschrift tippen.",
+            pl: "Ogólne informacje o hotelu pogrupowane według tematów — dotknij nagłówka, aby rozwinąć.",
+          });
     wrap.appendChild(lead);
 
-    SECTIONS.forEach(function (sec) {
+    var sections = getGeneralSectionsMerged();
+    sections.forEach(function (sec) {
       var det = document.createElement("details");
       det.className = "viona-acc";
       if (sec.defaultOpen) det.open = true;

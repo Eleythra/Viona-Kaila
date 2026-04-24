@@ -355,6 +355,103 @@
     },
   };
 
+  /** Sohbet modülü: karşılama, kısayollar, «Din besked» — ek UI dilleri (en tabanı üzerine). */
+  var CHAT_UI_PATCH = {
+    ru: {
+      chatWelcomeTitleLine: " · Чем я могу помочь вам сегодня?",
+      chatWelcomeLead:
+        "Спрашивайте о ресторанах и барах, бассейнах, спа, как добраться и деталях проживания — всё в одном месте.",
+      chatEmptyHint: "Выберите быстрый вопрос ниже или напишите своё.",
+      chatPlaceholder: "Введите сообщение…",
+      chatComposerLabel: "Ваше сообщение",
+      chatFormOptionsIntro: "Варианты",
+      chatQuickRest: "Часы работы ресторанов",
+      chatQuickPool: "Бассейн и пляж",
+      chatQuickSpa: "Спа и wellness",
+      chatQuickAnim: "Анимация и мероприятия",
+      chatQuickCheck: "Время заезда и выезда",
+      chatQuickWifi: "Wi‑Fi и интернет",
+    },
+    da: {
+      chatWelcomeTitleLine: " · Hvordan kan jeg hjælpe dig i dag?",
+      chatWelcomeLead:
+        "Spørg om restauranter og barer, pool, strand, spa, beliggenhed og praktisk info om opholdet — samlet ét sted.",
+      chatEmptyHint: "Prøv en genvej nedenfor, eller skriv dit eget spørgsmål.",
+      chatPlaceholder: "Skriv din besked…",
+      chatComposerLabel: "Din besked",
+      chatFormOptionsIntro: "Valgmuligheder",
+      chatQuickRest: "Restauranttider",
+      chatQuickPool: "Pool og strand",
+      chatQuickSpa: "Spa og wellness",
+      chatQuickAnim: "Animation og aktiviteter",
+      chatQuickCheck: "Ind- og udtjekningstider",
+      chatQuickWifi: "Wi‑Fi og internet",
+    },
+    cs: {
+      chatWelcomeTitleLine: " · Jak vám dnes mohu pomoci?",
+      chatWelcomeLead:
+        "Zeptejte se na restaurace a bary, bazény, spa, polohu a praktické informace k pobytu — vše na jednom místě.",
+      chatEmptyHint: "Zkuste zkratku níže nebo napište vlastní dotaz.",
+      chatPlaceholder: "Napište zprávu…",
+      chatComposerLabel: "Vaše zpráva",
+      chatFormOptionsIntro: "Možnosti",
+      chatQuickRest: "Otevírací doba restaurací",
+      chatQuickPool: "Bazén a pláž",
+      chatQuickSpa: "Spa a wellness",
+      chatQuickAnim: "Animace a akce",
+      chatQuickCheck: "Časy přihlášení a odhlášení",
+      chatQuickWifi: "Wi‑Fi a internet",
+    },
+    ro: {
+      chatWelcomeTitleLine: " · Cu ce vă pot ajuta astăzi?",
+      chatWelcomeLead:
+        "Întrebați despre restaurante și baruri, piscină, plajă, spa, locație și detalii practice despre sejur — totul într-un singur loc.",
+      chatEmptyHint: "Folosiți o scurtătură de mai jos sau scrieți propria întrebare.",
+      chatPlaceholder: "Scrieți mesajul…",
+      chatComposerLabel: "Mesajul dvs.",
+      chatFormOptionsIntro: "Opțiuni",
+      chatQuickRest: "Program restaurant",
+      chatQuickPool: "Piscină și plajă",
+      chatQuickSpa: "Spa și wellness",
+      chatQuickAnim: "Animație și evenimente",
+      chatQuickCheck: "Ore check-in și check-out",
+      chatQuickWifi: "Wi‑Fi și internet",
+    },
+    nl: {
+      chatWelcomeTitleLine: " · Hoe kan ik u vandaag helpen?",
+      chatWelcomeLead:
+        "Vraag over restaurants en bars, zwembad, strand, spa, locatie en praktische verblijfsinfo — alles op één plek.",
+      chatEmptyHint: "Probeer hieronder een snelkoppeling of stel uw eigen vraag.",
+      chatPlaceholder: "Typ uw bericht…",
+      chatComposerLabel: "Uw bericht",
+      chatFormOptionsIntro: "Opties",
+      chatQuickRest: "Restauranttijden",
+      chatQuickPool: "Zwembad en strand",
+      chatQuickSpa: "Spa en wellness",
+      chatQuickAnim: "Animatie en activiteiten",
+      chatQuickCheck: "In- en uitchecktijden",
+      chatQuickWifi: "Wi‑Fi en internet",
+    },
+    sk: {
+      chatWelcomeTitleLine: " · Ako vám dnes môžem pomôcť?",
+      chatWelcomeLead:
+        "Opýtajte sa na reštaurácie a bary, bazény, spa, polohu a praktické informácie k pobytu — všetko na jednom mieste.",
+      chatEmptyHint: "Skúste skratku nižšie alebo napíšte vlastnú otázku.",
+      chatPlaceholder: "Napíšte správu…",
+      chatComposerLabel: "Vaša správa",
+      chatFormOptionsIntro: "Možnosti",
+      chatQuickRest: "Otváracie hodiny reštaurácií",
+      chatQuickPool: "Bazén a pláž",
+      chatQuickSpa: "Spa a wellness",
+      chatQuickAnim: "Animácia a podujatia",
+      chatQuickCheck: "Časy príchodu a odchodu",
+      chatQuickWifi: "Wi‑Fi a internet",
+    },
+  };
+  Object.keys(CHAT_UI_PATCH).forEach(function (c) {
+    if (PATCH[c]) Object.assign(PATCH[c], CHAT_UI_PATCH[c]);
+  });
+
   window.VIONA_LANG.EXTRA.forEach(function (code) {
     var p = PATCH[code];
     I18N[code] = Object.assign({}, E, p || {});

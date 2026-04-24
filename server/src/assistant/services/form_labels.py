@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Literal, Dict
 
 from assistant.core.chatbot_languages import CHATBOT_UI_LANG_SET, FORM_LABEL_FALLBACK_ORDER
+from assistant.services.form_labels_extra_langs import merge_extra_lang_columns
 
 Lang = Literal["tr", "en", "de", "pl"]
 
@@ -447,6 +448,8 @@ CATEGORY_LABELS: Dict[str, Dict[str, Dict[Lang, str]]] = {
         },
     },
 }
+
+merge_extra_lang_columns(CATEGORY_LABELS)
 
 FIELD_LABELS: Dict[str, Dict[Lang, str]] = {
     "category": {"tr": "Kategori", "en": "Category", "de": "Kategorie", "pl": "Kategoria"},

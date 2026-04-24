@@ -1,19 +1,20 @@
 from typing import Dict
 
-from assistant.core.chatbot_languages import EXTRA_CHATBOT_UI_LANGS
+from assistant.core.chatbot_languages import CHATBOT_UI_LANG_SET, EXTRA_CHATBOT_UI_LANGS
+from assistant.services.localization_chat_form import inject_chat_form_strings
 from assistant.services.localization_pl import TRANSLATIONS_PL
 
 
 TRANSLATIONS: Dict[str, Dict[str, str]] = {
     "tr": {
-        "chitchat_greeting": "Merhaba, ben Viona; Kaila Beach Hotel'deki dijital asistanınızım. Size nasıl yardımcı olabilirim?",
-        "chitchat_assistant_intro": "Ben Viona — Kaila Beach Hotel için çalışan dijital asistanınızım. Otel hizmetleri ve sorularınızda size yardımcı olabilirim.",
-        "chitchat_identity_question": "Ben Viona, Kaila Beach Hotel için tasarlanmış dijital asistanım. Otel hizmetleri, konaklama ve genel sorular konusunda yardımcı olabilirim.",
-        "chitchat_thanks": "Rica ederim. Konaklamanızla ilgili başka bir konuda yardımcı olabilirim.",
-        "chitchat_farewell": "Görüşmek üzere. İhtiyacınız olursa yine buradayım.",
-        "chitchat_apology_from_user": "Hiç sorun değil. Size memnuniyetle yardımcı olmaya devam edebilirim.",
-        "chitchat_compliment": "Nazik geri bildiriminiz için teşekkür ederim. Yardımcı olabildiysem ne mutlu bana.",
-        "chitchat_how_are_you": "Teşekkür ederim, iyiyim. Kaila Beach Hotel ile ilgili sorularınızda yanınızdayım.",
+        "chitchat_greeting": "Merhaba; ben Viona, Kaila Beach Hotel'in dijital asistanınızım. Konaklamanızda size nasıl eşlik edebilirim?",
+        "chitchat_assistant_intro": "Ben Viona — Kaila Beach Hotel için çalışan dijital asistanınızım. Otel deneyiminiz, hizmetler ve pratik sorularınızda zarif ve net biçimde yanınızdayım.",
+        "chitchat_identity_question": "Ben Viona; Kaila Beach Hotel için tasarlanmış dijital asistanınızım. Otel hizmetleri, konaklama ve genel bilgilerde size rehberlik edebilirim.",
+        "chitchat_thanks": "Rica ederim. Kaila Beach'teki konaklamanızla ilgili başka bir konuda da memnuniyetle yanınızdayım.",
+        "chitchat_farewell": "Görüşmek üzere. İhtiyaç duyduğunuz her an buradayım.",
+        "chitchat_apology_from_user": "Hiç sorun değil. Size aynı özenle yardımcı olmaya devam ederim.",
+        "chitchat_compliment": "Nazik düşünceniz için teşekkür ederim. Yardımcı olabildiysem mutluluk duyarım.",
+        "chitchat_how_are_you": "Teşekkür ederim, çok iyiyim. Kaila Beach Hotel ile ilgili her soruda yanınızdayım.",
         "chitchat_cancel_command_hint": (
             "«İptal» derken kastettiğiniz şey sohbet formu özeti, bir rezervasyon talebi ya da başka bir işlem olabilir. "
             "Özet ekranında 2 seçeneği vazgeç anlamına gelir. "
@@ -27,7 +28,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
             "Tekrar başlamak için örneğin «priz çalışmıyor» yazabilirsiniz. "
             "Ad soyad adımında kimlikteki gibi adınızı ve soyadınızı iki kelime olarak yazmanız gerekir (ör. Ayşe Yılmaz)."
         ),
-        "session_ack_after_cancel": "Anlaşıldı. Başka bir konuda yardımcı olmamı isterseniz yazabilirsiniz.",
+        "session_ack_after_cancel": "Anlaşıldı. Başka bir konuda eşlik etmemi isterseniz birkaç kelimeyle yazmanız yeterli.",
         "session_vazgectim_after_cancel": (
             "Kayıt oluşturulmadı. İsterseniz aynı konuda yeniden sohbet formu ile ilerleyebilir veya yeni bir talep / arıza yazabilirsiniz."
         ),
@@ -43,33 +44,33 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
             "Mini Club / Mini Disco saatleri çocuk yaş grubuna göre sınırlı olabilir."
         ),
         "chat_form_cancel_ack_fault": (
-            "Tamam, bu arıza bildirimini iptal ettim. İstediğiniz zaman yeni bir arıza, talep veya misafir bildirimi oluşturabilirsiniz."
+            "İsteğiniz üzerine bu arıza bildirimini iptal ettim. Dilediğiniz an yeni bir arıza, talep veya misafir bildirimi oluşturabilirsiniz."
         ),
         "chat_form_cancel_ack_request": (
-            "Tamam, bu talebi iptal ettim. İstediğiniz zaman yeni bir talep, arıza bildirimi veya misafir bildirimi oluşturabilirsiniz."
+            "İsteğiniz üzerine bu talebi iptal ettim. Dilediğiniz an yeni bir talep, arıza bildirimi veya misafir bildirimi oluşturabilirsiniz."
         ),
         "chat_form_cancel_ack_complaint": (
-            "Tamam, bu şikayet kaydını iptal ettim. İstediğiniz zaman yeni bir şikayet, talep veya arıza bildirimi oluşturabilirsiniz."
+            "İsteğiniz üzerine bu şikayet kaydını iptal ettim. Dilediğiniz an yeni bir şikayet, talep veya arıza bildirimi oluşturabilirsiniz."
         ),
         "chat_form_cancel_ack_guest_notification": (
-            "Tamam, bu misafir bildirimini iptal ettim. İstediğiniz zaman yeni bir misafir bildirimi, talep veya arıza bildirimi oluşturabilirsiniz."
+            "İsteğiniz üzerine bu misafir bildirimini iptal ettim. Dilediğiniz an yeni bir misafir bildirimi, talep veya arıza bildirimi oluşturabilirsiniz."
         ),
         "chat_form_context_retract_ack": (
-            "Anladım; kayıt açmaya gerek kalmadıysa iyi oldu. Başka bir konuda — oda, yemek-içecek, aktiviteler veya resepsiyon — "
-            "nasıl yardımcı olayım, kısaca yazmanız yeterli."
+            "Anladım; kayıt gerekmediyse memnuniyetle not aldım. Oda, yemek-içecek, aktiviteler veya resepsiyon konusunda "
+            "nasıl eşlik edeyim — kısaca yazmanız yeterli."
         ),
-        "chitchat_switch_en": "I'll reply in English from now on. How can I help you?",
-        "chitchat_switch_tr": "Bundan sonra Türkçe yanıtlıyorum. Size nasıl yardımcı olabilirim?",
-        "chitchat_switch_de": "Ich antworte ab jetzt auf Deutsch. Wie kann ich Ihnen helfen?",
-        "chitchat_switch_pl": "Od teraz odpowiadam po polsku. W czym mogę pomóc?",
+        "chitchat_switch_en": "Good day — I'll reply in English from now on. How may I assist you?",
+        "chitchat_switch_tr": "Bundan sonra Türkçe yanıtlıyorum. Konaklamanızda size nasıl eşlik edebilirim?",
+        "chitchat_switch_de": "Gern ab jetzt auf Deutsch. Wobei darf ich behilflich sein?",
+        "chitchat_switch_pl": "Od teraz odpowiadam po polsku. W czym mogę dziś pomóc?",
         "current_time_template": "Şu an saat {time}'dir.",
         "fault_redirect_message": "Bu sorun için lütfen Arıza Talep formunu doldurunuz.",
         "complaint_redirect_message": "Bu konu için lütfen Şikayet formunu doldurunuz.",
         "request_redirect_message": "Talebinizi İstek formu üzerinden iletebilirsiniz.",
         "guest_relations_redirect_message": "Bu konu için lütfen Misafir İlişkileri departmanı ile iletişime geçiniz.",
-        "reception_fallback_message": "İsteğinizi şu anda tam işleyemedim. Dilerseniz sorunuzu daha kısa şekilde tekrar yazabilirsiniz; size yardımcı olmaya devam edebilirim.",
-        "canonical_fallback_safe": "Bu konuda doğrulanmış bilgiye şu anda erişemiyorum. Size en doğru destek için lütfen resepsiyon ile iletişime geçiniz.",
-        "canonical_fallback_unavailable": "Şu anda asistana kısa süreli erişim sorunu yaşıyorum. Lütfen birkaç saniye sonra tekrar deneyiniz.",
+        "reception_fallback_message": "Bu mesajı şu an tam işleyemedim; birkaç kelimeyle yeniden yazarsanız memnuniyetle yardımcı olurum.",
+        "canonical_fallback_safe": "Bu konuda doğrulanmış bilgiye şu an erişemiyorum. En güncel ve doğru yönlendirme için resepsiyonla görüşmenizi öneririm.",
+        "canonical_fallback_unavailable": "Kısa bir süre için bağlantıda kesinti yaşanıyor. Lütfen birkaç saniye sonra yeniden deneyiniz.",
         "chat_fallback_throttled": (
             "Çok kısa sürede çok fazla mesaj gönderildi. Lütfen birkaç saniye bekleyip tekrar deneyiniz; acil durumda resepsiyon her zaman yardımcı olabilir."
         ),
@@ -167,14 +168,14 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         ),
     },
     "en": {
-        "chitchat_greeting": "Hello, I'm Viona, your digital assistant at Kaila Beach Hotel. How can I help you?",
-        "chitchat_assistant_intro": "I'm Viona, the digital assistant for Kaila Beach Hotel. I can help you with hotel services, information and practical questions during your stay.",
-        "chitchat_identity_question": "I'm Viona, the digital assistant for Kaila Beach Hotel. I can help with hotel services, stay-related questions, and general information.",
-        "chitchat_thanks": "You're very welcome. I'm here if you need any help with your stay at Kaila Beach Hotel.",
-        "chitchat_farewell": "See you. I'm here whenever you need help during your stay.",
-        "chitchat_apology_from_user": "No worries at all. I'm happy to keep helping you.",
-        "chitchat_compliment": "Thank you for your kind words. Glad I could help.",
-        "chitchat_how_are_you": "I'm doing well, thank you. I'm here to help with anything about Kaila Beach Hotel.",
+        "chitchat_greeting": "Good day — I'm Viona, your digital host at Kaila Beach Hotel. How may I assist you today?",
+        "chitchat_assistant_intro": "I'm Viona, your digital host at Kaila Beach Hotel. I can guide you through services, information, and practical details of your stay with clarity and care.",
+        "chitchat_identity_question": "I'm Viona, crafted for Kaila Beach Hotel. I can help with hotel services, your stay, and general information — simply and precisely.",
+        "chitchat_thanks": "You're most welcome. I'm here for anything else you'd like to refine about your stay.",
+        "chitchat_farewell": "Until next time. Whenever you need discreet assistance, I'm here.",
+        "chitchat_apology_from_user": "Not at all. I'll continue with the same care.",
+        "chitchat_compliment": "Thank you for your thoughtful words — I'm glad I could be of service.",
+        "chitchat_how_are_you": "Very well, thank you. Ask me anything about Kaila Beach Hotel; I'll keep answers concise and useful.",
         "chitchat_cancel_command_hint": (
             "When you say “cancel”, you might mean a chat form summary, a booking request, or something else. "
             "On the summary screen, 2 means cancel. "
@@ -188,7 +189,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
             "To start again, you can type something like “socket not working”. "
             "For full name, please type your first and last name as on your ID (two words, e.g. Jane Smith)."
         ),
-        "session_ack_after_cancel": "Understood. Tell me if you need help with anything else.",
+        "session_ack_after_cancel": "Understood. If anything else deserves attention, a short note is all I need.",
         "session_vazgectim_after_cancel": (
             "No record was created. You can start the chat form again for the same topic or type a new request or fault report."
         ),
@@ -204,33 +205,33 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
             "Mini Club / Mini Disco hours may vary by children’s age group."
         ),
         "chat_form_cancel_ack_fault": (
-            "Okay, I have cancelled this fault report. You can start a new fault report, request, or guest notification anytime."
+            "I've cancelled this fault report for you. Whenever you wish, you may open a new fault report, request, or guest notice."
         ),
         "chat_form_cancel_ack_request": (
-            "Okay, I have cancelled this request. You can start a new request, fault report, or guest notification anytime."
+            "I've cancelled this request for you. Whenever you wish, you may open a new request, fault report, or guest notice."
         ),
         "chat_form_cancel_ack_complaint": (
-            "Okay, I have cancelled this complaint. You can start a new complaint, request, or fault report anytime."
+            "I've cancelled this complaint for you. Whenever you wish, you may open a new complaint, request, or fault report."
         ),
         "chat_form_cancel_ack_guest_notification": (
-            "Okay, I have cancelled this guest notification. You can start a new guest notification, request, or fault report anytime."
+            "I've cancelled this guest notification for you. Whenever you wish, you may open a new guest notice, request, or fault report."
         ),
         "chat_form_context_retract_ack": (
-            "Understood — if no record is needed, that’s good news. Tell me in a few words how else I can help: your room, dining, "
-            "activities, or reception."
+            "Understood — if no record is required, that's perfectly fine. In a few words, how may I assist next: your room, dining, "
+            "activities, or reception?"
         ),
-        "chitchat_switch_en": "I'll reply in English from now on. How can I help you?",
-        "chitchat_switch_tr": "Bundan sonra Türkçe yanıtlıyorum. Size nasıl yardımcı olabilirim?",
-        "chitchat_switch_de": "Ich antworte ab jetzt auf Deutsch. Wie kann ich Ihnen helfen?",
-        "chitchat_switch_pl": "Od teraz odpowiadam po polsku. W czym mogę pomóc?",
+        "chitchat_switch_en": "Good day — I'll reply in English from now on. How may I assist you?",
+        "chitchat_switch_tr": "Bundan sonra Türkçe yanıtlıyorum. Konaklamanızda size nasıl eşlik edebilirim?",
+        "chitchat_switch_de": "Gern ab jetzt auf Deutsch. Wobei darf ich behilflich sein?",
+        "chitchat_switch_pl": "Od teraz odpowiadam po polsku. W czym mogę dziś pomóc?",
         "current_time_template": "The current time is {time}.",
         "fault_redirect_message": "For this issue, please complete the Fault Report form.",
         "complaint_redirect_message": "For this matter, please complete the Complaint form.",
         "request_redirect_message": "You can submit your request through the Request form.",
         "guest_relations_redirect_message": "For this matter, please contact the Guest Relations department.",
-        "reception_fallback_message": "I couldn't fully process that right now. You can try asking again in a shorter way, and I'll keep helping.",
-        "canonical_fallback_safe": "I do not have verified information on this right now. For the most accurate assistance, please contact reception.",
-        "canonical_fallback_unavailable": "I am temporarily unavailable at the moment. Please try again in a few seconds.",
+        "reception_fallback_message": "I wasn't able to complete that just now. A shorter note works best — I'll gladly continue from there.",
+        "canonical_fallback_safe": "I don't have verified details on this at the moment. For the most accurate guidance, our front desk will be delighted to assist.",
+        "canonical_fallback_unavailable": "I'm briefly unavailable. Please try again in a few seconds.",
         "chat_fallback_throttled": (
             "You're sending messages very quickly. Please wait a few seconds and try again, or contact reception if you need help right away."
         ),
@@ -328,14 +329,14 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         ),
     },
     "de": {
-        "chitchat_greeting": "Hallo, ich bin Viona, Ihre digitale Assistentin im Kaila Beach Hotel. Wie kann ich Ihnen helfen?",
-        "chitchat_assistant_intro": "Ich bin Viona, die digitale Assistentin des Kaila Beach Hotels. Ich unterstütze Sie bei Services, Informationen und Fragen rund um Ihren Aufenthalt.",
-        "chitchat_identity_question": "Ich bin Viona, die digitale Assistentin des Kaila Beach Hotel. Ich helfe Ihnen gern bei Fragen zu Hotelservices und Ihrem Aufenthalt.",
-        "chitchat_thanks": "Gern geschehen. Wenn Sie noch Fragen zu Ihrem Aufenthalt haben, helfe ich Ihnen gern weiter.",
-        "chitchat_farewell": "Auf Wiedersehen. Ich bin jederzeit für Sie da, wenn Sie Hilfe brauchen.",
-        "chitchat_apology_from_user": "Kein Problem. Ich helfe Ihnen gern weiter.",
-        "chitchat_compliment": "Vielen Dank für Ihr nettes Feedback. Es freut mich, dass ich helfen konnte.",
-        "chitchat_how_are_you": "Danke, mir geht es gut. Ich unterstütze Sie gern bei Fragen rund um das Kaila Beach Hotel.",
+        "chitchat_greeting": "Guten Tag — ich bin Viona, Ihre digitale Gastgeberin im Kaila Beach Hotel. Wobei darf ich Ihnen heute behilflich sein?",
+        "chitchat_assistant_intro": "Ich bin Viona, Ihre digitale Gastgeberin im Kaila Beach Hotel. Ich begleite Sie bei Services, Informationen und praktischen Fragen Ihres Aufenthalts — klar und aufmerksam.",
+        "chitchat_identity_question": "Ich bin Viona, für das Kaila Beach Hotel entwickelt. Ich unterstütze Sie bei Hotelservices, Aufenthalt und allgemeinen Informationen.",
+        "chitchat_thanks": "Sehr gern. Für alles Weitere rund um Ihren Aufenthalt bin ich jederzeit für Sie da.",
+        "chitchat_farewell": "Auf Wiedersehen. Wenn Sie dezent Unterstützung wünschen, bin ich für Sie erreichbar.",
+        "chitchat_apology_from_user": "Kein Problem. Ich setze unsere Unterstützung gern mit derselben Sorgfalt fort.",
+        "chitchat_compliment": "Herzlichen Dank für Ihre freundlichen Worte — es freut mich, dass ich helfen konnte.",
+        "chitchat_how_are_you": "Danke, mir geht es ausgezeichnet. Fragen Sie gern alles zum Kaila Beach Hotel; ich antworte prägnant und nutzbringend.",
         "chitchat_cancel_command_hint": (
             "Mit „Abbrechen“ kann eine Chat-Formularzusammenfassung, eine Buchungsanfrage oder etwas anderes gemeint sein. "
             "Auf der Zusammenfassung bedeutet 2 „Abbrechen“. "
@@ -349,7 +350,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
             "Um neu zu starten, können Sie z. B. „Steckdose funktioniert nicht“ schreiben. "
             "Bitte geben Sie Vor- und Nachnamen wie im Ausweis an (zwei Wörter, z. B. Anna Müller)."
         ),
-        "session_ack_after_cancel": "Alles klar. Schreiben Sie gern, wenn Sie noch etwas brauchen.",
+        "session_ack_after_cancel": "Alles klar. Für alles Weitere genügt eine kurze Nachricht — ich bin gern für Sie da.",
         "session_vazgectim_after_cancel": (
             "Es wurde kein Eintrag erstellt. Sie können den Chat-Flow erneut starten oder eine neue Anfrage bzw. Störungsmeldung schreiben."
         ),
@@ -365,31 +366,31 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
             "Mini Club / Mini Disco können je nach Altersgruppe der Kinder abweichen."
         ),
         "chat_form_cancel_ack_fault": (
-            "In Ordnung, ich habe diese Störungsmeldung storniert. Sie können jederzeit eine neue Störungsmeldung, Anfrage oder Gästemeldung starten."
+            "Ich habe diese Störungsmeldung für Sie storniert. Wann immer Sie möchten, können Sie eine neue Meldung, Anfrage oder Gästenotiz beginnen."
         ),
         "chat_form_cancel_ack_request": (
-            "In Ordnung, ich habe diese Anfrage storniert. Sie können jederzeit eine neue Anfrage, Störungsmeldung oder Gästemeldung starten."
+            "Ich habe diese Anfrage für Sie storniert. Wann immer Sie möchten, können Sie eine neue Anfrage, Störungsmeldung oder Gästenotiz beginnen."
         ),
         "chat_form_cancel_ack_complaint": (
-            "In Ordnung, ich habe diese Beschwerde storniert. Sie können jederzeit eine neue Beschwerde, Anfrage oder Störungsmeldung starten."
+            "Ich habe diese Beschwerde für Sie storniert. Wann immer Sie möchten, können Sie eine neue Beschwerde, Anfrage oder Störungsmeldung beginnen."
         ),
         "chat_form_cancel_ack_guest_notification": (
-            "In Ordnung, ich habe diese Gästemeldung storniert. Sie können jederzeit eine neue Gästemeldung, Anfrage oder Störungsmeldung starten."
+            "Ich habe diese Gästemeldung für Sie storniert. Wann immer Sie möchten, können Sie eine neue Gästenotiz, Anfrage oder Störungsmeldung beginnen."
         ),
         "chat_form_context_retract_ack": (
             "Alles klar — wenn kein Eintrag nötig ist, freut mich das. Schreiben Sie kurz, womit ich sonst helfen darf: Zimmer, "
             "Essen & Trinken, Aktivitäten oder Rezeption."
         ),
-        "chitchat_switch_en": "I'll reply in English from now on. How can I help you?",
-        "chitchat_switch_tr": "Bundan sonra Türkçe yanıtlıyorum. Size nasıl yardımcı olabilirim?",
-        "chitchat_switch_de": "Ich antworte ab jetzt auf Deutsch. Wie kann ich Ihnen helfen?",
-        "chitchat_switch_pl": "Od teraz odpowiadam po polsku. W czym mogę pomóc?",
+        "chitchat_switch_en": "Good day — I'll reply in English from now on. How may I assist you?",
+        "chitchat_switch_tr": "Bundan sonra Türkçe yanıtlıyorum. Konaklamanızda size nasıl eşlik edebilirim?",
+        "chitchat_switch_de": "Gern ab jetzt auf Deutsch. Wobei darf ich behilflich sein?",
+        "chitchat_switch_pl": "Od teraz odpowiadam po polsku. W czym mogę dziś pomóc?",
         "current_time_template": "Die aktuelle Zeit ist {time}.",
         "fault_redirect_message": "Bitte füllen Sie für dieses Problem das Störungsmeldungsformular aus.",
         "complaint_redirect_message": "Bitte füllen Sie für dieses Thema das Beschwerdeformular aus.",
         "request_redirect_message": "Sie können Ihre Anfrage über das Anfrageformular senden.",
         "guest_relations_redirect_message": "Bitte wenden Sie sich für dieses Thema an die Gästebetreuung.",
-        "reception_fallback_message": "Ich konnte Ihre Anfrage gerade nicht vollständig verarbeiten. Versuchen Sie es gern noch einmal in kürzerer Form.",
+        "reception_fallback_message": "Das konnte ich gerade nicht vollständig auswerten. Eine knappere Formulierung hilft — ich unterstütze Sie gern weiter.",
         "canonical_fallback_safe": "Ich kann dazu derzeit keine verifizierten Informationen bereitstellen. Bitte wenden Sie sich für die sicherste Auskunft an die Rezeption.",
         "canonical_fallback_unavailable": "Ich bin momentan kurzzeitig nicht erreichbar. Bitte versuchen Sie es in wenigen Sekunden erneut.",
         "chat_fallback_throttled": (
@@ -491,37 +492,94 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 }
 
 _CHITCHAT_SWITCH_EXTRA_NATIVE: dict[str, str] = {
-    "ru": "Отныне отвечаю по-русски. Чем могу помочь?",
-    "da": "Fremover svarer jeg på dansk. Hvordan kan jeg hjælpe?",
-    "cs": "Odteď odpovídám česky. Jak vám mohu pomoci?",
-    "ro": "De acum răspund în română. Cu ce vă pot ajuta?",
-    "nl": "Ik antwoord voortaan in het Nederlands. Waarmee kan ik helpen?",
-    "sk": "Odteraz budem odpovedať po slovensky. Ako vám môžem pomôcť?",
+    "ru": "Отныне отвечаю по-русски. Чем могу быть полезна?",
+    "da": "Fremover svarer jeg på dansk. Hvordan kan jeg være til tjeneste?",
+    "cs": "Odteď odpovídám česky. Jak vám mohu dnes pomoci?",
+    "ro": "De acum răspund în română. Cu ce vă pot fi de folos?",
+    "nl": "Ik antwoord voortaan in het Nederlands. Waarmee mag ik u van dienst zijn?",
+    "sk": "Odteraz budem odpovedať po slovensky. Ako vám dnes môžem pomôcť?",
 }
 
-_en_bundle = TRANSLATIONS["en"]
+# Ek UI dilleri: tam kopya İngilizce yerine ince sözlük + `get()` zinciri (da/nl→de, cs/sk→pl, ro→en, ru→en yedeği).
+# Böylece selamlama / anahtar otel cümleleri «tamamen İngilizce» kalmaz; eksik anahtar anlamlı dilde devam eder.
+_RU_SURFACE: dict[str, str] = {
+    "chitchat_greeting": (
+        "Добрый день. Я Виона — цифровой консьерж отеля Kaila Beach. Чем могу быть полезна?"
+    ),
+    "chitchat_assistant_intro": (
+        "Я Виона, цифровой консьерж Kaila Beach Hotel. Помогу с сервисами, информацией и практическими вопросами проживания — кратко и по делу."
+    ),
+    "chitchat_identity_question": (
+        "Я Виона, создана для Kaila Beach Hotel. Помогу с услугами отеля, проживанием и общими вопросами."
+    ),
+    "chitchat_thanks": "Пожалуйста. Если появятся ещё вопросы о вашем отдыхе в Kaila Beach Hotel, я рядом.",
+    "chitchat_farewell": "До встречи. Когда понадобится ненавязчивая помощь — я на связи.",
+    "chitchat_apology_from_user": "Всё в порядке. Продолжу с тем же вниманием.",
+    "chitchat_compliment": "Благодарю за тёплые слова. Рада была быть полезной.",
+    "chitchat_how_are_you": "Спасибо, у меня всё отлично. Задавайте вопросы об отеле Kaila Beach — отвечу ясно и лаконично.",
+    "current_time_template": "Сейчас {time}.",
+    "session_ack_after_cancel": "Поняла. Если появится ещё что-то важное — короткой фразы достаточно.",
+    "fault_redirect_message": "Пожалуйста, заполните форму заявки о неисправности.",
+    "complaint_redirect_message": "Пожалуйста, заполните форму жалобы.",
+    "request_redirect_message": "Запрос можно отправить через форму «Запросы» в приложении.",
+    "reception_fallback_message": (
+        "Сейчас не удалось полностью обработать запрос. Короткая формулировка поможет — с удовольствием продолжу."
+    ),
+    "canonical_fallback_safe": (
+        "Проверенных данных по этому вопросу сейчас нет. Самую точную консультацию даст ресепшн отеля."
+    ),
+    "canonical_fallback_unavailable": "Кратковременный сбой. Пожалуйста, повторите запрос через несколько секунд.",
+    "chat_fallback_validation_error": "Пустое сообщение обработать нельзя. Напишите короткий вопрос или запрос.",
+    "guest_notification_policy_hint": (
+        "Уведомление гостя можно отправить в чате, выбрав категорию; в следующем сообщении достаточно ключевых слов, например «глютен», «аллергия», «праздник»."
+    ),
+    "fault_template_with_device": (
+        "Если не работает {device}, обратитесь на ресепшн — в отеле предусмотрен технический персонал."
+    ),
+    "fault_template_generic": "По этой неисправности обратитесь на ресепшн — в отеле предусмотрен технический персонал.",
+}
+
+_I18N_LOOKUP_CHAIN: dict[str, tuple[str, ...]] = {
+    "tr": ("tr", "en"),
+    "en": ("en", "tr"),
+    "de": ("de", "en", "tr"),
+    "pl": ("pl", "en", "tr"),
+    "da": ("da", "de", "en", "tr"),
+    "nl": ("nl", "de", "en", "tr"),
+    "cs": ("cs", "pl", "en", "tr"),
+    "sk": ("sk", "pl", "cs", "en", "tr"),
+    "ro": ("ro", "en", "tr"),
+    "ru": ("ru", "en", "tr"),
+}
+
 for _code in EXTRA_CHATBOT_UI_LANGS:
-    TRANSLATIONS[_code] = dict(_en_bundle)
-    TRANSLATIONS[_code][f"chitchat_switch_{_code}"] = _CHITCHAT_SWITCH_EXTRA_NATIVE[_code]
+    TRANSLATIONS[_code] = {f"chitchat_switch_{_code}": _CHITCHAT_SWITCH_EXTRA_NATIVE[_code]}
+    if _code == "ru":
+        TRANSLATIONS["ru"].update(_RU_SURFACE)
+
+inject_chat_form_strings(TRANSLATIONS)
 
 
 class LocalizationService:
     def get(self, key: str, language: str) -> str:
         lang = self.normalize_lang(language)
-        bundle = TRANSLATIONS[lang]
-        v = bundle.get(key)
-        if v is not None and str(v).strip() != "":
-            return str(v)
-        # Ekstra UI dilleri: eksik anahtarda önce İngilizce (otel metinleri), sonra Türkçe.
-        if lang in EXTRA_CHATBOT_UI_LANGS:
-            en_v = TRANSLATIONS["en"].get(key)
-            if en_v is not None and str(en_v).strip() != "":
-                return str(en_v)
+        chain = _I18N_LOOKUP_CHAIN.get(lang, ("tr", "en"))
+        for lg in chain:
+            if lg not in TRANSLATIONS:
+                continue
+            v = TRANSLATIONS[lg].get(key)
+            if v is not None and str(v).strip() != "":
+                return str(v)
         return TRANSLATIONS["tr"].get(key, key)
 
     @staticmethod
     def normalize_lang(language: str | None) -> str:
-        return language if language in TRANSLATIONS else "tr"
+        code = (language or "tr").strip().lower()
+        if code in CHATBOT_UI_LANG_SET:
+            return code
+        if code in TRANSLATIONS:
+            return code
+        return "tr"
 
     def canonical_fallback(self, language: str | None, reason: str = "safe") -> str:
         lang = self.normalize_lang(language)

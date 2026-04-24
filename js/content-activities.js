@@ -19,104 +19,222 @@
       en: "Animation & activities",
       de: "Animation & Aktivitäten",
       pl: "Animacja i aktywności",
+      ru: "Анимация и мероприятия",
+      da: "Animation og aktiviteter",
+      cs: "Animace a aktivity",
+      ro: "Animație și activități",
+      nl: "Animatie en activiteiten",
+      sk: "Animácia a aktivity",
     },
     lead: {
-      tr: "Aqua havuzda gün boyu animasyon ve su aktiviteleri. Katılım ücretsiz; güncel saatler tabloda.",
-      en: "Poolside animation and aqua activities all day at Aqua Pool. Free to join — times below.",
-      de: "Den ganzen Tag Animation und Wasseraktivitäten am Aqua Pool. Teilnahme kostenlos — Zeiten in der Tabelle.",
-      pl: "Przy basenie Aqua całodniowa animacja i zajęcia wodne. Udział bezpłatny — godziny poniżej.",
+      tr:
+        "Sezon boyunca her akşam canlı müzik, gösteri ve dans — aşağıdaki haftalık akşam programına göz atın. Gündüz Aqua havuzda ücretsiz su animasyonu ve oyunlar devam eder.",
+      en:
+        "Each evening through the season: live music, shows and dance — see the weekly night schedule below. By day, free aqua animation and pool games continue at Aqua Pool.",
+      de:
+        "Jeden Abend in der Saison: Live-Musik, Shows und Tanz — unten der wöchentliche Abendplan. Tagsüber kostenlose Wasser-Animation und Spiele am Aqua Pool.",
+      pl:
+        "Każdego wieczoru w sezonie: muzyka na żywo, pokazy i taniec — poniżej tygodniowy harmonogram wieczorny. W dzień bezpłatna animacja wodna i zabawy przy Aqua Pool.",
+      ru:
+        "Каждый вечер в течение сезона: живая музыка, шоу и танцы — ниже недельный вечерний график. Днём бесплатная водная анимация и игры у бассейна Aqua.",
+      da:
+        "Hver aften i sæsonen: live musik, shows og dans — se den ugentlige aftenplan nedenfor. Om dagen fortsætter gratis vandanimation og poollege ved Aqua Pool.",
+      cs:
+        "Každý večer během sezóny: živá hudba, představení a tanec — níže týdenní večerní program. Ve dne zdarma vodní animace a hry u bazénu Aqua.",
+      ro:
+        "În fiecare seară din sezon: muzică live, spectacole și dans — vezi programul săptămânal de seară mai jos. Ziua continuă animația acvatică gratuită și jocurile la Aqua Pool.",
+      nl:
+        "Elke avond het hele seizoen: livemuziek, shows en dans — zie het wekelijkse avondrooster hieronder. Overdag gratis wateranimatie en poolspellen bij Aqua Pool.",
+      sk:
+        "Každý večer počas sezóny: živá hudba, predstavenia a tanec — nižšie týždenný večerný program. Cez deň pokračuje bezplatná vodná animácia a hry pri Aqua Pool.",
     },
     scheduleTitle: {
-      tr: "Günlük program",
-      en: "Daily programme",
-      de: "Tagesprogramm",
-      pl: "Program dnia",
+      tr: "Haftalık akşam programı",
+      en: "Weekly evening programme",
+      de: "Wöchentliches Abendprogramm",
+      pl: "Tygodniowy program wieczorny",
+      ru: "Недельный вечерний график",
+      da: "Ugentligt aftenprogram",
+      cs: "Týdenní večerní program",
+      ro: "Program săptămânal de seară",
+      nl: "Wekelijks avondprogramma",
+      sk: "Týždenný večerný program",
     },
-    colTime: { tr: "Saat", en: "Time", de: "Uhrzeit", pl: "Time" },
-    colActivity: { tr: "Etkinlik", en: "Activity", de: "Aktivität", pl: "Activity" },
   };
 
-  var SCHEDULE = [
+  /** Haftalık akşam gösterileri — tüm UI dilleri (pickFromLangRow). */
+  var EVENING_SCHEDULE = [
     {
-      time: "10:00",
-      activity: {
-        tr: "Müzik ve Animasyon Başlangıcı",
-        en: "Music & Animation Start",
-        de: "Musik- & Animationsbeginn",
-        pl: "Start muzyki i animacji",
+      day: {
+        tr: "Pazartesi",
+        en: "Monday",
+        de: "Montag",
+        pl: "Poniedziałek",
+        ru: "Понедельник",
+        da: "Mandag",
+        cs: "Pondělí",
+        ro: "Luni",
+        nl: "Maandag",
+        sk: "Pondelok",
       },
+      time: "21:00",
+      event: {
+        tr: "Canlı müzik · Farşid",
+        en: "Live music · Farşid",
+        de: "Live-Musik · Farşid",
+        pl: "Muzyka na żywo · Farşid",
+        ru: "Живая музыка · Farşid",
+        da: "Live musik · Farşid",
+        cs: "Živá hudba · Farşid",
+        ro: "Muzică live · Farşid",
+        nl: "Livemuziek · Farşid",
+        sk: "Živá hudba · Farşid",
+      },
+      variant: "",
     },
     {
-      time: "10:30",
-      activity: {
-        tr: "Su Jimnastiği",
-        en: "Aqua Gym",
-        de: "Wassergymnastik",
-        pl: "Aqua gym",
+      day: {
+        tr: "Salı",
+        en: "Tuesday",
+        de: "Dienstag",
+        pl: "Wtorek",
+        ru: "Вторник",
+        da: "Tirsdag",
+        cs: "Úterý",
+        ro: "Marți",
+        nl: "Dinsdag",
+        sk: "Utorok",
       },
+      time: "21:15",
+      event: {
+        tr: "Akrobasi gösterisi",
+        en: "Acrobatics show",
+        de: "Akrobatik-Show",
+        pl: "Pokaz akrobatyczny",
+        ru: "Акробатическое шоу",
+        da: "Akrobatikshow",
+        cs: "Akrobatická show",
+        ro: "Spectacol de acrobație",
+        nl: "Acrobatiekshow",
+        sk: "Akrobatická šou",
+      },
+      variant: "",
     },
     {
-      time: "11:00",
-      activity: {
-        tr: "Dart Oyunu",
-        en: "Darts",
-        de: "Dart",
-        pl: "Dart",
+      day: {
+        tr: "Çarşamba",
+        en: "Wednesday",
+        de: "Mittwoch",
+        pl: "Środa",
+        ru: "Среда",
+        da: "Onsdag",
+        cs: "Středa",
+        ro: "Miercuri",
+        nl: "Woensdag",
+        sk: "Streda",
       },
+      time: "—",
+      variant: "empty",
     },
     {
-      time: "11:30",
-      activity: {
-        tr: "Su Topu",
-        en: "Water Polo",
-        de: "Wasserball",
-        pl: "Piłka wodna",
+      day: {
+        tr: "Perşembe",
+        en: "Thursday",
+        de: "Donnerstag",
+        pl: "Czwartek",
+        ru: "Четвер",
+        da: "Torsdag",
+        cs: "Čtvrtek",
+        ro: "Joi",
+        nl: "Donderdag",
+        sk: "Štvrtok",
       },
+      time: "21:15",
+      event: {
+        tr: "Miss gösterisi",
+        en: "Miss show",
+        de: "Miss-Show",
+        pl: "Pokaz Miss",
+        ru: "Шоу Miss",
+        da: "Miss-show",
+        cs: "Miss show",
+        ro: "Spectacol Miss",
+        nl: "Miss-show",
+        sk: "Miss šou",
+      },
+      variant: "",
     },
     {
-      time: "12:30 – 14:00",
-      activity: {
-        tr: "Serbest Aktivite Zamanı",
-        en: "Free Activity Time",
-        de: "Freie Aktivitätszeit",
-        pl: "Czas wolnych aktywności",
+      day: {
+        tr: "Cuma",
+        en: "Friday",
+        de: "Freitag",
+        pl: "Piątek",
+        ru: "Пятница",
+        da: "Fredag",
+        cs: "Pátek",
+        ro: "Vineri",
+        nl: "Vrijdag",
+        sk: "Piatok",
       },
+      time: "21:00",
+      event: {
+        tr: "Canlı müzik · Aether Band",
+        en: "Live music · Aether Band",
+        de: "Live-Musik · Aether Band",
+        pl: "Muzyka na żywo · Aether Band",
+        ru: "Живая музыка · Aether Band",
+        da: "Live musik · Aether Band",
+        cs: "Živá hudba · Aether Band",
+        ro: "Muzică live · Aether Band",
+        nl: "Livemuziek · Aether Band",
+        sk: "Živá hudba · Aether Band",
+      },
+      variant: "",
     },
     {
-      time: "14:45",
-      activity: {
-        tr: "Su Jimnastiği",
-        en: "Aqua Gym",
-        de: "Wassergymnastik",
-        pl: "Aqua gym",
+      day: {
+        tr: "Cumartesi",
+        en: "Saturday",
+        de: "Samstag",
+        pl: "Sobota",
+        ru: "Суббота",
+        da: "Lørdag",
+        cs: "Sobota",
+        ro: "Sâmbătă",
+        nl: "Zaterdag",
+        sk: "Sobota",
       },
+      time: "21:15",
+      event: {
+        tr: "Modern dans gösterisi",
+        en: "Modern dance show",
+        de: "Modern Dance Show",
+        pl: "Pokaz tańca nowoczesnego",
+        ru: "Шоу современного танца",
+        da: "Moderne danseforestilling",
+        cs: "Show moderního tance",
+        ro: "Spectacol de dans modern",
+        nl: "Moderne dansshow",
+        sk: "Show moderného tanca",
+      },
+      variant: "",
     },
     {
-      time: "15:00",
-      activity: {
-        tr: "Dart Oyunu",
-        en: "Darts",
-        de: "Dart",
-        pl: "Dart",
+      day: {
+        tr: "Pazar",
+        en: "Sunday",
+        de: "Sonntag",
+        pl: "Niedziela",
+        ru: "Воскресенье",
+        da: "Søndag",
+        cs: "Neděle",
+        ro: "Duminică",
+        nl: "Zondag",
+        sk: "Nedeľa",
       },
-    },
-    {
-      time: "16:00",
-      activity: {
-        tr: "Su Topu",
-        en: "Water Polo",
-        de: "Wasserball",
-        pl: "Piłka wodna",
-      },
-    },
-    {
-      time: "17:00",
-      activity: {
-        tr: "Animasyon Programı Kapanışı",
-        en: "Animation Program End",
-        de: "Animationsprogramm Ende",
-        pl: "Koniec programu animacji",
-      },
+      time: "—",
+      variant: "off",
     },
   ];
 
@@ -128,12 +246,24 @@
         en: "Water aerobics pool activity",
         de: "Wassergymnastik im Pool",
         pl: "Zajęcia aerobiku wodnego w basenie",
+        ru: "Аквааэробика в бассейне",
+        da: "Vandaerobik i poolen",
+        cs: "Vodní aerobik v bazénu",
+        ro: "Aerobic acvatic la piscină",
+        nl: "Wateraerobics in het zwembad",
+        sk: "Vodná aerobika v bazéne",
       },
       title: {
         tr: "Su jimnastiği",
         en: "Water aerobics",
         de: "Wassergymnastik",
         pl: "Aerobik wodny",
+        ru: "Аквааэробика",
+        da: "Vandaerobik",
+        cs: "Vodní aerobik",
+        ro: "Aerobic acvatic",
+        nl: "Wateraerobics",
+        sk: "Vodná aerobika",
       },
       text: {
         tr:
@@ -142,7 +272,13 @@
           "Just step into the pool. While the natural resistance of water works your body gently, you can enjoy a refreshing workout. This low-impact exercise is comfortable, fun, and suitable for all age groups.",
         de:
           "Steigen Sie einfach ins Becken. Der natürliche Wasserwiderstand trainiert den Körper sanft und sorgt gleichzeitig für Erfrischung. Diese gelenkschonende Übung ist angenehm, unterhaltsam und für alle Altersgruppen geeignet.",
-        pl: "Wejdź do basenu. Naturalny opór wody delikatnie angażuje ciało, a Ty możesz cieszyć się orzeźwiającym treningiem. To ćwiczenie o niskim obciążeniu jest komfortowe, zabawne i dla każdej grupy wiekowej.",
+        pl: "Wejdź do basenu. Naturalny opór wody delikatnie angažuje ciało, a Ty możesz cieszyć się orzeźwiającym treningiem. To ćwiczenie o niskim obciążeniu jest komfortowe, zabawne i dla każdej grupy wiekowej.",
+        ru: "Просто войдите в бассейн. Естественное сопротивление воды мягко нагружает тело, а вы получаете освежающую тренировку. Это щадящее упражнение комфортно, весело и подходит для любого возраста.",
+        da: "Træd bare i poolen. Vandets naturlige modstand træner kroppen blidt, mens du får en forfriskende træning. Denne skånsomme motion er behagelig, sjov og for alle aldre.",
+        cs: "Stačí vstoupit do bazénu. Přirozený odpor vody šetrně zatíží tělo a vy si užijete osvěžující trénink. Toto šetrné cvičení je příjemné, zábavné a vhodné pro každý věk.",
+        ro: "Intră în piscină. Rezistența naturală a apei lucrează corpul blând, iar tu te bucuri de un antrenament revigorant. Exercițiul cu impact redus e confortabil, distractiv și potrivit oricărei vârste.",
+        nl: "Stap het zwembad in. De natuurlijke weerstand van water traint je lichaam zachtjes terwijl je geniet van een verfrissende work-out. Deze low-impact oefening is comfortabel, leuk en voor elke leeftijd.",
+        sk: "Stačí vstúpiť do bazéna. Prirodzený odpor vody šetrne zaťaží telo a vy si užijete osviežujúci tréning. Toto šetrné cvičenie je príjemné, zábavné a vhodné pre každý vek.",
       },
     },
     {
@@ -152,12 +288,24 @@
         en: "Darts game activity",
         de: "Dartspiel-Aktivität",
         pl: "Aktywność — gra w darta",
+        ru: "Игра в дартс",
+        da: "Dartaktivitet",
+        cs: "Aktivita — šipky",
+        ro: "Activitate — darts",
+        nl: "Dartsactiviteit",
+        sk: "Aktivita — šípky",
       },
       title: {
         tr: "Dart oyunu",
         en: "Darts game",
         de: "Dartspiel",
         pl: "Gra w darta",
+        ru: "Дартс",
+        da: "Dart",
+        cs: "Šipky",
+        ro: "Darts",
+        nl: "Darts",
+        sk: "Šípky",
       },
       text: {
         tr:
@@ -167,6 +315,12 @@
         de:
           "Nehmen Sie den Dartpfeil und konzentrieren Sie sich auf das Ziel. Dieses freundliche Spiel verbindet Fokus und Spaß. Ob Einsteiger oder erfahrene Gäste: alle können mitmachen.",
         pl: "Weź lotkę i skup się na tarczy. Ta przyjazna gra łączy koncentrację i zabawę. Zarówno początkujący, jak i doświadczeni mogą wziąć udział.",
+        ru: "Возьмите дротик и сосредоточьтесь на мишени. Дружеская игра сочетает концентрацию и веселье. Подойдёт и новичкам, и опытным гостям.",
+        da: "Tag din pil og fokusér på målet. Dette venlige spil giver både koncentration og sjov. Begyndere og erfarne kan være med.",
+        cs: "Vezměte šipku a soustřeďte se na terč. Tato přátelská hra spojuje koncentraci a zábavu. Zvládnou ji začátečníci i zkušení hosté.",
+        ro: "Ia săgeata și concentrează-te pe țintă. Jocul prietenos combină concentrare și distracție. Se pot alătura începători și experimentați.",
+        nl: "Neem je dartpijl en richt op het doel. Deze vriendelijke game combineert concentratie en plezier. Beginners en ervaren gasten doen mee.",
+        sk: "Vezmite šípku a sústreďte sa na terč. Táto priateľská hra spája koncentráciu a zábavu. Zvládnu ju začiatočníci aj skúsení hostia.",
       },
     },
     {
@@ -176,12 +330,24 @@
         en: "Water polo pool activity",
         de: "Wasserball im Pool",
         pl: "Zajęcia — piłka wodna w basenie",
+        ru: "Водное поло в бассейне",
+        da: "Vandpolo i poolen",
+        cs: "Vodní pólo v bazénu",
+        ro: "Polo pe apă la piscină",
+        nl: "Waterpolo in het zwembad",
+        sk: "Vodné pólo v bazéne",
       },
       title: {
         tr: "Su topu",
         en: "Water polo",
         de: "Wasserball",
         pl: "Piłka wodna",
+        ru: "Водное поло",
+        da: "Vandpolo",
+        cs: "Vodní pólo",
+        ro: "Polo pe apă",
+        nl: "Waterpolo",
+        sk: "Vodné pólo",
       },
       text: {
         tr:
@@ -191,6 +357,12 @@
         de:
           "Im Pool geht es los. Dieses Teamspiel steigert die Energie und bietet ein soziales, unterhaltsames Erlebnis. Bleiben Sie aktiv im kühlen Wasser und genießen Sie viele fröhliche Momente.",
         pl: "Akcja zaczyna się w basenie. Ta gra zespołowa dodaje energii i buduje swobodną, radosną atmosferę. Rób ruch w chłodnej wodzie i śmiej się do woli.",
+        ru: "В бассейне начинается движение. Командная игра заряжает энергией и создаёт дружескую атмосферу. Оставайтесь активными в прохладной воде и смейтесь вволю.",
+        da: "Det går løs i poolen. Holdspillet giver energi og en social, sjov stemning. Vær aktiv i det kølige vand og nyd masser af latter.",
+        cs: "V bazénu to začne. Týmová hra dodá energii a přinese společenskou, zábavnou atmosféru. Zůstaňte aktivní ve chladné vodě a užijte si spoustu smíchu.",
+        ro: "Acțiunea începe în piscină. Jocul de echipă crește energia și o atmosferă socială, distractivă. Rămâi activ în apă răcoroare și bucură-te de multe râsete.",
+        nl: "Het begint in het zwembad. Dit teamsportspel geeft energie en een gezellige sfeer. Blijf actief in koel water en geniet van veel gelach.",
+        sk: "V bazéne to začína. Tímová hra dodá energiu a prinesie spoločenskú, zábavnú atmosféru. Zostaňte aktívni v chladnej vode a užite si veľa smiechu.",
       },
     },
   ];
@@ -199,25 +371,50 @@
     {
       highlight: true,
       kicker: {
-        tr: "Gece programı",
-        en: "Night program",
-        de: "Abendprogramm",
-        pl: "Program wieczorny",
+        tr: "Gece atmosferi",
+        en: "Evening atmosphere",
+        de: "Abendstimmung",
+        pl: "Wieczorny klimat",
+        ru: "Вечерняя атмосфера",
+        da: "Aftenstemning",
+        cs: "Večerní atmosféra",
+        ro: "Atmosferă de seară",
+        nl: "Avondsfeer",
+        sk: "Večerná atmosféra",
       },
       title: {
         tr: "Gece şovları & eğlenceler",
         en: "Evening shows & entertainment",
         de: "Abendshows & Unterhaltung",
         pl: "Wieczorne pokazy i rozrywka",
+        ru: "Вечерние шоу и развлечения",
+        da: "Aftenunderholdning",
+        cs: "Večerní show a zábava",
+        ro: "Spectacole și divertisment de seară",
+        nl: "Avondshows en entertainment",
+        sk: "Večerné predstavenia a zábava",
       },
       text: {
         tr:
-          "Güneş battıktan sonra Kaila Beach Hotel’de atmosfer bambaşka bir enerjiye bürünür. Her akşam farklı bir eğlence programı sunulur: akrobatik dans şovları, özel temalı geceler, canlı müzik veya DJ performansları.",
+          "Güneş battıktan sonra otelde farklı bir enerji oluşur. Haftalık akşam programı (günler ve saatler) yukarıdaki listede; canlı müzik ve gösterilerle keyifli akşamlar.",
         en:
-          "After sunset, Kaila Beach Hotel takes on a different energy. A new entertainment program is offered each evening, including acrobatic dance shows, themed nights, live music, and DJ performances.",
+          "After sunset, the hotel takes on a different energy. The weekly evening programme — days and times — is in the list above; enjoy live music and shows.",
         de:
-          "Nach Sonnenuntergang bekommt das Kaila Beach Hotel eine besondere Energie. Jeden Abend gibt es ein anderes Unterhaltungsprogramm: akrobatische Tanzshows, Themenabende, Live-Musik oder DJ-Auftritte.",
-        pl: "Po zachodzie słońca Kaila Beach Hotel nabiera innej energii. Każdego wieczoru nowy program: pokazy taneczno-akrobatyczne, wieczory tematyczne, muzyka na żyko i DJ.",
+          "Nach Sonnenuntergang verändert sich die Stimmung im Hotel. Der wöchentliche Abendplan mit Tagen und Zeiten steht oben in der Liste — Live-Musik und Shows inklusive.",
+        pl:
+          "Po zachodzie słońca hotel nabiera innego klimatu. Tygodniowy harmonogram wieczorny — dni i godziny — jest na liście powyżej; muzyka na żywo i pokazy.",
+        ru:
+          "После заката в отеле особая атмосфера. Недельный вечерний график — дни и время — в списке выше; живая музыка и шоу.",
+        da:
+          "Efter solnedgang skifter stemningen på hotellet. Den ugentlige aftenplan — dage og tider — står i listen ovenfor; live musik og shows.",
+        cs:
+          "Po západu slunce má hotel jinou atmosféru. Týdenní večerní program — dny a časy — je v seznamu výše; živá hudba a představení.",
+        ro:
+          "După apus, hotelul capătă o altă energie. Programul săptămânal de seară — zile și ore — este în lista de mai sus; muzică live și spectacole.",
+        nl:
+          "Na zonsondergang verandert de sfeer in het hotel. Het wekelijkse avondrooster — dagen en tijden — staat in de lijst hierboven; livemuziek en shows.",
+        sk:
+          "Po západe slnka má hotel inú atmosféru. Týždenný večerný program — dni a časy — je v zozname vyššie; živá hudba a predstavenia.",
       },
       images: [
         {
@@ -227,6 +424,12 @@
             en: "Night pool activity",
             de: "Abendaktivität am Pool",
             pl: "Wieczorna aktywność przy basenie",
+            ru: "Вечерняя активность у бассейна",
+            da: "Aftenaktivitet ved poolen",
+            cs: "Večerní aktivita u bazénu",
+            ro: "Activitate de seară la piscină",
+            nl: "Avondactiviteit bij het zwembad",
+            sk: "Večerná aktivita pri bazéne",
           },
         },
         {
@@ -236,6 +439,12 @@
             en: "Night show",
             de: "Abendshow",
             pl: "Pokaz wieczorny",
+            ru: "Вечернее шоу",
+            da: "Aftenforestilling",
+            cs: "Večerní show",
+            ro: "Spectacol de seară",
+            nl: "Avondshow",
+            sk: "Večerná šou",
           },
         },
       ],
@@ -246,6 +455,12 @@
         en: "Fitness centre",
         de: "Fitnessbereich",
         pl: "Siłownia / fitness",
+        ru: "Фитнес-центр",
+        da: "Fitnesscenter",
+        cs: "Fitness centrum",
+        ro: "Centru fitness",
+        nl: "Fitnessruimte",
+        sk: "Fitness centrum",
       },
       text: {
         tr:
@@ -255,6 +470,12 @@
         de:
           "Im voll ausgestatteten Fitnessbereich stehen Laufbänder, Gewichte und moderne Trainingsgeräte bereit. Ein motivierender Bereich für Gäste, die auch im Urlaub fit bleiben möchten.",
         pl: "W pełni wyposażona siłownia: bieżnie, wolne ciężary i nowoczesny sprzęt. Motywująca przestrzeń dla gości, którzy chcą zachować formę w wakacje.",
+        ru: "В полностью оборудованном фитнес-центре — беговые дорожки, свободные веса и современные тренажёры. Простор для гостей, которые хотят оставаться в форме во время отдыха.",
+        da: "Det fuldt udstyrede fitnesscenter har løbebånd, vægte og moderne træningsudstyr. Et motiverende sted for gæster, der vil holde formen på ferien.",
+        cs: "Plně vybavené fitness centrum s běžeckými pásy, činkami a moderním vybavením. Motivující prostor pro hosty, kteří chtějí zůstat ve formě i na dovolené.",
+        ro: "Centrul de fitness complet echipat include benzi de alergat, greutăți și aparate moderne. Spațiu motivant pentru oaspeții care vor să rămână în formă în vacanță.",
+        nl: "Het volledig uitgeruste fitnesscentrum heeft loopbanden, gewichten en moderne apparatuur. Een motiverende ruimte voor gasten die fit willen blijven tijdens hun verblijf.",
+        sk: "Plne vybavené fitness centrum s bežeckými pásmi, činkami a moderným vybavením. Motivujúci priestor pre hostí, ktorí chcú zostať vo forme aj na dovolenke.",
       },
       images: [
         {
@@ -264,6 +485,12 @@
             en: "Fitness centre",
             de: "Fitnessbereich",
             pl: "Siłownia / fitness",
+            ru: "Фитнес-центр",
+            da: "Fitnesscenter",
+            cs: "Fitness centrum",
+            ro: "Centru fitness",
+            nl: "Fitnessruimte",
+            sk: "Fitness centrum",
           },
         },
         {
@@ -273,6 +500,12 @@
             en: "Fitness centre equipment",
             de: "Fitnessgeräte im Fitnessbereich",
             pl: "Sprzęt na siłowni",
+            ru: "Оборудование фитнес-центра",
+            da: "Fitnessudstyr",
+            cs: "Fitness vybavení",
+            ro: "Echipamente fitness",
+            nl: "Fitnessapparatuur",
+            sk: "Fitness vybavenie",
           },
         },
       ],
@@ -283,6 +516,12 @@
         en: "Shopping area",
         de: "Einkaufsbereich",
         pl: "Strefa zakupów",
+        ru: "Зона шопинга",
+        da: "Shoppingområde",
+        cs: "Nákupní zóna",
+        ro: "Zonă de cumpărături",
+        nl: "Winkelruimte",
+        sk: "Nákupná zóna",
       },
       text: {
         tr:
@@ -292,45 +531,47 @@
         de:
           "Von 09:00 bis 23:00 stehen Fotograf, Ledergeschäft, Markt und Friseur zur Verfügung.",
         pl: "Od 09:00 do 23:00 goście mogą skorzystać z fotografa, sklepu ze skórą, marketu i fryzjera.",
+        ru: "С 09:00 до 23:00 доступны фотограф, кожаный магазин, мини-маркет и парикмахерская.",
+        da: "Fra 09:00 til 23:00 kan gæster benytte fotograf, skindbutik, market og frisør.",
+        cs: "Od 09:00 do 23:00 jsou k dispozici fotograf, obchod s kůží, market a kadeřnictví.",
+        ro: "Între 09:00 și 23:00 oaspeții pot folosi fotograf, magazin de piele, market și frizerie.",
+        nl: "Van 09:00 tot 23:00 zijn fotograaf, lederwinkel, market en kapper beschikbaar.",
+        sk: "Od 09:00 do 23:00 sú k dispozícii fotograf, obchod s kožou, market a kaderníctvo.",
       },
       images: [],
     },
   ];
 
-  function renderScheduleTable() {
-    var wrap = el("div", "activities-table-wrap");
-    var title = el("h3", "activities-block-title", T(MODULE_TEXT.scheduleTitle));
-    wrap.appendChild(title);
+  function renderEveningSchedule() {
+    var wrap = el("div", "activities-evening");
+    wrap.setAttribute("role", "region");
+    wrap.setAttribute("aria-labelledby", "activities-evening-title");
+    var head = el("div", "activities-evening__head");
+    var h3 = el("h3", "activities-evening__title");
+    h3.id = "activities-evening-title";
+    h3.textContent = T(MODULE_TEXT.scheduleTitle);
+    head.appendChild(h3);
+    wrap.appendChild(head);
 
-    var table = document.createElement("table");
-    table.className = "activities-table";
-    var thead = document.createElement("thead");
-    var trh = document.createElement("tr");
-    var thTime = document.createElement("th");
-    thTime.textContent = T(MODULE_TEXT.colTime);
-    var thAct = document.createElement("th");
-    thAct.textContent = T(MODULE_TEXT.colActivity);
-    trh.appendChild(thTime);
-    trh.appendChild(thAct);
-    thead.appendChild(trh);
-
-    var tbody = document.createElement("tbody");
-    SCHEDULE.forEach(function (row) {
-      var tr = document.createElement("tr");
-      var tdTime = document.createElement("td");
-      tdTime.className = "activities-table__time";
-      tdTime.textContent = row.time;
-      var tdAct = document.createElement("td");
-      tdAct.className = "activities-table__activity";
-      tdAct.textContent = T(row.activity);
-      tr.appendChild(tdTime);
-      tr.appendChild(tdAct);
-      tbody.appendChild(tr);
+    var list = el("div", "activities-evening__list");
+    EVENING_SCHEDULE.forEach(function (row) {
+      var rowCls = "activities-evening-row";
+      if (row.variant === "empty") rowCls += " activities-evening-row--empty";
+      if (row.variant === "off") rowCls += " activities-evening-row--off";
+      var rowEl = el("div", rowCls);
+      rowEl.appendChild(el("span", "activities-evening-row__day", T(row.day)));
+      rowEl.appendChild(el("span", "activities-evening-row__time", row.time));
+      var eventSpan = el("span", "activities-evening-row__event");
+      if (row.variant === "empty" || row.variant === "off") {
+        eventSpan.classList.add("activities-evening-row__event--silent");
+        eventSpan.setAttribute("aria-hidden", "true");
+      } else if (row.event) {
+        eventSpan.textContent = T(row.event);
+      }
+      rowEl.appendChild(eventSpan);
+      list.appendChild(rowEl);
     });
-
-    table.appendChild(thead);
-    table.appendChild(tbody);
-    wrap.appendChild(table);
+    wrap.appendChild(list);
     return wrap;
   }
 
@@ -441,7 +682,7 @@
     var root = el("div", "viona-mod viona-mod--activities");
     root.appendChild(el("p", "rest-section-title", T(MODULE_TEXT.sectionTitle)));
     root.appendChild(el("p", "viona-mod-lead viona-mod-lead--tight", T(MODULE_TEXT.lead)));
-    root.appendChild(renderScheduleTable());
+    root.appendChild(renderEveningSchedule());
     root.appendChild(renderActivityCards());
     root.appendChild(renderLegacySection());
     container.appendChild(root);

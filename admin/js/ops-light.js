@@ -145,6 +145,113 @@
     );
   }
 
+  /** Admin `data-adapter.getBucketPage` ile aynı sorgu şekli; yetki `opsFetch` (ops token). */
+  function opsLightBuildRequestsQuery(base, extraQuery) {
+    var o = Object.assign({}, base, extraQuery || {});
+    var qs = new URLSearchParams();
+    Object.keys(o).forEach(function (k) {
+      var v = o[k];
+      if (v == null || v === "") return;
+      qs.set(k, String(v));
+    });
+    return qs.toString();
+  }
+
+  function opsLightGetBucketPage(type, page, pageSize, extraQuery) {
+    var base = { type: type, page: String(page), pageSize: String(pageSize) };
+    var qs = opsLightBuildRequestsQuery(base, extraQuery);
+    return opsFetch("/requests?" + qs).then(function (d) {
+      return {
+        items: (d && d.items) || [],
+        pagination: (d && d.pagination) || {
+          page: page,
+          pageSize: pageSize,
+          total: ((d && d.items) || []).length,
+          totalPages: 1,
+        },
+      };
+    });
+  }
+
+  async function opsLightGetBucketMergeAll(type, maxPages, extraQuery) {
+    var pageSize = 500;
+    var cap = typeof maxPages === "number" && maxPages > 0 ? maxPages : 100;
+    var q = extraQuery && typeof extraQuery === "object" ? extraQuery : {};
+    var all = [];
+    var page = 1;
+    var totalPages = 1;
+    do {
+      var d = await opsLightGetBucketPage(type, page, pageSize, q);
+      all = all.concat(d.items || []);
+      totalPages = (d.pagination && d.pagination.totalPages) || 1;
+      page++;
+    } while (page <= totalPages && page <= cap);
+    return { items: all, truncated: totalPages > cap };
+  }
+
+  var opsLightPdfAdapter = { getBucketMergeAll: opsLightGetBucketMergeAll };
+  var opsLightPdfDownloadInFlight = false;
+
+  function readSlYmdForPdf(rolePrefix) {
+    var day = document.getElementById(rolePrefix + "-filter-day");
+    var y =
+      day && day.value && /^\d{4}-\d{2}-\d{2}$/.test(String(day.value).trim())
+        ? String(day.value).trim()
+        : String(slCalDay || "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(y)) y = hotelCalYmdSl(new Date());
+    return y;
+  }
+
+  function wireOpsLightPdfOnce() {
+    var role = getRole();
+    var variant =
+      role === "hk" ? "hk" : role === "tech" ? "tech" : role === "front" ? "front" : "";
+    if (!variant) return;
+    var btnId =
+      variant === "hk" ? "op-hk-pdf" : variant === "tech" ? "op-tech-pdf" : "op-front-pdf";
+    var el = document.getElementById(btnId);
+    if (!el || el.dataset.vionaPdfBound === "1") return;
+    el.dataset.vionaPdfBound = "1";
+    el.addEventListener(
+      "click",
+      function (ev) {
+        if (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+        }
+        void downloadOpsLightPdf(variant);
+      },
+      false,
+    );
+  }
+
+  async function downloadOpsLightPdf(variant) {
+    if (opsLightPdfDownloadInFlight) return;
+    if (!window.VionaOpsDayPdf || typeof window.VionaOpsDayPdf.download !== "function") {
+      window.alert("PDF modülü yüklenemedi; sayfayı yenileyin.");
+      return;
+    }
+    var btnId =
+      variant === "hk" ? "op-hk-pdf" : variant === "tech" ? "op-tech-pdf" : "op-front-pdf";
+    var btn = document.getElementById(btnId);
+    var prefix = variant === "hk" ? "op-hk" : variant === "tech" ? "op-tech" : "op-front";
+    var ymd = readSlYmdForPdf(prefix);
+    opsLightPdfDownloadInFlight = true;
+    if (btn) btn.disabled = true;
+    try {
+      await window.VionaOpsDayPdf.download({
+        variant: variant,
+        ymd: ymd,
+        adapter: opsLightPdfAdapter,
+      });
+    } catch (e) {
+      window.alert(formatErr(e));
+    } finally {
+      opsLightPdfDownloadInFlight = false;
+      if (btn) btn.disabled = false;
+    }
+  }
+
   /** # sonrası tam metin OPS_LINK_TOKEN_* ile birebir aynı olmalı (kısa veya uzun fark etmez). */
   function absorbHashToken() {
     var h = String(window.location.hash || "");
@@ -421,6 +528,299 @@
     return n;
   }
 
+  var OP_HOTEL_TZ_SL = "Europe/Istanbul";
+  var OP_DAY_STRIP_COUNT_SL = 14;
+  var OP_DAY_STORAGE_KEY_SL = "viona_op_selected_calendar_day";
+  var OP_FOLLOW_TODAY_KEY_SL = "viona_op_follow_hotel_today";
+  var slCalDay = "";
+  var slFollowToday = true;
+  var slStripMini = {};
+  var slStripBoundMount = null;
+
+  function hotelCalYmdSl(date) {
+    try {
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: OP_HOTEL_TZ_SL,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(date);
+    } catch (_e) {
+      return new Date().toISOString().slice(0, 10);
+    }
+  }
+
+  function enumerateSlDays(count) {
+    var want = Math.max(1, Math.min(31, Number(count) || 14));
+    var out = [];
+    var t = Date.now();
+    var guard = 0;
+    while (out.length < want && guard < 2000) {
+      var ymd = hotelCalYmdSl(new Date(t));
+      if (out.length === 0 || ymd !== out[out.length - 1]) {
+        out.push(ymd);
+      }
+      t -= 4 * 60 * 60 * 1000;
+      guard++;
+    }
+    return out;
+  }
+
+  function ymdToTrDotsSl(ymd) {
+    var p = String(ymd || "").trim().split("-");
+    if (p.length !== 3) return String(ymd || "");
+    return p[2] + "." + p[1] + "." + p[0];
+  }
+
+  function persistSlDay() {
+    try {
+      sessionStorage.setItem(OP_DAY_STORAGE_KEY_SL, slCalDay);
+      sessionStorage.setItem(OP_FOLLOW_TODAY_KEY_SL, slFollowToday ? "1" : "0");
+    } catch (_e) {}
+  }
+
+  function initSlDayFromStorage() {
+    var today = hotelCalYmdSl(new Date());
+    var strip = enumerateSlDays(OP_DAY_STRIP_COUNT_SL);
+    var allowed = {};
+    strip.forEach(function (s) {
+      allowed[s] = true;
+    });
+    try {
+      var sy = String(sessionStorage.getItem(OP_DAY_STORAGE_KEY_SL) || "").trim();
+      var sf = String(sessionStorage.getItem(OP_FOLLOW_TODAY_KEY_SL) || "1");
+      if (sy && /^\d{4}-\d{2}-\d{2}$/.test(sy) && allowed[sy]) {
+        slFollowToday = sf !== "0";
+        slCalDay = slFollowToday ? today : sy;
+        return;
+      }
+    } catch (_e) {}
+    slCalDay = today;
+    slFollowToday = true;
+  }
+
+  function maybeAdvanceSlToday() {
+    var today = hotelCalYmdSl(new Date());
+    if (slFollowToday && slCalDay !== today) {
+      slCalDay = today;
+      persistSlDay();
+      syncSlFilterDayForPrefix(getRole() === "hk" ? "op-hk" : getRole() === "tech" ? "op-tech" : "op-front");
+    }
+  }
+
+  function slChipSubLine(ymd, todayY, yesterdayY) {
+    if (ymd === todayY) return "Bugün";
+    if (ymd === yesterdayY) return "Dün";
+    try {
+      var p = ymd.split("-").map(Number);
+      var d = new Date(Date.UTC(p[0], p[1] - 1, p[2], 12, 0, 0));
+      return new Intl.DateTimeFormat("tr-TR", {
+        timeZone: OP_HOTEL_TZ_SL,
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+      }).format(d);
+    } catch (_e2) {
+      return ymd;
+    }
+  }
+
+  function summaryToStripLineSl(sum) {
+    if (!sum || typeof sum !== "object") {
+      return { line: "— · — · —", title: "" };
+    }
+    if (String(sum.mode || "").trim() === "filtered") {
+      var t = Number(sum.toplam) || 0;
+      return { line: "Σ " + t, title: "Durum süzgeci seçili." };
+    }
+    var bek = Number(sum.bekliyor) || 0;
+    var isl = Number(sum.islemde) || 0;
+    var yap = Number(sum.yapildi) || 0;
+    var red = Number(sum.yapilmadi) || 0;
+    var open = bek + isl;
+    return {
+      line: open + " · " + yap + " · " + red,
+      title: "Bekleyen + işlemde: " + open + " · Yapıldı: " + yap + " · Yapılmadı: " + red,
+    };
+  }
+
+  function mergeFrontStripLineSl(c, gn, lc) {
+    function parts(s) {
+      if (!s || typeof s !== "object") return [0, 0, 0];
+      if (String(s.mode || "").trim() === "filtered") return [0, 0, 0];
+      var bek = Number(s.bekliyor) || 0;
+      var isl = Number(s.islemde) || 0;
+      return [bek + isl, Number(s.yapildi) || 0, Number(s.yapilmadi) || 0];
+    }
+    var a = parts(c);
+    var b = parts(gn);
+    var d = parts(lc);
+    var o = a[0] + b[0] + d[0];
+    var y = a[1] + b[1] + d[1];
+    var r = a[2] + b[2] + d[2];
+    return {
+      line: o + " · " + y + " · " + r,
+      title: "Ön büro üç kategori toplamı",
+    };
+  }
+
+  function syncSlFilterDayForPrefix(prefix) {
+    var y = String(slCalDay || "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(y)) y = hotelCalYmdSl(new Date());
+    var el = document.getElementById(prefix + "-filter-day");
+    if (el) el.value = y;
+  }
+
+  function renderSlDayStrip(stripElId) {
+    var el = document.getElementById(stripElId);
+    if (!el) return;
+    var days = enumerateSlDays(OP_DAY_STRIP_COUNT_SL);
+    var todayY = days[0] || hotelCalYmdSl(new Date());
+    var yesterdayY = days.length > 1 ? days[1] : "";
+    var sel = String(slCalDay || "").trim() || todayY;
+    var parts = [];
+    days.forEach(function (ymd) {
+      var active = ymd === sel;
+      var sub = slChipSubLine(ymd, todayY, yesterdayY);
+      var m = slStripMini[ymd];
+      var miniLine = m && m.line ? m.line : "…";
+      var miniTitle = m && m.title ? m.title : "";
+      parts.push(
+        '<button type="button" class="op-day-strip__chip' +
+          (active ? " is-active" : "") +
+          '" data-op-day="' +
+          escHtml(ymd) +
+          '" role="option" aria-selected="' +
+          (active ? "true" : "false") +
+          '"><span class="op-day-strip__chip-date">' +
+          escHtml(ymdToTrDotsSl(ymd)) +
+          '</span><span class="op-day-strip__chip-sub">' +
+          escHtml(sub) +
+          '</span><span class="op-day-strip__chip-mini" title="' +
+          escHtml(miniTitle) +
+          '">' +
+          escHtml(miniLine) +
+          "</span></button>",
+      );
+    });
+    el.innerHTML = parts.join("");
+  }
+
+  function wireSlDayStrip(mountRoot, stripElId, onPick) {
+    if (!mountRoot || mountRoot.dataset.slStripBound) return;
+    mountRoot.dataset.slStripBound = "1";
+    mountRoot.addEventListener("click", function (ev) {
+      var chip = ev.target && ev.target.closest ? ev.target.closest(".op-day-strip__chip") : null;
+      if (!chip || !mountRoot.contains(chip)) return;
+      var ymd = chip.getAttribute("data-op-day") || "";
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return;
+      var todayY = hotelCalYmdSl(new Date());
+      slCalDay = ymd;
+      slFollowToday = ymd === todayY;
+      persistSlDay();
+      syncSlFilterDayForPrefix(getRole() === "hk" ? "op-hk" : getRole() === "tech" ? "op-tech" : "op-front");
+      renderSlDayStrip(stripElId);
+      if (typeof onPick === "function") onPick();
+    });
+  }
+
+  async function refreshSlStripMini(mode) {
+    var days = enumerateSlDays(OP_DAY_STRIP_COUNT_SL);
+    slStripMini = {};
+    try {
+      if (mode === "request" || mode === "fault") {
+        await Promise.all(
+          days.map(function (ymd) {
+            var q =
+              "?type=" +
+              encodeURIComponent(mode) +
+              "&from=" +
+              encodeURIComponent(ymd) +
+              "&to=" +
+              encodeURIComponent(ymd);
+            return opsFetch("/requests/bucket-type-summary" + q).then(function (d) {
+              slStripMini[ymd] = summaryToStripLineSl(d && d.summary != null ? d.summary : null);
+            });
+          }),
+        );
+      } else if (mode === "front") {
+        await Promise.all(
+          days.map(function (ymd) {
+            var b = "&from=" + encodeURIComponent(ymd) + "&to=" + encodeURIComponent(ymd);
+            return Promise.all([
+              opsFetch("/requests/front-type-summary?type=complaint" + b).catch(function () {
+                return null;
+              }),
+              opsFetch("/requests/front-type-summary?type=guest_notification" + b).catch(function () {
+                return null;
+              }),
+              opsFetch("/requests/front-type-summary?type=late_checkout" + b).catch(function () {
+                return null;
+              }),
+            ]).then(function (triple) {
+              var c = triple[0] && triple[0].summary != null ? triple[0].summary : null;
+              var gn = triple[1] && triple[1].summary != null ? triple[1].summary : null;
+              var lc = triple[2] && triple[2].summary != null ? triple[2].summary : null;
+              slStripMini[ymd] = mergeFrontStripLineSl(c, gn, lc);
+            });
+          }),
+        );
+      }
+    } catch (_e) {
+    } finally {
+      renderSlDayStrip(
+        getRole() === "hk" ? "op-hk-day-strip" : getRole() === "tech" ? "op-tech-day-strip" : "op-front-day-strip",
+      );
+    }
+  }
+
+  function opsLightDayStripHint(rolePrefix) {
+    if (rolePrefix === "op-front") {
+      return (
+        "Üç sekme (şikâyet, misafir bildirimi, geç çıkış) aynı güne göre süzülür. <strong>Bugün</strong> seçiliyken tarih otomatik güncellenir."
+      );
+    }
+    return (
+      "Yalnızca seçilen günde oluşturulan kayıtlar listelenir. <strong>Bugün</strong> seçiliyken tarih otomatik güncellenir; geçmiş bir gün seçince o gün sabit kalır."
+    );
+  }
+
+  function opsLightPdfBtnHtml(rolePrefix) {
+    var titleRaw =
+      rolePrefix === "op-hk"
+        ? "Seçili günün HK özeti PDF"
+        : rolePrefix === "op-tech"
+          ? "Seçili günün teknik özeti PDF"
+          : "Seçili günün ön büro özeti PDF";
+    var id = rolePrefix + "-pdf";
+    return (
+      '<button type="button" class="btn-small op-day-pdf-btn" id="' +
+      id +
+      '" title="' +
+      escHtml(titleRaw) +
+      '">PDF indir</button>'
+    );
+  }
+
+  function opsLightDayStripWrap(rolePrefix) {
+    return (
+      '<div class="op-day-strip-wrap glass-block" aria-label="Kayıt günü">' +
+      '<div class="op-day-strip-wrap__head">' +
+      '<div class="op-day-strip-wrap__head-text">' +
+      '<span class="op-day-strip-wrap__title">Gün seçimi</span>' +
+      '<span class="op-day-strip-wrap__tz">Otel günü · İstanbul</span>' +
+      "</div>" +
+      opsLightPdfBtnHtml(rolePrefix) +
+      "</div>" +
+      '<p class="op-day-strip-wrap__hint">' +
+      opsLightDayStripHint(rolePrefix) +
+      "</p>" +
+      '<div id="' +
+      rolePrefix +
+      '-day-strip" class="op-day-strip__scroll" role="listbox" aria-label="Gün şeridi"></div></div>'
+    );
+  }
+
   function opQueryFromFilter(f) {
     var o = {};
     if (f.status) o.status = f.status;
@@ -432,26 +832,27 @@
 
   function readOpFilterFromDom(prefix) {
     var status = document.getElementById(prefix + "-filter-status");
-    var from = document.getElementById(prefix + "-filter-from");
-    var to = document.getElementById(prefix + "-filter-to");
+    var day = document.getElementById(prefix + "-filter-day");
     var room = document.getElementById(prefix + "-filter-room");
+    var y =
+      day && day.value && /^\d{4}-\d{2}-\d{2}$/.test(String(day.value).trim())
+        ? String(day.value).trim()
+        : String(slCalDay || "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(y)) y = hotelCalYmdSl(new Date());
     return {
       status: status && status.value ? status.value : "",
-      from: from && from.value ? from.value : "",
-      to: to && to.value ? to.value : "",
+      from: y,
+      to: y,
       room: room && room.value ? String(room.value).trim() : "",
     };
   }
 
   function clearOpFilterDom(prefix) {
     var status = document.getElementById(prefix + "-filter-status");
-    var from = document.getElementById(prefix + "-filter-from");
-    var to = document.getElementById(prefix + "-filter-to");
     var room = document.getElementById(prefix + "-filter-room");
     if (status) status.value = "";
-    if (from) from.value = "";
-    if (to) to.value = "";
     if (room) room.value = "";
+    syncSlFilterDayForPrefix(prefix);
   }
 
   /** Admin «tab-op-hk» ile aynı filtre çubuğu (id’ler app.js ile uyumlu). */
@@ -468,16 +869,16 @@
       '<option value="rejected">Yapılmadı</option>' +
       '<option value="cancelled">İptal</option>' +
       "</select></label>" +
-      '<label class="op-filter-field"><span class="op-filter-field__lbl">Kayıt başlangıç</span>' +
-      '<input id="op-hk-filter-from" type="date" class="op-filter-input" autocomplete="off" /></label>' +
-      '<label class="op-filter-field"><span class="op-filter-field__lbl">Kayıt bitiş</span>' +
-      '<input id="op-hk-filter-to" type="date" class="op-filter-input" autocomplete="off" /></label>' +
+      '<label class="op-filter-field op-filter-field--day"><span class="op-filter-field__lbl">Kayıt günü</span>' +
+      '<input id="op-hk-filter-day" type="date" class="op-filter-input" autocomplete="off" /></label>' +
       '<label class="op-filter-field op-filter-field--room"><span class="op-filter-field__lbl">Oda</span>' +
       '<input id="op-hk-filter-room" type="text" class="op-filter-input" placeholder="Tam eşleşme" autocomplete="off" /></label>' +
       '<div class="op-filter-actions">' +
       '<button type="button" class="btn-primary btn-small" id="op-hk-filter-apply">Uygula</button>' +
       '<button type="button" class="btn-small" id="op-hk-filter-clear">Sıfırla</button>' +
-      "</div></div></div>"
+      "</div></div>" +
+      '<p class="op-filter-hint">Filtreler sunucuda uygulanır; <strong>Uygula</strong> ile listeyi yenilersiniz.</p>' +
+      "</div>"
     );
   }
 
@@ -495,16 +896,16 @@
       '<option value="rejected">Yapılmadı</option>' +
       '<option value="cancelled">İptal</option>' +
       "</select></label>" +
-      '<label class="op-filter-field"><span class="op-filter-field__lbl">Kayıt başlangıç</span>' +
-      '<input id="op-tech-filter-from" type="date" class="op-filter-input" autocomplete="off" /></label>' +
-      '<label class="op-filter-field"><span class="op-filter-field__lbl">Kayıt bitiş</span>' +
-      '<input id="op-tech-filter-to" type="date" class="op-filter-input" autocomplete="off" /></label>' +
+      '<label class="op-filter-field op-filter-field--day"><span class="op-filter-field__lbl">Kayıt günü</span>' +
+      '<input id="op-tech-filter-day" type="date" class="op-filter-input" autocomplete="off" /></label>' +
       '<label class="op-filter-field op-filter-field--room"><span class="op-filter-field__lbl">Oda</span>' +
       '<input id="op-tech-filter-room" type="text" class="op-filter-input" placeholder="Tam eşleşme" autocomplete="off" /></label>' +
       '<div class="op-filter-actions">' +
       '<button type="button" class="btn-primary btn-small" id="op-tech-filter-apply">Uygula</button>' +
       '<button type="button" class="btn-small" id="op-tech-filter-clear">Sıfırla</button>' +
-      "</div></div></div>"
+      "</div></div>" +
+      '<p class="op-filter-hint">Filtreler sunucuda uygulanır; <strong>Uygula</strong> ile listeyi yenilersiniz.</p>' +
+      "</div>"
     );
   }
 
@@ -522,16 +923,16 @@
       '<option value="rejected">Olumsuz</option>' +
       '<option value="cancelled">İptal</option>' +
       "</select></label>" +
-      '<label class="op-filter-field"><span class="op-filter-field__lbl">Kayıt başlangıç</span>' +
-      '<input id="op-front-filter-from" type="date" class="op-filter-input" autocomplete="off" /></label>' +
-      '<label class="op-filter-field"><span class="op-filter-field__lbl">Kayıt bitiş</span>' +
-      '<input id="op-front-filter-to" type="date" class="op-filter-input" autocomplete="off" /></label>' +
+      '<label class="op-filter-field op-filter-field--day"><span class="op-filter-field__lbl">Kayıt günü</span>' +
+      '<input id="op-front-filter-day" type="date" class="op-filter-input" autocomplete="off" /></label>' +
       '<label class="op-filter-field op-filter-field--room"><span class="op-filter-field__lbl">Oda</span>' +
       '<input id="op-front-filter-room" type="text" class="op-filter-input" placeholder="Tam eşleşme" autocomplete="off" /></label>' +
       '<div class="op-filter-actions">' +
       '<button type="button" class="btn-primary btn-small" id="op-front-filter-apply">Uygula</button>' +
       '<button type="button" class="btn-small" id="op-front-filter-clear">Sıfırla</button>' +
-      "</div></div></div>"
+      "</div></div>" +
+      '<p class="op-filter-hint">Sekmeyi değiştirdiğinizde alanlar o sekmenin son süzgecini gösterir.</p>' +
+      "</div>"
     );
   }
 
@@ -586,6 +987,8 @@
       document.body.classList.remove("admin-body--ops-wa-card-only");
     } catch (_br) {}
 
+    if (mount) mount.dataset.slStripBound = "";
+
     var initialHighlightId = waId || "";
     var warnedMissingDeep = false;
 
@@ -602,12 +1005,23 @@
     }
 
     mount.innerHTML =
+      opsLightDayStripWrap("op-hk") +
       '<div id="ops-hk-summary-mount" class="ops-hk-mount"></div>' +
       hkFilterBarHtml() +
       '<div id="ops-hk-list-host" class="ops-hk-mount"></div>';
+    initSlDayFromStorage();
+    maybeAdvanceSlToday();
+    syncSlFilterDayForPrefix("op-hk");
+    renderSlDayStrip("op-hk-day-strip");
+    wireSlDayStrip(mount, "op-hk-day-strip", function () {
+      page = 1;
+      hkFilterState.from = slCalDay;
+      hkFilterState.to = slCalDay;
+      void load(1);
+    });
     var summaryHost = document.getElementById("ops-hk-summary-mount");
     var listHost = mount.querySelector("#ops-hk-list-host");
-    var hkFilterState = { status: "", from: "", to: "", room: "" };
+    var hkFilterState = { status: "", from: slCalDay, to: slCalDay, room: "" };
     var page = 1;
 
     function paintHkSummary(rawApi, listPack) {
@@ -630,6 +1044,8 @@
     if (applyBtn) {
       applyBtn.addEventListener("click", function () {
         var next = readOpFilterFromDom("op-hk");
+        next.from = slCalDay;
+        next.to = slCalDay;
         hkFilterState.status = next.status;
         hkFilterState.from = next.from;
         hkFilterState.to = next.to;
@@ -641,10 +1057,10 @@
     if (clearBtn) {
       clearBtn.addEventListener("click", function () {
         hkFilterState.status = "";
-        hkFilterState.from = "";
-        hkFilterState.to = "";
         hkFilterState.room = "";
         clearOpFilterDom("op-hk");
+        hkFilterState.from = slCalDay;
+        hkFilterState.to = slCalDay;
         page = 1;
         void load(1);
       });
@@ -652,6 +1068,10 @@
 
     async function load(pageNum) {
       page = pageNum != null ? pageNum : page;
+      maybeAdvanceSlToday();
+      hkFilterState.from = slCalDay;
+      hkFilterState.to = slCalDay;
+      syncSlFilterDayForPrefix("op-hk");
       var deeplinkHint = document.getElementById("ops-deeplink-hint");
 
       if (summaryHost) summaryHost.classList.remove("hidden");
@@ -732,9 +1152,11 @@
         },
       });
       paintHkSummary(sumRaw, res);
+      void refreshSlStripMini("request");
     }
 
     await load(1);
+    wireOpsLightPdfOnce();
     wireOpsCrossTabListRefresh(function () {
       void load(page);
     });
@@ -791,6 +1213,8 @@
       document.body.classList.remove("admin-body--ops-wa-card-only");
     } catch (_br2) {}
 
+    if (mount) mount.dataset.slStripBound = "";
+
     var initialHighlightId = waTechId || "";
     var warnedMissingDeepTech = false;
 
@@ -807,12 +1231,23 @@
     }
 
     mount.innerHTML =
+      opsLightDayStripWrap("op-tech") +
       '<div id="ops-tech-summary-mount" class="ops-hk-mount"></div>' +
       techFilterBarHtml() +
       '<div id="ops-tech-list-host" class="ops-hk-mount"></div>';
+    initSlDayFromStorage();
+    maybeAdvanceSlToday();
+    syncSlFilterDayForPrefix("op-tech");
+    renderSlDayStrip("op-tech-day-strip");
+    wireSlDayStrip(mount, "op-tech-day-strip", function () {
+      page = 1;
+      techFilterState.from = slCalDay;
+      techFilterState.to = slCalDay;
+      void load(1);
+    });
     var techSummaryHost = document.getElementById("ops-tech-summary-mount");
     var listHost = mount.querySelector("#ops-tech-list-host");
-    var techFilterState = { status: "", from: "", to: "", room: "" };
+    var techFilterState = { status: "", from: slCalDay, to: slCalDay, room: "" };
     var page = 1;
 
     function paintTechSummary(rawApi, listPack) {
@@ -835,6 +1270,8 @@
     if (applyBtn) {
       applyBtn.addEventListener("click", function () {
         var next = readOpFilterFromDom("op-tech");
+        next.from = slCalDay;
+        next.to = slCalDay;
         techFilterState.status = next.status;
         techFilterState.from = next.from;
         techFilterState.to = next.to;
@@ -846,10 +1283,10 @@
     if (clearBtn) {
       clearBtn.addEventListener("click", function () {
         techFilterState.status = "";
-        techFilterState.from = "";
-        techFilterState.to = "";
         techFilterState.room = "";
         clearOpFilterDom("op-tech");
+        techFilterState.from = slCalDay;
+        techFilterState.to = slCalDay;
         page = 1;
         void load(1);
       });
@@ -857,6 +1294,10 @@
 
     async function load(pageNum) {
       page = pageNum != null ? pageNum : page;
+      maybeAdvanceSlToday();
+      techFilterState.from = slCalDay;
+      techFilterState.to = slCalDay;
+      syncSlFilterDayForPrefix("op-tech");
       var deeplinkHintT = document.getElementById("ops-deeplink-hint");
 
       if (techSummaryHost) techSummaryHost.classList.remove("hidden");
@@ -937,9 +1378,11 @@
         },
       });
       paintTechSummary(sumRaw, res);
+      void refreshSlStripMini("fault");
     }
 
     await load(1);
+    wireOpsLightPdfOnce();
     wireOpsCrossTabListRefresh(function () {
       void load(page);
     });
@@ -1016,7 +1459,16 @@
       document.body.classList.remove("admin-body--ops-wa-card-only");
     } catch (_s3) {}
 
-    mount.innerHTML = frontFilterBarHtml() + '<div id="op-front-mount" class="ops-hk-mount"></div>';
+    if (mount) mount.dataset.slStripBound = "";
+    initSlDayFromStorage();
+    maybeAdvanceSlToday();
+    mount.innerHTML =
+      opsLightDayStripWrap("op-front") +
+      '<p id="op-front-filter-scope" class="op-filter-scope" role="status"></p>' +
+      frontFilterBarHtml() +
+      '<div id="op-front-mount" class="ops-hk-mount"></div>';
+    syncSlFilterDayForPrefix("op-front");
+    renderSlDayStrip("op-front-day-strip");
     var inner = document.getElementById("op-front-mount");
     if (!inner) return;
 
@@ -1038,21 +1490,46 @@
     } catch (_sk) {}
 
     var opFilterFrontByType = {
-      complaint: { status: "", from: "", to: "", room: "" },
-      guest_notification: { status: "", from: "", to: "", room: "" },
-      late_checkout: { status: "", from: "", to: "", room: "" },
+      complaint: { status: "", from: slCalDay, to: slCalDay, room: "" },
+      guest_notification: { status: "", from: slCalDay, to: slCalDay, room: "" },
+      late_checkout: { status: "", from: slCalDay, to: slCalDay, room: "" },
     };
     var opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
+
+    wireSlDayStrip(mount, "op-front-day-strip", function () {
+      ["complaint", "guest_notification", "late_checkout"].forEach(function (k) {
+        var o = opFilterFrontByType[k] || { status: "", from: "", to: "", room: "" };
+        o.from = slCalDay;
+        o.to = slCalDay;
+        opFilterFrontByType[k] = o;
+      });
+      opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
+      void loadAll();
+    });
+
+    function updateOpFrontFilterScopeLabel() {
+      var el = document.getElementById("op-front-filter-scope");
+      if (!el) return;
+      var labels = {
+        complaint: "Şikâyetler",
+        guest_notification: "Misafir bildirimleri",
+        late_checkout: "Geç çıkış",
+      };
+      var lab = labels[opFrontFilterActiveType] || opFrontFilterActiveType;
+      el.textContent =
+        "Aktif sekme: " +
+        lab +
+        " — Bu süzgeç yalnız bu listeye uygulanır. Sekme değişince alanlar o listenin kayıtlı süzgecini gösterir.";
+    }
 
     function syncOpFrontFilterFormFromActiveType() {
       var m = opFilterFrontByType[opFrontFilterActiveType] || { status: "", from: "", to: "", room: "" };
       var status = document.getElementById("op-front-filter-status");
-      var from = document.getElementById("op-front-filter-from");
-      var to = document.getElementById("op-front-filter-to");
+      var day = document.getElementById("op-front-filter-day");
       var room = document.getElementById("op-front-filter-room");
       if (status) status.value = m.status || "";
-      if (from) from.value = m.from || "";
-      if (to) to.value = m.to || "";
+      var y = m.from && /^\d{4}-\d{2}-\d{2}$/.test(String(m.from).trim()) ? String(m.from).trim() : slCalDay;
+      if (day) day.value = y || "";
       if (room) room.value = m.room || "";
     }
 
@@ -1062,6 +1539,8 @@
       applyBtn.dataset.vionaBound = "1";
       applyBtn.addEventListener("click", function () {
         var next = readOpFilterFromDom("op-front");
+        next.from = slCalDay;
+        next.to = slCalDay;
         opFilterFrontByType[opFrontFilterActiveType] = next;
         opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
         void loadAll();
@@ -1070,7 +1549,10 @@
     if (clearBtn && !clearBtn.dataset.vionaBound) {
       clearBtn.dataset.vionaBound = "1";
       clearBtn.addEventListener("click", function () {
-        opFilterFrontByType[opFrontFilterActiveType] = { status: "", from: "", to: "", room: "" };
+        var y = slCalDay;
+        opFilterFrontByType.complaint = { status: "", from: y, to: y, room: "" };
+        opFilterFrontByType.guest_notification = { status: "", from: y, to: y, room: "" };
+        opFilterFrontByType.late_checkout = { status: "", from: y, to: y, room: "" };
         clearOpFilterDom("op-front");
         opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
         void loadAll();
@@ -1078,8 +1560,17 @@
     }
 
     syncOpFrontFilterFormFromActiveType();
+    updateOpFrontFilterScopeLabel();
 
     async function loadAll() {
+      maybeAdvanceSlToday();
+      ["complaint", "guest_notification", "late_checkout"].forEach(function (k) {
+        var o = opFilterFrontByType[k] || {};
+        o.from = slCalDay;
+        o.to = slCalDay;
+        opFilterFrontByType[k] = o;
+      });
+      syncSlFilterDayForPrefix("op-front");
       syncOpFrontFilterFormFromActiveType();
       var hiliteForRender = pendingFrontHighlight;
       pendingFrontHighlight = null;
@@ -1220,13 +1711,16 @@
             opFilterFrontByType[opFrontFilterActiveType] = next;
             opFrontFilterActiveType = newKey;
             syncOpFrontFilterFormFromActiveType();
+            updateOpFrontFilterScopeLabel();
           },
         },
         summary,
       );
+      void refreshSlStripMini("front");
     }
 
     await loadAll();
+    wireOpsLightPdfOnce();
     wireOpsCrossTabListRefresh(function () {
       void loadAll();
     });

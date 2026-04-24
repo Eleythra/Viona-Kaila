@@ -196,6 +196,7 @@
     },
   };
 
+  /** Ek UI dilleri: tam metin I18N’de (i18n-survey-overlays-extra.js); burada yalnızca yedek sözlük. */
   (function aliasExtraSurveyFallback() {
     var VL = typeof window !== "undefined" ? window.VIONA_LANG : null;
     if (!VL || !VL.EXTRA) return;

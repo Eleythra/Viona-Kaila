@@ -1,6 +1,6 @@
 /**
  * Viona — Kaila Beach Hotel — çok dilli metinler.
- * Tam çeviri: tr, en, de, pl. Ek UI dilleri (ru, da, cs, ro, nl, sk) `js/lang-registry.js` + `i18n-extra-locales.js` ile eklenir;
+ * Tam çeviri: tr, en, de, pl. Ek UI dilleri (ru, da, cs, ro, nl, sk) `js/lang-registry.js` + `i18n-extra-locales.js` + `i18n-extra-module-overlays.js` ile eklenir;
  * sözlük girdisi yoksa `app.js` içindeki t() önce en, sonra tr anahtarlarına düşer.
  */
 const I18N = {
@@ -99,6 +99,12 @@ const I18N = {
     hintBooking: "Otelin resmi web sitesine yönlendirir (konaklama ve bilgi).",
 
     modGeneral: "Genel Otel Bilgileri",
+    modGeneralLead:
+      "Bu bölümde otelle ilgili genel bilgiler konulara göre gruplandırılmıştır. Aşağıdaki başlıklara dokunarak açabilirsiniz.",
+    modMiniClubKicker: "Çocuk ve animasyon aktiviteleri",
+    modMeetModuleKicker: "Toplantı & organizasyon alanları",
+    modMeetModuleLead:
+      "Bu bölümde toplantı ve organizasyon salonları ile iş merkezi hakkında bilgi ve kullanım koşulları yer alır.",
     modWhere: "Neredeyim? & Nasıl Giderim?",
     modRest: "Restaurant & Barlar",
     modAlacarte: "A La Carte Restaurantlar",
@@ -704,6 +710,12 @@ const I18N = {
     hintBooking: "Opens the hotel’s official website (stays and information).",
 
     modGeneral: "General Hotel Information",
+    modGeneralLead:
+      "General hotel information grouped by topic — tap a heading to expand.",
+    modMiniClubKicker: "Kids & animation",
+    modMeetModuleKicker: "Meeting & event spaces",
+    modMeetModuleLead:
+      "Meeting & event spaces and the business centre — information and fees below.",
     modWhere: "Where Am I? & How Do I Get There?",
     modRest: "Restaurants & Bars",
     modAlacarte: "À La Carte Restaurants",
@@ -1308,6 +1320,12 @@ const I18N = {
     hintBooking: "Öffnet die offizielle Website des Hotels (Aufenthalt und Infos).",
 
     modGeneral: "Allgemeine Hotelinformationen",
+    modGeneralLead:
+      "Allgemeine Hotelinformationen nach Themen — zum Öffnen auf die Überschrift tippen.",
+    modMiniClubKicker: "Kinder & Animation",
+    modMeetModuleKicker: "Tagungs- & Veranstaltungsbereiche",
+    modMeetModuleLead:
+      "Tagungs- und Veranstaltungsräume sowie Business Center — Informationen und Konditionen unten.",
     modWhere: "Wo bin ich? & Wie komme ich hin?",
     modRest: "Restaurants & Bars",
     modAlacarte: "À-la-carte-Restaurants",
@@ -1890,6 +1908,12 @@ const I18N = {
     hintInstagram: "Zdjęcia, wiadomości i codzienne aktualizacje.",
     hintBooking: "Otwiera oficjalną stronę internetową hotelu (pobyty i informacje).",
     modGeneral: "Ogólne informacje o hotelu",
+    modGeneralLead:
+      "Ogólne informacje o hotelu pogrupowane według tematów — dotknij nagłówka, aby rozwinąć.",
+    modMiniClubKicker: "Dzieci i animacja",
+    modMeetModuleKicker: "Sale spotkań i przestrzenie na wydarzenia",
+    modMeetModuleLead:
+      "Sale spotkań i eventów oraz centrum biznesowe — informacje i opłaty poniżej.",
     modWhere: "Gdzie jestem? I jak się tam dostać?",
     modRest: "Restauracje, bary",
     modAlacarte: "Restauracje À La Carte",

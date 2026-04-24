@@ -89,33 +89,9 @@ GUEST_NOTIF_DESC_REQUIRED = frozenset(
 def _guest_notification_description_lead(category: str, reply_language: str) -> str:
     """Kategori seçiminden sonra açıklama adımı: zorunlu / isteğe bağlı (web formu ile aynı mantık)."""
     need = (category or "") in GUEST_NOTIF_DESC_REQUIRED
-    if _tpl_lang(reply_language) == "en":
-        if need:
-            return "Please write a short description for this notice category (required)."
-        return (
-            "Optional: add any details for the team. If you have nothing to add, reply with “-” or “no”; "
-            "your first message in this chat may also be kept as context."
-        )
-    if _tpl_lang(reply_language) == "de":
-        if need:
-            return "Bitte eine kurze Beschreibung zu dieser Kategorie (erforderlich)."
-        return (
-            "Optional: ergänzen Sie Details. Wenn nichts hinzukommt, antworten Sie mit „-“ oder „nein“; "
-            "Ihre erste Nachricht in diesem Chat kann als Kontext dienen."
-        )
-    if _tpl_lang(reply_language) == "pl":
-        if need:
-            return "Proszę krótko opisać wybraną kategorię (wymagane)."
-        return (
-            "Możesz dodać szczegóły. Jeśli nie ma nic do dodania, odpowiedz „-” lub „nie”; "
-            "pierwsza wiadomość w tym czacie może też służyć jako kontekst."
-        )
-    if need:
-        return "Bu konu için kısa bir açıklama yazmanız gerekir (zorunlu)."
-    return (
-        "İsteğe bağlı: ekip için ek not ekleyebilirsiniz. Eklemeyecekseniz “-” veya “yok” yazın; "
-        "sohbetteki ilk mesajınız da bağlam olarak kullanılabilir."
-    )
+    _loc = LocalizationService()
+    key = "guest_notif_description_required" if need else "guest_notif_description_optional"
+    return _loc.get(key, reply_language)
 
 
 _VALID_LANG = CHATBOT_UI_LANG_SET
@@ -242,38 +218,14 @@ _LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_TEXT: dict[str, str] = {
 
 
 def _guest_notification_category_prompt(notif_group: str | None, reply_language: str) -> str:
-    if _tpl_lang(reply_language) == "en":
-        heads = {
-            "diet": "Diet / sensitivity:",
-            "health": "Health / special situation:",
-            "celebration": "Celebration / special occasion:",
-            "reception": "Front desk / reception:",
-        }
-        lead = "Please choose a category (reply with the number):\n"
-    elif _tpl_lang(reply_language) == "de":
-        heads = {
-            "diet": "Ernährung / Unverträglichkeit:",
-            "health": "Gesundheit / besondere Situation:",
-            "celebration": "Feier / besonderer Anlass:",
-            "reception": "Rezeption:",
-        }
-        lead = "Bitte wählen Sie eine Kategorie (Antwort mit Nummer):\n"
-    elif _tpl_lang(reply_language) == "pl":
-        heads = {
-            "diet": "Dieta / wrażliwość:",
-            "health": "Zdrowie / szczególna sytuacja:",
-            "celebration": "Świętowanie / szczególna okazja:",
-            "reception": "Recepcja:",
-        }
-        lead = "Wybierz kategorię (odpowiedz numerem):\n"
-    else:
-        heads = {
-            "diet": "Beslenme / hassasiyet:",
-            "health": "Sağlık / özel durum:",
-            "celebration": "Kutlama / özel gün:",
-            "reception": "Ön büro / resepsiyon:",
-        }
-        lead = "Lütfen bir kategori seçiniz (numara ile yanıtlayın):\n"
+    _loc = LocalizationService()
+    heads = {
+        "diet": _loc.get("guest_notif_head_diet", reply_language),
+        "health": _loc.get("guest_notif_head_health", reply_language),
+        "celebration": _loc.get("guest_notif_head_celebration", reply_language),
+        "reception": _loc.get("guest_notif_head_reception", reply_language),
+    }
+    lead = _loc.get("guest_notif_choose_lead_numbered", reply_language)
 
     if notif_group is None:
         lines: list[str] = []
@@ -345,30 +297,7 @@ def _request_chat_category_prompt(reply_language: str) -> str:
             lines.append(f"{n}. {lbl}")
             n += 1
     body = "\n".join(lines)
-    if _tpl_lang(reply_language) == "en":
-        lead = (
-            "Please choose a request type (reply with the number). "
-            "You may also type the item name (e.g. bathrobe, pillow). "
-            "Groups match the Requests tab in the app:\n\n"
-        )
-    elif _tpl_lang(reply_language) == "de":
-        lead = (
-            "Bitte wählen Sie eine Art der Anfrage (Antwort mit Nummer). "
-            "Sie können auch den Namen nennen (z. B. Bademantel, Kissen). "
-            "Die Gruppen entsprechen dem Reiter «Anfragen» in der App:\n\n"
-        )
-    elif _tpl_lang(reply_language) == "pl":
-        lead = (
-            "Wybierz rodzaj prośby (odpowiedz numerem). "
-            "Możesz napisać nazwę (np. szlafrok, poduszka). "
-            "Grupy odpowiadają zakładce „Prośby” w aplikacji:\n\n"
-        )
-    else:
-        lead = (
-            "Lütfen talep türünü seçiniz (numara ile yanıtlayın). "
-            "İsterseniz tür adını da yazabilirsiniz (ör. bornoz, yastık). "
-            "Gruplar uygulamadaki İstekler sekmesiyle aynıdır:\n\n"
-        )
+    lead = LocalizationService().get("chat_request_category_prompt_lead", reply_language)
     return lead + body
 
 
@@ -655,37 +584,76 @@ def _request_rule_uses_reception_redirect_not_chat_form(sub_intent: str | None, 
     return False
 
 
+# Kayıt özeti satırı — `orchestrator_branch_lang` ile değil, gerçek UI dilinde gösterilir.
+_FORM_RECORD_TYPE_LABELS: dict[str, dict[str, str]] = {
+    "tr": {
+        "fault": "Arıza bildirimi",
+        "request": "Oda talebi",
+        "complaint": "Şikayet",
+        "guest_notification": "Misafir bildirimi",
+    },
+    "en": {
+        "fault": "Fault report",
+        "request": "Room request",
+        "complaint": "Complaint",
+        "guest_notification": "Guest notice",
+    },
+    "de": {
+        "fault": "Störmeldung",
+        "request": "Zimmeranfrage",
+        "complaint": "Beschwerde",
+        "guest_notification": "Gästemeldung",
+    },
+    "pl": {
+        "fault": "Zgłoszenie awarii",
+        "request": "Prośba do pokoju",
+        "complaint": "Reklamacja",
+        "guest_notification": "Powiadomienie dla hotelu",
+    },
+    "da": {
+        "fault": "Fejlrapport",
+        "request": "Værelsesanmodning",
+        "complaint": "Klage",
+        "guest_notification": "Gæstenotifikation",
+    },
+    "nl": {
+        "fault": "Storingsmelding",
+        "request": "Kamerverzoek",
+        "complaint": "Klacht",
+        "guest_notification": "Gastmelding",
+    },
+    "cs": {
+        "fault": "Hlášení závady",
+        "request": "Požadavek na pokoj",
+        "complaint": "Reklamace",
+        "guest_notification": "Oznámení hosta",
+    },
+    "ro": {
+        "fault": "Raport de defecțiune",
+        "request": "Cerere cameră",
+        "complaint": "Reclamație",
+        "guest_notification": "Notificare oaspete",
+    },
+    "sk": {
+        "fault": "Hlásenie poruchy",
+        "request": "Požiadavka na izbu",
+        "complaint": "Reklamácia",
+        "guest_notification": "Oznámenie hosťa",
+    },
+    "ru": {
+        "fault": "Сообщение о неисправности",
+        "request": "Запрос в номер",
+        "complaint": "Жалоба",
+        "guest_notification": "Уведомление гостя",
+    },
+}
+
+
 def _form_record_type_label(kind: str, reply_language: str) -> str:
     k = (kind or "").strip()
-    if _tpl_lang(reply_language) == "en":
-        m = {
-            "fault": "Fault report",
-            "request": "Room request",
-            "complaint": "Complaint",
-            "guest_notification": "Guest notice",
-        }
-    elif _tpl_lang(reply_language) == "de":
-        m = {
-            "fault": "Störmeldung",
-            "request": "Zimmeranfrage",
-            "complaint": "Beschwerde",
-            "guest_notification": "Gästemeldung",
-        }
-    elif _tpl_lang(reply_language) == "pl":
-        m = {
-            "fault": "Zgłoszenie awarii",
-            "request": "Prośba do pokoju",
-            "complaint": "Reklamacja",
-            "guest_notification": "Powiadomienie dla hotelu",
-        }
-    else:
-        m = {
-            "fault": "Arıza bildirimi",
-            "request": "Oda talebi",
-            "complaint": "Şikayet",
-            "guest_notification": "Misafir bildirimi",
-        }
-    return m.get(k, k)
+    lang = normalize_chatbot_lang(reply_language)
+    row = _FORM_RECORD_TYPE_LABELS.get(lang) or _FORM_RECORD_TYPE_LABELS["tr"]
+    return row.get(k, k)
 
 
 # Onay adımı: kısa doğal dil (oturum durumu + form step ile birlikte yorumlanır).
@@ -709,6 +677,22 @@ _CONFIRM_YES_PHRASES = frozenset(
         "oke",
         "tak",
         "potwierdzam",
+        "bekræft",
+        "bekraft",
+        "jeg bekræfter",
+        "jeg bekrafter",
+        "gerne",
+        "bevestig",
+        "ik bevestig",
+        "potvrzuji",
+        "potvrzujem",
+        "confirmă",
+        "confirma",
+        "potvrdzujem",
+        "подтверждаю",
+        "да",
+        "согласен",
+        "согласна",
     }
 )
 _CONFIRM_NO_PHRASES = frozenset(
@@ -732,6 +716,17 @@ _CONFIRM_NO_PHRASES = frozenset(
         "nein",
         "anuluj",
         "nie",
+        "nej",
+        "nee",
+        "annuller",
+        "annuleer",
+        "zrušit",
+        "zrusit",
+        "anulovať",
+        "anulovat",
+        "нет",
+        "отмена",
+        "отменить",
     }
 )
 
@@ -758,6 +753,19 @@ _FORM_ABORT_EXTRA_EXACT = frozenset(
         "abbrechen bitte",
         "anuluj wniosek",
         "anuluj formularz",
+        "annuller anmodningen",
+        "annuller anmodning",
+        "afbestil formularen",
+        "annuleer het formulier",
+        "annuleer formulier",
+        "zrušit formulář",
+        "zrusit formular",
+        "anulează formularul",
+        "anuleaza formularul",
+        "zrušiť formulár",
+        "zrusit formular",
+        "отменить форму",
+        "отмена формы",
     }
 )
 _FORM_ABORT_SUBSTRINGS = (
@@ -773,6 +781,11 @@ _FORM_ABORT_SUBSTRINGS = (
     "şikayeti iptal",
     "sikayeti iptal",
     "anuluj form",
+    "annuller form",
+    "annuleer form",
+    "zrus formular",
+    "anuleaza formularul",
+    "отменить форму",
 )
 
 _SESSION_ACK_AFTER_CANCEL = frozenset(
@@ -797,6 +810,18 @@ _SESSION_ACK_AFTER_CANCEL = frozenset(
         "thank you",
         "danke",
         "dziękuję",
+        "tak skal du have",
+        "mange tak",
+        "dank je",
+        "bedankt",
+        "děkuji",
+        "dekuji",
+        "mulțumesc",
+        "multumesc",
+        "ďakujem",
+        "dakujem",
+        "спасибо",
+        "благодарю",
     }
 )
 _SESSION_VAZGECTIM_AFTER_CANCEL = frozenset(
@@ -872,6 +897,20 @@ _FOLLOWUP_HOW_NORMALIZED_PHRASES = frozenset(
         "wie bestelle ich",
         "jak zamówić",
         "jak dostać",
+        "hvordan bestiller jeg",
+        "hvordan får jeg",
+        "hoe kan ik bestellen",
+        "hoe vraag ik",
+        "jak si objednat",
+        "jak objednat",
+        "cum pot comanda",
+        "cum solicit",
+        "ako si to objednám",
+        "ako si to objednam",
+        "ako objednať",
+        "ako objednat",
+        "как заказать",
+        "как получить",
     }
 )
 
@@ -883,6 +922,22 @@ def _is_short_how_followup_message(normalized_lower: str) -> bool:
 
 _CHAT_FORM_LIST_SELECTION_STEPS = frozenset({"category", "detail_enum", "detail_int", "location", "urgency"})
 
+# Liste adımında «hayır» benzeri = genelde «arıza yok»; form iptali sayma.
+_CHAT_FORM_LIST_STEP_NO_LIKE = frozenset(
+    {
+        "hayır",
+        "hayir",
+        "yok",
+        "no",
+        "nope",
+        "nein",
+        "nie",
+        "nej",
+        "nee",
+        "нет",
+    }
+)
+
 
 def _user_wants_chat_form_abort_message(normalized: str, *, at_list_selection_step: bool = False) -> bool:
     """Kategori / detay / açıklama / isim / oda adımlarında formu iptal ifadesi (menüde «2» seçimi ile karışmaz)."""
@@ -893,9 +948,7 @@ def _user_wants_chat_form_abort_message(normalized: str, *, at_list_selection_st
         return False
     if t in _CONFIRM_NO_PHRASES:
         # Liste adımında «hayır» / «yok» genelde «arıza yok» anlamı; bağlamlı geri çekilme ayrı işlenir.
-        if at_list_selection_step and t in frozenset(
-            {"hayır", "hayir", "yok", "no", "nope", "nein", "nie"}
-        ):
+        if at_list_selection_step and t in _CHAT_FORM_LIST_STEP_NO_LIKE:
             return False
         return True
     if t in _FORM_ABORT_EXTRA_EXACT:
@@ -912,7 +965,7 @@ def _user_wants_chat_form_soft_retract(normalized: str) -> bool:
     t = (normalized or "").strip()
     if not t:
         return False
-    if t in frozenset({"hayır", "hayir", "yok", "no", "nope", "nein", "nie"}):
+    if t in _CHAT_FORM_LIST_STEP_NO_LIKE:
         return True
     retract_markers = (
         "yok değilmiş",
@@ -950,6 +1003,17 @@ def _user_wants_chat_form_soft_retract(normalized: str) -> bool:
         "kein problem mehr",
         "problem rozwiązany",
         "nie zepsute",
+        "det virker alligevel",
+        "het werkt weer",
+        "werkt nu wel",
+        "už to funguje",
+        "uz to funguje",
+        "funcționează acum",
+        "functioneaza acum",
+        "už to ide",
+        "uz to ide",
+        "уже работает",
+        "теперь работает",
     )
     if any(p in t for p in retract_markers):
         return True
@@ -2389,14 +2453,8 @@ class ChatOrchestrator:
                 label = category_label(cat_intent, cat, reply_language)
                 options.append(f"{idx}. {label}")
 
-            if _tpl_lang(reply_language) == "en":
-                prompt = "Please choose a category:\n" + "\n".join(options)
-            elif _tpl_lang(reply_language) == "de":
-                prompt = "Bitte wählen Sie eine Kategorie:\n" + "\n".join(options)
-            elif _tpl_lang(reply_language) == "pl":
-                prompt = "Proszę wybrać kategorię:\n" + "\n".join(options)
-            else:
-                prompt = "Lütfen bir kategori seçiniz:\n" + "\n".join(options)
+            lead = self.localization_service.get("chat_form_category_prompt_lead", reply_language)
+            prompt = lead + "\n" + "\n".join(options)
             meta_intent = "fault_report" if op == "fault" else "complaint"
 
         return self.response_service.build(
@@ -2675,13 +2733,8 @@ class ChatOrchestrator:
                 cat_intent = "fault" if op == "fault" else "complaint"
                 lbl = category_label(cat_intent, cat, reply_language)
                 lines.append(f"{idx}. {lbl}")
-            if _tpl_lang(reply_language) == "en":
-                return "Please choose a category:\n" + "\n".join(lines)
-            if _tpl_lang(reply_language) == "de":
-                return "Bitte wählen Sie eine Kategorie:\n" + "\n".join(lines)
-            if _tpl_lang(reply_language) == "pl":
-                return "Proszę wybrać kategorię:\n" + "\n".join(lines)
-            return "Lütfen bir kategori seçiniz:\n" + "\n".join(lines)
+            lead = self.localization_service.get("chat_form_category_prompt_lead", reply_language)
+            return lead + "\n" + "\n".join(lines)
 
         # Yardımcı: geçerli kategori listesini verir.
         def _current_categories(op: OperationType):

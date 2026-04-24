@@ -169,30 +169,67 @@
     pl: "Business Center — przestrzeń robocza i usługi",
   };
 
-  function renderMeetingModule(container) {
-    var root = el("div", "viona-mod viona-mod--meeting");
+  function mergeMeetingContent() {
+    var E = window.VionaMeetingLocalesExtra;
+    if (!E) {
+      return { venueLines: VENUE_LINES, sections: SECTIONS, businessAlt: BUSINESS_IMG_ALT };
+    }
+    var vl = VENUE_LINES.map(function (row, i) {
+      return E.venueLines && E.venueLines[i] ? Object.assign({}, row, E.venueLines[i]) : row;
+    });
+    var secs = SECTIONS.map(function (sec, i) {
+      var ex = E.sections && E.sections[i];
+      if (!ex) return sec;
+      var o = Object.assign({}, sec);
+      if (ex.title) o.title = Object.assign({}, sec.title, ex.title);
+      if (ex.alt) o.alt = Object.assign({}, sec.alt, ex.alt);
+      if (ex.paras && sec.paras) {
+        o.paras = sec.paras.map(function (p, j) {
+          return ex.paras[j] ? Object.assign({}, p, ex.paras[j]) : p;
+        });
+      }
+      return o;
+    });
+    var ba = E.businessImgAlt ? Object.assign({}, BUSINESS_IMG_ALT, E.businessImgAlt) : BUSINESS_IMG_ALT;
+    return { venueLines: vl, sections: secs, businessAlt: ba };
+  }
 
-    var secTitle = el("p", "rest-section-title", T({ tr: "Toplantı & organizasyon alanları", en: "Meeting & event spaces", de: "Tagungs- & Veranstaltungsbereiche", pl: "Meeting & event spaces" }));
-    root.appendChild(secTitle);
+  function renderMeetingModule(container, t) {
+    var root = el("div", "viona-mod viona-mod--meeting");
+    var M = mergeMeetingContent();
+
+    var secTitleText =
+      typeof t === "function"
+        ? t("modMeetModuleKicker")
+        : T({
+            tr: "Toplantı & organizasyon alanları",
+            en: "Meeting & event spaces",
+            de: "Tagungs- & Veranstaltungsbereiche",
+            pl: "Meeting & event spaces",
+          });
+    root.appendChild(el("p", "rest-section-title", secTitleText));
 
     var lead = el("p", "viona-mod-lead");
-    lead.textContent = T({
-      tr: "Bu bölümde toplantı ve organizasyon salonları ile iş merkezi hakkında bilgi ve kullanım koşulları yer alır.",
-      en: "Meeting & event spaces and the business centre — information and fees below.",
-      de: "Tagungs- und Veranstaltungsräume sowie Business Center — Informationen und Konditionen unten.",
-      pl: "Sale spotkań i eventów oraz centrum biznesowe — informacje i opłaty poniżej.",
-    });
+    lead.textContent =
+      typeof t === "function"
+        ? t("modMeetModuleLead")
+        : T({
+            tr: "Bu bölümde toplantı ve organizasyon salonları ile iş merkezi hakkında bilgi ve kullanım koşulları yer alır.",
+            en: "Meeting & event spaces and the business centre — information and fees below.",
+            de: "Tagungs- und Veranstaltungsräume sowie Business Center — Informationen und Konditionen unten.",
+            pl: "Sale spotkań i eventów oraz centrum biznesowe — informacje i opłaty poniżej.",
+          });
     root.appendChild(lead);
 
     var summary = el("div", "meet-summary");
-    VENUE_LINES.forEach(function (line) {
+    M.venueLines.forEach(function (line) {
       var row = el("p", "meet-summary__line", T(line));
       summary.appendChild(row);
     });
     root.appendChild(summary);
 
     var prose = el("div", "meet-prose");
-    SECTIONS.forEach(function (sec) {
+    M.sections.forEach(function (sec) {
       var h = el("h3", "meet-prose__h", T(sec.title));
       prose.appendChild(h);
       if (sec.img) {
@@ -206,8 +243,8 @@
     root.appendChild(prose);
 
     var business = el("div", "meet-business");
-    business.appendChild(meetFigure("assets/images/meeting/business-center.png", BUSINESS_IMG_ALT));
-    var bizCap = el("p", "meet-business__cap", T(VENUE_LINES[2]));
+    business.appendChild(meetFigure("assets/images/meeting/business-center.png", M.businessAlt));
+    var bizCap = el("p", "meet-business__cap", T(M.venueLines[2]));
     business.appendChild(bizCap);
     root.appendChild(business);
 

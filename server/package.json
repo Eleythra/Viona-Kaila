@@ -16,6 +16,7 @@
     "seed:surveys-test:clean": "node scripts/delete-survey-evaluations-seed.mjs",
     "verify:surveys-report": "node scripts/verify-survey-evaluations-report.mjs",
     "smoke:guest-request": "node scripts/smoke-guest-request-room-cleaning.mjs",
+    "build:survey-locales": "node ../scripts/build-survey-i18n-overlay.mjs",
     "pm2:start": "pm2 start ecosystem.config.cjs",
     "pm2:stop": "pm2 stop viona-node-api",
     "pm2:logs": "pm2 logs viona-node-api --lines 100"

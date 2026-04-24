@@ -531,6 +531,24 @@
     },
   ];
 
+  (function mergeWherePlaceExtraLocales() {
+    var X = typeof window !== "undefined" ? window.VionaWhereLocalesExtra : null;
+    if (!X || !Array.isArray(X)) return;
+    var langs = ["ru", "da", "cs", "ro", "nl", "sk"];
+    for (var i = 0; i < WHERE_PLACES.length && i < X.length; i++) {
+      var ex = X[i];
+      if (!ex) continue;
+      ["title", "konum", "desc"].forEach(function (field) {
+        var tgt = WHERE_PLACES[i][field];
+        if (!tgt || typeof tgt !== "object" || !ex[field] || typeof ex[field] !== "object") return;
+        langs.forEach(function (lg) {
+          var s = ex[field][lg];
+          if (s != null && String(s).trim() !== "") tgt[lg] = String(s).trim();
+        });
+      });
+    }
+  })();
+
   var KROKI_SRC = "assets/images/where/kroki-portrait.png?v=1";
 
   /** Sabit pin: Sinton hariç 29 nokta, kroki sol-üst köşeye göre yüzde. */

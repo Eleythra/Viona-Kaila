@@ -44,7 +44,11 @@
    */
   function contentFallbackChain(preferredCode) {
     var p = normalizeToUiLang(preferredCode || DEFAULT_LANG);
-    var rest = ["en", "tr", "de", "pl"].concat(EXTRA);
+    /** Ek UI dilleri: önce de/pl (çook dilli içerikte var), sonra tr — İngilizce en sona. */
+    var rest =
+      EXTRA.indexOf(p) !== -1
+        ? ["de", "pl", "tr", "en"].concat(EXTRA.filter(function (x) { return x !== p; }))
+        : ["en", "tr", "de", "pl"].concat(EXTRA);
     var out = [];
     if (p) out.push(p);
     for (var i = 0; i < rest.length; i++) {

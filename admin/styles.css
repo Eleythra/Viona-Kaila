@@ -4348,6 +4348,11 @@
   flex: 1 1 140px;
   max-width: 200px;
 }
+.op-filter-field--day {
+  flex: 1 1 160px;
+  min-width: min(100%, 10.5rem);
+  max-width: 220px;
+}
 .op-filter-field__lbl {
   font-size: 0.68rem;
   font-weight: 700;
@@ -4449,8 +4454,11 @@
 }
 .op-day-strip__chip {
   flex: 0 0 auto;
-  min-width: 4.5rem;
-  max-width: 8.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 5.2rem;
+  max-width: 9.25rem;
   padding: 0.45rem 0.55rem;
   border-radius: 10px;
   border: 1px solid rgba(51, 72, 96, 0.95);
@@ -4464,6 +4472,10 @@
   cursor: pointer;
   transition: border-color var(--admin-ease), background var(--admin-ease), color var(--admin-ease),
     box-shadow var(--admin-ease);
+}
+.op-day-strip__chip-date {
+  display: block;
+  font-variant-numeric: tabular-nums;
 }
 .op-day-strip__chip:hover {
   border-color: rgba(61, 108, 255, 0.45);
@@ -4486,6 +4498,16 @@
   font-weight: 600;
   color: var(--admin-text-dim);
   letter-spacing: 0.03em;
+}
+.op-day-strip__chip-mini {
+  display: block;
+  margin-top: 0.12rem;
+  font-size: 0.58rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: #b8cfe8;
+  white-space: nowrap;
 }
 
 /* ops-hk.html / ops-tech.html / ops-front.html — admin ilgili sekmeyle aynı kart / dış boşluk */
