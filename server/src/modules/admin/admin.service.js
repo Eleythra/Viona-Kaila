@@ -233,7 +233,10 @@ export async function listAdminBucket(type, query = {}) {
   let qb = getSupabase().from(cfg.table).select("*", { count: "exact" }).order("submitted_at", { ascending: false });
   qb = applyDateFilters(qb, query, "submitted_at");
   if (query.status) qb = applyGuestBucketStatusFilter(qb, type, query);
-  if (type !== "reservation" && query.room_number) {
+  const searchList = String(query.search ?? "").trim();
+  if (type !== "reservation" && searchList) {
+    qb = applyGuestBucketSearchOr(qb, type, searchList);
+  } else if (type !== "reservation" && query.room_number) {
     const rn = String(query.room_number || "").trim();
     if (rn) qb = qb.eq("room_number", rn);
   }
@@ -287,9 +290,43 @@ function applyGuestBucketStatusFilter(qb, type, query = {}) {
   return qb.eq("status", st);
 }
 
+/** Metin araması: virgül/postgREST `or` ayırıcılarından kaçın; ILIKE jokerlerini sınırla. */
+function normalizeGuestBucketSearch(raw) {
+  const s = String(raw ?? "")
+    .trim()
+    .slice(0, 80)
+    .replace(/\\/g, "\\\\")
+    .replace(/%/g, "\\%")
+    .replace(/_/g, "\\_")
+    .replace(/,/g, " ");
+  return s;
+}
+
+/** `search` doluysa oda tam eşleşmesi yerine bu OR kullanılır (plan). */
+function applyGuestBucketSearchOr(qb, type, rawSearch) {
+  const term = normalizeGuestBucketSearch(rawSearch);
+  if (!term) return qb;
+  const pat = `%${term}%`;
+  const t = String(type || "").trim();
+  const colsByType = {
+    request: ["guest_name", "room_number", "description", "category", "other_category_note"],
+    complaint: ["guest_name", "room_number", "description", "category", "other_category_note"],
+    fault: ["guest_name", "room_number", "description", "category"],
+    guest_notification: ["guest_name", "room_number", "description", "category", "other_category_note"],
+    late_checkout: ["guest_name", "room_number", "description", "checkout_time"],
+  };
+  const cols = colsByType[t];
+  if (!cols?.length) return qb;
+  const ors = cols.map((c) => `${c}.ilike.${pat}`).join(",");
+  return qb.or(ors);
+}
+
 function applyGuestBucketListFilters(qb, type, query = {}) {
   let q = applyDateFilters(qb, query, "submitted_at");
-  if (type !== "reservation" && query.room_number) {
+  const searchRaw = String(query.search ?? "").trim();
+  if (type !== "reservation" && searchRaw) {
+    q = applyGuestBucketSearchOr(q, type, searchRaw);
+  } else if (type !== "reservation" && query.room_number) {
     const rn = String(query.room_number || "").trim();
     if (rn) q = q.eq("room_number", rn);
   }

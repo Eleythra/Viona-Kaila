@@ -4385,6 +4385,71 @@
   color: var(--admin-text-muted);
 }
 
+.op-filter-bar__row--search {
+  margin-top: 0.55rem;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
+.op-filter-field--search {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.op-filter-field--search .op-filter-input {
+  width: 100%;
+}
+
+/* Gün şeridi chip altı: Aç / Bit / Ol + sayılar */
+.op-chip-stats {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 0.12rem 0.18rem;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #b8cfe8;
+  line-height: 1.2;
+}
+.op-chip-stats__it {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.08rem;
+  white-space: nowrap;
+}
+.op-chip-stats__it abbr {
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.56rem;
+  color: #8ea6c4;
+  letter-spacing: 0.04em;
+}
+.op-chip-stats__it strong {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #e8f0ff;
+}
+.op-chip-stats__sep {
+  opacity: 0.45;
+  font-weight: 400;
+  padding: 0 0.04rem;
+}
+.op-chip-stats--sigma .op-chip-stats__it strong {
+  font-size: 0.62rem;
+}
+
+.op-day-strip-wrap__legend {
+  margin: 0.45rem 0 0;
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: var(--admin-text-muted);
+  letter-spacing: 0.01em;
+}
+.op-day-strip-wrap__legend strong {
+  font-weight: 800;
+  color: var(--admin-text-dim);
+}
+
 /* Operasyon sekmeleri: gün şeridi (HK / Teknik / Ön büro) */
 .op-day-strip-wrap {
   margin-bottom: 0.85rem;

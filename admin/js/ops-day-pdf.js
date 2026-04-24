@@ -270,19 +270,6 @@
     return String(raw.name || raw.guest_name || "").replace(/\s+/g, " ").trim();
   }
 
-  function pdfDetailShort(row, type) {
-    if (!row) return "-";
-    var d = String(row.description || row.note || "").replace(/\s+/g, " ").trim();
-    var c = String(row.category || "").trim();
-    if (!c && row.categories && row.categories.length) c = String(row.categories[0] || "").trim();
-    var bits = [];
-    if (c) bits.push(c);
-    if (d) bits.push(d);
-    var t = bits.join(" — ") || "-";
-    t = t.length > 220 ? t.slice(0, 217) + "…" : t;
-    return pdfText(t);
-  }
-
   function statusLabelPdf(row, type) {
     var st = normAdminIssueStatus(row);
     if (type === "complaint" || type === "guest_notification") {
@@ -381,6 +368,23 @@
     return y + 30;
   }
 
+  function pdfSummaryCell(row, type) {
+    var oz = "";
+    try {
+      if (window.AdminUI && typeof window.AdminUI.operationSummaryForType === "function") {
+        oz = String(window.AdminUI.operationSummaryForType(type, row) || "").trim();
+      }
+    } catch (_e) {}
+    if (!oz) {
+      var d = String(row.description || row.note || "").replace(/\s+/g, " ").trim();
+      var c = String(row.category || "").trim();
+      if (!c && row.categories && row.categories.length) c = String(row.categories[0] || "").trim();
+      oz = [c, d].filter(Boolean).join(" — ") || "-";
+    }
+    if (oz.length > 260) oz = oz.slice(0, 257) + "…";
+    return pdfText(oz);
+  }
+
   function buildRowsForTable(rows, type) {
     var body = [];
     var buckets = [];
@@ -390,8 +394,7 @@
         pdfText(formatSubmittedPdfTr(r.submitted_at)),
         pdfText(String(r.room_number || "-")),
         pdfText(operationGuestName(r) || "-"),
-        pdfText(String(r.category || (r.categories && r.categories[0]) || "-")),
-        pdfDetailShort(r, type),
+        pdfSummaryCell(r, type),
         statusLabelPdf(r, type),
       ]);
     });
@@ -432,12 +435,11 @@
       },
       bodyStyles: { minCellHeight: 13, textColor: [30, 41, 59] },
       columnStyles: {
-        0: { cellWidth: 58 },
-        1: { cellWidth: 32, halign: "center" },
-        2: { cellWidth: 84 },
-        3: { cellWidth: 68 },
-        4: { cellWidth: "auto" },
-        5: { cellWidth: 68, halign: "center", fontStyle: "bold" },
+        0: { cellWidth: 50 },
+        1: { cellWidth: 28, halign: "center" },
+        2: { cellWidth: 64 },
+        3: { cellWidth: "auto" },
+        4: { cellWidth: 58, halign: "center", fontStyle: "bold" },
       },
       margin: { left: M, right: M },
       didParseCell: function (data) {
@@ -446,7 +448,7 @@
         if (ri < 0 || ri >= buckets.length) return;
         var bucket = buckets[ri];
         if (typeof data.column.index !== "number") return;
-        if (data.column.index === 5) {
+        if (data.column.index === 4) {
           var pill = statusPillStyle(bucket);
           data.cell.styles.fillColor = pill.fill;
           data.cell.styles.textColor = pill.text;
@@ -485,8 +487,22 @@
     return out;
   }
 
-  async function fetchDay(adapter, type, ymd) {
-    var raw = await adapter.getBucketMergeAll(type, MERGE_MAX_PAGES, { from: ymd, to: ymd });
+  async function fetchDay(adapter, type, ymd, mergeListQuery) {
+    var base = { from: ymd, to: ymd };
+    if (typeof mergeListQuery === "function") {
+      try {
+        var extra = mergeListQuery(type, ymd);
+        if (extra && typeof extra === "object") {
+          Object.keys(extra).forEach(function (k) {
+            var v = extra[k];
+            if (v == null || v === "") return;
+            if (k === "from" || k === "to") return;
+            base[k] = v;
+          });
+        }
+      } catch (_e) {}
+    }
+    var raw = await adapter.getBucketMergeAll(type, MERGE_MAX_PAGES, base);
     return { items: dedupeRowsById(raw.items), truncated: Boolean(raw.truncated) };
   }
 
@@ -530,8 +546,7 @@
         pdfText("Zaman"),
         pdfText("Oda"),
         pdfText("Misafir"),
-        pdfText("Kategori"),
-        pdfText("Detay"),
+        pdfText("Özet"),
         pdfText("Durum"),
       ],
     ];
@@ -548,6 +563,7 @@
     var adapter = opts && opts.adapter;
     var ymd = String((opts && opts.ymd) || "").trim();
     var variant = String((opts && opts.variant) || "").trim();
+    var mergeListQuery = opts && opts.mergeListQuery;
     if (!adapter || typeof adapter.getBucketMergeAll !== "function") {
       throw new Error("adapter_missing");
     }
@@ -562,7 +578,7 @@
     }
 
     if (variant === "hk") {
-      var packHk = await fetchDay(adapter, "request", ymd);
+      var packHk = await fetchDay(adapter, "request", ymd, mergeListQuery);
       oneSectionPdf(doc, pdfText("HK operasyon"), pdfText("Günlük HK talep raporu"), ymd, packHk.items || [], "request");
       if (packHk.truncated) {
         var ph = doc.internal.pageSize.getHeight();
@@ -588,7 +604,7 @@
     }
 
     if (variant === "tech") {
-      var packT = await fetchDay(adapter, "fault", ymd);
+      var packT = await fetchDay(adapter, "fault", ymd, mergeListQuery);
       oneSectionPdf(doc, pdfText("Teknik operasyon"), pdfText("Günlük arıza raporu"), ymd, packT.items || [], "fault");
       if (packT.truncated) {
         var ph2 = doc.internal.pageSize.getHeight();
@@ -614,9 +630,9 @@
     }
 
     if (variant === "front") {
-      var packC = await fetchDay(adapter, "complaint", ymd);
-      var packG = await fetchDay(adapter, "guest_notification", ymd);
-      var packL = await fetchDay(adapter, "late_checkout", ymd);
+      var packC = await fetchDay(adapter, "complaint", ymd, mergeListQuery);
+      var packG = await fetchDay(adapter, "guest_notification", ymd, mergeListQuery);
+      var packL = await fetchDay(adapter, "late_checkout", ymd, mergeListQuery);
       var pageW = doc.internal.pageSize.getWidth();
       var pageH = doc.internal.pageSize.getHeight();
       var M = 36;
@@ -665,8 +681,7 @@
           pdfText("Zaman"),
           pdfText("Oda"),
           pdfText("Misafir"),
-          pdfText("Kategori"),
-          pdfText("Detay"),
+          pdfText("Özet"),
           pdfText("Durum"),
         ],
       ];

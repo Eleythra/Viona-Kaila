@@ -17,7 +17,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/styles.css?v=30" />
-    <link rel="stylesheet" href="styles.css?v=55" />
+    <link rel="stylesheet" href="styles.css?v=56" />
   </head>
   <body class="admin-body">
     <section id="admin-login" class="admin-login">
@@ -196,6 +196,9 @@
               Yalnızca seçilen günde oluşturulan kayıtlar listelenir. <strong>Bugün</strong> seçiliyken tarih otomatik güncellenir; geçmiş bir gün seçince o gün sabit kalır.
             </p>
             <div id="op-hk-day-strip" class="op-day-strip__scroll" role="listbox" aria-label="Gün şeridi"></div>
+            <p class="op-day-strip-wrap__legend">
+              Şerit özeti: <strong>Aç</strong> açık (bekleyen + işlemde) · <strong>Bit</strong> yapıldı · <strong>Ol</strong> yapılmadı.
+            </p>
           </div>
           <div class="op-filter-bar glass-block" id="op-hk-filters" role="search" aria-label="HK operasyon filtreleri">
             <div class="op-filter-bar__row">
@@ -223,7 +226,22 @@
                 <button type="button" class="btn-small" id="op-hk-filter-clear">Sıfırla</button>
               </div>
             </div>
-            <p class="op-filter-hint">Filtreler sunucuda uygulanır; <strong>Uygula</strong> ile listeyi yenilersiniz.</p>
+            <div class="op-filter-bar__row op-filter-bar__row--search">
+              <label class="op-filter-field op-filter-field--search"
+                ><span class="op-filter-field__lbl">Metin ara</span>
+                <input
+                  id="op-hk-filter-search"
+                  type="search"
+                  class="op-filter-input"
+                  placeholder="Oda, misafir, kategori kodu, not…"
+                  autocomplete="off"
+                />
+              </label>
+            </div>
+            <p class="op-filter-hint">
+              Kayıt günü takviminden seçim anında uygulanır. Metin araması yazarken kısa gecikmeyle uygulanır; durum ve oda için
+              <strong>Uygula</strong>.
+            </p>
           </div>
           <div id="op-hk-summary-mount" class="ops-hk-mount"></div>
           <div id="op-hk-mount"></div>
@@ -247,6 +265,9 @@
               Yalnızca seçilen günde oluşturulan kayıtlar listelenir. <strong>Bugün</strong> seçiliyken tarih otomatik güncellenir; geçmiş bir gün seçince o gün sabit kalır.
             </p>
             <div id="op-tech-day-strip" class="op-day-strip__scroll" role="listbox" aria-label="Gün şeridi"></div>
+            <p class="op-day-strip-wrap__legend">
+              Şerit özeti: <strong>Aç</strong> açık (bekleyen + işlemde) · <strong>Bit</strong> yapıldı · <strong>Ol</strong> yapılmadı.
+            </p>
           </div>
           <div class="op-filter-bar glass-block" id="op-tech-filters" role="search" aria-label="Teknik operasyon filtreleri">
             <div class="op-filter-bar__row">
@@ -274,7 +295,22 @@
                 <button type="button" class="btn-small" id="op-tech-filter-clear">Sıfırla</button>
               </div>
             </div>
-            <p class="op-filter-hint">Filtreler sunucuda uygulanır; <strong>Uygula</strong> ile listeyi yenilersiniz.</p>
+            <div class="op-filter-bar__row op-filter-bar__row--search">
+              <label class="op-filter-field op-filter-field--search"
+                ><span class="op-filter-field__lbl">Metin ara</span>
+                <input
+                  id="op-tech-filter-search"
+                  type="search"
+                  class="op-filter-input"
+                  placeholder="Oda, misafir, kategori kodu, not…"
+                  autocomplete="off"
+                />
+              </label>
+            </div>
+            <p class="op-filter-hint">
+              Kayıt günü takviminden seçim anında uygulanır. Metin araması yazarken kısa gecikmeyle uygulanır; durum ve oda için
+              <strong>Uygula</strong>.
+            </p>
           </div>
           <div id="op-tech-summary-mount" class="ops-hk-mount"></div>
           <div id="op-tech-mount"></div>
@@ -298,6 +334,9 @@
               Üç sekme (şikâyet, misafir bildirimi, geç çıkış) aynı güne göre süzülür. <strong>Bugün</strong> seçiliyken tarih otomatik güncellenir.
             </p>
             <div id="op-front-day-strip" class="op-day-strip__scroll" role="listbox" aria-label="Gün şeridi"></div>
+            <p class="op-day-strip-wrap__legend">
+              Şerit özeti (üç liste toplamı): <strong>Aç</strong> açık · <strong>Bit</strong> tamamlandı · <strong>Ol</strong> olumsuz.
+            </p>
           </div>
           <p id="op-front-filter-scope" class="op-filter-scope" role="status"></p>
           <div class="op-filter-bar glass-block" id="op-front-filters" role="search" aria-label="Ön büro operasyon filtreleri">
@@ -326,7 +365,22 @@
                 <button type="button" class="btn-small" id="op-front-filter-clear">Sıfırla</button>
               </div>
             </div>
-            <p class="op-filter-hint">Sekmeyi değiştirdiğinizde alanlar o sekmenin son süzgecini gösterir.</p>
+            <div class="op-filter-bar__row op-filter-bar__row--search">
+              <label class="op-filter-field op-filter-field--search"
+                ><span class="op-filter-field__lbl">Metin ara</span>
+                <input
+                  id="op-front-filter-search"
+                  type="search"
+                  class="op-filter-input"
+                  placeholder="Oda, misafir, kategori kodu, not…"
+                  autocomplete="off"
+                />
+              </label>
+            </div>
+            <p class="op-filter-hint">
+              Kayıt günü takviminden seçim anında uygulanır. Metin araması yazarken kısa gecikmeyle uygulanır; durum ve oda için
+              <strong>Uygula</strong>. Sekme değişince alanlar o listenin son süzgecini gösterir.
+            </p>
           </div>
           <div id="op-front-mount"></div>
         </section>
@@ -559,7 +613,7 @@
     <script src="../js/hotel-room-numbers.js?v=1"></script>
     <script src="js/data-adapter.js?v=24"></script>
     <script src="js/ui.js?v=72"></script>
-    <script src="js/ops-day-pdf.js?v=5"></script>
-    <script src="js/app.js?v=63"></script>
+    <script src="js/ops-day-pdf.js?v=6"></script>
+    <script src="js/app.js?v=64"></script>
   </body>
 </html>
