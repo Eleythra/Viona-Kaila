@@ -539,6 +539,34 @@ app.post("/api/internal/daily-operation-report", async (req, res) => {
   }
 });
 
+/**
+ * Ücretsiz Render web dyno uyuduğunda iç timer çalışmaz. cron-job.org vb. bu GET ile dyno’yu uyandırıp aynı job’u çalıştırır.
+ * `DAILY_OPERATION_REPORT_CRON_KEY` (uzun rastgele) = `?key=` veya başlık `X-Daily-Report-Cron-Key`. Tanımlı değilse 404 (keşif zorlaştırma).
+ */
+app.get("/api/internal/daily-operation-report-cron", async (req, res) => {
+  try {
+    const expected = String(process.env.DAILY_OPERATION_REPORT_CRON_KEY || "").trim();
+    if (!expected) {
+      return res.status(404).end();
+    }
+    const key = String(
+      req.query.key || req.headers["x-daily-report-cron-key"] || req.headers["X-Daily-Report-Cron-Key"] || "",
+    ).trim();
+    const a = Buffer.from(expected, "utf8");
+    const b = Buffer.from(key, "utf8");
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+      return res.status(404).end();
+    }
+    const ymd = ymdTodayInHotelTz();
+    const out = await runDailyOperationReportJob({ ymd, force: false, source: "external_cron_get" });
+    const status = out.ok || out.skipped ? 200 : 500;
+    return res.status(status).json(out);
+  } catch (e) {
+    console.error("[daily_operation_report] cron_get_handler", e);
+    return res.status(500).json({ ok: false, error: String(e?.message || e) });
+  }
+});
+
 const speechLimiter = rateLimit({
   windowMs: env.rateLimitWindowMs,
   max: Math.min(60, Math.max(24, Math.floor(env.rateLimitMax / 4))),
@@ -592,6 +620,10 @@ app.get("/api/health", (req, res) => {
     },
     /** 1 iken /api/ops token olmadan yalnızca güvenilir origin + X-Viona-Ops-Page ile açılır (dahili kullanım). */
     opsTrustOpsPageHeader: Boolean(env.opsTrustOpsPageHeader),
+    /** Günlük PDF: dış cron GET için `DAILY_OPERATION_REPORT_CRON_KEY` tanımlı mı (değer sızmaz). */
+    dailyReportExternalCronKeyConfigured: Boolean(
+      String(process.env.DAILY_OPERATION_REPORT_CRON_KEY || "").trim(),
+    ),
   };
   const pretty =
     String(req.query?.pretty || "") === "1" ||

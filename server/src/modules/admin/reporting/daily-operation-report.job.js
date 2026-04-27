@@ -135,7 +135,7 @@ export async function runDailyOperationReportJob(opts = {}) {
 
     if (!force && existsSync(sentFlagPath(ymd, seg.fileSlug))) {
       const hint =
-        source === "cron"
+        source === "cron" || source === "external_cron_get"
           ? " (aynı gün manuel/API ile gönderildiyse bu normal; tekrar test için .data/daily-operation-report/*.sent silin)"
           : "";
       console.info(
