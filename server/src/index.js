@@ -817,34 +817,77 @@ const httpServer = app.listen(env.port, () => {
           ? parsedMin
           : 30;
     const tickMs = Math.min(120_000, Math.max(20_000, Number(process.env.DAILY_OPERATION_REPORT_TICK_MS) || 45_000));
+    /** Aynı saat içinde hedef dakikadan sonra kaç dakika boyunca tetiklenebilir (sunucu geç açılırsa kaçırılmasın). */
+    const fireWindowMin = Math.min(
+      59,
+      Math.max(1, Math.floor(Number(process.env.DAILY_OPERATION_REPORT_FIRE_WINDOW_MIN) || 30)),
+    );
+    const maxMinuteInHour = Math.min(59, targetMin + fireWindowMin - 1);
     let lastFiredYmd = "";
-    setInterval(() => {
+
+    function readHourMinuteHotelTz() {
+      const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: tz,
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+      }).formatToParts(new Date());
+      const h = Number(parts.find((p) => p.type === "hour")?.value);
+      const mi = Number(parts.find((p) => p.type === "minute")?.value);
+      return { h, mi };
+    }
+
+    /** Periyodik tetik: sadece hedef saat + dakika penceresi içinde (aynı saat diliminde). */
+    function inCronMinuteWindow(h, mi) {
+      return h === targetHour && mi >= targetMin && mi <= maxMinuteInHour;
+    }
+
+    /** Sunucu geç açıldıysa: hedef saatten sonra aynı takvim günü (ör. 21:00’de restart → hâlâ 20:00 raporu). */
+    function isAtOrAfterScheduleToday(h, mi) {
+      return h > targetHour || (h === targetHour && mi >= targetMin);
+    }
+
+    function tryFireDailyOperationReport(trigger) {
       try {
         const ymd = ymdTodayInHotelTz();
-        const parts = new Intl.DateTimeFormat("en-GB", {
-          timeZone: tz,
-          hour: "2-digit",
-          minute: "2-digit",
-          hourCycle: "h23",
-        }).formatToParts(new Date());
-        const h = Number(parts.find((p) => p.type === "hour")?.value);
-        const mi = Number(parts.find((p) => p.type === "minute")?.value);
-        if (h !== targetHour) return;
-        if (mi < targetMin || mi > targetMin + 9) return;
         if (lastFiredYmd === ymd) return;
+        const { h, mi } = readHourMinuteHotelTz();
+        const allow =
+          trigger === "interval" ? inCronMinuteWindow(h, mi) : isAtOrAfterScheduleToday(h, mi);
+        if (!allow) return;
         lastFiredYmd = ymd;
+        if (trigger === "startup_catchup") {
+          const lhm = `${String(h).padStart(2, "0")}:${String(mi).padStart(2, "0")}`;
+          const tgt = `${String(targetHour).padStart(2, "0")}:${String(targetMin).padStart(2, "0")}`;
+          console.info(
+            "[daily_operation_report] startup_catchup tz=%s local_hm=%s target=%s ymd=%s",
+            tz,
+            lhm,
+            tgt,
+            ymd,
+          );
+        }
         runDailyOperationReportJob({ ymd, source: "cron" }).catch((e) =>
           console.error("[daily_operation_report] cron", e),
         );
       } catch (e) {
-        console.error("[daily_operation_report] cron_tick", e);
+        console.error("[daily_operation_report] try_fire", trigger, e);
       }
-    }, tickMs).unref();
+    }
+
+    setInterval(() => tryFireDailyOperationReport("interval"), tickMs).unref();
+
+    const catchupDelayMs = Math.min(60_000, Math.max(2000, Number(process.env.DAILY_OPERATION_REPORT_STARTUP_CATCHUP_MS) || 5000));
+    setTimeout(() => tryFireDailyOperationReport("startup_catchup"), catchupDelayMs).unref();
+    const hh = String(targetHour).padStart(2, "0");
+    const mm = String(targetMin).padStart(2, "0");
     console.info(
-      "[daily_operation_report] scheduler_on tz=%s time=%02d:%02d expr=%s tick_ms=%d",
+      "[daily_operation_report] scheduler_on tz=%s time=%s:%s window_min=%d..%d expr=%s tick_ms=%d",
       tz,
-      targetHour,
+      hh,
+      mm,
       targetMin,
+      maxMinuteInHour,
       cronExpr,
       tickMs,
     );

@@ -79,3 +79,14 @@ services:
         sync: false
       - key: AZURE_SPEECH_REGION
         sync: false
+      # Günlük operasyon PDF → WhatsApp; İstanbul 20:30 ( yerel .env repoda yok — canlı için burada sabitlenir )
+      - key: DAILY_OPERATION_REPORT_ENABLED
+        value: "1"
+      - key: DAILY_OPERATION_REPORT_TZ
+        value: Europe/Istanbul
+      - key: DAILY_OPERATION_REPORT_HOUR
+        value: "20"
+      - key: DAILY_OPERATION_REPORT_MINUTE
+        value: "30"
+      - key: DAILY_OPERATION_REPORT_CRON
+        value: "30 20 * * *"

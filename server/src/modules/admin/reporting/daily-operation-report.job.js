@@ -26,6 +26,30 @@ const SEGMENTS = [
   },
 ];
 
+/** Boş veya yok: üçü; `hk` veya `hk,tech,front` (Meta şablonu + alıcı hazır olmayan segmentleri dışarıda bırakmak için). */
+function activeSegmentKeys() {
+  const raw = String(process.env.DAILY_OPERATION_REPORT_SEGMENTS || "")
+    .trim()
+    .toLowerCase();
+  if (!raw) return new Set(SEGMENTS.map((s) => s.key));
+  const keys = new Set();
+  for (const part of raw.split(/[\s,]+/)) {
+    const p = part.trim();
+    if (SEGMENTS.some((s) => s.key === p)) keys.add(p);
+  }
+  return keys.size ? keys : new Set(SEGMENTS.map((s) => s.key));
+}
+
+function allActiveSegmentsAlreadySent(ymd, active) {
+  let any = false;
+  for (const seg of SEGMENTS) {
+    if (!active.has(seg.key)) continue;
+    any = true;
+    if (!existsSync(sentFlagPath(ymd, seg.fileSlug))) return false;
+  }
+  return any;
+}
+
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
@@ -71,10 +95,6 @@ function recipientsForSegment(envKeys) {
   return { list: fallback, envKey: fallback.length ? "WHATSAPP_DAILY_REPORT_RECIPIENTS" : "" };
 }
 
-function allSegmentsAlreadySent(ymd) {
-  return SEGMENTS.every(({ fileSlug }) => existsSync(sentFlagPath(ymd, fileSlug)));
-}
-
 /**
  * @param {{ ymd?: string, force?: boolean, source?: string }} opts
  */
@@ -86,8 +106,9 @@ export async function runDailyOperationReportJob(opts = {}) {
 
   const force = Boolean(opts.force);
   const source = String(opts.source || "").trim() || "-";
+  const activeKeys = activeSegmentKeys();
 
-  if (!force && allSegmentsAlreadySent(ymd)) {
+  if (!force && allActiveSegmentsAlreadySent(ymd, activeKeys)) {
     console.info("[daily_operation_report] skipped reason=all_segments_sent ymd=%s source=%s", ymd, source);
     return { ok: true, skipped: true, reason: "all_segments_sent", ymd };
   }
@@ -101,12 +122,28 @@ export async function runDailyOperationReportJob(opts = {}) {
   let pauseBeforeNextSend = false;
 
   for (const seg of SEGMENTS) {
-    if (!force && existsSync(sentFlagPath(ymd, seg.fileSlug))) {
+    if (!activeKeys.has(seg.key)) {
       console.info(
-        "[daily_operation_report] segment_skip reason=already_sent ymd=%s segment=%s source=%s",
+        "[daily_operation_report] segment_skip reason=segment_disabled ymd=%s segment=%s source=%s (DAILY_OPERATION_REPORT_SEGMENTS)",
         ymd,
         seg.key,
         source,
+      );
+      results.push({ segment: seg.key, skipped: true, reason: "segment_disabled" });
+      continue;
+    }
+
+    if (!force && existsSync(sentFlagPath(ymd, seg.fileSlug))) {
+      const hint =
+        source === "cron"
+          ? " (aynı gün manuel/API ile gönderildiyse bu normal; tekrar test için .data/daily-operation-report/*.sent silin)"
+          : "";
+      console.info(
+        "[daily_operation_report] segment_skip reason=already_sent ymd=%s segment=%s source=%s%s",
+        ymd,
+        seg.key,
+        source,
+        hint,
       );
       results.push({ segment: seg.key, skipped: true, reason: "already_sent" });
       continue;
@@ -192,7 +229,12 @@ export async function runDailyOperationReportJob(opts = {}) {
   const hadDelivery = results.some((r) => r.ok);
   const allNoRecipients =
     results.length > 0 &&
-    results.every((r) => r.reason === "empty_recipients" || r.reason === "already_sent");
+    results.every(
+      (r) =>
+        r.reason === "empty_recipients" ||
+        r.reason === "already_sent" ||
+        r.reason === "segment_disabled",
+    );
 
   if (!hadDelivery && allNoRecipients && !results.some((r) => r.reason === "already_sent")) {
     return {
