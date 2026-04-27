@@ -24,6 +24,10 @@ import {
   resolveWhatsappAccessToken,
 } from "./services/whatsapp-operational-notification.service.js";
 import { runDailyOperationReportJob, ymdTodayInHotelTz } from "./modules/admin/reporting/daily-operation-report.job.js";
+import {
+  pingDailyOperationReportFromHttpTraffic,
+  startDailyOperationReportScheduler,
+} from "./modules/admin/reporting/daily-operation-report.scheduler.js";
 const env = getEnv();
 const app = express();
 
@@ -478,6 +482,12 @@ app.use(
   }),
 );
 
+/** Render ücretsiz dyno uyuyunca timer çalışmaz; gelen API trafiği (throttle) raporu aynı akşam tetikleyebilir. */
+app.use("/api", (_req, _res, next) => {
+  pingDailyOperationReportFromHttpTraffic();
+  next();
+});
+
 app.use(
   "/api/admin",
   rateLimit({
@@ -793,105 +803,7 @@ app.use((err, _req, res, next) => {
 
 const httpServer = app.listen(env.port, () => {
   console.log(`Server running on http://localhost:${env.port}`);
-
-  if (String(process.env.DAILY_OPERATION_REPORT_ENABLED || "").trim() === "1") {
-    const tz = String(
-      process.env.DAILY_OPERATION_REPORT_TZ || process.env.HOTEL_TIMEZONE || "Europe/Istanbul",
-    ).trim();
-    const cronExpr = String(process.env.DAILY_OPERATION_REPORT_CRON || "30 21 * * *").trim();
-    const cronParts = cronExpr.split(/\s+/);
-    const parsedMin = Number(cronParts[0]);
-    const parsedHour = Number(cronParts[1]);
-    const rawEnvHour = Number(process.env.DAILY_OPERATION_REPORT_HOUR);
-    const rawEnvMin = Number(process.env.DAILY_OPERATION_REPORT_MINUTE);
-    const targetHour =
-      Number.isFinite(rawEnvHour) && rawEnvHour >= 0 && rawEnvHour <= 23
-        ? rawEnvHour
-        : Number.isFinite(parsedHour) && parsedHour >= 0 && parsedHour <= 23
-          ? parsedHour
-          : 21;
-    const targetMin =
-      Number.isFinite(rawEnvMin) && rawEnvMin >= 0 && rawEnvMin <= 59
-        ? rawEnvMin
-        : Number.isFinite(parsedMin) && parsedMin >= 0 && parsedMin <= 59
-          ? parsedMin
-          : 30;
-    const tickMs = Math.min(120_000, Math.max(20_000, Number(process.env.DAILY_OPERATION_REPORT_TICK_MS) || 45_000));
-    /** Aynı saat içinde hedef dakikadan sonra kaç dakika boyunca tetiklenebilir (sunucu geç açılırsa kaçırılmasın). */
-    const fireWindowMin = Math.min(
-      59,
-      Math.max(1, Math.floor(Number(process.env.DAILY_OPERATION_REPORT_FIRE_WINDOW_MIN) || 30)),
-    );
-    const maxMinuteInHour = Math.min(59, targetMin + fireWindowMin - 1);
-    let lastFiredYmd = "";
-
-    function readHourMinuteHotelTz() {
-      const parts = new Intl.DateTimeFormat("en-GB", {
-        timeZone: tz,
-        hour: "2-digit",
-        minute: "2-digit",
-        hourCycle: "h23",
-      }).formatToParts(new Date());
-      const h = Number(parts.find((p) => p.type === "hour")?.value);
-      const mi = Number(parts.find((p) => p.type === "minute")?.value);
-      return { h, mi };
-    }
-
-    /** Periyodik tetik: sadece hedef saat + dakika penceresi içinde (aynı saat diliminde). */
-    function inCronMinuteWindow(h, mi) {
-      return h === targetHour && mi >= targetMin && mi <= maxMinuteInHour;
-    }
-
-    /** Sunucu geç açıldıysa: hedef saatten sonra aynı takvim günü (ör. 21:00’de restart → hâlâ 20:00 raporu). */
-    function isAtOrAfterScheduleToday(h, mi) {
-      return h > targetHour || (h === targetHour && mi >= targetMin);
-    }
-
-    function tryFireDailyOperationReport(trigger) {
-      try {
-        const ymd = ymdTodayInHotelTz();
-        if (lastFiredYmd === ymd) return;
-        const { h, mi } = readHourMinuteHotelTz();
-        const allow =
-          trigger === "interval" ? inCronMinuteWindow(h, mi) : isAtOrAfterScheduleToday(h, mi);
-        if (!allow) return;
-        lastFiredYmd = ymd;
-        if (trigger === "startup_catchup") {
-          const lhm = `${String(h).padStart(2, "0")}:${String(mi).padStart(2, "0")}`;
-          const tgt = `${String(targetHour).padStart(2, "0")}:${String(targetMin).padStart(2, "0")}`;
-          console.info(
-            "[daily_operation_report] startup_catchup tz=%s local_hm=%s target=%s ymd=%s",
-            tz,
-            lhm,
-            tgt,
-            ymd,
-          );
-        }
-        runDailyOperationReportJob({ ymd, source: "cron" }).catch((e) =>
-          console.error("[daily_operation_report] cron", e),
-        );
-      } catch (e) {
-        console.error("[daily_operation_report] try_fire", trigger, e);
-      }
-    }
-
-    setInterval(() => tryFireDailyOperationReport("interval"), tickMs).unref();
-
-    const catchupDelayMs = Math.min(60_000, Math.max(2000, Number(process.env.DAILY_OPERATION_REPORT_STARTUP_CATCHUP_MS) || 5000));
-    setTimeout(() => tryFireDailyOperationReport("startup_catchup"), catchupDelayMs).unref();
-    const hh = String(targetHour).padStart(2, "0");
-    const mm = String(targetMin).padStart(2, "0");
-    console.info(
-      "[daily_operation_report] scheduler_on tz=%s time=%s:%s window_min=%d..%d expr=%s tick_ms=%d",
-      tz,
-      hh,
-      mm,
-      targetMin,
-      maxMinuteInHour,
-      cronExpr,
-      tickMs,
-    );
-  }
+  startDailyOperationReportScheduler();
 });
 httpServer.on("error", (err) => {
   if (err && err.code === "EADDRINUSE") {
