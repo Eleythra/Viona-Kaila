@@ -16,6 +16,7 @@
 # Operasyon WhatsApp (Cloud API, bireysel numaralar; grup botu / whatsapp-web.js yok):
 #   WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID
 #   WHATSAPP_TECH_RECIPIENTS, WHATSAPP_HK_RECIPIENTS, WHATSAPP_FRONT_RECIPIENTS (virgülle)
+#   Günlük HK PDF raporu ayrı numara: WHATSAPP_DAILY_REPORT_HK_RECIPIENTS (boşsa WHATSAPP_HK_RECIPIENTS)
 #   İsteğe bağlı şablon «Panelde Aç» URL butonu (Meta şablonu uyumlu olmalı, ayrıntı server/.env.example):
 #   WHATSAPP_HK_PANEL_URL_BUTTON, WHATSAPP_TECH_PANEL_URL_BUTTON, WHATSAPP_FRONT_PANEL_URL_BUTTON
 # Eski grup oturumu env anahtarlarını Dashboard’dan silin (kafa karıştırır).
@@ -61,6 +62,8 @@ services:
         sync: false
       - key: WHATSAPP_FRONT_RECIPIENTS
         sync: false
+      - key: WHATSAPP_DAILY_REPORT_HK_RECIPIENTS
+        sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_VECTOR_STORE_ID
@@ -79,7 +82,7 @@ services:
         sync: false
       - key: AZURE_SPEECH_REGION
         sync: false
-      # Günlük operasyon PDF → WhatsApp; İstanbul 21:00 (yerel .env git’te yok)
+      # Günlük operasyon PDF → WhatsApp; İstanbul 21:30 (yerel .env git’te yok)
       - key: DAILY_OPERATION_REPORT_ENABLED
         value: "1"
       - key: DAILY_OPERATION_REPORT_TZ
@@ -87,9 +90,9 @@ services:
       - key: DAILY_OPERATION_REPORT_HOUR
         value: "21"
       - key: DAILY_OPERATION_REPORT_MINUTE
-        value: "0"
+        value: "30"
       - key: DAILY_OPERATION_REPORT_CRON
-        value: "0 21 * * *"
+        value: "30 21 * * *"
       - key: DAILY_OPERATION_REPORT_FIRE_WINDOW_MIN
         value: "60"
       - key: DAILY_OPERATION_REPORT_HOTEL_NAME
