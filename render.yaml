@@ -30,7 +30,7 @@
 #
 # Günlük PDF otomatik (Render ücretsiz dyno uyuyunca iç timer yetmez):
 #   1) Dashboard’a `DAILY_OPERATION_REPORT_CRON_KEY` ekleyin (örn. `openssl rand -hex 32`).
-#   2) cron-job.org: her gün İstanbul 22:00’da tarayıcıya yapıştıracağınız tam URL (aşağıdaki “Adım adım”).
+#   2) cron-job.org: her gün İstanbul 05:30’da (veya istediğiniz saatte) tam URL — aşağıdaki .env.example adımları.
 #   İç zamanlayıcı yine çalışır; bu GET yedek + dyno uyandırma sağlar.
 #
 services:
@@ -87,17 +87,17 @@ services:
         sync: false
       - key: AZURE_SPEECH_REGION
         sync: false
-      # Günlük operasyon PDF → WhatsApp; İstanbul 22:00 (yerel .env git’te yok)
+      # Günlük operasyon PDF → WhatsApp; İstanbul 05:30 (yerel .env git’te yok)
       - key: DAILY_OPERATION_REPORT_ENABLED
         value: "1"
       - key: DAILY_OPERATION_REPORT_TZ
         value: Europe/Istanbul
       - key: DAILY_OPERATION_REPORT_HOUR
-        value: "22"
+        value: "5"
       - key: DAILY_OPERATION_REPORT_MINUTE
-        value: "0"
+        value: "30"
       - key: DAILY_OPERATION_REPORT_CRON
-        value: "0 22 * * *"
+        value: "30 5 * * *"
       - key: DAILY_OPERATION_REPORT_FIRE_WINDOW_MIN
         value: "60"
       - key: DAILY_OPERATION_REPORT_HOTEL_NAME

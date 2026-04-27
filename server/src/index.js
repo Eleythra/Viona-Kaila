@@ -479,6 +479,11 @@ app.use(
     max: env.rateLimitMax,
     standardHeaders: true,
     legacyHeaders: false,
+    /** Günlük rapor dış cron tek istek; genel /api limiti 429 vermesin. */
+    skip: (req) => {
+      const p = String(req.path || req.url || "");
+      return p.includes("daily-operation-report");
+    },
   }),
 );
 
@@ -547,6 +552,7 @@ app.get("/api/internal/daily-operation-report-cron", async (req, res) => {
   try {
     const expected = String(process.env.DAILY_OPERATION_REPORT_CRON_KEY || "").trim();
     if (!expected) {
+      console.warn("[daily_operation_report] cron_get rejected reason=env_DAILY_OPERATION_REPORT_CRON_KEY_empty");
       return res.status(404).end();
     }
     const key = String(
@@ -554,11 +560,25 @@ app.get("/api/internal/daily-operation-report-cron", async (req, res) => {
     ).trim();
     const a = Buffer.from(expected, "utf8");
     const b = Buffer.from(key, "utf8");
-    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+    if (a.length !== b.length) {
+      console.warn(
+        "[daily_operation_report] cron_get rejected reason=key_length_mismatch (URL’de key eksik/bozuk veya Render’daki env ile cron-job URL’si aynı değil; anahtar openssl rand -hex 32 kullanın)",
+      );
+      return res.status(404).end();
+    }
+    if (!crypto.timingSafeEqual(a, b)) {
+      console.warn("[daily_operation_report] cron_get rejected reason=key_mismatch");
       return res.status(404).end();
     }
     const ymd = ymdTodayInHotelTz();
     const out = await runDailyOperationReportJob({ ymd, force: false, source: "external_cron_get" });
+    console.info(
+      "[daily_operation_report] cron_get_done ymd=%s ok=%s skipped=%s reason=%s",
+      ymd,
+      String(out.ok),
+      String(Boolean(out.skipped)),
+      String(out.reason || out.segments?.map((s) => s.reason).filter(Boolean).join(",") || "-"),
+    );
     const status = out.ok || out.skipped ? 200 : 500;
     return res.status(status).json(out);
   } catch (e) {
