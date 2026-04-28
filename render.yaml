@@ -30,7 +30,7 @@
 #
 # Günlük PDF otomatik (Render ücretsiz dyno uyuyunca iç timer yetmez):
 #   1) Dashboard’a `DAILY_OPERATION_REPORT_CRON_KEY` ekleyin (örn. `openssl rand -hex 32`).
-#   2) cron-job.org: her gün İstanbul 05:30’da (veya istediğiniz saatte) tam URL — aşağıdaki .env.example adımları.
+#   2) cron-job.org: her gün İstanbul 17:30’da (veya istediğiniz saatte) tam URL — aşağıdaki .env.example adımları.
 #   İç zamanlayıcı yine çalışır; bu GET yedek + dyno uyandırma sağlar.
 #
 services:
@@ -69,6 +69,10 @@ services:
         sync: false
       - key: WHATSAPP_DAILY_REPORT_HK_RECIPIENTS
         sync: false
+      - key: WHATSAPP_DAILY_REPORT_TECH_RECIPIENTS
+        sync: false
+      - key: WHATSAPP_DAILY_REPORT_FRONT_RECIPIENTS
+        sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_VECTOR_STORE_ID
@@ -87,25 +91,29 @@ services:
         sync: false
       - key: AZURE_SPEECH_REGION
         sync: false
-      # Günlük operasyon PDF → WhatsApp; İstanbul 05:30 (yerel .env git’te yok)
+      # Günlük operasyon PDF → WhatsApp; İstanbul 17:30 (yerel .env git’te yok)
       - key: DAILY_OPERATION_REPORT_ENABLED
         value: "1"
       - key: DAILY_OPERATION_REPORT_TZ
         value: Europe/Istanbul
       - key: DAILY_OPERATION_REPORT_HOUR
-        value: "5"
+        value: "17"
       - key: DAILY_OPERATION_REPORT_MINUTE
         value: "30"
       - key: DAILY_OPERATION_REPORT_CRON
-        value: "30 5 * * *"
+        value: "30 17 * * *"
       - key: DAILY_OPERATION_REPORT_FIRE_WINDOW_MIN
         value: "60"
       - key: DAILY_OPERATION_REPORT_HOTEL_NAME
         value: Viona Kaila Beach Hotel
       - key: DAILY_OPERATION_REPORT_SEGMENTS
-        value: "hk"
+        value: "hk,tech,front"
       - key: WHATSAPP_TEMPLATE_DAILY_OPERATION_HK
         value: hk_operasyon
+      - key: WHATSAPP_TEMPLATE_DAILY_OPERATION_TECH
+        value: teknik_operasyon
+      - key: WHATSAPP_TEMPLATE_DAILY_OPERATION_FRONT
+        value: front_operasyon
       - key: DAILY_OPERATION_REPORT_HTTP_PING
         value: "1"
       - key: DAILY_OPERATION_REPORT_CRON_KEY
