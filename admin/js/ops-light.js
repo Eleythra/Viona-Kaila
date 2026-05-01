@@ -823,11 +823,19 @@
     el.innerHTML = parts.join("");
   }
 
+  function slEventClickTargetElement(ev) {
+    var t = ev && ev.target;
+    if (!t) return null;
+    if (t.nodeType === 1) return t;
+    return t.parentElement || null;
+  }
+
   function wireSlDayStrip(mountRoot, stripElId, onPick) {
     if (!mountRoot || mountRoot.dataset.slStripBound) return;
     mountRoot.dataset.slStripBound = "1";
     mountRoot.addEventListener("click", function (ev) {
-      var chip = ev.target && ev.target.closest ? ev.target.closest(".op-day-strip__chip") : null;
+      var el = slEventClickTargetElement(ev);
+      var chip = el && typeof el.closest === "function" ? el.closest(".op-day-strip__chip") : null;
       if (!chip || !mountRoot.contains(chip)) return;
       var ymd = chip.getAttribute("data-op-day") || "";
       if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return;
@@ -1077,6 +1085,115 @@
     );
   }
 
+  var OPS_LIGHT_OPEN_QUEUE_FETCH = 100;
+  var OPS_LIGHT_BANNER_SEQ = { hk: 0, tech: 0, front: 0 };
+
+  function bumpOpsLightBannerPaintSeq(slot) {
+    var k = String(slot || "hk").trim();
+    OPS_LIGHT_BANNER_SEQ[k] = (OPS_LIGHT_BANNER_SEQ[k] || 0) + 1;
+    return OPS_LIGHT_BANNER_SEQ[k];
+  }
+
+  function opsLightBannerLookbackRange() {
+    var days = enumerateSlDays(OP_DAY_STRIP_COUNT_SL);
+    if (!days.length) {
+      var t = hotelCalYmdSl(new Date());
+      return { from: t, to: t };
+    }
+    return { from: days[days.length - 1], to: days[0] };
+  }
+
+  async function fetchOpsLightOpenQueueRows(bucketTypes) {
+    var range = opsLightBannerLookbackRange();
+    var base = { from: range.from, to: range.to };
+    var tasks = (bucketTypes || []).map(function (bt) {
+      return Promise.all([
+        opsFetch(
+          "/requests?" +
+            new URLSearchParams(
+              Object.assign({}, base, {
+                type: bt,
+                page: "1",
+                pageSize: String(OPS_LIGHT_OPEN_QUEUE_FETCH),
+                status: "pending",
+              }),
+            ).toString(),
+        ).catch(function () {
+          return { items: [] };
+        }),
+        opsFetch(
+          "/requests?" +
+            new URLSearchParams(
+              Object.assign({}, base, {
+                type: bt,
+                page: "1",
+                pageSize: String(OPS_LIGHT_OPEN_QUEUE_FETCH),
+                status: "in_progress",
+              }),
+            ).toString(),
+        ).catch(function () {
+          return { items: [] };
+        }),
+      ]).then(function (pair) {
+        return { bt: bt, p: pair[0], i: pair[1] };
+      });
+    });
+    var chunks = await Promise.all(tasks);
+    var out = [];
+    chunks.forEach(function (ch) {
+      var bt = ch.bt;
+      (ch.p.items || []).forEach(function (r) {
+        out.push({ bucketType: bt, row: r });
+      });
+      (ch.i.items || []).forEach(function (r) {
+        out.push({ bucketType: bt, row: r });
+      });
+    });
+    out.sort(function (a, b) {
+      return String(a.row.submitted_at || "").localeCompare(String(b.row.submitted_at || ""));
+    });
+    var seen = {};
+    var dedup = [];
+    out.forEach(function (item) {
+      var id = String(item.row && item.row.id != null ? item.row.id : "").trim();
+      var key = item.bucketType + ":" + (id || "_");
+      if (seen[key]) return;
+      seen[key] = true;
+      dedup.push(item);
+    });
+    return dedup;
+  }
+
+  async function paintOpsLightPendingBanner(hostId, bucketTypes, title, slotKey) {
+    var slot = String(slotKey || "hk").trim();
+    var myGen = bumpOpsLightBannerPaintSeq(slot);
+    var host = document.getElementById(hostId);
+    var ui = window.AdminUI;
+    if (!host || !ui || typeof ui.renderOpsPendingQueueBanner !== "function") return;
+    try {
+      var range = opsLightBannerLookbackRange();
+      var hint =
+        "Kayıt günü " +
+        ymdToTrDotsSl(range.from) +
+        " – " +
+        ymdToTrDotsSl(range.to) +
+        " · " +
+        OP_HOTEL_TZ_SL +
+        " · en eski kayıt üstte";
+      var rows = await fetchOpsLightOpenQueueRows(bucketTypes);
+      if (myGen !== OPS_LIGHT_BANNER_SEQ[slot]) return;
+      ui.renderOpsPendingQueueBanner(host, {
+        title: title,
+        hint: hint,
+        rows: rows,
+        hideWhenEmpty: true,
+        maxRows: 12,
+      });
+    } catch (_e) {
+      if (myGen === OPS_LIGHT_BANNER_SEQ[slot]) host.innerHTML = "";
+    }
+  }
+
   async function loadHkMount(mount) {
     var ui = window.AdminUI;
     if (!ui || typeof ui.renderBucketTable !== "function") throw new Error("ui_missing");
@@ -1146,6 +1263,7 @@
     }
 
     mount.innerHTML =
+      '<div id="ops-hk-pending-banner" class="ops-pending-banner-host"></div>' +
       opsLightDayStripWrap("op-hk") +
       '<div id="ops-hk-summary-mount" class="ops-hk-mount"></div>' +
       hkFilterBarHtml() +
@@ -1185,11 +1303,17 @@
     if (applyBtn) {
       applyBtn.addEventListener("click", function () {
         var next = readOpFilterFromDom("op-hk");
-        next.from = slCalDay;
-        next.to = slCalDay;
+        var todayY = hotelCalYmdSl(new Date());
+        if (/^\d{4}-\d{2}-\d{2}$/.test(next.from)) {
+          slCalDay = next.from;
+          slFollowToday = next.from === todayY;
+          persistSlDay();
+        }
+        syncSlFilterDayForPrefix("op-hk");
+        renderSlDayStrip("op-hk-day-strip");
         hkFilterState.status = next.status;
-        hkFilterState.from = next.from;
-        hkFilterState.to = next.to;
+        hkFilterState.from = slCalDay;
+        hkFilterState.to = slCalDay;
         hkFilterState.room = next.room;
         hkFilterState.search = next.search || "";
         page = 1;
@@ -1271,6 +1395,13 @@
       hkFilterState.from = slCalDay;
       hkFilterState.to = slCalDay;
       syncSlFilterDayForPrefix("op-hk");
+      void paintOpsLightPendingBanner(
+        "ops-hk-pending-banner",
+        ["request"],
+        "Açık işler (HK · bekleyen & yapılıyor)",
+        "hk",
+      );
+      try {
       var deeplinkHint = document.getElementById("ops-deeplink-hint");
 
       if (summaryHost) summaryHost.classList.remove("hidden");
@@ -1352,6 +1483,13 @@
       });
       paintHkSummary(sumRaw, res);
       void refreshSlStripMini("request");
+      } catch (err) {
+        bumpOpsLightBannerPaintSeq("hk");
+        var bhHk = document.getElementById("ops-hk-pending-banner");
+        if (bhHk) bhHk.innerHTML = "";
+        if (listHost)
+          listHost.innerHTML = '<p class="admin-load-error">' + escHtml(formatErr(err)) + "</p>";
+      }
     }
 
     await load(1);
@@ -1430,6 +1568,7 @@
     }
 
     mount.innerHTML =
+      '<div id="ops-tech-pending-banner" class="ops-pending-banner-host"></div>' +
       opsLightDayStripWrap("op-tech") +
       '<div id="ops-tech-summary-mount" class="ops-hk-mount"></div>' +
       techFilterBarHtml() +
@@ -1469,11 +1608,17 @@
     if (applyBtn) {
       applyBtn.addEventListener("click", function () {
         var next = readOpFilterFromDom("op-tech");
-        next.from = slCalDay;
-        next.to = slCalDay;
+        var todayY = hotelCalYmdSl(new Date());
+        if (/^\d{4}-\d{2}-\d{2}$/.test(next.from)) {
+          slCalDay = next.from;
+          slFollowToday = next.from === todayY;
+          persistSlDay();
+        }
+        syncSlFilterDayForPrefix("op-tech");
+        renderSlDayStrip("op-tech-day-strip");
         techFilterState.status = next.status;
-        techFilterState.from = next.from;
-        techFilterState.to = next.to;
+        techFilterState.from = slCalDay;
+        techFilterState.to = slCalDay;
         techFilterState.room = next.room;
         techFilterState.search = next.search || "";
         page = 1;
@@ -1555,6 +1700,13 @@
       techFilterState.from = slCalDay;
       techFilterState.to = slCalDay;
       syncSlFilterDayForPrefix("op-tech");
+      void paintOpsLightPendingBanner(
+        "ops-tech-pending-banner",
+        ["fault"],
+        "Açık işler (Teknik · bekleyen & yapılıyor)",
+        "tech",
+      );
+      try {
       var deeplinkHintT = document.getElementById("ops-deeplink-hint");
 
       if (techSummaryHost) techSummaryHost.classList.remove("hidden");
@@ -1636,6 +1788,13 @@
       });
       paintTechSummary(sumRaw, res);
       void refreshSlStripMini("fault");
+      } catch (err) {
+        bumpOpsLightBannerPaintSeq("tech");
+        var bhTc = document.getElementById("ops-tech-pending-banner");
+        if (bhTc) bhTc.innerHTML = "";
+        if (listHost)
+          listHost.innerHTML = '<p class="admin-load-error">' + escHtml(formatErr(err)) + "</p>";
+      }
     }
 
     await load(1);
@@ -1720,6 +1879,7 @@
     initSlDayFromStorage();
     maybeAdvanceSlToday();
     mount.innerHTML =
+      '<div id="ops-front-pending-banner" class="ops-pending-banner-host"></div>' +
       opsLightDayStripWrap("op-front") +
       '<p id="op-front-filter-scope" class="op-filter-scope" role="status"></p>' +
       frontFilterBarHtml() +
@@ -1798,9 +1958,28 @@
       applyBtn.dataset.vionaBound = "1";
       applyBtn.addEventListener("click", function () {
         var next = readOpFilterFromDom("op-front");
-        next.from = slCalDay;
-        next.to = slCalDay;
-        opFilterFrontByType[opFrontFilterActiveType] = next;
+        var todayY = hotelCalYmdSl(new Date());
+        if (/^\d{4}-\d{2}-\d{2}$/.test(next.from)) {
+          slCalDay = next.from;
+          slFollowToday = next.from === todayY;
+          persistSlDay();
+        }
+        syncSlFilterDayForPrefix("op-front");
+        renderSlDayStrip("op-front-day-strip");
+        opFilterFrontByType[opFrontFilterActiveType] = {
+          status: next.status,
+          from: slCalDay,
+          to: slCalDay,
+          room: next.room,
+          search: next.search || "",
+        };
+        ["complaint", "guest_notification", "late_checkout"].forEach(function (k) {
+          if (k === opFrontFilterActiveType) return;
+          var o = opFilterFrontByType[k] || { status: "", from: "", to: "", room: "", search: "" };
+          o.from = slCalDay;
+          o.to = slCalDay;
+          opFilterFrontByType[k] = o;
+        });
         opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
         void loadAll();
       });
@@ -1888,6 +2067,13 @@
 
     async function loadAll() {
       maybeAdvanceSlToday();
+      void paintOpsLightPendingBanner(
+        "ops-front-pending-banner",
+        ["complaint", "guest_notification", "late_checkout"],
+        "Açık işler (Ön büro · bekleyen & yapılıyor)",
+        "front",
+      );
+      try {
       ["complaint", "guest_notification", "late_checkout"].forEach(function (k) {
         var o = opFilterFrontByType[k] || {};
         o.from = slCalDay;
@@ -2041,6 +2227,13 @@
         summary,
       );
       void refreshSlStripMini("front");
+      } catch (err) {
+        bumpOpsLightBannerPaintSeq("front");
+        var bhFr = document.getElementById("ops-front-pending-banner");
+        if (bhFr) bhFr.innerHTML = "";
+        if (inner)
+          inner.innerHTML = '<p class="admin-load-error">' + escHtml(formatErr(err)) + "</p>";
+      }
     }
 
     await loadAll();

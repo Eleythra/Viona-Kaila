@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/styles.css?v=78" />
+    <link rel="stylesheet" href="css/styles.css?v=81" />
     <link rel="stylesheet" href="css/promo-popup.css?v=2" />
   </head>
   <body>
@@ -29,7 +29,7 @@
             <p class="lang-sub" data-i18n="langScreenSubtitle">Kaila Beach Hotel · Smart hotel assistant</p>
           </header>
           <div class="lang-grid-wrap">
-            <div class="lang-grid" role="group" aria-label="Available languages">
+            <div class="lang-grid" role="group" data-i18n-aria="langGridAria">
               <button type="button" class="lang-chip" data-lang="tr" aria-pressed="false">Türkçe</button>
               <button type="button" class="lang-chip" data-lang="en" aria-pressed="false">English</button>
               <button type="button" class="lang-chip" data-lang="de" aria-pressed="false">Deutsch</button>
@@ -45,6 +45,57 @@
           <button type="button" class="btn-primary lang-cta" id="btn-lang-continue" data-i18n="continue" disabled>
             Continue
           </button>
+        </div>
+      </section>
+
+      <!-- Erişim: şifre + gizlilik + 18+ (dil seçiminden sonra) -->
+      <section id="view-gate" class="view view--gate hidden" aria-hidden="true" aria-labelledby="gate-screen-heading">
+        <div class="lang-bg gate-bg" aria-hidden="true"></div>
+        <div class="lang-overlay"></div>
+        <div class="gate-content">
+          <div class="lang-content-accent" aria-hidden="true"></div>
+          <header class="lang-header gate-header">
+            <p class="lang-brand">Viona</p>
+            <h1 id="gate-screen-heading" class="lang-title" data-i18n="gateScreenTitle">Welcome</h1>
+            <p class="lang-sub gate-sub" data-i18n="gateScreenSubtitle"></p>
+          </header>
+
+          <div class="gate-field">
+            <label class="gate-label" for="gate-password" data-i18n="gatePasswordLabel"></label>
+            <input
+              type="password"
+              id="gate-password"
+              class="gate-input"
+              autocomplete="current-password"
+              maxlength="128"
+              data-i18n-placeholder="gatePasswordPlaceholder"
+            />
+          </div>
+
+          <div class="gate-privacy glass-block gate-privacy-card" role="region" aria-labelledby="gate-privacy-heading">
+            <h2 id="gate-privacy-heading" class="gate-privacy-title" data-i18n="gatePrivacyTitle"></h2>
+            <div class="gate-privacy-scroll">
+              <p class="gate-privacy-body" data-i18n="gatePrivacyBody"></p>
+            </div>
+          </div>
+
+          <div class="gate-checks">
+            <label class="gate-check">
+              <input type="checkbox" id="gate-check-privacy" class="gate-check-input" />
+              <span class="gate-check-text" data-i18n="gateCheckPrivacy"></span>
+            </label>
+            <label class="gate-check">
+              <input type="checkbox" id="gate-check-age" class="gate-check-input" />
+              <span class="gate-check-text" data-i18n="gateCheckAge"></span>
+            </label>
+          </div>
+
+          <p id="gate-error" class="gate-error hidden" role="alert" aria-live="polite"></p>
+
+          <button type="button" class="btn-primary lang-cta gate-cta" id="btn-gate-continue" data-i18n="gateSubmit">
+            Continue
+          </button>
+          <button type="button" class="gate-back" id="btn-gate-back-lang" data-i18n="gateBackLang"></button>
         </div>
       </section>
 
@@ -294,9 +345,10 @@
       </div>
     </div>
 
+    <script src="js/viona-gate-config.js?v=1"></script>
     <script src="js/lang-registry.js?v=3"></script>
-    <script src="js/i18n.js?v=64"></script>
-    <script src="js/i18n-extra-locales.js?v=3"></script>
+    <script src="js/i18n.js?v=65"></script>
+    <script src="js/i18n-extra-locales.js?v=5"></script>
     <script src="js/i18n-extra-module-overlays.js?v=4"></script>
     <script src="js/i18n-survey-overlays-extra.js?v=2"></script>
     <script src="js/viona-backend-url.js?v=11"></script>
@@ -337,6 +389,6 @@
     <script src="js/survey-submit.js?v=11"></script>
     <script src="js/survey-render.js?v=5"></script>
     <script src="js/promo-popup.js?v=26"></script>
-    <script src="js/app.js?v=31"></script>
+    <script src="js/app.js?v=32"></script>
   </body>
 </html>

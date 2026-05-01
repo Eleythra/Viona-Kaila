@@ -4766,6 +4766,112 @@
     });
   }
 
+  function formatYmdDotsFromCalendarIso(ymd) {
+    var p = String(ymd || "").trim().split("-");
+    if (p.length !== 3) return String(ymd || "").trim() || "—";
+    return p[2] + "." + p[1] + "." + p[0];
+  }
+
+  /** HK / Teknik / Ön büro: bekleyen+yapılıyor kuyruğu özet şeridi (üst bilgi). */
+  function renderOpsPendingQueueBannerImpl(mountEl, cfg) {
+    if (!mountEl) return;
+    cfg = cfg || {};
+    var title = String(cfg.title || "Açık işler");
+    var hint = String(cfg.hint || "");
+    var rows = Array.isArray(cfg.rows) ? cfg.rows : [];
+    var hideWhenEmpty = cfg.hideWhenEmpty !== false;
+    var maxRows = Math.min(24, Math.max(4, Number(cfg.maxRows) || 12));
+
+    if (!rows.length && hideWhenEmpty) {
+      mountEl.innerHTML = "";
+      return;
+    }
+
+    if (!rows.length) {
+      mountEl.innerHTML =
+        '<div class="ops-pending-queue ops-pending-queue--empty glass-block" role="status">' +
+        '<div class="ops-pending-queue__head">' +
+        '<span class="ops-pending-queue__title">' +
+        esc(title) +
+        '</span></div><p class="ops-pending-queue__empty">' +
+        esc(cfg.emptyText || "Bu aralıkta bekleyen veya yapılıyor kaydı yok.") +
+        "</p>" +
+        (hint ? '<p class="ops-pending-queue__hint">' + esc(hint) + "</p>" : "") +
+        "</div>";
+      return;
+    }
+
+    var showing = rows.slice(0, maxRows);
+    var more = rows.length - showing.length;
+    var lines = showing.map(function (item) {
+      var bt = item.bucketType;
+      var r = item.row || {};
+      var sum = operationSummaryForType(bt, r);
+      var calDay = submittedAtCalendarIso(r.submitted_at);
+      var dayDots = formatYmdDotsFromCalendarIso(calDay);
+      var sla = operationalSlaDisplayTr(r);
+      var st = normalizeBucketStatus(r.status);
+      var badge =
+        st === "in_progress"
+          ? '<span class="ops-pending-queue__badge ops-pending-queue__badge--prog">Yapılıyor</span>'
+          : '<span class="ops-pending-queue__badge ops-pending-queue__badge--wait">Bekliyor</span>';
+      var typeLab =
+        bt === "request"
+          ? "İstek"
+          : bt === "fault"
+            ? "Arıza"
+            : bt === "complaint"
+              ? "Şikâyet"
+              : bt === "guest_notification"
+                ? "Bildirim"
+                : bt === "late_checkout"
+                  ? "Geç çıkış"
+                  : String(bt || "");
+      var room = String(r.room_number || "").trim();
+      var roomHtml = room
+        ? '<span class="ops-pending-queue__room">Oda ' + esc(room) + "</span>"
+        : "";
+      return (
+        '<li class="ops-pending-queue__item">' +
+        '<div class="ops-pending-queue__item-top">' +
+        badge +
+        '<span class="ops-pending-queue__type">' +
+        esc(typeLab) +
+        "</span>" +
+        roomHtml +
+        '<span class="ops-pending-queue__day" title="Kayıt günü (otel takvimi)">' +
+        esc(dayDots) +
+        "</span>" +
+        "</div>" +
+        '<div class="ops-pending-queue__sum">' +
+        esc(sum) +
+        "</div>" +
+        '<div class="ops-pending-queue__sla">' +
+        esc(sla) +
+        "</div>" +
+        "</li>"
+      );
+    });
+
+    mountEl.innerHTML =
+      '<div class="ops-pending-queue glass-block" role="region" aria-live="polite" aria-label="' +
+      esc(title) +
+      '">' +
+      '<div class="ops-pending-queue__head">' +
+      '<span class="ops-pending-queue__title">' +
+      esc(title) +
+      "</span>" +
+      (hint ? '<span class="ops-pending-queue__meta">' + esc(hint) + "</span>" : "") +
+      "</div>" +
+      '<ul class="ops-pending-queue__list" role="list">' +
+      lines.join("") +
+      "</ul>" +
+      (more > 0
+        ? '<p class="ops-pending-queue__more">+' + esc(String(more)) + " kayıt daha (listede süzün)</p>"
+        : "") +
+      "</div>";
+  }
+
   /** HK / Teknik ops-light: ön büro özet kartıyla aynı sınıflar, tek kova. */
   function renderOpsSingleBucketSummaryImpl(mountEl, cfg) {
     if (!mountEl) return;
@@ -5543,6 +5649,9 @@
     /** HK / Teknik ops-light: tek özet kartı (`row`: normalizeFrontTypeSummary + isteğe bağlı enrich). */
     renderOpsSingleBucketSummary: function (mountEl, cfg) {
       renderOpsSingleBucketSummaryImpl(mountEl, cfg);
+    },
+    renderOpsPendingQueueBanner: function (mountEl, cfg) {
+      renderOpsPendingQueueBannerImpl(mountEl, cfg);
     },
     /** Saha tabloları için kısa özet metni (istek / arıza / şikâyet vb.). */
     operationSummaryForType: function (bucketType, row) {

@@ -8,7 +8,24 @@ const I18N = {
     metaTitle: "Viona — Kaila Beach Hotel",
     langScreenTitle: "Dil seçin",
     langScreenSubtitle: "Kaila Beach Hotel · Akıllı otel asistanı",
+    langGridAria: "Dil seçenekleri",
     continue: "Devam et",
+
+    gateScreenTitle: "Hoş geldiniz",
+    gateScreenSubtitle:
+      "Devam etmek için otelin paylaştığı erişim şifresini girin; kısa bilgilendirmeyi okuyup onaylayın.",
+    gatePasswordLabel: "Erişim şifresi",
+    gatePasswordPlaceholder: "Şifreyi girin",
+    gatePrivacyTitle: "Kişisel veriler — kısa bilgilendirme",
+    gatePrivacyBody:
+      "Viona üzerinden ilettiğiniz bilgiler, Kaila Beach Hotel’de konaklamanızla ilgili taleplerinizi karşılamak ve sizi bilgilendirmek için işlenir; hukuka aykırı şekilde yayımlanmaz. Ayrıntılı aydınlatma ve haklarınız için otelin resmi bilgilendirme metnine başvurabilirsiniz.",
+    gateCheckPrivacy: "Yukarıdaki bilgilendirmeyi okudum ve anladım.",
+    gateCheckAge: "18 yaşında veya daha büyük olduğumu beyan ederim.",
+    gateSubmit: "Onaylıyorum ve devam ediyorum",
+    gateBackLang: "Dil seçimine dön",
+    gateErrorPassword: "Şifre doğru değil. Güncel şifreyi girin.",
+    gateErrorPrivacy: "Devam etmek için bilgilendirme onayını işaretleyin.",
+    gateErrorAge: "Devam etmek için yaş beyanını işaretleyin.",
 
     homeTitle: "Kaila Beach Hotel",
 
@@ -629,7 +646,24 @@ const I18N = {
     metaTitle: "Viona — Kaila Beach Hotel",
     langScreenTitle: "Choose your language",
     langScreenSubtitle: "Kaila Beach Hotel · Smart hotel assistant",
+    langGridAria: "Language options",
     continue: "Continue",
+
+    gateScreenTitle: "Welcome",
+    gateScreenSubtitle:
+      "Enter the access password provided by the hotel, then review and confirm the notices below.",
+    gatePasswordLabel: "Access password",
+    gatePasswordPlaceholder: "Enter password",
+    gatePrivacyTitle: "Privacy — brief notice",
+    gatePrivacyBody:
+      "Information you share through Viona is used to handle requests related to your stay at Kaila Beach Hotel and to keep you informed appropriately; it is not published unlawfully. Please refer to the hotel’s official privacy notice for full details and your rights.",
+    gateCheckPrivacy: "I have read and understood the notice above.",
+    gateCheckAge: "I confirm that I am 18 years of age or older.",
+    gateSubmit: "I agree and continue",
+    gateBackLang: "Back to language selection",
+    gateErrorPassword: "Incorrect password. Please enter the current access password.",
+    gateErrorPrivacy: "Please confirm that you have read the notice above.",
+    gateErrorAge: "Please confirm that you are 18 or older.",
 
     homeTitle: "Kaila Beach Hotel",
 
@@ -1249,7 +1283,24 @@ const I18N = {
     metaTitle: "Viona — Kaila Beach Hotel",
     langScreenTitle: "Sprache wählen",
     langScreenSubtitle: "Kaila Beach Hotel · Intelligenter Hotel-Assistent",
+    langGridAria: "Sprachauswahl",
     continue: "Weiter",
+
+    gateScreenTitle: "Willkommen",
+    gateScreenSubtitle:
+      "Geben Sie das vom Hotel mitgeteilte Zugangspasswort ein und bestätigen Sie die Hinweise unten.",
+    gatePasswordLabel: "Zugangspasswort",
+    gatePasswordPlaceholder: "Passwort eingeben",
+    gatePrivacyTitle: "Datenschutz — Kurzhinweis",
+    gatePrivacyBody:
+      "Die über Viona übermittelten Informationen werden zur Bearbeitung Ihrer Anliegen im Zusammenhang mit Ihrem Aufenthalt im Kaila Beach Hotel und zur angemessenen Information verwendet; eine rechtswidrige Veröffentlichung erfolgt nicht. Ausführliche Informationen und Ihre Rechte entnehmen Sie bitte der offiziellen Datenschutzerklärung des Hotels.",
+    gateCheckPrivacy: "Ich habe den obigen Hinweis gelesen und verstanden.",
+    gateCheckAge: "Ich bestätige, dass ich 18 Jahre oder älter bin.",
+    gateSubmit: "Zustimmen und fortfahren",
+    gateBackLang: "Zurück zur Sprachauswahl",
+    gateErrorPassword: "Passwort ungültig. Bitte das aktuelle Zugangspasswort eingeben.",
+    gateErrorPrivacy: "Bitte bestätigen Sie, dass Sie den Hinweis gelesen haben.",
+    gateErrorAge: "Bitte bestätigen Sie, dass Sie 18 Jahre oder älter sind.",
 
     homeTitle: "Kaila Beach Hotel",
 
@@ -1870,7 +1921,25 @@ const I18N = {
     metaTitle: "Viona — Kaila Beach Hotel",
     langScreenTitle: "Wybierz język",
     langScreenSubtitle: "Kaila Beach Hotel · Inteligentny asystent hotelowy",
+    langGridAria: "Wybór języka",
     continue: "Kontynuuj",
+
+    gateScreenTitle: "Witamy",
+    gateScreenSubtitle:
+      "Wpisz hasło dostępu podane przez hotel, a następnie zapoznaj się z informacjami i je potwierdź.",
+    gatePasswordLabel: "Hasło dostępu",
+    gatePasswordPlaceholder: "Wpisz hasło",
+    gatePrivacyTitle: "Prywatność — krótka informacja",
+    gatePrivacyBody:
+      "Informacje przekazywane przez Viona są wykorzystywane do realizacji związanych z pobytem w Kaila Beach Hotel oraz do odpowiedniego informowania; nie są publikowane w sposób niezgodny z prawem. Pełne informacje i Państwa prawa znajdują się w oficjalnej polityce prywatności hotelu.",
+    gateCheckPrivacy: "Przeczytałem/am powyższą informację i ją rozumiem.",
+    gateCheckAge: "Potwierdzam, że mam ukończone 18 lat.",
+    gateSubmit: "Akceptuję i kontynuuję",
+    gateBackLang: "Powrót do wyboru języka",
+    gateErrorPassword: "Nieprawidłowe hasło. Wpisz aktualne hasło dostępu.",
+    gateErrorPrivacy: "Zaznacz potwierdzenie zapoznania się z informacją.",
+    gateErrorAge: "Zaznacz potwierdzenie pełnoletności.",
+
     homeTitle: "Hotel Kaila Beach",
     introLead: "Przy plaży w Obagöl, Alanya — All Inclusive dla komfortowych wakacji.",
     appVionaTitle: "Viona · Twój inteligentny towarzysz pobytu",

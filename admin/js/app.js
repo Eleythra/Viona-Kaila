@@ -503,12 +503,21 @@
     if (room) room.value = "";
   }
 
+  /** Tıklanan düğüm bazen #text olur; Text.closest yok → şerit chip'i bulunamaz. */
+  function eventClickTargetElement(ev) {
+    var t = ev && ev.target;
+    if (!t) return null;
+    if (t.nodeType === 1) return t;
+    return t.parentElement || null;
+  }
+
   function wireOpDayStripLayoutClick() {
     var layout = document.getElementById("admin-layout");
     if (!layout || layout.dataset.vionaOpDayStripBound) return;
     layout.dataset.vionaOpDayStripBound = "1";
     layout.addEventListener("click", function (ev) {
-      var chip = ev.target && ev.target.closest ? ev.target.closest(".op-day-strip__chip") : null;
+      var el = eventClickTargetElement(ev);
+      var chip = el && typeof el.closest === "function" ? el.closest(".op-day-strip__chip") : null;
       if (!chip || !layout.contains(chip)) return;
       var ymd = chip.getAttribute("data-op-day") || "";
       if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return;
@@ -611,6 +620,97 @@
     if (f.search && String(f.search).trim()) o.search = String(f.search).trim().slice(0, 80);
     if (f.room && String(f.room).trim() && !o.search) o.room_number = String(f.room).trim();
     return o;
+  }
+
+  var OPS_OPEN_QUEUE_FETCH = 100;
+  /** Banner boyalı isteklerde yarışı önlemek: son tetikleyici kazanır. */
+  var OPS_BANNER_PAINT_SEQ = { hk: 0, tech: 0, front: 0 };
+
+  function bumpOpsBannerPaintSeq(slot) {
+    var k = String(slot || "hk").trim();
+    OPS_BANNER_PAINT_SEQ[k] = (OPS_BANNER_PAINT_SEQ[k] || 0) + 1;
+    return OPS_BANNER_PAINT_SEQ[k];
+  }
+
+  /** Şeritteki gün sayısıyla aynı geriye dönük aralık (otel takvim günü). */
+  function opBannerLookbackRange() {
+    var days = enumerateOpStripDays(OP_DAY_STRIP_COUNT);
+    if (!days.length) {
+      var t = hotelCalendarYmd(new Date());
+      return { from: t, to: t };
+    }
+    return { from: days[days.length - 1], to: days[0] };
+  }
+
+  /** Bekliyor + yapılıyor; kayıt tarihi şerit aralığında; en eski üstte. */
+  async function fetchOpsOpenQueueRows(bucketTypes) {
+    var range = opBannerLookbackRange();
+    var base = { from: range.from, to: range.to };
+    var tasks = (bucketTypes || []).map(function (bt) {
+      return Promise.all([
+        adapter.getBucketPage(bt, 1, OPS_OPEN_QUEUE_FETCH, Object.assign({}, base, { status: "pending" })).catch(function () {
+          return { items: [] };
+        }),
+        adapter.getBucketPage(bt, 1, OPS_OPEN_QUEUE_FETCH, Object.assign({}, base, { status: "in_progress" })).catch(function () {
+          return { items: [] };
+        }),
+      ]).then(function (pair) {
+        return { bt: bt, p: pair[0], i: pair[1] };
+      });
+    });
+    var chunks = await Promise.all(tasks);
+    var out = [];
+    chunks.forEach(function (ch) {
+      var bt = ch.bt;
+      (ch.p.items || []).forEach(function (r) {
+        out.push({ bucketType: bt, row: r });
+      });
+      (ch.i.items || []).forEach(function (r) {
+        out.push({ bucketType: bt, row: r });
+      });
+    });
+    out.sort(function (a, b) {
+      return String(a.row.submitted_at || "").localeCompare(String(b.row.submitted_at || ""));
+    });
+    var seen = {};
+    var dedup = [];
+    out.forEach(function (item) {
+      var id = String(item.row && item.row.id != null ? item.row.id : "").trim();
+      var key = item.bucketType + ":" + (id || "_");
+      if (seen[key]) return;
+      seen[key] = true;
+      dedup.push(item);
+    });
+    return dedup;
+  }
+
+  async function paintOpsPendingBanner(hostId, bucketTypes, title, slotKey) {
+    var slot = String(slotKey || "hk").trim();
+    var myGen = bumpOpsBannerPaintSeq(slot);
+    var host = document.getElementById(hostId);
+    if (!host || typeof ui.renderOpsPendingQueueBanner !== "function") return;
+    try {
+      var range = opBannerLookbackRange();
+      var hint =
+        "Kayıt günü " +
+        ymdToTrDots(range.from) +
+        " – " +
+        ymdToTrDots(range.to) +
+        " · " +
+        OP_HOTEL_TZ +
+        " · en eski kayıt üstte";
+      var rows = await fetchOpsOpenQueueRows(bucketTypes);
+      if (myGen !== OPS_BANNER_PAINT_SEQ[slot]) return;
+      ui.renderOpsPendingQueueBanner(host, {
+        title: title,
+        hint: hint,
+        rows: rows,
+        hideWhenEmpty: true,
+        maxRows: 12,
+      });
+    } catch (_e) {
+      if (myGen === OPS_BANNER_PAINT_SEQ[slot]) host.innerHTML = "";
+    }
   }
 
   var opSearchDebounceTimer = null;
@@ -751,6 +851,7 @@
     syncOpFiltersAndDomFromSelectedDay();
     renderOpDayStrips();
     try {
+      void paintOpsPendingBanner("op-hk-pending-banner", ["request"], "Açık işler (HK · bekleyen & yapılıyor)", "hk");
       var fqHk = opQueryFromFilter(opFilterHk);
       var pairHk = await Promise.all([
         adapter.getBucketPage("request", opHkPage, OP_ACTION_PAGE_SIZE, fqHk),
@@ -790,6 +891,9 @@
       });
       void refreshOpDayStripMiniStats();
     } catch (e) {
+      bumpOpsBannerPaintSeq("hk");
+      var bh = document.getElementById("op-hk-pending-banner");
+      if (bh) bh.innerHTML = "";
       mount.innerHTML =
         '<p class="admin-load-error">' + escHtml(formatAdminBucketLoadError(e)) + "</p>";
     }
@@ -809,6 +913,7 @@
     syncOpFiltersAndDomFromSelectedDay();
     renderOpDayStrips();
     try {
+      void paintOpsPendingBanner("op-tech-pending-banner", ["fault"], "Açık işler (Teknik · bekleyen & yapılıyor)", "tech");
       var fqTech = opQueryFromFilter(opFilterTech);
       var pairTech = await Promise.all([
         adapter.getBucketPage("fault", opTechPage, OP_ACTION_PAGE_SIZE, fqTech),
@@ -848,6 +953,9 @@
       });
       void refreshOpDayStripMiniStats();
     } catch (e) {
+      bumpOpsBannerPaintSeq("tech");
+      var techBan = document.getElementById("op-tech-pending-banner");
+      if (techBan) techBan.innerHTML = "";
       mount.innerHTML =
         '<p class="admin-load-error">' + escHtml(formatAdminBucketLoadError(e)) + "</p>";
     }
@@ -1032,14 +1140,28 @@
       applyBtn.dataset.vionaBound = "1";
       applyBtn.addEventListener("click", function () {
         var next = readOpFilterFromDom("op-front");
-        next.from = opSelectedCalendarDay;
-        next.to = opSelectedCalendarDay;
-        opFilterFrontByType[opFrontFilterActiveType] = next;
+        var todayY = hotelCalendarYmd(new Date());
+        if (/^\d{4}-\d{2}-\d{2}$/.test(next.from)) {
+          opSelectedCalendarDay = next.from;
+          opFollowHotelToday = next.from === todayY;
+          persistOpDayState();
+        }
+        syncOpFiltersAndDomFromSelectedDay();
+        renderOpDayStrips();
+        var y = String(opSelectedCalendarDay || "").trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(y)) y = hotelCalendarYmd(new Date());
+        opFilterFrontByType[opFrontFilterActiveType] = {
+          status: next.status,
+          from: y,
+          to: y,
+          room: next.room,
+          search: next.search || "",
+        };
         ["complaint", "guest_notification", "late_checkout"].forEach(function (k) {
           if (k === opFrontFilterActiveType) return;
           var o = opFilterFrontByType[k] || { status: "", from: "", to: "", room: "", search: "" };
-          o.from = opSelectedCalendarDay;
-          o.to = opSelectedCalendarDay;
+          o.from = y;
+          o.to = y;
           opFilterFrontByType[k] = o;
         });
         opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
@@ -1073,6 +1195,12 @@
     syncOpFiltersAndDomFromSelectedDay();
     renderOpDayStrips();
     try {
+      void paintOpsPendingBanner(
+        "op-front-pending-banner",
+        ["complaint", "guest_notification", "late_checkout"],
+        "Açık işler (Ön büro · bekleyen & yapılıyor)",
+        "front",
+      );
       try {
         var tab = String(sessionStorage.getItem(OP_FRONT_TAB_KEY) || "").trim();
         if (tab === "guest_notification" || tab === "late_checkout" || tab === "complaint") {
@@ -1153,6 +1281,9 @@
       );
       void refreshOpDayStripMiniStats();
     } catch (e) {
+      bumpOpsBannerPaintSeq("front");
+      var bf = document.getElementById("op-front-pending-banner");
+      if (bf) bf.innerHTML = "";
       mount.innerHTML =
         '<p class="admin-load-error">' + escHtml(formatAdminBucketLoadError(e)) + "</p>";
     }
@@ -2355,11 +2486,15 @@
       if (applyBtn) {
         applyBtn.addEventListener("click", function () {
           var next = readOpFilterFromDom(prefix);
-          next.from = opSelectedCalendarDay;
-          next.to = opSelectedCalendarDay;
+          var todayY = hotelCalendarYmd(new Date());
+          if (/^\d{4}-\d{2}-\d{2}$/.test(next.from)) {
+            opSelectedCalendarDay = next.from;
+            opFollowHotelToday = next.from === todayY;
+            persistOpDayState();
+          }
+          syncOpFiltersAndDomFromSelectedDay();
+          renderOpDayStrips();
           filterObj.status = next.status;
-          filterObj.from = next.from;
-          filterObj.to = next.to;
           filterObj.room = next.room;
           filterObj.search = next.search || "";
           applyPage();
