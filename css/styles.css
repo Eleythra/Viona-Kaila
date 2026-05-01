@@ -6697,16 +6697,18 @@ select.req-input option {
 /* Haftalık akşam programı — animasyon modülü */
 .activities-evening {
   margin: 0 0 16px;
-  padding: 18px 18px 16px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 20px 20px 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   background:
-    linear-gradient(160deg, rgba(46, 184, 199, 0.1) 0%, transparent 38%),
-    linear-gradient(210deg, rgba(120, 86, 200, 0.05) 0%, transparent 45%),
-    rgba(6, 12, 20, 0.62);
+    linear-gradient(155deg, rgba(46, 184, 199, 0.14) 0%, transparent 42%),
+    linear-gradient(215deg, rgba(212, 175, 88, 0.07) 0%, transparent 48%),
+    linear-gradient(210deg, rgba(120, 86, 200, 0.06) 0%, transparent 45%),
+    rgba(6, 12, 20, 0.72);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.06) inset,
-    0 16px 48px rgba(0, 0, 0, 0.35);
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 20px 56px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(46, 184, 199, 0.06);
   min-width: 0;
 }
 
@@ -6727,112 +6729,149 @@ select.req-input option {
 .activities-evening__list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
 }
 
-.activities-evening-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1.05fr) auto minmax(0, 1.4fr);
-  align-items: center;
-  gap: 10px 12px;
-  padding: 11px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.03);
-  transition: border-color 0.2s ease, background 0.2s ease;
+/* Gün kartı — başlık + alt alta saat / etkinlik */
+.activities-evening-day {
+  margin: 0;
+  padding: 14px 14px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(165deg, rgba(255, 255, 255, 0.045) 0%, transparent 55%),
+    rgba(8, 14, 22, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 8px 28px rgba(0, 0, 0, 0.22);
+  min-width: 0;
 }
 
-.activities-evening-row:hover {
-  border-color: rgba(46, 184, 199, 0.22);
-  background: rgba(46, 184, 199, 0.06);
-}
-
-.activities-evening-row__day {
-  font-size: 0.82rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: rgba(242, 244, 248, 0.92);
-}
-
-.activities-evening-row__time {
-  flex-shrink: 0;
-  padding: 5px 10px;
-  border-radius: 999px;
-  font-size: 0.75rem;
+.activities-evening-day__title {
+  margin: 0 0 12px;
+  padding: 0 2px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.92rem;
   font-weight: 700;
   letter-spacing: 0.04em;
-  white-space: nowrap;
-  color: rgba(12, 18, 24, 0.92);
-  background: linear-gradient(135deg, rgba(220, 184, 106, 0.95), rgba(245, 210, 130, 0.88));
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.activities-evening-row__event {
-  font-size: 0.84rem;
-  line-height: 1.35;
-  color: rgba(232, 236, 242, 0.9);
-}
-
-.activities-evening-row--empty,
-.activities-evening-row--off {
+  color: rgba(245, 238, 224, 0.96);
   position: relative;
-  padding-left: 14px;
-  background: rgba(255, 255, 255, 0.025);
-  border-color: rgba(255, 255, 255, 0.05);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
-.activities-evening-row--empty::before,
-.activities-evening-row--off::before {
+.activities-evening-day__title::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 44px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(212, 175, 88, 0.95), rgba(46, 184, 199, 0.65));
+}
+
+.activities-evening-day__slots {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.activities-evening-slot {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 12px 14px;
+  padding: 10px 11px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.035);
+  transition: border-color 0.2s ease, background 0.2s ease;
+  min-width: 0;
+}
+
+.activities-evening-slot:hover {
+  border-color: rgba(46, 184, 199, 0.2);
+  background: rgba(46, 184, 199, 0.07);
+}
+
+.activities-evening-slot__time {
+  flex-shrink: 0;
+  min-width: 4.25rem;
+  padding: 7px 11px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+  text-align: center;
+  white-space: nowrap;
+  color: rgba(12, 18, 24, 0.94);
+  background: linear-gradient(145deg, rgba(230, 200, 120, 0.98), rgba(210, 168, 88, 0.9));
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  line-height: 1.2;
+}
+
+.activities-evening-slot__event {
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: rgba(232, 236, 242, 0.94);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding-top: 1px;
+}
+
+.activities-evening-slot__event--off-note {
+  color: rgba(210, 218, 228, 0.9);
+  font-weight: 500;
+  font-size: 0.84rem;
+  line-height: 1.48;
+}
+
+.activities-evening-slot--empty,
+.activities-evening-slot--off {
+  position: relative;
+  padding-left: 13px;
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.activities-evening-slot--empty::before,
+.activities-evening-slot--off::before {
   content: "";
   position: absolute;
   left: 4px;
   top: 50%;
   transform: translateY(-50%);
   width: 3px;
-  height: 56%;
+  height: 52%;
   border-radius: 0 4px 4px 0;
   opacity: 0.85;
 }
 
-.activities-evening-row--empty::before {
-  background: linear-gradient(180deg, rgba(46, 184, 199, 0.55), rgba(46, 184, 199, 0.15));
+.activities-evening-slot--empty::before {
+  background: linear-gradient(180deg, rgba(46, 184, 199, 0.55), rgba(46, 184, 199, 0.12));
 }
 
-.activities-evening-row--off::before {
-  background: linear-gradient(180deg, rgba(148, 156, 170, 0.45), rgba(148, 156, 170, 0.12));
+.activities-evening-slot--off::before {
+  background: linear-gradient(180deg, rgba(148, 156, 170, 0.45), rgba(148, 156, 170, 0.1));
 }
 
-.activities-evening-row--empty:hover,
-.activities-evening-row--off:hover {
-  border-color: rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.activities-evening-row--empty .activities-evening-row__day,
-.activities-evening-row--off .activities-evening-row__day {
-  color: rgba(236, 240, 246, 0.82);
-}
-
-.activities-evening-row--empty .activities-evening-row__time,
-.activities-evening-row--off .activities-evening-row__time {
-  background: rgba(255, 255, 255, 0.07);
-  color: rgba(220, 226, 234, 0.55);
+.activities-evening-slot--empty .activities-evening-slot__time,
+.activities-evening-slot--off .activities-evening-slot__time {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(218, 224, 232, 0.65);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   font-weight: 600;
-  letter-spacing: 0.12em;
 }
 
-/* Boş / izin — metin yok; ince görsel ipucu */
-.activities-evening-row__event--silent {
+.activities-evening-slot__event--silent {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  min-height: 1.15rem;
+  min-height: 1.2rem;
   pointer-events: none;
 }
 
-.activities-evening-row__event--silent::after {
+.activities-evening-slot__event--silent::after {
   content: "";
   display: block;
   width: min(100%, 72px);
@@ -6849,7 +6888,7 @@ select.req-input option {
   opacity: 0.9;
 }
 
-.activities-evening-row--off .activities-evening-row__event--silent::after {
+.activities-evening-slot--off .activities-evening-slot__event--silent::after {
   background: linear-gradient(
     90deg,
     transparent 0%,
@@ -6861,7 +6900,7 @@ select.req-input option {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .activities-evening-row__event--silent::after {
+  .activities-evening-slot__event--silent::after {
     animation: activities-evening-silent-shimmer 5s ease-in-out infinite;
   }
 }
@@ -6879,14 +6918,70 @@ select.req-input option {
 }
 
 @media (max-width: 520px) {
-  .activities-evening-row {
-    grid-template-columns: 1fr;
-    gap: 6px;
-    align-items: start;
+  .activities-evening {
+    padding: 16px 14px 14px;
+    border-radius: 18px;
   }
 
-  .activities-evening-row__time {
+  .activities-evening__head {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+  }
+
+  .activities-evening__title {
+    font-size: 0.92rem;
+    line-height: 1.35;
+  }
+
+  .activities-evening__list {
+    gap: 12px;
+  }
+
+  .activities-evening-day {
+    padding: 13px 12px 11px;
+    border-radius: 14px;
+  }
+
+  .activities-evening-day__title {
+    font-size: 0.88rem;
+    margin-bottom: 10px;
+    padding-bottom: 9px;
+  }
+
+  .activities-evening-day__slots {
+    gap: 9px;
+  }
+
+  .activities-evening-slot {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 11px 11px;
+  }
+
+  .activities-evening-slot__time {
     justify-self: start;
+    min-width: unset;
+    padding: 8px 14px;
+    font-size: 0.8rem;
+  }
+
+  .activities-evening-slot__event {
+    font-size: 0.82rem;
+    padding-top: 0;
+  }
+
+  .activities-evening-slot__event--off-note {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .activities-evening {
+    padding: 14px 12px 12px;
+  }
+
+  .activities-evening-slot__event {
+    font-size: 0.8rem;
   }
 }
 

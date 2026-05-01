@@ -62,180 +62,259 @@
     },
   };
 
-  /** Haftalık akşam gösterileri — tüm UI dilleri (pickFromLangRow). */
+  /** Haftalık akşam — gün başına birden fazla satır; tüm UI dilleri. */
+  var WD = {
+    mon: {
+      tr: "Pazartesi",
+      en: "Monday",
+      de: "Montag",
+      pl: "Poniedziałek",
+      ru: "Понедельник",
+      da: "Mandag",
+      cs: "Pondělí",
+      ro: "Luni",
+      nl: "Maandag",
+      sk: "Pondelok",
+    },
+    tue: {
+      tr: "Salı",
+      en: "Tuesday",
+      de: "Dienstag",
+      pl: "Wtorek",
+      ru: "Вторник",
+      da: "Tirsdag",
+      cs: "Úterý",
+      ro: "Marți",
+      nl: "Dinsdag",
+      sk: "Utorok",
+    },
+    wed: {
+      tr: "Çarşamba",
+      en: "Wednesday",
+      de: "Mittwoch",
+      pl: "Środa",
+      ru: "Среда",
+      da: "Onsdag",
+      cs: "Středa",
+      ro: "Miercuri",
+      nl: "Woensdag",
+      sk: "Streda",
+    },
+    thu: {
+      tr: "Perşembe",
+      en: "Thursday",
+      de: "Donnerstag",
+      pl: "Czwartek",
+      ru: "Четвер",
+      da: "Torsdag",
+      cs: "Čtvrtek",
+      ro: "Joi",
+      nl: "Donderdag",
+      sk: "Štvrtok",
+    },
+    fri: {
+      tr: "Cuma",
+      en: "Friday",
+      de: "Freitag",
+      pl: "Piątek",
+      ru: "Пятница",
+      da: "Fredag",
+      cs: "Pátek",
+      ro: "Vineri",
+      nl: "Vrijdag",
+      sk: "Piatok",
+    },
+    sat: {
+      tr: "Cumartesi",
+      en: "Saturday",
+      de: "Samstag",
+      pl: "Sobota",
+      ru: "Суббота",
+      da: "Lørdag",
+      cs: "Sobota",
+      ro: "Sâmbătă",
+      nl: "Zaterdag",
+      sk: "Sobota",
+    },
+    sun: {
+      tr: "Pazar",
+      en: "Sunday",
+      de: "Sonntag",
+      pl: "Niedziela",
+      ru: "Воскресенье",
+      da: "Søndag",
+      cs: "Neděle",
+      ro: "Duminică",
+      nl: "Zondag",
+      sk: "Nedeľa",
+    },
+  };
+
+  var EVT = {
+    balloon: {
+      tr: "Balon Gösterisi",
+      en: "Balloon show",
+      de: "Ballonshow",
+      pl: "Pokaz balonów",
+      ru: "Шоу с воздушными шарами",
+      da: "Ballonshow",
+      cs: "Balónová show",
+      ro: "Spectacol cu baloane",
+      nl: "Ballonnenshow",
+      sk: "Balónová show",
+    },
+    miniDisco: {
+      tr: "Mini Disko",
+      en: "Mini disco",
+      de: "Mini-Disco",
+      pl: "Mini disco",
+      ru: "Мини-диско",
+      da: "Mini disco",
+      cs: "Mini disco",
+      ro: "Mini disco",
+      nl: "Mini disco",
+      sk: "Mini disco",
+    },
+    liveAether: {
+      tr: "Canlı Müzik – Aether Band",
+      en: "Live music – Aether Band",
+      de: "Live-Musik – Aether Band",
+      pl: "Muzyka na żywo – Aether Band",
+      ru: "Живая музыка — Aether Band",
+      da: "Live musik – Aether Band",
+      cs: "Živá hudba – Aether Band",
+      ro: "Muzică live – Aether Band",
+      nl: "Livemuziek – Aether Band",
+      sk: "Živá hudba – Aether Band",
+    },
+    modernDance: {
+      tr: "Modern Dans Gösterisi",
+      en: "Modern dance show",
+      de: "Modern-Dance-Show",
+      pl: "Pokaz tańca nowoczesnego",
+      ru: "Шоу современного танца",
+      da: "Moderne danseforestilling",
+      cs: "Show moderního tance",
+      ro: "Spectacol de dans modern",
+      nl: "Moderne dansshow",
+      sk: "Show moderného tanca",
+    },
+    bingo: {
+      tr: "Bingo Gecesi",
+      en: "Bingo night",
+      de: "Bingo-Abend",
+      pl: "Wieczór bingo",
+      ru: "Вечер бинго",
+      da: "Bingoaften",
+      cs: "Bingo večer",
+      ro: "Seară bingo",
+      nl: "Bingo-avond",
+      sk: "Bingo večer",
+    },
+    missKaila: {
+      tr: "Miss Kaila Yarışması",
+      en: "Miss Kaila contest",
+      de: "Miss-Kaila-Wettbewerb",
+      pl: "Konkurs Miss Kaila",
+      ru: "Конкурс Miss Kaila",
+      da: "Miss Kaila-konkurrence",
+      cs: "Soutěž Miss Kaila",
+      ro: "Concurs Miss Kaila",
+      nl: "Miss Kaila-wedstrijd",
+      sk: "Súťaž Miss Kaila",
+    },
+    djParty: {
+      tr: "DJ Partisi",
+      en: "DJ party",
+      de: "DJ-Party",
+      pl: "Impreza z DJ-em",
+      ru: "DJ-вечеринка",
+      da: "DJ-fest",
+      cs: "DJ párty",
+      ro: "Petrecere cu DJ",
+      nl: "DJ-feest",
+      sk: "DJ párty",
+    },
+    liveFarshid: {
+      tr: "Canlı Müzik – Mr. Farşid",
+      en: "Live music – Mr. Farşid",
+      de: "Live-Musik – Mr. Farşid",
+      pl: "Muzyka na żywo – Mr. Farşid",
+      ru: "Живая музыка — Mr. Farşid",
+      da: "Live musik – Mr. Farşid",
+      cs: "Živá hudba – Mr. Farşid",
+      ro: "Muzică live – Mr. Farşid",
+      nl: "Livemuziek – Mr. Farşid",
+      sk: "Živá hudba – Mr. Farşid",
+    },
+    foam: {
+      tr: "Köpük Partisi",
+      en: "Foam party",
+      de: "Schaumparty",
+      pl: "Impreza piankowa",
+      ru: "Пенная вечеринка",
+      da: "Skumparty",
+      cs: "Pěnová párty",
+      ro: "Petrecere cu spumă",
+      nl: "Schuimparty",
+      sk: "Pena party",
+    },
+    africaAcro: {
+      tr: "Afrika Akrobasi Gösterisi",
+      en: "African acrobatics show",
+      de: "Afrikanische Akrobatik-Show",
+      pl: "Pokaz akrobatyki afrykańskiej",
+      ru: "Африканское акробатическое шоу",
+      da: "Afrikansk akrobatikshow",
+      cs: "Africká akrobatická show",
+      ro: "Spectacol de acrobație africană",
+      nl: "Afrikaanse acrobatiekshow",
+      sk: "Africká akrobatická šou",
+    },
+    karaoke: {
+      tr: "Karaoke",
+      en: "Karaoke",
+      de: "Karaoke",
+      pl: "Karaoke",
+      ru: "Караоке",
+      da: "Karaoke",
+      cs: "Karaoke",
+      ro: "Karaoke",
+      nl: "Karaoke",
+      sk: "Karaoke",
+    },
+    eveningNoProgram: {
+      tr: "Bu gün için akşam programında etkinlik bulunmamaktadır.",
+      en: "No evening programme is scheduled for this day.",
+      de: "Für diesen Tag ist kein Abendprogramm vorgesehen.",
+      pl: "Na ten dzień nie przewidziano programu wieczornego.",
+      ru: "Вечерняя программа на этот день не запланирована.",
+      da: "Der er ikke planlagt aftenprogram for denne dag.",
+      cs: "Pro tento večer není v programu plánována žádná akce.",
+      ro: "Pentru această seară nu este prevăzut niciun eveniment în program.",
+      nl: "Voor deze avond staan geen evenementen op het programma.",
+      sk: "Pre tento večer nie je v programe plánované žiadne podujatie.",
+    },
+  };
+
   var EVENING_SCHEDULE = [
-    {
-      day: {
-        tr: "Pazartesi",
-        en: "Monday",
-        de: "Montag",
-        pl: "Poniedziałek",
-        ru: "Понедельник",
-        da: "Mandag",
-        cs: "Pondělí",
-        ro: "Luni",
-        nl: "Maandag",
-        sk: "Pondelok",
-      },
-      time: "21:00",
-      event: {
-        tr: "Canlı müzik · Farşid",
-        en: "Live music · Farşid",
-        de: "Live-Musik · Farşid",
-        pl: "Muzyka na żywo · Farşid",
-        ru: "Живая музыка · Farşid",
-        da: "Live musik · Farşid",
-        cs: "Živá hudba · Farşid",
-        ro: "Muzică live · Farşid",
-        nl: "Livemuziek · Farşid",
-        sk: "Živá hudba · Farşid",
-      },
-      variant: "",
-    },
-    {
-      day: {
-        tr: "Salı",
-        en: "Tuesday",
-        de: "Dienstag",
-        pl: "Wtorek",
-        ru: "Вторник",
-        da: "Tirsdag",
-        cs: "Úterý",
-        ro: "Marți",
-        nl: "Dinsdag",
-        sk: "Utorok",
-      },
-      time: "21:15",
-      event: {
-        tr: "Akrobasi gösterisi",
-        en: "Acrobatics show",
-        de: "Akrobatik-Show",
-        pl: "Pokaz akrobatyczny",
-        ru: "Акробатическое шоу",
-        da: "Akrobatikshow",
-        cs: "Akrobatická show",
-        ro: "Spectacol de acrobație",
-        nl: "Acrobatiekshow",
-        sk: "Akrobatická šou",
-      },
-      variant: "",
-    },
-    {
-      day: {
-        tr: "Çarşamba",
-        en: "Wednesday",
-        de: "Mittwoch",
-        pl: "Środa",
-        ru: "Среда",
-        da: "Onsdag",
-        cs: "Středa",
-        ro: "Miercuri",
-        nl: "Woensdag",
-        sk: "Streda",
-      },
-      time: "—",
-      variant: "empty",
-    },
-    {
-      day: {
-        tr: "Perşembe",
-        en: "Thursday",
-        de: "Donnerstag",
-        pl: "Czwartek",
-        ru: "Четвер",
-        da: "Torsdag",
-        cs: "Čtvrtek",
-        ro: "Joi",
-        nl: "Donderdag",
-        sk: "Štvrtok",
-      },
-      time: "21:15",
-      event: {
-        tr: "Miss gösterisi",
-        en: "Miss show",
-        de: "Miss-Show",
-        pl: "Pokaz Miss",
-        ru: "Шоу Miss",
-        da: "Miss-show",
-        cs: "Miss show",
-        ro: "Spectacol Miss",
-        nl: "Miss-show",
-        sk: "Miss šou",
-      },
-      variant: "",
-    },
-    {
-      day: {
-        tr: "Cuma",
-        en: "Friday",
-        de: "Freitag",
-        pl: "Piątek",
-        ru: "Пятница",
-        da: "Fredag",
-        cs: "Pátek",
-        ro: "Vineri",
-        nl: "Vrijdag",
-        sk: "Piatok",
-      },
-      time: "21:00",
-      event: {
-        tr: "Canlı müzik · Aether Band",
-        en: "Live music · Aether Band",
-        de: "Live-Musik · Aether Band",
-        pl: "Muzyka na żywo · Aether Band",
-        ru: "Живая музыка · Aether Band",
-        da: "Live musik · Aether Band",
-        cs: "Živá hudba · Aether Band",
-        ro: "Muzică live · Aether Band",
-        nl: "Livemuziek · Aether Band",
-        sk: "Živá hudba · Aether Band",
-      },
-      variant: "",
-    },
-    {
-      day: {
-        tr: "Cumartesi",
-        en: "Saturday",
-        de: "Samstag",
-        pl: "Sobota",
-        ru: "Суббота",
-        da: "Lørdag",
-        cs: "Sobota",
-        ro: "Sâmbătă",
-        nl: "Zaterdag",
-        sk: "Sobota",
-      },
-      time: "21:15",
-      event: {
-        tr: "Modern dans gösterisi",
-        en: "Modern dance show",
-        de: "Modern Dance Show",
-        pl: "Pokaz tańca nowoczesnego",
-        ru: "Шоу современного танца",
-        da: "Moderne danseforestilling",
-        cs: "Show moderního tance",
-        ro: "Spectacol de dans modern",
-        nl: "Moderne dansshow",
-        sk: "Show moderného tanca",
-      },
-      variant: "",
-    },
-    {
-      day: {
-        tr: "Pazar",
-        en: "Sunday",
-        de: "Sonntag",
-        pl: "Niedziela",
-        ru: "Воскресенье",
-        da: "Søndag",
-        cs: "Neděle",
-        ro: "Duminică",
-        nl: "Zondag",
-        sk: "Nedeľa",
-      },
-      time: "—",
-      variant: "off",
-    },
+    { day: WD.mon, time: "15:00", event: EVT.balloon },
+    { day: WD.mon, time: "20:45", event: EVT.miniDisco },
+    { day: WD.mon, time: "21:00", event: EVT.liveAether },
+    { day: WD.tue, time: "20:45", event: EVT.miniDisco },
+    { day: WD.tue, time: "21:00", event: EVT.modernDance },
+    { day: WD.tue, time: "22:00", event: EVT.bingo },
+    { day: WD.wed, time: "21:00", event: EVT.miniDisco },
+    { day: WD.wed, time: "21:15", event: EVT.missKaila },
+    { day: WD.thu, time: "21:00", event: EVT.miniDisco },
+    { day: WD.thu, time: "21:15", event: EVT.djParty },
+    { day: WD.fri, time: "20:45", event: EVT.miniDisco },
+    { day: WD.fri, time: "21:00", event: EVT.liveFarshid },
+    { day: WD.sat, time: "15:00", event: EVT.foam },
+    { day: WD.sat, time: "20:45", event: EVT.miniDisco },
+    { day: WD.sat, time: "21:00", event: EVT.africaAcro },
+    { day: WD.sat, time: "22:00", event: EVT.karaoke },
+    { day: WD.sun, time: "—", event: EVT.eveningNoProgram, variant: "off" },
   ];
 
   var ACTIVITY_CARDS = [
@@ -554,22 +633,44 @@
     wrap.appendChild(head);
 
     var list = el("div", "activities-evening__list");
+
+    var groups = [];
     EVENING_SCHEDULE.forEach(function (row) {
-      var rowCls = "activities-evening-row";
-      if (row.variant === "empty") rowCls += " activities-evening-row--empty";
-      if (row.variant === "off") rowCls += " activities-evening-row--off";
-      var rowEl = el("div", rowCls);
-      rowEl.appendChild(el("span", "activities-evening-row__day", T(row.day)));
-      rowEl.appendChild(el("span", "activities-evening-row__time", row.time));
-      var eventSpan = el("span", "activities-evening-row__event");
-      if (row.variant === "empty" || row.variant === "off") {
-        eventSpan.classList.add("activities-evening-row__event--silent");
-        eventSpan.setAttribute("aria-hidden", "true");
-      } else if (row.event) {
-        eventSpan.textContent = T(row.event);
+      var label = T(row.day);
+      if (!groups.length || groups[groups.length - 1].label !== label) {
+        groups.push({ label: label, rows: [row] });
+      } else {
+        groups[groups.length - 1].rows.push(row);
       }
-      rowEl.appendChild(eventSpan);
-      list.appendChild(rowEl);
+    });
+
+    groups.forEach(function (g) {
+      var daySection = el("section", "activities-evening-day");
+      daySection.setAttribute("aria-label", g.label);
+      daySection.appendChild(el("h4", "activities-evening-day__title", g.label));
+
+      var slots = el("div", "activities-evening-day__slots");
+      g.rows.forEach(function (row) {
+        var slotCls = "activities-evening-slot";
+        if (row.variant === "empty") slotCls += " activities-evening-slot--empty";
+        if (row.variant === "off") slotCls += " activities-evening-slot--off";
+        var slot = el("article", slotCls);
+
+        slot.appendChild(el("span", "activities-evening-slot__time", row.time));
+        var eventSpan = el("span", "activities-evening-slot__event");
+        if (row.event) {
+          eventSpan.textContent = T(row.event);
+          if (row.variant === "off") eventSpan.classList.add("activities-evening-slot__event--off-note");
+        } else if (row.variant === "empty" || row.variant === "off") {
+          eventSpan.classList.add("activities-evening-slot__event--silent");
+          eventSpan.setAttribute("aria-hidden", "true");
+        }
+        slot.appendChild(eventSpan);
+        slots.appendChild(slot);
+      });
+
+      daySection.appendChild(slots);
+      list.appendChild(daySection);
     });
     wrap.appendChild(list);
     return wrap;

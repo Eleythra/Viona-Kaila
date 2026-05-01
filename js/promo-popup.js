@@ -5,10 +5,10 @@
    * Sabit indirim popup — görseller `assets/indirim/indirim-{TR|EN|DE|PL|RU|DA|CS|RO|NL|SK}.png`.
    * Yeni dil görseli eklerken `PROMO_IMAGES` + CACHE_BUST artırın.
    */
-  var CACHE_BUST = "11";
+  var CACHE_BUST = "12";
   var POPUP_ID = "discount-promo-popup";
   var SEEN_SESSION_KEY = "viona_indirim_popup_seen_v2";
-  var HOME_VISIBLE_MAX_FRAMES = 12;
+  var HOME_VISIBLE_MAX_FRAMES = 18;
 
   var EN_PROMO_SRC = "assets/indirim/indirim-EN.png?v=" + CACHE_BUST;
   var PROMO_IMAGES = {
@@ -24,8 +24,8 @@
     sk: "assets/indirim/indirim-SK.png?v=" + CACHE_BUST,
   };
 
-  /** Ana sayfaya ilk geçişte indirim penceresi otomatik açılmasın (manuel tetik yoksa). */
-  var DISABLE_PROMO_AUTO_OPEN = true;
+  /** Şifre ile ana sayfaya her girişte (oturum başına bir kez) kampanya popup — kapatılabilir. */
+  var DISABLE_PROMO_AUTO_OPEN = false;
 
   function getLang() {
     try {
@@ -40,9 +40,36 @@
     if (window.VIONA_LANG && typeof window.VIONA_LANG.normalizeToUiLang === "function") {
       return window.VIONA_LANG.normalizeToUiLang(c);
     }
+    if (window.VIONA_LANG && window.VIONA_LANG.ALL && window.VIONA_LANG.ALL.indexOf(c) !== -1) return c;
     if (c === "en" || c === "de" || c === "pl") return c;
     return "tr";
   }
+
+  var CLOSE_ARIA = {
+    tr: "Kapat",
+    en: "Close",
+    de: "Schließen",
+    pl: "Zamknij",
+    ru: "Закрыть",
+    da: "Luk",
+    cs: "Zavřít",
+    ro: "Închide",
+    nl: "Sluiten",
+    sk: "Zavrieť",
+  };
+
+  var IMG_ALT = {
+    tr: "Kampanya ve duyuru görseli",
+    en: "Promotional offer image",
+    de: "Aktions- und Hinweisbild",
+    pl: "Grafika promocyjna",
+    ru: "Рекламное изображение",
+    da: "Kampagnebillede",
+    cs: "Propagační obrázek",
+    ro: "Imagine promoțională",
+    nl: "Promotieafbeelding",
+    sk: "Propagačný obrázok",
+  };
 
   function imageSrcForLang(lang) {
     var n = normalizeLang(lang);
@@ -110,7 +137,7 @@
     root.innerHTML =
       '<div class="promo-popup__backdrop"></div>' +
       '<div class="promo-popup__panel">' +
-      '<button type="button" class="promo-popup__close" aria-label="Kapat">×</button>' +
+      '<button type="button" class="promo-popup__close" aria-label="">×</button>' +
       '<img class="promo-popup__image" alt="" decoding="async" loading="eager" />' +
       "</div>";
 
@@ -161,9 +188,11 @@
     }
 
     var popup = ensurePopup();
+    var closeBtn = popup.querySelector(".promo-popup__close");
+    if (closeBtn) closeBtn.setAttribute("aria-label", CLOSE_ARIA[lang] || CLOSE_ARIA.en);
     var img = popup.querySelector(".promo-popup__image");
     img.src = src;
-    img.alt = "Kampanya";
+    img.alt = IMG_ALT[lang] || IMG_ALT.en;
     popup.classList.add("is-open");
     popup.setAttribute("aria-hidden", "false");
   }

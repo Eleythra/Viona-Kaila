@@ -315,6 +315,10 @@
       '<svg class="rate-link__svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#ea580c"/><path fill="#fff" d="M8 7h8a1.5 1.5 0 011.5 1.5V11h-11V8.5A1.5 1.5 0 018 7zm-1.5 5h13v6.5A1.5 1.5 0 0118 20H6a1.5 1.5 0 01-1.5-1.5V12z" opacity="0.96"/></svg>',
     zoover:
       '<svg class="rate-link__svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#16a34a"/><path fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M8 10h8M8 14h5"/><circle cx="9" cy="10" r="1.2" fill="#fff"/><circle cx="15" cy="14" r="1.2" fill="#fff"/></svg>',
+    otelpuan:
+      '<svg class="rate-link__svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#0284c7"/><path fill="#fff" d="M12 6.8l1.35 3.1 3.35.35-2.5 2.35.65 3.55L12 14.6l-2.85 1.55.65-3.55-2.5-2.35 3.35-.35L12 6.8z"/></svg>',
+    check24:
+      '<svg class="rate-link__svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5" fill="#15803d"/><path stroke="#fff" stroke-width="1.65" stroke-linecap="round" fill="none" d="M7 12.5h10M10 9v7M14 9v7"/></svg>',
   };
 
   function badgeKeyFor(badge) {

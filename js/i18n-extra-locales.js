@@ -81,11 +81,15 @@
       footer: "Eleythra Derin Teknoloji · Viona",
       rateModalTitle: "Отзывы и ссылки",
       rateModalLead:
-        "Оставьте отзыв на Google, HolidayCheck, Booking.com, Tripadvisor и др.; ниже — Corendon, Zoover, соцсети и официальный сайт.",
+        "Оставьте отзыв на Google, Otelpuan, CHECK24, HolidayCheck, Booking.com, Tripadvisor и др.; ниже — Corendon, Zoover, соцсети и официальный сайт.",
       rateModalSurveyHint:
         "Структурированный опрос о проживании и помощнике Viona (1–5 по разделам) — плитка «Оцените впечатления» на главном экране. Это окно только внешние ссылки.",
       reqErrAfterHoursReception:
         "С 0:00 до 8:00 оперативная команда недоступна — через приложение запросы, жалобы, заявки и уведомления гостя не принимаются. Обратитесь на ресепшн напрямую.",
+      linkOtelpuan: "Otelpuan",
+      linkCheck24: "CHECK24",
+      hintOtelpuan: "Оцените отель на Otelpuan — турецкой платформе отзывов об отелях.",
+      hintCheck24: "CHECK24 (Германия) — отзыв об отеле после поездки.",
     },
     da: {
       metaTitle: "Viona — Kaila Beach Hotel",
@@ -157,11 +161,15 @@
       footer: "Eleythra Derin Teknoloji · Viona",
       rateModalTitle: "Anmeldelser og links",
       rateModalLead:
-        "Skriv en anmeldelse på Google, HolidayCheck, Booking.com, Tripadvisor m.fl.; Corendon, Zoover, sociale medier og det officielle site nedenfor.",
+        "Skriv en anmeldelse på Google, Otelpuan, CHECK24, HolidayCheck, Booking.com, Tripadvisor m.fl.; Corendon, Zoover, sociale medier og det officielle site nedenfor.",
       rateModalSurveyHint:
         "Den strukturerede undersøgelse om dit ophold og Viona-assistenten (1–5 pr. afsnit) findes på flisen «Bedøm din oplevelse». Dette vindue er kun eksterne links.",
       reqErrAfterHoursReception:
         "Mellem kl. 00.00 og 08.00 er driftsteamet ikke tilgængeligt; forespørgsler, klager, fejlrapporter og gæstemeldinger kan ikke modtages via appen. Kontakt venligst receptionen direkte.",
+      linkOtelpuan: "Otelpuan",
+      linkCheck24: "CHECK24",
+      hintOtelpuan: "Bedøm dit ophold på Otelpuan — Tyrkiets hotelplatform.",
+      hintCheck24: "CHECK24 (Tyskland) — hotelbedømmelse efter ophold.",
     },
     cs: {
       metaTitle: "Viona — Kaila Beach Hotel",
@@ -233,11 +241,15 @@
       footer: "Eleythra Derin Teknoloji · Viona",
       rateModalTitle: "Recenze a odkazy",
       rateModalLead:
-        "Napište recenzi na Google, HolidayCheck, Booking.com, Tripadvisor a další; níže Corendon, Zoover, sociální sítě a oficiální web.",
+        "Napište recenzi na Google, Otelpuan, CHECK24, HolidayCheck, Booking.com, Tripadvisor a další; níže Corendon, Zoover, sociální sítě a oficiální web.",
       rateModalSurveyHint:
         "Strukturovaný dotazník k pobytu a asistentovi Viona (1–5 podle sekcí) najdete na dlaždici «Ohodnoťte svůj zážitek». Toto okno obsahuje jen externí odkazy.",
       reqErrAfterHoursReception:
         "Mezi 0:00 a 8:00 je provozní tým nedostupný — přes aplikaci v tuto dobu nepřijímám požadavky, stížnosti, hlášení závad ani hlášení hostů. V naléhavých případech kontaktujte recepci.",
+      linkOtelpuan: "Otelpuan",
+      linkCheck24: "CHECK24",
+      hintOtelpuan: "Ohodnoťte pobyt na Otelpuan — turecké platformě hodnocení hotelů.",
+      hintCheck24: "CHECK24 (Německo) — hodnocení hotelu po pobytu.",
     },
     ro: {
       metaTitle: "Viona — Kaila Beach Hotel",
@@ -309,11 +321,15 @@
       footer: "Eleythra Derin Teknoloji · Viona",
       rateModalTitle: "Recenzii și linkuri",
       rateModalLead:
-        "Lăsați o recenzie pe Google, HolidayCheck, Booking.com, Tripadvisor și altele; mai jos Corendon, Zoover, rețele sociale și site-ul oficial.",
+        "Lăsați o recenzie pe Google, Otelpuan, CHECK24, HolidayCheck, Booking.com, Tripadvisor și altele; mai jos Corendon, Zoover, rețele sociale și site-ul oficial.",
       rateModalSurveyHint:
         "Chestionarul structurat despre sejur și asistentul Viona (1–5 pe secțiuni) este pe dala «Evaluați experiența». Această fereastră listează doar linkuri externe.",
       reqErrAfterHoursReception:
         "Între 0:00 și 8:00 echipa operațională nu este disponibilă — nu pot înregistra solicitări, reclamații, sesizări sau notificări pentru oaspeți prin aplicație. Pentru asistență, contactați recepția.",
+      linkOtelpuan: "Otelpuan",
+      linkCheck24: "CHECK24",
+      hintOtelpuan: "Evaluați sejurul pe Otelpuan — platforma turcă de recenzii hoteliere.",
+      hintCheck24: "CHECK24 (Germania) — recenzie hotel după sejur.",
     },
     nl: {
       metaTitle: "Viona — Kaila Beach Hotel",
@@ -385,11 +401,15 @@
       footer: "Eleythra Derin Teknoloji · Viona",
       rateModalTitle: "Recensies en links",
       rateModalLead:
-        "Laat een review achter op Google, HolidayCheck, Booking.com, Tripadvisor e.a.; hieronder Corendon, Zoover, social media en de officiële site.",
+        "Laat een review achter op Google, Otelpuan, CHECK24, HolidayCheck, Booking.com, Tripadvisor e.a.; hieronder Corendon, Zoover, social media en de officiële site.",
       rateModalSurveyHint:
         "De gestructureerde enquête over uw verblijf en de Viona-assistent (1–5 per sectie) staat op de tegel «Beoordeel uw ervaring». Dit venster toont alleen externe links.",
       reqErrAfterHoursReception:
         "Tussen 00:00 en 08:00 kan ik geen verzoeken, klachten, storingsmeldingen of gastmeldingen via de app registreren. Neem contact op met de receptie.",
+      linkOtelpuan: "Otelpuan",
+      linkCheck24: "CHECK24",
+      hintOtelpuan: "Beoordeel uw verblijf op Otelpuan — het Turkse hotelreviewplatform.",
+      hintCheck24: "CHECK24 (Duitsland) — hotelbeoordeling na verblijf.",
     },
     sk: {
       metaTitle: "Viona — Kaila Beach Hotel",
@@ -461,11 +481,15 @@
       footer: "Eleythra Derin Teknoloji · Viona",
       rateModalTitle: "Recenzie a odkazy",
       rateModalLead:
-        "Zanechajte recenziu na Google, HolidayCheck, Booking.com, Tripadvisor a ďalšie; nižšie Corendon, Zoover, sociálne siete a oficiálna stránka.",
+        "Zanechajte recenziu na Google, Otelpuan, CHECK24, HolidayCheck, Booking.com, Tripadvisor a ďalšie; nižšie Corendon, Zoover, sociálne siete a oficiálna stránka.",
       rateModalSurveyHint:
         "Štruktúrovaný dotazník k pobytu a asistentovi Viona (1–5 podľa sekcií) je na dlaždici «Ohodnoťte svoj zážitok». Toto okno obsahuje len externé odkazy.",
       reqErrAfterHoursReception:
         "Medzi 0:00 a 8:00 nemôžem prijímať požiadavky, sťažnosti, hlásenia porúch ani oznámenia hostí cez aplikáciu. Kontaktujte recepciu.",
+      linkOtelpuan: "Otelpuan",
+      linkCheck24: "CHECK24",
+      hintOtelpuan: "Ohodnoťte pobyt na Otelpuan — tureckej platforme hodnotení hotelov.",
+      hintCheck24: "CHECK24 (Nemecko) — hodnotenie hotela po pobyte.",
     },
   };
 
