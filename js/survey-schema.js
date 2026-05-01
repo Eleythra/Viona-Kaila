@@ -130,6 +130,27 @@
           { id: "guest_hotel_care", label: "Genel olarak otelin ilgisini ve takibini nasıl değerlendirirsiniz?" },
         ],
       },
+      {
+        id: "sustainability",
+        label: "Sürdürülebilirlik",
+        questions: [
+          {
+            id: "sus_eco_practices",
+            label:
+              "Konaklamanız sırasında otelin çevre dostu uygulamalarını (enerji tasarrufu, atık yönetimi, plastik kullanımının azaltılması vb.) ne kadar yeterli buldunuz?",
+          },
+          {
+            id: "sus_sustainability_engagement",
+            label:
+              "Otelin sürdürülebilirlik konusunda sizi bilgilendirme ve bu sürece dahil etme düzeyini nasıl değerlendirirsiniz?",
+          },
+          {
+            id: "sus_overall_sustainability",
+            label:
+              "Genel olarak, Kaila Beach’in sürdürülebilir ve çevreye duyarlı bir tesis olduğunu ne ölçüde düşünüyorsunuz?",
+          },
+        ],
+      },
     ],
     hotelCommentPlaceholder:
       "Konaklamanız hakkında eklemek istediğiniz bir yorum varsa yazabilirsiniz",

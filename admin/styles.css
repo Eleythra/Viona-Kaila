@@ -5382,3 +5382,12 @@
     max-width: 32rem;
   }
 }
+
+/* Bildirim → çözüm süre ölçümü (İstanbul günü ile uyumlu liste filtresi) */
+.admin-body .viona-sla-cell {
+  font-size: 0.82rem;
+  white-space: nowrap;
+  color: var(--admin-text-muted);
+  font-variant-numeric: tabular-nums;
+  max-width: 11rem;
+}

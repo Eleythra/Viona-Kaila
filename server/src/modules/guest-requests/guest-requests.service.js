@@ -1,4 +1,8 @@
 import { getSupabase, throwIfSupabaseDatastoreDnsError, withSupabaseFetchGuard } from "../../lib/supabase.js";
+import {
+  isInOperationalQuietHours,
+  isOperationalGuestRequestTypeBlocked,
+} from "../../lib/operational-quiet-hours.js";
 import { isValidHotelRoomNumber } from "../../lib/hotel-room-numbers.js";
 import {
   validateGuestFullName,
@@ -762,6 +766,12 @@ async function updateWhatsappDeliveryStatus(table, id, result) {
 export async function createGuestRequest(payload) {
   const normalized = normalizePayload(payload);
   validate(normalized);
+
+  if (isOperationalGuestRequestTypeBlocked(normalized.type) && isInOperationalQuietHours()) {
+    const err = new Error("quiet_hours_reception_only");
+    err.statusCode = 409;
+    throw err;
+  }
 
   if (normalized.type === "request") {
     const id = await insertSimple("guest_requests", normalized);

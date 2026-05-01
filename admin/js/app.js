@@ -155,6 +155,15 @@
     }
   }
 
+  /** submitted_at ISO → otel takvim günü (OP_HOTEL_TZ); ana sayfa Bugün ile operasyon sekmesi uyumu. */
+  function submittedAtHotelCalendarDay(iso) {
+    var s = String(iso || "").trim();
+    if (!s) return "";
+    var d = new Date(s);
+    if (Number.isNaN(d.getTime())) return "";
+    return hotelCalendarYmd(d);
+  }
+
   /** Görünüm: gg.aa.yyyy (API yine YYYY-MM-DD). */
   function ymdToTrDots(ymd) {
     var s = String(ymd || "").trim();
@@ -871,7 +880,11 @@
   }
 
   function mergeNormFrontTypes(c, gn, lc) {
-    return {
+    var digerCount =
+      (Number(c.digerCount) || 0) +
+      (Number(gn.digerCount) || 0) +
+      (Number(lc.digerCount) || 0);
+    var out = {
       mode: c.filtered || gn.filtered || lc.filtered ? "mixed" : "full",
       bekliyor: c.bekliyor + gn.bekliyor + lc.bekliyor,
       islemde: c.islemde + gn.islemde + lc.islemde,
@@ -879,24 +892,55 @@
       yapilmadi: c.yapilmadi + gn.yapilmadi + lc.yapilmadi,
       iptal: c.iptal + gn.iptal + lc.iptal,
       toplam: c.toplam + gn.toplam + lc.toplam,
+      digerCount: digerCount,
       byType: {
         complaint: c,
         guest_notification: gn,
         late_checkout: lc,
       },
     };
+    var sumParts =
+      out.bekliyor +
+      out.islemde +
+      out.yapildi +
+      out.yapilmadi +
+      out.iptal +
+      digerCount;
+    if (out.toplam > 0 && sumParts !== out.toplam) {
+      out._statusSumMismatch = true;
+    }
+    return out;
+  }
+
+  function validateOpsSummaryParts(n) {
+    if (!n || n.filtered) return n;
+    var dig = Number(n.digerCount) || 0;
+    var s =
+      (Number(n.bekliyor) || 0) +
+      (Number(n.islemde) || 0) +
+      (Number(n.yapildi) || 0) +
+      (Number(n.yapilmadi) || 0) +
+      (Number(n.iptal) || 0) +
+      dig;
+    var t = Number(n.toplam) || 0;
+    if (t > 0 && s !== t) {
+      n._statusSumMismatch = true;
+    } else {
+      delete n._statusSumMismatch;
+    }
+    return n;
   }
 
   /**
    * Özet API'si 0 veya hata döndüğünde: liste sayımı (pagination.total) doğrudur;
-   * tek sayfada tüm kayıtlar yüklendiyse durum kırılımını aynı sayfadaki satırlardan üret.
+   * tek sayfada tüm kayıtlar yüklendiyse durum kırılımını listedeki satırlardan üret (özet–liste tutarlılığı).
    */
   function enrichFrontTypeSummaryWithPack(apiRaw, pack) {
     var n = normalizeFrontTypeSummary(apiRaw);
-    if (!pack || typeof pack !== "object") return n;
+    if (!pack || typeof pack !== "object") return validateOpsSummaryParts(n);
     if (n.filtered) return n;
     var listTotal = Number((pack.pagination && pack.pagination.total) || 0) || 0;
-    if (listTotal <= 0) return n;
+    if (listTotal <= 0) return validateOpsSummaryParts(n);
     if (n.toplam !== listTotal) {
       n.toplam = listTotal;
     }
@@ -904,15 +948,36 @@
     var items = pack.items || [];
     var apiMissing = apiRaw == null || typeof apiRaw !== "object";
     var sumParts = n.bekliyor + n.islemde + n.yapildi + n.yapilmadi + n.iptal;
-    if ((apiMissing || sumParts === 0) && pages === 1 && items.length === listTotal) {
+    var fullSinglePage = pages === 1 && items.length === listTotal && listTotal > 0;
+    if (fullSinglePage) {
       var k = countOpsKanbanStatus(items);
       n.bekliyor = k.bekliyor;
       n.islemde = k.yapiliyor;
       n.yapildi = k.yapildi;
       n.yapilmadi = k.yapilmadi;
       n.iptal = k.iptal;
+      n.digerCount = k.diger;
+      n.toplam = listTotal;
+      n._reconciledFromList = true;
+      delete n._multiPageList;
+    } else {
+      delete n._reconciledFromList;
+      if (pages > 1) {
+        n._multiPageList = true;
+      } else {
+        delete n._multiPageList;
+      }
+      if ((apiMissing || sumParts === 0) && items.length > 0) {
+        var k2 = countOpsKanbanStatus(items);
+        n.bekliyor = k2.bekliyor;
+        n.islemde = k2.yapiliyor;
+        n.yapildi = k2.yapildi;
+        n.yapilmadi = k2.yapilmadi;
+        n.iptal = k2.iptal;
+        n.digerCount = k2.diger;
+      }
     }
-    return n;
+    return validateOpsSummaryParts(n);
   }
 
   function paintOpHkTechSummary(hostId, bucketType, sumRaw, listPack) {
@@ -1235,6 +1300,11 @@
           title: "Misafir deneyimi & hizmet",
           value: satCat.guestExperience || "-",
           desc: "hotel_categories.guestExperience (yeni şema).",
+        },
+        {
+          title: "Sürdürülebilirlik",
+          value: satCat.sustainability || "-",
+          desc: "hotel_categories.sustainability — çevre dostu uygulamalar, bilgilendirme, genel sürdürülebilirlik algısı.",
         },
         {
           title: "Genel deneyim (eski anket)",
@@ -1675,26 +1745,9 @@
     }).length;
   }
 
-  function todayIsoLocal() {
-    var d = new Date();
-    var y = d.getFullYear();
-    var m = String(d.getMonth() + 1).padStart(2, "0");
-    var day = String(d.getDate()).padStart(2, "0");
-    return y + "-" + m + "-" + day;
-  }
-
-  function submittedDateKey(row) {
-    var raw = String((row && row.submitted_at) || "").trim();
-    if (raw.length >= 10) {
-      var slice = raw.slice(0, 10);
-      if (/^\d{4}-\d{2}-\d{2}$/.test(slice)) return slice;
-    }
-    return "";
-  }
-
-  function filterRowsSubmittedOnDay(rows, isoDay) {
+  function filterRowsSubmittedOnHotelDay(rows, ymd) {
     return rows.filter(function (r) {
-      return submittedDateKey(r) === isoDay;
+      return submittedAtHotelCalendarDay(r.submitted_at) === ymd;
     });
   }
 
@@ -1812,13 +1865,13 @@
     var lcRows = data.late_checkout || [];
     var allOpRows = reqRows.concat(comRows).concat(faultRows).concat(notifRows).concat(lcRows);
     var stripAgg = countOpsKanbanStatus(allOpRows);
-    var todayIso = todayIsoLocal();
+    var todayYmd = hotelCalendarYmd(new Date());
     var todayLabel =
-      typeof ui.formatIsoDateDisplayTr === "function" ? ui.formatIsoDateDisplayTr(todayIso) : todayIso;
-    var reqToday = filterRowsSubmittedOnDay(reqRows, todayIso);
-    var comToday = filterRowsSubmittedOnDay(comRows, todayIso);
-    var faultToday = filterRowsSubmittedOnDay(faultRows, todayIso);
-    var notifToday = filterRowsSubmittedOnDay(notifRows, todayIso);
+      typeof ui.formatIsoDateDisplayTr === "function" ? ui.formatIsoDateDisplayTr(todayYmd) : todayYmd;
+    var reqToday = filterRowsSubmittedOnHotelDay(reqRows, todayYmd);
+    var comToday = filterRowsSubmittedOnHotelDay(comRows, todayYmd);
+    var faultToday = filterRowsSubmittedOnHotelDay(faultRows, todayYmd);
+    var notifToday = filterRowsSubmittedOnHotelDay(notifRows, todayYmd);
     var kpis = report && report.kpis ? report.kpis : {};
     var totalChats = kpis.totalChats != null ? kpis.totalChats : "—";
     var fb = kpis.fallbackRate != null ? kpis.fallbackRate + "%" : "—";
@@ -1866,7 +1919,9 @@
       '<section class="home-ops-pano__section home-ops-pano__section--today" aria-labelledby="home-pano-today-h">' +
       '<div class="home-ops-pano__head">' +
       '<h4 id="home-pano-today-h" class="home-ops-pano__h">Bugün</h4>' +
-      '<span class="home-ops-pano__sub">Kayıt tarihi: ' +
+      '<span class="home-ops-pano__sub">Kayıt günü (otel saati · ' +
+      escHtml(OP_HOTEL_TZ) +
+      "): " +
       todayLabel +
       "</span>" +
       "</div>" +

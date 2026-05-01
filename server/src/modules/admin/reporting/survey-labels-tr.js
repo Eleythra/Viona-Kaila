@@ -14,6 +14,7 @@ const META = {
   beach_area: { label: "Plaj — özet", hint: "Plaj gönderim ortalaması" },
   spaWellness: { label: "Spa ve wellness (özet)", hint: "Spa bölümü ortalaması" },
   guestExperience: { label: "Misafir deneyimi ve hizmet (özet)", hint: "Misafir deneyimi bölümü ortalaması" },
+  sustainability: { label: "Sürdürülebilirlik (özet)", hint: "Sürdürülebilirlik sekmesi gönderim ortalaması" },
 
   gen_stay_experience: { label: "Genel konaklama deneyimi", hint: "Genel değerlendirme" },
   gen_service_quality: { label: "Otel hizmetlerinin genel kalitesi", hint: "Genel değerlendirme" },
@@ -56,6 +57,19 @@ const META = {
   guest_issue_resolution: { label: "Sorun çözüm süreci", hint: "Misafir deneyimi" },
   guest_solution_focus: { label: "Çözüm odaklı yaklaşım", hint: "Misafir deneyimi" },
   guest_hotel_care: { label: "Otelin ilgisi ve takibi", hint: "Misafir deneyimi" },
+
+  sus_eco_practices: {
+    label: "Çevre dostu uygulamaların yeterliliği",
+    hint: "Sürdürülebilirlik",
+  },
+  sus_sustainability_engagement: {
+    label: "Sürdürülebilirlik bilgilendirme ve dahil etme",
+    hint: "Sürdürülebilirlik",
+  },
+  sus_overall_sustainability: {
+    label: "Genel sürdürülebilir ve çevreye duyarlı tesis algısı",
+    hint: "Sürdürülebilirlik",
+  },
 
   viona_helpfulness: { label: "Yanıtların yararlılığı", hint: "Viona" },
   viona_understanding: { label: "İsteğin anlaşılması", hint: "Viona" },

@@ -194,7 +194,7 @@
     doc.roundedRect(M, y, contentW, boxH, 4, 4, "S");
     var items = [
       { b: "bekliyor", l: "Bekleyen" },
-      { b: "yapiliyor", l: "İşlemde" },
+      { b: "yapiliyor", l: "Yapılıyor" },
       { b: "yapildi", l: "Tamamlandı" },
       { b: "yapilmadi", l: "Olumsuz" },
       { b: "iptal", l: "İptal" },
@@ -274,9 +274,9 @@
   function statusLabelPdf(row, type) {
     var st = normAdminIssueStatus(row);
     if (type === "complaint" || type === "guest_notification") {
-      if (st === "done") return pdfText("Dikkate alındı");
-      if (st === "rejected") return pdfText("Dikkate alınmadı");
-      if (st === "in_progress") return pdfText("İşlemde");
+      if (st === "done") return pdfText("Yapıldı");
+      if (st === "rejected") return pdfText("Yapılmadı");
+      if (st === "in_progress") return pdfText("Yapılıyor");
       if (st === "new" || st === "pending") return pdfText("Bekliyor");
       if (st === "cancelled") return pdfText("İptal");
       return pdfText(st);
@@ -284,7 +284,7 @@
     if (type === "late_checkout") {
       if (st === "done") return pdfText("Onaylandı");
       if (st === "rejected") return pdfText("Onaylanmadı");
-      if (st === "in_progress") return pdfText("İşlemde");
+      if (st === "in_progress") return pdfText("Yapılıyor");
       if (st === "new" || st === "pending") return pdfText("Bekliyor");
       if (st === "cancelled") return pdfText("İptal");
       return pdfText(st);
@@ -331,7 +331,7 @@
   function drawStatCards(doc, M, y, counts, contentW) {
     var items = [
       { k: "bekliyor", l: "Bekleyen", rgb: [245, 158, 11] },
-      { k: "yapiliyor", l: "İşlemde", rgb: [59, 130, 246] },
+      { k: "yapiliyor", l: "Yapılıyor", rgb: [59, 130, 246] },
       { k: "yapildi", l: "Tamamlandı", rgb: [34, 197, 94] },
       { k: "yapilmadi", l: "Olumsuz", rgb: [239, 68, 68] },
       { k: "iptal", l: "İptal", rgb: [100, 116, 139] },

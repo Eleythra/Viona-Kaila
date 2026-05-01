@@ -7,7 +7,8 @@
   },
   "main": "src/index.js",
   "scripts": {
-    "test": "node --test src/modules/admin/reporting/*.test.mjs src/modules/admin/*.test.mjs src/services/operational-template-format.test.mjs",
+    "test": "node --test src/modules/admin/reporting/*.test.mjs src/modules/admin/*.test.mjs src/services/operational-template-format.test.mjs src/lib/operational-quiet-hours.test.mjs",
+    "test:quiet-hours": "node --test src/lib/operational-quiet-hours.test.mjs && python3 scripts/verify-quiet-hours-clock.py",
     "test:assistant": "PYTHONPATH=src .venv/bin/python -m pytest src/assistant/tests -q --tb=line",
     "dev": "node src/index.js",
     "puppeteer:install-chrome": "PUPPETEER_CACHE_DIR=.cache/puppeteer npx puppeteer browsers install chrome",

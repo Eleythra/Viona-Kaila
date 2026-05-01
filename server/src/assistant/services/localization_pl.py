@@ -32,6 +32,11 @@ TRANSLATIONS_PL: Dict[str, str] = {
     'request_redirect_message': 'Prośbę możesz przekazać przez formularz zgłoszeń.',
     'guest_relations_redirect_message': 'W tej sprawie skontaktuj się proszę z działem Guest Relations.',
     'reception_fallback_message': 'Nie mogłam teraz w pełni przetworzyć wiadomości. Krótsza forma pomoże — chętnie kontynuuję.',
+    'after_hours_reception_redirect': (
+        'W godzinach 0:00–8:00 zespół operacyjny jest niedostępny, więc nie mogę przyjmować w tym czasie próśb, reklamacji, '
+        'zgłoszeń awarii ani informacji dla hotelu przez aplikację. W pilnych sprawach skontaktuj się bezpośrednio z recepcją — '
+        'personel pomoże z najwyższą starannością.'
+    ),
     'canonical_fallback_safe': 'Nie mam teraz zweryfikowanych informacji na ten temat. Najpewniejszą odpowiedź uzyskasz w recepcji.',
     'canonical_fallback_unavailable': 'Chwilowo jestem niedostępna. Spróbuj ponownie za kilka sekund.',
     'chat_fallback_throttled': 'Wysyłasz wiadomości bardzo szybko. Poczekaj kilka sekund i spróbuj ponownie — w pilnych sprawach recepcja zawsze pomoże.',

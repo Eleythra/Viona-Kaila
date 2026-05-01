@@ -212,6 +212,40 @@
     return s;
   }
 
+  var ADMIN_HOTEL_TZ = "Europe/Istanbul";
+
+  function formatDurationHumanTr(ms) {
+    if (ms == null || !Number.isFinite(ms) || ms < 0) return "—";
+    var totalMin = Math.floor(ms / 60000);
+    var dayPart = Math.floor(totalMin / (60 * 24));
+    var h = Math.floor((totalMin % (60 * 24)) / 60);
+    var m = totalMin % 60;
+    if (dayPart > 0) return dayPart + " g " + h + " sa " + m + " dk";
+    if (h > 0) return h + " sa " + m + " dk";
+    return m + " dk";
+  }
+
+  /** Kapalı: bildirim → yapıldı / yapılmadı anına kadar; açık: o ana kadar geçen süre. */
+  function operationalSlaDisplayTr(r) {
+    var st = normalizeBucketStatus(r.status);
+    var t0 = r.submitted_at ? new Date(r.submitted_at).getTime() : NaN;
+    if (!Number.isFinite(t0)) return "—";
+    var rEnd = r.resolved_at ? new Date(r.resolved_at).getTime() : NaN;
+    if (!Number.isFinite(rEnd) && (st === "done" || st === "rejected") && r.updated_at) {
+      rEnd = new Date(r.updated_at).getTime();
+    }
+    if (st === "done" && Number.isFinite(rEnd)) {
+      return "Yapıldı · " + formatDurationHumanTr(rEnd - t0);
+    }
+    if (st === "rejected" && Number.isFinite(rEnd)) {
+      return "Yapılmadı · " + formatDurationHumanTr(rEnd - t0);
+    }
+    if (st === "new" || st === "pending" || st === "in_progress") {
+      return "Geçen süre " + formatDurationHumanTr(Date.now() - t0);
+    }
+    return "—";
+  }
+
   /** Misafir anketi — js/survey-schema.js ile aynı sıra ve soru anahtarları. */
   var SURVEY_EVAL_SECTIONS = [
     {
@@ -338,6 +372,27 @@
         { id: "guest_hotel_care", label: "Genel olarak otelin ilgisini ve takibini nasıl değerlendirirsiniz?" },
       ],
     },
+    {
+      tabId: "sustainability",
+      title: "Sürdürülebilirlik",
+      questions: [
+        {
+          id: "sus_eco_practices",
+          label:
+            "Konaklamanız sırasında otelin çevre dostu uygulamalarını (enerji tasarrufu, atık yönetimi, plastik kullanımının azaltılması vb.) ne kadar yeterli buldunuz?",
+        },
+        {
+          id: "sus_sustainability_engagement",
+          label:
+            "Otelin sürdürülebilirlik konusunda sizi bilgilendirme ve bu sürece dahil etme düzeyini nasıl değerlendirirsiniz?",
+        },
+        {
+          id: "sus_overall_sustainability",
+          label:
+            "Genel olarak, Kaila Beach’in sürdürülebilir ve çevreye duyarlı bir tesis olduğunu ne ölçüde düşünüyorsunuz?",
+        },
+      ],
+    },
   ];
 
   /** Yerel tarih YYYY-MM-DD (tarih seçicilerde geçmiş günleri kapatmak için min). */
@@ -374,7 +429,7 @@
     return s === "new" || s === "pending" || s === "in_progress";
   }
 
-  /** İstek/arıza: Yapılıyor · Yapıldı · Yapılmadı · Şikâyet & misafir bildirimi: Dikkate alındı / alınmadı · Geç çıkış: onay dili. */
+  /** İstek / arıza / şikâyet / bildirim: Bekliyor · Yapılıyor · Yapıldı · Yapılmadı · Geç çıkış: onay dili. */
   function issueStatusLabel(issueType, status) {
     var s = normalizeBucketStatus(status);
     if (s === "cancelled") return "İptal";
@@ -384,12 +439,11 @@
     }
     if (s === "done") {
       if (issueType === "late_checkout") return "Onaylandı";
-      if (issueType === "complaint" || issueType === "guest_notification") return "Dikkate alındı";
       return "Yapıldı";
     }
     if (s === "rejected") {
       if (issueType === "late_checkout") return "Onaylanmadı";
-      return issueType === "complaint" || issueType === "guest_notification" ? "Dikkate alınmadı" : "Yapılmadı";
+      return "Yapılmadı";
     }
     return s;
   }
@@ -415,9 +469,6 @@
     if (type === "late_checkout") {
       posLabel = "Onaylandı";
       negLabel = "Onaylanmadı";
-    } else if (type === "complaint" || type === "guest_notification") {
-      posLabel = "Dikkate alındı";
-      negLabel = "Dikkate alınmadı";
     } else {
       posLabel = "Yapıldı";
       negLabel = "Yapılmadı";
@@ -795,16 +846,25 @@
     return s.length >= 16 ? s.slice(8, 10) + "/" + s.slice(5, 7) + " " + s.slice(11, 16) : "—";
   }
 
-  /** submitted_at → yerel takvim günü YYYY-MM-DD (filtre için). */
+  /** submitted_at → otel takvim günü YYYY-MM-DD (liste tarih süzgeci; Europe/Istanbul). */
   function submittedAtCalendarIso(iso) {
     var s = String(iso || "");
     if (!s) return "";
     var d = new Date(s);
     if (Number.isNaN(d.getTime())) return "";
-    var y = d.getFullYear();
-    var m = String(d.getMonth() + 1).padStart(2, "0");
-    var day = String(d.getDate()).padStart(2, "0");
-    return y + "-" + m + "-" + day;
+    try {
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: ADMIN_HOTEL_TZ,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(d);
+    } catch (_e) {
+      var y = d.getFullYear();
+      var m = String(d.getMonth() + 1).padStart(2, "0");
+      var day = String(d.getDate()).padStart(2, "0");
+      return y + "-" + m + "-" + day;
+    }
   }
 
   var REQ_STAFF_NOTE_KEY = "viona_admin_request_staff_notes_v1";
@@ -2778,12 +2838,12 @@
       "<thead><tr>" +
       "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Kategori</th><th>Tür</th><th>Adet</th><th>Açıklama</th>" +
       (ro
-        ? "<th>Personel notu (salt okunur)</th><th>Durum</th>" + (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
-        : "<th>Personel notu</th><th>Durum</th><th>İşlemler</th>") +
+        ? "<th>Personel notu (salt okunur)</th><th>Süre</th><th>Durum</th>" + (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
+        : "<th>Personel notu</th><th>Süre</th><th>Durum</th><th>İşlemler</th>") +
       "</tr></thead><tbody>";
 
     if (!rows.length) {
-      html += '<tr><td colspan="11" class="admin-table__empty">Henüz istek kaydı yok.</td></tr>';
+      html += '<tr><td colspan="12" class="admin-table__empty">Henüz istek kaydı yok.</td></tr>';
     } else {
       rows.forEach(function (r) {
         var st = normalizeBucketStatus(r.status);
@@ -2835,6 +2895,7 @@
             esc(staffNote) +
             "</textarea></td>";
         }
+        html += '<td class="viona-sla-cell">' + esc(operationalSlaDisplayTr(r)) + "</td>";
         html += '<td><span class="status-badge status-' + esc(st) + '">' + esc(issueStatusLabel("request", st)) + "</span></td>";
         if (ro) {
           html += satH ? "<td>" + satisfactionEditCellHtml("request", r) + "</td>" : "<td></td>";
@@ -2982,8 +3043,8 @@
       ">" +
       '<div class="bucket-stat"><span>Toplam</span><strong>' + esc(totalCount) + "</strong></div>" +
       '<div class="bucket-stat"><span>Beklemede</span><strong>' + esc(open) + "</strong></div>" +
-      '<div class="bucket-stat"><span>Dikkate alındı</span><strong>' + esc(done) + "</strong></div>" +
-      '<div class="bucket-stat"><span>Dikkate alınmadı</span><strong>' + esc(rejected) + "</strong></div>" +
+      '<div class="bucket-stat"><span>Yapıldı</span><strong>' + esc(done) + "</strong></div>" +
+      '<div class="bucket-stat"><span>Yapılmadı</span><strong>' + esc(rejected) + "</strong></div>" +
       "</div>" +
       '<p class="bucket-help bucket-help--complaints">' +
       (ro
@@ -3001,8 +3062,8 @@
       '<select class="bucket-filter-status">' +
       '<option value="all">Tüm Durumlar</option>' +
       '<option value="new_pending">Beklemede</option>' +
-      '<option value="done">Dikkate alındı</option>' +
-      '<option value="rejected">Dikkate alınmadı</option>' +
+      '<option value="done">Yapıldı</option>' +
+      '<option value="rejected">Yapılmadı</option>' +
       "</select>" +
       "</div>" +
       '<div class="viona-table-shell glass-block">' +
@@ -3011,12 +3072,12 @@
       "<thead><tr>" +
       "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Şikâyet konusu</th><th>Açıklama</th>" +
       (ro
-        ? "<th>Personel notu (salt okunur)</th><th>Durum</th>" + (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
-        : "<th>Personel notu</th><th>Durum</th><th>İşlemler</th>") +
+        ? "<th>Personel notu (salt okunur)</th><th>Süre</th><th>Durum</th>" + (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
+        : "<th>Personel notu</th><th>Süre</th><th>Durum</th><th>İşlemler</th>") +
       "</tr></thead><tbody>";
 
     if (!rows.length) {
-      html += '<tr><td colspan="9" class="admin-table__empty">Henüz şikâyet kaydı yok.</td></tr>';
+      html += '<tr><td colspan="10" class="admin-table__empty">Henüz şikâyet kaydı yok.</td></tr>';
     } else {
       rows.forEach(function (r) {
         var st = normalizeBucketStatus(r.status);
@@ -3062,6 +3123,7 @@
             esc(staffNote) +
             "</textarea></td>";
         }
+        html += '<td class="viona-sla-cell">' + esc(operationalSlaDisplayTr(r)) + "</td>";
         html += '<td><span class="status-badge status-' + esc(st) + '">' + esc(issueStatusLabel("complaint", st)) + "</span></td>";
         if (ro) {
           html += satH ? "<td>" + satisfactionEditCellHtml("complaint", r) + "</td>" : "<td></td>";
@@ -3205,8 +3267,8 @@
       ">" +
       '<div class="bucket-stat"><span>Toplam</span><strong>' + esc(totalCount) + "</strong></div>" +
       '<div class="bucket-stat"><span>Beklemede</span><strong>' + esc(open) + "</strong></div>" +
-      '<div class="bucket-stat"><span>Dikkate alındı</span><strong>' + esc(done) + "</strong></div>" +
-      '<div class="bucket-stat"><span>Dikkate alınmadı</span><strong>' + esc(rejected) + "</strong></div>" +
+      '<div class="bucket-stat"><span>Yapıldı</span><strong>' + esc(done) + "</strong></div>" +
+      '<div class="bucket-stat"><span>Yapılmadı</span><strong>' + esc(rejected) + "</strong></div>" +
       "</div>" +
       '<p class="bucket-help bucket-help--complaints">' +
       (ro
@@ -3224,8 +3286,8 @@
       '<select class="bucket-filter-status">' +
       '<option value="all">Tüm Durumlar</option>' +
       '<option value="new_pending">Beklemede</option>' +
-      '<option value="done">Dikkate alındı</option>' +
-      '<option value="rejected">Dikkate alınmadı</option>' +
+      '<option value="done">Yapıldı</option>' +
+      '<option value="rejected">Yapılmadı</option>' +
       "</select>" +
       "</div>" +
       '<div class="viona-table-shell glass-block">' +
@@ -3234,12 +3296,12 @@
       "<thead><tr>" +
       "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Bildirim konusu</th><th>Açıklama</th>" +
       (ro
-        ? "<th>Personel notu (salt okunur)</th><th>Durum</th>" + (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
-        : "<th>Personel notu</th><th>Durum</th><th>İşlemler</th>") +
+        ? "<th>Personel notu (salt okunur)</th><th>Süre</th><th>Durum</th>" + (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
+        : "<th>Personel notu</th><th>Süre</th><th>Durum</th><th>İşlemler</th>") +
       "</tr></thead><tbody>";
 
     if (!rows.length) {
-      html += '<tr><td colspan="9" class="admin-table__empty">Henüz misafir bildirimi yok.</td></tr>';
+      html += '<tr><td colspan="10" class="admin-table__empty">Henüz misafir bildirimi yok.</td></tr>';
     } else {
       rows.forEach(function (r) {
         var st = normalizeBucketStatus(r.status);
@@ -3285,6 +3347,7 @@
             esc(staffNote) +
             "</textarea></td>";
         }
+        html += '<td class="viona-sla-cell">' + esc(operationalSlaDisplayTr(r)) + "</td>";
         html +=
           '<td><span class="status-badge status-' +
           esc(st) +
@@ -3460,8 +3523,8 @@
       "<thead><tr>" +
       "<th>Kayıt</th><th>Çıkış tarihi</th><th>Çıkış saati</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Misafir notu</th>" +
       (ro
-        ? "<th>Personel notu (salt okunur)</th><th>Durum</th>" + (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
-        : "<th>Personel notu</th><th>Durum</th><th>İşlemler</th>") +
+        ? "<th>Personel notu (salt okunur)</th><th>Süre</th><th>Durum</th>" + (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
+        : "<th>Personel notu</th><th>Süre</th><th>Durum</th><th>İşlemler</th>") +
       "</tr></thead><tbody>";
 
     function checkoutDateDisp(r) {
@@ -3471,7 +3534,7 @@
     }
 
     if (!rows.length) {
-      html += '<tr><td colspan="10" class="admin-table__empty">Henüz geç çıkış talebi yok.</td></tr>';
+      html += '<tr><td colspan="11" class="admin-table__empty">Henüz geç çıkış talebi yok.</td></tr>';
     } else {
       rows.forEach(function (r) {
         var st = normalizeBucketStatus(r.status);
@@ -3520,6 +3583,7 @@
             esc(staffNote) +
             "</textarea></td>";
         }
+        html += '<td class="viona-sla-cell">' + esc(operationalSlaDisplayTr(r)) + "</td>";
         html +=
           '<td><span class="status-badge status-' +
           esc(st) +
@@ -3699,12 +3763,12 @@
       "<thead><tr>" +
       "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Arıza kategorisi</th><th>Lokasyon</th><th>Aciliyet</th><th>Açıklama</th>" +
       (ro
-        ? "<th>Personel notu (salt okunur)</th><th>Durum</th>" + (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
-        : "<th>Personel notu</th><th>Durum</th><th>İşlemler</th>") +
+        ? "<th>Personel notu (salt okunur)</th><th>Süre</th><th>Durum</th>" + (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
+        : "<th>Personel notu</th><th>Süre</th><th>Durum</th><th>İşlemler</th>") +
       "</tr></thead><tbody>";
 
     if (!rows.length) {
-      html += '<tr><td colspan="11" class="admin-table__empty">Henüz arıza kaydı yok.</td></tr>';
+      html += '<tr><td colspan="12" class="admin-table__empty">Henüz arıza kaydı yok.</td></tr>';
     } else {
       rows.forEach(function (r) {
         var st = normalizeBucketStatus(r.status);
@@ -3760,6 +3824,7 @@
             esc(staffNote) +
             "</textarea></td>";
         }
+        html += '<td class="viona-sla-cell">' + esc(operationalSlaDisplayTr(r)) + "</td>";
         html += '<td><span class="status-badge status-' + esc(st) + '">' + esc(issueStatusLabel("fault", st)) + "</span></td>";
         if (ro) {
           html += satH ? "<td>" + satisfactionEditCellHtml("fault", r) + "</td>" : "<td></td>";
@@ -3924,6 +3989,7 @@
       var lcd = complaintFormDescription(r);
       if (lcd) out.push({ k: "Not", v: lcd, long: true });
     }
+    out.push({ k: "Süre ölçümü", v: operationalSlaDisplayTr(r) });
     return out;
   }
 
@@ -4187,11 +4253,12 @@
       '<th scope="col" class="op-th-time">Kayıt</th>' +
       '<th scope="col" class="op-th-room">Oda</th>' +
       '<th scope="col" class="op-th-sum">Özet</th>' +
+      '<th scope="col" class="op-th-sla">Süre</th>' +
       '<th scope="col" class="op-th-status">Durum</th>' +
       '<th scope="col" class="op-th-actions">İşlem</th>' +
       "</tr></thead><tbody>";
     if (!rows.length) {
-      html += '<tr><td colspan="5" class="admin-table__empty">Kayıt yok.</td></tr>';
+      html += '<tr><td colspan="6" class="admin-table__empty">Kayıt yok.</td></tr>';
     } else {
       rows.forEach(function (r) {
         var st = normalizeBucketStatus(r.status);
@@ -4220,6 +4287,8 @@
           esc(r.room_number || "—") +
           "</td><td>" +
           esc(sum) +
+          '</td><td class="viona-sla-cell">' +
+          esc(operationalSlaDisplayTr(r)) +
           '</td><td><span class="status-badge status-' +
           esc(st) +
           '">' +
@@ -4485,9 +4554,6 @@
       if (typeKey === "late_checkout") {
         return ["Bekliyor", "Yapılıyor", "Onaylandı", "Onaylanmadı"];
       }
-      if (typeKey === "complaint" || typeKey === "guest_notification") {
-        return ["Bekliyor", "Yapılıyor", "Dikkate alındı", "Dikkate alınmadı"];
-      }
       return ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"];
     }
     function opFrontCatCardHtml(typeKey, title, row) {
@@ -4533,6 +4599,9 @@
         (row.iptal > 0
           ? "<div><dt>İptal</dt><dd>" + esc(String(row.iptal)) + "</dd></div>"
           : "") +
+        (row.digerCount > 0
+          ? "<div><dt>Diğer</dt><dd>" + esc(String(row.digerCount)) + "</dd></div>"
+          : "") +
         '<div class="op-front-cat-card__sum"><dt>Toplam</dt><dd>' +
         esc(String(row.toplam)) +
         "</dd></div></dl></article>"
@@ -4550,6 +4619,12 @@
         "Üç kategori toplamı <strong>" +
         esc(String(summary.toplam != null ? summary.toplam : "0")) +
         "</strong> kayıt · Üstteki tek süzgeç yalnız <strong>seçili sekme</strong> listesine uygulanır; diğer iki kategorinin kayıtlı süzgeci ayrı kalır";
+      if (summary._statusSumMismatch) {
+        headMeta +=
+          ' <span class="op-front-summary__hint">' +
+          esc("Bir kategoride durum toplamları ile toplam kayıt uyumsuz olabilir; listeyi veya API özetini kontrol edin.") +
+          "</span>";
+      }
       summaryHtml =
         '<div class="op-front-summary glass-block" role="status">' +
         '<div class="op-front-summary__head">' +
@@ -4571,12 +4646,12 @@
       {
         key: "complaint",
         label: "Şikâyetler",
-        labels: ["Bekliyor", "Yapılıyor", "Dikkate alındı", "Dikkate alınmadı"],
+        labels: ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"],
       },
       {
         key: "guest_notification",
         label: "Misafir bildirimleri",
-        labels: ["Bekliyor", "Yapılıyor", "Dikkate alındı", "Dikkate alınmadı"],
+        labels: ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"],
       },
       { key: "late_checkout", label: "Geç çıkış", labels: ["Bekliyor", "Yapılıyor", "Onaylandı", "Onaylanmadı"] },
     ];
@@ -4710,6 +4785,15 @@
       bucketType === "fault"
         ? "Teknik liste ile aynı süzgeç ve canlı sayım. Tablodan durum güncelleyince kart yenilenir."
         : "HK listesi ile aynı süzgeç ve canlı sayım. Tablodan durum güncelleyince kart yenilenir.";
+    if (!filtered) {
+      if (row._statusSumMismatch) {
+        headMeta +=
+          " Durum toplamı ile kayıt sayısı uyumsuz; özet API veya veriyi kontrol edin.";
+      } else if (row._multiPageList && !row._reconciledFromList) {
+        headMeta +=
+          " Çok sayfalı liste: durum kırılımı özet API üzerinden (tüm sayfaları kapsar).";
+      }
+    }
     var cardsClass = "op-front-summary-cards" + (filtered ? " op-front-summary-cards--filtered" : "");
     var cardHtml;
     if (filtered) {
@@ -4751,6 +4835,9 @@
         "</dd></div>" +
         (row.iptal > 0
           ? "<div><dt>İptal</dt><dd>" + esc(String(row.iptal)) + "</dd></div>"
+          : "") +
+        (row.digerCount > 0
+          ? "<div><dt>Diğer</dt><dd>" + esc(String(row.digerCount)) + "</dd></div>"
           : "") +
         '<div class="op-front-cat-card__sum"><dt>Toplam</dt><dd>' +
         esc(String(row.toplam != null ? row.toplam : "0")) +
@@ -5143,10 +5230,8 @@
       var rejected = rows.filter(function (r) {
         return normalizeBucketStatus(r.status) === "rejected";
       }).length;
-      var negLabel =
-        type === "complaint" || type === "guest_notification" ? "Dikkate alınmadı" : "Yapılmadı";
-      var posLabel =
-        type === "complaint" || type === "guest_notification" ? "Dikkate alındı" : "Yapıldı";
+      var negLabel = type === "late_checkout" ? "Onaylanmadı" : "Yapılmadı";
+      var posLabel = type === "late_checkout" ? "Onaylandı" : "Yapıldı";
       var html =
         '<div class="bucket-shell">' +
         '<div class="bucket-topstats bucket-topstats--quad"' +
@@ -5167,17 +5252,17 @@
         "</div>" +
         '<p class="bucket-help">' +
         esc(typeLabel(type)) +
-        ": ilk kayıt beklemede. Olumlu / olumsuz durumlar birbirine çevrilebilir; şikâyet ve misafir bildiriminde dikkate alındı / alınmadı. Uygun kayıtlar operasyon WhatsApp (Cloud API) hattına gider; gerekirse satırdaki WhatsApp ile tekrar gönderin.</p>" +
+        ": ilk kayıt beklemede. Durumlar birbirine çevrilebilir (geç çıkışta onay dili). Süre sütunu bildirimden çözüme kadar geçen süreyi gösterir. Uygun kayıtlar operasyon WhatsApp (Cloud API) hattına gider; gerekirse satırdaki WhatsApp ile tekrar gönderin.</p>" +
         '<div class="bucket-toolbar">' +
         '<input class="bucket-search" type="search" placeholder="Oda, misafir veya detay ara..." />' +
         '<select class="bucket-filter-status">' +
         '<option value=\"all\">Tüm Durumlar</option>' +
         '<option value=\"new_pending\">Beklemede</option>' +
         '<option value=\"done\">' +
-        esc(type === "complaint" || type === "guest_notification" ? "Dikkate alındı" : "Yapıldı") +
+        esc(posLabel) +
         '</option>' +
         '<option value=\"rejected\">' +
-        esc(type === "complaint" || type === "guest_notification" ? "Dikkate alınmadı" : "Yapılmadı") +
+        esc(negLabel) +
         "</option>" +
         "</select>" +
         "</div>" +

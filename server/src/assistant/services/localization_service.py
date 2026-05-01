@@ -69,6 +69,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "request_redirect_message": "Talebinizi İstek formu üzerinden iletebilirsiniz.",
         "guest_relations_redirect_message": "Bu konu için lütfen Misafir İlişkileri departmanı ile iletişime geçiniz.",
         "reception_fallback_message": "Bu mesajı şu an tam işleyemedim; birkaç kelimeyle yeniden yazarsanız memnuniyetle yardımcı olurum.",
+        "after_hours_reception_redirect": (
+            "Gece 00:00 – 08:00 arasında operasyon ekibimiz çevrimdışıdır; bu saatlerde talep, şikayet, arıza ve misafir bildirimi "
+            "kayıtlarını uygulama üzerinden alamıyorum. Özenle takip edebilmemiz için lütfen resepsiyon ile doğrudan iletişime geçiniz; "
+            "ekibimiz size en doğru biçimde yardımcı olacaktır."
+        ),
         "canonical_fallback_safe": "Bu konuda doğrulanmış bilgiye şu an erişemiyorum. En güncel ve doğru yönlendirme için resepsiyonla görüşmenizi öneririm.",
         "canonical_fallback_unavailable": "Kısa bir süre için bağlantıda kesinti yaşanıyor. Lütfen birkaç saniye sonra yeniden deneyiniz.",
         "chat_fallback_throttled": (
@@ -230,6 +235,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "request_redirect_message": "You can submit your request through the Request form.",
         "guest_relations_redirect_message": "For this matter, please contact the Guest Relations department.",
         "reception_fallback_message": "I wasn't able to complete that just now. A shorter note works best — I'll gladly continue from there.",
+        "after_hours_reception_redirect": (
+            "Between midnight and 8:00 a.m., our operational team is offline, so I cannot record service requests, complaints, "
+            "fault reports, or guest notifications through the app during this time. For prompt assistance, please contact "
+            "reception directly — they will be glad to help."
+        ),
         "canonical_fallback_safe": "I don't have verified details on this at the moment. For the most accurate guidance, our front desk will be delighted to assist.",
         "canonical_fallback_unavailable": "I'm briefly unavailable. Please try again in a few seconds.",
         "chat_fallback_throttled": (
@@ -391,6 +401,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "request_redirect_message": "Sie können Ihre Anfrage über das Anfrageformular senden.",
         "guest_relations_redirect_message": "Bitte wenden Sie sich für dieses Thema an die Gästebetreuung.",
         "reception_fallback_message": "Das konnte ich gerade nicht vollständig auswerten. Eine knappere Formulierung hilft — ich unterstütze Sie gern weiter.",
+        "after_hours_reception_redirect": (
+            "Zwischen 0:00 und 8:00 Uhr ist unser operatives Team nicht erreichbar; in dieser Zeit kann ich daher keine "
+            "Serviceanfragen, Beschwerden, Störungsmeldungen oder Gästehinweise per Formular entgegennehmen. "
+            "Bitte wenden Sie sich direkt an die Rezeption — dort wird Ihnen mit größter Sorgfalt geholfen."
+        ),
         "canonical_fallback_safe": "Ich kann dazu derzeit keine verifizierten Informationen bereitstellen. Bitte wenden Sie sich für die sicherste Auskunft an die Rezeption.",
         "canonical_fallback_unavailable": "Ich bin momentan kurzzeitig nicht erreichbar. Bitte versuchen Sie es in wenigen Sekunden erneut.",
         "chat_fallback_throttled": (
@@ -500,6 +515,30 @@ _CHITCHAT_SWITCH_EXTRA_NATIVE: dict[str, str] = {
     "sk": "Odteraz budem odpovedať po slovensky. Ako vám dnes môžem pomôcť?",
 }
 
+# Gece 00–08 (İstanbul): ek UI dilleri için doğrudan çeviri (_RU_SURFACE ile çakışmaz; ru anahtarı orada).
+_AFTER_HOURS_EXTRA_NATIVE: dict[str, str] = {
+    "da": (
+        "Mellem kl. 00.00 og 08.00 er vores driftsteam ikke tilgængeligt; i den periode kan jeg ikke registrere "
+        "serviceanmodninger, klager, fejlmeldinger eller gæstenotater via appen. Kontakt venligst receptionen direkte."
+    ),
+    "nl": (
+        "Tussen 00:00 en 08:00 is ons operationele team niet bereikbaar; in die periode kan ik geen serviceverzoeken, "
+        "klachten, storingsmeldingen of gastmeldingen via de app registreren. Neem voor directe hulp contact op met de receptie."
+    ),
+    "cs": (
+        "Mezi 0:00 a 8:00 je provozní tým nedostupný; v tomto čase nemohu přijímat požadavky, stížnosti, hlášení závad "
+        "ani hlášení hostů přes aplikaci. V naléhavých případech kontaktujte přímo recepci."
+    ),
+    "ro": (
+        "Între 0:00 și 8:00 echipa operațională nu este disponibilă; în acest interval nu pot înregistra solicitări, "
+        "reclamații, sesizări tehnice sau notificări pentru oaspeți prin aplicație. Pentru asistență rapidă, contactați recepția."
+    ),
+    "sk": (
+        "Medzi 0:00 a 8:00 je prevádzkový tím nedostupný; v tomto čase nemôžem prijímať požiadavky, sťažnosti, hlásenia porúch "
+        "ani oznámenia hostí cez aplikáciu. V naliehavých prípadoch kontaktujte priamo recepciu."
+    ),
+}
+
 # Ek UI dilleri: tam kopya İngilizce yerine ince sözlük + `get()` zinciri (da/nl→de, cs/sk→pl, ro→en, ru→en yedeği).
 # Böylece selamlama / anahtar otel cümleleri «tamamen İngilizce» kalmaz; eksik anahtar anlamlı dilde devam eder.
 _RU_SURFACE: dict[str, str] = {
@@ -524,6 +563,11 @@ _RU_SURFACE: dict[str, str] = {
     "request_redirect_message": "Запрос можно отправить через форму «Запросы» в приложении.",
     "reception_fallback_message": (
         "Сейчас не удалось полностью обработать запрос. Короткая формулировка поможет — с удовольствием продолжу."
+    ),
+    "after_hours_reception_redirect": (
+        "С 0:00 до 8:00 оперативная команда недоступна, поэтому в это время я не могу оформлять через приложение "
+        "запросы, жалобы, заявки о неисправностях и уведомления гостя. Пожалуйста, обратитесь напрямую на ресепшн — "
+        "коллеги помогут с вниманием и заботой."
     ),
     "canonical_fallback_safe": (
         "Проверенных данных по этому вопросу сейчас нет. Самую точную консультацию даст ресепшн отеля."
@@ -553,7 +597,10 @@ _I18N_LOOKUP_CHAIN: dict[str, tuple[str, ...]] = {
 }
 
 for _code in EXTRA_CHATBOT_UI_LANGS:
-    TRANSLATIONS[_code] = {f"chitchat_switch_{_code}": _CHITCHAT_SWITCH_EXTRA_NATIVE[_code]}
+    _extra_row: dict[str, str] = {f"chitchat_switch_{_code}": _CHITCHAT_SWITCH_EXTRA_NATIVE[_code]}
+    if _code in _AFTER_HOURS_EXTRA_NATIVE:
+        _extra_row["after_hours_reception_redirect"] = _AFTER_HOURS_EXTRA_NATIVE[_code]
+    TRANSLATIONS[_code] = _extra_row
     if _code == "ru":
         TRANSLATIONS["ru"].update(_RU_SURFACE)
 

@@ -406,9 +406,6 @@
 
   function waBucketStatusButtonLabels(bucketType) {
     if (bucketType === "late_checkout") return ["Bekliyor", "Yapılıyor", "Onaylandı", "Onaylanmadı"];
-    if (bucketType === "complaint" || bucketType === "guest_notification") {
-      return ["Bekliyor", "Yapılıyor", "Dikkate alındı", "Dikkate alınmadı"];
-    }
     return ["Bekliyor", "Yapılıyor", "Yapıldı", "Yapılmadı"];
   }
 
@@ -445,6 +442,7 @@
     var yapildi = 0;
     var yapilmadi = 0;
     var iptal = 0;
+    var diger = 0;
     (rows || []).forEach(function (r) {
       var st = normAdminIssueStatus(r);
       if (st === "new" || st === "pending") bekliyor++;
@@ -452,6 +450,7 @@
       else if (st === "done") yapildi++;
       else if (st === "rejected") yapilmadi++;
       else if (st === "cancelled") iptal++;
+      else diger++;
     });
     return {
       bekliyor: bekliyor,
@@ -459,7 +458,7 @@
       yapildi: yapildi,
       yapilmadi: yapilmadi,
       iptal: iptal,
-      diger: 0,
+      diger: diger,
       toplam: (rows || []).length,
     };
   }
@@ -491,7 +490,11 @@
   }
 
   function mergeNormFrontTypes(c, gn, lc) {
-    return {
+    var digerCount =
+      (Number(c.digerCount) || 0) +
+      (Number(gn.digerCount) || 0) +
+      (Number(lc.digerCount) || 0);
+    var out = {
       mode: c.filtered || gn.filtered || lc.filtered ? "mixed" : "full",
       bekliyor: c.bekliyor + gn.bekliyor + lc.bekliyor,
       islemde: c.islemde + gn.islemde + lc.islemde,
@@ -499,20 +502,51 @@
       yapilmadi: c.yapilmadi + gn.yapilmadi + lc.yapilmadi,
       iptal: c.iptal + gn.iptal + lc.iptal,
       toplam: c.toplam + gn.toplam + lc.toplam,
+      digerCount: digerCount,
       byType: {
         complaint: c,
         guest_notification: gn,
         late_checkout: lc,
       },
     };
+    var sumParts =
+      out.bekliyor +
+      out.islemde +
+      out.yapildi +
+      out.yapilmadi +
+      out.iptal +
+      digerCount;
+    if (out.toplam > 0 && sumParts !== out.toplam) {
+      out._statusSumMismatch = true;
+    }
+    return out;
+  }
+
+  function validateOpsSummaryParts(n) {
+    if (!n || n.filtered) return n;
+    var dig = Number(n.digerCount) || 0;
+    var s =
+      (Number(n.bekliyor) || 0) +
+      (Number(n.islemde) || 0) +
+      (Number(n.yapildi) || 0) +
+      (Number(n.yapilmadi) || 0) +
+      (Number(n.iptal) || 0) +
+      dig;
+    var t = Number(n.toplam) || 0;
+    if (t > 0 && s !== t) {
+      n._statusSumMismatch = true;
+    } else {
+      delete n._statusSumMismatch;
+    }
+    return n;
   }
 
   function enrichFrontTypeSummaryWithPack(apiRaw, pack) {
     var n = normalizeFrontTypeSummary(apiRaw);
-    if (!pack || typeof pack !== "object") return n;
+    if (!pack || typeof pack !== "object") return validateOpsSummaryParts(n);
     if (n.filtered) return n;
     var listTotal = Number((pack.pagination && pack.pagination.total) || 0) || 0;
-    if (listTotal <= 0) return n;
+    if (listTotal <= 0) return validateOpsSummaryParts(n);
     if (n.toplam !== listTotal) {
       n.toplam = listTotal;
     }
@@ -520,15 +554,36 @@
     var items = pack.items || [];
     var apiMissing = apiRaw == null || typeof apiRaw !== "object";
     var sumParts = n.bekliyor + n.islemde + n.yapildi + n.yapilmadi + n.iptal;
-    if ((apiMissing || sumParts === 0) && pages === 1 && items.length === listTotal) {
+    var fullSinglePage = pages === 1 && items.length === listTotal && listTotal > 0;
+    if (fullSinglePage) {
       var k = countOpsKanbanStatus(items);
       n.bekliyor = k.bekliyor;
       n.islemde = k.yapiliyor;
       n.yapildi = k.yapildi;
       n.yapilmadi = k.yapilmadi;
       n.iptal = k.iptal;
+      n.digerCount = k.diger;
+      n.toplam = listTotal;
+      n._reconciledFromList = true;
+      delete n._multiPageList;
+    } else {
+      delete n._reconciledFromList;
+      if (pages > 1) {
+        n._multiPageList = true;
+      } else {
+        delete n._multiPageList;
+      }
+      if ((apiMissing || sumParts === 0) && items.length > 0) {
+        var k2 = countOpsKanbanStatus(items);
+        n.bekliyor = k2.bekliyor;
+        n.islemde = k2.yapiliyor;
+        n.yapildi = k2.yapildi;
+        n.yapilmadi = k2.yapilmadi;
+        n.iptal = k2.iptal;
+        n.digerCount = k2.diger;
+      }
     }
-    return n;
+    return validateOpsSummaryParts(n);
   }
 
   var OP_HOTEL_TZ_SL = "Europe/Istanbul";
@@ -1001,8 +1056,8 @@
       '<option value="">Tüm kayıtlar</option>' +
       '<option value="pending">Bekliyor</option>' +
       '<option value="in_progress">Yapılıyor</option>' +
-      '<option value="done">Tamamlandı</option>' +
-      '<option value="rejected">Olumsuz</option>' +
+      '<option value="done">Yapıldı</option>' +
+      '<option value="rejected">Yapılmadı</option>' +
       '<option value="cancelled">İptal</option>' +
       "</select></label>" +
       '<label class="op-filter-field op-filter-field--day"><span class="op-filter-field__lbl">Kayıt günü</span>' +

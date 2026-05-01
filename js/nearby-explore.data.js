@@ -4,8 +4,10 @@
  *
  * Sözleşme:
  * - categoryOrder içindeki her id için i18n.js’te nearCat_<id> (tüm UI dilleri; eksik anahtar en/tr yedeği) tanımlı olmalı.
+ * - bazaar: haftalık semt pazarları (Market = süpermarket zincirleri).
  * - place.category değerleri categoryOrder ile uyumlu olmalı.
  * - name / address / description: en az { tr, en, de, pl }; yeni dil kodları için metin yoksa pick zinciri en/tr’ye düşer.
+ * - İsteğe bağlı scheduleNote: { tr, en, de, pl } — liste kartı ve detayda dipnot (ör. pazar günü).
  */
 (function () {
   "use strict";
@@ -77,6 +79,70 @@
         en: "Supermarket with a wide product range.",
         de: "Supermarkt mit großer Auswahl.",
         pl: "Supermarket with a wide product range.",
+      },
+    },
+    {
+      id: "market-oba-semt-pazari",
+      category: "bazaar",
+      isFeatured: true,
+      mapsUrl: "https://maps.app.goo.gl/Wi2DiCTojQR1NTCN7",
+      lat: 36.5356616,
+      lng: 32.0416433,
+      name: {
+        tr: "Oba Pazarı",
+        en: "Oba Market",
+        de: "Oba-Wochenmarkt",
+        pl: "Targ Oba",
+      },
+      address: {
+        tr: "Oba Göl Mevkii, Hacıkadir Caddesi, Hacıkadiroğlu İlköğretim Okulu yanı, Alanya",
+        en: "Oba Göl area, Hacıkadir Street, next to Hacıkadiroğlu Primary School, Alanya",
+        de: "Oba Göl, Hacıkadir Straße, neben der Hacıkadiroğlu-Grundschule, Alanya",
+        pl: "Oba Göl, ul. Hacıkadir, przy szkole podstawowej Hacıkadiroğlu, Alanya",
+      },
+      description: {
+        tr: "Semt pazarı; taze gıda ve yerel ürünler.",
+        en: "Neighborhood market; fresh produce and local goods.",
+        de: "Stadtviertelmarkt; frische Lebensmittel und lokale Angebote.",
+        pl: "Targ osiedlowy; świeże produkty i lokalny asortyment.",
+      },
+      scheduleNote: {
+        tr: "Pazar kuruluş günü: Pazartesi.",
+        en: "Market day: Monday.",
+        de: "Markttag: Montag.",
+        pl: "Dzień targowy: poniedziałek.",
+      },
+    },
+    {
+      id: "market-tosmur-semt-pazari",
+      category: "bazaar",
+      isFeatured: false,
+      mapsUrl: "https://maps.app.goo.gl/4KbN2QGZJBAt5Hxz9",
+      lat: 36.5287758,
+      lng: 32.0451923,
+      name: {
+        tr: "Tosmur Pazarı",
+        en: "Tosmur Market",
+        de: "Tosmur-Wochenmarkt",
+        pl: "Targ Tosmur",
+      },
+      address: {
+        tr: "Cumhuriyet Karakolu, Belediye yanı, Sarıtaş Otel yanı, Tosmur, Alanya",
+        en: "Near Cumhuriyet police station, municipality and Sarıtaş Hotel, Tosmur, Alanya",
+        de: "Nahe Polizeiwache Cumhuriyet, Rathaus und Sarıtaş Hotel, Tosmur, Alanya",
+        pl: "Przy posterunku Cumhuriyet, urzędzie gminy i hotelu Sarıtaş, Tosmur, Alanya",
+      },
+      description: {
+        tr: "Semt pazarı; taze gıda ve yerel ürünler.",
+        en: "Neighborhood market; fresh produce and local goods.",
+        de: "Stadtviertelmarkt; frische Lebensmittel und lokale Angebote.",
+        pl: "Targ osiedlowy; świeże produkty i lokalny asortyment.",
+      },
+      scheduleNote: {
+        tr: "Pazar kuruluş günü: Perşembe.",
+        en: "Market day: Thursday.",
+        de: "Markttag: Donnerstag.",
+        pl: "Dzień targowy: czwartek.",
       },
     },
     {
@@ -345,6 +411,6 @@
   window.NEARBY_EXPLORE_DATA = {
     hotel: HOTEL,
     places: PLACES,
-    categoryOrder: ["market", "pharmacy", "atm", "beach", "sight", "food"],
+    categoryOrder: ["market", "bazaar", "pharmacy", "atm", "beach", "sight", "food"],
   };
 })();

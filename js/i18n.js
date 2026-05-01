@@ -137,6 +137,7 @@ const I18N = {
     nearExploreDirections: "Yol tarifi al",
     nearExploreOpenInMaps: "Google Haritalar’da aç",
     nearCat_market: "Market",
+    nearCat_bazaar: "Pazar",
     nearCat_pharmacy: "Eczane",
     nearCat_atm: "ATM",
     nearCat_beach: "Plaj",
@@ -243,6 +244,7 @@ const I18N = {
     surveyTab_beach_area: "Plaj",
     surveyTab_spaWellness: "Spa & wellness",
     surveyTab_guestExperience: "Misafir deneyimi & hizmet",
+    surveyTab_sustainability: "Sürdürülebilirlik",
     surveyTab_viona: "Viona",
     surveyQuestion_gen_stay_experience: "Genel konaklama deneyiminizi nasıl değerlendirirsiniz?",
     surveyQuestion_gen_service_quality: "Otel hizmetlerinin genel kalitesini nasıl değerlendirirsiniz?",
@@ -280,6 +282,12 @@ const I18N = {
       "Yaşadığınız bir sorun olduysa çözüm sürecini nasıl değerlendirirsiniz?",
     surveyQuestion_guest_solution_focus: "Personelin çözüm odaklı yaklaşımını nasıl değerlendirirsiniz?",
     surveyQuestion_guest_hotel_care: "Genel olarak otelin ilgisini ve takibini nasıl değerlendirirsiniz?",
+    surveyQuestion_sus_eco_practices:
+      "Konaklamanız sırasında otelin çevre dostu uygulamalarını (enerji tasarrufu, atık yönetimi, plastik kullanımının azaltılması vb.) ne kadar yeterli buldunuz?",
+    surveyQuestion_sus_sustainability_engagement:
+      "Otelin sürdürülebilirlik konusunda sizi bilgilendirme ve bu sürece dahil etme düzeyini nasıl değerlendirirsiniz?",
+    surveyQuestion_sus_overall_sustainability:
+      "Genel olarak, Kaila Beach’in sürdürülebilir ve çevreye duyarlı bir tesis olduğunu ne ölçüde düşünüyorsunuz?",
     surveyQuestion_viona_helpfulness: "Yanıtların işinize yararlığı",
     surveyQuestion_viona_understanding: "İsteğinizi doğru anlama",
     surveyQuestion_viona_usability: "Sohbet ekranı kullanım kolaylığı",
@@ -446,6 +454,8 @@ const I18N = {
     reqSuccessBody: "Talebiniz alındı.",
     reqErrApi: "Gönderim modülü yüklenemedi.",
     reqErrSend: "Gönderilemedi; tekrar deneyin.",
+    reqErrAfterHoursReception:
+      "Gece 00:00 – 08:00 arasında bu kayıtları uygulama üzerinden alamıyoruz. Talebiniz için lütfen resepsiyon ile doğrudan iletişime geçiniz; ekibimiz size özenle yardımcı olacaktır.",
     reqApiErrInvalidType:
       "Talep türü sunucuda tanınmadı. Sayfayı yenileyin veya uygulamanın güncel olduğundan emin olun.",
     reqApiErrTypeRequired: "Talep türü eksik. Sayfayı yenileyip tekrar deneyin.",
@@ -748,6 +758,7 @@ const I18N = {
     nearExploreDirections: "Get directions",
     nearExploreOpenInMaps: "Open in Google Maps",
     nearCat_market: "Market",
+    nearCat_bazaar: "Bazaar",
     nearCat_pharmacy: "Pharmacy",
     nearCat_atm: "ATM",
     nearCat_beach: "Beach",
@@ -853,6 +864,7 @@ const I18N = {
     surveyTab_beach_area: "Beach",
     surveyTab_spaWellness: "Spa & wellness",
     surveyTab_guestExperience: "Guest experience & service",
+    surveyTab_sustainability: "Sustainability",
     surveyTab_viona: "Viona",
     surveyQuestion_gen_stay_experience: "How would you rate your overall stay?",
     surveyQuestion_gen_service_quality: "How would you rate the overall quality of the hotel’s services?",
@@ -890,6 +902,12 @@ const I18N = {
       "If you had an issue, how would you rate the resolution process?",
     surveyQuestion_guest_solution_focus: "How would you rate the staff’s solution-focused approach?",
     surveyQuestion_guest_hotel_care: "How would you rate the hotel’s overall care and follow-up?",
+    surveyQuestion_sus_eco_practices:
+      "During your stay, how adequate did you find the hotel’s environmentally friendly practices (energy saving, waste management, reduced plastic use, etc.)?",
+    surveyQuestion_sus_sustainability_engagement:
+      "How would you rate how the hotel informs you about sustainability and involves you in this process?",
+    surveyQuestion_sus_overall_sustainability:
+      "Overall, to what extent do you consider Kaila Beach a sustainable, environmentally conscious hotel?",
     surveyQuestion_viona_helpfulness: "How useful were the answers?",
     surveyQuestion_viona_understanding: "Did Viona understand your request?",
     surveyQuestion_viona_usability: "Ease of using the chat",
@@ -1056,6 +1074,8 @@ const I18N = {
     reqSuccessBody: "Your request has been received.",
     reqErrApi: "Submit module failed to load.",
     reqErrSend: "Could not send; please try again.",
+    reqErrAfterHoursReception:
+      "Between midnight and 8:00 a.m., we cannot accept these submissions through the app. Please contact reception directly for prompt, attentive assistance.",
     reqApiErrInvalidType:
       "This request type was not accepted by the server. Refresh the page or update the app.",
     reqApiErrTypeRequired: "Request type is missing. Refresh and try again.",
@@ -1358,6 +1378,7 @@ const I18N = {
     nearExploreDirections: "Route anzeigen",
     nearExploreOpenInMaps: "In Google Maps öffnen",
     nearCat_market: "Markt / Supermarkt",
+    nearCat_bazaar: "Basar",
     nearCat_pharmacy: "Apotheke",
     nearCat_atm: "Geldautomat",
     nearCat_beach: "Strand",
@@ -1464,6 +1485,7 @@ const I18N = {
     surveyTab_beach_area: "Strand",
     surveyTab_spaWellness: "Spa & Wellness",
     surveyTab_guestExperience: "Gästeerlebnis & Service",
+    surveyTab_sustainability: "Nachhaltigkeit",
     surveyTab_viona: "Viona",
     surveyQuestion_gen_stay_experience: "Wie bewerten Sie Ihren Gesamtaufenthalt?",
     surveyQuestion_gen_service_quality: "Wie bewerten Sie die allgemeine Qualität der Hotelleistungen?",
@@ -1501,6 +1523,12 @@ const I18N = {
       "Falls Sie ein Problem hatten, wie bewerten Sie den Ablauf der Lösung?",
     surveyQuestion_guest_solution_focus: "Wie bewerten Sie die lösungsorientierte Haltung des Personals?",
     surveyQuestion_guest_hotel_care: "Wie bewerten Sie das allgemeine Engagement und die Nachverfolgung des Hotels?",
+    surveyQuestion_sus_eco_practices:
+      "Wie angemessen empfanden Sie die umweltfreundlichen Maßnahmen des Hotels während Ihres Aufenthalts (Energiesparen, Abfallmanagement, weniger Plastik usw.)?",
+    surveyQuestion_sus_sustainability_engagement:
+      "Wie bewerten Sie, wie das Hotel Sie über Nachhaltigkeit informiert und Sie in diesen Prozess einbindet?",
+    surveyQuestion_sus_overall_sustainability:
+      "Inwieweit empfinden Sie Kaila Beach insgesamt als nachhaltiges und umweltbewusstes Hotel?",
     surveyQuestion_viona_helpfulness: "Nützlichkeit der Antworten",
     surveyQuestion_viona_understanding: "Verständnis Ihres Anliegens",
     surveyQuestion_viona_usability: "Bedienung des Chats",
@@ -1667,6 +1695,8 @@ const I18N = {
     reqSuccessBody: "Ihre Anfrage wurde erhalten.",
     reqErrApi: "Sendemodul konnte nicht geladen werden.",
     reqErrSend: "Senden fehlgeschlagen; bitte erneut versuchen.",
+    reqErrAfterHoursReception:
+      "Zwischen 0:00 und 8:00 Uhr können wir diese Meldungen nicht über die App entgegennehmen. Bitte wenden Sie sich direkt an die Rezeption — dort hilft man Ihnen aufmerksam weiter.",
     reqApiErrInvalidType:
       "Dieser Anfragetyp wurde vom Server nicht akzeptiert. Seite neu laden oder App aktualisieren.",
     reqApiErrTypeRequired: "Anfragetyp fehlt. Seite neu laden und erneut versuchen.",
@@ -1941,6 +1971,7 @@ const I18N = {
     nearExploreDirections: "Uzyskaj wskazówki dojazdu",
     nearExploreOpenInMaps: "Otwórz w Google Maps",
     nearCat_market: "Rynek",
+    nearCat_bazaar: "Bazar",
     nearCat_pharmacy: "Punkt Apteczny",
     nearCat_atm: "ATM",
     nearCat_beach: "Plaża",
@@ -2037,6 +2068,7 @@ const I18N = {
     surveyTab_beach_area: "Plaża",
     surveyTab_spaWellness: "SPA WELLNESS",
     surveyTab_guestExperience: "Doświadczenie i obsługa gości",
+    surveyTab_sustainability: "Zrównoważony rozwój",
     surveyTab_viona: "Viona",
     surveyQuestion_gen_stay_experience: "Jak oceniasz cały pobyt?",
     surveyQuestion_gen_service_quality: "Jak oceniasz ogólną jakość usług hotelowych?",
@@ -2073,6 +2105,12 @@ const I18N = {
     surveyQuestion_guest_issue_resolution: "Jak oceniasz proces rozwiązywania problemu?",
     surveyQuestion_guest_solution_focus: "Jak oceniasz podejście skoncentrowane na rozwiązaniach?",
     surveyQuestion_guest_hotel_care: "Jak oceniasz ogólną opiekę nad hotelem i dalsze działania?",
+    surveyQuestion_sus_eco_practices:
+      "W jakim stopniu praktyki przyjazne środowisku hotelu (oszczędzanie energii, gospodarka odpadami, mniej plastiku itp.) były podczas pobytu wystarczające?",
+    surveyQuestion_sus_sustainability_engagement:
+      "Jak oceniasz poziom informowania o zrównoważonym rozwoju i angażowania Cię w ten proces?",
+    surveyQuestion_sus_overall_sustainability:
+      "W jakim stopniu uważasz Kaila Beach za hotel zrównoważony i dbający o środowisko?",
     surveyQuestion_viona_helpfulness: "Jak przydatne były odpowiedzi?",
     surveyQuestion_viona_understanding: "Czy Viona zrozumiała Twoją prośbę?",
     surveyQuestion_viona_usability: "Łatwość korzystania z czatu",
@@ -2231,6 +2269,8 @@ const I18N = {
     reqSuccessBody: "Twoje zapytanie zostało wysłane.",
     reqErrApi: "Nie udało się załadować modułu.",
     reqErrSend: "Nie można wysłać; spróbuj ponownie.",
+    reqErrAfterHoursReception:
+      "W godzinach 0:00–8:00 nie przyjmujemy tych zgłoszeń przez aplikację. Skontaktuj się bezpośrednio z recepcją — personel pomoże z troską i natychmiastową uwagą.",
     reqApiErrInvalidType: "Ten typ żądania nie został zaakceptowany przez serwer. Odśwież stronę lub zaktualizuj aplikację.",
     reqApiErrTypeRequired: "Brak typu żądania. Odśwież i spróbuj ponownie.",
     reqApiErrNameRequired: "Wymagane jest pełne imię i nazwisko",

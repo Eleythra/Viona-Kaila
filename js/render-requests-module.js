@@ -36,6 +36,7 @@
     "description is required for selected notification category": "reqErrGuestNotificationDescriptionRequired",
     "guest_request_submit_failed": "reqErrSend",
     "guest_request_create_failed": "reqErrSend",
+    "quiet_hours_reception_only": "reqErrAfterHoursReception",
     "guest_request_bad_response": "reqApiErrBadResponse",
     request_timeout: "reqApiErrTimeout",
     SUPABASE_NOT_CONFIGURED: "reqApiErrSupabase",
@@ -1713,6 +1714,22 @@
     var base = payload && typeof payload === "object" ? payload : {};
     var body = Object.assign({}, base);
     body.language = currentUiLanguage();
+    var ty = String(body.type || "").trim();
+    if (
+      (ty === "request" ||
+        ty === "complaint" ||
+        ty === "fault" ||
+        ty === "guest_notification") &&
+      typeof window.vionaIsOperationalQuietHours === "function" &&
+      window.vionaIsOperationalQuietHours()
+    ) {
+      err.textContent = t("reqErrAfterHoursReception");
+      err.hidden = false;
+      try {
+        err.scrollIntoView({ block: "nearest" });
+      } catch (eScroll) {}
+      return;
+    }
     submitBtn.disabled = true;
     submitBtn.textContent = t("reqSending");
     var fn = window.submitGuestRequest;

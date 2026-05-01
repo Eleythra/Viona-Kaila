@@ -1,4 +1,5 @@
 import { getSupabase, throwIfSupabaseDatastoreDnsError, withSupabaseFetchGuard } from "../../lib/supabase.js";
+import { submittedAtHotelCalendarFilter } from "../../lib/hotel-calendar-range.js";
 
 /** Geçici DNS (EAI_AGAIN) → datastore_dns_unavailable (503). */
 function sb(fn) {
@@ -40,8 +41,16 @@ function isoCalendarDateOnly(v) {
   return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : "";
 }
 
-/** Takvim `YYYY-MM-DD` → UTC günü [00:00, ertesi gün 00:00); tam gün kapsar. Saat içeren değerler olduğu gibi gte/lt. */
+/** Takvim `YYYY-MM-DD`: önce İstanbul otel günü (submitted_at); aksi halde UTC takvim günü veya ham ISO. */
 function applyDateFilters(qb, query = {}, column = "submitted_at") {
+  const toLtEarly = String(query.to_lt || "").trim();
+  if (column === "submitted_at" && !toLtEarly) {
+    const hf = submittedAtHotelCalendarFilter(query);
+    if (hf?.kind === "range") return qb.gte(column, hf.fromIso).lt(column, hf.toExclusiveIso);
+    if (hf?.kind === "from") return qb.gte(column, hf.fromIso);
+    if (hf?.kind === "to") return qb.lt(column, hf.toExclusiveIso);
+  }
+
   let out = qb;
   const fromD = isoCalendarDateOnly(query.from);
   const fromRaw = fromD ? "" : String(query.from || "").trim();
@@ -656,16 +665,36 @@ function formatStatusUpdateFailureMessage(type, normalized, supabaseError) {
   return raw || supabaseError?.message || "status_update_failed";
 }
 
+const SLA_TIMESTAMP_TYPES = new Set(["request", "fault", "complaint", "guest_notification", "late_checkout"]);
+
 export async function updateAdminItemStatus(type, id, status) {
   const idStr = String(id ?? "").trim();
   if (!idStr) throw new Error("id is required");
   const normalized = normalizeIncomingAdminStatus(status);
   if (!VALID_STATUS.has(normalized)) throw new Error("invalid status");
   const table = tableForType(type);
+
+  let patch = { status: normalized };
+  if (SLA_TIMESTAMP_TYPES.has(String(type))) {
+    const { data: prev, error: prevErr } = await sb(() =>
+      getSupabase().from(table).select("status,work_started_at,resolved_at").eq("id", idStr).maybeSingle(),
+    );
+    if (!prevErr && prev) {
+      const prevSt = String(prev.status || "");
+      const nowIso = new Date().toISOString();
+      if (normalized === "in_progress" && prevSt !== "in_progress" && !prev.work_started_at) {
+        patch = { ...patch, work_started_at: nowIso };
+      }
+      if ((normalized === "done" || normalized === "rejected") && !prev.resolved_at) {
+        patch = { ...patch, resolved_at: nowIso };
+      }
+    }
+  }
+
   const { data, error } = await sb(() =>
     getSupabase()
       .from(table)
-      .update({ status: normalized })
+      .update(patch)
       .eq("id", idStr)
       .select("id,status")
       .maybeSingle(),

@@ -24,6 +24,7 @@ import {
   resolveWhatsappAccessToken,
 } from "./services/whatsapp-operational-notification.service.js";
 import { runDailyOperationReportJob, ymdTodayInHotelTz } from "./modules/admin/reporting/daily-operation-report.job.js";
+import { runOperationalPendingReminderJob } from "./services/operational-pending-reminder.service.js";
 import {
   pingDailyOperationReportFromHttpTraffic,
   startDailyOperationReportScheduler,
@@ -59,6 +60,30 @@ const RESERVATION_REDIRECT_BY_LANG = {
     "W sprawie pobytu lub specjalnych stolików pomogą recepcja lub Guest Relations. Godziny, menu i bary — otwórz przyciskiem poniżej sekcję «Restauracje i bary» w aplikacji.",
 };
 
+/** Chat proxy: createGuestRequest gece penceresinde reddedilirse misafire gösterilecek metin (assistant localization ile hizalı). */
+const QUIET_HOURS_RECEPTION_BY_LANG = {
+  tr:
+    "Gece 00:00 – 08:00 arasında operasyon ekibimiz çevrimdışıdır; bu saatlerde talep, şikayet, arıza ve misafir bildirimi kayıtlarını uygulama üzerinden alamıyorum. Özenle takip edebilmemiz için lütfen resepsiyon ile doğrudan iletişime geçiniz; ekibimiz size en doğru biçimde yardımcı olacaktır.",
+  en:
+    "Between midnight and 8:00 a.m., our operational team is offline, so I cannot record service requests, complaints, fault reports, or guest notifications through the app during this time. For prompt assistance, please contact reception directly — they will be glad to help.",
+  de:
+    "Zwischen 0:00 und 8:00 Uhr ist unser operatives Team nicht erreichbar; in dieser Zeit kann ich daher keine Serviceanfragen, Beschwerden, Störungsmeldungen oder Gästehinweise per Formular entgegennehmen. Bitte wenden Sie sich direkt an die Rezeption — dort wird Ihnen mit größter Sorgfalt geholfen.",
+  pl:
+    "W godzinach 0:00–8:00 zespół operacyjny jest niedostępny, więc nie mogę przyjmować w tym czasie próśb, reklamacji, zgłoszeń awarii ani informacji gościa przez aplikację. W pilnych sprawach skontaktuj się bezpośrednio z recepcją — personel pomoże z najwyższą starannością.",
+  ru:
+    "С 0:00 до 8:00 оперативная команда недоступна — запросы, жалобы, заявки о неисправностях и уведомления гостя через приложение в это время не принимаются. Пожалуйста, обратитесь на ресепшн напрямую.",
+  da:
+    "Mellem kl. 00.00 og 08.00 er driftsteamet ikke tilgængeligt; forespørgsler, klager, fejlrapporter og gæstemeldinger kan ikke modtages via appen. Kontakt venligst receptionen direkte.",
+  cs:
+    "Mezi 0:00 a 8:00 je provozní tým nedostupný — přes aplikaci v tuto dobu nepřijímám požadavky, stížnosti, hlášení závad ani hlášení hostů. V naléhavých případech kontaktujte recepci.",
+  ro:
+    "Între 0:00 și 8:00 echipa operațională nu este disponibilă — nu pot înregistra solicitări, reclamații, sesizări sau notificări pentru oaspeți prin aplicație. Pentru asistență, contactați recepția.",
+  nl:
+    "Tussen 00:00 en 08:00 is het operationele team niet bereikbaar; verzoeken, klachten, storingsmeldingen en gastmeldingen kan ik dan niet via de app registreren. Neem contact op met de receptie.",
+  sk:
+    "Medzi 0:00 a 8:00 je prevádzkový tím nedostupný — cez aplikáciu nemôžem prijímať požiadavky, sťažnosti, hlásenia porúch ani oznámenia hostí. Kontaktujte recepciu.",
+};
+
 function isReservationLikeMessage(msg = "") {
   const t = String(msg || "").toLowerCase();
   if (!t) return false;
@@ -77,7 +102,7 @@ function normalizeLocale(value = "") {
 
 function pickChatLangMessage(map, lang) {
   const code = normalizeLocale(lang);
-  return map[code] || map.en || map.tr;
+  return map[code] || map.en || map.de || map.tr;
 }
 
 function safeFallback(locale = "tr", reason = "safe", userMessage = "") {
@@ -290,6 +315,15 @@ async function writeChatObservation({
 }
 
 
+function metaIntentFromGuestPayloadType(type) {
+  const t = String(type || "").trim();
+  if (t === "fault") return "fault_report";
+  if (t === "complaint") return "complaint";
+  if (t === "guest_notification") return "guest_notification";
+  if (t === "request") return "request";
+  return "request";
+}
+
 async function processCreateGuestRequestAction(data) {
   try {
     const action = data?.meta?.action;
@@ -314,6 +348,31 @@ async function processCreateGuestRequestAction(data) {
     // Operasyon WhatsApp: createGuestRequest içinde türe göre (arıza/istek/şikâyet/misafir bildirimi/geç çıkış) tetiklenir.
     return data;
   } catch (err) {
+    const em = String(err?.message || "").trim();
+    const prevAction = data?.meta?.action;
+    if (
+      em === "quiet_hours_reception_only" &&
+      data &&
+      typeof data === "object" &&
+      prevAction &&
+      prevAction.kind === "create_guest_request"
+    ) {
+      const lang = normalizeLocale(data?.meta?.language || data?.meta?.ui_language || "tr");
+      const text = pickChatLangMessage(QUIET_HOURS_RECEPTION_BY_LANG, lang);
+      const ptype = prevAction.payload?.type;
+      const intentFix = metaIntentFromGuestPayloadType(ptype);
+      return {
+        ...data,
+        type: "inform",
+        message: text,
+        meta: {
+          ...(data.meta || {}),
+          intent: intentFix,
+          source: "rule",
+          action: null,
+        },
+      };
+    }
     console.warn("chat_form_create_guest_request_failed error=%s", err?.message || err);
     return data;
   }
@@ -583,6 +642,40 @@ app.get("/api/internal/daily-operation-report-cron", async (req, res) => {
     return res.status(status).json(out);
   } catch (e) {
     console.error("[daily_operation_report] cron_get_handler", e);
+    return res.status(500).json({ ok: false, error: String(e?.message || e) });
+  }
+});
+
+/**
+ * «Bekliyor» kayıtlar 1 saati (env ile ayarlanır) geçince operasyon WhatsApp şablonunu bir kez daha gönderir.
+ * cron-job.org: günlük PDF cron’undan farklı olarak sıklıkta çalışmalı (örn. her 15 dk).
+ * Anahtar: OPERATIONAL_PENDING_REMINDER_CRON_KEY — tanımlı değilse DAILY_OPERATION_REPORT_CRON_KEY kullanılır.
+ */
+app.get("/api/internal/operational-pending-reminder-cron", async (req, res) => {
+  try {
+    const expected = String(
+      process.env.OPERATIONAL_PENDING_REMINDER_CRON_KEY || process.env.DAILY_OPERATION_REPORT_CRON_KEY || "",
+    ).trim();
+    if (!expected) {
+      console.warn("[pending_whatsapp_reminder] cron_get rejected reason=env_cron_keys_empty");
+      return res.status(404).end();
+    }
+    const key = String(
+      req.query.key || req.headers["x-pending-reminder-cron-key"] || req.headers["X-Pending-Reminder-Cron-Key"] || "",
+    ).trim();
+    const a = Buffer.from(expected, "utf8");
+    const b = Buffer.from(key, "utf8");
+    if (a.length !== b.length) {
+      return res.status(404).end();
+    }
+    if (!crypto.timingSafeEqual(a, b)) {
+      return res.status(404).end();
+    }
+    const out = await runOperationalPendingReminderJob();
+    const status = out.ok ? 200 : 500;
+    return res.status(status).json(out);
+  } catch (e) {
+    console.error("[pending_whatsapp_reminder] cron_get_handler", e);
     return res.status(500).json({ ok: false, error: String(e?.message || e) });
   }
 });

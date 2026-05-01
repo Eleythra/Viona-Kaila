@@ -5,44 +5,20 @@ import {
 } from "../admin.service.js";
 import { buildDailyOperationReportHtml } from "./daily-operation-report-template.js";
 import { renderDailyOperationPdfBuffer } from "./pdf.service.js";
+import { hotelCalendarDaySubmittedAtRange as hotelCalendarDaySubmittedAtRangeLib } from "../../lib/hotel-calendar-range.js";
 
 const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** @typedef {'hk' | 'tech' | 'front'} DailyReportSegment */
 
-function pad2(n) {
-  return String(n).padStart(2, "0");
-}
-
-/**
- * Otel takvim günü `YYYY-MM-DD` için `submitted_at` aralığı (üst sınır exclusive).
- * `Europe/Istanbul` için yerel gece yarısı +03:00; diğer IANA dilimleri için UTC takvim gününe düşer.
- */
+/** Günlük PDF ile uyumlu; `tz` isteğe bağlı (varsayılan env). */
 export function hotelCalendarDaySubmittedAtRange(query = {}) {
   const ymd = String(query.ymd || "").trim();
   if (!YMD_RE.test(ymd)) throw new Error("invalid_report_ymd");
-
-  const tz = String(
-    query.tz || process.env.DAILY_OPERATION_REPORT_TZ || process.env.HOTEL_TIMEZONE || "Europe/Istanbul",
-  ).trim();
-
-  if (tz === "Europe/Istanbul") {
-    const [y, m, d] = ymd.split("-").map(Number);
-    const fromIso = new Date(`${y}-${pad2(m)}-${pad2(d)}T00:00:00+03:00`).toISOString();
-    const toExclusiveIso = new Date(
-      new Date(`${y}-${pad2(m)}-${pad2(d)}T00:00:00+03:00`).getTime() + 24 * 60 * 60 * 1000,
-    ).toISOString();
-    return { fromIso, toExclusiveIso, tz };
-  }
-
-  const [y, m, d] = ymd.split("-").map(Number);
-  const fromIso = `${ymd}T00:00:00.000Z`;
-  const next = new Date(Date.UTC(y, m - 1, d + 1));
-  const ny = next.getUTCFullYear();
-  const nm = String(next.getUTCMonth() + 1).padStart(2, "0");
-  const nd = String(next.getUTCDate()).padStart(2, "0");
-  const toExclusiveIso = `${ny}-${nm}-${nd}T00:00:00.000Z`;
-  return { fromIso, toExclusiveIso, tz };
+  return hotelCalendarDaySubmittedAtRangeLib({
+    ymd,
+    tz: query.tz || process.env.DAILY_OPERATION_REPORT_TZ || process.env.HOTEL_TIMEZONE,
+  });
 }
 
 function listQueryForHotelDay(ymd, extra = {}) {

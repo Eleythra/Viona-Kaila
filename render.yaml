@@ -16,7 +16,7 @@
 # Operasyon WhatsApp (Cloud API, bireysel numaralar; grup botu / whatsapp-web.js yok):
 #   WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID
 #   WHATSAPP_TECH_RECIPIENTS, WHATSAPP_HK_RECIPIENTS, WHATSAPP_FRONT_RECIPIENTS (virgülle)
-#   Günlük HK PDF raporu ayrı numara: WHATSAPP_DAILY_REPORT_HK_RECIPIENTS (boşsa WHATSAPP_HK_RECIPIENTS)
+#   Günlük PDF ayrı numaralar: WHATSAPP_DAILY_REPORT_HK|TECH|FRONT_RECIPIENTS (boşsa ilgili operasyon listesi)
 #   İsteğe bağlı şablon «Panelde Aç» URL butonu (Meta şablonu uyumlu olmalı, ayrıntı server/.env.example):
 #   WHATSAPP_HK_PANEL_URL_BUTTON, WHATSAPP_TECH_PANEL_URL_BUTTON, WHATSAPP_FRONT_PANEL_URL_BUTTON
 # Eski grup oturumu env anahtarlarını Dashboard’dan silin (kafa karıştırır).
@@ -30,7 +30,7 @@
 #
 # Günlük PDF otomatik (Render ücretsiz dyno uyuyunca iç timer yetmez):
 #   1) Dashboard’a `DAILY_OPERATION_REPORT_CRON_KEY` ekleyin (örn. `openssl rand -hex 32`).
-#   2) cron-job.org: her gün İstanbul 17:30’da (veya istediğiniz saatte) tam URL — aşağıdaki .env.example adımları.
+#   2) cron-job.org: her gün İstanbul 18:00 (veya istediğiniz saatte) tam URL — aşağıdaki .env.example adımları.
 #   İç zamanlayıcı yine çalışır; bu GET yedek + dyno uyandırma sağlar.
 #
 services:
@@ -91,17 +91,20 @@ services:
         sync: false
       - key: AZURE_SPEECH_REGION
         sync: false
-      # Günlük operasyon PDF → WhatsApp; İstanbul 17:30 (yerel .env git’te yok)
+      # Liste tarih filtresi + günlük PDF günü (admin API submitted_at aralığı)
+      - key: HOTEL_TIMEZONE
+        value: Europe/Istanbul
+      # Günlük operasyon PDF → WhatsApp; İstanbul 18:00 (yerel .env git’te yok)
       - key: DAILY_OPERATION_REPORT_ENABLED
         value: "1"
       - key: DAILY_OPERATION_REPORT_TZ
         value: Europe/Istanbul
       - key: DAILY_OPERATION_REPORT_HOUR
-        value: "17"
+        value: "18"
       - key: DAILY_OPERATION_REPORT_MINUTE
-        value: "30"
+        value: "0"
       - key: DAILY_OPERATION_REPORT_CRON
-        value: "30 17 * * *"
+        value: "0 18 * * *"
       - key: DAILY_OPERATION_REPORT_FIRE_WINDOW_MIN
         value: "60"
       - key: DAILY_OPERATION_REPORT_HOTEL_NAME
@@ -118,3 +121,8 @@ services:
         value: "1"
       - key: DAILY_OPERATION_REPORT_CRON_KEY
         sync: false
+      # «Bekliyor» 1 saat (OPERATIONAL_PENDING_REMINDER_AFTER_MINUTES) sonra WhatsApp tekrarı — ayrı sık cron (örn. 15 dk)
+      - key: OPERATIONAL_PENDING_REMINDER_ENABLED
+        value: "0"
+      - key: OPERATIONAL_PENDING_REMINDER_AFTER_MINUTES
+        value: "60"

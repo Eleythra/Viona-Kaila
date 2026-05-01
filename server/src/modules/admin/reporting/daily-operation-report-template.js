@@ -39,12 +39,10 @@ function issueStatusLabelTr(issueType, status) {
   if (s === "in_progress") return "Yapılıyor";
   if (s === "done") {
     if (issueType === "late_checkout") return "Onaylandı";
-    if (issueType === "complaint" || issueType === "guest_notification") return "Dikkate alındı";
     return "Yapıldı";
   }
   if (s === "rejected") {
     if (issueType === "late_checkout") return "Onaylanmadı";
-    if (issueType === "complaint" || issueType === "guest_notification") return "Dikkate alınmadı";
     return "Yapılmadı";
   }
   return dash(s);
@@ -89,7 +87,7 @@ function summaryLineFrontOffice(s) {
     if (!x) return `${t}: —`;
     return `${t}: T${x.toplam} (B${x.bekliyor}/İ${x.islemde}/Y${x.yapildi}/N${x.yapilmadi}/X${x.iptal})`;
   });
-  return `Özet: Bekliyor ${s.bekliyor} · Yapılıyor ${s.islemde} · Tamamlanan ${s.yapildi} · Olumsuz ${s.yapilmadi} · İptal ${s.iptal} · Toplam ${s.toplam}<br/><span class="muted">${parts.join(" · ")}</span>`;
+  return `Özet: Bekliyor ${s.bekliyor} · Yapılıyor ${s.islemde} · Yapıldı ${s.yapildi} · Yapılmadı ${s.yapilmadi} · İptal ${s.iptal} · Toplam ${s.toplam}<br/><span class="muted">${parts.join(" · ")}</span>`;
 }
 
 function tableWrap(inner) {

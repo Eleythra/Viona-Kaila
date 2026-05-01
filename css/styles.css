@@ -3884,6 +3884,64 @@ body {
   display: block;
 }
 
+/* A La Carte — La Terrace: iki görsel, ~2 sn otomatik crossfade (4 sn döngü), kontrol yok */
+.venue-card__media--crossfade {
+  position: relative;
+}
+
+.venue-card__media--crossfade img {
+  position: absolute;
+  inset: 0;
+}
+
+@keyframes viona-alacarte-xfade-a {
+  0%,
+  48% {
+    opacity: 1;
+  }
+
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes viona-alacarte-xfade-b {
+  0%,
+  48% {
+    opacity: 0;
+  }
+
+  50%,
+  100% {
+    opacity: 1;
+  }
+}
+
+.venue-card__media--crossfade img:nth-child(1) {
+  animation: viona-alacarte-xfade-a 4s ease-in-out infinite;
+}
+
+.venue-card__media--crossfade img:nth-child(2) {
+  animation: viona-alacarte-xfade-b 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .venue-card__media--crossfade img {
+    animation: none !important;
+  }
+
+  .venue-card__media--crossfade img:nth-child(1) {
+    opacity: 1;
+  }
+
+  .venue-card__media--crossfade img:nth-child(2) {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
 .venue-card__body {
   padding: 14px 16px 16px;
   min-width: 0;
@@ -7737,6 +7795,21 @@ select.req-input option {
 .near-explore-cat[data-category="food"] .near-explore-cat__ico::before {
   content: "🍽";
 }
+/* Semt pazarı / bazaar — altın vurgu (Market süpermarketten ayrı sekme) */
+.near-explore-cat[data-category="bazaar"] .near-explore-cat__ico {
+  background: linear-gradient(145deg, rgba(212, 168, 83, 0.28) 0%, rgba(120, 90, 40, 0.14) 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 232, 196, 0.12);
+}
+.near-explore-cat[data-category="bazaar"] .near-explore-cat__ico::before {
+  content: "🧺";
+}
+.near-explore-cat[data-category="bazaar"]:hover,
+.near-explore-cat[data-category="bazaar"]:focus-visible {
+  border-color: rgba(212, 168, 83, 0.55);
+  box-shadow:
+    0 0 0 1px rgba(212, 168, 83, 0.22),
+    0 12px 36px rgba(0, 0, 0, 0.32);
+}
 
 .near-explore-cat__label {
   line-height: 1.25;
@@ -7872,6 +7945,14 @@ select.req-input option {
   color: rgba(180, 188, 200, 0.88);
 }
 
+.near-explore-card__schedule {
+  margin: -4px 0 10px;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  font-style: italic;
+  color: rgba(160, 168, 182, 0.82);
+}
+
 .near-explore-card__meta {
   display: flex;
   flex-wrap: wrap;
@@ -7940,6 +8021,14 @@ select.req-input option {
   font-size: 0.84rem;
   line-height: 1.5;
   color: rgba(180, 188, 200, 0.9);
+}
+
+.near-explore-detail__schedule {
+  margin: -6px 0 12px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  font-style: italic;
+  color: rgba(160, 168, 182, 0.88);
 }
 
 .near-explore-detail__meta {

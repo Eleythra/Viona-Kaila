@@ -87,7 +87,7 @@
 
   var CARDS = [
     {
-      img: "assets/images/alacarte/terrace-1.png",
+      images: ["assets/images/alacarte/terrace-1.png", "assets/images/alacarte/terrace-2.png"],
       alt: {
         tr: "La Terrace a la carte restoran",
         en: "La Terrace à la carte restaurant",
@@ -194,12 +194,30 @@
   function renderCard(item, t, lang) {
     var card = el("article", "venue-card venue-card--rest alacarte-card");
     var fig = el("div", "venue-card__media");
-    var img = document.createElement("img");
-    img.src = item.img;
-    img.alt = T(item.alt);
-    img.loading = "lazy";
-    img.decoding = "async";
-    fig.appendChild(img);
+    var multi =
+      Array.isArray(item.images) && item.images.length >= 2;
+    if (multi) {
+      fig.className = "venue-card__media venue-card__media--crossfade";
+      item.images.forEach(function (src, idx) {
+        var img = document.createElement("img");
+        img.src = src;
+        img.alt = T(item.alt);
+        img.loading = idx === 0 ? "lazy" : "eager";
+        img.decoding = "async";
+        fig.appendChild(img);
+      });
+    } else {
+      var src =
+        item.img ||
+        (Array.isArray(item.images) && item.images[0]) ||
+        "";
+      var img = document.createElement("img");
+      img.src = src;
+      img.alt = T(item.alt);
+      img.loading = "lazy";
+      img.decoding = "async";
+      fig.appendChild(img);
+    }
     var body = el("div", "venue-card__body");
     body.appendChild(el("h3", "venue-card__title", T(item.title)));
     if (item.sub) {

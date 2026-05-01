@@ -43,6 +43,17 @@ from assistant.services.form_name_input import (
     validate_chat_form_full_name,
 )
 
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+
+def operational_quiet_hours_active(now: datetime | None = None) -> bool:
+    """Europe/Istanbul 00:00–07:59 — operasyonel form kaydı kapalı (08:00 dahil açık)."""
+    tz = ZoneInfo("Europe/Istanbul")
+    t = now.astimezone(tz) if now else datetime.now(tz)
+    return (t.hour * 60 + t.minute) < 8 * 60
+
+
 
 def _reset_chat_form_to_category(state: ChatFormState) -> None:
     """Serbest metin / oda hatası sonrası kategori seçimine dönmek için form alanlarını sıfırlar."""
@@ -1084,6 +1095,73 @@ class ChatOrchestrator:
             ttl_seconds=settings.chat_form_ttl_seconds,
         )
 
+    def _operational_quiet_hours_reception_response(
+        self, reply_language: str, ui_language: str, meta_intent: str
+    ) -> ChatResponse:
+        text = self.localization_service.get("after_hours_reception_redirect", reply_language)
+        if not text or text == "after_hours_reception_redirect":
+            text = self.localization_service.get("after_hours_reception_redirect", "tr")
+        return self.response_service.build(
+            "inform",
+            text,
+            meta_intent,
+            1.0,
+            reply_language,
+            ui_language,
+            "rule",
+            action=None,
+        )
+
+    def _maybe_quiet_hours_strip_operational_actions(
+        self, payload: ChatRequest, response: ChatResponse
+    ) -> ChatResponse:
+        if not operational_quiet_hours_active():
+            return response
+        act = response.meta.action
+        if act is None:
+            return response
+        if act.kind == "open_complaint_form":
+            self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+            return self._operational_quiet_hours_reception_response(
+                response.meta.language, response.meta.ui_language, "complaint"
+            )
+        if act.kind == "chat_form" and act.operation in (
+            "request",
+            "complaint",
+            "fault",
+            "guest_notification",
+        ):
+            self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+            op = act.operation or "request"
+            meta_intent = (
+                "fault_report"
+                if op == "fault"
+                else (
+                    "complaint"
+                    if op == "complaint"
+                    else ("guest_notification" if op == "guest_notification" else "request")
+                )
+            )
+            return self._operational_quiet_hours_reception_response(
+                response.meta.language, response.meta.ui_language, meta_intent
+            )
+        if act.kind == "create_guest_request" and act.payload and isinstance(act.payload, dict):
+            ptype = str((act.payload or {}).get("type") or "").strip()
+            if ptype in ("request", "complaint", "fault", "guest_notification"):
+                self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+                meta_map = {
+                    "request": "request",
+                    "complaint": "complaint",
+                    "fault": "fault_report",
+                    "guest_notification": "guest_notification",
+                }
+                return self._operational_quiet_hours_reception_response(
+                    response.meta.language,
+                    response.meta.ui_language,
+                    meta_map.get(ptype, "request"),
+                )
+        return response
+
     def _voice_operational_redirect(self, reply_lang: str, ui_language: str):
         """Sesli kanal: form / kayıt yok; yazılı kanala yönlendirme metni."""
         text = VOICE_OPERATIONAL_USE_TEXT.get(
@@ -1129,6 +1207,7 @@ class ChatOrchestrator:
 
     def handle(self, payload: ChatRequest) -> ChatResponse:
         response = self._handle_chat_request(payload)
+        response = self._maybe_quiet_hours_strip_operational_actions(payload, response)
         self._conversation_session_record_turn(payload, response)
         return response
 
@@ -2390,6 +2469,22 @@ class ChatOrchestrator:
         else:
             op = "complaint"
 
+        if operational_quiet_hours_active():
+            # Geç çıkış → Misafir bildirimleri sekmesi (resepsiyon grubu): form akışı açık kalmalı.
+            if not (op == "guest_notification" and notif_group == "reception"):
+                intent_meta = (
+                    "fault_report"
+                    if op == "fault"
+                    else (
+                        "complaint"
+                        if op == "complaint"
+                        else ("guest_notification" if op == "guest_notification" else "request")
+                    )
+                )
+                return self._operational_quiet_hours_reception_response(
+                    reply_language, ui_language, intent_meta
+                )
+
         if op == "guest_notification" and notif_group == "reception":
             text = _LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_TEXT.get(
                 _tpl_lang(reply_language), _LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_TEXT["tr"]
@@ -2537,6 +2632,13 @@ class ChatOrchestrator:
                 reply_language,
                 ui_language,
                 "rule",
+            )
+
+        if operational_quiet_hours_active():
+            self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
+            self._session_on_form_abandoned_clear_cancel_context(payload)
+            return self._operational_quiet_hours_reception_response(
+                reply_language, ui_language, intent
             )
 
         # Bağlamsal güncelleme: kategori veya talep detay listesinde / adet sorulurken geçerli numara girilmediyse

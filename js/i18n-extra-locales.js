@@ -67,6 +67,8 @@
         "Оставьте отзыв на Google, HolidayCheck, Booking.com, Tripadvisor и др.; ниже — Corendon, Zoover, соцсети и официальный сайт.",
       rateModalSurveyHint:
         "Структурированный опрос о проживании и помощнике Viona (1–5 по разделам) — плитка «Оцените впечатления» на главном экране. Это окно только внешние ссылки.",
+      reqErrAfterHoursReception:
+        "С 0:00 до 8:00 оперативная команда недоступна — через приложение запросы, жалобы, заявки и уведомления гостя не принимаются. Обратитесь на ресепшн напрямую.",
     },
     da: {
       metaTitle: "Viona — Kaila Beach Hotel",
@@ -124,6 +126,8 @@
         "Skriv en anmeldelse på Google, HolidayCheck, Booking.com, Tripadvisor m.fl.; Corendon, Zoover, sociale medier og det officielle site nedenfor.",
       rateModalSurveyHint:
         "Den strukturerede undersøgelse om dit ophold og Viona-assistenten (1–5 pr. afsnit) findes på flisen «Bedøm din oplevelse». Dette vindue er kun eksterne links.",
+      reqErrAfterHoursReception:
+        "Mellem kl. 00.00 og 08.00 er driftsteamet ikke tilgængeligt; forespørgsler, klager, fejlrapporter og gæstemeldinger kan ikke modtages via appen. Kontakt venligst receptionen direkte.",
     },
     cs: {
       metaTitle: "Viona — Kaila Beach Hotel",
@@ -181,6 +185,8 @@
         "Napište recenzi na Google, HolidayCheck, Booking.com, Tripadvisor a další; níže Corendon, Zoover, sociální sítě a oficiální web.",
       rateModalSurveyHint:
         "Strukturovaný dotazník k pobytu a asistentovi Viona (1–5 podle sekcí) najdete na dlaždici «Ohodnoťte svůj zážitek». Toto okno obsahuje jen externí odkazy.",
+      reqErrAfterHoursReception:
+        "Mezi 0:00 a 8:00 je provozní tým nedostupný — přes aplikaci v tuto dobu nepřijímám požadavky, stížnosti, hlášení závad ani hlášení hostů. V naléhavých případech kontaktujte recepci.",
     },
     ro: {
       metaTitle: "Viona — Kaila Beach Hotel",
@@ -238,6 +244,8 @@
         "Lăsați o recenzie pe Google, HolidayCheck, Booking.com, Tripadvisor și altele; mai jos Corendon, Zoover, rețele sociale și site-ul oficial.",
       rateModalSurveyHint:
         "Chestionarul structurat despre sejur și asistentul Viona (1–5 pe secțiuni) este pe dala «Evaluați experiența». Această fereastră listează doar linkuri externe.",
+      reqErrAfterHoursReception:
+        "Între 0:00 și 8:00 echipa operațională nu este disponibilă — nu pot înregistra solicitări, reclamații, sesizări sau notificări pentru oaspeți prin aplicație. Pentru asistență, contactați recepția.",
     },
     nl: {
       metaTitle: "Viona — Kaila Beach Hotel",
@@ -295,6 +303,8 @@
         "Laat een review achter op Google, HolidayCheck, Booking.com, Tripadvisor e.a.; hieronder Corendon, Zoover, social media en de officiële site.",
       rateModalSurveyHint:
         "De gestructureerde enquête over uw verblijf en de Viona-assistent (1–5 per sectie) staat op de tegel «Beoordeel uw ervaring». Dit venster toont alleen externe links.",
+      reqErrAfterHoursReception:
+        "Tussen 00:00 en 08:00 kan ik geen verzoeken, klachten, storingsmeldingen of gastmeldingen via de app registreren. Neem contact op met de receptie.",
     },
     sk: {
       metaTitle: "Viona — Kaila Beach Hotel",
@@ -352,6 +362,8 @@
         "Zanechajte recenziu na Google, HolidayCheck, Booking.com, Tripadvisor a ďalšie; nižšie Corendon, Zoover, sociálne siete a oficiálna stránka.",
       rateModalSurveyHint:
         "Štruktúrovaný dotazník k pobytu a asistentovi Viona (1–5 podľa sekcií) je na dlaždici «Ohodnoťte svoj zážitok». Toto okno obsahuje len externé odkazy.",
+      reqErrAfterHoursReception:
+        "Medzi 0:00 a 8:00 nemôžem prijímať požiadavky, sťažnosti, hlásenia porúch ani oznámenia hostí cez aplikáciu. Kontaktujte recepciu.",
     },
   };
 

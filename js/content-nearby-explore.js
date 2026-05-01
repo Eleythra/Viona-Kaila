@@ -15,6 +15,23 @@
     return n;
   }
 
+  function escapeHtmlAttrText(s) {
+    return String(s != null ? s : "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function scheduleNoteHtml(place, Lg) {
+    if (!place.scheduleNote || typeof place.scheduleNote !== "object") return "";
+    var s = pick(place.scheduleNote, Lg);
+    if (!s) return "";
+    return (
+      '<p class="near-explore-card__schedule" role="note">' + escapeHtmlAttrText(s) + "</p>"
+    );
+  }
+
   function pick(row, lang) {
     if (!row || typeof row !== "object") return "";
     if (window.VIONA_LANG && typeof window.VIONA_LANG.pickFromLangRow === "function") {
@@ -395,6 +412,7 @@
           '<p class="near-explore-card__addr">' +
           pick(place.address, Lg) +
           "</p>" +
+          scheduleNoteHtml(place, Lg) +
           '<div class="near-explore-card__meta">' +
           '<span>' +
           dist +
@@ -497,6 +515,15 @@
       detailInner.appendChild(el("p", "near-explore-detail__cat", t("nearCat_" + p.category)));
       detailInner.appendChild(el("p", "near-explore-detail__desc", pick(p.description, Lg)));
       detailInner.appendChild(el("p", "near-explore-detail__addr", pick(p.address, Lg)));
+      if (p.scheduleNote && typeof p.scheduleNote === "object") {
+        var sn = pick(p.scheduleNote, Lg);
+        if (sn) {
+          var snP = el("p", "near-explore-detail__schedule");
+          snP.setAttribute("role", "note");
+          snP.textContent = sn;
+          detailInner.appendChild(snP);
+        }
+      }
       var meta = el("div", "near-explore-detail__meta");
       meta.innerHTML = "<span>" + dist + "</span><span>" + dur + "</span>";
       detailInner.appendChild(meta);

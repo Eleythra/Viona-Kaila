@@ -15,23 +15,29 @@ function clientFacingErrorMessage(error, fallbackMsg) {
 }
 
 function routeErr(res, error, fallbackMsg) {
-  const code = error?.statusCode === 503 ? 503 : 400;
+  const sc = error && typeof error.statusCode === "number" ? error.statusCode : null;
+  const code = sc === 503 ? 503 : sc === 409 ? 409 : 400;
+  const msg = clientFacingErrorMessage(error, fallbackMsg);
+  if (code === 409 && msg === "quiet_hours_reception_only") {
+    return res.status(409).json({ ok: false, error: "quiet_hours_reception_only" });
+  }
   return res.status(code).json({
     ok: false,
-    error: clientFacingErrorMessage(error, fallbackMsg),
+    error: msg,
   });
 }
 
 router.post("/", async (req, res) => {
   try {
-    const result = await createGuestRequest(req.body || {});
-    const body = {
+    const payload = req.body || {};
+    const result = await createGuestRequest(payload);
+    const out = {
       ok: true,
       id: String(result.id),
       bucket: result.bucket,
     };
-    if (result.whatsapp != null) body.whatsapp = result.whatsapp;
-    return res.status(201).json(body);
+    if (result.whatsapp != null) out.whatsapp = result.whatsapp;
+    return res.status(201).json(out);
   } catch (error) {
     return routeErr(res, error, "guest_request_create_failed");
   }

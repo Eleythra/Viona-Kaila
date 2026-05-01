@@ -19,6 +19,7 @@
     "poolBeach",
     "spaWellness",
     "guestExperience",
+    "sustainability",
   ];
   var HUB_ICONS = {
     generalEval:
@@ -37,6 +38,8 @@
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3c-2 3-6 4-6 9a6 6 0 0012 0c0-5-4-6-6-9z"/><path d="M12 18v3"/></svg>',
     guestExperience:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 21s-4-3.5-4-7a4 4 0 118 0c0 3.5-4 7-4 7z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+    sustainability:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 22a7 7 0 006.29-4.1C19.6 15.3 16.5 12 12 5.5 7.5 12 4.4 15.3 5.71 17.9A7 7 0 0012 22z"/></svg>',
   };
 
   var TAB_BY_ID = {};

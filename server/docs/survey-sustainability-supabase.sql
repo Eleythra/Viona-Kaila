@@ -1,0 +1,36 @@
+-- =============================================================================
+-- Sürdürülebilirlik anketi — Supabase / Postgres notları (yapıştırılabilir özet)
+-- =============================================================================
+--
+-- Yeni sorular otel uygulaması şemasıyla uyumludur (js/survey-schema.js).
+-- Mevcut tablo yapısında DEĞİŞİKLİK GEREKMEZ: survey_submissions.hotel_answers ve
+-- survey_submissions.hotel_categories alanları zaten JSON/JSONB ise yeni anahtarlar
+-- doğrudan yazılır.
+--
+-- Gönderim başına JSON örnekleri:
+--
+-- hotel_categories içinde yeni sekme özeti:
+--   "sustainability": 4.33
+--
+-- hotel_answers içinde soru puanları (1–5):
+--   "sus_eco_practices": 4,
+--   "sus_sustainability_engagement": 5,
+--   "sus_overall_sustainability": 4
+--
+-- Soru anahtarları (hotel_answers):
+--   sus_eco_practices              — Çevre dostu uygulamaların yeterliliği
+--   sus_sustainability_engagement — Bilgilendirme ve sürece dahil etme
+--   sus_overall_sustainability    — Genel sürdürülebilir tesis algısı
+--
+-- Kategori anahtarı (hotel_categories):
+--   sustainability
+--
+-- İsteğe bağlı doğrulama (JSONB ise): yalnızca şema disiplini için; üretim zorunlu değil.
+-- ALTER TABLE survey_submissions
+--   DROP CONSTRAINT IF EXISTS survey_hotel_answers_object;
+-- (Projede böyle bir constraint yoksa bu blok atlanır.)
+--
+-- Yedek / raporlama: Admin paneli ve PDF etiketleri
+-- server/src/modules/admin/reporting/survey-labels-tr.js dosyasında tanımlıdır.
+--
+-- =============================================================================

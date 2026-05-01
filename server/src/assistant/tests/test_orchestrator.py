@@ -1,6 +1,7 @@
 import sys
 import re
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
@@ -22,6 +23,20 @@ from assistant.services.rule_engine import (  # noqa: E402
 from assistant.utils.text_normalizer import normalize_text  # noqa: E402
 from assistant.services.throttle_service import ThrottleService  # noqa: E402
 from assistant.services.chat_form_state import ChatFormState  # noqa: E402
+
+_PATCH_QUIET_OFF = patch(
+    "assistant.services.orchestrator.operational_quiet_hours_active",
+    new=lambda now=None: False,
+)
+
+
+def setup_module():
+    """Tüm senaryolarda İstanbul gece penceresi kapalı varsayılır; gece testi iç içe patch ile True yapar."""
+    _PATCH_QUIET_OFF.start()
+
+
+def teardown_module():
+    _PATCH_QUIET_OFF.stop()
 
 
 class DummyIntentService:
@@ -2666,4 +2681,25 @@ def test_full_name_ack_prompts_four_locales_consistency():
     de_gn = _localized_full_name_prompt_guest_notif_skip_description("pregnancy", "de")
     assert "schwangerschaft" in de_gn.lower()
     assert "mitteilung" in de_gn.lower() or "erhalten" in de_gn.lower()
+
+
+def test_operational_quiet_hours_blocks_chat_form_start():
+    with patch(
+        "assistant.services.orchestrator.operational_quiet_hours_active",
+        new=lambda now=None: True,
+    ):
+        orch, _, _ = build_orchestrator()
+        res = orch.handle(
+            ChatRequest(
+                message="havlu talep ediyorum",
+                ui_language="tr",
+                locale="tr",
+                user_id="u-night",
+                session_id="s-night",
+            )
+        )
+    assert res.meta.action is None
+    low = res.message.lower()
+    assert "resepsiyon" in low
+    assert "00:00" in low or "08:00" in low
 
