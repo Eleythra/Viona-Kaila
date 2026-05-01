@@ -806,44 +806,80 @@
     return t ? t : "—";
   }
 
-  /** ISO submitted_at → gg/aa/yyyy ss:dd (yerel saat). Takvim inputu değil; tablo/metin için. */
+  /** ISO submitted_at → gg/aa/yyyy ss:dd (Europe/Istanbul; Kayıt tarihi süzgeci data-cal-date ile aynı gün). */
   function formatSubmittedAtTr(iso) {
     var s = String(iso || "");
     if (!s) return "—";
     var d = new Date(s);
-    if (!Number.isNaN(d.getTime())) {
-      var dd = String(d.getDate()).padStart(2, "0");
-      var mm = String(d.getMonth() + 1).padStart(2, "0");
-      var yyyy = String(d.getFullYear());
-      var hh = String(d.getHours()).padStart(2, "0");
-      var mi = String(d.getMinutes()).padStart(2, "0");
-      return dd + "/" + mm + "/" + yyyy + " " + hh + ":" + mi;
+    if (Number.isNaN(d.getTime())) {
+      var m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (m) {
+        return m[3] + "/" + m[2] + "/" + m[1] + (s.length > 10 ? " " + s.slice(11, 16).replace("T", " ") : "");
+      }
+      return s.length >= 16 ? s.slice(0, 16).replace("T", " ") : s;
     }
-    var m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (m) {
-      return m[3] + "/" + m[2] + "/" + m[1] + (s.length > 10 ? " " + s.slice(11, 16).replace("T", " ") : "");
+    var cal = submittedAtCalendarIso(s);
+    if (!cal || cal.length < 10) return "—";
+    var dateTr = formatIsoDateDisplayTr(cal);
+    var hm = "";
+    try {
+      hm = new Intl.DateTimeFormat("en-GB", {
+        timeZone: ADMIN_HOTEL_TZ,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        hourCycle: "h23",
+      })
+        .format(d)
+        .trim()
+        .replace(/\u202f|\u00a0/g, " ");
+    } catch (_e) {
+      hm = "";
     }
-    return s.length >= 16 ? s.slice(0, 16).replace("T", " ") : s;
+    if (!hm) {
+      hm =
+        String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+    }
+    return dateTr + " " + hm;
   }
 
-  /** submitted_at → gg/aa ss:dd (tablo için kısa). */
+  /** submitted_at → gg/aa ss:dd (kısa; Europe/Istanbul). */
   function formatSubmittedAtShortTr(iso) {
     var s = String(iso || "");
     if (!s) return "—";
     var d = new Date(s);
-    if (!Number.isNaN(d.getTime())) {
-      var dd = String(d.getDate()).padStart(2, "0");
-      var mm = String(d.getMonth() + 1).padStart(2, "0");
-      var hh = String(d.getHours()).padStart(2, "0");
-      var mi = String(d.getMinutes()).padStart(2, "0");
-      return dd + "/" + mm + " " + hh + ":" + mi;
+    if (Number.isNaN(d.getTime())) {
+      var m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (m) {
+        var tail = s.length > 10 ? String(s.slice(11, 16)).replace("T", " ").trim() : "";
+        return m[3] + "/" + m[2] + (tail ? " " + tail : "");
+      }
+      return s.length >= 16 ? s.slice(8, 10) + "/" + s.slice(5, 7) + " " + s.slice(11, 16) : "—";
     }
-    var m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (m) {
-      var tail = s.length > 10 ? String(s.slice(11, 16)).replace("T", " ").trim() : "";
-      return m[3] + "/" + m[2] + (tail ? " " + tail : "");
+    var cal = submittedAtCalendarIso(s);
+    if (!cal || cal.length < 10) return "—";
+    var p = cal.split("-");
+    var ddmm = p[2] + "/" + p[1];
+    var hm = "";
+    try {
+      hm = new Intl.DateTimeFormat("en-GB", {
+        timeZone: ADMIN_HOTEL_TZ,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        hourCycle: "h23",
+      })
+        .format(d)
+        .trim()
+        .replace(/\u202f|\u00a0/g, " ");
+    } catch (_e) {
+      hm = "";
     }
-    return s.length >= 16 ? s.slice(8, 10) + "/" + s.slice(5, 7) + " " + s.slice(11, 16) : "—";
+    if (!hm) {
+      hm =
+        String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+    }
+    return ddmm + " " + hm;
   }
 
   /** submitted_at → otel takvim günü YYYY-MM-DD (liste tarih süzgeci; Europe/Istanbul). */
