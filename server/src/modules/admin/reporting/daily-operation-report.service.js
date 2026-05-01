@@ -5,7 +5,7 @@ import {
 } from "../admin.service.js";
 import { buildDailyOperationReportHtml } from "./daily-operation-report-template.js";
 import { renderDailyOperationPdfBuffer } from "./pdf.service.js";
-import { hotelCalendarDaySubmittedAtRange as hotelCalendarDaySubmittedAtRangeLib } from "../../lib/hotel-calendar-range.js";
+import { hotelCalendarDaySubmittedAtRange as hotelCalendarDaySubmittedAtRangeLib } from "../../../lib/hotel-calendar-range.js";
 
 const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
 
