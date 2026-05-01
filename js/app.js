@@ -66,10 +66,8 @@
 
   /** i18n.js ile aynı anahtar; burada da tanımlı olsun (bağımsız yükleme). */
   const LANG_STORAGE_KEY = "viona_lang";
-  /** Bu oturumda «Devam et» ile dil onaylandıysa ana sayfaya doğrudan geçilir. */
+  /** Eski sürümlerde kullanılıyordu; artık dil/giriş atlama yok — kalıntı temizliği için. */
   const SESSION_LANG_OK = "viona_lang_session_ok";
-  /** `viona-gate-config.js` VERSION ile eşleşince erişim onayı geçerlidir. */
-  const GATE_STORAGE_KEY = "viona_gate_passed_version";
 
   let lang = null;
   let selectedLangCode = null;
@@ -704,16 +702,6 @@
     });
   }
 
-  function gateVersionMatches() {
-    try {
-      const cfg = window.VIONA_GATE;
-      if (!cfg || cfg.VERSION == null) return false;
-      return String(localStorage.getItem(GATE_STORAGE_KEY) || "") === String(cfg.VERSION);
-    } catch (_e) {
-      return false;
-    }
-  }
-
   function gatePasswordAccepts(input) {
     const cfg = window.VIONA_GATE;
     if (!cfg || typeof cfg.PASSWORD !== "string") return false;
@@ -730,11 +718,9 @@
   function resetGateForm() {
     const pw = el("gate-password");
     const c1 = el("gate-check-privacy");
-    const c2 = el("gate-check-age");
     const err = el("gate-error");
     if (pw) pw.value = "";
     if (c1) c1.checked = false;
-    if (c2) c2.checked = false;
     if (err) {
       err.textContent = "";
       err.classList.add("hidden");
@@ -762,9 +748,8 @@
       }
     }
     if (pw) pw.addEventListener("input", clearGateError);
-    [el("gate-check-privacy"), el("gate-check-age")].forEach((node) => {
-      if (node) node.addEventListener("change", clearGateError);
-    });
+    const chk = el("gate-check-privacy");
+    if (chk) chk.addEventListener("change", clearGateError);
 
     btn.addEventListener("click", () => {
       const errEl = el("gate-error");
@@ -774,7 +759,6 @@
       }
       const pass = pw ? pw.value : "";
       const okPrivacy = el("gate-check-privacy") && el("gate-check-privacy").checked;
-      const okAge = el("gate-check-age") && el("gate-check-age").checked;
 
       if (!gatePasswordAccepts(pass)) {
         showGateError("gateErrorPassword");
@@ -785,19 +769,7 @@
         showGateError("gateErrorPrivacy");
         return;
       }
-      if (!okAge) {
-        showGateError("gateErrorAge");
-        return;
-      }
 
-      try {
-        const cfg = window.VIONA_GATE;
-        if (cfg && cfg.VERSION != null) {
-          localStorage.setItem(GATE_STORAGE_KEY, String(cfg.VERSION));
-        }
-      } catch (_e) {
-        /* private mode */
-      }
       resetGateForm();
       showView("home");
       scheduleDiscountPopup();
@@ -829,21 +801,11 @@
 
     continueBtn.addEventListener("click", () => {
       if (!selectedLangCode) return;
-      try {
-        sessionStorage.setItem(SESSION_LANG_OK, "1");
-      } catch (e) {
-        /* private mode vb. */
-      }
       setLang(selectedLangCode);
-      if (gateVersionMatches()) {
-        showView("home");
-        scheduleDiscountPopup();
-      } else {
-        showView("gate");
-        applyI18n(document);
-        const pwInput = el("gate-password");
-        if (pwInput) pwInput.focus();
-      }
+      showView("gate");
+      applyI18n(document);
+      const pwInput = el("gate-password");
+      if (pwInput) pwInput.focus();
     });
   }
 
@@ -871,61 +833,50 @@
     wireGateScreen();
     wireHome();
 
+    try {
+      sessionStorage.removeItem(SESSION_LANG_OK);
+    } catch (_e) {
+      /* private mode */
+    }
+
     let storedLang = null;
     try {
       storedLang = localStorage.getItem(LANG_STORAGE_KEY);
     } catch (e) {
       storedLang = null;
     }
-    let sessionOk = false;
-    try {
-      sessionOk = sessionStorage.getItem(SESSION_LANG_OK) === "1";
-    } catch (e) {
-      sessionOk = false;
-    }
 
     function validLang(code) {
       return Boolean(code && I18N[code]);
     }
 
-    const skipLangScreen = sessionOk && validLang(storedLang);
-
-    if (skipLangScreen) {
-      lang = storedLang;
-      selectedLangCode = lang;
-      setLang(lang);
+    lang = null;
+    if (validLang(storedLang)) {
+      selectedLangCode = storedLang;
+    }
+    applyI18n(document);
+    showView("lang");
+    if (validLang(storedLang)) {
       document.querySelectorAll(".lang-chip").forEach((c) => {
-        const on = c.dataset.lang === lang;
+        const on = c.dataset.lang === storedLang;
         c.classList.toggle("lang-chip--active", on);
         c.setAttribute("aria-pressed", on ? "true" : "false");
       });
-      if (gateVersionMatches()) {
-        showView("home");
-        scheduleDiscountPopup();
-      } else {
-        showView("gate");
-        applyI18n(document);
-      }
-    } else {
-      if (validLang(storedLang)) {
-        selectedLangCode = storedLang;
-      }
-      applyI18n(document);
-      showView("lang");
-      if (validLang(storedLang)) {
-        document.querySelectorAll(".lang-chip").forEach((c) => {
-          const on = c.dataset.lang === storedLang;
-          c.classList.toggle("lang-chip--active", on);
-          c.setAttribute("aria-pressed", on ? "true" : "false");
-        });
-        el("btn-lang-continue").disabled = false;
-      }
+      el("btn-lang-continue").disabled = false;
     }
 
-    if (!skipLangScreen) {
-      renderModuleGrid();
-      renderRateLinks();
-    }
+    renderModuleGrid();
+    renderRateLinks();
+
+    window.addEventListener(
+      "pageshow",
+      function (ev) {
+        if (ev.persisted) {
+          window.location.reload();
+        }
+      },
+      false
+    );
   }
 
   init();

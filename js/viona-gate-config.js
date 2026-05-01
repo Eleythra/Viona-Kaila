@@ -1,6 +1,6 @@
 /**
- * Misafir erişim şifresi — haftalık değişimde VERSION değerini artırın.
- * Böylece cihazda kayıtlı eski onay geçersiz olur ve yeni şifre sorulur.
+ * Misafir erişim şifresi — şifre her tam sayfa yüklemesinde sorulur (tarayıcıda saklanmaz).
+ * Haftalık şifre değişiminde PASSWORD güncelleyin; isteğe bağlı VERSION ile js dosyası ?v= önbelleğini kırın.
  */
 (function () {
   "use strict";

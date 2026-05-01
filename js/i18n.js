@@ -19,13 +19,14 @@ const I18N = {
     gatePrivacyTitle: "Kişisel veriler — kısa bilgilendirme",
     gatePrivacyBody:
       "Viona üzerinden ilettiğiniz bilgiler, Kaila Beach Hotel’de konaklamanızla ilgili taleplerinizi karşılamak ve sizi bilgilendirmek için işlenir; hukuka aykırı şekilde yayımlanmaz. Ayrıntılı aydınlatma ve haklarınız için otelin resmi bilgilendirme metnine başvurabilirsiniz.",
-    gateCheckPrivacy: "Yukarıdaki bilgilendirmeyi okudum ve anladım.",
-    gateCheckAge: "18 yaşında veya daha büyük olduğumu beyan ederim.",
+    gatePrivacyAgeLine:
+      "• Reşit olduğunuzu (18 yaş ve üzeri) beyan edersiniz; aksi halde bu uygulamayı kullanmamanız gerekir.",
+    gateCheckPrivacy:
+      "Yukarıdaki bilgilendirmeyi ve reşitlik maddesini okudum, kabul ediyorum.",
     gateSubmit: "Onaylıyorum ve devam ediyorum",
     gateBackLang: "Dil seçimine dön",
     gateErrorPassword: "Şifre doğru değil. Güncel şifreyi girin.",
-    gateErrorPrivacy: "Devam etmek için bilgilendirme onayını işaretleyin.",
-    gateErrorAge: "Devam etmek için yaş beyanını işaretleyin.",
+    gateErrorPrivacy: "Devam etmek için onayı işaretleyin.",
 
     homeTitle: "Kaila Beach Hotel",
 
@@ -657,13 +658,13 @@ const I18N = {
     gatePrivacyTitle: "Privacy — brief notice",
     gatePrivacyBody:
       "Information you share through Viona is used to handle requests related to your stay at Kaila Beach Hotel and to keep you informed appropriately; it is not published unlawfully. Please refer to the hotel’s official privacy notice for full details and your rights.",
-    gateCheckPrivacy: "I have read and understood the notice above.",
-    gateCheckAge: "I confirm that I am 18 years of age or older.",
+    gatePrivacyAgeLine:
+      "• You declare that you are of legal age (18+); otherwise you must not use this application.",
+    gateCheckPrivacy: "I have read the notice and the age statement above and I agree.",
     gateSubmit: "I agree and continue",
     gateBackLang: "Back to language selection",
     gateErrorPassword: "Incorrect password. Please enter the current access password.",
-    gateErrorPrivacy: "Please confirm that you have read the notice above.",
-    gateErrorAge: "Please confirm that you are 18 or older.",
+    gateErrorPrivacy: "Please tick the box to confirm and continue.",
 
     homeTitle: "Kaila Beach Hotel",
 
@@ -1294,13 +1295,14 @@ const I18N = {
     gatePrivacyTitle: "Datenschutz — Kurzhinweis",
     gatePrivacyBody:
       "Die über Viona übermittelten Informationen werden zur Bearbeitung Ihrer Anliegen im Zusammenhang mit Ihrem Aufenthalt im Kaila Beach Hotel und zur angemessenen Information verwendet; eine rechtswidrige Veröffentlichung erfolgt nicht. Ausführliche Informationen und Ihre Rechte entnehmen Sie bitte der offiziellen Datenschutzerklärung des Hotels.",
-    gateCheckPrivacy: "Ich habe den obigen Hinweis gelesen und verstanden.",
-    gateCheckAge: "Ich bestätige, dass ich 18 Jahre oder älter bin.",
+    gatePrivacyAgeLine:
+      "• Sie erklären, dass Sie volljährig sind (18 Jahre oder älter); andernfalls dürfen Sie diese Anwendung nicht nutzen.",
+    gateCheckPrivacy:
+      "Ich habe den Hinweis und die Altersangabe oben gelesen und stimme zu.",
     gateSubmit: "Zustimmen und fortfahren",
     gateBackLang: "Zurück zur Sprachauswahl",
     gateErrorPassword: "Passwort ungültig. Bitte das aktuelle Zugangspasswort eingeben.",
-    gateErrorPrivacy: "Bitte bestätigen Sie, dass Sie den Hinweis gelesen haben.",
-    gateErrorAge: "Bitte bestätigen Sie, dass Sie 18 Jahre oder älter sind.",
+    gateErrorPrivacy: "Bitte aktivieren Sie das Kontrollkästchen, um fortzufahren.",
 
     homeTitle: "Kaila Beach Hotel",
 
@@ -1932,13 +1934,14 @@ const I18N = {
     gatePrivacyTitle: "Prywatność — krótka informacja",
     gatePrivacyBody:
       "Informacje przekazywane przez Viona są wykorzystywane do realizacji związanych z pobytem w Kaila Beach Hotel oraz do odpowiedniego informowania; nie są publikowane w sposób niezgodny z prawem. Pełne informacje i Państwa prawa znajdują się w oficjalnej polityce prywatności hotelu.",
-    gateCheckPrivacy: "Przeczytałem/am powyższą informację i ją rozumiem.",
-    gateCheckAge: "Potwierdzam, że mam ukończone 18 lat.",
+    gatePrivacyAgeLine:
+      "• Oświadczasz, że jesteś osobą pełnoletnią (18+); w przeciwnym razie nie powinieneś/powinnaś korzystać z aplikacji.",
+    gateCheckPrivacy:
+      "Przeczytałem/am powyższą informację i punkt o wieku oraz akceptuję.",
     gateSubmit: "Akceptuję i kontynuuję",
     gateBackLang: "Powrót do wyboru języka",
     gateErrorPassword: "Nieprawidłowe hasło. Wpisz aktualne hasło dostępu.",
-    gateErrorPrivacy: "Zaznacz potwierdzenie zapoznania się z informacją.",
-    gateErrorAge: "Zaznacz potwierdzenie pełnoletności.",
+    gateErrorPrivacy: "Zaznacz pole potwierdzenia, aby kontynuować.",
 
     homeTitle: "Hotel Kaila Beach",
     introLead: "Przy plaży w Obagöl, Alanya — All Inclusive dla komfortowych wakacji.",

@@ -24,13 +24,14 @@
       gatePrivacyTitle: "Персональные данные — краткое уведомление",
       gatePrivacyBody:
         "Сведения, которые вы передаёте через Viona, используются для обработки запросов, связанных с вашим проживанием в Kaila Beach Hotel, и для информирования; не распространяются незаконно. Подробности и ваши права — в официальном уведомлении отеля о конфиденциальности.",
-      gateCheckPrivacy: "Я прочитал(а) уведомление выше и понимаю его содержание.",
-      gateCheckAge: "Подтверждаю, что мне исполнилось 18 лет или больше.",
+      gatePrivacyAgeLine:
+        "• Вы подтверждаете, что достигли совершеннолетия (18+); иначе не следует пользоваться приложением.",
+      gateCheckPrivacy:
+        "Я прочитал(а) уведомление и пункт о возрасте выше и согласен(на).",
       gateSubmit: "Подтверждаю и продолжаю",
       gateBackLang: "Назад к выбору языка",
       gateErrorPassword: "Неверный пароль. Введите актуальный пароль доступа.",
-      gateErrorPrivacy: "Отметьте подтверждение ознакомления с уведомлением.",
-      gateErrorAge: "Отметьте подтверждение возраста 18+.",
+      gateErrorPrivacy: "Отметьте галочку подтверждения, чтобы продолжить.",
       homeTitle: "Kaila Beach Hotel",
       introLead:
         "Первая линия у моря в Обагёле, Аланья — концепция «всё включено» для комфортного отдыха.",
@@ -100,13 +101,14 @@
       gatePrivacyTitle: "Beskyttelse af persondata — kort meddelelse",
       gatePrivacyBody:
         "Oplysninger, du deler via Viona, bruges til at håndtere henvendelser vedrørende dit ophold på Kaila Beach Hotel og til relevant information; de offentliggøres ikke i strid med loven. Se hotellets officielle privatlivsbesked for fulde detaljer.",
-      gateCheckPrivacy: "Jeg har læst og forstået meddelelsen ovenfor.",
-      gateCheckAge: "Jeg bekræfter, at jeg er 18 år eller derover.",
+      gatePrivacyAgeLine:
+        "• Du erklærer, at du er myndig (18+); ellers må du ikke bruge appen.",
+      gateCheckPrivacy:
+        "Jeg har læst meddelelsen og alderspunktet ovenfor og accepterer.",
       gateSubmit: "Jeg accepterer og fortsætter",
       gateBackLang: "Tilbage til sprogvalg",
       gateErrorPassword: "Forkert adgangskode. Indtast den aktuelle kode.",
-      gateErrorPrivacy: "Bekræft venligst, at du har læst meddelelsen.",
-      gateErrorAge: "Bekræft venligst, at du er 18 år eller derover.",
+      gateErrorPrivacy: "Sæt kryds i feltet for at fortsætte.",
       homeTitle: "Kaila Beach Hotel",
       introLead: "Strandfront i Obagöl, Alanya — All Inclusive til en behagelig ferie.",
       appVionaTitle: "Viona · Din smarte opholdsledsager",
@@ -175,13 +177,14 @@
       gatePrivacyTitle: "Ochrana osobních údajů — stručná informace",
       gatePrivacyBody:
         "Údaje sdílené prostřednictvím Viona slouží k vyřízení požadavků souvisejících s pobytem v Kaila Beach Hotel a k přiměřenému informování; nejsou zveřejňovány nezákoně. Podrobnosti a svá práva najdete v oficiálním oznámení hotelu.",
-      gateCheckPrivacy: "Prohlásil(a) jsem se s výše uvedenou informací seznámil(a) a rozumím jí.",
-      gateCheckAge: "Potvrzuji, že mi je 18 let nebo více.",
+      gatePrivacyAgeLine:
+        "• Prohlašujete, že jste zletilý/á (18+); jinak aplikaci nepoužívejte.",
+      gateCheckPrivacy:
+        "Seznámil(a) jsem se s informací i bodem o věku výše a souhlasím.",
       gateSubmit: "Souhlasím a pokračuji",
       gateBackLang: "Zpět k výběru jazyka",
       gateErrorPassword: "Nesprávné heslo. Zadejte aktuální přístupové heslo.",
-      gateErrorPrivacy: "Potvrďte prosím seznámení s informací.",
-      gateErrorAge: "Potvrďte prosím věk 18+.",
+      gateErrorPrivacy: "Zaškrtněte prosím pole pro pokračování.",
       homeTitle: "Kaila Beach Hotel",
       introLead: "Přímo u moře v Obagöl, Alanya — All Inclusive pro pohodlnou dovolenou.",
       appVionaTitle: "Viona · Chytrý průvodce pobytem",
@@ -250,13 +253,14 @@
       gatePrivacyTitle: "Date personale — informare scurtă",
       gatePrivacyBody:
         "Informațiile transmise prin Viona sunt folosite pentru solicitările legate de sejurul la Kaila Beach Hotel și pentru informare adecvată; nu sunt publicate ilegal. Detaliile și drepturile dvs. sunt în notificarea oficială de confidențialitate a hotelului.",
-      gateCheckPrivacy: "Am citit și am înțeles informarea de mai sus.",
-      gateCheckAge: "Confirm că am împlinit 18 ani sau mai mult.",
+      gatePrivacyAgeLine:
+        "• Declarați că aveți cel puțin 18 ani; altfel nu trebuie să folosiți aplicația.",
+      gateCheckPrivacy:
+        "Am citit informarea și punctul privind vârsta de mai sus și sunt de acord.",
       gateSubmit: "Sunt de acord și continui",
       gateBackLang: "Înapoi la limbi",
       gateErrorPassword: "Parolă incorectă. Introduceți parola curentă.",
-      gateErrorPrivacy: "Confirmați că ați citit informarea.",
-      gateErrorAge: "Confirmați vârsta de cel puțin 18 ani.",
+      gateErrorPrivacy: "Bifați caseta pentru a continua.",
       homeTitle: "Kaila Beach Hotel",
       introLead: "La malul mării în Obagöl, Alanya — All Inclusive pentru o vacanță confortabilă.",
       appVionaTitle: "Viona · Companionul inteligent al sejurului",
@@ -325,13 +329,14 @@
       gatePrivacyTitle: "Privacy — korte mededeling",
       gatePrivacyBody:
         "Gegevens die u via Viona deelt, worden gebruikt voor verzoeken met betrekking tot uw verblijf in Kaila Beach Hotel en voor passende informatie; ze worden niet onrechtmatig gepubliceerd. Zie de officiële privacyverklaring van het hotel voor details en uw rechten.",
-      gateCheckPrivacy: "Ik heb de mededeling hierboven gelezen en begrepen.",
-      gateCheckAge: "Ik bevestig dat ik 18 jaar of ouder ben.",
+      gatePrivacyAgeLine:
+        "• U verklaart meerderjarig te zijn (18+); anders mag u de app niet gebruiken.",
+      gateCheckPrivacy:
+        "Ik heb de mededeling en het leeftijdspunt hierboven gelezen en ga akkoord.",
       gateSubmit: "Ik ga akkoord en ga verder",
       gateBackLang: "Terug naar taalkeuze",
       gateErrorPassword: "Onjuist wachtwoord. Voer het actuele toegangswachtwoord in.",
-      gateErrorPrivacy: "Bevestig dat u de mededeling heeft gelezen.",
-      gateErrorAge: "Bevestig dat u 18 jaar of ouder bent.",
+      gateErrorPrivacy: "Vink het vakje aan om door te gaan.",
       homeTitle: "Kaila Beach Hotel",
       introLead: "Strandzijde in Obagöl, Alanya — all-inclusive voor een comfortabel verblijf.",
       appVionaTitle: "Viona · Uw slimme verblijfsmetgezel",
@@ -400,13 +405,14 @@
       gatePrivacyTitle: "Osobné údaje — stručná informácia",
       gatePrivacyBody:
         "Údaje zdieľané cez Viona slúžia na vybavenie požiadaviek súvisiacich s pobytom v Kaila Beach Hotel a na primerané informovanie; nezverejňujú sa nezákonne. Podrobnosti a svoje práva nájdete v oficiálnom oznámení hotela.",
-      gateCheckPrivacy: "Prečítal(a) som si vyššie uvedenú informáciu a rozumiem jej.",
-      gateCheckAge: "Potvrdzujem, že mám 18 rokov alebo viac.",
+      gatePrivacyAgeLine:
+        "• Potvrdzujete, že ste plnoletý/á (18+); inak aplikáciu nepoužívajte.",
+      gateCheckPrivacy:
+        "Prečítal(a) som si vyššie informáciu aj bod o veku a súhlasím.",
       gateSubmit: "Súhlasím a pokračujem",
       gateBackLang: "Späť na výber jazyka",
       gateErrorPassword: "Nesprávne heslo. Zadajte aktuálne prístupové heslo.",
-      gateErrorPrivacy: "Potvrďte, že ste sa s informáciou oboznámili.",
-      gateErrorAge: "Potvrďte vek 18+.",
+      gateErrorPrivacy: "Zaškrtnite pole na pokračovanie.",
       homeTitle: "Kaila Beach Hotel",
       introLead: "Pri mori v Obagöl, Alanya — all inclusive pre pohodlnú dovolenku.",
       appVionaTitle: "Viona · Váš inteligentný sprievodca pobytom",

@@ -440,6 +440,10 @@ body {
   hyphens: auto;
 }
 
+.gate-privacy-age-line {
+  margin-top: 12px;
+}
+
 .gate-checks {
   display: flex;
   flex-direction: column;
