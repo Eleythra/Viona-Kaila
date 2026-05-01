@@ -903,6 +903,14 @@
     }
   }
 
+  /** Tablo satırı: submitted_at boşsa created_at (süzgeç ve sütun uyumu). */
+  function bucketRowRecordTimestamp(r) {
+    var row = r || {};
+    var s = row.submitted_at;
+    if (s != null && String(s).trim()) return s;
+    return row.created_at != null ? row.created_at : "";
+  }
+
   var REQ_STAFF_NOTE_KEY = "viona_admin_request_staff_notes_v1";
 
   function loadRequestStaffNotes() {
@@ -1405,6 +1413,41 @@
     if (!displayEl) return;
     var v = String((nativeEl && nativeEl.value) || "").slice(0, 10);
     displayEl.textContent = v.length === 10 ? formatIsoDateDisplayTr(v) : "Tümü";
+  }
+
+  /**
+   * Operasyon sekmeleri: liste araç çubuğundaki «Kayıt tarihi» seçilince üst şerit/API ile aynı güne geçilir.
+   * Aksi halde yalnızca client-side süzülür (ör. değerlendirmeler sekmesi).
+   */
+  function wireBucketToolbarDateControls(dateNat, dateDisp, dateClear, handlers, applyFilters) {
+    var h = handlers || {};
+    if (dateNat && h.toolbarCalendarSeedYmd && /^\d{4}-\d{2}-\d{2}$/.test(String(h.toolbarCalendarSeedYmd))) {
+      dateNat.value = String(h.toolbarCalendarSeedYmd).slice(0, 10);
+      syncBucketFilterDateDisplay(dateNat, dateDisp);
+    }
+    if (dateNat) {
+      dateNat.addEventListener("change", function () {
+        syncBucketFilterDateDisplay(dateNat, dateDisp);
+        var v = String(dateNat.value || "").slice(0, 10);
+        if (typeof h.onToolbarCalendarDayChange === "function" && v.length === 10) {
+          h.onToolbarCalendarDayChange(v);
+          return;
+        }
+        applyFilters();
+      });
+      dateNat.addEventListener("input", function () {
+        syncBucketFilterDateDisplay(dateNat, dateDisp);
+        if (typeof h.onToolbarCalendarDayChange === "function") return;
+        applyFilters();
+      });
+    }
+    if (dateClear) {
+      dateClear.addEventListener("click", function () {
+        if (dateNat) dateNat.value = "";
+        syncBucketFilterDateDisplay(dateNat, dateDisp);
+        applyFilters();
+      });
+    }
   }
 
   /** API / DB farklı yazımları için; özet kartlarında tutarlı sayım. */
@@ -3031,23 +3074,7 @@
 
     if (search) search.addEventListener("input", applyFilters);
     if (statusFilter) statusFilter.addEventListener("change", applyFilters);
-    if (dateNat) {
-      dateNat.addEventListener("change", function () {
-        syncBucketFilterDateDisplay(dateNat, dateDisp);
-        applyFilters();
-      });
-      dateNat.addEventListener("input", function () {
-        syncBucketFilterDateDisplay(dateNat, dateDisp);
-        applyFilters();
-      });
-    }
-    if (dateClear) {
-      dateClear.addEventListener("click", function () {
-        if (dateNat) dateNat.value = "";
-        syncBucketFilterDateDisplay(dateNat, dateDisp);
-        applyFilters();
-      });
-    }
+    wireBucketToolbarDateControls(dateNat, dateDisp, dateClear, handlers, applyFilters);
 
     applyFilters();
   }
@@ -3255,23 +3282,7 @@
 
     if (search) search.addEventListener("input", applyFilters);
     if (statusFilter) statusFilter.addEventListener("change", applyFilters);
-    if (dateNat) {
-      dateNat.addEventListener("change", function () {
-        syncBucketFilterDateDisplay(dateNat, dateDisp);
-        applyFilters();
-      });
-      dateNat.addEventListener("input", function () {
-        syncBucketFilterDateDisplay(dateNat, dateDisp);
-        applyFilters();
-      });
-    }
-    if (dateClear) {
-      dateClear.addEventListener("click", function () {
-        if (dateNat) dateNat.value = "";
-        syncBucketFilterDateDisplay(dateNat, dateDisp);
-        applyFilters();
-      });
-    }
+    wireBucketToolbarDateControls(dateNat, dateDisp, dateClear, handlers, applyFilters);
 
     applyFilters();
   }
@@ -3484,23 +3495,7 @@
 
     if (search) search.addEventListener("input", applyFilters);
     if (statusFilter) statusFilter.addEventListener("change", applyFilters);
-    if (dateNat) {
-      dateNat.addEventListener("change", function () {
-        syncBucketFilterDateDisplay(dateNat, dateDisp);
-        applyFilters();
-      });
-      dateNat.addEventListener("input", function () {
-        syncBucketFilterDateDisplay(dateNat, dateDisp);
-        applyFilters();
-      });
-    }
-    if (dateClear) {
-      dateClear.addEventListener("click", function () {
-        if (dateNat) dateNat.value = "";
-        syncBucketFilterDateDisplay(dateNat, dateDisp);
-        applyFilters();
-      });
-    }
+    wireBucketToolbarDateControls(dateNat, dateDisp, dateClear, handlers, applyFilters);
 
     applyFilters();
   }
@@ -3722,23 +3717,7 @@
 
     if (search) search.addEventListener("input", applyFilters);
     if (statusFilter) statusFilter.addEventListener("change", applyFilters);
-    if (dateNat) {
-      dateNat.addEventListener("change", function () {
-        syncBucketFilterDateDisplay(dateNat, dateDisp);
-        applyFilters();
-      });
-      dateNat.addEventListener("input", function () {
-        syncBucketFilterDateDisplay(dateNat, dateDisp);
-        applyFilters();
-      });
-    }
-    if (dateClear) {
-      dateClear.addEventListener("click", function () {
-        if (dateNat) dateNat.value = "";
-        syncBucketFilterDateDisplay(dateNat, dateDisp);
-        applyFilters();
-      });
-    }
+    wireBucketToolbarDateControls(dateNat, dateDisp, dateClear, handlers, applyFilters);
 
     applyFilters();
   }
@@ -3840,9 +3819,9 @@
           '" data-search="' +
           esc(rowSearchText) +
           '" data-cal-date="' +
-          esc(submittedAtCalendarIso(r.submitted_at)) +
+          esc(submittedAtCalendarIso(bucketRowRecordTimestamp(r))) +
           '">';
-        html += "<td>" + esc(formatSubmittedAtTr(r.submitted_at)) + "</td>";
+        html += "<td>" + esc(formatSubmittedAtTr(bucketRowRecordTimestamp(r))) + "</td>";
         html += "<td>" + esc(r.room_number || "-") + "</td>";
         html += "<td>" + esc(operationGuestName(r) || "-") + "</td>";
         html += "<td>" + esc(r.nationality || "-") + "</td>";
@@ -3964,23 +3943,7 @@
 
     if (search) search.addEventListener("input", applyFilters);
     if (statusFilter) statusFilter.addEventListener("change", applyFilters);
-    if (dateNat) {
-      dateNat.addEventListener("change", function () {
-        syncBucketFilterDateDisplay(dateNat, dateDisp);
-        applyFilters();
-      });
-      dateNat.addEventListener("input", function () {
-        syncBucketFilterDateDisplay(dateNat, dateDisp);
-        applyFilters();
-      });
-    }
-    if (dateClear) {
-      dateClear.addEventListener("click", function () {
-        if (dateNat) dateNat.value = "";
-        syncBucketFilterDateDisplay(dateNat, dateDisp);
-        applyFilters();
-      });
-    }
+    wireBucketToolbarDateControls(dateNat, dateDisp, dateClear, handlers, applyFilters);
 
     applyFilters();
   }
@@ -4755,6 +4718,12 @@
       };
       if (typeof onSat === "function") tableHandlers.onSatisfaction = onSat;
       if (typeof onWa === "function") tableHandlers.onWhatsappResend = onWa;
+      if (handlers.toolbarCalendarSeedYmd) {
+        tableHandlers.toolbarCalendarSeedYmd = handlers.toolbarCalendarSeedYmd;
+      }
+      if (typeof handlers.onToolbarCalendarDayChange === "function") {
+        tableHandlers.onToolbarCalendarDayChange = handlers.onToolbarCalendarDayChange;
+      }
       if (tab.key === "request") {
         renderRequestsPanel(wrap, items, tableHandlers);
       } else if (tab.key === "complaint") {

@@ -496,6 +496,18 @@
     else if (activeAdminTab === "op_front") void loadOpFront();
   }
 
+  /** Liste içi «Kayıt tarihi» ile şerit/API gününü eşitle (HK / Teknik / Ön büro tabloları). */
+  function opsToolbarListHandlers() {
+    var y = String(opSelectedCalendarDay || "").trim();
+    return {
+      toolbarCalendarSeedYmd: /^\d{4}-\d{2}-\d{2}$/.test(y) ? y : "",
+      onToolbarCalendarDayChange: function (ymd) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return;
+        selectOpCalendarDay(ymd, ymd === hotelCalendarYmd(new Date()));
+      },
+    };
+  }
+
   function clearOpFilterDomStatusRoom(prefix) {
     var status = document.getElementById(prefix + "-filter-status");
     var room = document.getElementById(prefix + "-filter-room");
@@ -861,34 +873,42 @@
       ]);
       var res = pairHk[0];
       paintOpHkTechSummary("op-hk-summary-mount", "request", pairHk[1], res);
-      ui.renderBucketTable(mount, "request", res.items || [], {
-        pagination: res.pagination,
-        readOnly: false,
-        onPage: function (p) {
-          void loadOpHk(p);
-        },
-        onStatus: async function (bt, id, status) {
-          await adapter.updateStatus(bt, id, status);
-          await loadOpHk(opHkPage);
-        },
-        onDelete: async function (bt, id) {
-          await adapter.deleteItem(bt, id);
-          await loadOpHk(opHkPage);
-        },
-        onWhatsappResend: async function (itemType, id) {
-          try {
-            await adapter.resendWhatsappOperational(itemType, id);
-            window.alert("Kayıt operasyon WhatsApp (Cloud API) hattına yeniden iletildi.");
-            await loadOpHk(opHkPage);
-          } catch (err) {
-            var msg =
-              err && err.message
-                ? String(err.message)
-                : "WhatsApp iletimi tamamlanamadı. Bağlantıyı veya sunucu yanıtını kontrol edin.";
-            window.alert(msg);
-          }
-        },
-      });
+      ui.renderBucketTable(
+        mount,
+        "request",
+        res.items || [],
+        Object.assign(
+          {
+            pagination: res.pagination,
+            readOnly: false,
+            onPage: function (p) {
+              void loadOpHk(p);
+            },
+            onStatus: async function (bt, id, status) {
+              await adapter.updateStatus(bt, id, status);
+              await loadOpHk(opHkPage);
+            },
+            onDelete: async function (bt, id) {
+              await adapter.deleteItem(bt, id);
+              await loadOpHk(opHkPage);
+            },
+            onWhatsappResend: async function (itemType, id) {
+              try {
+                await adapter.resendWhatsappOperational(itemType, id);
+                window.alert("Kayıt operasyon WhatsApp (Cloud API) hattına yeniden iletildi.");
+                await loadOpHk(opHkPage);
+              } catch (err) {
+                var msg =
+                  err && err.message
+                    ? String(err.message)
+                    : "WhatsApp iletimi tamamlanamadı. Bağlantıyı veya sunucu yanıtını kontrol edin.";
+                window.alert(msg);
+              }
+            },
+          },
+          opsToolbarListHandlers(),
+        ),
+      );
       void refreshOpDayStripMiniStats();
     } catch (e) {
       bumpOpsBannerPaintSeq("hk");
@@ -923,34 +943,42 @@
       ]);
       var res = pairTech[0];
       paintOpHkTechSummary("op-tech-summary-mount", "fault", pairTech[1], res);
-      ui.renderBucketTable(mount, "fault", res.items || [], {
-        pagination: res.pagination,
-        readOnly: false,
-        onPage: function (p) {
-          void loadOpTech(p);
-        },
-        onStatus: async function (bt, id, status) {
-          await adapter.updateStatus(bt, id, status);
-          await loadOpTech(opTechPage);
-        },
-        onDelete: async function (bt, id) {
-          await adapter.deleteItem(bt, id);
-          await loadOpTech(opTechPage);
-        },
-        onWhatsappResend: async function (itemType, id) {
-          try {
-            await adapter.resendWhatsappOperational(itemType, id);
-            window.alert("Kayıt operasyon WhatsApp (Cloud API) hattına yeniden iletildi.");
-            await loadOpTech(opTechPage);
-          } catch (err) {
-            var msg =
-              err && err.message
-                ? String(err.message)
-                : "WhatsApp iletimi tamamlanamadı. Bağlantıyı veya sunucu yanıtını kontrol edin.";
-            window.alert(msg);
-          }
-        },
-      });
+      ui.renderBucketTable(
+        mount,
+        "fault",
+        res.items || [],
+        Object.assign(
+          {
+            pagination: res.pagination,
+            readOnly: false,
+            onPage: function (p) {
+              void loadOpTech(p);
+            },
+            onStatus: async function (bt, id, status) {
+              await adapter.updateStatus(bt, id, status);
+              await loadOpTech(opTechPage);
+            },
+            onDelete: async function (bt, id) {
+              await adapter.deleteItem(bt, id);
+              await loadOpTech(opTechPage);
+            },
+            onWhatsappResend: async function (itemType, id) {
+              try {
+                await adapter.resendWhatsappOperational(itemType, id);
+                window.alert("Kayıt operasyon WhatsApp (Cloud API) hattına yeniden iletildi.");
+                await loadOpTech(opTechPage);
+              } catch (err) {
+                var msg =
+                  err && err.message
+                    ? String(err.message)
+                    : "WhatsApp iletimi tamamlanamadı. Bağlantıyı veya sunucu yanıtını kontrol edin.";
+                window.alert(msg);
+              }
+            },
+          },
+          opsToolbarListHandlers(),
+        ),
+      );
       void refreshOpDayStripMiniStats();
     } catch (e) {
       bumpOpsBannerPaintSeq("tech");
@@ -1241,12 +1269,13 @@
       ui.renderOperationFront(
         mount,
         { complaint: c, guest_notification: gn, late_checkout: lc },
-        {
-          readOnly: false,
-          onPage: function (bt, p) {
-            opFrontPages[bt] = p;
-            void loadOpFront();
-          },
+        Object.assign(
+          {
+            readOnly: false,
+            onPage: function (bt, p) {
+              opFrontPages[bt] = p;
+              void loadOpFront();
+            },
           onStatus: async function (bt, id, status) {
             await adapter.updateStatus(bt, id, status);
             await loadOpFront();
@@ -1277,6 +1306,8 @@
             updateOpFrontFilterScopeLabel();
           },
         },
+          opsToolbarListHandlers(),
+        ),
         summary,
       );
       void refreshOpDayStripMiniStats();
