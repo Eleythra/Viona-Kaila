@@ -767,6 +767,7 @@ export async function createGuestRequest(payload) {
   const normalized = normalizePayload(payload);
   validate(normalized);
 
+  /* Sessiz saat: yalnızca request|complaint|fault|guest_notification — geç çıkış/rezervasyon buradan geçer, WA ön büro listesine gider. */
   if (isOperationalGuestRequestTypeBlocked(normalized.type) && isInOperationalQuietHours()) {
     const err = new Error("quiet_hours_reception_only");
     err.statusCode = 409;

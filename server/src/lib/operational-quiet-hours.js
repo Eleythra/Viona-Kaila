@@ -1,6 +1,13 @@
 /**
- * Otel operasyonu: Europe/Istanbul 00:00–07:59 arası misafir istek/şikayet/arıza/misafir bildirimi
- * formları kapalı; 08:00 tam olarak açık.
+ * Sessiz pencere (Europe/Istanbul): takvimde 00:00–08:00 aralığının dışında kayıt kabulü.
+ * Kapalı an: saat diliminde 08:00’a kadar (07:59 dahil), yani dakika < 8×60; 08:00:00 ve sonrası açık.
+ *
+ * Bu dört tür hem burada hem istemci (`js/lib/operational-quiet-hours.js`) hem Python asistan
+ * (`operational_quiet_hours_active`) ile aynı formül; geç çıkış / rezervasyon / anket kapalı değildir.
+ *
+ * Kayıt kabul edildiğinde WhatsApp alıcıları (sessiz saatten bağımsız; env listeleri):
+ *   fault → WHATSAPP_TECH_RECIPIENTS | request → WHATSAPP_HK_RECIPIENTS |
+ *   complaint | guest_notification | late_checkout → WHATSAPP_FRONT_RECIPIENTS
  */
 const TZ = "Europe/Istanbul";
 

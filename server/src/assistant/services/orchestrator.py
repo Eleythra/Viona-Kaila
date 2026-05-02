@@ -48,7 +48,7 @@ from zoneinfo import ZoneInfo
 
 
 def operational_quiet_hours_active(now: datetime | None = None) -> bool:
-    """Europe/Istanbul 00:00–07:59 — operasyonel form kaydı kapalı (08:00 dahil açık)."""
+    """Europe/Istanbul: 00:00–07:59 kayıt kapalı; 08:00:00 itibarıyla açık (dakika < 8*60). Node/js ile aynı."""
     tz = ZoneInfo("Europe/Istanbul")
     t = now.astimezone(tz) if now else datetime.now(tz)
     return (t.hour * 60 + t.minute) < 8 * 60

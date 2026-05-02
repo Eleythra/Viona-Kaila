@@ -21,7 +21,8 @@
   }
 
   /**
-   * 00:00–07:59 Europe/Istanbul: operasyonel 4 form türü kapalı.
+   * Europe/Istanbul: gece 00:00–07:59 kapalı; 08:00 ve sonrası açık (dakika < 8×60).
+   * Sunucu `operational-quiet-hours.js` ve Python asistan ile aynı mantık olmalı.
    */
   window.vionaIsOperationalQuietHours = function (d) {
     return istanbulMinutes(d) < 8 * 60;
