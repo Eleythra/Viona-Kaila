@@ -86,13 +86,41 @@ function markSent(ymd, fileSlug) {
   writeFileSync(sentFlagPath(ymd, fileSlug), `${new Date().toISOString()}\n`, "utf8");
 }
 
-function recipientsForSegment(envKeys) {
+const HK_FALLBACK_ENV_KEYS = ["WHATSAPP_DAILY_REPORT_HK_RECIPIENTS", "WHATSAPP_HK_RECIPIENTS"];
+
+/** Teknik/ön büro listeleri boşken HK günlük listesine düş (aynı hatta 3 PDF). Kapatmak: DAILY_OPERATION_REPORT_FALLBACK_TO_HK_RECIPIENTS=0 */
+function hkDailyRecipientsFallbackEnabled() {
+  const v = String(process.env.DAILY_OPERATION_REPORT_FALLBACK_TO_HK_RECIPIENTS ?? "1")
+    .trim()
+    .toLowerCase();
+  return v !== "0" && v !== "false" && v !== "no" && v !== "off";
+}
+
+/**
+ * @param {string[]} envKeys
+ * @param {"hk"|"tech"|"front"} segmentKey
+ */
+function recipientsForSegment(envKeys, segmentKey) {
   for (const k of envKeys) {
     const list = parseOperationalRecipients(process.env[k] || "");
-    if (list.length) return { list, envKey: k };
+    if (list.length) return { list, envKey: k, usedHkFallback: false };
   }
-  const fallback = parseOperationalRecipients(process.env.WHATSAPP_DAILY_REPORT_RECIPIENTS || "");
-  return { list: fallback, envKey: fallback.length ? "WHATSAPP_DAILY_REPORT_RECIPIENTS" : "" };
+  const fallbackAll = parseOperationalRecipients(process.env.WHATSAPP_DAILY_REPORT_RECIPIENTS || "");
+  if (fallbackAll.length) {
+    return { list: fallbackAll, envKey: "WHATSAPP_DAILY_REPORT_RECIPIENTS", usedHkFallback: false };
+  }
+  if (
+    (segmentKey === "tech" || segmentKey === "front") &&
+    hkDailyRecipientsFallbackEnabled()
+  ) {
+    for (const k of HK_FALLBACK_ENV_KEYS) {
+      const list = parseOperationalRecipients(process.env[k] || "");
+      if (list.length) {
+        return { list, envKey: k, usedHkFallback: true };
+      }
+    }
+  }
+  return { list: [], envKey: "", usedHkFallback: false };
 }
 
 /**
@@ -149,7 +177,16 @@ export async function runDailyOperationReportJob(opts = {}) {
       continue;
     }
 
-    const { list: recipients, envKey } = recipientsForSegment(seg.envKeys);
+    const { list: recipients, envKey, usedHkFallback } = recipientsForSegment(seg.envKeys, seg.key);
+    if (usedHkFallback) {
+      console.info(
+        "[daily_operation_report] recipients_from_hk_fallback ymd=%s segment=%s env=%s source=%s",
+        ymd,
+        seg.key,
+        envKey,
+        source,
+      );
+    }
     if (!recipients.length) {
       console.warn(
         "[daily_operation_report] segment_skip reason=empty_recipients ymd=%s segment=%s tried_env=%s source=%s",
@@ -184,10 +221,11 @@ export async function runDailyOperationReportJob(opts = {}) {
 
     if (wa.skipped) {
       console.warn(
-        "[daily_operation_report] whatsapp_skipped ymd=%s segment=%s reason=%s env=%s source=%s",
+        "[daily_operation_report] whatsapp_skipped ymd=%s segment=%s reason=%s template=%s env=%s source=%s",
         ymd,
         seg.key,
         wa.reason || "-",
+        wa.templateName || "-",
         envKey || "-",
         source,
       );
@@ -198,9 +236,10 @@ export async function runDailyOperationReportJob(opts = {}) {
     }
     if (!wa.ok) {
       console.warn(
-        "[daily_operation_report] whatsapp_failed ymd=%s segment=%s reason=%s delivered=%s/%s source=%s",
+        "[daily_operation_report] whatsapp_failed ymd=%s segment=%s template=%s reason=%s delivered=%s/%s source=%s",
         ymd,
         seg.key,
+        wa.templateName || "-",
         wa.reason || "-",
         wa.deliveredCount ?? 0,
         recipients.length,

@@ -778,8 +778,11 @@ export async function resendWhatsappForAdminItem(type, id) {
   const { data, error } = await sb(() => getSupabase().from(table).select("*").eq("id", idStr).maybeSingle());
   if (error) rethrowSupabaseError(error);
   if (!data) throw new Error("record_not_found");
-  const payload = data?.raw_payload && typeof data.raw_payload === "object" ? data.raw_payload : null;
+  const payload = data?.raw_payload && typeof data.raw_payload === "object" ? { ...data.raw_payload } : null;
   if (!payload) throw new Error("raw_payload_missing");
+  if ((payload.submittedAt == null || String(payload.submittedAt).trim() === "") && data.submitted_at) {
+    payload.submittedAt = data.submitted_at;
+  }
   const result = await sendOperationalWhatsappNotification(payload, "unknown", {
     recordId: idStr,
     resend: true,

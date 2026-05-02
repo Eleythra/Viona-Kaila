@@ -23,6 +23,11 @@
  * isteğe bağlı WHATSAPP_BUSINESS_ACCOUNT_ID (referans), WHATSAPP_TEMPLATE_* ile şablon adı override.
  */
 
+import {
+  formatInstantHotelDdMmYyyy,
+  formatInstantHotelHhMm,
+  formatIsoCalendarYmdAsDdMmYyyy,
+} from "../lib/hotel-calendar-range.js";
 import { coerceOperationalPayload, normalizeRequestCategoryKey } from "./operational-template-format.js";
 import { isOperationalRecordType } from "./operational-notification-routing.service.js";
 
@@ -252,6 +257,26 @@ function clip(s) {
   return t.slice(0, PARAM_MAX - 1) + "…";
 }
 
+/**
+ * Bekliyor cron tekrarı (`resend`): aynı şablon + son parametreye kısa hatırlatma metni (Meta’da ek şablon gerekmez).
+ * Kapatmak: OPERATIONAL_PENDING_REMINDER_APPEND_SUFFIX=0
+ */
+function appendOperationalReminderSuffix(bodyParams, options) {
+  const params = Array.isArray(bodyParams) ? bodyParams : [];
+  if (!options?.resend || params.length === 0) return params;
+  const rawOff = String(process.env.OPERATIONAL_PENDING_REMINDER_APPEND_SUFFIX ?? "1").trim().toLowerCase();
+  if (rawOff === "0" || rawOff === "false" || rawOff === "off") return params;
+  const suffix = String(
+    process.env.OPERATIONAL_PENDING_REMINDER_SUFFIX_TR ??
+      "\n\n[HATIRLATMA] Kayıt hâlâ «Bekliyor» durumunda.",
+  ).trim();
+  if (!suffix) return params;
+  const out = params.slice();
+  const i = out.length - 1;
+  out[i] = clip(String(out[i] ?? "") + suffix);
+  return out;
+}
+
 function categoryLabel(kind, cat) {
   const k = String(kind);
   const c = String(cat || "").trim();
@@ -267,17 +292,14 @@ function guestNotificationMainCategoryLabel(catId) {
   return clip(dash(m || "Misafir bildirimi"));
 }
 
-function formatDateDDMMYYYY(d) {
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = d.getFullYear();
-  return `${day}.${month}.${year}`;
-}
-
-function formatTimeHHmm(d) {
-  const h = String(d.getHours()).padStart(2, "0");
-  const m = String(d.getMinutes()).padStart(2, "0");
-  return `${h}:${m}`;
+/** Misafir kaydı anı — şablonda UTC yerine otel saat diliminde gösterim için. */
+function operationalEventInstant(payload) {
+  const raw = payload?.submittedAt ?? payload?.submitted_at;
+  if (raw != null && String(raw).trim()) {
+    const d = new Date(raw);
+    if (Number.isFinite(d.getTime())) return d;
+  }
+  return new Date();
 }
 
 function normalizeGuestType(payload, intentFallback) {
@@ -358,7 +380,7 @@ function itemTypeLabel(v) {
   return clip(dash(ITEM_TYPE_LABELS[x] || String(v || "").trim() || "-"));
 }
 
-function buildFaultBodyParams(payload, now) {
+function buildFaultBodyParams(payload, eventInstant) {
   const loc = payload.location || payload.details?.location;
   const urg = payload.urgency || payload.details?.urgency;
   return [
@@ -367,8 +389,8 @@ function buildFaultBodyParams(payload, now) {
     categoryLabel("fault", payload.category),
     locLabel(loc),
     urgLabel(urg),
-    dash(formatDateDDMMYYYY(now)),
-    dash(formatTimeHHmm(now)),
+    dash(formatInstantHotelDdMmYyyy(eventInstant)),
+    dash(formatInstantHotelHhMm(eventInstant)),
     clip(dash(payload.description)),
   ];
 }
@@ -421,7 +443,7 @@ function buildRequestQuantity(category, details) {
   return "-";
 }
 
-function buildRequestBodyParams(payload, now) {
+function buildRequestBodyParams(payload, eventInstant) {
   const cat = normalizeRequestCategoryKey(payload.category);
   const details = payload.details && typeof payload.details === "object" ? payload.details : {};
   const rawN = String(process.env.WHATSAPP_CLOUD_REQUEST_PARAM_COUNT || "8").trim();
@@ -447,19 +469,19 @@ function buildRequestBodyParams(payload, now) {
     requestSectionLabelTr(cat),
     buildRequestTypeLineTr(cat, details),
     buildRequestQuantity(cat, details),
-    dash(formatDateDDMMYYYY(now)),
-    dash(formatTimeHHmm(now)),
+    dash(formatInstantHotelDdMmYyyy(eventInstant)),
+    dash(formatInstantHotelHhMm(eventInstant)),
     clip(dash(payload.description)),
   ];
 }
 
-function buildComplaintBodyParams(payload, now) {
+function buildComplaintBodyParams(payload, eventInstant) {
   return [
     clip(dash(payload.name)),
     clip(dash(payload.room)),
     categoryLabel("complaint", payload.category),
-    dash(formatDateDDMMYYYY(now)),
-    dash(formatTimeHHmm(now)),
+    dash(formatInstantHotelDdMmYyyy(eventInstant)),
+    dash(formatInstantHotelHhMm(eventInstant)),
     clip(dash(payload.description)),
   ];
 }
@@ -468,36 +490,23 @@ function buildComplaintBodyParams(payload, now) {
  * Meta şablon sırası: {{1}} ad, {{2}} oda, {{3}} üst kategori, {{4}} alt kategori, {{5}} tarih, {{6}} saat, {{7}} açıklama.
  * Genel bildirimlerde {{5}}/{{6}} kayıt anı; geç çıkışta istenen çıkış tarihi/saati.
  */
-function buildGuestNotificationBodyParams(payload, now) {
+function buildGuestNotificationBodyParams(payload, eventInstant) {
   const cat = String(payload.category || "").trim();
   return [
     clip(dash(payload.name)),
     clip(dash(payload.room)),
     guestNotificationMainCategoryLabel(cat),
     categoryLabel("guest_notification", cat),
-    dash(formatDateDDMMYYYY(now)),
-    dash(formatTimeHHmm(now)),
+    dash(formatInstantHotelDdMmYyyy(eventInstant)),
+    dash(formatInstantHotelHhMm(eventInstant)),
     clip(dash(payload.description)),
   ];
-}
-
-function parseIsoDateToLocalDate(isoYmd) {
-  const s = String(isoYmd || "").trim();
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
-  if (!m) return null;
-  const y = Number(m[1]);
-  const mo = Number(m[2]) - 1;
-  const d = Number(m[3]);
-  const dt = new Date(y, mo, d);
-  if (dt.getFullYear() !== y || dt.getMonth() !== mo || dt.getDate() !== d) return null;
-  return dt;
 }
 
 function buildLateCheckoutBodyParams(payload) {
   const rawD = String(payload.checkoutDate || payload.details?.checkoutDate || "").trim();
   const rawT = String(payload.checkoutTime || payload.details?.checkoutTime || "").trim();
-  const dt = parseIsoDateToLocalDate(rawD);
-  const dateStr = dt ? formatDateDDMMYYYY(dt) : dash(rawD);
+  const dateStr = formatIsoCalendarYmdAsDdMmYyyy(rawD) || dash(rawD);
   return [
     clip(dash(payload.name)),
     clip(dash(payload.room)),
@@ -696,25 +705,29 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
     return { ok: false, skipped: true, channel: "cloud", reason: "empty_recipient_list" };
   }
 
-  const now = new Date();
+  const eventInstant = operationalEventInstant(payload);
   let bodyParams = [];
-  if (recordType === "fault") bodyParams = buildFaultBodyParams(payload, now);
-  else if (recordType === "request") bodyParams = buildRequestBodyParams(payload, now);
-  else if (recordType === "complaint") bodyParams = buildComplaintBodyParams(payload, now);
+  if (recordType === "fault") bodyParams = buildFaultBodyParams(payload, eventInstant);
+  else if (recordType === "request") bodyParams = buildRequestBodyParams(payload, eventInstant);
+  else if (recordType === "complaint") bodyParams = buildComplaintBodyParams(payload, eventInstant);
   else if (recordType === "late_checkout") bodyParams = buildLateCheckoutBodyParams(payload);
-  else bodyParams = buildGuestNotificationBodyParams(payload, now);
+  else bodyParams = buildGuestNotificationBodyParams(payload, eventInstant);
+
+  bodyParams = appendOperationalReminderSuffix(bodyParams, options);
 
   const graphUrl = buildWhatsappGraphMessagesUrl();
   const lang = templateLanguageCode();
 
   console.info(
-    "[whatsapp_ops] send_start record_type=%s template=%s language=%s recipient_count=%d recipients=%s param_count=%d waba_env_set=%s token_env=%s token_len=%d",
+    "[whatsapp_ops] send_start record_type=%s template=%s language=%s reminder=%s recipient_count=%d recipients=%s param_count=%d hotel_tz=%s waba_env_set=%s token_env=%s token_len=%d",
     recordType,
     templateName,
     lang,
+    options?.resend ? "1" : "0",
     recipients.length,
     recipients.join(","),
     bodyParams.length,
+    String(process.env.HOTEL_TIMEZONE || process.env.DAILY_OPERATION_REPORT_TZ || "Europe/Istanbul").trim(),
     process.env.WHATSAPP_BUSINESS_ACCOUNT_ID ? "yes" : "no",
     tokenEnvKey || "-",
     token.length,

@@ -121,7 +121,7 @@ services:
         value: "1"
       - key: DAILY_OPERATION_REPORT_CRON_KEY
         sync: false
-      # «Bekliyor» 1 saat (OPERATIONAL_PENDING_REMINDER_AFTER_MINUTES) sonra WhatsApp tekrarı — ayrı sık cron (örn. 15 dk)
+      # «Bekliyor» her N dk (OPERATIONAL_PENDING_REMINDER_AFTER_MINUTES, örn. 60) WhatsApp hatırlatması — sık cron (örn. 15 dk)
       - key: OPERATIONAL_PENDING_REMINDER_ENABLED
         value: "0"
       - key: OPERATIONAL_PENDING_REMINDER_AFTER_MINUTES

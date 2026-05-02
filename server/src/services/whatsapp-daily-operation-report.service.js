@@ -1,7 +1,9 @@
 /**
- * Günlük operasyon PDF’i: Graph `/{phone-id}/media` yükleme + departman şablonu
- * (`daily_operation_report_hk` | `daily_operation_report_tech` | `daily_operation_report_front`).
- * Belge başlığı: PDF; gövde {{1}} tarih, {{2}} tesis adı (DAILY_OPERATION_REPORT_HOTEL_NAME).
+ * Günlük operasyon PDF’i: Graph `/{phone-id}/media` yükleme + departman şablonu.
+ * Varsayılan şablon adları Meta’daki yaygın adlarla uyumlu (hk_operasyon | teknik_operasyon | front_operasyon);
+ * farklı ad için WHATSAPP_TEMPLATE_DAILY_OPERATION_* env kullanın.
+ * Belge başlığı: PDF; gövde {{1}} departman kısa adı (HK / Teknik / Ön büro), {{2}} tarih, {{3}} tesis adı.
+ * Meta şablon metni sabit «HK» yazmamalı — örn. «Günlük {{1}} operasyon raporu hazır. Tarih: {{2}} Tesis: {{3}}» (satır sonları opsiyonel).
  */
 
 import {
@@ -22,10 +24,11 @@ function buildWhatsappGraphMediaUrl() {
   return `https://graph.facebook.com/${graphVer}/${phoneNumberId}/media`;
 }
 
+/** Env yoksa kullanılır; Meta Manager’daki şablon adıyla birebir olmalı (bkz. render.yaml). */
 const DEFAULT_TEMPLATE_BY_SEGMENT = {
-  hk: "daily_operation_report_hk",
-  tech: "daily_operation_report_tech",
-  front: "daily_operation_report_front",
+  hk: "hk_operasyon",
+  tech: "teknik_operasyon",
+  front: "front_operasyon",
 };
 
 const TEMPLATE_ENV_BY_SEGMENT = {
@@ -43,6 +46,15 @@ function resolveDailyReportTemplateName(segment) {
   const fromEnv = String(process.env[envKey] || "").trim();
   if (fromEnv) return fromEnv;
   return DEFAULT_TEMPLATE_BY_SEGMENT[s];
+}
+
+/** WhatsApp gövdesi {{1}} — Meta şablonunda «Günlük {{1}} operasyon raporu…» ile kullanılır. */
+export function dailyReportBodySegmentLabel(segment) {
+  const s = String(segment || "").trim();
+  if (s === "hk") return "HK";
+  if (s === "tech") return "Teknik";
+  if (s === "front") return "Ön büro";
+  return "—";
 }
 
 function clipText(t, max = PARAM_MAX) {
@@ -113,6 +125,7 @@ export async function sendDailyOperationReportPdfTemplate(opts = {}) {
   }
 
   const filename = String(opts.filename || "rapor.pdf").trim() || "rapor.pdf";
+  const segmentLabel = clipText(dailyReportBodySegmentLabel(segment), 120);
   const reportDateText = clipText(opts.reportDateText || "—", 900);
   const hotelName = clipText(opts.hotelName || "—", 900);
   const templateName = resolveDailyReportTemplateName(segment);
@@ -123,8 +136,8 @@ export async function sendDailyOperationReportPdfTemplate(opts = {}) {
   try {
     mediaId = await uploadPdfMedia(token, pdfBuffer, filename);
   } catch (e) {
-    console.warn("[whatsapp_daily_report] media_upload_failed error=%s", e?.message || e);
-    return { ok: false, reason: "media_upload_failed", detail: String(e?.message || e) };
+    console.warn("[whatsapp_daily_report] media_upload_failed template=%s error=%s", templateName, e?.message || e);
+    return { ok: false, reason: "media_upload_failed", detail: String(e?.message || e), templateName };
   }
 
   const components = [
@@ -140,6 +153,7 @@ export async function sendDailyOperationReportPdfTemplate(opts = {}) {
     {
       type: "body",
       parameters: [
+        { type: "text", text: segmentLabel },
         { type: "text", text: reportDateText },
         { type: "text", text: hotelName },
       ],
@@ -147,8 +161,9 @@ export async function sendDailyOperationReportPdfTemplate(opts = {}) {
   ];
 
   console.info(
-    "[whatsapp_daily_report] send_start segment=%s template=%s language=%s recipient_count=%d media_id=%s",
+    "[whatsapp_daily_report] send_start segment=%s label=%s template=%s language=%s recipient_count=%d media_id=%s",
     segment,
+    segmentLabel,
     templateName,
     lang,
     recipients.length,

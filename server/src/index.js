@@ -647,8 +647,9 @@ app.get("/api/internal/daily-operation-report-cron", async (req, res) => {
 });
 
 /**
- * «Bekliyor» kayıtlar 1 saati (env ile ayarlanır) geçince operasyon WhatsApp şablonunu bir kez daha gönderir.
- * cron-job.org: günlük PDF cron’undan farklı olarak sıklıkta çalışmalı (örn. her 15 dk).
+ * «Bekliyor» kayıtlar: kayıttan / son hatırlatmadan sonra N dk (OPERATIONAL_PENDING_REMINDER_AFTER_MINUTES, varsayılan 60)
+ * geçince operasyon WhatsApp şablonunu tekrar gönderir; hâlâ bekliyorsa döngü devam eder.
+ * cron-job.org: sık tetiklenmeli (örn. her 15 dk).
  * Anahtar: OPERATIONAL_PENDING_REMINDER_CRON_KEY — tanımlı değilse DAILY_OPERATION_REPORT_CRON_KEY kullanılır.
  */
 app.get("/api/internal/operational-pending-reminder-cron", async (req, res) => {

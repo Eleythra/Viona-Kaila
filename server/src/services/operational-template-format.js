@@ -3,6 +3,12 @@
  * WhatsApp Cloud API şablon gövdesi parametreleriyle uyumlu (grup / whatsapp-web.js yok).
  */
 
+import {
+  formatInstantHotelDdMmYyyy,
+  formatInstantHotelHhMm,
+  formatIsoCalendarYmdAsDdMmYyyy,
+} from "../lib/hotel-calendar-range.js";
+
 const WH_CATEGORY_LABELS = {
   request: {
     towel_extra: "Ek havlu",
@@ -224,19 +230,6 @@ function guestNotificationMainCategoryLabel(catId) {
   return dash(m || "Misafir bildirimi");
 }
 
-function formatDateDDMMYYYY(d) {
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = d.getFullYear();
-  return `${day}.${month}.${year}`;
-}
-
-function formatTimeHHmm(d) {
-  const h = String(d.getHours()).padStart(2, "0");
-  const m = String(d.getMinutes()).padStart(2, "0");
-  return `${h}:${m}`;
-}
-
 function requestItemLabelTr(category) {
   const c = normalizeRequestCategoryKey(category);
   if (!c) return "—";
@@ -301,18 +294,6 @@ function urgLabel(v) {
   return dash(URGENCY_LABELS[x] || x);
 }
 
-function parseIsoDateToLocalDate(isoYmd) {
-  const s = String(isoYmd || "").trim();
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
-  if (!m) return null;
-  const y = Number(m[1]);
-  const mo = Number(m[2]) - 1;
-  const d = Number(m[3]);
-  const dt = new Date(y, mo, d);
-  if (dt.getFullYear() !== y || dt.getMonth() !== mo || dt.getDate() !== d) return null;
-  return dt;
-}
-
 /**
  * @param {string} recordType — fault | request | complaint | guest_notification | late_checkout
  * @param {object} payload — normalize edilmiş misafir kaydı
@@ -324,8 +305,8 @@ export function formatOperationalTemplatePreviewText(recordType, payload) {
   const submittedRaw = payload?.submittedAt ? new Date(payload.submittedAt) : new Date();
   const submitted =
     Number.isFinite(submittedRaw.getTime()) ? submittedRaw : new Date();
-  const dateStr = formatDateDDMMYYYY(submitted);
-  const timeStr = formatTimeHHmm(submitted);
+  const dateStr = formatInstantHotelDdMmYyyy(submitted);
+  const timeStr = formatInstantHotelHhMm(submitted);
 
   const lines = [];
 
@@ -363,8 +344,7 @@ export function formatOperationalTemplatePreviewText(recordType, payload) {
   } else if (rt === "late_checkout") {
     const rawD = String(payload.checkoutDate || payload.details?.checkoutDate || "").trim();
     const rawT = String(payload.checkoutTime || payload.details?.checkoutTime || "").trim();
-    const dt = parseIsoDateToLocalDate(rawD);
-    const dateHuman = dt ? formatDateDDMMYYYY(dt) : dash(rawD);
+    const dateHuman = formatIsoCalendarYmdAsDdMmYyyy(rawD) || dash(rawD);
     lines.push(`İstenen çıkış tarihi: ${dateHuman}`);
     lines.push(`İstenen çıkış saati: ${dash(rawT)}`);
     const desc = dash(payload?.description);

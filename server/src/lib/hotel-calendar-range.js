@@ -74,3 +74,67 @@ export function submittedAtHotelCalendarFilter(query = {}) {
   }
   return null;
 }
+
+function resolveHotelTimezone() {
+  return String(process.env.HOTEL_TIMEZONE || process.env.DAILY_OPERATION_REPORT_TZ || "Europe/Istanbul").trim();
+}
+
+/**
+ * Kayıt anı (UTC ISO) → gg.aa.yyyy — WhatsApp operasyon şablonları ve PDF ile uyumlu otel saati.
+ * @param {Date|string|number} input
+ */
+export function formatInstantHotelDdMmYyyy(input) {
+  const dt = input instanceof Date ? input : new Date(input);
+  if (!Number.isFinite(dt.getTime())) return "—";
+  const tz = resolveHotelTimezone();
+  try {
+    const ymd = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(dt);
+    const p = ymd.split("-");
+    if (p.length !== 3) return "—";
+    return `${p[2]}.${p[1]}.${p[0]}`;
+  } catch {
+    const day = String(dt.getUTCDate()).padStart(2, "0");
+    const month = String(dt.getUTCMonth() + 1).padStart(2, "0");
+    const year = dt.getUTCFullYear();
+    return `${day}.${month}.${year}`;
+  }
+}
+
+/**
+ * Kayıt anı → HH:mm (24 saat, otel saat dilimi).
+ * @param {Date|string|number} input
+ */
+export function formatInstantHotelHhMm(input) {
+  const dt = input instanceof Date ? input : new Date(input);
+  if (!Number.isFinite(dt.getTime())) return "—";
+  const tz = resolveHotelTimezone();
+  try {
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone: tz,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      hourCycle: "h23",
+    })
+      .format(dt)
+      .replace(/\u202f|\u00a0/g, " ")
+      .trim();
+  } catch {
+    const h = String(dt.getUTCHours()).padStart(2, "0");
+    const m = String(dt.getUTCMinutes()).padStart(2, "0");
+    return `${h}:${m}`;
+  }
+}
+
+/** Takvim günü YYYY-MM-DD → gg.aa.yyyy (saat dilimi kayması yok; geç çıkış istenen tarih vb.). */
+export function formatIsoCalendarYmdAsDdMmYyyy(isoYmd) {
+  const s = String(isoYmd ?? "").trim();
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (!m) return "";
+  return `${m[3]}.${m[2]}.${m[1]}`;
+}

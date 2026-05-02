@@ -1,5 +1,5 @@
 -- Süre ölçümü (bildirim → yapıldı/yapılmadı): admin güncellemesinde dolar.
--- «Bekliyor» 1 saat hatırlatma WhatsApp (cron job): yalnızca bir kez gönderilir.
+-- «Bekliyor» hatırlatma WhatsApp (cron): whatsapp_pending_reminder_sent_at son gönderim zamanı (tekrarlayan hatırlatma).
 -- Supabase: SQL Editor → New query → bu dosyanın tamamını yapıştır → Run (ana betiğe gömülmesi şart değil).
 -- Çalıştırmadan önce yedek alın.
 alter table if exists public.guest_requests
