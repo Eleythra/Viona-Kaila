@@ -17,7 +17,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/styles.css?v=30" />
-    <link rel="stylesheet" href="styles.css?v=57" />
+    <link rel="stylesheet" href="styles.css?v=59" />
   </head>
   <body class="admin-body">
     <section id="admin-login" class="admin-login">
@@ -56,6 +56,7 @@
             <button type="button" data-tab="guest_notifications" aria-controls="tab-guest-notifications" title="Misafir bildirim kayıtlarını açar">Misafir bildirimleri</button>
             <button type="button" data-tab="evaluations" aria-controls="tab-evaluations" title="Misafir anket özeti">Değerlendirmeler</button>
             <button type="button" data-tab="logs" aria-controls="tab-logs" title="Sohbet günlükleri: filtre, tablo ve dışa aktarım">Loglar</button>
+            <button type="button" data-tab="rooms" aria-controls="tab-rooms" title="Oda haritası: HK istek ve teknik arıza geçmişi">Odalar</button>
             <button type="button" data-tab="pdf-report" aria-controls="tab-pdf-report" title="PDF rapor oluşturma ekranını açar">Rapor</button>
           </nav>
         </div>
@@ -467,6 +468,128 @@
           </article>
         </section>
 
+        <section id="tab-rooms" class="admin-tab admin-tab--rooms hidden" aria-label="Odalar">
+          <div class="section-head">
+            <h2>Odalar</h2>
+            <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
+          </div>
+          <p class="section-lead">
+            Tesis genelinde <strong>363</strong> geçerli oda; blok ve kata göre düzenlenmiş harita. Bir odaya tıklayarak yalnızca
+            <strong>HK (istek)</strong> ve <strong>teknik (arıza)</strong> kayıtlarını görüntüleyebilir, süzebilir ve PDF indirebilirsiniz. Şikâyet ve misafir
+            bildirimi bu görünümde yer almaz.
+          </p>
+          <div id="rooms-explorer-wrap" class="rooms-explorer-wrap">
+            <div id="rooms-explorer-mount" class="rooms-explorer-mount"></div>
+          </div>
+          <div id="rooms-detail-wrap" class="rooms-detail-wrap hidden" aria-live="polite">
+            <div class="glass-block rooms-detail-toolbar">
+              <div class="rooms-detail-toolbar__row rooms-detail-toolbar__row--top">
+                <button type="button" id="room-detail-back" class="btn-small">← Oda haritası</button>
+                <p id="room-detail-breadcrumb" class="rooms-detail-breadcrumb" role="status"></p>
+              </div>
+              <div class="rooms-detail-segments" role="tablist" aria-label="Kayıt türü">
+                <button type="button" class="rooms-detail-seg is-active" id="room-seg-request" data-room-seg="request" role="tab" aria-selected="true">
+                  İstekler (HK)
+                </button>
+                <button type="button" class="rooms-detail-seg" id="room-seg-fault" data-room-seg="fault" role="tab" aria-selected="false">
+                  Arızalar (Teknik)
+                </button>
+              </div>
+              <div class="rooms-filter-stack">
+                <div class="rooms-filter-card glass-block">
+                  <div class="rooms-filter-card__head">
+                    <span class="rooms-filter-card__title">Kayıt tarihi</span>
+                    <button type="button" class="btn-small rooms-refresh-btn" id="room-filter-refresh" title="Aynı sayfayı sunucudan yeniden yükle">
+                      Yenile
+                    </button>
+                  </div>
+                  <div class="rooms-date-mode" role="group" aria-label="Tarih türü">
+                    <button type="button" class="rooms-date-mode__chip is-active" data-room-date-mode="all">Tüm dönem</button>
+                    <button type="button" class="rooms-date-mode__chip" data-room-date-mode="single">Tek gün</button>
+                    <button type="button" class="rooms-date-mode__chip" data-room-date-mode="range">Tarih aralığı</button>
+                  </div>
+                  <p class="rooms-filter-micro">
+                    «Tek gün» ve «Tarih aralığı» İstanbul otel takvimiyle uyumludur; tek günde başlangıç = bitiş otomatik eşlenir.
+                  </p>
+                  <div id="room-date-single-wrap" class="rooms-date-panel hidden">
+                    <label class="rooms-detail-field rooms-detail-field--block"
+                      ><span class="rooms-detail-field__lbl">Takvim günü</span>
+                      <input type="date" id="room-filter-single-day" class="rooms-detail-input" autocomplete="off" />
+                    </label>
+                  </div>
+                  <div id="room-date-range-wrap" class="rooms-date-panel rooms-date-panel--range hidden">
+                    <label class="rooms-detail-field"
+                      ><span class="rooms-detail-field__lbl">Başlangıç</span>
+                      <input id="room-filter-from" type="date" class="rooms-detail-input" autocomplete="off" />
+                    </label>
+                    <label class="rooms-detail-field"
+                      ><span class="rooms-detail-field__lbl">Bitiş</span>
+                      <input id="room-filter-to" type="date" class="rooms-detail-input" autocomplete="off" />
+                    </label>
+                  </div>
+                </div>
+                <div class="rooms-filter-card glass-block">
+                  <div class="rooms-filter-card__head">
+                    <span class="rooms-filter-card__title">Durum, kategori ve arama</span>
+                  </div>
+                  <div class="rooms-filter-row rooms-filter-row--2">
+                    <label class="rooms-detail-field"
+                      ><span class="rooms-detail-field__lbl">Durum</span>
+                      <select id="room-filter-status" class="rooms-detail-input">
+                        <option value="">Tüm kayıtlar</option>
+                        <option value="pending">Bekliyor</option>
+                        <option value="in_progress">Yapılıyor</option>
+                        <option value="done">Yapıldı</option>
+                        <option value="rejected">Yapılmadı</option>
+                        <option value="cancelled">İptal</option>
+                      </select>
+                    </label>
+                    <label class="rooms-detail-field rooms-detail-field--grow"
+                      ><span class="rooms-detail-field__lbl">Kategori</span>
+                      <select id="room-filter-category" class="rooms-detail-input">
+                        <option value="">Tüm kategoriler</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div class="rooms-filter-row">
+                    <label class="rooms-detail-field rooms-detail-field--grow"
+                      ><span class="rooms-detail-field__lbl">Metin ara</span>
+                      <input
+                        id="room-filter-search"
+                        type="search"
+                        class="rooms-detail-input"
+                        placeholder="Misafir, açıklama, kategori kodu…"
+                        autocomplete="off"
+                      />
+                    </label>
+                    <div class="rooms-detail-actions">
+                      <button type="button" class="btn-primary btn-small" id="room-filter-apply">Uygula</button>
+                      <button type="button" class="btn-small" id="room-filter-clear">Sıfırla</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="rooms-detail-toolbar__row rooms-detail-toolbar__row--pdf">
+                <span class="rooms-detail-pdf-lbl">PDF</span>
+                <button type="button" class="btn-small" id="room-pdf-page">Görünen sayfa</button>
+                <button type="button" class="btn-small" id="room-pdf-merged">Filtreye göre tam liste (üst sınır)</button>
+                <label class="rooms-detail-pdf-scope"
+                  ><span class="rooms-detail-field__lbl">Tam liste kapsamı</span>
+                  <select id="room-pdf-scope" class="rooms-detail-input rooms-detail-input--narrow">
+                    <option value="segment">Yalnız seçili sekme</option>
+                    <option value="both">İstek + Arıza</option>
+                  </select>
+                </label>
+              </div>
+              <p class="rooms-detail-hint">
+                PDF ve tam liste, üstteki süzgeçlerle aynı parametreleri kullanır. Kategori listesi seçili sekmeye (İstek / Arıza) göre değişir.
+              </p>
+            </div>
+            <p id="rooms-detail-status" class="rooms-detail-status" role="status"></p>
+            <div id="rooms-detail-table-mount" class="rooms-detail-table-mount"></div>
+          </div>
+        </section>
+
         <section id="tab-logs" class="admin-tab admin-tab--logs hidden">
           <div class="section-head">
             <div class="logs-page-title">
@@ -613,10 +736,12 @@
     <script src="../js/viona-api-resolve.js?v=12"></script>
     <script src="../js/api-config.js?v=13"></script>
     <script src="../js/requests/config.js?v=20"></script>
-    <script src="../js/hotel-room-numbers.js?v=1"></script>
+    <script src="../js/hotel-room-numbers.js?v=2"></script>
     <script src="js/data-adapter.js?v=24"></script>
-    <script src="js/ui.js?v=74"></script>
+    <script src="js/ui.js?v=75"></script>
     <script src="js/ops-day-pdf.js?v=8"></script>
-    <script src="js/app.js?v=67"></script>
+    <script src="js/rooms-explorer.js?v=1"></script>
+    <script src="js/room-history-pdf.js?v=1"></script>
+    <script src="js/app.js?v=69"></script>
   </body>
 </html>

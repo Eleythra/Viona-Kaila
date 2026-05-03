@@ -15,7 +15,7 @@ logger = get_logger("assistant.rule_engine")
 #   dil değişimi → chitchat / iptal benzeri → geç çıkış (misafir bildirimi)
 #   → bebek maması (MR) → erken oda tedariki (minibar/kettle; arıza kelimesi yoksa)
 #   → kutlama / sağlık / diyet (SPECIAL) → MISAFIR_BILDIRIM_STRICT (tüm kategoriler)
-#   → acil resepsiyon → gece yemeği / spa rahatlama / spa fiyat / restoran-bar modülü / oda servisi bilgisi
+#   → acil resepsiyon → gece yemeği / spa rahatlama / spa fiyat / restoran-bar modülü / oda servisi (sabit + modül)
 #   → erken çıkış öğle kutusu → Alanya / dış otel / dondurma → çamaşırhane sabit bilgisi (FAULT yoksa)
 #   → temizlik yalnız bilgi → animasyon programı → envanter+güçlü talep → öneri
 #   → housekeeping (şikâyet kalitesi bağlamında atlama) → resepsiyon / MR / transfer / öğle kutusu
@@ -271,6 +271,39 @@ def text_suggests_service_experience_complaint(text: str) -> bool:
     if any(n in t for n in needles):
         return True
     if "personel" in t and "ilgisiz" in t:
+        return True
+    # Rahatsızlık / rahatsız edici durum — şikâyet formu (arıza değil).
+    comfort_needles = (
+        "rahatsızım",
+        "rahatsizim",
+        "rahatsız oldum",
+        "rahatsiz oldum",
+        "huzursuzum",
+        "çok rahatsız",
+        "cok rahatsiz",
+        "feel uncomfortable",
+        "feeling uncomfortable",
+        "cannot sleep",
+        "can't sleep",
+        "cant sleep",
+        "keeps me awake",
+        "mir ist unwohl",
+        "fühle mich unwohl",
+        "fuhle mich unwohl",
+        "czuję się źle",
+        "czuje sie zle",
+        "voel me ongemakkelijk",
+        "føler mig utilpas",
+        "cítím se nepříjemně",
+        "citim se neprijemne",
+        "mă simt inconfortabil",
+        "ma simt inconfortabil",
+        "cítim sa nepríjemne",
+        "citim sa neprijemne",
+        "чувствую себя некомфортно",
+        "мне некомфортно",
+    )
+    if any(n in t for n in comfort_needles):
         return True
     return False
 
@@ -731,18 +764,23 @@ COMPLAINT_CLEANLINESS_STRICT_PHRASES = [
 COMPLAINT_WORDS = [
     # TR
     "çok kötü", "cok kotu", "memnun değilim", "memnun degilim",
-    "gürültü", "gurultu", "şikayet", "berbat",
+    "gürültü", "gurultu", "şikayet", "şikâyet", "berbat",
     "hayal kırıklığı", "rezalet",
+    "rahatsız", "rahatsiz", "huzursuz", "rahatsızlık", "rahatsizlik",
+    "şikayetim", "sikayetim", "şikayetçiyim", "sikayetciyim",
     # EN
     "complaint", "noisy", "dissatisfied", "unhappy", "terrible",
     "awful", "horrible", "disappointed", "very bad", "not satisfied",
     "bad service", "bad experience",
+    "uncomfortable", "disturbed", "bothered", "upset", "annoyed",
     # DE
     "beschwerde", "unzufrieden", "lärm", "laerm", "schlecht",
     "furchtbar", "enttäuscht", "enttaeuscht", "schlechter service",
+    "belästigt", "belastigt", "genervt", "unwohl", "gestört", "gestort",
     # PL
     "reklamacja", "hałas", "halas", "źle", "zle", "niezadowolony", "niezadowolona", "okropnie",
     "rozczarowany", "rozczarowana", "zła obsługa", "zla obsluga", "bardzo źle", "bardzo zle",
+    "niekomfortowo", "przeszkadza",
     # DA / NL / CS / RO / SK / RU
     "klage",
     "utilfreds",
@@ -764,6 +802,16 @@ COMPLAINT_WORDS = [
     "недовольна",
     "шумно",
     "плохой сервис",
+    "некомфортно",
+    "беспокоит",
+    "ongemak",
+    "geïrriteerd",
+    "geirriteerd",
+    "irriteret",
+    "deranjat",
+    "incomod",
+    "nepríjemne",
+    "neprijemne",
 ]
 REQUEST_WORDS = [
     # Stronger signals: entity/item keywords (keep verbs out to reduce false matches).
@@ -2798,8 +2846,8 @@ def _matches_alanya_discover_intent(normalized_text: str) -> bool:
     if has_en_de_pl_place and (has_tour or "see" in tl or "places" in tl or "things" in tl):
         return True
     return False
-# Oda servisi — ücretli hizmet; şimdilik yalnız bilgi (RAG), istek formu yok.
-_ROOM_SERVICE_SUBSTRINGS: tuple[str, ...] = (
+# Oda servisi — ücretli hizmet; sabit çok dilli metin + uygulama «Oda servisi» modülü (genel istek formu değil).
+_ROOM_SERVICE_NAME_SUBSTRINGS: tuple[str, ...] = (
     "oda servisi",
     "oda servis",
     "oda-servisi",
@@ -2810,7 +2858,149 @@ _ROOM_SERVICE_SUBSTRINGS: tuple[str, ...] = (
     "zimmer service",
     "serwis pokojowy",
     "obsługa pokoju",
+    "obsługa pokojowa",
     "servizio in camera",
+    "service en chambre",
+    "værelsesservice",
+    "vaerelsesservice",
+    "kamerdienst",
+    "roomservic",
+    "pokojová služba",
+    "pokojova sluzba",
+    "roomservice-menu",
+    "room service menu",
+    "serviciu cameră",
+    "serviciu camera",
+    "izbový servis",
+    "izbovy servis",
+    "обслуживание номеров",
+    "обслуживание в номере",
+    "ин-рум",
+    "in-room dining",
+    "in room dining",
+    "stolování na pokoji",
+)
+
+_ROOM_SERVICE_TO_ROOM_MARKERS: tuple[str, ...] = (
+    "odaya",
+    "odama",
+    "odamın",
+    "odamin",
+    "odanın",
+    "odanin",
+    "odamızda",
+    "odamizda",
+    "to my room",
+    "to the room",
+    "into the room",
+    "ins zimmer",
+    "im zimmer",
+    "aufs zimmer",
+    "auf mein zimmer",
+    "auf meinem zimmer",
+    "in meinem zimmer",
+    "in mein zimmer",
+    "do pokoju",
+    "w pokoju",
+    "do pokoje",
+    "i rummet",
+    "på rummet",
+    "på mit værelse",
+    "op mijn kamer",
+    "naar mijn kamer",
+    "op de kamer",
+    "pe cameră",
+    "pe camera",
+    "în cameră",
+    "in camera",
+    "na izbu",
+    "do izby",
+    "на номер",
+    "в номер",
+)
+
+_ROOM_SERVICE_FOOD_BEV_MARKERS: tuple[str, ...] = (
+    "şampanya",
+    "sampanya",
+    "champagne",
+    "prosecco",
+    "wine",
+    "şarap",
+    "sarap",
+    "wino",
+    "wein",
+    "wijn",
+    "вино",
+    "yemek",
+    "food",
+    "meal",
+    "kahve",
+    "coffee",
+    "çay",
+    "cay",
+    "tea",
+    "içecek",
+    "icecek",
+    "getränk",
+    "getrank",
+    "drink",
+    "snack",
+    "kahvaltı",
+    "kahvalti",
+    "breakfast",
+    "lunch",
+    "dinner",
+    "brunch",
+    "frühstück",
+    "fruhstuck",
+    "abendessen",
+    "mittagessen",
+    "essen",
+    "jedzenie",
+    "posiłek",
+    "posilek",
+    "napój",
+    "napoj",
+    "objednávka jídla",
+    "objednavka jidla",
+    "måltid",
+    "maltid",
+    "maaltijd",
+    "заказ еды",
+    "еда в номер",
+)
+
+_ROOM_SERVICE_ORDER_PHRASES: tuple[str, ...] = (
+    "yemek sipariş",
+    "yemek siparis",
+    "içecek sipariş",
+    "icecek siparis",
+    "kahve sipariş",
+    "kahve siparis",
+    "food order",
+    "order food",
+    "order drinks",
+    "order drink",
+    "room service menu",
+    "zimmerservice menü",
+    "zimmerservice menu",
+    "speisen aufs zimmer",
+    "essen aufs zimmer",
+    "bestilling til rom",
+    "bestilling til rummet",
+    "bestil til værelset",
+    "bestil til vaerelset",
+    "bestellen op de kamer",
+    "objednávka na pokoj",
+    "objednavka na pokoj",
+    "dostawa do pokoju",
+    "comandă la cameră",
+    "comanda la camera",
+    "objednávka na izbu",
+    "objednavka na izbu",
+    "доставка в номер",
+    "заказ в номер",
+    "заказать в номер",
 )
 
 HOTEL_INFO_WORDS = [
@@ -3397,16 +3587,16 @@ class RuleEngine:
                 source="rule",
             )
 
-        if RuleEngine._is_room_service_information_query(normalized_text):
-            logger.info("RULE MATCH: hotel_info (room_service)")
+        if RuleEngine._is_room_service_module_query(normalized_text):
+            logger.info("RULE MATCH: hotel_info (room_service_module)")
             return IntentResult(
                 intent="hotel_info",
                 sub_intent="service_information",
-                entity=None,
+                entity="fixed_room_service_module_hint",
                 department=None,
-                needs_rag=True,
+                needs_rag=False,
                 response_mode="answer",
-                confidence=0.94,
+                confidence=0.96,
                 source="rule",
             )
 
@@ -4759,14 +4949,22 @@ class RuleEngine:
         return False
 
     @staticmethod
-    def _is_room_service_information_query(text: str) -> bool:
-        """Ücretli oda servisi → yalnız bilgi (RAG); «talebi / istiyorum» dahil istek formuna düşmez (şimdilik)."""
-        t = (text or "").lower().strip()
-        if not any(m in t for m in _ROOM_SERVICE_SUBSTRINGS):
-            return False
+    def _is_room_service_module_query(text: str) -> bool:
+        """
+        Ücretli oda servisi / odaya yemek-içecek siparişi → sabit metin + «Oda servisi» modülü; genel istek formu değil.
+        """
         if any(_fuzzy_has(text, w) for w in FAULT_WORDS):
             return False
-        return True
+        t = (text or "").lower().strip()
+        if any(m in t for m in _ROOM_SERVICE_NAME_SUBSTRINGS):
+            return True
+        if any(p in t for p in _ROOM_SERVICE_ORDER_PHRASES):
+            return True
+        has_room = any(m in t for m in _ROOM_SERVICE_TO_ROOM_MARKERS)
+        has_food = any(m in t for m in _ROOM_SERVICE_FOOD_BEV_MARKERS)
+        if has_room and has_food:
+            return True
+        return False
 
     @staticmethod
     def _menu_word_or_typo_in(t: str) -> bool:
@@ -5147,17 +5345,30 @@ class RuleEngine:
 
     @staticmethod
     def _complaint_sub_intent(text: str, entity: str | None) -> str:
-        # Tek kelimelik «şikayet» / complaint → uygulama formu butonu (service_complaint = yalnız metin).
+        # Tek kelimelik «şikayet» / complaint → şikâyet formu (open_complaint_form); metin orchestrator’da.
         tl_raw = (text or "").strip().lower()
         core = tl_raw.strip(".,!?…").replace("؟", "")
         parts = [p for p in core.split() if p]
         _bare_complaint = frozenset(
             {
                 "şikayet",
+                "şikâyet",
                 "sikayet",
+                "şikayetim",
+                "sikayetim",
                 "complaint",
                 "beschwerde",
                 "skarga",
+                "reklamacja",
+                "klacht",
+                "klage",
+                "rahatsızım",
+                "rahatsizim",
+                "huzursuzum",
+                "uncomfortable",
+                "unwohl",
+                "genervt",
+                "жалоба",
             }
         )
         if len(parts) == 1 and parts[0] in _bare_complaint:

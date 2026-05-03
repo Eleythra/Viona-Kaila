@@ -1,5 +1,6 @@
 /**
  * Kaila Beach geçerli oda numaraları (363 oda). Python `hotel_room_numbers.py` ile senkron tutun.
+ * Admin «Odalar» blok/kat ayrımı: tarayıcıda `js/hotel-room-numbers.js` → `vionaParseRoomLayout` (binler=blok A/B/C, yüzler=kat).
  */
 const ROOM_RANGES = [
   [1001, 1008],

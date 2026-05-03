@@ -571,6 +571,27 @@ export function buildWhatsappGraphMessagesUrl() {
   return `https://graph.facebook.com/${graphVer}/${phoneNumberId}/messages`;
 }
 
+function dailyReportWhatsappBodyParamCountHealth() {
+  const raw = String(
+    process.env.DAILY_OPERATION_REPORT_WHATSAPP_BODY_PARAMS ||
+      process.env.WHATSAPP_DAILY_OPERATION_BODY_PARAM_COUNT ||
+      "2",
+  )
+    .trim()
+    .toLowerCase();
+  if (raw === "3" || raw === "three" || raw === "dynamic") return 3;
+  return 2;
+}
+
+function dailyReportEffectiveTemplateNamesHealth() {
+  const def = { hk: "hk_operasyon", tech: "teknik_operasyon", front: "front_operasyon" };
+  return {
+    hk: String(process.env.WHATSAPP_TEMPLATE_DAILY_OPERATION_HK || "").trim() || def.hk,
+    tech: String(process.env.WHATSAPP_TEMPLATE_DAILY_OPERATION_TECH || "").trim() || def.tech,
+    front: String(process.env.WHATSAPP_TEMPLATE_DAILY_OPERATION_FRONT || "").trim() || def.front,
+  };
+}
+
 /** /api/health: anahtar sızdırmaz; ön büro / HK / teknik alıcı sayıları. */
 export function getWhatsappOperationalHealthSummary() {
   const { token } = resolveWhatsappAccessToken();
@@ -605,6 +626,21 @@ export function getWhatsappOperationalHealthSummary() {
         process.env.WHATSAPP_DAILY_REPORT_FRONT_RECIPIENTS || process.env.WHATSAPP_FRONT_RECIPIENTS || "",
       ).length,
       fallbackAll: parseOperationalRecipients(process.env.WHATSAPP_DAILY_REPORT_RECIPIENTS || "").length,
+    },
+    /** Günlük PDF WhatsApp: Meta gövde parametre sayısı (2=klasik; 3=dinamik departman) + çözümlenen şablon adları. */
+    dailyReportWhatsapp: {
+      bodyParamCount: dailyReportWhatsappBodyParamCountHealth(),
+      effectiveTemplateNames: dailyReportEffectiveTemplateNamesHealth(),
+      segmentsEnv: String(process.env.DAILY_OPERATION_REPORT_SEGMENTS || "").trim() || "hk,tech,front (default)",
+      reportTz: String(
+        process.env.DAILY_OPERATION_REPORT_TZ || process.env.HOTEL_TIMEZONE || "Europe/Istanbul",
+      ).trim(),
+      hkFallbackToHkRecipientsEnabled: (() => {
+        const v = String(process.env.DAILY_OPERATION_REPORT_FALLBACK_TO_HK_RECIPIENTS ?? "1")
+          .trim()
+          .toLowerCase();
+        return v !== "0" && v !== "false" && v !== "no" && v !== "off";
+      })(),
     },
     /** Meta şablonunda «Dynamic URL» butonu env ile açıksa (suffix sunucu üretir). */
     panelUrlButtons: {

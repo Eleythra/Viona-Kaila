@@ -509,6 +509,8 @@
       chatQuickAnim: "Анимация и мероприятия",
       chatQuickCheck: "Время заезда и выезда",
       chatQuickWifi: "Wi‑Fi и интернет",
+      chatOpenComplaint: "Открыть форму жалобы",
+      chatOpenRoomService: "Открыть обслуживание в номере",
     },
     da: {
       chatWelcomeTitleLine: " · Hvordan kan jeg hjælpe dig i dag?",
@@ -524,6 +526,8 @@
       chatQuickAnim: "Animation og aktiviteter",
       chatQuickCheck: "Ind- og udtjekningstider",
       chatQuickWifi: "Wi‑Fi og internet",
+      chatOpenComplaint: "Åbn klageformular",
+      chatOpenRoomService: "Åbn roomservice",
     },
     cs: {
       chatWelcomeTitleLine: " · Jak vám dnes mohu pomoci?",
@@ -539,6 +543,8 @@
       chatQuickAnim: "Animace a akce",
       chatQuickCheck: "Časy přihlášení a odhlášení",
       chatQuickWifi: "Wi‑Fi a internet",
+      chatOpenComplaint: "Otevřít stížnostní formulář",
+      chatOpenRoomService: "Otevřít room service",
     },
     ro: {
       chatWelcomeTitleLine: " · Cu ce vă pot ajuta astăzi?",
@@ -554,6 +560,8 @@
       chatQuickAnim: "Animație și evenimente",
       chatQuickCheck: "Ore check-in și check-out",
       chatQuickWifi: "Wi‑Fi și internet",
+      chatOpenComplaint: "Deschide formularul de reclamație",
+      chatOpenRoomService: "Deschide room service",
     },
     nl: {
       chatWelcomeTitleLine: " · Hoe kan ik u vandaag helpen?",
@@ -569,6 +577,8 @@
       chatQuickAnim: "Animatie en activiteiten",
       chatQuickCheck: "In- en uitchecktijden",
       chatQuickWifi: "Wi‑Fi en internet",
+      chatOpenComplaint: "Klachtenformulier openen",
+      chatOpenRoomService: "Roomservice openen",
     },
     sk: {
       chatWelcomeTitleLine: " · Ako vám dnes môžem pomôcť?",
@@ -584,6 +594,8 @@
       chatQuickAnim: "Animácia a podujatia",
       chatQuickCheck: "Časy príchodu a odchodu",
       chatQuickWifi: "Wi‑Fi a internet",
+      chatOpenComplaint: "Otvoriť formulár sťažnosti",
+      chatOpenRoomService: "Otvoriť room service",
     },
   };
   Object.keys(CHAT_UI_PATCH).forEach(function (c) {

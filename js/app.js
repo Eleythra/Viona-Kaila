@@ -614,6 +614,15 @@
     closeModals();
   };
 
+  window.vionaChatOpenRoomService = function () {
+    moduleId = "room_service";
+    requestSub = null;
+    surveySub = null;
+    showView("module");
+    renderModuleContent();
+    closeModals();
+  };
+
   window.vionaChatOpenWhere = function () {
     moduleId = "where";
     requestSub = null;

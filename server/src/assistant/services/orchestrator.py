@@ -115,31 +115,6 @@ def _valid_conversation_language(value: str | None) -> str | None:
     return v if v in _VALID_LANG else None
 
 
-# Erken giriş: Rezervasyonlar modülü değil; ön büro — nazik, net resepsiyon yönlendirmesi (yalnız metin).
-_EARLY_CHECKIN_RECEPTION_TEXT: dict[str, str] = {
-    "tr": (
-        "Erken giriş, o günkü doluluk ve oda hazırlığına bağlıdır; en doğru bilgi ve yardımı "
-        "ön büro / resepsiyon ekibimiz verir. İsterseniz doğrudan resepsiyona uğrayabilir veya "
-        "telefonla arayabilirsiniz; talebinizi kısaca iletmeniz yeterli — ekibimiz sizi memnuniyetle yönlendirir."
-    ),
-    "en": (
-        "Early check-in is subject to availability and housekeeping on the day of arrival. "
-        "Our front desk team will gladly confirm what is possible and arrange the details. "
-        "Please stop by reception or call us when you arrive — we are here to help."
-    ),
-    "de": (
-        "Ein früherer Check-in hängt von Belegung und Zimmerbereitung am Anreisetag ab. "
-        "Unser Rezeptionsteam informiert Sie zuverlässig und hilft bei der Organisation. "
-        "Sprechen Sie uns bitte direkt an der Rezeption an oder rufen Sie uns an — wir unterstützen Sie gern."
-    ),
-    "pl": (
-        "Wcześniejsze zameldowanie zależy od obłożenia i przygotowania pokoju w dniu przyjazdu. "
-        "Aktualne informacje i pomoc uzyskasz u zespołu recepcji. "
-        "Zajrzyj do recepcji lub zadzwoń — chętnie podpowiemy możliwe opcje."
-    ),
-}
-
-
 def _is_early_checkin_reception_handoff(normalized: str, sub_intent: str | None, entity: str | None) -> bool:
     tl = (normalized or "").lower()
     if (entity or "").strip() == "early_checkin":
@@ -168,64 +143,6 @@ def _is_early_checkin_reception_handoff(normalized: str, sub_intent: str | None,
     if any(n in tl for n in needles):
         return True
     return False
-
-
-# Şikayet: kategorisi net olanlar için uygulama şikayet formu butonu (open_complaint_form); genel “sorunum var” yalnız metin.
-_COMPLAINT_GUIDANCE_TEXT: dict[str, str] = {
-    "tr": (
-        "Şikayetinizi Viona uygulamasındaki şikayet formu ile iletebilirsiniz. "
-        "Kayıp eşya bildirimleri için formda «Kayıp eşya» başlığı da yer alır. "
-        "Aşağıdaki buton formu açar; dilerseniz resepsiyona da başvurabilirsiniz."
-    ),
-    "en": (
-        "You can submit your complaint using the complaint form in the Viona app. "
-        "The form includes a dedicated «Lost property» category. "
-        "The button below opens the form; you can also speak with reception."
-    ),
-    "de": (
-        "Sie können Ihre Beschwerde über das Beschwerdeformular in der Viona-App senden. "
-        "Dort gibt es eine eigene Kategorie «Fundsachen / verlorenes Eigentum». "
-        "Die Schaltfläche unten öffnet das Formular; alternativ erreichen Sie die Rezeption."
-    ),
-    "pl": (
-        "Reklamację możesz przesłać przez formularz w aplikacji Viona. "
-        "W formularzu jest osobna kategoria „Zgubione rzeczy”. "
-        "Przycisk poniżej otwiera formularz; możesz też udać się do recepcji."
-    ),
-}
-
-_COMPLAINT_GUIDANCE_TEXT_GENERIC: dict[str, str] = {
-    "tr": (
-        "Yaşadığınız durumu netleştirmek için lütfen resepsiyon ile görüşün veya uygulamadaki şikayet formunu kullanın."
-    ),
-    "en": ("Please contact reception or use the complaint form in the app so the team can help you."),
-    "de": ("Bitte wenden Sie sich an die Rezeption oder nutzen Sie das Beschwerdeformular in der App."),
-    "pl": ("Skontaktuj się z recepcją lub użyj formularza reklamacji w aplikacji."),
-}
-
-# Geç çıkış: rezervasyon değil — Talepler → Misafir bildirimleri (ön büro / resepsiyon).
-_LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_TEXT: dict[str, str] = {
-    "tr": (
-        "Geç çıkış talebiniz ön büro / resepsiyon tarafından değerlendirilir. "
-        "Ana sayfada İstekler → Misafir bildirimleri içindeki geç çıkış formunu kullanın. "
-        "Aşağıdaki buton bu formu doğrudan açar."
-    ),
-    "en": (
-        "Late check-out is arranged by the front desk. "
-        "Use the late check-out form inside Requests → Guest notices on the main screen. "
-        "The button below opens that form directly."
-    ),
-    "de": (
-        "Ein späterer Check-out wird an der Rezeption geklärt. "
-        "Nutzen Sie das Formular für den späten Check-out unter Anfragen → Gästemeldungen. "
-        "Die Schaltfläche unten öffnet dieses Formular direkt."
-    ),
-    "pl": (
-        "Późniejsze wymeldowanie uzgadnia się na recepcji. "
-        "Wypełnij formularz w sekcji „Prośby” → „Powiadomienia gościa”. "
-        "Przycisk poniżej otwiera ten formularz od razu."
-    ),
-}
 
 
 def _guest_notification_category_prompt(notif_group: str | None, reply_language: str) -> str:
@@ -1727,9 +1644,7 @@ class ChatOrchestrator:
                 if rule_intent.intent == "reservation" and _is_early_checkin_reception_handoff(
                     normalized, rule_intent.sub_intent, rule_intent.entity
                 ):
-                    text = _EARLY_CHECKIN_RECEPTION_TEXT.get(
-                        _tpl_lang(reply_lang), _EARLY_CHECKIN_RECEPTION_TEXT["tr"]
-                    )
+                    text = self.localization_service.get("early_checkin_reception_handoff", reply_lang)
                     response = self.response_service.build(
                         "inform",
                         text,
@@ -1913,9 +1828,7 @@ class ChatOrchestrator:
         if llm_intent.intent == "reservation" and _is_early_checkin_reception_handoff(
             normalized, llm_intent.sub_intent, llm_intent.entity
         ):
-            text = _EARLY_CHECKIN_RECEPTION_TEXT.get(
-                _tpl_lang(reply_base), _EARLY_CHECKIN_RECEPTION_TEXT["tr"]
-            )
+            text = self.localization_service.get("early_checkin_reception_handoff", reply_base)
             response = self.response_service.build(
                 "inform",
                 text,
@@ -2023,14 +1936,8 @@ class ChatOrchestrator:
         if policy == "compose_complaint":
             if (sub_intent or "") == "lost_property_complaint":
                 text = self.localization_service.get("complaint_lost_property", reply_language)
-            elif (sub_intent or "") == "service_complaint":
-                text = _COMPLAINT_GUIDANCE_TEXT_GENERIC.get(
-                    _tpl_lang(reply_language), _COMPLAINT_GUIDANCE_TEXT_GENERIC["tr"]
-                )
             else:
-                text = _COMPLAINT_GUIDANCE_TEXT.get(
-                    _tpl_lang(reply_language), _COMPLAINT_GUIDANCE_TEXT["tr"]
-                )
+                text = self.localization_service.get("complaint_form_guidance", reply_language)
             return self.response_service.build(
                 "inform",
                 text,
@@ -2098,9 +2005,7 @@ class ChatOrchestrator:
 
         if policy == "compose_guest_notification":
             if self.rule_engine.matches_late_checkout_guest_notif(normalize_text(message)):
-                text = _LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_TEXT.get(
-                    _tpl_lang(reply_language), _LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_TEXT["tr"]
-                )
+                text = self.localization_service.get("late_checkout_guest_notif_redirect", reply_language)
                 return self.response_service.build(
                     "inform",
                     text,
@@ -2244,6 +2149,18 @@ class ChatOrchestrator:
                     ui_language,
                     "rule",
                     action={"kind": "open_transfer_module"},
+                )
+            if fixed_entity_key == "fixed_room_service_module_hint":
+                fixed_text = self.localization_service.get(fixed_entity_key, reply_language)
+                return self.response_service.build(
+                    "answer",
+                    fixed_text,
+                    intent,
+                    confidence,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "open_room_service_module"},
                 )
             if fixed_entity_key in (
                 "fixed_restaurant_info",
@@ -2486,9 +2403,7 @@ class ChatOrchestrator:
                 )
 
         if op == "guest_notification" and notif_group == "reception":
-            text = _LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_TEXT.get(
-                _tpl_lang(reply_language), _LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_TEXT["tr"]
-            )
+            text = self.localization_service.get("late_checkout_guest_notif_redirect", reply_language)
             return self.response_service.build(
                 "inform",
                 text,
@@ -2730,8 +2645,8 @@ class ChatOrchestrator:
                         ):
                             self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
                             self._session_on_form_abandoned_clear_cancel_context(payload)
-                            text = _EARLY_CHECKIN_RECEPTION_TEXT.get(
-                                _tpl_lang(reply_language), _EARLY_CHECKIN_RECEPTION_TEXT["tr"]
+                            text = self.localization_service.get(
+                                "early_checkin_reception_handoff", reply_language
                             )
                             return self.response_service.build(
                                 "inform",
@@ -4238,7 +4153,7 @@ class ChatOrchestrator:
                 "entity": entity,
                 "sub_intent": sub_intent,
             }
-        if intent == "complaint" and sub_intent and sub_intent != "service_complaint":
+        if intent == "complaint" and sub_intent:
             return {
                 "kind": "open_complaint_form",
                 "sub_intent": sub_intent,

@@ -34,6 +34,5 @@ def orchestrator_branch_lang(ui_lang: str | None) -> str:
 
 
 def voice_dict_lang(reply_lang: str | None) -> str:
-    """Sesli kanal sözlükleri yalnız tr/en/de/pl: bilinmeyen UI kodu → İngilizce (Türkçe sürpriz yok)."""
-    code = normalize_chatbot_lang(reply_lang)
-    return code if code in _TEMPLATE_BRANCH_LANGS else "en"
+    """Sesli TTS / sözlük anahtarı — `normalize_chatbot_lang` ile aynı kod kümesi (tr…sk)."""
+    return normalize_chatbot_lang(reply_lang)

@@ -91,7 +91,16 @@
     evaluations: "tab-evaluations",
     "pdf-report": "tab-pdf-report",
     logs: "tab-logs",
+    rooms: "tab-rooms",
   };
+  /** Odalar sekmesi: seçili oda detayı (HK istek + teknik arıza). */
+  var roomDetailMeta = null;
+  var roomDetailSegment = "request";
+  var roomDetailPage = 1;
+  var roomDetailLast = { type: "", rows: [], pagination: null, baseQuery: {} };
+  var roomsPanelWired = false;
+  /** Oda detayı tarih süzgeci: all | single | range (İstanbul otel günü, sunucu ile uyumlu). */
+  var roomDateFilterMode = "all";
   var OP_ACTION_PAGE_SIZE = 50;
   var opHkPage = 1;
   var opTechPage = 1;
@@ -1575,6 +1584,8 @@
         await loadEvaluations();
       } else if (activeAdminTab === "logs") {
         await loadLogs();
+      } else if (activeAdminTab === "rooms" && isRoomsDetailOpen()) {
+        await loadRoomBucket(roomDetailPage);
       }
     } catch (_e) {
     } finally {
@@ -1590,6 +1601,351 @@
     var c = e && e.cause;
     if (c && String(c.code || "") === "EAI_AGAIN") return true;
     return false;
+  }
+
+  function isRoomsDetailOpen() {
+    var w = document.getElementById("rooms-detail-wrap");
+    return Boolean(roomDetailMeta && w && !w.classList.contains("hidden"));
+  }
+
+  function readRoomFilterBaseQuery() {
+    var fromEl = document.getElementById("room-filter-from");
+    var toEl = document.getElementById("room-filter-to");
+    var singleEl = document.getElementById("room-filter-single-day");
+    var stEl = document.getElementById("room-filter-status");
+    var catEl = document.getElementById("room-filter-category");
+    var seEl = document.getElementById("room-filter-search");
+    var num = String((roomDetailMeta && roomDetailMeta.number) || "").trim();
+    var q = { room_number: num };
+    if (roomDateFilterMode === "single") {
+      var y = singleEl && singleEl.value ? String(singleEl.value).trim() : "";
+      if (y) {
+        q.from = y;
+        q.to = y;
+      }
+    } else if (roomDateFilterMode === "range") {
+      var from = fromEl && fromEl.value ? String(fromEl.value).trim() : "";
+      var to = toEl && toEl.value ? String(toEl.value).trim() : "";
+      if (from) q.from = from;
+      if (to) q.to = to;
+    }
+    var status = stEl && stEl.value ? String(stEl.value).trim() : "";
+    var cat = catEl && catEl.value ? String(catEl.value).trim() : "";
+    var search = seEl && seEl.value ? String(seEl.value).trim() : "";
+    if (status) q.status = status;
+    if (cat) q.category = cat;
+    if (search) q.search = search;
+    return q;
+  }
+
+  function roomFilterSummaryLine() {
+    var parts = [];
+    if (roomDateFilterMode === "all") {
+      parts.push("tarih: tüm dönem");
+    } else if (roomDateFilterMode === "single") {
+      var sd = document.getElementById("room-filter-single-day");
+      var y = sd && sd.value ? String(sd.value).trim() : "";
+      parts.push(y ? "tarih: tek gün " + y : "tarih: tek gün (gün seçilmedi)");
+    } else {
+      var f = document.getElementById("room-filter-from");
+      var t = document.getElementById("room-filter-to");
+      var fv = f && f.value ? String(f.value).trim() : "";
+      var tv = t && t.value ? String(t.value).trim() : "";
+      if (fv || tv) parts.push("tarih: " + (fv || "…") + " → " + (tv || "…"));
+      else parts.push("tarih: aralık (tarih seçilmedi)");
+    }
+    var q = readRoomFilterBaseQuery();
+    if (q.status) parts.push("durum " + q.status);
+    if (q.category) parts.push("kategori " + q.category);
+    if (q.search) parts.push("arama «" + q.search.slice(0, 48) + "»");
+    return parts.join(" · ");
+  }
+
+  function syncRoomDateModeUi() {
+    document.querySelectorAll("[data-room-date-mode]").forEach(function (b) {
+      var m = b.getAttribute("data-room-date-mode") || "";
+      b.classList.toggle("is-active", m === roomDateFilterMode);
+    });
+    var singleWrap = document.getElementById("room-date-single-wrap");
+    var rangeWrap = document.getElementById("room-date-range-wrap");
+    if (singleWrap) singleWrap.classList.toggle("hidden", roomDateFilterMode !== "single");
+    if (rangeWrap) rangeWrap.classList.toggle("hidden", roomDateFilterMode !== "range");
+  }
+
+  function syncRoomCategorySelect() {
+    var sel = document.getElementById("room-filter-category");
+    if (!sel || !ui.getRoomCategoryFilterSelectInnerHtml) return;
+    sel.innerHTML = ui.getRoomCategoryFilterSelectInnerHtml(roomDetailSegment === "fault" ? "fault" : "request");
+  }
+
+  function syncRoomSegmentUi() {
+    document.querySelectorAll("[data-room-seg]").forEach(function (b) {
+      var t = b.getAttribute("data-room-seg") || "";
+      var on = t === roomDetailSegment;
+      b.classList.toggle("is-active", on);
+      b.setAttribute("aria-selected", on ? "true" : "false");
+    });
+  }
+
+  function syncRoomBreadcrumb() {
+    var el = document.getElementById("room-detail-breadcrumb");
+    if (!el || !roomDetailMeta) return;
+    el.textContent =
+      "Odalar · " +
+      (roomDetailMeta.blockLabel || "") +
+      " · " +
+      (roomDetailMeta.floorLabel || "") +
+      " · Oda " +
+      (roomDetailMeta.number || "");
+  }
+
+  function clearRoomFiltersDom() {
+    roomDateFilterMode = "all";
+    syncRoomDateModeUi();
+    ["room-filter-from", "room-filter-to", "room-filter-single-day"].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.value = "";
+    });
+    var st = document.getElementById("room-filter-status");
+    if (st) st.selectedIndex = 0;
+    var se = document.getElementById("room-filter-search");
+    if (se) se.value = "";
+    syncRoomCategorySelect();
+  }
+
+  function renderRoomsGrid() {
+    var mount = document.getElementById("rooms-explorer-mount");
+    if (!mount || !window.RoomsExplorer || typeof window.RoomsExplorer.renderGrid !== "function") return;
+    window.RoomsExplorer.renderGrid(mount, {
+      onPickRoom: function (meta) {
+        if (!meta || !meta.number) return;
+        roomDetailMeta = meta;
+        roomDetailSegment = "request";
+        roomDetailPage = 1;
+        clearRoomFiltersDom();
+        var ex = document.getElementById("rooms-explorer-wrap");
+        var dw = document.getElementById("rooms-detail-wrap");
+        if (ex) ex.classList.add("hidden");
+        if (dw) dw.classList.remove("hidden");
+        syncRoomSegmentUi();
+        syncRoomBreadcrumb();
+        void loadRoomBucket(1);
+      },
+    });
+  }
+
+  function exitRoomDetailToGrid() {
+    roomDetailMeta = null;
+    roomDetailSegment = "request";
+    roomDetailPage = 1;
+    roomDetailLast = { type: "", rows: [], pagination: null, baseQuery: {} };
+    var wrap = document.getElementById("rooms-detail-wrap");
+    var ex = document.getElementById("rooms-explorer-wrap");
+    var st = document.getElementById("rooms-detail-status");
+    var mount = document.getElementById("rooms-detail-table-mount");
+    if (wrap) wrap.classList.add("hidden");
+    if (ex) ex.classList.remove("hidden");
+    if (st) st.textContent = "";
+    if (mount) mount.textContent = "";
+    clearRoomFiltersDom();
+    renderRoomsGrid();
+  }
+
+  async function loadRoomBucket(page) {
+    var mount = document.getElementById("rooms-detail-table-mount");
+    var st = document.getElementById("rooms-detail-status");
+    if (!mount || !roomDetailMeta) return;
+    var type = roomDetailSegment === "fault" ? "fault" : "request";
+    var pageNum = page != null ? page : roomDetailPage;
+    roomDetailPage = pageNum;
+    var base = readRoomFilterBaseQuery();
+    if (st) {
+      st.textContent = "Yükleniyor…";
+      st.classList.remove("rooms-detail-status--error");
+    }
+    mount.textContent = "";
+    try {
+      var res = await adapter.getBucketPage(type, pageNum, BUCKET_LIST_PAGE_SIZE, base);
+      var rows = res.items || [];
+      var pagination = res.pagination || null;
+      if (
+        rows.length === 0 &&
+        pagination &&
+        pagination.page > 1 &&
+        (pagination.total || 0) > 0
+      ) {
+        await loadRoomBucket(pagination.page - 1);
+        return;
+      }
+      roomDetailLast = { type: type, rows: rows, pagination: pagination, baseQuery: base };
+      var bucketHandlers = {
+        pagination: pagination,
+        onPage: function (nextPage) {
+          void loadRoomBucket(nextPage);
+        },
+        readOnly: true,
+      };
+      if (type === "request") {
+        bucketHandlers.onSatisfaction = async function (itemType, id, score, note) {
+          try {
+            await adapter.patchSatisfaction(itemType, id, {
+              score: score === "" || score == null ? null : Number(score),
+              note: note,
+            });
+            window.alert("Misafir memnuniyeti kaydedildi.");
+            await loadRoomBucket(roomDetailPage);
+          } catch (err) {
+            var msg =
+              err && err.message
+                ? String(err.message)
+                : "Kayıt başarısız. Bağlantıyı veya yetkiyi kontrol edin.";
+            window.alert(msg);
+            throw err;
+          }
+        };
+      }
+      ui.renderBucketTable(mount, type, rows, bucketHandlers);
+      if (st) {
+        if (rows.length) {
+          var tot = pagination && pagination.total != null ? Number(pagination.total) : rows.length;
+          var pg = pagination && pagination.page != null ? pagination.page : roomDetailPage;
+          var tpg = pagination && pagination.totalPages != null ? pagination.totalPages : 1;
+          st.textContent = "Güncel · Toplam " + tot + " kayıt · sayfa " + pg + "/" + tpg;
+        } else {
+          st.textContent = "Bu süzgeçte kayıt yok.";
+        }
+      }
+    } catch (e) {
+      var errP = document.createElement("p");
+      errP.className = "admin-load-error";
+      errP.textContent = formatAdminBucketLoadError(e);
+      mount.appendChild(errP);
+      if (st) {
+        st.textContent = "Yükleme hatası.";
+        st.classList.add("rooms-detail-status--error");
+      }
+    }
+  }
+
+  function wireRoomsPanelOnce() {
+    if (roomsPanelWired) return;
+    roomsPanelWired = true;
+    var back = document.getElementById("room-detail-back");
+    if (back) {
+      back.addEventListener("click", function () {
+        exitRoomDetailToGrid();
+      });
+    }
+    var applyBtn = document.getElementById("room-filter-apply");
+    if (applyBtn) {
+      applyBtn.addEventListener("click", function () {
+        if (roomDateFilterMode === "single") {
+          var sd0 = document.getElementById("room-filter-single-day");
+          if (!sd0 || !String(sd0.value || "").trim()) {
+            window.alert("«Tek gün» için bir tarih seçin veya tarih modunu değiştirin.");
+            return;
+          }
+        }
+        if (roomDateFilterMode === "range") {
+          var f0 = document.getElementById("room-filter-from");
+          var t0 = document.getElementById("room-filter-to");
+          var fv0 = f0 && f0.value ? String(f0.value).trim() : "";
+          var tv0 = t0 && t0.value ? String(t0.value).trim() : "";
+          if (fv0 && tv0 && fv0 > tv0) {
+            window.alert("Bitiş tarihi başlangıçtan önce olamaz.");
+            return;
+          }
+        }
+        roomDetailPage = 1;
+        void loadRoomBucket(1);
+      });
+    }
+    var clearBtn = document.getElementById("room-filter-clear");
+    if (clearBtn) {
+      clearBtn.addEventListener("click", function () {
+        clearRoomFiltersDom();
+        roomDetailPage = 1;
+        void loadRoomBucket(1);
+      });
+    }
+    document.querySelectorAll("[data-room-seg]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var seg = b.getAttribute("data-room-seg") || "request";
+        roomDetailSegment = seg === "fault" ? "fault" : "request";
+        roomDetailPage = 1;
+        syncRoomSegmentUi();
+        syncRoomCategorySelect();
+        void loadRoomBucket(1);
+      });
+    });
+    document.querySelectorAll("[data-room-date-mode]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var m = String(b.getAttribute("data-room-date-mode") || "").trim();
+        if (m !== "all" && m !== "single" && m !== "range") return;
+        roomDateFilterMode = m;
+        syncRoomDateModeUi();
+      });
+    });
+    var refreshBtn = document.getElementById("room-filter-refresh");
+    if (refreshBtn) {
+      refreshBtn.addEventListener("click", function () {
+        void loadRoomBucket(roomDetailPage);
+      });
+    }
+    var pdfPage = document.getElementById("room-pdf-page");
+    if (pdfPage) {
+      pdfPage.addEventListener("click", async function () {
+        if (!window.RoomHistoryPdf || typeof window.RoomHistoryPdf.downloadCurrentPagePdf !== "function") {
+          window.alert("PDF modülü yüklenemedi.");
+          return;
+        }
+        if (!roomDetailMeta) return;
+        try {
+          var blockLine =
+            (roomDetailMeta.blockLabel || "") + " · " + (roomDetailMeta.floorLabel || "");
+          await window.RoomHistoryPdf.downloadCurrentPagePdf({
+            room: roomDetailMeta.number,
+            blockLine: blockLine,
+            type: roomDetailLast.type || roomDetailSegment,
+            rows: roomDetailLast.rows || [],
+            filterLine: roomFilterSummaryLine(),
+          });
+        } catch (e) {
+          window.alert(String((e && e.message) || e || "PDF oluşturulamadı."));
+        }
+      });
+    }
+    var pdfMerged = document.getElementById("room-pdf-merged");
+    if (pdfMerged) {
+      pdfMerged.addEventListener("click", async function () {
+        if (!window.RoomHistoryPdf || typeof window.RoomHistoryPdf.downloadMergedPdf !== "function") {
+          window.alert("PDF modülü yüklenemedi.");
+          return;
+        }
+        if (!roomDetailMeta) return;
+        var scopeEl = document.getElementById("room-pdf-scope");
+        var scope = scopeEl && scopeEl.value === "both" ? "both" : "segment";
+        pdfMerged.disabled = true;
+        try {
+          var blockLine =
+            (roomDetailMeta.blockLabel || "") + " · " + (roomDetailMeta.floorLabel || "");
+          await window.RoomHistoryPdf.downloadMergedPdf(adapter, {
+            room: roomDetailMeta.number,
+            baseQuery: readRoomFilterBaseQuery(),
+            scope: scope,
+            activeType: roomDetailSegment === "fault" ? "fault" : "request",
+            maxPages: 100,
+            filterLine: roomFilterSummaryLine(),
+            blockLine: blockLine,
+          });
+        } catch (e) {
+          window.alert(String((e && e.message) || e || "PDF oluşturulamadı."));
+        } finally {
+          pdfMerged.disabled = false;
+        }
+      });
+    }
+    syncRoomDateModeUi();
   }
 
   function formatAdminBucketLoadError(e) {
@@ -2441,6 +2797,7 @@
         if (tab === "evaluations") await loadEvaluations();
         if (tab === "pdf-report") setPdfCustomRangeUi(Boolean(document.getElementById("pdf-custom-range") && document.getElementById("pdf-custom-range").checked));
         if (tab === "logs") await loadLogs();
+        if (tab === "rooms") exitRoomDetailToGrid();
         if (isOperasyonAdminTab(tab) && isOperasyonAdminTab(previousActive) && tab !== previousActive) {
           resetOpCalendarToHotelToday();
         }
@@ -2600,6 +2957,8 @@
                 maybeAdvanceOpHotelToday();
                 renderOpDayStrips();
                 await loadOpFront();
+              } else if (activeAdminTab === "rooms" && isRoomsDetailOpen()) {
+                await loadRoomBucket(roomDetailPage);
               }
             } catch (_e) {}
           })();
@@ -2622,6 +2981,7 @@
       wireOpFilterSearchInputsOnce();
       wireOpDayStripLayoutClick();
       wireOpPdfButtonsOnce();
+      wireRoomsPanelOnce();
       wireVisibilityRefresh();
       wireOpsBroadcastRefresh();
     }

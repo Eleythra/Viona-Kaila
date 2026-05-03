@@ -4969,7 +4969,34 @@
       "</div></div>";
   }
 
+  /** Oda detayı süzgeci: istek/arıza kategori `<select>` iç HTML (REQUESTS_CONFIG + panel etiketleri). */
+  function adminRoomCategoryFilterSelectInnerHtml(bucketType) {
+    var bt = bucketType === "fault" ? "fault" : "request";
+    var cfg = typeof window !== "undefined" ? window.REQUESTS_CONFIG : null;
+    var items =
+      bt === "fault"
+        ? (cfg && cfg.categories && cfg.categories.fault) || []
+        : (cfg && cfg.categories && cfg.categories.request) || [];
+    var html = '<option value="">Tüm kategoriler</option>';
+    items.forEach(function (it) {
+      var id = String((it && it.id) || "").trim();
+      if (!id) return;
+      var group = REQUEST_GROUP_LABELS[id] || "";
+      var spec =
+        (CATEGORY_LABELS.request && CATEGORY_LABELS.request[id]) ||
+        (CATEGORY_LABELS.fault && CATEGORY_LABELS.fault[id]) ||
+        "";
+      var label = spec || group || id;
+      if (group && spec && group !== spec) {
+        label = group + " · " + spec;
+      }
+      html += '<option value="' + esc(id) + '">' + esc(label) + "</option>";
+    });
+    return html;
+  }
+
   window.AdminUI = {
+    getRoomCategoryFilterSelectInnerHtml: adminRoomCategoryFilterSelectInnerHtml,
     renderKpis: function (el, kpis) {
       if (!el) return;
       el.innerHTML = "";

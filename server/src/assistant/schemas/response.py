@@ -20,6 +20,7 @@ class ChatMeta(BaseModel):
             "open_spa_module",
             "open_restaurants_bars_module",
             "open_transfer_module",
+            "open_room_service_module",
             "open_where_module",
         ]
         target_department: Literal["reception", "guest_relations"] | None = None

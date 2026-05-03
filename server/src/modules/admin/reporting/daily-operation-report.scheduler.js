@@ -56,13 +56,14 @@ function tryFireDailyOperationReport(trigger) {
   const cfg = parseScheduleFromEnv();
   try {
     const ymd = ymdTodayInHotelTz();
-    if (lastFiredYmd === ymd) return;
+    /** `interval`: aynı gün pencerede tekrar dene (WhatsApp/Meta hatası sonrası yeniden deneme). HTTP/startup: günde en fazla bir kez. */
+    if (trigger !== "interval" && lastFiredYmd === ymd) return;
     const { h, mi } = readHourMinuteHotelTz(cfg.tz);
     const inCronMinuteWindow = h === cfg.targetHour && mi >= cfg.targetMin && mi <= cfg.maxMinuteInHour;
     const isAtOrAfterScheduleToday = h > cfg.targetHour || (h === cfg.targetHour && mi >= cfg.targetMin);
     const allow = trigger === "interval" ? inCronMinuteWindow : isAtOrAfterScheduleToday;
     if (!allow) return;
-    lastFiredYmd = ymd;
+    if (trigger !== "interval") lastFiredYmd = ymd;
     if (trigger === "startup_catchup" || trigger === "http_ping") {
       const lhm = `${String(h).padStart(2, "0")}:${String(mi).padStart(2, "0")}`;
       const tgt = `${String(cfg.targetHour).padStart(2, "0")}:${String(cfg.targetMin).padStart(2, "0")}`;

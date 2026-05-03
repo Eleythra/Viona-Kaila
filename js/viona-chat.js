@@ -166,6 +166,10 @@
         if (typeof window.vionaChatOpenTransfer === "function") window.vionaChatOpenTransfer();
         return;
       }
+      if (opt.value === "__open_room_service_module__") {
+        if (typeof window.vionaChatOpenRoomService === "function") window.vionaChatOpenRoomService();
+        return;
+      }
       if (opt.value === "__open_where_module__") {
         if (typeof window.vionaChatOpenWhere === "function") window.vionaChatOpenWhere();
         return;
@@ -266,6 +270,10 @@
           }
           if (opt.value === "__open_transfer_module__") {
             appendChatCtaButton(optWrap, opt, "viona-chat__option-btn--cta-transfer", SVG_CHAT_CTA_TRANSFER);
+            return;
+          }
+          if (opt.value === "__open_room_service_module__") {
+            appendChatCtaButton(optWrap, opt, "viona-chat__option-btn--cta-restaurant", SVG_CHAT_CTA_UTENSILS);
             return;
           }
           if (opt.value === "__open_where_module__") {
@@ -546,6 +554,13 @@
         {
           value: "__open_transfer_module__",
           label: t("chatOpenTransfer") || "Transfer",
+        },
+      ];
+    } else if (action && action.kind === "open_room_service_module") {
+      options = [
+        {
+          value: "__open_room_service_module__",
+          label: t("chatOpenRoomService") || "Oda servisi",
         },
       ];
     } else if (action && action.kind === "open_where_module") {

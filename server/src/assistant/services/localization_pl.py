@@ -60,6 +60,10 @@ TRANSLATIONS_PL: Dict[str, str] = {
         'to nie awaria pokoju — w poniższym formularzu reklamacji wybierz «Zgubione rzeczy».\n\n'
         'Aby uzyskać najlepszą pomoc, udaj się do Guest Relations lub recepcji. Możesz też wypełnić poniższy formularz reklamacji i opisać sytuację na piśmie — zespół zadba o Twój wpis.'
     ),
+    'complaint_form_guidance': (
+        'Reklamację możesz zgłosić w aplikacji Viona — wybór właściwej kategorii ułatwia naszemu zespołowi sprawne rozpatrzenie sprawy. '
+        'Przycisk poniżej otwiera formularz; możesz też zwrócić się do recepcji lub działu relacji z gośćmi.'
+    ),
     'request_towel': 'W sprawie ręczników skontaktuj się z recepcją.',
     'request_blanket': 'W sprawie dodatkowego koca skontaktuj się z recepcją.',
     'request_water': 'Aby dowieźć wodę lub wodę pitną do pokoju, skontaktuj się z recepcją — zespół zorganizuje dostawę.',
@@ -75,6 +79,16 @@ TRANSLATIONS_PL: Dict[str, str] = {
     'request_default': 'Przekaż tę prośbę recepcji.',
     'reservation_early_checkin': 'W sprawie wcześniejszego zameldowania skontaktuj się z recepcją.',
     'reservation_late_checkout': 'W sprawie późniejszego wymeldowania skontaktuj się z recepcją.',
+    'early_checkin_reception_handoff': (
+        'Wcześniejsze zameldowanie zależy od obłożenia i przygotowania pokoju w dniu przyjazdu. '
+        'Aktualne informacje i pomoc uzyskasz u zespołu recepcji. '
+        'Zajrzyj do recepcji lub zadzwoń — chętnie podpowiemy możliwe opcje.'
+    ),
+    'late_checkout_guest_notif_redirect': (
+        'Późniejsze wymeldowanie uzgadnia się na recepcji. '
+        'Wypełnij formularz w sekcji „Prośby” → „Powiadomienia gościa”. '
+        'Przycisk poniżej otwiera ten formularz od razu.'
+    ),
     'reservation_room_change': 'W sprawie zmiany pokoju skontaktuj się z recepcją.',
     'reservation_default': 'W Kaila Beach rezerwacje i stoliki są załatwiane osobiście przez recepcję i zespoły specjalistów — z indywidualną troską. W sprawach pobytu i planów: recepcja; stoliki à la carte: Guest Relations; spa i masaż: La Serenite Spa — jesteśmy przy Tobie na każdym etapie.',
     'special_need_celiac': 'Poinformuj Guest Relations o tej sytuacji; kuchnia może zapewnić odpowiednie wsparcie.',
@@ -92,6 +106,12 @@ TRANSLATIONS_PL: Dict[str, str] = {
     'fixed_transfer_module_hint': 'Kaila Beach oferuje dedykowany transfer; w sprawie powitania i trasy skontaktuj się z recepcją / front office. Aktualne stawki, opcje pojazdów i przykładowe trasy nie są podawane jako długi tekst w czacie — treści premium są w module „Transfer”.\n\nOtwórz go przyciskiem poniżej.',
     'fixed_spa_prices_module_hint': 'Ceny zabiegów spa nie są wymieniane w czacie. Aktualny cennik i pakiety są tylko w module „Spa & wellness” — użyj przycisku poniżej.',
     'fixed_restaurants_bars_module_hint': 'Menu Pool Bar, menu Lobby Bar, menu Moss Beach Restaurant oraz cenniki napojów / importowanych alkoholi w barach nie są pokazywane jako długi tekst w czacie; aktualne PDF są w „Restauracje i bary”. Otwórz sekcję przyciskiem poniżej. (Ogólne godziny lokali możesz zapytać jako „godziny restauracji” lub zobaczyć w tym samym module.)',
+    'fixed_room_service_module_hint': (
+        'Serwis pokojowy (jedzenie i napoje) w Kaila Beach jest płatny we wszystkich kategoriach pokoi; aktualne menu i ścieżka '
+        'zamówienia są wyłącznie w aplikacji Viona w module „Serwis pokojowy” — nie wklejamy długich menu ani cenników na czacie. '
+        'Recepcja pomoże w godzinach podania, alergenach i indywidualnych ustaleniach.\n\n'
+        'Otwórz moduł przyciskiem poniżej.'
+    ),
     'fixed_animation_info': '- Wieczorne pokazy akrobatyczne, tematyczne wieczory, muzyka na żywo i DJ (mogą się różnić wg dnia i sezonu; czasem dodatkowy pokaz).\n- Dzienny harmonogram jest zwykle stały: program od 10:00 z aqua gym, dartem i piłką wodną. Najnowsze brzmienie i godziny są w aplikacji w sekcji „Animacja i wydarzenia”.\nAktywności dla dzieci:\n- Jammies Kids Club / Mini Club: 10:00-12:30 i 14:30-17:00 (wiek 4-12)\n- Mini Disco: 20:45-21:00 (wiek 4-12)\n- Plac zabaw: 07:00-21:00\nUwaga: program wieczorny i dodatkowe pokazy mogą się różnić wg dnia; dokładne informacje u recepcji lub na tablicy animacji.',
     'fixed_outside_hotel_info': 'W sprawie rekomendacji poza hotelem najpewniejsze i aktualne informacje poda recepcja. Centrum Alanii jest ok. 3 km; dostępne są taxi i transport publiczny.',
     'fixed_alanya_discover_intro': 'Alanya to kurort nad Morzem Śródziemnym znany z plaży, zamku i klimatu historycznego. Częste punkty zwiedzania:\n\n• Plaża Kleopatry — drobny piasek i czysta woda\n• Czerwona Wieża i port — symbol miasta\n• Zamek Alanii — panorama ze wzgórza; zachody słońca zapadają w pamięć\n• Rzeka Dim i strefy piknikowe w głębi lądu\n\nHotel jest w Obagöl, ok. 3 km od centrum. Taxi i komunikacja są praktyczne. Godziny otwarcia, bilety i wycieczki organizowane — najpewniej u recepcji.\n\nPrzycisk poniżej otwiera w aplikacji sekcję „Odkryj Alanę” z krótkimi opisami i zdjęciami.',

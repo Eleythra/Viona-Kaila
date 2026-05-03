@@ -38,11 +38,14 @@ def test_finalize_empty_message_uses_fallback():
     assert "yazılı" in fin.message or "sohbet" in fin.message
 
 
-def test_extra_ui_lang_voice_maps_to_english_voice_assets():
-    """ru/nl vb. sözlükte yok: voice_dict_lang → en (TTS tutarlı, TR sürpriz yok)."""
-    nl = "Info. Use the button below to open it."
+def test_extra_ui_lang_voice_uses_native_assets_and_strips_cta():
+    """nl: yerel sesli metin + EN modül kalıntısı strip (ikinci geçiş)."""
+    nl = "Info. Open de module met de knop hieronder."
     out = sanitize_message_for_voice(nl, "nl")
-    assert "button below" not in out.lower()
+    assert "knop" not in out.lower()
+    mixed = "Kort. Use the button below to open it."
+    out2 = sanitize_message_for_voice(mixed, "nl")
+    assert "button below" not in out2.lower()
     meta = ChatMeta(
         intent="hotel_info",
         confidence=1.0,
@@ -53,7 +56,21 @@ def test_extra_ui_lang_voice_maps_to_english_voice_assets():
     resp = ChatResponse(type="inform", message="", meta=meta)
     fin = finalize_voice_channel_response(resp, "nl")
     assert fin.message.strip()
-    assert "text chat" in fin.message.lower() or "chat" in fin.message.lower()
+    assert "tekstchat" in fin.message.lower() or "text" in fin.message.lower()
+
+
+def test_ru_voice_empty_message_fallback_is_russian():
+    meta = ChatMeta(
+        intent="hotel_info",
+        confidence=1.0,
+        language="ru",
+        ui_language="ru",
+        source="rule",
+    )
+    resp = ChatResponse(type="inform", message="", meta=meta)
+    fin = finalize_voice_channel_response(resp, "ru")
+    assert fin.message.strip()
+    assert "чат" in fin.message.lower() or "текст" in fin.message.lower()
 
 
 def test_finalize_clears_action_and_exit_timer():

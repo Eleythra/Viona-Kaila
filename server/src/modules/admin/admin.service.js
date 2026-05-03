@@ -248,12 +248,18 @@ export async function listAdminBucket(type, query = {}) {
   let qb = getSupabase().from(cfg.table).select("*", { count: "exact" }).order("submitted_at", { ascending: false });
   qb = applyDateFilters(qb, query, "submitted_at");
   if (query.status) qb = applyGuestBucketStatusFilter(qb, type, query);
+  const categoryEq = String(query.category ?? "").trim();
+  if (categoryEq && type !== "reservation") {
+    qb = qb.eq("category", categoryEq);
+  }
+  /** Oda numarası metin aramasından bağımsız AND ile uygulanır (oda ekranında ikisi birlikte). */
+  const rn = String(query.room_number || "").trim();
+  if (type !== "reservation" && rn) {
+    qb = qb.eq("room_number", rn);
+  }
   const searchList = String(query.search ?? "").trim();
   if (type !== "reservation" && searchList) {
     qb = applyGuestBucketSearchOr(qb, type, searchList);
-  } else if (type !== "reservation" && query.room_number) {
-    const rn = String(query.room_number || "").trim();
-    if (rn) qb = qb.eq("room_number", rn);
   }
   if (type === "reservation") {
     if (query.reservation_type) qb = qb.eq("reservation_type", String(query.reservation_type));
@@ -338,12 +344,17 @@ function applyGuestBucketSearchOr(qb, type, rawSearch) {
 
 function applyGuestBucketListFilters(qb, type, query = {}) {
   let q = applyDateFilters(qb, query, "submitted_at");
+  const categoryEq = String(query.category ?? "").trim();
+  if (categoryEq && type !== "reservation") {
+    q = q.eq("category", categoryEq);
+  }
+  const rn0 = String(query.room_number || "").trim();
+  if (type !== "reservation" && rn0) {
+    q = q.eq("room_number", rn0);
+  }
   const searchRaw = String(query.search ?? "").trim();
   if (type !== "reservation" && searchRaw) {
     q = applyGuestBucketSearchOr(q, type, searchRaw);
-  } else if (type !== "reservation" && query.room_number) {
-    const rn = String(query.room_number || "").trim();
-    if (rn) q = q.eq("room_number", rn);
   }
   if (query.status) q = applyGuestBucketStatusFilter(q, type, query);
   return q;

@@ -235,33 +235,51 @@ export async function runDailyOperationReportJob(opts = {}) {
       continue;
     }
     if (!wa.ok) {
+      const delivered = Number(wa.deliveredCount) || 0;
+      const partialOk = wa.reason === "partial_failure" && delivered > 0;
+      if (!partialOk) {
+        console.warn(
+          "[daily_operation_report] whatsapp_failed ymd=%s segment=%s template=%s reason=%s delivered=%s/%s body_params=%s source=%s",
+          ymd,
+          seg.key,
+          wa.templateName || "-",
+          wa.reason || "-",
+          wa.deliveredCount ?? 0,
+          recipients.length,
+          wa.bodyParamCount ?? "-",
+          source,
+        );
+        results.push({ segment: seg.key, ok: false, whatsapp: wa });
+        anyFailure = true;
+        pauseBeforeNextSend = true;
+        continue;
+      }
       console.warn(
-        "[daily_operation_report] whatsapp_failed ymd=%s segment=%s template=%s reason=%s delivered=%s/%s source=%s",
+        "[daily_operation_report] whatsapp_partial ymd=%s segment=%s template=%s delivered=%d/%s body_params=%s source=%s (mark_sent idempotency; kalan numaralar için ertesi gün veya force)",
         ymd,
         seg.key,
         wa.templateName || "-",
-        wa.reason || "-",
-        wa.deliveredCount ?? 0,
+        delivered,
         recipients.length,
+        wa.bodyParamCount ?? "-",
         source,
       );
-      results.push({ segment: seg.key, ok: false, whatsapp: wa });
       anyFailure = true;
-      pauseBeforeNextSend = true;
-      continue;
     }
 
     markSent(ymd, seg.fileSlug);
     console.info(
-      "[daily_operation_report] segment_done ymd=%s segment=%s delivered=%d/%s env=%s source=%s",
+      "[daily_operation_report] segment_done ymd=%s segment=%s delivered=%d/%s body_params=%s template=%s env=%s source=%s",
       ymd,
       seg.key,
       wa.deliveredCount ?? 0,
       recipients.length,
+      wa.bodyParamCount ?? "-",
+      wa.templateName || "-",
       envKey || "-",
       source,
     );
-    results.push({ segment: seg.key, ok: true, whatsapp: wa });
+    results.push({ segment: seg.key, ok: Boolean(wa.ok), whatsapp: wa });
     pauseBeforeNextSend = true;
   }
 

@@ -102,6 +102,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
             "Eşyanızı aramak veya kaydı netleştirmek için öncelikle Misafir İlişkileri veya resepsiyon ekibimize başvurabilirsiniz. "
             "İsterseniz aşağıdaki şikâyet formunu da doldurarak ayrıntıları yazılı iletebilirsiniz; ekibimiz kaydınızı özenle değerlendirir."
         ),
+        "complaint_form_guidance": (
+            "Şikâyetinizi Viona uygulamasındaki şikâyet formu ile iletebilirsiniz; uygun kategoriyi seçerek ekibimizin kaydı net "
+            "incelemesine yardımcı olursunuz. Aşağıdaki düğme formu doğrudan açar — isterseniz resepsiyon veya Misafir İlişkileri’ne de "
+            "başvurabilirsiniz."
+        ),
         "request_towel": "Havlu talebinizi lütfen resepsiyon ile iletiniz.",
         "request_blanket": "Battaniye talebiniz için lütfen resepsiyon ile iletişime geçiniz.",
         "request_water": "Odaya su veya içme suyu talebiniz için lütfen resepsiyon ile iletişime geçiniz; ekip yönlendirilecektir.",
@@ -127,6 +132,16 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "request_default": "Bu talebinizi lütfen resepsiyon ile paylaşınız.",
         "reservation_early_checkin": "Erken giriş talebiniz için lütfen resepsiyon ile iletişime geçiniz.",
         "reservation_late_checkout": "Geç çıkış talebiniz için lütfen resepsiyon ile iletişime geçiniz.",
+        "early_checkin_reception_handoff": (
+            "Erken giriş, o günkü doluluk ve oda hazırlığına bağlıdır; en doğru bilgi ve yardımı "
+            "ön büro / resepsiyon ekibimiz verir. İsterseniz doğrudan resepsiyona uğrayabilir veya "
+            "telefonla arayabilirsiniz; talebinizi kısaca iletmeniz yeterli — ekibimiz sizi memnuniyetle yönlendirir."
+        ),
+        "late_checkout_guest_notif_redirect": (
+            "Geç çıkış talebiniz ön büro / resepsiyon tarafından değerlendirilir. "
+            "Ana sayfada İstekler → Misafir bildirimleri içindeki geç çıkış formunu kullanın. "
+            "Aşağıdaki buton bu formu doğrudan açar."
+        ),
         "reservation_room_change": "Oda değişikliği talebiniz için lütfen resepsiyon ile iletişime geçiniz.",
         "reservation_default": (
             "Kaila Beach’te rezervasyon ve masa düzenlemeleriniz ön büro ile uzman ekiplerimiz tarafından yüz yüze, size özel ve özenle tamamlanır. "
@@ -158,6 +173,12 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         ),
         "fixed_spa_prices_module_hint": "Spa ve profesyonel bakım fiyatları sohbette listelenmez. Güncel fiyat listesi ve paketler yalnızca uygulamadaki «Spa & wellness» modülündedir; premium içeriğe aşağıdaki düğmeyle geçebilirsiniz.",
         "fixed_restaurants_bars_module_hint": "Havuz Bar menüsü, Lobby Bar menüsü, Moss Beach Restaurant menüsü ve barlarda içecek / import içki fiyat listesi sohbette uzun metin olarak gösterilmez; güncel PDF’ler «Restaurant & barlar» modülündedir. İlgili listelere aşağıdaki düğmeyle ulaşabilirsiniz. (Genel restoran saatleri için «restoran saatleri» diye sorabilir veya aynı modüle gidebilirsiniz.)",
+        "fixed_room_service_module_hint": (
+            "Kaila Beach’te yiyecek ve içecek oda servisi tüm oda tiplerinde ücretlidir; güncel oda servisi menüsü ve sipariş akışı "
+            "yalnızca Viona uygulamasındaki «Oda servisi» modülündedir — sohbette uzun menü veya fiyat listesi paylaşılmaz. "
+            "Özel zamanlama, alerjen veya kişiselleştirilmiş düzenleme için resepsiyon aynı özenle size eşlik eder.\n\n"
+            "Modülü açmak için aşağıdaki düğmeyi kullanabilirsiniz."
+        ),
         "fixed_animation_info": "- Akşam akrobatik dans şovları, temalı geceler, canlı müzik, DJ performansları (bu bölüm gün ve sezona göre çeşitlenebilir; bazı günler ekstra şov eklenebilir).\n- Gündüz çizelgesi genelde sabittir; günlük program 10:00'da başlar; aqua gym, dart, su topu gibi aktiviteler içerir. Güncel metin ve saatler uygulamadaki «Animasyon ve etkinlikler» modülündedir.\nÇocuk aktiviteleri:\n- Jammies Kids Club / Mini Club: 10:00-12:30 ve 14:30-17:00 (4-12 yaş)\n- Mini Disco: 20:45-21:00 (4-12 yaş)\n- Çocuk oyun parkı: 07:00-21:00\nNot: Akşam programı ve özel gösteriler güne göre farklılık gösterebilir; kesin bilgi için resepsiyon veya animasyon panosunu kontrol ediniz.",
         "fixed_outside_hotel_info": "Otel dışı öneriler için en güncel ve güvenli bilgi resepsiyondadır. Alanya merkez yaklaşık 3 km mesafededir; taksi ve toplu taşıma seçenekleri mevcuttur.",
         "fixed_alanya_discover_intro": "Alanya, Akdeniz kıyısında denizi, kalesi ve tarihi dokusuyla öne çıkan bir tatil kentidir. Gezginler için sık sorulan başlıca duraklar:\n\n• Kleopatra Plajı — ince kum ve berrak deniz\n• Kızıl Kule ve liman — şehrin simgesi\n• Alanya Kalesi — tepeden panoramik manzara; gün batımı çok beğenilir\n• Dim Çayı ve mesire alanları (iç kesim)\n\nOtelimiz Obagöl'de; şehir merkezine yaklaşık 3 km. Ulaşım için taksi ve toplu taşıma pratik seçeneklerdir. Güncel saatler, biletli alanlar ve özel turlar için resepsiyon en güvenilir kaynaktır.\n\nAşağıdaki düğmeyle uygulamadaki «Alanya'yı keşfedin» bölümünü açarak kısa metinler ve görsellerle bu noktaları inceleyebilirsiniz.",
@@ -268,6 +289,10 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
             "For the most attentive assistance, please visit Guest Relations or reception. "
             "You may also complete the complaint form below to share details in writing — our team will handle your record with care."
         ),
+        "complaint_form_guidance": (
+            "You can submit your complaint through the complaint form in the Viona app — choosing the right category helps our team "
+            "review your case efficiently. The button below opens the form; you may also speak with reception or Guest Relations."
+        ),
         "request_towel": "Please contact reception for your towel request.",
         "request_blanket": "Please contact reception for your blanket request.",
         "request_water": "For water or drinking water to your room, please contact reception; the team will arrange delivery.",
@@ -293,6 +318,16 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "request_default": "Please share this request with reception.",
         "reservation_early_checkin": "Please contact reception for your early check-in request.",
         "reservation_late_checkout": "Please contact reception for your late check-out request.",
+        "early_checkin_reception_handoff": (
+            "Early check-in is subject to availability and housekeeping on the day of arrival. "
+            "Our front desk team will gladly confirm what is possible and arrange the details. "
+            "Please stop by reception or call us when you arrive — we are here to help."
+        ),
+        "late_checkout_guest_notif_redirect": (
+            "Late check-out is arranged by the front desk. "
+            "Use the late check-out form inside Requests → Guest notices on the main screen. "
+            "The button below opens that form directly."
+        ),
         "reservation_room_change": "Please contact reception for your room change request.",
         "reservation_default": (
             "At Kaila Beach, reservations and table arrangements are completed in person by our front-of-house and specialist hosts, with attentive, bespoke care. "
@@ -324,6 +359,12 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         ),
         "fixed_spa_prices_module_hint": "Spa treatment prices are not listed in chat. The current price list and packages are only in the «Spa & wellness» module — use the button below for the premium content.",
         "fixed_restaurants_bars_module_hint": "The Pool Bar menu, Lobby Bar menu, Moss Beach Restaurant menu, and bar drink / imported spirits price lists are not shown as long text in chat; up-to-date PDFs are in «Restaurants & bars». Open that section with the button below. (For general outlet hours you can still ask for «restaurant hours» or use the same module.)",
+        "fixed_room_service_module_hint": (
+            "In-room dining at Kaila Beach is a paid service in every room category; the current room-service menu and ordering "
+            "flow are only in the Viona app under «Room service» — we do not paste long menus or price lists in chat. "
+            "For timing, allergens, or a tailored arrangement, reception will assist you with the same care.\n\n"
+            "Open the module with the button below."
+        ),
         "fixed_animation_info": "- Evening acrobatic dance shows, themed nights, live music, and DJ performances (this part can vary by day and season; some days may include an extra show).\n- The daytime schedule is generally stable: the daily program starts at 10:00 with aqua gym, darts, and water polo. The latest wording and times are in the in-app «Animation & events» section.\nChildren’s activities:\n- Jammies Kids Club / Mini Club: 10:00-12:30 and 14:30-17:00 (ages 4-12)\n- Mini Disco: 20:45-21:00 (ages 4-12)\n- Children’s playground: 07:00-21:00\nNote: Evening line-ups and special shows may differ by day; please check reception or the animation board for the exact programme.",
         "fixed_outside_hotel_info": "For outside-hotel suggestions, reception provides the most up-to-date and safe guidance. Alanya city center is about 3 km away, and taxi/public transport options are available.",
         "fixed_alanya_discover_intro": "Alanya is a lively Mediterranean resort known for its seafront, castle and historic character. Highlights many guests enjoy:\n\n• Kleopatra Beach — fine sand and clear water\n• Red Tower and harbour — an iconic landmark\n• Alanya Castle — panoramic views from the hill; sunsets are memorable\n• Dim River picnic area inland\n\nOur hotel is in Obagöl, about 3 km from the city centre. Taxis and public transport are practical. For opening hours, ticketed sites and organised tours, reception is the safest source of up-to-date advice.\n\nUse the button below to open the in-app «Discover Alanya» section with short descriptions and images.",
@@ -434,6 +475,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
             "Für eine persönliche Betreuung wenden Sie sich bitte an die Gästebetreuung oder die Rezeption. "
             "Optional können Sie unten das Beschwerdeformular ausfüllen und die Details schriftlich mitteilen — unser Team bearbeitet Ihren Eintrag aufmerksam."
         ),
+        "complaint_form_guidance": (
+            "Ihre Beschwerde können Sie über das Beschwerdeformular in der Viona-App senden — die passende Kategorie hilft unserem Team, "
+            "Ihr Anliegen zügig zu prüfen. Die Schaltfläche unten öffnet das Formular; alternativ erreichen Sie die Rezeption oder die "
+            "Gästebetreuung."
+        ),
         "request_towel": "Bitte wenden Sie sich für Ihre Handtuchanfrage an die Rezeption.",
         "request_blanket": "Bitte wenden Sie sich für Ihre Deckenanfrage an die Rezeption.",
         "request_water": "Für Wasser oder Trinkwasser aufs Zimmer wenden Sie sich bitte an die Rezeption; das Team organisiert die Zustellung.",
@@ -459,6 +505,16 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "request_default": "Bitte teilen Sie diese Anfrage der Rezeption mit.",
         "reservation_early_checkin": "Bitte wenden Sie sich für Ihre Bitte um frühen Check-in an die Rezeption.",
         "reservation_late_checkout": "Bitte wenden Sie sich für Ihre Bitte um späten Check-out an die Rezeption.",
+        "early_checkin_reception_handoff": (
+            "Ein früherer Check-in hängt von Belegung und Zimmerbereitung am Anreisetag ab. "
+            "Unser Rezeptionsteam informiert Sie zuverlässig und hilft bei der Organisation. "
+            "Sprechen Sie uns bitte direkt an der Rezeption an oder rufen Sie uns an — wir unterstützen Sie gern."
+        ),
+        "late_checkout_guest_notif_redirect": (
+            "Ein späterer Check-out wird an der Rezeption geklärt. "
+            "Nutzen Sie das Formular für den späten Check-out unter Anfragen → Gästemeldungen. "
+            "Die Schaltfläche unten öffnet dieses Formular direkt."
+        ),
         "reservation_room_change": "Bitte wenden Sie sich für Ihren Zimmerwechsel an die Rezeption.",
         "reservation_default": (
             "Im Kaila Beach werden Reservierungen und Tischwünsche persönlich von unserem Front Office und den Spezialteams mit aufmerksamer, maßgeschneiderter Betreuung für Sie abgestimmt. "
@@ -489,6 +545,12 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         ),
         "fixed_spa_prices_module_hint": "Spa- und Anwendungspreise werden im Chat nicht aufgelistet. Die aktuelle Preisliste und Pakete stehen nur im Modul «Spa & Wellness» — bitte nutzen Sie die Schaltfläche unten.",
         "fixed_restaurants_bars_module_hint": "Pool-Bar-Menü, Lobby-Bar-Speisekarte, Moss-Restaurant-Speisekarte und Getränke-/Importspirituosen-Preislisten der Bars werden im Chat nicht als langer Text gezeigt; aktuelle PDFs liegen unter «Restaurants & Bars». Bitte öffnen Sie den Bereich über die Schaltfläche unten. (Allgemeine Öffnungszeiten können Sie weiterhin mit «Restaurantzeiten» erfragen oder im selben Modul einsehen.)",
+        "fixed_room_service_module_hint": (
+            "Speisen und Getränke per Zimmerservice sind im Kaila Beach in allen Zimmerkategorien kostenpflichtig; aktuelles Menü "
+            "und Bestellweg finden Sie ausschließlich in der Viona-App unter «Zimmerservice» — keine langen Menüs oder Preislisten im Chat. "
+            "Für Zeiten, Allergene oder eine persönliche Abstimmung hilft Ihnen die Rezeption aufmerksam weiter.\n\n"
+            "Öffnen Sie das Modul über die Schaltfläche unten."
+        ),
         "fixed_animation_info": "- Abendliche Akrobatik-Tanzshows, Themenabende, Live-Musik und DJ-Performances (dieser Teil kann je nach Tag und Saison wechseln; an manchen Tagen gibt es Zusatzshows).\n- Der Tagesablauf ist in der Regel stabil: Start um 10:00 mit Aqua Gym, Dart und Wasserball. Aktuelle Texte und Zeiten finden Sie in der App unter «Animation & Veranstaltungen».\nKinderaktivitäten:\n- Jammies Kids Club / Mini Club: 10:00-12:30 und 14:30-17:00 (4-12 Jahre)\n- Mini Disco: 20:45-21:00 (4-12 Jahre)\n- Kinderspielplatz: 07:00-21:00\nHinweis: Abendprogramm und Zusatzshows können täglich abweichen; genaue Auskunft an der Rezeption oder an der Animationstafel.",
         "fixed_outside_hotel_info": "Für Empfehlungen außerhalb des Hotels wenden Sie sich bitte an die Rezeption; dort erhalten Sie die aktuellsten und sichersten Informationen. Das Zentrum von Alanya ist etwa 3 km entfernt; Taxi- und ÖPNV-Optionen sind verfügbar.",
         "fixed_alanya_discover_intro": "Alanya ist ein lebendiges Mittelmeerziel mit Strand, Burg und historischem Flair. Beliebte Stationen:\n\n• Kleopatra-Strand — feiner Sand, klares Wasser\n• Roter Turm und Hafen — Wahrzeichen der Stadt\n• Burg von Alanya — Panoramablick; Sonnenuntergänge sind eindrucksvoll\n• Dim-Çayı und Picknickbereiche landeinwärts\n\nUnser Hotel liegt in Obagöl, etwa 3 km vom Zentrum. Taxi und ÖPNV sind praktisch. Für Öffnungszeiten, Eintritte und organisierte Ausflüge ist die Rezeption die zuverlässigste Anlaufstelle.\n\nMit der Schaltfläche unten öffnen Sie die App-Rubrik «Alanya entdecken» mit Kurztexten und Bildern.",
@@ -539,6 +601,118 @@ _AFTER_HOURS_EXTRA_NATIVE: dict[str, str] = {
     ),
 }
 
+_COMPLAINT_FORM_GUIDANCE_EXTRA_NATIVE: dict[str, str] = {
+    "da": (
+        "Du kan sende din klage via klageformularen i Viona-appen — den rette kategori hjælper teamet med at behandle sagen effektivt. "
+        "Knappen herunder åbner formularen; du kan også henvende dig til receptionen eller Guest Relations."
+    ),
+    "nl": (
+        "U kunt uw klacht indienen via het klachtenformulier in de Viona-app — de juiste categorie helpt ons team uw zaak efficiënt te beoordelen. "
+        "De knop hieronder opent het formulier; u kunt ook de receptie of Guest Relations raadplegen."
+    ),
+    "cs": (
+        "Stížnost můžete podat přes formulář ve aplikaci Viona — zvolte správnou kategorii, aby náš tým věc vyřídil co nejrychleji. "
+        "Tlačítko níže formulář otevře; v případě potřeby kontaktujte recepci nebo Guest Relations."
+    ),
+    "ro": (
+        "Puteți trimite reclamația prin formularul din aplicația Viona — categoria potrivită ajută echipa să analizeze eficient solicitarea. "
+        "Butonul de mai jos deschide formularul; puteți apela și la recepție sau la Guest Relations."
+    ),
+    "sk": (
+        "Sťažnosť môžete podať cez formulár v aplikácii Viona — správna kategória pomôže tímu vec vyriešiť čo najskôr. "
+        "Tlačidlo nižšie otvorí formulár; v prípade potreby kontaktujte recepciu alebo Guest Relations."
+    ),
+}
+
+_EARLY_CHECKIN_RECEPTION_HANDOFF_EXTRA: dict[str, str] = {
+    "da": (
+        "Tidlig indtjekning afhænger af belægning og rengøring på ankomstdagen. "
+        "Receptionsteamet kan bekræfte muligheder og hjælpe med detaljer. "
+        "Kontakt receptionen direkte eller ring — vi hjælper gerne."
+    ),
+    "nl": (
+        "Vroege inchecken hangt af van bezetting en housekeeping op de aankomstdag. "
+        "Het receptieteam helpt u graag met mogelijkheden en details. "
+        "Kom langs bij de receptie of bel ons — wij helpen u graag verder."
+    ),
+    "cs": (
+        "Dřívější check-in závisí na obsazenosti a úklidu v den příjezdu. "
+        "Tým na recepci vám rád sdělí možnosti a pomůže s detaily. "
+        "Zastavte se na recepci nebo zavolejte — rádi vám pomůžeme."
+    ),
+    "ro": (
+        "Check-inul devreme depinde de gradul de ocupare și de housekeeping în ziua sosirii. "
+        "Echipa de la recepție vă poate confirma opțiunile și detaliile. "
+        "Treceți pe la recepție sau sunați — suntem aici să vă ajutăm."
+    ),
+    "sk": (
+        "Skorší check-in závisí od obsadenosti a upratovania v deň príchodu. "
+        "Tím na recepcii vám rád povie možnosti a pomôže s detailmi. "
+        "Zastavte sa na recepcii alebo zavolajte — radi pomôžeme."
+    ),
+}
+
+_LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_EXTRA: dict[str, str] = {
+    "da": (
+        "Sen udtjekning aftales ved receptionen. "
+        "Brug formularen for sen udtjekning under Forespørgsler → Gæstenotater på startskærmen. "
+        "Knappen herunder åbner formularen direkte."
+    ),
+    "nl": (
+        "Late check-out wordt geregeld aan de receptie. "
+        "Gebruik het formulier voor late check-out onder Verzoeken → Gastmeldingen op het startscherm. "
+        "De knop hieronder opent dit formulier direct."
+    ),
+    "cs": (
+        "Pozdější check-out se domlouvá na recepci. "
+        "Použijte formulář pro pozdější check-out v sekci Požadavky → Oznámení hosta na hlavní obrazovce. "
+        "Tlačítko níže otevře tento formulář přímo."
+    ),
+    "ro": (
+        "Check-outul târziu se stabilește la recepție. "
+        "Folosiți formularul pentru check-out târziu din Cereri → Notificare oaspete pe ecranul principal. "
+        "Butonul de mai jos deschide direct acest formular."
+    ),
+    "sk": (
+        "Neskorší check-out sa dohaduje na recepcii. "
+        "Použite formulár pre neskorší check-out v sekcii Požiadavky → Oznámenie hosťa na hlavnej obrazovke. "
+        "Tlačidlo nižšie otvorí tento formulár priamo."
+    ),
+}
+
+_ROOM_SERVICE_MODULE_HINT_EXTRA: dict[str, str] = {
+    "da": (
+        "Roomservice ved Kaila Beach er betalt i alle værelsestyper; den aktuelle menu og bestilling ligger udelukkende i "
+        "Viona-appen under «Roomservice» — vi deler ikke lange menuer eller prislister i chatten. "
+        "Receptionen hjælper gerne med tidspunkter, allergener og særlige ønsker.\n\n"
+        "Åbn modulet med knappen herunder."
+    ),
+    "nl": (
+        "Roomservice bij Kaila Beach is in elke kamercategorie betaald; het actuele menu en de bestelstroom staan uitsluitend "
+        "in de Viona-app onder «Roomservice» — we plaatsen geen lange menu’s of prijslijsten in de chat. "
+        "De receptie helpt u graag met timing, allergenen en persoonlijke wensen.\n\n"
+        "Open de module met de knop hieronder."
+    ),
+    "cs": (
+        "Donáška jídel a nápojů na pokoj v Kaila Beach je ve všech kategoriích pokojů placená; aktuální menu a objednávkový postup "
+        "jsou výhradně v aplikaci Viona v sekci «Room service» — dlouhá menu v chatu nesdílíme. "
+        "Recepce vám ráda pomůže s časem podání nebo speciálními požadavky.\n\n"
+        "Modul otevřete tlačítkem níže."
+    ),
+    "ro": (
+        "Room service la Kaila Beach este cu plată, în toate categoriile de cameră; meniul actual și fluxul de comandă "
+        "sunt exclusiv în aplicația Viona la «Room service» — nu afișăm meniuri lungi sau liste de prețuri în chat. "
+        "Recepția vă poate ajuta cu ora livrării, alergenii sau aranjamente personalizate.\n\n"
+        "Deschideți modulul cu butonul de mai jos."
+    ),
+    "sk": (
+        "Donáška jedla a nápojov na izbu v Kaila Beach je vo všetkých kategóriách izieb spoplatnená; aktuálne menu a postup objednania "
+        "sú výhradne v aplikácii Viona v sekcii «Room service» — dlhé menu v chate nezdieľame. "
+        "Recepcia vám rada pomôže s časom podania, alergénmi alebo osobitnými požiadavkami.\n\n"
+        "Modul otvoríte tlačidlom nižšie."
+    ),
+}
+
 # Ek UI dilleri: tam kopya İngilizce yerine ince sözlük + `get()` zinciri (da/nl→de, cs/sk→pl, ro→en, ru→en yedeği).
 # Böylece selamlama / anahtar otel cümleleri «tamamen İngilizce» kalmaz; eksik anahtar anlamlı dilde devam eder.
 _RU_SURFACE: dict[str, str] = {
@@ -581,6 +755,26 @@ _RU_SURFACE: dict[str, str] = {
         "Если не работает {device}, обратитесь на ресепшн — в отеле предусмотрен технический персонал."
     ),
     "fault_template_generic": "По этой неисправности обратитесь на ресепшн — в отеле предусмотрен технический персонал.",
+    "complaint_form_guidance": (
+        "Жалобу можно оставить через форму в приложении Viona — правильная категория помогает команде рассмотреть обращение эффективнее. "
+        "Кнопка ниже открывает форму; при желании обратитесь на ресепшн или в Guest Relations."
+    ),
+    "early_checkin_reception_handoff": (
+        "Ранний заезд зависит от загрузки и уборки в день приезда. "
+        "Коллеги на ресепшне подскажут возможные варианты и помогут с деталями. "
+        "Зайдите на ресепшн или позвоните — мы с радостью поможем."
+    ),
+    "late_checkout_guest_notif_redirect": (
+        "Поздний выезд согласуется на ресепшн. "
+        "Заполните форму позднего выезда в разделе «Запросы» → «Уведомления гостя» на главном экране. "
+        "Кнопка ниже открывает эту форму напрямую."
+    ),
+    "fixed_room_service_module_hint": (
+        "Обслуживание в номере в Kaila Beach — платная услуга во всех категориях номеров; актуальное меню и оформление заказа "
+        "только в приложении Viona в разделе «Обслуживание номеров» — длинные меню и прайсы в чат не выкладываем. "
+        "По времени подачи, аллергенам или особым пожеланиям поможет ресепшн.\n\n"
+        "Откройте модуль кнопкой ниже."
+    ),
 }
 
 _I18N_LOOKUP_CHAIN: dict[str, tuple[str, ...]] = {
@@ -600,6 +794,14 @@ for _code in EXTRA_CHATBOT_UI_LANGS:
     _extra_row: dict[str, str] = {f"chitchat_switch_{_code}": _CHITCHAT_SWITCH_EXTRA_NATIVE[_code]}
     if _code in _AFTER_HOURS_EXTRA_NATIVE:
         _extra_row["after_hours_reception_redirect"] = _AFTER_HOURS_EXTRA_NATIVE[_code]
+    if _code in _COMPLAINT_FORM_GUIDANCE_EXTRA_NATIVE:
+        _extra_row["complaint_form_guidance"] = _COMPLAINT_FORM_GUIDANCE_EXTRA_NATIVE[_code]
+    if _code in _EARLY_CHECKIN_RECEPTION_HANDOFF_EXTRA:
+        _extra_row["early_checkin_reception_handoff"] = _EARLY_CHECKIN_RECEPTION_HANDOFF_EXTRA[_code]
+    if _code in _LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_EXTRA:
+        _extra_row["late_checkout_guest_notif_redirect"] = _LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_EXTRA[_code]
+    if _code in _ROOM_SERVICE_MODULE_HINT_EXTRA:
+        _extra_row["fixed_room_service_module_hint"] = _ROOM_SERVICE_MODULE_HINT_EXTRA[_code]
     TRANSLATIONS[_code] = _extra_row
     if _code == "ru":
         TRANSLATIONS["ru"].update(_RU_SURFACE)
