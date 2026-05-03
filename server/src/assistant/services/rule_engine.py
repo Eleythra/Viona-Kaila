@@ -18,7 +18,9 @@ logger = get_logger("assistant.rule_engine")
 #   → acil resepsiyon → gece yemeği / spa rahatlama / spa fiyat / restoran-bar modülü / oda servisi (sabit + modül)
 #   → erken çıkış öğle kutusu → Alanya / dış otel / dondurma → çamaşırhane sabit bilgisi (FAULT yoksa)
 #   → temizlik yalnız bilgi → animasyon programı → envanter+güçlü talep → öneri
-#   → housekeeping (şikâyet kalitesi bağlamında atlama) → resepsiyon / MR / transfer / öğle kutusu
+#   → oda temizliği memnuniyetsizliği (şikâyet) → housekeeping (şikâyet kalitesi bağlamında atlama)
+#   → resepsiyon/ön büro bilgi (konum, saat, sıra, ücret) → RAG → resepsiyon iletişim talebi (arıza cümlesinde atlama)
+#   → MR / transfer / öğle kutusu
 #   → kayıp eşya şikâyeti → genel şikâyet sözcükleri → giriş-çıkış saati / saat / service_info (FAULT yoksa)
 #   → genel oda isteği / genel oda+teknik arıza (strict) → hizmet deneyimi şikâyeti (service_experience)
 #   → arıza: FAULT_WORDS + öncelikli tesisat/elektrik + eksik parça + FAULT_STRICT_SUBSTRING_PHRASES
@@ -730,6 +732,249 @@ def text_suggests_priority_plumbing_or_electric_fault(text: str) -> bool:
     )
 
 
+def _reception_contact_routing_suppressed_for_room_fault(text: str) -> bool:
+    """
+    «Resepsiyon klima çalışmıyor» gibi: ön büro iletişim formu değil, arıza/teknik akışına bırak.
+    Yalnızca belirgin arıza fiili + oda donanımı birlikteyken; «resepsiyonda sıra var mı» gibi sorulara dokunmaz.
+    """
+    tl = (text or "").lower()
+    fault_mark = (
+        "çalışmıyor",
+        "calismiyor",
+        "çalışmadı",
+        "calismadi",
+        "yanmıyor",
+        "yanmiyor",
+        "açılmıyor",
+        "acilmiyor",
+        "bozuk",
+        "arıza",
+        "ariza",
+        "akmıyor",
+        "akmiyor",
+        "tıkalı",
+        "tikali",
+        "tıkanık",
+        "tikanik",
+        "sızdır",
+        "sizdir",
+        "sızdırıyor",
+        "sızıyor",
+        "siziyor",
+        "patlak",
+        "kırık",
+        "kirik",
+        "kopuk",
+        "sinyal yok",
+        "no signal",
+        "geht nicht",
+        "funktioniert nicht",
+    )
+    if not any(m in tl for m in fault_mark):
+        return False
+    if text_suggests_priority_plumbing_or_electric_fault(text):
+        return True
+    devices = (
+        "tv",
+        "television",
+        "fernseher",
+        "klima",
+        "wifi",
+        "wi-fi",
+        "internet",
+        "wlan",
+        "priz",
+        "elektrik",
+        "duş",
+        "dus",
+        "banyo",
+        "lavabo",
+        "klozet",
+        "musluk",
+        "kapı",
+        "kapi",
+        "kart",
+        "anahtar",
+        "minibar",
+        "telefon",
+        "ışık",
+        "isik",
+        "lamba",
+        "ampul",
+        "perde",
+        "şofben",
+        "sofben",
+        "duşakabin",
+        "dusakabin",
+    )
+    return any(m in tl for m in devices)
+
+
+def _is_reception_front_desk_info_query(text: str) -> bool:
+    """
+    Resepsiyon / ön büro / reception — konum, saat, sıra, ücret bilgisi (iletişim talebi değil).
+    «Ön büro ile görüşmek istiyorum» gibi güçlü iletişim niyetlerini dışlar.
+    """
+    t = (text or "").lower()
+    if not any(
+        x in t
+        for x in (
+            "resepsiyon",
+            "reception",
+            "front desk",
+            "ön büro",
+            "on buro",
+            "önbüro",
+            "onburo",
+            "rezeption",
+            "recepcja",
+            "recepție",
+            "receptie",
+            "ресепшн",
+            "регистрац",
+            "стойка регистрации",
+            "balie",
+            "hotelbalie",
+        )
+    ):
+        return False
+    strong_contact = (
+        "görüşmek istiyorum",
+        "gorusmek istiyorum",
+        "görüşeceğim",
+        "gorusecegim",
+        "ulaşmak istiyorum",
+        "ulasmak istiyorum",
+        "çağırın",
+        "cagirin",
+        "çağırır",
+        "cagirir",
+        "bekliyorum aransın",
+        "bekliyorum aran",
+        "arıyorum",
+        "ariyorum",
+        "call me",
+        "please call",
+    )
+    if any(s in t for s in strong_contact):
+        return False
+    info_markers = (
+        "nerede",
+        "gdzie",
+        "where is",
+        "where's",
+        "wo ist",
+        "wo sind",
+        "dove",
+        "dónde",
+        "donde",
+        "où est",
+        "ou est",
+        "saat kaçta",
+        "saat kacta",
+        "kaça kadar",
+        "kaca kadar",
+        "ne zaman",
+        "açık mı",
+        "acik mi",
+        "açık mısınız",
+        "acik misiniz",
+        "kapalı mı",
+        "kapali mi",
+        "hours",
+        "opening",
+        "öffnung",
+        "öffnungszeit",
+        "oeffnung",
+        "godziny otwarcia",
+        "horaires",
+        "sıra",
+        "sira",
+        "queue",
+        "how long",
+        "wie lange",
+        "combien de temps",
+        "bekleme süresi",
+        "bekleme suresi",
+        "numara",
+        "telefon",
+        "fiyat",
+        "ücret",
+        "ucret",
+        "price",
+        "how much",
+        "bagaj",
+        "bavul",
+        "safe deposit",
+        "kasa aç",
+    )
+    return any(m in t for m in info_markers)
+
+
+def _is_room_cleaning_dissatisfaction_complaint_query(text: str) -> bool:
+    """
+    «Oda temizliği memnun kalmadım» — HK zamanlama talebi değil; şikâyet akışı.
+    Düz «temizlik istiyorum» (talep) buraya düşmez.
+    """
+    t = (text or "").lower()
+    cleaning_ctx = (
+        "temizlik",
+        "oda temiz",
+        "oda kirli",
+        "oda pis",
+        "oda çok kirli",
+        "oda cok kirli",
+        "housekeeping",
+        "room cleaning",
+        "dirty room",
+        "sprzątanie pokoju",
+        "uborka",
+        "уборка",
+        "curățenie",
+        "curatenie",
+    )
+    if not any(c in t for c in cleaning_ctx):
+        return False
+    if any(x in t for x in ("temizlik istiyorum", "temizlik istiyoruz", "temizlik talep", "oda temizliği istiyorum", "oda temizligi istiyorum", "cleaning please", "need cleaning", "need room cleaning")):
+        if not any(
+            d in t
+            for d in (
+                "beğenmedim",
+                "begenmedim",
+                "memnun kalmadım",
+                "memnun kalmadim",
+                "memnun değilim",
+                "memnun degilim",
+            )
+        ):
+            return False
+    diss = (
+        "beğenmedim",
+        "begenmedim",
+        "memnun kalmadım",
+        "memnun kalmadim",
+        "memnun değilim",
+        "memnun degilim",
+        "yetersiz temizlik",
+        "eksik temizlik",
+        "temizlik kötü",
+        "temizlik kotu",
+        "temizlik berbat",
+        "temizlik rezalet",
+        "oda kirli",
+        "oda pis",
+        "dirty room",
+        "brudny pokój",
+        "brudny pokoj",
+        "zimmer schmutzig",
+        "hijyen",
+        "yetersiz",
+        "kirli",
+        "pis kok",
+    )
+    return any(d in t for d in diss)
+
+
 # "temizlik kötü" burada olmamalı: _fuzzy_has çok kelimeli ifadede tek token (temizlik) ile
 # "temizlik istiyorum" gibi talepleri yanlışlıkla şikayet sayıyor. Aşağıdaki strict liste kullanılır.
 COMPLAINT_CLEANLINESS_STRICT_PHRASES = [
@@ -916,6 +1161,8 @@ ROUTING_HOUSEKEEPING_WORDS = [
 ]
 ROUTING_RECEPTION_WORDS = [
     "resepsiyon", "resepsiyonla görüş", "resepsiyonla gorus",
+    "ön büro", "on buro", "önbüro", "onburo",
+    "danışma", "danisma",
     "reception", "front desk",
     "rezeption",
     "recepcja", "lobby hotelowe",
@@ -1567,6 +1814,12 @@ GENERIC_ROOM_PROBLEM_OR_TECH_FAULT_STRICT_PHRASES = [
     "teknik destek istiyorum",
     "teknik destek isterim",
     "teknik destek talebim var",
+    "teknik yardım istiyorum",
+    "teknik yardim istiyorum",
+    "teknik yardım lazım",
+    "teknik yardim lazim",
+    "teknik yardım talebi",
+    "teknik yardim talebi",
     "arıza var",
     "ariza var",
     "bir arıza var",
@@ -2846,6 +3099,82 @@ def _matches_alanya_discover_intent(normalized_text: str) -> bool:
     if has_en_de_pl_place and (has_tour or "see" in tl or "places" in tl or "things" in tl):
         return True
     return False
+
+
+def _room_service_marker_merge(*groups: tuple[str, ...]) -> tuple[str, ...]:
+    """Oda servisi alt dizge eşlemesi: grupları birleştir, sırayı koruyarak tekilleştir (çağrılar .lower() ile)."""
+    return tuple(dict.fromkeys((s for g in groups for s in g)))
+
+
+def _room_service_food_or_drink_marker_in_text(t: str, marker: str) -> bool:
+    """
+    Yemek/içecek işareti: kısa tek parçada tam kelime (alt dizge yanlış pozitifleri azaltır).
+    «romantik» içindeki «manti» gibi ≤5 harf alt dizge tuzaklarından kaçınır.
+    Boşluklu veya uzun (≥6 harf) ifadelerde alt dizge (meyve suyu, hamburger, …).
+    """
+    if not marker:
+        return False
+    ml = marker.lower()
+    if " " in ml or len(ml) > 5:
+        return ml in t
+    return ml in _norm_tokens(t)
+
+
+def _room_service_text_suggests_fault_or_complaint_not_order(text: str) -> bool:
+    """«Oda servisi çalışmıyor» → sipariş modülü değil; arıza/şikâyet akışına bırak."""
+    if text_suggests_priority_plumbing_or_electric_fault(text):
+        return True
+    tl = (text or "").lower()
+    if not tl.strip():
+        return False
+    neg = (
+        "çalışmıyor",
+        "calismiyor",
+        "çalışmadı",
+        "calismadi",
+        "bozuk",
+        "arıza",
+        "ariza",
+        "gelmiyor",
+        "gecikti",
+        "şikayet",
+        "sikayet",
+        "berbat",
+        "rezalet",
+        "problem",
+        "sorun",
+        "iptal",
+        "iade",
+        "yanlış sipariş",
+        "yanlis siparis",
+        "fahiş fiyat",
+        "fahis fiyat",
+        "doesn't work",
+        "not working",
+        "kaputt",
+        "defekt",
+        "defekti",
+    )
+    if not any(x in tl for x in neg):
+        return False
+    order_hint = (
+        "sipariş",
+        "siparis",
+        "istiyorum",
+        "isterim",
+        "order",
+        "bestell",
+        "commande",
+        "pedir",
+        "ordinare",
+        "menü",
+        "menu",
+        "lütfen gönder",
+        "lutfen gonder",
+    )
+    return not any(h in tl for h in order_hint)
+
+
 # Oda servisi — ücretli hizmet; sabit çok dilli metin + uygulama «Oda servisi» modülü (genel istek formu değil).
 _ROOM_SERVICE_NAME_SUBSTRINGS: tuple[str, ...] = (
     "oda servisi",
@@ -2917,9 +3246,23 @@ _ROOM_SERVICE_TO_ROOM_MARKERS: tuple[str, ...] = (
     "do izby",
     "на номер",
     "в номер",
+    "pour ma chambre",
+    "dans ma chambre",
+    "a ma chambre",
+    "à ma chambre",
+    "vers ma chambre",
+    "a mi habitación",
+    "para mi habitación",
+    "hasta mi habitación",
+    "alla mia camera",
+    "in camera mia",
+    "nella mia camera",
+    "pro meu quarto",
+    "para o meu quarto",
+    "ao meu quarto",
 )
 
-_ROOM_SERVICE_FOOD_BEV_MARKERS: tuple[str, ...] = (
+_ROOM_SERVICE_MARKERS_WINE_AND_SPARKLING: tuple[str, ...] = (
     "şampanya",
     "sampanya",
     "champagne",
@@ -2930,7 +3273,12 @@ _ROOM_SERVICE_FOOD_BEV_MARKERS: tuple[str, ...] = (
     "wino",
     "wein",
     "wijn",
+    "vin",
+    "vino",
     "вино",
+)
+
+_ROOM_SERVICE_MARKERS_MEAL_AND_DRINK_GENERIC: tuple[str, ...] = (
     "yemek",
     "food",
     "meal",
@@ -2966,8 +3314,429 @@ _ROOM_SERVICE_FOOD_BEV_MARKERS: tuple[str, ...] = (
     "måltid",
     "maltid",
     "maaltijd",
+    "maaltje",
+    "repas",
+    "colazione",
+    "pranzo",
+    "desayuno",
+    "almuerzo",
+    "comida",
     "заказ еды",
     "еда в номер",
+)
+
+_ROOM_SERVICE_DISH_INTL: tuple[str, ...] = (
+    "pizza",
+    "hamburg",
+    "hamburger",
+    "burger",
+    "cheeseburger",
+    "wrap",
+    "sandwich",
+    "toast",
+    "sushi",
+    "steak",
+    "taco",
+    "tacos",
+    "hotdog",
+    "hot dog",
+    "nugget",
+    "nachos",
+    "burrito",
+    "quesadilla",
+    "wok",
+    "pasta",
+    "spaghetti",
+    "lasagne",
+    "lasagna",
+    "fries",
+    "wurst",
+    "schnitzel",
+    "currywurst",
+    "ribs",
+    "wings",
+)
+
+_ROOM_SERVICE_DISH_TR: tuple[str, ...] = (
+    "pide",
+    "lahmacun",
+    "döner",
+    "doner",
+    "dürüm",
+    "durum",
+    "kebap",
+    "kebab",
+    "sandviç",
+    "tost",
+    "makarna",
+    "börek",
+    "borek",
+    "patates kızartması",
+    "patates kizartmasi",
+    "mantı",
+    "manti",
+    "gözleme",
+    "gozleme",
+    "çiğ köfte",
+    "cig kofte",
+    "iskender",
+    "kumpir",
+    "balık ekmek",
+    "balik ekmek",
+)
+
+_ROOM_SERVICE_DISH_DE: tuple[str, ...] = (
+    "flammkuchen",
+    "flammkuche",
+    "bratwurst",
+    "weisswurst",
+    "weißwurst",
+    "brezel",
+    "brezn",
+    "kartoffelpuffer",
+    "spätzle",
+    "spaetzle",
+)
+
+_ROOM_SERVICE_DISH_PL: tuple[str, ...] = (
+    "zapiekanka",
+    "pierogi",
+    "bigos",
+    "kopytka",
+    "pyzy",
+    "gołąbki",
+    "golabki",
+    "kotlet schabowy",
+    "żurek",
+    "zurek",
+)
+
+_ROOM_SERVICE_DISH_NL: tuple[str, ...] = (
+    "broodje",
+    "bitterballen",
+    "kroket",
+    "frikandel",
+    "stamppot",
+)
+
+_ROOM_SERVICE_DISH_FR: tuple[str, ...] = (
+    "croque",
+    "baguette",
+    "tartine",
+    "raclette",
+    "fondue",
+)
+
+_ROOM_SERVICE_DISH_IT: tuple[str, ...] = (
+    "carbonara",
+    "risotto",
+    "bruschetta",
+    "gnocchi",
+    "ravioli",
+    "tagliatelle",
+)
+
+_ROOM_SERVICE_DISH_ES: tuple[str, ...] = (
+    "paella",
+    "tapas",
+    "tortilla",
+    "empanada",
+    "churros",
+)
+
+_ROOM_SERVICE_DISH_RO: tuple[str, ...] = (
+    "mici",
+    "sarmale",
+    "mămăligă",
+    "mamaliga",
+    "ciorbă",
+    "ciorba",
+)
+
+_ROOM_SERVICE_DISH_CS_SK: tuple[str, ...] = (
+    "knedlo",
+    "svíčková",
+    "svickova",
+    "bryndzové halušky",
+    "bryndzove halusky",
+    "guláš",
+    "gulas",
+)
+
+_ROOM_SERVICE_DISH_RU_LATIN: tuple[str, ...] = (
+    "borscht",
+    "borsch",
+    "pelmeni",
+    "pirozhki",
+    "shashlik",
+)
+
+_ROOM_SERVICE_DISH_SV_DA_NO: tuple[str, ...] = (
+    "köttbullar",
+    "kottbullar",
+    "smörgås",
+    "smorgas",
+    "frikadeller",
+    "rakfisk",
+)
+
+_ROOM_SERVICE_PREPARED_DISH_MARKERS: tuple[str, ...] = _room_service_marker_merge(
+    _ROOM_SERVICE_DISH_INTL,
+    _ROOM_SERVICE_DISH_TR,
+    _ROOM_SERVICE_DISH_DE,
+    _ROOM_SERVICE_DISH_PL,
+    _ROOM_SERVICE_DISH_NL,
+    _ROOM_SERVICE_DISH_FR,
+    _ROOM_SERVICE_DISH_IT,
+    _ROOM_SERVICE_DISH_ES,
+    _ROOM_SERVICE_DISH_RO,
+    _ROOM_SERVICE_DISH_CS_SK,
+    _ROOM_SERVICE_DISH_RU_LATIN,
+    _ROOM_SERVICE_DISH_SV_DA_NO,
+)
+
+# Soğuk içecek / meşrubat adları («odama cola», «meyve suyu istiyorum») — şarap/şampanya ayrı listede.
+_ROOM_SERVICE_BEV_INTL: tuple[str, ...] = (
+    "cola",
+    "pepsi",
+    "fanta",
+    "sprite",
+    "7-up",
+    "seven up",
+    "coca-cola",
+    "cocacola",
+    "red bull",
+    "redbull",
+    "monster",
+    "schweppes",
+    "burn",
+    "tonic",
+    "milkshake",
+    "smoothie",
+    "icetea",
+    "ice tea",
+    "iced tea",
+    "eistee",
+)
+
+_ROOM_SERVICE_BEV_TR: tuple[str, ...] = (
+    "meyve suyu",
+    "portakal suyu",
+    "elma suyu",
+    "vişne suyu",
+    "visne suyu",
+    "gazoz",
+    "ayran",
+    "limonata",
+    "maden suyu",
+    "soda",
+    "şalgam",
+    "salgam",
+    "şerbet",
+    "serbet",
+    "boza",
+)
+
+_ROOM_SERVICE_BEV_EN: tuple[str, ...] = (
+    "fruit juice",
+    "orange juice",
+    "apple juice",
+    "cranberry juice",
+    "pineapple juice",
+    "grape juice",
+    "tomato juice",
+    "lemonade",
+    "soft drink",
+    "sparkling water",
+    "mineral water",
+    "still water",
+    "tonic water",
+    "ginger ale",
+    "root beer",
+    "energy drink",
+    "vitamin water",
+)
+
+_ROOM_SERVICE_BEV_DE: tuple[str, ...] = (
+    "saft",
+    "orangensaft",
+    "apfelsaft",
+    "traubensaft",
+    "multivitaminsaft",
+    "limonade",
+    "spezi",
+    "mezzo mix",
+    "fruchtsaft",
+    "stilles wasser",
+    "sprudelwasser",
+    "sprudel",
+)
+
+_ROOM_SERVICE_BEV_PL: tuple[str, ...] = (
+    "sok pomarańczowy",
+    "sok pomaranczowy",
+    "sok jabłkowy",
+    "sok jablkowy",
+    "sok owocowy",
+    "sok wieloowocowy",
+    "napój gazowany",
+    "napoj gazowany",
+    "woda gazowana",
+    "woda niegazowana",
+)
+
+_ROOM_SERVICE_BEV_NL: tuple[str, ...] = (
+    "frisdrank",
+    "jus d'orange",
+    "jus d orange",
+    "appelsap",
+    "sinaasappelsap",
+    "bruiswater",
+)
+
+_ROOM_SERVICE_BEV_FR: tuple[str, ...] = (
+    "jus de fruit",
+    "jus d'orange",
+    "jus d orange",
+    "jus de pomme",
+    "limonade",
+    "eau gazeuse",
+    "eau plate",
+    "soda",
+)
+
+_ROOM_SERVICE_BEV_IT: tuple[str, ...] = (
+    "spremuta",
+    "succo d'arancia",
+    "succo d arancia",
+    "succo di frutta",
+    "aranciata",
+    "gassata",
+    "bibita",
+)
+
+_ROOM_SERVICE_BEV_ES: tuple[str, ...] = (
+    "zumo",
+    "jugo",
+    "zumo de naranja",
+    "jugo de naranja",
+    "gaseosa",
+    "refresco",
+    "bebida",
+)
+
+_ROOM_SERVICE_BEV_RO: tuple[str, ...] = (
+    "suc de fructe",
+    "suc de portocale",
+    "băutură carbogazoasă",
+    "bautura carbogazoasa",
+    "apă minerală",
+    "apa minerala",
+)
+
+_ROOM_SERVICE_BEV_CS_SK: tuple[str, ...] = (
+    "džus",
+    "dzus",
+    "ovocná šťava",
+    "ovocna stava",
+    "perlivá voda",
+    "perliva voda",
+    "neperlivá voda",
+    "neperliva voda",
+)
+
+_ROOM_SERVICE_BEV_RU_LATIN: tuple[str, ...] = (
+    "kompot",
+    "kvas",
+    "kvass",
+    "mors",
+    "morse",
+    "gazirovka",
+    "limonad",
+)
+
+_ROOM_SERVICE_BEV_SV_DA_NO: tuple[str, ...] = (
+    "läsk",
+    "lask",
+    "saft",
+    "juice",
+    "mineralvatten",
+    "kolsyrat vatten",
+    "brus",
+)
+
+_ROOM_SERVICE_BEVERAGE_PRODUCT_MARKERS: tuple[str, ...] = _room_service_marker_merge(
+    _ROOM_SERVICE_BEV_INTL,
+    _ROOM_SERVICE_BEV_TR,
+    _ROOM_SERVICE_BEV_EN,
+    _ROOM_SERVICE_BEV_DE,
+    _ROOM_SERVICE_BEV_PL,
+    _ROOM_SERVICE_BEV_NL,
+    _ROOM_SERVICE_BEV_FR,
+    _ROOM_SERVICE_BEV_IT,
+    _ROOM_SERVICE_BEV_ES,
+    _ROOM_SERVICE_BEV_RO,
+    _ROOM_SERVICE_BEV_CS_SK,
+    _ROOM_SERVICE_BEV_RU_LATIN,
+    _ROOM_SERVICE_BEV_SV_DA_NO,
+)
+
+_ROOM_SERVICE_FOOD_BEV_MARKERS: tuple[str, ...] = _room_service_marker_merge(
+    _ROOM_SERVICE_MARKERS_WINE_AND_SPARKLING,
+    _ROOM_SERVICE_MARKERS_MEAL_AND_DRINK_GENERIC,
+    _ROOM_SERVICE_PREPARED_DISH_MARKERS,
+    _ROOM_SERVICE_BEVERAGE_PRODUCT_MARKERS,
+)
+
+# Yemek + içecek ürünü; oda yokken de «pizza istiyorum» / «cola istiyorum».
+_ROOM_SERVICE_STANDALONE_ORDER_DISHES: tuple[str, ...] = _room_service_marker_merge(
+    _ROOM_SERVICE_PREPARED_DISH_MARKERS,
+    _ROOM_SERVICE_BEVERAGE_PRODUCT_MARKERS,
+)
+
+_ROOM_SERVICE_STANDALONE_ORDER_INTENT_TYPOS_TR: tuple[str, ...] = (
+    "sitiyorum",
+    "sityourm",
+    "istiyom",
+    "istiyurum",
+)
+
+_ROOM_SERVICE_STANDALONE_EXCLUDE_CONTEXT: tuple[str, ...] = (
+    "restoran",
+    "restaurant",
+    "ristorante",
+    "restaurante",
+    "buffet",
+    "brasserie",
+    "bistro",
+    "nerede",
+    "gdzie jest",
+    "gdzie są",
+    "gdzie sa",
+    "where is",
+    "where's",
+    "where ",
+    "wo ist",
+    "wo sind",
+    "où est",
+    "ou est",
+    "dove è",
+    "dove e",
+    "dove si trova",
+    "donde está",
+    "donde esta",
+    "preisliste",
+    "price list",
+    "fiyat list",
+    "menüde",
+    "menude",
+    "speisekarte",
+    "karta dań",
+    "horaires",
+    "opening hours",
+    "öffnungszeiten",
+    "oeffnungszeiten",
+    "godziny otwarcia",
 )
 
 _ROOM_SERVICE_ORDER_PHRASES: tuple[str, ...] = (
@@ -3001,6 +3770,14 @@ _ROOM_SERVICE_ORDER_PHRASES: tuple[str, ...] = (
     "доставка в номер",
     "заказ в номер",
     "заказать в номер",
+    "commander à la chambre",
+    "commander a la chambre",
+    "commande chambre",
+    "pedir a la habitación",
+    "pedir a la habitacion",
+    "ordinare in camera",
+    "bestellen op kamer",
+    "bestel naar kamer",
 )
 
 HOTEL_INFO_WORDS = [
@@ -3745,6 +4522,18 @@ class RuleEngine:
             )
 
         # Routing block: keep operations/routing separate from recommendation/knowledge.
+        if _is_room_cleaning_dissatisfaction_complaint_query(normalized_text):
+            logger.info("RULE MATCH: complaint (room_cleaning_dissatisfaction)")
+            return IntentResult(
+                intent="complaint",
+                sub_intent="service_complaint",
+                entity=None,
+                department="guest_relations",
+                needs_rag=False,
+                response_mode="guided",
+                confidence=0.96,
+                source="rule",
+            )
         if _has_any_phrase_strict(normalized_text, ROUTING_HOUSEKEEPING_WORDS):
             tl_hk = (normalized_text or "").lower()
             if any(
@@ -3763,6 +4552,15 @@ class RuleEngine:
                     "memnun degil",
                     "kirli",
                     "ilgisiz",
+                    "beğenmedim",
+                    "begenmedim",
+                    "memnun kalmadım",
+                    "memnun kalmadim",
+                    "memnun değilim",
+                    "memnun degilim",
+                    "yetersiz temizlik",
+                    "eksik temizlik",
+                    "hijyen",
                 )
             ):
                 logger.info("RULE SKIP: housekeeping_request (complaint_quality_context)")
@@ -3778,18 +4576,33 @@ class RuleEngine:
                     confidence=1.0,
                     source="rule",
                 )
-        if _has_any_phrase_strict(normalized_text, ROUTING_RECEPTION_WORDS):
-            logger.info("RULE MATCH: request (reception_contact)")
+        if _is_reception_front_desk_info_query(normalized_text):
+            logger.info("RULE MATCH: hotel_info (reception_front_desk_info)")
             return IntentResult(
-                intent="request",
-                sub_intent="reception_contact_request",
-                entity="reception_contact",
-                department="reception",
-                needs_rag=False,
-                response_mode="guided",
-                confidence=1.0,
+                intent="hotel_info",
+                sub_intent="service_information",
+                entity=None,
+                department=None,
+                needs_rag=True,
+                response_mode="answer",
+                confidence=0.94,
                 source="rule",
             )
+        if _has_any_phrase_strict(normalized_text, ROUTING_RECEPTION_WORDS):
+            if _reception_contact_routing_suppressed_for_room_fault(normalized_text):
+                logger.info("RULE SKIP: reception_contact (room_fault_context)")
+            else:
+                logger.info("RULE MATCH: request (reception_contact)")
+                return IntentResult(
+                    intent="request",
+                    sub_intent="reception_contact_request",
+                    entity="reception_contact",
+                    department="reception",
+                    needs_rag=False,
+                    response_mode="guided",
+                    confidence=1.0,
+                    source="rule",
+                )
         if _has_any_phrase_strict(normalized_text, ROUTING_GUEST_RELATIONS_WORDS):
             logger.info("RULE MATCH: request (guest_relations_contact)")
             return IntentResult(
@@ -4956,13 +5769,22 @@ class RuleEngine:
         if any(_fuzzy_has(text, w) for w in FAULT_WORDS):
             return False
         t = (text or "").lower().strip()
+        if _room_service_text_suggests_fault_or_complaint_not_order(text):
+            return False
         if any(m in t for m in _ROOM_SERVICE_NAME_SUBSTRINGS):
             return True
         if any(p in t for p in _ROOM_SERVICE_ORDER_PHRASES):
             return True
         has_room = any(m in t for m in _ROOM_SERVICE_TO_ROOM_MARKERS)
-        has_food = any(m in t for m in _ROOM_SERVICE_FOOD_BEV_MARKERS)
+        has_food = any(_room_service_food_or_drink_marker_in_text(t, m) for m in _ROOM_SERVICE_FOOD_BEV_MARKERS)
         if has_room and has_food:
+            return True
+        if any(_room_service_food_or_drink_marker_in_text(t, m) for m in _ROOM_SERVICE_STANDALONE_ORDER_DISHES) and (
+            _has_strong_service_request_intent(text)
+            or any(ty in t for ty in _ROOM_SERVICE_STANDALONE_ORDER_INTENT_TYPOS_TR)
+        ):
+            if any(x in t for x in _ROOM_SERVICE_STANDALONE_EXCLUDE_CONTEXT):
+                return False
             return True
         return False
 
