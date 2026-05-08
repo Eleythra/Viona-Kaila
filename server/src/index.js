@@ -31,6 +31,7 @@ import {
 } from "./modules/admin/reporting/daily-operation-report.scheduler.js";
 const env = getEnv();
 const app = express();
+app.set("trust proxy", 1);
 
 const ASSISTANT_CHAT_ENDPOINT =
   process.env.ASSISTANT_CHAT_ENDPOINT || "http://127.0.0.1:8010/api/chat";
@@ -324,7 +325,7 @@ function metaIntentFromGuestPayloadType(type) {
   return "request";
 }
 
-async function processCreateGuestRequestAction(data) {
+async function processCreateGuestRequestAction(data, httpCtx = {}) {
   try {
     const action = data?.meta?.action;
     if (!action || action.kind !== "create_guest_request" || !action.payload) {
@@ -335,7 +336,8 @@ async function processCreateGuestRequestAction(data) {
       // Chatbot kaynaklı kayıtları backend validasyonunda ayrıştırmak için.
       source: "viona_chat",
     };
-    const result = await createGuestRequest(payload);
+    const clientIp = httpCtx.clientIp || "";
+    const result = await createGuestRequest(payload, { clientIp });
     if (data?.meta) {
       data.meta.action = {
         ...action,
@@ -369,6 +371,34 @@ async function processCreateGuestRequestAction(data) {
           ...(data.meta || {}),
           intent: intentFix,
           source: "rule",
+          action: null,
+        },
+      };
+    }
+    if (
+      err &&
+      typeof err === "object" &&
+      err.guestVerificationReason &&
+      data &&
+      typeof data === "object" &&
+      prevAction &&
+      prevAction.kind === "create_guest_request"
+    ) {
+      const msg =
+        typeof err.guestVerificationMessage === "string" && err.guestVerificationMessage.trim()
+          ? err.guestVerificationMessage.trim()
+          : String(err.message || "").trim();
+      const ptype = prevAction.payload?.type;
+      const intentFix = metaIntentFromGuestPayloadType(ptype);
+      return {
+        ...data,
+        type: "inform",
+        message: msg || pickChatLangMessage(SAFE_FALLBACK_BY_LANG, normalizeLocale(data?.meta?.language || "tr")),
+        meta: {
+          ...(data.meta || {}),
+          intent: intentFix,
+          source: "rule",
+          guest_verification_failed: String(err.guestVerificationReason),
           action: null,
         },
       };
@@ -734,6 +764,8 @@ app.get("/api/health", (req, res) => {
     },
     /** 1 iken /api/ops token olmadan yalnızca güvenilir origin + X-Viona-Ops-Page ile açılır (dahili kullanım). */
     opsTrustOpsPageHeader: Boolean(env.opsTrustOpsPageHeader),
+    /** Elektra PMS misafir doğrulama: env tam ve GUEST_PMS_VERIFY_ENABLED=1 (değer sızmaz). */
+    elektraGuestVerifyActive: Boolean(env.elektraGuestVerifyConfigured),
     /** Günlük PDF: dış cron GET için `DAILY_OPERATION_REPORT_CRON_KEY` tanımlı mı (değer sızmaz). */
     dailyReportExternalCronKeyConfigured: Boolean(
       String(process.env.DAILY_OPERATION_REPORT_CRON_KEY || "").trim(),
@@ -920,7 +952,9 @@ app.post("/api/chat", async (req, res) => {
       decisionPath: `proxy:${String(data?.meta?.source || "unknown")}`,
     });
     // Kayıt createGuestRequest içinde; operasyon WhatsApp türe göre (.env alıcı listeleri).
-    data = await processCreateGuestRequestAction(data);
+    data = await processCreateGuestRequestAction(data, {
+      clientIp: req.ip || req.socket?.remoteAddress || "",
+    });
     return res.status(200).json(data);
   } catch (error) {
     const isAbort = error?.name === "AbortError";

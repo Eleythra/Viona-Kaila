@@ -1,7 +1,17 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
+import { getEnv } from "../../config/env.js";
 import { createGuestRequest } from "./guest-requests.service.js";
 
 const router = Router();
+const env = getEnv();
+
+const guestRequestSubmitLimiter = rateLimit({
+  windowMs: Math.max(60_000, env.rateLimitWindowMs || 60_000),
+  max: Math.min(120, Math.max(40, Math.floor((env.rateLimitMax || 180) / 2))),
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 function clientFacingErrorMessage(error, fallbackMsg) {
   if (error == null) return fallbackMsg;
@@ -16,21 +26,25 @@ function clientFacingErrorMessage(error, fallbackMsg) {
 
 function routeErr(res, error, fallbackMsg) {
   const sc = error && typeof error.statusCode === "number" ? error.statusCode : null;
-  const code = sc === 503 ? 503 : sc === 409 ? 409 : 400;
+  const reason = error && error.guestVerificationReason ? String(error.guestVerificationReason) : null;
+  const code =
+    sc === 503 ? 503 : sc === 429 ? 429 : sc === 422 ? 422 : sc === 409 ? 409 : 400;
   const msg = clientFacingErrorMessage(error, fallbackMsg);
   if (code === 409 && msg === "quiet_hours_reception_only") {
     return res.status(409).json({ ok: false, error: "quiet_hours_reception_only" });
   }
-  return res.status(code).json({
+  const body = {
     ok: false,
     error: msg,
-  });
+  };
+  if (reason) body.reason = reason;
+  return res.status(code).json(body);
 }
 
-router.post("/", async (req, res) => {
+router.post("/", guestRequestSubmitLimiter, async (req, res) => {
   try {
     const payload = req.body || {};
-    const result = await createGuestRequest(payload);
+    const result = await createGuestRequest(payload, { clientIp: req.ip || req.socket?.remoteAddress });
     const out = {
       ok: true,
       id: String(result.id),

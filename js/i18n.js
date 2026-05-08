@@ -13,7 +13,7 @@ const I18N = {
 
     gateScreenTitle: "Hoş geldiniz",
     gateScreenSubtitle:
-      "Devam etmek için otelin paylaştığı erişim şifresini girin; kısa bilgilendirmeyi okuyup onaylayın.",
+      "Kısa bilgilendirmeyi okuyup onaylayarak devam edebilirsiniz.",
     gatePasswordLabel: "Erişim şifresi",
     gatePasswordPlaceholder: "Şifreyi girin",
     gatePrivacyTitle: "Kişisel veriler — kısa bilgilendirme",
@@ -364,6 +364,10 @@ const I18N = {
     voicePanelAria: "Sesli asistan avatarı",
     voiceBackToChat: "Metin sohbetine dön",
     voiceBackToChatAria: "Metin sohbetine dön",
+    voiceErrorNoSpeech: "Konuşma algılanamadı; biraz daha yüksek veya yakından tekrar deneyin.",
+    voiceErrorNetwork: "Ses veya sunucu bağlantısı kesildi. Metin sohbetinden de deneyebilirsiniz.",
+    voiceErrorPlayback: "Yanıt sesi çalınamadı (tarayıcı izni). Tekrar dokunup deneyin veya metin sohbetini kullanın.",
+    voiceErrorAssistant: "Yanıt alınamadı. Lütfen tekrar deneyin veya metin sohbetine geçin.",
     chatNavBackAria: "Geri — uygulamaya dön",
     chatOpenGuestNotifications: "İstekler ve geç çıkış bölümünü aç",
     chatOpenComplaint: "Şikâyet formunu aç",
@@ -657,7 +661,7 @@ const I18N = {
 
     gateScreenTitle: "Welcome",
     gateScreenSubtitle:
-      "Enter the access password provided by the hotel, then review and confirm the notices below.",
+      "Please read the brief notice below and confirm to continue.",
     gatePasswordLabel: "Access password",
     gatePasswordPlaceholder: "Enter password",
     gatePrivacyTitle: "Privacy — brief notice",
@@ -1006,6 +1010,10 @@ const I18N = {
     voicePanelAria: "Voice assistant avatar",
     voiceBackToChat: "Back to text chat",
     voiceBackToChatAria: "Return to text chat",
+    voiceErrorNoSpeech: "No speech detected — try again a bit louder or closer to the microphone.",
+    voiceErrorNetwork: "Voice or server connection failed. You can try text chat instead.",
+    voiceErrorPlayback: "Could not play the reply audio (browser restriction). Tap again or use text chat.",
+    voiceErrorAssistant: "No reply received. Please try again or switch to text chat.",
     chatNavBackAria: "Back — return to app",
     chatOpenGuestNotifications: "Open requests & late check-out",
     chatOpenComplaint: "Open complaint form",
@@ -1299,7 +1307,7 @@ const I18N = {
 
     gateScreenTitle: "Willkommen",
     gateScreenSubtitle:
-      "Geben Sie das vom Hotel mitgeteilte Zugangspasswort ein und bestätigen Sie die Hinweise unten.",
+      "Bitte lesen Sie den Kurzhinweis und bestätigen Sie unten, um fortzufahren.",
     gatePasswordLabel: "Zugangspasswort",
     gatePasswordPlaceholder: "Passwort eingeben",
     gatePrivacyTitle: "Datenschutz — Kurzhinweis",
@@ -1650,6 +1658,10 @@ const I18N = {
     voicePanelAria: "Sprachassistent-Avatar",
     voiceBackToChat: "Zurück zum Textchat",
     voiceBackToChatAria: "Zurück zum Textchat",
+    voiceErrorNoSpeech: "Keine Sprache erkannt — etwas lauter oder näher am Mikrofon erneut versuchen.",
+    voiceErrorNetwork: "Sprach- oder Serververbindung unterbrochen. Bitte Textchat versuchen.",
+    voiceErrorPlayback: "Antwortton konnte nicht abgespielt werden (Browser). Erneut tippen oder Textchat nutzen.",
+    voiceErrorAssistant: "Keine Antwort erhalten. Bitte erneut versuchen oder zum Textchat wechseln.",
     chatNavBackAria: "Zurück zur App",
     chatOpenGuestNotifications: "Anfragen & späterer Check-out öffnen",
     chatOpenComplaint: "Beschwerdeformular öffnen",
@@ -1943,7 +1955,7 @@ const I18N = {
 
     gateScreenTitle: "Witamy",
     gateScreenSubtitle:
-      "Wpisz hasło dostępu podane przez hotel, a następnie zapoznaj się z informacjami i je potwierdź.",
+      "Przeczytaj krótką informację poniżej i potwierdź, aby kontynuować.",
     gatePasswordLabel: "Hasło dostępu",
     gatePasswordPlaceholder: "Wpisz hasło",
     gatePrivacyTitle: "Prywatność — krótka informacja",
@@ -2255,6 +2267,10 @@ const I18N = {
     voicePanelAria: "Awatar asystenta głosowego",
     voiceBackToChat: "Powrót do czatu tekstowego",
     voiceBackToChatAria: "Wróć do czatu tekstowego",
+    voiceErrorNoSpeech: "Nie wykryto mowy — spróbuj ponownie głośniej lub bliżej mikrofonu.",
+    voiceErrorNetwork: "Połączenie głosowe lub z serwerem przerwane. Możesz użyć czatu tekstowego.",
+    voiceErrorPlayback: "Nie można odtworzyć odpowiedzi (ograniczenie przeglądarki). Dotknij ponownie lub użyj czatu.",
+    voiceErrorAssistant: "Brak odpowiedzi. Spróbuj ponownie lub przejdź do czatu tekstowego.",
     chatNavBackAria: "Wstecz — wróć do aplikacji",
     chatOpenGuestNotifications: "Otwarte prośby i późne wymeldowanie",
     chatOpenComplaint: "Otwórz formularz reklamacji",

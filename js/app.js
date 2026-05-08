@@ -715,24 +715,9 @@
     });
   }
 
-  function gatePasswordAccepts(input) {
-    const cfg = window.VIONA_GATE;
-    if (!cfg || typeof cfg.PASSWORD !== "string") return false;
-    const norm = (s) =>
-      String(s || "")
-        .normalize("NFC")
-        .trim()
-        .replace(/\u0130/g, "I")
-        .replace(/\u0131/g, "i")
-        .toLowerCase();
-    return norm(input) === norm(cfg.PASSWORD);
-  }
-
   function resetGateForm() {
-    const pw = el("gate-password");
     const c1 = el("gate-check-privacy");
     const err = el("gate-error");
-    if (pw) pw.value = "";
     if (c1) c1.checked = false;
     if (err) {
       err.textContent = "";
@@ -750,7 +735,6 @@
   function wireGateScreen() {
     const btn = el("btn-gate-continue");
     const back = el("btn-gate-back-lang");
-    const pw = el("gate-password");
     if (!btn) return;
 
     function clearGateError() {
@@ -760,7 +744,6 @@
         err.classList.add("hidden");
       }
     }
-    if (pw) pw.addEventListener("input", clearGateError);
     const chk = el("gate-check-privacy");
     if (chk) chk.addEventListener("change", clearGateError);
 
@@ -770,14 +753,8 @@
         errEl.textContent = "";
         errEl.classList.add("hidden");
       }
-      const pass = pw ? pw.value : "";
       const okPrivacy = el("gate-check-privacy") && el("gate-check-privacy").checked;
 
-      if (!gatePasswordAccepts(pass)) {
-        showGateError("gateErrorPassword");
-        if (pw) pw.focus();
-        return;
-      }
       if (!okPrivacy) {
         showGateError("gateErrorPrivacy");
         return;
@@ -817,8 +794,8 @@
       setLang(selectedLangCode);
       showView("gate");
       applyI18n(document);
-      const pwInput = el("gate-password");
-      if (pwInput) pwInput.focus();
+      const chkGate = el("gate-check-privacy");
+      if (chkGate) chkGate.focus();
     });
   }
 

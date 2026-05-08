@@ -161,6 +161,15 @@ function optionalCsv(name, fallback = []) {
     .filter(Boolean);
 }
 
+/** @returns {"bearer"|"raw"|"query"|"none"} */
+function normalizeElektraAuthMode(raw) {
+  const s = String(raw || "bearer").trim().toLowerCase();
+  if (s === "raw" || s === "header_raw" || s === "plain") return "raw";
+  if (s === "query" || s === "query_only") return "query";
+  if (s === "none" || s === "off") return "none";
+  return "bearer";
+}
+
 /** 0 = özellik kapalı; boş = varsayılan (ms). */
 function optionalNonNegativeMs(name, fallbackMs) {
   const v = process.env[name];
@@ -238,5 +247,58 @@ export function getEnv() {
      * Statik sitede aynı değer `window.__VIONA_SPEECH_CLIENT_SECRET__` ile verilir (kaynak görüntülenebilir; maliyet sınırı).
      */
     speechClientSecret: optionalAny(["SPEECH_CLIENT_SECRET", "VIONA_SPEECH_CLIENT_SECRET"], ""),
+    /** ElektraWeb Hotspot misafir listesi — `GET .../apisequence/GetHotspotList?HOTELID=` */
+    elektraBaseUrl: optional("ELEKTRA_BASE_URL", ""),
+    elektraHotelId: optional("ELEKTRA_HOTEL_ID", ""),
+    /** Tam `hotspot#otelId$secret` veya yalnızca secret (otel id ayrı env’deyse birleştirilir). */
+    elektraToken: optional("ELEKTRA_TOKEN", ""),
+    /**
+     * Hotspot listesi path (Postman’daki path ile birebir). Varsayılan Elektra HotelAdvisor sırası.
+     */
+    elektraHotspotPath: optional("ELEKTRA_HOTSPOT_PATH", "/apisequence/GetHotspotList"),
+    /**
+     * bearer = Authorization: Bearer {credential}
+     * raw = Authorization: {credential} (Bearer öneki yok)
+     * query = Authorization yok; credential ELEKTRA_AUTH_QUERY_KEY ile query’de
+     */
+    elektraAuthMode: optional("ELEKTRA_AUTH_MODE", "bearer").toLowerCase(),
+    /** Authorization header adı (varsayılan Postman ile uyumlu). */
+    elektraAuthHeader: optional("ELEKTRA_AUTH_HEADER", "Authorization"),
+    /**
+     * Doluysa URL’e eklenir: &KEY=encodeURIComponent(credential)
+     * MODE=query iken zorunlu; bearer/raw ile birlikte kullanılırsa ek parametre olarak gönderilir.
+     */
+    elektraAuthQueryKey: optional("ELEKTRA_AUTH_QUERY_KEY", ""),
+    get elektraAuthModeNormalized() {
+      return normalizeElektraAuthMode(this.elektraAuthMode);
+    },
+    /** `1` ise ve Elektra env tam ise insert öncesi PMS doğrulaması. Varsayılan kapalı. */
+    guestPmsVerifyEnabled: optional("GUEST_PMS_VERIFY_ENABLED", "") === "1",
+    guestPmsVerifyTypesCsv: optional(
+      "GUEST_PMS_VERIFY_TYPES",
+      "request,complaint,fault,guest_notification",
+    ),
+    elektraCacheTtlMs: optionalNonNegativeMs("ELEKTRA_CACHE_TTL_MS", 5 * 60 * 1000),
+    elektraFetchTimeoutMs: optionalNonNegativeMs("ELEKTRA_FETCH_TIMEOUT_MS", 12_000),
+    elektraFetchMaxRetries: optionalInt("ELEKTRA_FETCH_MAX_RETRIES", 2),
+    guestVerifyFailMax: optionalInt("GUEST_VERIFY_FAIL_MAX", 5),
+    guestVerifyFailWindowMs: optionalInt("GUEST_VERIFY_FAIL_WINDOW_MS", 10 * 60 * 1000),
+    get guestPmsVerifyTypeSet() {
+      const raw = String(this.guestPmsVerifyTypesCsv || "")
+        .split(",")
+        .map((x) => String(x || "").trim().toLowerCase())
+        .filter(Boolean);
+      return new Set(raw.length ? raw : ["request", "complaint", "fault", "guest_notification"]);
+    },
+    get elektraGuestVerifyConfigured() {
+      const qk = String(this.elektraAuthQueryKey || "").trim();
+      if (this.elektraAuthModeNormalized === "query" && !qk) return false;
+      return Boolean(
+        this.guestPmsVerifyEnabled &&
+          String(this.elektraBaseUrl || "").trim() &&
+          String(this.elektraHotelId || "").trim() &&
+          String(this.elektraToken || "").trim(),
+      );
+    },
   };
 }

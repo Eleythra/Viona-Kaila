@@ -809,14 +809,16 @@
       renderMessages();
       return result.reply;
     } catch (e) {
+      var errText = getClientErrorReply(e);
       state.messages.push({
         role: "assistant",
-        content: getClientErrorReply(e),
+        content: errText,
         error: true,
       });
       trimHistory();
       renderMessages();
-      throw e;
+      /* Sesli tur: TTS için metin dönmeli; aksi halde viona-voice sessizce idle’a döner. */
+      return errText;
     } finally {
       state.pending = false;
       setTyping(false);

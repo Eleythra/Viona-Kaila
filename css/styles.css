@@ -300,7 +300,7 @@ body {
   }
 }
 
-/* ---------- Erişim ekranı (şifre + gizlilik + 18+) ---------- */
+/* ---------- Erişim ekranı (gizlilik + onay) ---------- */
 
 .view--gate {
   position: relative;

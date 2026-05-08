@@ -294,6 +294,57 @@
     setComposerLocked(false);
   }
 
+  /** Kısa kullanıcı mesajı; ardından varsayılan idle metnine döner */
+  function goIdleWithVoiceHint(i18nKey) {
+    stopTtsPlayback();
+    stopMicAndAnalysis();
+    applyVoiceState(STATE_IDLE);
+    setComposerLocked(false);
+    if (els.status && i18nKey) {
+      els.status.textContent = t(i18nKey);
+      setTimeout(function () {
+        cacheEls();
+        if (voiceState === STATE_IDLE && els.status) {
+          els.status.textContent = t("voiceStatusIdle");
+          els.status.setAttribute("data-i18n", "voiceStatusIdle");
+        }
+      }, 4200);
+    }
+  }
+
+  /**
+   * Uzun STT/sohbet/TTS zincirinden sonra audio.play() mobilde engellenebiliyor.
+   * Avatar tıklandığı anda bağlamı «açmak» için kısa sessiz çalma + AudioContext resume.
+   */
+  function primeVoiceAudioPlayback() {
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) {
+        var ctx = new AC();
+        if (ctx.state === "suspended") {
+          ctx.resume().catch(function () {});
+        }
+        var buf = ctx.createBuffer(1, 1, 22050);
+        var src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.connect(ctx.destination);
+        src.start(0);
+        setTimeout(function () {
+          try {
+            ctx.close();
+          } catch (e) {}
+        }, 400);
+      }
+    } catch (e) {}
+    try {
+      var a = new Audio();
+      a.src =
+        "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+      var p = a.play();
+      if (p && typeof p.catch === "function") p.catch(function () {});
+    } catch (e) {}
+  }
+
   function writeString(view, offset, s) {
     for (var i = 0; i < s.length; i++) view.setUint8(offset + i, s.charCodeAt(i));
   }
@@ -480,14 +531,14 @@
       })
       .then(function (data) {
         if (!data || !data.ok || !String(data.text || "").trim()) {
-          goIdle();
+          goIdleWithVoiceHint("voiceErrorNoSpeech");
           return;
         }
         var said = String(data.text).trim();
         return runThinkingAndSpeaking(said);
       })
       .catch(function () {
-        goIdle();
+        goIdleWithVoiceHint("voiceErrorNetwork");
       });
   }
 
@@ -502,13 +553,13 @@
       .then(function (reply) {
         var text = String(reply || "").trim();
         if (!text) {
-          goIdle();
+          goIdleWithVoiceHint("voiceErrorAssistant");
           return;
         }
         return fetchTtsAndSpeak(text);
       })
       .catch(function () {
-        goIdle();
+        goIdleWithVoiceHint("voiceErrorAssistant");
       });
   }
 
@@ -556,12 +607,12 @@
         if (playPromise && typeof playPromise.catch === "function") {
           playPromise.catch(function () {
             stopTtsPlayback();
-            goIdle();
+            goIdleWithVoiceHint("voiceErrorPlayback");
           });
         }
       })
       .catch(function () {
-        goIdle();
+        goIdleWithVoiceHint("voiceErrorPlayback");
       });
   }
 
@@ -571,6 +622,7 @@
 
     expandPanelIfCollapsed();
     stopTtsPlayback();
+    primeVoiceAudioPlayback();
     setComposerLocked(true);
     applyVoiceState(STATE_LISTENING);
 

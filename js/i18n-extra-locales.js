@@ -18,7 +18,7 @@
       langGridAria: "Выбор языка",
       gateScreenTitle: "Добро пожаловать",
       gateScreenSubtitle:
-        "Введите пароль доступа, сообщённый отелем, затем ознакомьтесь с уведомлениями и подтвердите их.",
+        "Ознакомьтесь с кратким уведомлением ниже и подтвердите, чтобы продолжить.",
       gatePasswordLabel: "Пароль доступа",
       gatePasswordPlaceholder: "Введите пароль",
       gatePrivacyTitle: "Персональные данные — краткое уведомление",
@@ -99,7 +99,7 @@
       langGridAria: "Sprogvalg",
       gateScreenTitle: "Velkommen",
       gateScreenSubtitle:
-        "Indtast den adgangskode, hotellet har oplyst, og bekræft derefter meddelelserne nedenfor.",
+        "Læs den korte meddelelse nedenfor og bekræft for at fortsætte.",
       gatePasswordLabel: "Adgangskode",
       gatePasswordPlaceholder: "Indtast adgangskode",
       gatePrivacyTitle: "Beskyttelse af persondata — kort meddelelse",
@@ -179,7 +179,7 @@
       langGridAria: "Volba jazyka",
       gateScreenTitle: "Vítejte",
       gateScreenSubtitle:
-        "Zadejte přístupové heslo sdělené hotelem a potvrďte níže uvedené informace.",
+        "Přečtěte si stručnou informaci níže a potvrďte pokračování.",
       gatePasswordLabel: "Přístupové heslo",
       gatePasswordPlaceholder: "Zadejte heslo",
       gatePrivacyTitle: "Ochrana osobních údajů — stručná informace",
@@ -259,7 +259,7 @@
       langGridAria: "Opțiuni limbă",
       gateScreenTitle: "Bun venit",
       gateScreenSubtitle:
-        "Introduceți parola de acces comunicată de hotel, apoi confirmați informările de mai jos.",
+        "Citiți informarea scurtă de mai jos și confirmați pentru a continua.",
       gatePasswordLabel: "Parolă de acces",
       gatePasswordPlaceholder: "Introduceți parola",
       gatePrivacyTitle: "Date personale — informare scurtă",
@@ -339,7 +339,7 @@
       langGridAria: "Taalkeuze",
       gateScreenTitle: "Welkom",
       gateScreenSubtitle:
-        "Voer het toegangswachtwoord in dat het hotel heeft gegeven en bevestig daarna de onderstaande mededelingen.",
+        "Lees de korte mededeling hieronder en bevestig om door te gaan.",
       gatePasswordLabel: "Toegangswachtwoord",
       gatePasswordPlaceholder: "Wachtwoord invoeren",
       gatePrivacyTitle: "Privacy — korte mededeling",
@@ -419,7 +419,7 @@
       langGridAria: "Voľba jazyka",
       gateScreenTitle: "Vitajte",
       gateScreenSubtitle:
-        "Zadajte prístupové heslo, ktoré vám poskytol hotel, a potvrďte nižšie uvedené informácie.",
+        "Prečítajte si stručnú informáciu nižšie a potvrďte pokračovanie.",
       gatePasswordLabel: "Prístupové heslo",
       gatePasswordPlaceholder: "Zadajte heslo",
       gatePrivacyTitle: "Osobné údaje — stručná informácia",

@@ -13,6 +13,7 @@ import {
 } from "../../lib/guest-full-name.js";
 import { sendOperationalWhatsappNotification } from "../../services/whatsapp-operational-notification.service.js";
 import { normalizeVionaUiLanguage } from "../../lib/viona-ui-languages.js";
+import { maybeVerifyGuestForPms } from "../guest-verification/guest-verification.service.js";
 
 const SIMPLE_TYPES = new Set(["request", "complaint", "fault", "guest_notification"]);
 const RESERVATION_TYPES = new Set(["reservation_alacarte", "reservation_spa"]);
@@ -762,8 +763,10 @@ async function updateWhatsappDeliveryStatus(table, id, result) {
 /**
  * Web + sohbet (`source: viona_chat`) aynı doğrulama ve WhatsApp yönlendirmesini kullanır:
  * arıza → teknik, istek → HK, şikayet / misafir bildirimi / geç çıkış → ön büro (`WHATSAPP_*_RECIPIENTS`).
+ * @param {object} [options]
+ * @param {string} [options.clientIp] PMS doğrulama brute-force sayacı için
  */
-export async function createGuestRequest(payload) {
+export async function createGuestRequest(payload, options = {}) {
   const normalized = normalizePayload(payload);
   validate(normalized);
 
@@ -772,6 +775,11 @@ export async function createGuestRequest(payload) {
     const err = new Error("quiet_hours_reception_only");
     err.statusCode = 409;
     throw err;
+  }
+
+  const pmsMeta = await maybeVerifyGuestForPms(normalized, { clientIp: options.clientIp });
+  if (pmsMeta) {
+    normalized.pms_guest_verification = pmsMeta;
   }
 
   if (normalized.type === "request") {

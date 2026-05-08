@@ -14,6 +14,17 @@ Kayıt `createGuestRequest` ile Supabase’e yazıldıktan sonra aynı `type` il
 
 Web formları (`js/render-requests-module.js` vb.) ve sohbetten gelen `create_guest_request` eylemi aynı Node API’yi kullanır; Render’da `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` ve yukarıdaki listeler dolu olmalı.
 
+### PMS misafir doğrulama (ElektraWeb Hotspot)
+
+`GUEST_PMS_VERIFY_ENABLED=1` ve `ELEKTRA_BASE_URL`, `ELEKTRA_HOTEL_ID`, `ELEKTRA_TOKEN` doluysa, `request` / `complaint` / `fault` / `guest_notification` için **Supabase insert öncesi** `GetHotspotList` ile `ROOMNO` + `LNAME` (+ konaklama tarihleri) doğrulanır. Kapalıysa veya tip listede değilse davranış önceki gibi.
+
+Postman’daki istekle hizalamak için isteğe bağlı: `ELEKTRA_HOTSPOT_PATH`, `ELEKTRA_AUTH_MODE` (`bearer`, `raw`, `query`, `none`), `ELEKTRA_AUTH_HEADER`, `ELEKTRA_AUTH_QUERY_KEY`. Ayrıntı: `server/docs/elektra-hotspot-postman.md`.
+
+- **POST `/api/guest-requests`:** Başarısız doğrulamada `422` (veya `503` PMS erişilemez, `429` çok deneme); gövde `{ ok: false, error: "<TR mesaj>", reason: "<kod>" }`.
+- **reason:** `room_not_found` | `surname_mismatch` | `stay_not_active` | `ambiguous_guest` | `pms_unavailable` | `too_many_verification_attempts`
+- **Sohbet:** Aynı doğrulama `createGuestRequest` içinde; hata durumunda yanıt metni güncellenir, `meta.action` kaldırılır, `meta.guest_verification_failed` reason kodu ile işaretlenir.
+- **`/api/health`:** `elektraGuestVerifyActive` — env tam ve doğrulama açık mı (değer sızmaz).
+
 ### Meta Cloud API — gönderim uç noktası
 
 - **HTTP:** `POST https://graph.facebook.com/{WHATSAPP_GRAPH_API_VERSION|v21.0}/{WHATSAPP_PHONE_NUMBER_ID}/messages`

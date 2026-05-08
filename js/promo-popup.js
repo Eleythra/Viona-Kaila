@@ -24,7 +24,7 @@
     sk: "assets/indirim/indirim-SK.png?v=" + CACHE_BUST,
   };
 
-  /** Şifre ile ana sayfaya her girişte (oturum başına bir kez) kampanya popup — kapatılabilir. */
+  /** Ana sayfaya geçişte (oturum başına bir kez) kampanya popup — kapatılabilir. */
   var DISABLE_PROMO_AUTO_OPEN = false;
 
   function getLang() {
