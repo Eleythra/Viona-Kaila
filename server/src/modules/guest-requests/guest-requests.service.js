@@ -371,7 +371,7 @@ function validateComplaintPayload(normalized) {
   }
   normalized.category = category;
   normalized.categories = [category];
-  if (COMPLAINT_DESC_REQUIRED.has(category) && !normalized.description) {
+  if (COMPLAINT_DESC_REQUIRED.has(category) && !String(normalized.description || "").trim()) {
     throw new Error("description is required for selected complaint category");
   }
   if (category === "other") {

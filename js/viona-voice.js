@@ -7,6 +7,7 @@
 
   var LANG_KEY = "viona_lang";
   /** Deterministik: otomatik dil algılama yok; uygulama dili = STT/TTS locale */
+  /** `js/lang-registry.js` VIONA_LANG.ALL ile aynı kodlar; sunucu `LOCALE_VOICE_MAP` (azure-speech.service.js) ile senkron tutulmalı. */
   var AZURE_LOCALE_BY_APP = {
     tr: "tr-TR",
     en: "en-US",

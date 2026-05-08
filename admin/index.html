@@ -224,6 +224,15 @@
                 ><span class="op-filter-field__lbl">Oda</span>
                 <input id="op-hk-filter-room" type="text" class="op-filter-input" placeholder="Tam eşleşme" autocomplete="off" />
               </label>
+              <label class="op-filter-field"
+                ><span class="op-filter-field__lbl">Kaynak</span>
+                <select id="op-hk-filter-source" class="op-filter-input">
+                  <option value="">Tümü</option>
+                  <option value="viona_ops_manual">Personel (manuel)</option>
+                  <option value="viona_web">Web</option>
+                  <option value="viona_chat">Sohbet</option>
+                </select>
+              </label>
               <div class="op-filter-actions">
                 <button type="button" class="btn-primary btn-small" id="op-hk-filter-apply">Uygula</button>
                 <button type="button" class="btn-small" id="op-hk-filter-clear">Sıfırla</button>
@@ -242,7 +251,7 @@
               </label>
             </div>
             <p class="op-filter-hint">
-              Kayıt günü takviminden seçim anında uygulanır. Metin araması yazarken kısa gecikmeyle uygulanır; durum ve oda için
+              Kayıt günü takviminden seçim anında uygulanır. Metin araması yazarken kısa gecikmeyle uygulanır; durum, kaynak ve oda için
               <strong>Uygula</strong>.
             </p>
           </div>
@@ -295,6 +304,15 @@
                 ><span class="op-filter-field__lbl">Oda</span>
                 <input id="op-tech-filter-room" type="text" class="op-filter-input" placeholder="Tam eşleşme" autocomplete="off" />
               </label>
+              <label class="op-filter-field"
+                ><span class="op-filter-field__lbl">Kaynak</span>
+                <select id="op-tech-filter-source" class="op-filter-input">
+                  <option value="">Tümü</option>
+                  <option value="viona_ops_manual">Personel (manuel)</option>
+                  <option value="viona_web">Web</option>
+                  <option value="viona_chat">Sohbet</option>
+                </select>
+              </label>
               <div class="op-filter-actions">
                 <button type="button" class="btn-primary btn-small" id="op-tech-filter-apply">Uygula</button>
                 <button type="button" class="btn-small" id="op-tech-filter-clear">Sıfırla</button>
@@ -313,7 +331,7 @@
               </label>
             </div>
             <p class="op-filter-hint">
-              Kayıt günü takviminden seçim anında uygulanır. Metin araması yazarken kısa gecikmeyle uygulanır; durum ve oda için
+              Kayıt günü takviminden seçim anında uygulanır. Metin araması yazarken kısa gecikmeyle uygulanır; durum, kaynak ve oda için
               <strong>Uygula</strong>.
             </p>
           </div>
@@ -367,6 +385,15 @@
                 ><span class="op-filter-field__lbl">Oda</span>
                 <input id="op-front-filter-room" type="text" class="op-filter-input" placeholder="Tam eşleşme" autocomplete="off" />
               </label>
+              <label class="op-filter-field"
+                ><span class="op-filter-field__lbl">Kaynak</span>
+                <select id="op-front-filter-source" class="op-filter-input">
+                  <option value="">Tümü</option>
+                  <option value="viona_ops_manual">Personel (manuel)</option>
+                  <option value="viona_web">Web</option>
+                  <option value="viona_chat">Sohbet</option>
+                </select>
+              </label>
               <div class="op-filter-actions">
                 <button type="button" class="btn-primary btn-small" id="op-front-filter-apply">Uygula</button>
                 <button type="button" class="btn-small" id="op-front-filter-clear">Sıfırla</button>
@@ -385,7 +412,7 @@
               </label>
             </div>
             <p class="op-filter-hint">
-              Kayıt günü takviminden seçim anında uygulanır. Metin araması yazarken kısa gecikmeyle uygulanır; durum ve oda için
+              Kayıt günü takviminden seçim anında uygulanır. Metin araması yazarken kısa gecikmeyle uygulanır; durum, kaynak ve oda için
               <strong>Uygula</strong>. Sekme değişince alanlar o listenin son süzgecini gösterir.
             </p>
           </div>
@@ -746,6 +773,6 @@
     <script src="js/ops-day-pdf.js?v=8"></script>
     <script src="js/rooms-explorer.js?v=1"></script>
     <script src="js/room-history-pdf.js?v=1"></script>
-    <script src="js/app.js?v=70"></script>
+    <script src="js/app.js?v=71"></script>
   </body>
 </html>

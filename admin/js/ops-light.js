@@ -958,6 +958,7 @@
     if (f.status) o.status = f.status;
     if (f.from) o.from = f.from;
     if (f.to) o.to = f.to;
+    if (f.source && String(f.source).trim()) o.source = String(f.source).trim();
     if (f.search && String(f.search).trim()) o.search = String(f.search).trim().slice(0, 80);
     if (f.room && String(f.room).trim() && !o.search) o.room_number = String(f.room).trim();
     return o;
@@ -967,6 +968,7 @@
     var status = document.getElementById(prefix + "-filter-status");
     var day = document.getElementById(prefix + "-filter-day");
     var room = document.getElementById(prefix + "-filter-room");
+    var source = document.getElementById(prefix + "-filter-source");
     var qSearch = document.getElementById(prefix + "-filter-search");
     var y =
       day && day.value && /^\d{4}-\d{2}-\d{2}$/.test(String(day.value).trim())
@@ -978,6 +980,7 @@
       from: y,
       to: y,
       room: room && room.value ? String(room.value).trim() : "",
+      source: source && source.value ? String(source.value).trim() : "",
       search: qSearch && qSearch.value ? String(qSearch.value).trim().slice(0, 80) : "",
     };
   }
@@ -985,9 +988,11 @@
   function clearOpFilterDom(prefix) {
     var status = document.getElementById(prefix + "-filter-status");
     var room = document.getElementById(prefix + "-filter-room");
+    var source = document.getElementById(prefix + "-filter-source");
     var qSearch = document.getElementById(prefix + "-filter-search");
     if (status) status.value = "";
     if (room) room.value = "";
+    if (source) source.value = "";
     if (qSearch) qSearch.value = "";
     syncSlFilterDayForPrefix(prefix);
   }
@@ -1010,6 +1015,13 @@
       '<input id="op-hk-filter-day" type="date" class="op-filter-input" autocomplete="off" /></label>' +
       '<label class="op-filter-field op-filter-field--room"><span class="op-filter-field__lbl">Oda</span>' +
       '<input id="op-hk-filter-room" type="text" class="op-filter-input" placeholder="Tam eşleşme" autocomplete="off" /></label>' +
+      '<label class="op-filter-field"><span class="op-filter-field__lbl">Kaynak</span>' +
+      '<select id="op-hk-filter-source" class="op-filter-input">' +
+      '<option value="">Tümü</option>' +
+      '<option value="viona_ops_manual">Personel (manuel)</option>' +
+      '<option value="viona_web">Web</option>' +
+      '<option value="viona_chat">Sohbet</option>' +
+      "</select></label>" +
       '<div class="op-filter-actions">' +
       '<button type="button" class="btn-primary btn-small" id="op-hk-filter-apply">Uygula</button>' +
       '<button type="button" class="btn-small" id="op-hk-filter-clear">Sıfırla</button>' +
@@ -1018,7 +1030,7 @@
       '<label class="op-filter-field op-filter-field--search"><span class="op-filter-field__lbl">Metin ara</span>' +
       '<input id="op-hk-filter-search" type="search" class="op-filter-input" placeholder="Oda, misafir, kategori kodu, not…" autocomplete="off" /></label>' +
       "</div>" +
-      '<p class="op-filter-hint">Kayıt günü takviminden seçim anında uygulanır. Metin araması yazarken kısa gecikmeyle uygulanır; durum ve oda için <strong>Uygula</strong>.</p>' +
+      '<p class="op-filter-hint">Kayıt günü takviminden seçim anında uygulanır. Metin araması yazarken kısa gecikmeyle uygulanır; durum, kaynak ve oda için <strong>Uygula</strong>.</p>' +
       "</div>"
     );
   }
@@ -1041,6 +1053,13 @@
       '<input id="op-tech-filter-day" type="date" class="op-filter-input" autocomplete="off" /></label>' +
       '<label class="op-filter-field op-filter-field--room"><span class="op-filter-field__lbl">Oda</span>' +
       '<input id="op-tech-filter-room" type="text" class="op-filter-input" placeholder="Tam eşleşme" autocomplete="off" /></label>' +
+      '<label class="op-filter-field"><span class="op-filter-field__lbl">Kaynak</span>' +
+      '<select id="op-tech-filter-source" class="op-filter-input">' +
+      '<option value="">Tümü</option>' +
+      '<option value="viona_ops_manual">Personel (manuel)</option>' +
+      '<option value="viona_web">Web</option>' +
+      '<option value="viona_chat">Sohbet</option>' +
+      "</select></label>" +
       '<div class="op-filter-actions">' +
       '<button type="button" class="btn-primary btn-small" id="op-tech-filter-apply">Uygula</button>' +
       '<button type="button" class="btn-small" id="op-tech-filter-clear">Sıfırla</button>' +
@@ -1049,7 +1068,7 @@
       '<label class="op-filter-field op-filter-field--search"><span class="op-filter-field__lbl">Metin ara</span>' +
       '<input id="op-tech-filter-search" type="search" class="op-filter-input" placeholder="Oda, misafir, kategori kodu, not…" autocomplete="off" /></label>' +
       "</div>" +
-      '<p class="op-filter-hint">Kayıt günü takviminden seçim anında uygulanır. Metin araması yazarken kısa gecikmeyle uygulanır; durum ve oda için <strong>Uygula</strong>.</p>' +
+      '<p class="op-filter-hint">Kayıt günü takviminden seçim anında uygulanır. Metin araması yazarken kısa gecikmeyle uygulanır; durum, kaynak ve oda için <strong>Uygula</strong>.</p>' +
       "</div>"
     );
   }
@@ -1072,6 +1091,13 @@
       '<input id="op-front-filter-day" type="date" class="op-filter-input" autocomplete="off" /></label>' +
       '<label class="op-filter-field op-filter-field--room"><span class="op-filter-field__lbl">Oda</span>' +
       '<input id="op-front-filter-room" type="text" class="op-filter-input" placeholder="Tam eşleşme" autocomplete="off" /></label>' +
+      '<label class="op-filter-field"><span class="op-filter-field__lbl">Kaynak</span>' +
+      '<select id="op-front-filter-source" class="op-filter-input">' +
+      '<option value="">Tümü</option>' +
+      '<option value="viona_ops_manual">Personel (manuel)</option>' +
+      '<option value="viona_web">Web</option>' +
+      '<option value="viona_chat">Sohbet</option>' +
+      "</select></label>" +
       '<div class="op-filter-actions">' +
       '<button type="button" class="btn-primary btn-small" id="op-front-filter-apply">Uygula</button>' +
       '<button type="button" class="btn-small" id="op-front-filter-clear">Sıfırla</button>' +
@@ -1080,7 +1106,7 @@
       '<label class="op-filter-field op-filter-field--search"><span class="op-filter-field__lbl">Metin ara</span>' +
       '<input id="op-front-filter-search" type="search" class="op-filter-input" placeholder="Oda, misafir, kategori kodu, not…" autocomplete="off" /></label>' +
       "</div>" +
-      '<p class="op-filter-hint">Kayıt günü takviminden seçim anında uygulanır. Metin araması yazarken kısa gecikmeyle uygulanır; durum ve oda için <strong>Uygula</strong>. Sekme değişince alanlar o listenin son süzgecini gösterir.</p>' +
+      '<p class="op-filter-hint">Kayıt günü takviminden seçim anında uygulanır. Metin araması yazarken kısa gecikmeyle uygulanır; durum, kaynak ve oda için <strong>Uygula</strong>. Sekme değişince alanlar o listenin son süzgecini gösterir.</p>' +
       "</div>"
     );
   }
@@ -1281,7 +1307,7 @@
     });
     var summaryHost = document.getElementById("ops-hk-summary-mount");
     var listHost = mount.querySelector("#ops-hk-list-host");
-    var hkFilterState = { status: "", from: slCalDay, to: slCalDay, room: "", search: "" };
+    var hkFilterState = { status: "", from: slCalDay, to: slCalDay, room: "", search: "", source: "" };
     var page = 1;
 
     function paintHkSummary(rawApi, listPack) {
@@ -1316,6 +1342,7 @@
         hkFilterState.from = slCalDay;
         hkFilterState.to = slCalDay;
         hkFilterState.room = next.room;
+        hkFilterState.source = next.source || "";
         hkFilterState.search = next.search || "";
         page = 1;
         void load(1);
@@ -1325,6 +1352,7 @@
       clearBtn.addEventListener("click", function () {
         hkFilterState.status = "";
         hkFilterState.room = "";
+        hkFilterState.source = "";
         hkFilterState.search = "";
         clearOpFilterDom("op-hk");
         hkFilterState.from = slCalDay;
@@ -1606,7 +1634,7 @@
     });
     var techSummaryHost = document.getElementById("ops-tech-summary-mount");
     var listHost = mount.querySelector("#ops-tech-list-host");
-    var techFilterState = { status: "", from: slCalDay, to: slCalDay, room: "", search: "" };
+    var techFilterState = { status: "", from: slCalDay, to: slCalDay, room: "", search: "", source: "" };
     var page = 1;
 
     function paintTechSummary(rawApi, listPack) {
@@ -1641,6 +1669,7 @@
         techFilterState.from = slCalDay;
         techFilterState.to = slCalDay;
         techFilterState.room = next.room;
+        techFilterState.source = next.source || "";
         techFilterState.search = next.search || "";
         page = 1;
         void load(1);
@@ -1650,6 +1679,7 @@
       clearBtn.addEventListener("click", function () {
         techFilterState.status = "";
         techFilterState.room = "";
+        techFilterState.source = "";
         techFilterState.search = "";
         clearOpFilterDom("op-tech");
         techFilterState.from = slCalDay;
@@ -1948,15 +1978,15 @@
     } catch (_sk) {}
 
     var opFilterFrontByType = {
-      complaint: { status: "", from: slCalDay, to: slCalDay, room: "", search: "" },
-      guest_notification: { status: "", from: slCalDay, to: slCalDay, room: "", search: "" },
-      late_checkout: { status: "", from: slCalDay, to: slCalDay, room: "", search: "" },
+      complaint: { status: "", from: slCalDay, to: slCalDay, room: "", search: "", source: "" },
+      guest_notification: { status: "", from: slCalDay, to: slCalDay, room: "", search: "", source: "" },
+      late_checkout: { status: "", from: slCalDay, to: slCalDay, room: "", search: "", source: "" },
     };
     var opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
 
     wireSlDayStrip(mount, "op-front-day-strip", function () {
       ["complaint", "guest_notification", "late_checkout"].forEach(function (k) {
-        var o = opFilterFrontByType[k] || { status: "", from: "", to: "", room: "", search: "" };
+        var o = opFilterFrontByType[k] || { status: "", from: "", to: "", room: "", search: "", source: "" };
         o.from = slCalDay;
         o.to = slCalDay;
         opFilterFrontByType[k] = o;
@@ -1981,15 +2011,17 @@
     }
 
     function syncOpFrontFilterFormFromActiveType() {
-      var m = opFilterFrontByType[opFrontFilterActiveType] || { status: "", from: "", to: "", room: "", search: "" };
+      var m = opFilterFrontByType[opFrontFilterActiveType] || { status: "", from: "", to: "", room: "", search: "", source: "" };
       var status = document.getElementById("op-front-filter-status");
       var day = document.getElementById("op-front-filter-day");
       var room = document.getElementById("op-front-filter-room");
       var qSearch = document.getElementById("op-front-filter-search");
+      var source = document.getElementById("op-front-filter-source");
       if (status) status.value = m.status || "";
       var y = m.from && /^\d{4}-\d{2}-\d{2}$/.test(String(m.from).trim()) ? String(m.from).trim() : slCalDay;
       if (day) day.value = y || "";
       if (room) room.value = m.room || "";
+      if (source) source.value = m.source || "";
       if (qSearch) qSearch.value = m.search != null ? String(m.search) : "";
     }
 
@@ -2013,10 +2045,11 @@
           to: slCalDay,
           room: next.room,
           search: next.search || "",
+          source: next.source || "",
         };
         ["complaint", "guest_notification", "late_checkout"].forEach(function (k) {
           if (k === opFrontFilterActiveType) return;
-          var o = opFilterFrontByType[k] || { status: "", from: "", to: "", room: "", search: "" };
+          var o = opFilterFrontByType[k] || { status: "", from: "", to: "", room: "", search: "", source: "" };
           o.from = slCalDay;
           o.to = slCalDay;
           opFilterFrontByType[k] = o;
@@ -2029,9 +2062,9 @@
       clearBtn.dataset.vionaBound = "1";
       clearBtn.addEventListener("click", function () {
         var y = slCalDay;
-        opFilterFrontByType.complaint = { status: "", from: y, to: y, room: "", search: "" };
-        opFilterFrontByType.guest_notification = { status: "", from: y, to: y, room: "", search: "" };
-        opFilterFrontByType.late_checkout = { status: "", from: y, to: y, room: "", search: "" };
+        opFilterFrontByType.complaint = { status: "", from: y, to: y, room: "", search: "", source: "" };
+        opFilterFrontByType.guest_notification = { status: "", from: y, to: y, room: "", search: "", source: "" };
+        opFilterFrontByType.late_checkout = { status: "", from: y, to: y, room: "", search: "", source: "" };
         clearOpFilterDom("op-front");
         opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
         void loadAll();

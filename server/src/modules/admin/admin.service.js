@@ -252,6 +252,10 @@ export async function listAdminBucket(type, query = {}) {
   if (categoryEq && type !== "reservation") {
     qb = qb.eq("category", categoryEq);
   }
+  const sourceEq = String(query.source ?? "").trim();
+  if (sourceEq && type !== "reservation") {
+    qb = qb.eq("source", sourceEq);
+  }
   /** Oda numarası metin aramasından bağımsız AND ile uygulanır (oda ekranında ikisi birlikte). */
   const rn = String(query.room_number || "").trim();
   if (type !== "reservation" && rn) {
@@ -347,6 +351,10 @@ function applyGuestBucketListFilters(qb, type, query = {}) {
   const categoryEq = String(query.category ?? "").trim();
   if (categoryEq && type !== "reservation") {
     q = q.eq("category", categoryEq);
+  }
+  const sourceEq0 = String(query.source ?? "").trim();
+  if (sourceEq0 && type !== "reservation") {
+    q = q.eq("source", sourceEq0);
   }
   const rn0 = String(query.room_number || "").trim();
   if (type !== "reservation" && rn0) {

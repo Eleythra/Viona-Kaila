@@ -22,6 +22,7 @@ import {
   mergeGuestSatisfactionAdmin,
   resendWhatsappForAdminItem,
 } from "./admin.service.js";
+import { translateGuestRequestApiError } from "../../lib/guest-request-api-error-tr.js";
 import { createOperationalManualEntry } from "../guest-requests/guest-requests.service.js";
 const router = Router();
 const ADMIN_API_TOKEN = getAdminApiToken();
@@ -64,22 +65,24 @@ router.post("/requests/manual", async (req, res) => {
   try {
     const type = String(req.body?.type || "").trim();
     if (!MANUAL_ENTRY_TYPES.has(type)) {
-      return res.status(400).json({ ok: false, error: "invalid_type" });
+      return res.status(400).json({ ok: false, error: translateGuestRequestApiError("invalid_type") });
     }
     const out = await createOperationalManualEntry(req.body || {});
     return res.status(200).json({ ok: true, ...out });
   } catch (error) {
-    const msg = String(error?.message || "");
-    if (msg === "quiet_hours_reception_only") {
+    const raw = String(error?.message || "");
+    const msg = translateGuestRequestApiError(raw);
+    if (raw === "quiet_hours_reception_only") {
       return res.status(409).json({ ok: false, error: msg });
     }
     if (error?.statusCode === 409) {
-      return res.status(409).json({ ok: false, error: msg || "conflict" });
+      return res.status(409).json({ ok: false, error: msg || translateGuestRequestApiError("conflict") });
     }
     if (error?.statusCode === 400) {
-      return res.status(400).json({ ok: false, error: msg || "bad_request" });
+      return res.status(400).json({ ok: false, error: msg || translateGuestRequestApiError("bad_request") });
     }
-    return adminErr(res, error, "admin_manual_create_failed");
+    const display = raw ? msg : translateGuestRequestApiError("admin_manual_create_failed");
+    return adminErr(res, { ...error, message: display }, display);
   }
 });
 

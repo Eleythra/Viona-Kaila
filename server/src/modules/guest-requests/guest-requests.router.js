@@ -1,6 +1,7 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { getEnv } from "../../config/env.js";
+import { translateGuestRequestApiError } from "../../lib/guest-request-api-error-tr.js";
 import { createGuestRequest } from "./guest-requests.service.js";
 
 const router = Router();
@@ -14,14 +15,14 @@ const guestRequestSubmitLimiter = rateLimit({
 });
 
 function clientFacingErrorMessage(error, fallbackMsg) {
-  if (error == null) return fallbackMsg;
-  if (typeof error === "string" && error.trim()) return error.trim();
+  if (error == null) return translateGuestRequestApiError(fallbackMsg);
+  if (typeof error === "string" && error.trim()) return translateGuestRequestApiError(error.trim());
   const m = error.message;
   if (m === "datastore_dns_unavailable") {
     return "Sunucu veritabanına şu an bağlanılamıyor (DNS veya geçici ağ). Lütfen bir süre sonra tekrar deneyin. Sorun sürerse sunucuda DNS_SERVERS (ör. 8.8.8.8,1.1.1.1) tanımlanmalıdır.";
   }
-  if (typeof m === "string" && m.trim()) return m.trim();
-  return fallbackMsg;
+  if (typeof m === "string" && m.trim()) return translateGuestRequestApiError(m.trim());
+  return translateGuestRequestApiError(fallbackMsg);
 }
 
 function routeErr(res, error, fallbackMsg) {
@@ -31,7 +32,10 @@ function routeErr(res, error, fallbackMsg) {
     sc === 503 ? 503 : sc === 429 ? 429 : sc === 422 ? 422 : sc === 409 ? 409 : 400;
   const msg = clientFacingErrorMessage(error, fallbackMsg);
   if (code === 409 && msg === "quiet_hours_reception_only") {
-    return res.status(409).json({ ok: false, error: "quiet_hours_reception_only" });
+    return res.status(409).json({
+      ok: false,
+      error: translateGuestRequestApiError("quiet_hours_reception_only"),
+    });
   }
   const body = {
     ok: false,

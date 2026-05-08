@@ -602,6 +602,112 @@
     if (PATCH[c]) Object.assign(PATCH[c], CHAT_UI_PATCH[c]);
   });
 
+  /** Sesli asistan: durum, ARIA, hata metinleri (STT/TTS locale ayrı; `viona-voice.js` + Azure). */
+  var VOICE_UI_PATCH = {
+    ru: {
+      voiceStatusIdle: "Коснитесь аватара Viona, чтобы говорить",
+      voiceStatusListening: "Слушаю…",
+      voiceStatusThinking: "Думаю…",
+      voiceStatusSpeaking: "Говорю…",
+      voiceToggleExpandAria: "Открыть панель голосового помощника",
+      voiceToggleCollapseAria: "Закрыть панель голосового помощника",
+      voiceBackToChat: "Вернуться к текстовому чату",
+      voiceBackToChatAria: "Вернуться к текстовому чату",
+      voiceErrorNoSpeech:
+        "Речь не распознана — говорите громче или ближе к микрофону.",
+      voiceErrorNetwork:
+        "Сбой голосового соединения или сервера. Попробуйте текстовый чат.",
+      voiceErrorPlayback:
+        "Не удалось воспроизвести ответ (ограничение браузера). Нажмите снова или используйте текст.",
+      voiceErrorAssistant:
+        "Ответ не получен. Повторите попытку или перейдите в текстовый чат.",
+    },
+    da: {
+      voiceStatusIdle: "Tryk på Viona-avatar for at tale",
+      voiceStatusListening: "Lytter…",
+      voiceStatusThinking: "Tænker…",
+      voiceStatusSpeaking: "Taler…",
+      voiceToggleExpandAria: "Åbn stemmeassistent-panelet",
+      voiceToggleCollapseAria: "Luk stemmeassistent-panelet",
+      voiceBackToChat: "Tilbage til tekstchat",
+      voiceBackToChatAria: "Tilbage til tekstchat",
+      voiceErrorNoSpeech:
+        "Ingen tale registreret — prøv højere eller tættere på mikrofonen.",
+      voiceErrorNetwork: "Stemme- eller serverforbindelse afbrudt. Prøv tekstchat.",
+      voiceErrorPlayback:
+        "Kunne ikke afspille svar (browserbegrænsning). Tryk igen eller brug tekstchat.",
+      voiceErrorAssistant: "Intet svar. Prøv igen eller skift til tekstchat.",
+    },
+    cs: {
+      voiceStatusIdle: "Pro mluvení klepněte na avatar Viona",
+      voiceStatusListening: "Naslouchám…",
+      voiceStatusThinking: "Přemýšlím…",
+      voiceStatusSpeaking: "Mluvím…",
+      voiceToggleExpandAria: "Otevřít panel hlasové asistentky",
+      voiceToggleCollapseAria: "Zavřít panel hlasové asistentky",
+      voiceBackToChat: "Zpět na textový chat",
+      voiceBackToChatAria: "Zpět na textový chat",
+      voiceErrorNoSpeech:
+        "Nepovedlo se rozpoznat řeč — zkuste mluvit hlasitěji nebo blíž k mikrofonu.",
+      voiceErrorNetwork: "Hlasové nebo serverové spojení selhalo. Zkuste textový chat.",
+      voiceErrorPlayback:
+        "Odpověď se nepřehrála (omezení prohlížeče). Klepněte znovu nebo použijte text.",
+      voiceErrorAssistant: "Odpověď nepřišla. Zkuste to znovu nebo přejděte na textový chat.",
+    },
+    ro: {
+      voiceStatusIdle: "Atingeți avatarul Viona pentru a vorbi",
+      voiceStatusListening: "Ascult…",
+      voiceStatusThinking: "Mă gândesc…",
+      voiceStatusSpeaking: "Vorbesc…",
+      voiceToggleExpandAria: "Deschide panoul asistentului vocal",
+      voiceToggleCollapseAria: "Închide panoul asistentului vocal",
+      voiceBackToChat: "Înapoi la chat text",
+      voiceBackToChatAria: "Înapoi la chat text",
+      voiceErrorNoSpeech:
+        "Nu s-a detectat vocea — vorbiți mai tare sau mai aproape de microfon.",
+      voiceErrorNetwork:
+        "Conexiune vocală sau la server întreruptă. Încercați chatul text.",
+      voiceErrorPlayback:
+        "Răspunsul audio nu a putut fi redat (browser). Atingeți din nou sau folosiți chatul text.",
+      voiceErrorAssistant: "Fără răspuns. Reîncercați sau comutați la chat text.",
+    },
+    nl: {
+      voiceStatusIdle: "Tik op de Viona-avatar om te spreken",
+      voiceStatusListening: "Ik luister…",
+      voiceStatusThinking: "Even nadenken…",
+      voiceStatusSpeaking: "Ik spreek…",
+      voiceToggleExpandAria: "Paneel spraakassistent openen",
+      voiceToggleCollapseAria: "Paneel spraakassistent sluiten",
+      voiceBackToChat: "Terug naar tekstchat",
+      voiceBackToChatAria: "Terug naar tekstchat",
+      voiceErrorNoSpeech:
+        "Geen spraak herkend — probeer harder of dichter bij de microfoon.",
+      voiceErrorNetwork: "Spraak- of serververbinding mislukt. Probeer tekstchat.",
+      voiceErrorPlayback:
+        "Antwoord kon niet worden afgespeeld (browser). Tik opnieuw of gebruik tekstchat.",
+      voiceErrorAssistant: "Geen antwoord. Probeer opnieuw of schakel over naar tekstchat.",
+    },
+    sk: {
+      voiceStatusIdle: "Ťuknite na avatar Viona a budete hovoriť",
+      voiceStatusListening: "Počúvam…",
+      voiceStatusThinking: "Premýšľam…",
+      voiceStatusSpeaking: "Hovorím…",
+      voiceToggleExpandAria: "Otvoriť panel hlasovej asistentky",
+      voiceToggleCollapseAria: "Zavrieť panel hlasovej asistentky",
+      voiceBackToChat: "Späť na textový chat",
+      voiceBackToChatAria: "Späť na textový chat",
+      voiceErrorNoSpeech:
+        "Reč nebola rozpoznaná — hovorte hlasnejší alebo bližšie k mikrofónu.",
+      voiceErrorNetwork: "Hlasové alebo serverové spojenie zlyhalo. Skúste textový chat.",
+      voiceErrorPlayback:
+        "Odpoveď sa neprehrala (obmedzenie prehliadača). Ťuknite znova alebo použite text.",
+      voiceErrorAssistant: "Žiadna odpoveď. Skúste znova alebo prejdite na textový chat.",
+    },
+  };
+  Object.keys(VOICE_UI_PATCH).forEach(function (c) {
+    if (PATCH[c]) Object.assign(PATCH[c], VOICE_UI_PATCH[c]);
+  });
+
   window.VIONA_LANG.EXTRA.forEach(function (code) {
     var p = PATCH[code];
     I18N[code] = Object.assign({}, E, p || {});

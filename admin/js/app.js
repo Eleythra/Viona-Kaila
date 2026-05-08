@@ -105,12 +105,12 @@
   var opHkPage = 1;
   var opTechPage = 1;
   var opFrontPages = { complaint: 1, guest_notification: 1, late_checkout: 1 };
-  var opFilterHk = { status: "", from: "", to: "", room: "", search: "" };
-  var opFilterTech = { status: "", from: "", to: "", room: "", search: "" };
+  var opFilterHk = { status: "", from: "", to: "", room: "", search: "", source: "" };
+  var opFilterTech = { status: "", from: "", to: "", room: "", search: "", source: "" };
   var opFilterFrontByType = {
-    complaint: { status: "", from: "", to: "", room: "", search: "" },
-    guest_notification: { status: "", from: "", to: "", room: "", search: "" },
-    late_checkout: { status: "", from: "", to: "", room: "", search: "" },
+    complaint: { status: "", from: "", to: "", room: "", search: "", source: "" },
+    guest_notification: { status: "", from: "", to: "", room: "", search: "", source: "" },
+    late_checkout: { status: "", from: "", to: "", room: "", search: "", source: "" },
   };
   /** Hangi sekmenin süzgeci formda düzenleniyor (tek filtre çubuğu). */
   var opFrontFilterActiveType = "complaint";
@@ -520,8 +520,10 @@
   function clearOpFilterDomStatusRoom(prefix) {
     var status = document.getElementById(prefix + "-filter-status");
     var room = document.getElementById(prefix + "-filter-room");
+    var source = document.getElementById(prefix + "-filter-source");
     if (status) status.value = "";
     if (room) room.value = "";
+    if (source) source.value = "";
   }
 
   /** Tıklanan düğüm bazen #text olur; Text.closest yok → şerit chip'i bulunamaz. */
@@ -638,6 +640,7 @@
     if (f.status) o.status = f.status;
     if (f.from) o.from = f.from;
     if (f.to) o.to = f.to;
+    if (f.source && String(f.source).trim()) o.source = String(f.source).trim();
     if (f.search && String(f.search).trim()) o.search = String(f.search).trim().slice(0, 80);
     if (f.room && String(f.room).trim() && !o.search) o.room_number = String(f.room).trim();
     return o;
@@ -791,7 +794,7 @@
       elF.dataset.vionaOpSearchBound = "1";
       elF.addEventListener("input", function () {
         var t = opFrontFilterActiveType;
-        var o = opFilterFrontByType[t] || { status: "", from: "", to: "", room: "", search: "" };
+        var o = opFilterFrontByType[t] || { status: "", from: "", to: "", room: "", search: "", source: "" };
         o.search = String(elF.value || "").trim().slice(0, 80);
         opFilterFrontByType[t] = o;
         scheduleOpSearchRefresh();
@@ -1158,15 +1161,17 @@
   }
 
   function syncOpFrontFilterFormFromActiveType() {
-    var m = opFilterFrontByType[opFrontFilterActiveType] || { status: "", from: "", to: "", room: "", search: "" };
+    var m = opFilterFrontByType[opFrontFilterActiveType] || { status: "", from: "", to: "", room: "", search: "", source: "" };
     var status = document.getElementById("op-front-filter-status");
     var day = document.getElementById("op-front-filter-day");
     var room = document.getElementById("op-front-filter-room");
     var qSearch = document.getElementById("op-front-filter-search");
+    var source = document.getElementById("op-front-filter-source");
     if (status) status.value = m.status || "";
     var y = m.from && /^\d{4}-\d{2}-\d{2}$/.test(String(m.from).trim()) ? String(m.from).trim() : opSelectedCalendarDay;
     if (day) day.value = y || "";
     if (room) room.value = m.room || "";
+    if (source) source.value = m.source || "";
     if (qSearch) qSearch.value = m.search != null ? String(m.search) : "";
   }
 
@@ -1193,10 +1198,11 @@
           to: y,
           room: next.room,
           search: next.search || "",
+          source: next.source || "",
         };
         ["complaint", "guest_notification", "late_checkout"].forEach(function (k) {
           if (k === opFrontFilterActiveType) return;
-          var o = opFilterFrontByType[k] || { status: "", from: "", to: "", room: "", search: "" };
+          var o = opFilterFrontByType[k] || { status: "", from: "", to: "", room: "", search: "", source: "" };
           o.from = y;
           o.to = y;
           opFilterFrontByType[k] = o;
@@ -1210,9 +1216,9 @@
       clearBtn.dataset.vionaBound = "1";
       clearBtn.addEventListener("click", function () {
         var y = opSelectedCalendarDay;
-        opFilterFrontByType.complaint = { status: "", from: y, to: y, room: "", search: "" };
-        opFilterFrontByType.guest_notification = { status: "", from: y, to: y, room: "", search: "" };
-        opFilterFrontByType.late_checkout = { status: "", from: y, to: y, room: "", search: "" };
+        opFilterFrontByType.complaint = { status: "", from: y, to: y, room: "", search: "", source: "" };
+        opFilterFrontByType.guest_notification = { status: "", from: y, to: y, room: "", search: "", source: "" };
+        opFilterFrontByType.late_checkout = { status: "", from: y, to: y, room: "", search: "", source: "" };
         clearOpFilterDomStatusRoom("op-front");
         var sF = document.getElementById("op-front-filter-search");
         if (sF) sF.value = "";
@@ -2845,6 +2851,7 @@
     var status = document.getElementById(prefix + "-filter-status");
     var day = document.getElementById(prefix + "-filter-day");
     var room = document.getElementById(prefix + "-filter-room");
+    var source = document.getElementById(prefix + "-filter-source");
     var qSearch = document.getElementById(prefix + "-filter-search");
     var y =
       day && day.value && /^\d{4}-\d{2}-\d{2}$/.test(String(day.value).trim())
@@ -2856,6 +2863,7 @@
       from: y,
       to: y,
       room: room && room.value ? String(room.value).trim() : "",
+      source: source && source.value ? String(source.value).trim() : "",
       search: qSearch && qSearch.value ? String(qSearch.value).trim().slice(0, 80) : "",
     };
   }
@@ -2863,9 +2871,11 @@
   function clearOpFilterDom(prefix) {
     var status = document.getElementById(prefix + "-filter-status");
     var room = document.getElementById(prefix + "-filter-room");
+    var source = document.getElementById(prefix + "-filter-source");
     var qSearch = document.getElementById(prefix + "-filter-search");
     if (status) status.value = "";
     if (room) room.value = "";
+    if (source) source.value = "";
     if (qSearch) qSearch.value = "";
     syncOpFiltersAndDomFromSelectedDay();
   }
@@ -2887,6 +2897,7 @@
           renderOpDayStrips();
           filterObj.status = next.status;
           filterObj.room = next.room;
+          filterObj.source = next.source || "";
           filterObj.search = next.search || "";
           applyPage();
           scheduleAutoRefresh();
@@ -2896,6 +2907,7 @@
         clearBtn.addEventListener("click", function () {
           filterObj.status = "";
           filterObj.room = "";
+          filterObj.source = "";
           filterObj.search = "";
           filterObj.from = opSelectedCalendarDay;
           filterObj.to = opSelectedCalendarDay;
