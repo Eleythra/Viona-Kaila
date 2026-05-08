@@ -182,6 +182,16 @@ export async function transcribeWav({ wavBuffer, voiceSpec, key, region, fetchTi
   if (!res.ok) {
     console.warn("stt_interactive_http status=%s retrying_conversation", res.status);
     ({ res, data } = await postStt(urlConversation));
+  } else {
+    const interactiveStatus = String(data?.RecognitionStatus || "");
+    if (interactiveStatus !== "Success") {
+      console.warn("stt_interactive_status=%s retrying_conversation", interactiveStatus || "(empty)");
+      const conv = await postStt(urlConversation);
+      if (conv.res.ok) {
+        res = conv.res;
+        data = conv.data;
+      }
+    }
   }
 
   if (!res.ok) {

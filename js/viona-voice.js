@@ -442,11 +442,12 @@
     }
     var rms = Math.sqrt(sum / dataArray.length);
 
-    var LOUD = 0.035;
-    var QUIET = 0.018;
+    var LOUD = 0.022;
+    var QUIET = 0.012;
     var SILENCE_HOLD_MS = 1500;
     var MAX_MS = 28000;
     var NO_SPEECH_MAX_MS = 22000;
+    var MIN_RECORD_MS = 700;
 
     var now = Date.now();
     var elapsed = now - listenStartedAt;
@@ -457,7 +458,12 @@
       if (!speechFirstAt) speechFirstAt = now;
     } else if (speechEver && rms < QUIET) {
       if (!silenceSince) silenceSince = now;
-      else if (now - silenceSince >= SILENCE_HOLD_MS && speechFirstAt && now - speechFirstAt >= 400) {
+      else if (
+        now - silenceSince >= SILENCE_HOLD_MS &&
+        speechFirstAt &&
+        now - speechFirstAt >= 600 &&
+        elapsed >= MIN_RECORD_MS
+      ) {
         finishListeningPhase();
         return;
       }
@@ -487,6 +493,11 @@
     }
     if (mediaRecorder && mediaRecorder.state === "recording") {
       try {
+        if (typeof mediaRecorder.requestData === "function") {
+          try {
+            mediaRecorder.requestData();
+          } catch (reqErr) {}
+        }
         mediaRecorder.stop();
       } catch (e) {
         goIdle();
@@ -523,15 +534,37 @@
           },
           speechTimeoutMs("speechSttTimeoutMs", 25000),
         ).then(function (res) {
-          return res.json().then(function (data) {
-            if (!res.ok) return { ok: false };
-            return data;
+          return res.text().then(function (raw) {
+            var data = null;
+            try {
+              data = raw ? JSON.parse(raw) : null;
+            } catch (parseErr) {
+              data = null;
+            }
+            if (!res.ok) {
+              return {
+                ok: false,
+                error: (data && data.error) || "http_" + res.status,
+                httpStatus: res.status,
+              };
+            }
+            return data || { ok: false, error: "bad_json" };
           });
         });
       })
       .then(function (data) {
         if (!data || !data.ok || !String(data.text || "").trim()) {
-          goIdleWithVoiceHint("voiceErrorNoSpeech");
+          var code = data && data.error;
+          var httpSt = data && data.httpStatus;
+          var serverSide =
+            code === "speech_not_configured" ||
+            code === "stt_failed" ||
+            code === "speech_unauthorized" ||
+            code === "stt_error" ||
+            code === "bad_json" ||
+            (typeof httpSt === "number" && httpSt >= 500) ||
+            (typeof code === "string" && code.indexOf("http_") === 0);
+          goIdleWithVoiceHint(serverSide ? "voiceErrorNetwork" : "voiceErrorNoSpeech");
           return;
         }
         var said = String(data.text).trim();
@@ -579,8 +612,16 @@
       speechTimeoutMs("speechTtsTimeoutMs", 35000),
     )
       .then(function (res) {
-        if (!res.ok) throw new Error("tts_http");
-        return res.blob();
+        if (res.ok) return res.blob();
+        return res.text().then(function (raw) {
+          var code = "tts_http";
+          try {
+            var j = raw ? JSON.parse(raw) : null;
+            if (j && j.error) code = String(j.error);
+          } catch (parseErr) {}
+          var err = new Error(code);
+          throw err;
+        });
       })
       .then(function (blob) {
         if (!blob || !blob.size) throw new Error("tts_empty");
@@ -599,7 +640,7 @@
           "error",
           function () {
             stopTtsPlayback();
-            goIdle();
+            goIdleWithVoiceHint("voiceErrorPlayback");
           },
           { once: true },
         );
@@ -611,8 +652,18 @@
           });
         }
       })
-      .catch(function () {
-        goIdleWithVoiceHint("voiceErrorPlayback");
+      .catch(function (e) {
+        var c = e && e.message ? String(e.message) : "";
+        var network =
+          (e && e.name === "AbortError") ||
+          c === "speech_not_configured" ||
+          c === "speech_unauthorized" ||
+          c === "tts_error" ||
+          c === "empty_text" ||
+          c === "text_too_long" ||
+          /^http_5\d\d$/.test(c) ||
+          /aborted|Failed to fetch|NetworkError|Load failed/i.test(c);
+        goIdleWithVoiceHint(network ? "voiceErrorNetwork" : "voiceErrorPlayback");
       });
   }
 
