@@ -35,11 +35,18 @@ function getSpeechTrustedOriginAllowlist() {
  * Böylece statik sitede gizli enjekte edilmeden Vercel→Render misafir sitesi STT/TTS kullanabilir.
  */
 export function speechClientAuthMiddleware(req, res, next) {
-  const secret = String(getEnv().speechClientSecret || "").trim();
+  const env = getEnv();
+  const secret = String(env.speechClientSecret || "").trim();
   if (!secret) return next();
   const header = String(req.headers["x-viona-speech-secret"] || "").trim();
   if (speechSecretMatches(header, secret)) return next();
-  if (requestHasAllowedPublicSiteOrigin(req, getSpeechTrustedOriginAllowlist())) return next();
+  if (
+    requestHasAllowedPublicSiteOrigin(req, getSpeechTrustedOriginAllowlist(), {
+      trustForwardedHeaders: env.speechTrustForwardedOrigin,
+    })
+  ) {
+    return next();
+  }
   return res.status(401).json({ ok: false, error: "speech_unauthorized" });
 }
 

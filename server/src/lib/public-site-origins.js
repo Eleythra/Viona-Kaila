@@ -37,19 +37,86 @@ export function buildPublicSiteOriginAllowlist(env) {
 }
 
 /**
- * Tarayıcıdan gelen Origin veya Referer kökeni allowlist’te mi?
+ * Proxy (Vercel rewrite → Render) bazen `Origin` iletmez; `X-Forwarded-Host` köken üretir.
+ * Not: Doğrudan API’ye istek atan bir istemci bu başlıkları taklit edebilir; maliyet için SPEECH_CLIENT_SECRET veya rate limit ile birlikte düşünün.
+ */
+function syntheticOriginFromForwardedHeaders(req) {
+  const raw = String(req.headers?.["x-forwarded-host"] || "").trim();
+  const firstHost = raw.split(",")[0].trim();
+  if (!firstHost) return "";
+
+  let proto = String(req.headers?.["x-forwarded-proto"] || "")
+    .trim()
+    .split(",")[0]
+    .trim()
+    .toLowerCase();
+  if (proto !== "http" && proto !== "https") {
+    const h = firstHost.toLowerCase();
+    proto =
+      h.startsWith("localhost") || h.startsWith("127.") ? "http" : "https";
+  }
+
+  return normalizePublicSiteOrigin(`${proto}://${firstHost}`);
+}
+
+/** RFC 7239 örnekleri: `host=example.com` veya `proto=https;host=example.com` */
+function syntheticOriginFromForwardedHeader(req) {
+  const raw = String(req.headers?.forwarded || "").trim();
+  if (!raw) return "";
+  const parts = raw.split(",").map((s) => s.trim()).filter(Boolean);
+  for (const segment of parts) {
+    let host = "";
+    let proto = "";
+    const pairs = segment.split(";").map((s) => s.trim());
+    for (const p of pairs) {
+      const eq = p.indexOf("=");
+      if (eq === -1) continue;
+      const k = p.slice(0, eq).trim().toLowerCase();
+      const v = p.slice(eq + 1).trim().replace(/^"|"$/g, "");
+      if (k === "host") host = v;
+      if (k === "proto") proto = v.toLowerCase();
+    }
+    if (!host) continue;
+    if (proto !== "http" && proto !== "https") {
+      const hl = host.toLowerCase();
+      proto =
+        hl.startsWith("localhost") || hl.startsWith("127.") ? "http" : "https";
+    }
+    const o = normalizePublicSiteOrigin(`${proto}://${host}`);
+    if (o) return o;
+  }
+  return "";
+}
+
+/**
+ * Tarayıcıdan gelen Origin / Referer / (isteğe bağlı) proxy iletilen köken allowlist’te mi?
  * @param {import("express").Request} req
  * @param {Set<string>} allowlist
+ * @param {{ trustForwardedHeaders?: boolean }} [opts]
  */
-export function requestHasAllowedPublicSiteOrigin(req, allowlist) {
+export function requestHasAllowedPublicSiteOrigin(req, allowlist, opts = {}) {
+  const trustForwarded = opts.trustForwardedHeaders !== false;
+
   const origin = normalizePublicSiteOrigin(req.headers?.origin);
   if (origin && allowlist.has(origin)) return true;
+
   const ref = String(req.headers?.referer || "").trim();
-  if (!ref) return false;
-  try {
-    const o = normalizePublicSiteOrigin(new URL(ref).origin);
-    return Boolean(o && allowlist.has(o));
-  } catch {
-    return false;
+  if (ref) {
+    try {
+      const o = normalizePublicSiteOrigin(new URL(ref).origin);
+      if (o && allowlist.has(o)) return true;
+    } catch {
+      /* ignore */
+    }
   }
+
+  if (!trustForwarded) return false;
+
+  const fromXfh = syntheticOriginFromForwardedHeaders(req);
+  if (fromXfh && allowlist.has(fromXfh)) return true;
+
+  const fromFwd = syntheticOriginFromForwardedHeader(req);
+  if (fromFwd && allowlist.has(fromFwd)) return true;
+
+  return false;
 }

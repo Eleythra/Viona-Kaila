@@ -249,6 +249,11 @@ export function getEnv() {
      * Statik sitede aynı değer `window.__VIONA_SPEECH_CLIENT_SECRET__` ile verilir (kaynak görüntülenebilir; maliyet sınırı).
      */
     speechClientSecret: optionalAny(["SPEECH_CLIENT_SECRET", "VIONA_SPEECH_CLIENT_SECRET"], ""),
+    /**
+     * `1` (varsayılan): Vercel vb. proxy `Origin` iletmezse `X-Forwarded-Host` / `Forwarded` ile izinli köken kontrolü.
+     * `0`: yalnızca Origin/Referer + doğru secret (doğrudan API erişiminde spoof riskini azaltır).
+     */
+    speechTrustForwardedOrigin: optional("SPEECH_TRUST_FORWARDED_ORIGIN", "1") !== "0",
     /** ElektraWeb Hotspot misafir listesi — `GET .../apisequence/GetHotspotList?HOTELID=` */
     elektraBaseUrl: optional("ELEKTRA_BASE_URL", ""),
     elektraHotelId: optional("ELEKTRA_HOTEL_ID", ""),
