@@ -208,6 +208,23 @@
         body: JSON.stringify(payload || {}),
       });
     },
+    /** Personel manuel operasyon kaydı (aynı tablolar + WhatsApp akışı). */
+    createOperationalManual: function (payload) {
+      return jfetch(getApiBase() + "/admin/requests/manual", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload || {}),
+      }).then(function (d) {
+        try {
+          if (typeof BroadcastChannel !== "undefined") {
+            var c = new BroadcastChannel("viona-ops-mutations");
+            c.postMessage({ t: Date.now(), v: 1, source: "admin-panel", manual: true });
+            c.close();
+          }
+        } catch (_e) {}
+        return d;
+      });
+    },
     /** Operasyon WhatsApp (Cloud API) numaralarına kaydı yeniden ilet (istek / şikâyet / arıza / misafir bildirimi / geç çıkış). */
     resendWhatsappOperational: function (type, id) {
       var url =

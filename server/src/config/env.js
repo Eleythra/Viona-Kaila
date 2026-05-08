@@ -232,6 +232,8 @@ export function getEnv() {
      * rol X-Viona-Ops-Page başlığından (ops-hk.html → hk) alınır. Linkte #/?k= gerekmez.
      */
     opsTrustOpsPageHeader: optional("OPS_TRUST_OPS_PAGE_HEADER", "") === "1",
+    /** `1` ise personel manuel kayıtları da sessiz saatte misafir kurallarına tabi olur (varsayılan: hayır). */
+    opsManualRespectQuietHours: optional("OPS_MANUAL_RESPECT_QUIET_HOURS", "") === "1",
     /** CORS allowlist (virgülle ayrılmış origin listesi). */
     corsAllowedOrigins: optionalCsv("CORS_ALLOWED_ORIGINS", []),
     /** Basit rate-limit. */

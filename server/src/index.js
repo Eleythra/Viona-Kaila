@@ -29,6 +29,10 @@ import {
   pingDailyOperationReportFromHttpTraffic,
   startDailyOperationReportScheduler,
 } from "./modules/admin/reporting/daily-operation-report.scheduler.js";
+import {
+  buildPublicSiteOriginAllowlist,
+  normalizePublicSiteOrigin,
+} from "./lib/public-site-origins.js";
 const env = getEnv();
 const app = express();
 app.set("trust proxy", 1);
@@ -192,43 +196,13 @@ function guessMultiIntent(message = "") {
   return /\s(ama|ayrıca|ayrica|fakat|but|also)\s/.test(t);
 }
 
-function normalizeOrigin(value = "") {
-  const s = String(value || "").trim().replace(/\/+$/, "");
-  if (!s) return "";
-  return s.toLowerCase();
-}
-
-/** Ortamdan gelen origin’ler + yerel/statik test için sabitler (birleşim).
- * CORS_ALLOWED_ORIGINS dolu olsa bile önceden sadece boşken localhost ekleniyordu;
- * bu yüzden .env’de yalnızca üretim domain’leri varken lokal 5500 reddediliyordu. */
-const corsAllowlist = new Set(
-  (env.corsAllowedOrigins || []).map((x) => normalizeOrigin(x)).filter(Boolean),
-);
-[
-  "https://viona-kaila.onrender.com",
-  "https://viona-node-api.onrender.com",
-  /** Vercel / özel alan: doğrudan Render’a istek (proxy dışı veya eski istemci) */
-  "https://viona.eleythra.com",
-  "https://www.viona.eleythra.com",
-  "https://viona-admin.eleythra.com",
-  "https://www.viona-admin.eleythra.com",
-  "http://localhost:3000",
-  "http://localhost:5173",
-  "http://localhost:5500",
-  "http://127.0.0.1:5500",
-  "http://127.0.0.1:3000",
-  /** Yerel statik sunucu: python -m http.server 8080 (Viona + /admin/) */
-  "http://localhost:8080",
-  "http://127.0.0.1:8080",
-]
-  .map(normalizeOrigin)
-  .forEach((x) => corsAllowlist.add(x));
+/** Ortamdan gelen origin’ler + yerel/statik test için sabitler (`public-site-origins.js`). */
+const corsAllowlist = buildPublicSiteOriginAllowlist(env);
 
 function isAllowedOrigin(origin = "") {
-  const normalized = normalizeOrigin(origin);
+  const normalized = normalizePublicSiteOrigin(origin);
   if (!normalized) return false;
-  if (corsAllowlist.has(normalized)) return true;
-  return false;
+  return corsAllowlist.has(normalized);
 }
 
 /** Supabase chat_observations.chat_obs_response_type_chk */

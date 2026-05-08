@@ -7,6 +7,18 @@
     return d.innerHTML;
   }
 
+  /** Personel manuel operasyon kaydı (`viona_ops_manual`). */
+  function manualOpsEntryBadgeHtml(row) {
+    try {
+      if (window.VionaOpsManualForm && typeof window.VionaOpsManualForm.isManualRow === "function") {
+        if (window.VionaOpsManualForm.isManualRow(row) && typeof window.VionaOpsManualForm.manualBadgeHtml === "function") {
+          return window.VionaOpsManualForm.manualBadgeHtml();
+        }
+      }
+    } catch (_e) {}
+    return "";
+  }
+
   /** WhatsApp «panelde aç» vb.: tam tabloda ilgili satırı vurgula. */
   function bucketRowHighlightClass(handlers, rowId) {
     var hid =
@@ -2956,7 +2968,11 @@
           '" data-cal-date="' +
           esc(submittedAtCalendarIso(r.submitted_at)) +
           '">';
-        html += "<td>" + esc(formatSubmittedAtTr(r.submitted_at)) + "</td>";
+        html +=
+          "<td>" +
+          esc(formatSubmittedAtTr(r.submitted_at)) +
+          manualOpsEntryBadgeHtml(r) +
+          "</td>";
         html += "<td>" + esc(r.room_number || "-") + "</td>";
         html += "<td>" + esc(r.guest_name || "-") + "</td>";
         html += "<td>" + esc(r.nationality || "-") + "</td>";
@@ -3170,7 +3186,8 @@
           '" data-cal-date="' +
           esc(submittedAtCalendarIso(r.submitted_at)) +
           '">';
-        html += "<td>" + esc(formatSubmittedAtTr(r.submitted_at)) + "</td>";
+        html +=
+          "<td>" + esc(formatSubmittedAtTr(r.submitted_at)) + manualOpsEntryBadgeHtml(r) + "</td>";
         html += "<td>" + esc(r.room_number || "-") + "</td>";
         html += "<td>" + esc(r.guest_name || "-") + "</td>";
         html += "<td>" + esc(r.nationality || "-") + "</td>";
@@ -3378,7 +3395,8 @@
           '" data-cal-date="' +
           esc(submittedAtCalendarIso(r.submitted_at)) +
           '">';
-        html += "<td>" + esc(formatSubmittedAtTr(r.submitted_at)) + "</td>";
+        html +=
+          "<td>" + esc(formatSubmittedAtTr(r.submitted_at)) + manualOpsEntryBadgeHtml(r) + "</td>";
         html += "<td>" + esc(r.room_number || "-") + "</td>";
         html += "<td>" + esc(r.guest_name || "-") + "</td>";
         html += "<td>" + esc(r.nationality || "-") + "</td>";
@@ -3597,7 +3615,8 @@
           '" data-cal-date="' +
           esc(submittedAtCalendarIso(r.submitted_at)) +
           '">';
-        html += "<td>" + esc(formatSubmittedAtTr(r.submitted_at)) + "</td>";
+        html +=
+          "<td>" + esc(formatSubmittedAtTr(r.submitted_at)) + manualOpsEntryBadgeHtml(r) + "</td>";
         html += "<td>" + esc(coDate) + "</td>";
         html += "<td>" + esc(coTime) + "</td>";
         html += "<td>" + esc(r.room_number || "-") + "</td>";
@@ -3821,7 +3840,11 @@
           '" data-cal-date="' +
           esc(submittedAtCalendarIso(bucketRowRecordTimestamp(r))) +
           '">';
-        html += "<td>" + esc(formatSubmittedAtTr(bucketRowRecordTimestamp(r))) + "</td>";
+        html +=
+          "<td>" +
+          esc(formatSubmittedAtTr(bucketRowRecordTimestamp(r))) +
+          manualOpsEntryBadgeHtml(r) +
+          "</td>";
         html += "<td>" + esc(r.room_number || "-") + "</td>";
         html += "<td>" + esc(operationGuestName(r) || "-") + "</td>";
         html += "<td>" + esc(r.nationality || "-") + "</td>";

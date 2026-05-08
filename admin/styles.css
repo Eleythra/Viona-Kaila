@@ -5846,3 +5846,68 @@
     width: 100%;
   }
 }
+
+/* Personel manuel operasyon formu */
+.ops-manual-form-host {
+  margin-bottom: 0.75rem;
+}
+.ops-manual-form {
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 0;
+}
+.ops-manual-form__title {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.ops-manual-form__hint {
+  margin: 0 0 0.65rem;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--admin-text-muted);
+}
+.ops-manual-form__hint code {
+  font-size: 0.72em;
+  color: #94a3b8;
+}
+.op-filter-bar__row--manual {
+  align-items: flex-end;
+}
+.op-filter-field--grow {
+  flex: 1 1 180px;
+  min-width: min(100%, 12rem);
+}
+.op-filter-field--textarea .op-filter-input {
+  min-height: 56px;
+  resize: vertical;
+}
+.op-filter-actions--manual {
+  margin-left: 0;
+  flex: 1 1 100%;
+  align-items: center;
+  gap: 0.65rem;
+}
+.ops-manual-form__status {
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+.ops-manual-badge {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  background: rgba(251, 191, 36, 0.18);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.35);
+}
+.manual-front-panel {
+  flex: 1 1 100%;
+}
+.manual-front-panel.hidden {
+  display: none !important;
+}

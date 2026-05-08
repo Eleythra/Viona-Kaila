@@ -1264,6 +1264,7 @@
 
     mount.innerHTML =
       '<div id="ops-hk-pending-banner" class="ops-pending-banner-host"></div>' +
+      '<div id="ops-hk-manual-form-host" class="ops-manual-form-host"></div>' +
       opsLightDayStripWrap("op-hk") +
       '<div id="ops-hk-summary-mount" class="ops-hk-mount"></div>' +
       hkFilterBarHtml() +
@@ -1386,6 +1387,25 @@
         hkFilterState.to = slCalDay;
         page = 1;
         void load(1);
+      });
+    }
+
+    var mhHk = document.getElementById("ops-hk-manual-form-host");
+    if (mhHk && window.VionaOpsManualForm && typeof window.VionaOpsManualForm.mount === "function") {
+      window.VionaOpsManualForm.mount(mhHk, {
+        mode: "fixed",
+        recordType: "request",
+        submitManual: function (body) {
+          return opsFetch("/requests/manual", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+        },
+        onSuccess: function () {
+          postOpsMutation();
+          void load(1);
+        },
       });
     }
 
@@ -1569,6 +1589,7 @@
 
     mount.innerHTML =
       '<div id="ops-tech-pending-banner" class="ops-pending-banner-host"></div>' +
+      '<div id="ops-tech-manual-form-host" class="ops-manual-form-host"></div>' +
       opsLightDayStripWrap("op-tech") +
       '<div id="ops-tech-summary-mount" class="ops-hk-mount"></div>' +
       techFilterBarHtml() +
@@ -1691,6 +1712,25 @@
         techFilterState.to = slCalDay;
         page = 1;
         void load(1);
+      });
+    }
+
+    var mhTech = document.getElementById("ops-tech-manual-form-host");
+    if (mhTech && window.VionaOpsManualForm && typeof window.VionaOpsManualForm.mount === "function") {
+      window.VionaOpsManualForm.mount(mhTech, {
+        mode: "fixed",
+        recordType: "fault",
+        submitManual: function (body) {
+          return opsFetch("/requests/manual", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+        },
+        onSuccess: function () {
+          postOpsMutation();
+          void load(1);
+        },
       });
     }
 
@@ -1883,6 +1923,7 @@
       opsLightDayStripWrap("op-front") +
       '<p id="op-front-filter-scope" class="op-filter-scope" role="status"></p>' +
       frontFilterBarHtml() +
+      '<div id="ops-front-manual-form-host" class="ops-manual-form-host"></div>' +
       '<div id="op-front-mount" class="ops-hk-mount"></div>';
     syncSlFilterDayForPrefix("op-front");
     renderSlDayStrip("op-front-day-strip");
@@ -2065,6 +2106,27 @@
     syncOpFrontFilterFormFromActiveType();
     updateOpFrontFilterScopeLabel();
 
+    var mhFront = document.getElementById("ops-front-manual-form-host");
+    if (mhFront && window.VionaOpsManualForm && typeof window.VionaOpsManualForm.mount === "function") {
+      window.VionaOpsManualForm.mount(mhFront, {
+        mode: "front",
+        getRecordType: function () {
+          return opFrontFilterActiveType;
+        },
+        submitManual: function (body) {
+          return opsFetch("/requests/manual", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+        },
+        onSuccess: function () {
+          postOpsMutation();
+          void loadAll();
+        },
+      });
+    }
+
     async function loadAll() {
       maybeAdvanceSlToday();
       void paintOpsLightPendingBanner(
@@ -2222,6 +2284,9 @@
             opFrontFilterActiveType = newKey;
             syncOpFrontFilterFormFromActiveType();
             updateOpFrontFilterScopeLabel();
+            if (window.VionaOpsManualForm && typeof window.VionaOpsManualForm.syncFrontType === "function") {
+              window.VionaOpsManualForm.syncFrontType(newKey);
+            }
           },
         },
         summary,

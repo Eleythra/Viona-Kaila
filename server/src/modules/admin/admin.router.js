@@ -22,6 +22,7 @@ import {
   mergeGuestSatisfactionAdmin,
   resendWhatsappForAdminItem,
 } from "./admin.service.js";
+import { createOperationalManualEntry } from "../guest-requests/guest-requests.service.js";
 const router = Router();
 const ADMIN_API_TOKEN = getAdminApiToken();
 
@@ -56,6 +57,31 @@ function adminErr(res, error, fallbackMsg) {
   }
   return res.status(code).json({ ok: false, error: msg });
 }
+
+const MANUAL_ENTRY_TYPES = new Set(["request", "complaint", "fault", "guest_notification", "late_checkout"]);
+
+router.post("/requests/manual", async (req, res) => {
+  try {
+    const type = String(req.body?.type || "").trim();
+    if (!MANUAL_ENTRY_TYPES.has(type)) {
+      return res.status(400).json({ ok: false, error: "invalid_type" });
+    }
+    const out = await createOperationalManualEntry(req.body || {});
+    return res.status(200).json({ ok: true, ...out });
+  } catch (error) {
+    const msg = String(error?.message || "");
+    if (msg === "quiet_hours_reception_only") {
+      return res.status(409).json({ ok: false, error: msg });
+    }
+    if (error?.statusCode === 409) {
+      return res.status(409).json({ ok: false, error: msg || "conflict" });
+    }
+    if (error?.statusCode === 400) {
+      return res.status(400).json({ ok: false, error: msg || "bad_request" });
+    }
+    return adminErr(res, error, "admin_manual_create_failed");
+  }
+});
 
 router.get("/requests", async (req, res) => {
   try {

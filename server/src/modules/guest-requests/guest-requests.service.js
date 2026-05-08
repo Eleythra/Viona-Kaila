@@ -14,6 +14,10 @@ import {
 import { sendOperationalWhatsappNotification } from "../../services/whatsapp-operational-notification.service.js";
 import { normalizeVionaUiLanguage } from "../../lib/viona-ui-languages.js";
 import { maybeVerifyGuestForPms } from "../guest-verification/guest-verification.service.js";
+import { getEnv } from "../../config/env.js";
+
+/** Personel operasyon panelinden eklenen kayıtlar; liste / raporlarda `source` ile ayırt edilir. */
+export const VIONA_OPS_MANUAL_SOURCE = "viona_ops_manual";
 
 const SIMPLE_TYPES = new Set(["request", "complaint", "fault", "guest_notification"]);
 const RESERVATION_TYPES = new Set(["reservation_alacarte", "reservation_spa"]);
@@ -482,8 +486,12 @@ function validate(normalized) {
   if (nameErr) throw new Error(guestFullNameErrorMessage(nameErr));
   normalized.name = normalizeGuestFullNameForStorage(normalized.name);
   if (!isValidHotelRoomNumber(normalized.room)) throw new Error("invalid hotel room number");
-  // Chatbot üzerinden gelen kayıtlarda milliyet alanı '-' olarak tutulabilir.
-  if (normalized.source !== "viona_chat" && !looksLikeNationality(normalized.nationality)) {
+  // Chatbot veya operasyon personeli manuel girişte milliyet '-' olabilir.
+  if (
+    normalized.source !== "viona_chat" &&
+    normalized.source !== VIONA_OPS_MANUAL_SOURCE &&
+    !looksLikeNationality(normalized.nationality)
+  ) {
     throw new Error("nationality must contain letters only");
   }
   if (
@@ -809,4 +817,60 @@ export async function createGuestRequest(payload, options = {}) {
   }
   const id = await insertReservation(normalized);
   return { id, bucket: "reservation" };
+}
+
+/**
+ * HK / teknik / ön büro personelinin manuel kaydı. Misafir akışıyla aynı tablolar ve WhatsApp tetiklemesi;
+ * PMS doğrulaması yok; sessiz saat varsayılan olarak uygulanmaz (`OPS_MANUAL_RESPECT_QUIET_HOURS=1` ile açılır).
+ * @param {object} payload — `createGuestRequest` ile uyumlu gövde (`type`, `name`, `room`, …)
+ */
+export async function createOperationalManualEntry(payload) {
+  const raw = payload && typeof payload === "object" ? payload : {};
+  const normalized = normalizePayload({ ...raw, source: VIONA_OPS_MANUAL_SOURCE });
+  normalized.source = VIONA_OPS_MANUAL_SOURCE;
+  validate(normalized);
+
+  if (RESERVATION_TYPES.has(normalized.type)) {
+    const err = new Error("manual entry does not support reservation types");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const env = getEnv();
+  if (env.opsManualRespectQuietHours) {
+    if (isOperationalGuestRequestTypeBlocked(normalized.type) && isInOperationalQuietHours()) {
+      const quietErr = new Error("quiet_hours_reception_only");
+      quietErr.statusCode = 409;
+      throw quietErr;
+    }
+  }
+
+  if (normalized.type === "request") {
+    const id = await insertSimple("guest_requests", normalized);
+    scheduleOperationalWhatsappAfterInsert("guest_requests", normalized, id);
+    return { id, bucket: "request", whatsapp: { pending: true } };
+  }
+  if (normalized.type === "complaint") {
+    const id = await insertSimple("guest_complaints", normalized);
+    scheduleOperationalWhatsappAfterInsert("guest_complaints", normalized, id);
+    return { id, bucket: "complaint", whatsapp: { pending: true } };
+  }
+  if (normalized.type === "fault") {
+    const id = await insertSimple("guest_faults", normalized);
+    scheduleOperationalWhatsappAfterInsert("guest_faults", normalized, id);
+    return { id, bucket: "fault", whatsapp: { pending: true } };
+  }
+  if (normalized.type === "guest_notification") {
+    const id = await insertSimple("guest_notifications", normalized);
+    scheduleOperationalWhatsappAfterInsert("guest_notifications", normalized, id);
+    return { id, bucket: "guest_notification", whatsapp: { pending: true } };
+  }
+  if (normalized.type === LATE_CHECKOUT_TYPE) {
+    const id = await insertLateCheckout(normalized);
+    scheduleOperationalWhatsappAfterInsert("guest_late_checkouts", normalized, id);
+    return { id, bucket: "late_checkout", whatsapp: { pending: true } };
+  }
+  const inv = new Error("invalid type for manual entry");
+  inv.statusCode = 400;
+  throw inv;
 }

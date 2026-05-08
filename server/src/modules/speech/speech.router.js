@@ -4,6 +4,10 @@
 import express from "express";
 import { timingSafeEqual } from "node:crypto";
 import { getEnv } from "../../config/env.js";
+import {
+  buildPublicSiteOriginAllowlist,
+  requestHasAllowedPublicSiteOrigin,
+} from "../../lib/public-site-origins.js";
 import { resolveVoiceForRequest, synthesizeToWav, transcribeWav } from "./azure-speech.service.js";
 
 const MAX_TTS_CHARS = 4000;
@@ -17,15 +21,26 @@ function speechSecretMatches(candidate, expected) {
   return timingSafeEqual(left, right);
 }
 
-/** SPEECH_CLIENT_SECRET doluysa `X-Viona-Speech-Secret` zorunlu (TTS/STT). */
+let speechTrustedOriginAllowlist = null;
+
+function getSpeechTrustedOriginAllowlist() {
+  if (!speechTrustedOriginAllowlist) {
+    speechTrustedOriginAllowlist = buildPublicSiteOriginAllowlist(getEnv());
+  }
+  return speechTrustedOriginAllowlist;
+}
+
+/**
+ * SPEECH_CLIENT_SECRET doluysa: doğru `X-Viona-Speech-Secret` veya CORS ile aynı allowlist’te Origin/Referer.
+ * Böylece statik sitede gizli enjekte edilmeden Vercel→Render misafir sitesi STT/TTS kullanabilir.
+ */
 export function speechClientAuthMiddleware(req, res, next) {
   const secret = String(getEnv().speechClientSecret || "").trim();
   if (!secret) return next();
   const header = String(req.headers["x-viona-speech-secret"] || "").trim();
-  if (!speechSecretMatches(header, secret)) {
-    return res.status(401).json({ ok: false, error: "speech_unauthorized" });
-  }
-  return next();
+  if (speechSecretMatches(header, secret)) return next();
+  if (requestHasAllowedPublicSiteOrigin(req, getSpeechTrustedOriginAllowlist())) return next();
+  return res.status(401).json({ ok: false, error: "speech_unauthorized" });
 }
 
 export function createSpeechRouter() {

@@ -11,6 +11,7 @@ import {
   resendWhatsappForAdminItem,
   updateAdminItemStatus,
 } from "../admin/admin.service.js";
+import { createOperationalManualEntry } from "../guest-requests/guest-requests.service.js";
 
 const router = Router();
 
@@ -168,6 +169,30 @@ router.use((req, res, next) => {
   }
   req.opsRole = role;
   return next();
+});
+
+router.post("/requests/manual", async (req, res) => {
+  try {
+    const type = String(req.body?.type || "").trim();
+    const allowed = BUCKETS_BY_ROLE[req.opsRole];
+    if (!allowed || !allowed.has(type)) {
+      return res.status(403).json({ ok: false, error: "forbidden_bucket" });
+    }
+    const out = await createOperationalManualEntry(req.body || {});
+    return res.status(200).json({ ok: true, ...out });
+  } catch (error) {
+    const msg = String(error?.message || "");
+    if (msg === "quiet_hours_reception_only") {
+      return res.status(409).json({ ok: false, error: msg });
+    }
+    if (error?.statusCode === 409) {
+      return res.status(409).json({ ok: false, error: msg || "conflict" });
+    }
+    if (error?.statusCode === 400) {
+      return res.status(400).json({ ok: false, error: msg || "bad_request" });
+    }
+    return adminErr(res, error, "ops_manual_create_failed");
+  }
 });
 
 router.get("/requests", async (req, res) => {

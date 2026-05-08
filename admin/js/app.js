@@ -1313,6 +1313,9 @@
             opFrontFilterActiveType = newKey;
             syncOpFrontFilterFormFromActiveType();
             updateOpFrontFilterScopeLabel();
+            if (window.VionaOpsManualForm && typeof window.VionaOpsManualForm.syncFrontType === "function") {
+              window.VionaOpsManualForm.syncFrontType(newKey);
+            }
           },
         },
           opsToolbarListHandlers(),
@@ -2929,6 +2932,54 @@
 
   var OPS_MUTATION_BC = "viona-ops-mutations";
   var opsMutationDebounce = null;
+  var opsManualFormsWired = false;
+
+  function wireOpsManualFormsOnce() {
+    if (opsManualFormsWired) return;
+    if (!window.VionaOpsManualForm || typeof window.VionaOpsManualForm.mount !== "function") return;
+    opsManualFormsWired = true;
+    var hk = document.getElementById("op-hk-manual-form-host");
+    if (hk) {
+      window.VionaOpsManualForm.mount(hk, {
+        mode: "fixed",
+        recordType: "request",
+        submitManual: function (body) {
+          return adapter.createOperationalManual(body);
+        },
+        onSuccess: function () {
+          void loadOpHk(opHkPage);
+        },
+      });
+    }
+    var tech = document.getElementById("op-tech-manual-form-host");
+    if (tech) {
+      window.VionaOpsManualForm.mount(tech, {
+        mode: "fixed",
+        recordType: "fault",
+        submitManual: function (body) {
+          return adapter.createOperationalManual(body);
+        },
+        onSuccess: function () {
+          void loadOpTech(opTechPage);
+        },
+      });
+    }
+    var fr = document.getElementById("op-front-manual-form-host");
+    if (fr) {
+      window.VionaOpsManualForm.mount(fr, {
+        mode: "front",
+        getRecordType: function () {
+          return opFrontFilterActiveType;
+        },
+        submitManual: function (body) {
+          return adapter.createOperationalManual(body);
+        },
+        onSuccess: function () {
+          void loadOpFront();
+        },
+      });
+    }
+  }
   function wireOpsBroadcastRefresh() {
     try {
       if (typeof BroadcastChannel === "undefined") return;
@@ -2977,6 +3028,7 @@
       wireLogsControls();
       wireBackHomeButtons();
       wireOpFilterBars();
+      wireOpsManualFormsOnce();
       wireOpFilterDayInputsOnce();
       wireOpFilterSearchInputsOnce();
       wireOpDayStripLayoutClick();
