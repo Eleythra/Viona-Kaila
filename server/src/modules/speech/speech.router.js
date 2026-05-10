@@ -127,6 +127,14 @@ export async function handleStt(req, res) {
   } catch (err) {
     const code = err?.code || "stt_error";
     console.warn("stt_error code=%s msg=%s", code, err?.message || err);
-    return res.status(200).json({ ok: false, error: code });
+    if (err?.rawSnippet) {
+      console.warn("stt_error raw_snippet=%s", String(err.rawSnippet).slice(0, 400));
+    }
+    const out = { ok: false, error: code };
+    const st = err?.status;
+    if (st != null && Number.isFinite(Number(st))) {
+      out.httpStatus = Number(st);
+    }
+    return res.status(200).json(out);
   }
 }

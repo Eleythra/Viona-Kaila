@@ -58,6 +58,7 @@
         en: "Restaurants & daytime dining",
         de: "Restaurants & Tagesgastronomie",
         pl: "Restauracje i wyżywienie w ciągu dnia",
+        ru: "Рестораны и питание в течение дня",
       },
     },
     {
@@ -68,12 +69,14 @@
         en: "Main Restaurant",
         de: "Hauptrestaurant",
         pl: "Restauracja główna",
+        ru: "Главный ресторан",
       },
       sub: {
         tr: "Açık büfe · Ana bina",
         en: "Open buffet · Main building",
         de: "Offenes Buffet · Hauptgebäude",
         pl: "Bufet szwedzki · budynek główny",
+        ru: "Шведский стол · главный корпус",
       },
       slots: [
         {

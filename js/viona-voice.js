@@ -60,9 +60,14 @@
     return "tr";
   }
 
+  /** `app.js` ile aynı sıra: seçili dil → İngilizce → Türkçe → anahtar (sesli metin hiç düşmesin). */
   function t(key) {
-    var L = I18N[getAppLang()] || I18N.tr;
-    return L[key] !== undefined ? L[key] : I18N.tr[key] || key;
+    var code = getAppLang();
+    var L = I18N[code] || I18N.tr;
+    if (L[key] !== undefined) return L[key];
+    var E = I18N.en;
+    if (E && E[key] !== undefined) return E[key];
+    return I18N.tr[key] !== undefined ? I18N.tr[key] : key;
   }
 
   function azureLocale() {
@@ -128,6 +133,11 @@
     }
     if (code === "speech_unauthorized") return "voiceErrorSpeechUnauthorized";
     if (code === "speech_not_configured") return "voiceErrorSpeechNotConfigured";
+    if (code === "stt_azure_unauthorized") return "voiceErrorAzureKey";
+    if (code === "stt_azure_forbidden") return "voiceErrorAzureQuota";
+    if (code === "stt_azure_endpoint") return "voiceErrorAzureRegion";
+    if (code === "stt_azure_throttled") return "voiceErrorRateLimit";
+    if (code === "stt_azure_upstream") return "voiceErrorSpeechAzure";
     if (code === "stt_failed" || code === "stt_error") return "voiceErrorSpeechAzure";
     if (code === "audio_too_short" || code === "stt_no_match" || code === "stt_empty_text") return "voiceErrorNoSpeech";
     if (code === "bad_json") return "voiceErrorNetwork";

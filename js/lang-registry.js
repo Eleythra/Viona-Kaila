@@ -89,3 +89,18 @@
     pickFromLangRow: pickFromLangRow,
   };
 })(typeof window !== "undefined" ? window : globalThis);
+
+(function () {
+  "use strict";
+  var doc = typeof document !== "undefined" ? document : null;
+  var storage = typeof localStorage !== "undefined" ? localStorage : null;
+  var VL = typeof window !== "undefined" && window.VIONA_LANG ? window.VIONA_LANG : null;
+  if (!doc || !storage || !VL || typeof VL.htmlLangFor !== "function" || typeof VL.normalizeToUiLang !== "function") return;
+  try {
+    var raw = storage.getItem("viona_lang");
+    if (!raw) return;
+    doc.documentElement.lang = VL.htmlLangFor(VL.normalizeToUiLang(raw));
+  } catch (_e) {
+    /* private mode */
+  }
+})();

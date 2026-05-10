@@ -744,6 +744,7 @@ app.get("/api/health", (req, res) => {
     elektraGuestVerifyActive: Boolean(env.elektraGuestVerifyConfigured),
     /** Misafir statik site kapı şifresi: VIONA_UI_GATE_PASSWORD dolu ve etkin mi (değer sızmaz). */
     guestUiGateRequired: Boolean(env.guestUiGateRequired),
+    guestUiGateStrict: Boolean(env.guestUiGateStrict),
     /** Günlük PDF: dış cron GET için `DAILY_OPERATION_REPORT_CRON_KEY` tanımlı mı (değer sızmaz). */
     dailyReportExternalCronKeyConfigured: Boolean(
       String(process.env.DAILY_OPERATION_REPORT_CRON_KEY || "").trim(),
@@ -774,6 +775,9 @@ app.use(
     },
     get guestUiGatePasswordList() {
       return env.guestUiGatePasswordList;
+    },
+    get guestUiGateStrict() {
+      return env.guestUiGateStrict;
     },
   }),
 );

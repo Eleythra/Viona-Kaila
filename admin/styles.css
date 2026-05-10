@@ -170,6 +170,7 @@
 }
 
 .admin-layout {
+  position: relative;
   display: grid;
   grid-template-columns: 260px 1fr;
   gap: 20px;
@@ -178,6 +179,42 @@
   max-width: 1680px;
   margin: 0 auto;
   box-sizing: border-box;
+}
+
+/* Klavye / erişilebilirlik: ana içeriğe atla (grid düzenini bozmaz) */
+.admin-skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: 100;
+}
+.admin-skip-link:focus {
+  left: max(18px, env(safe-area-inset-left, 0px));
+  top: max(18px, env(safe-area-inset-top, 0px));
+  width: auto;
+  height: auto;
+  padding: 10px 14px;
+  overflow: visible;
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.88rem;
+  text-decoration: none;
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 2px;
+}
+
+/* Dar ekran: navigasyon gövdesini daralt; çıkış footer’da kalır */
+.admin-nav-toggle {
+  display: none;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0 0 10px;
+  justify-content: center;
 }
 .admin-layout .glass-block {
   border-radius: var(--admin-radius-lg);
@@ -3571,6 +3608,9 @@
 }
 
 @media (max-width: 1020px) {
+  .admin-nav-toggle {
+    display: flex;
+  }
   .admin-layout {
     grid-template-columns: 1fr;
     gap: 16px;
@@ -3584,6 +3624,20 @@
   }
   .admin-body.admin-body--app .admin-sidebar {
     max-height: min(42vh, 320px);
+  }
+  .admin-body.admin-body--app .admin-layout--sidebar-collapsed .admin-sidebar {
+    max-height: none;
+  }
+  .admin-body.admin-body--app .admin-layout--sidebar-collapsed .admin-sidebar__body {
+    max-height: 0 !important;
+    min-height: 0;
+    margin: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    border: none;
   }
   .admin-body.admin-body--app .admin-main {
     min-height: 0;

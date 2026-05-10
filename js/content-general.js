@@ -63,6 +63,7 @@
         en: "General hotel information",
         de: "Allgemeine Hotelinformationen",
         pl: "Ogólne informacje o hotelu",
+        ru: "Общая информация об отеле",
       },
       html: {
         tr:
@@ -72,6 +73,8 @@
         de:
           "<p>Das Kaila Beach Hotel in Alanya, Antalya, liegt direkt am Meer und bietet modernen Komfort für Familien, Paare und Einzelreisende. All Inclusive vereint Verpflegung, Aktivitäten und Erholung über den Tag.</p><p>Am Pool gibt es drei Außenbecken und im Spa ein beheiztes Hallenbad; im Aquapark Rutschen und flache Bereiche für Kinder. Moderne Architektur, großzügige Bereiche, Aquapark, Spa sowie Restaurants und Bars; zudem Nähe zum Zentrum und Strandzugang.</p>",
         pl: "<p>Kaila Beach Hotel to nowoczesny kurort w Alanii (Antalya), bezpośrednio nad morzem. Łączy relaks i rozrywkę dla rodzin, par i podróżujących indywidualnie. Formuła All Inclusive łączy wyżywienie, atrakcje i wypoczynek przez cały dzień.</p><p>W strefie basenów są trzy baseny zewnętrzne oraz jeden podgrzewany basen kryty w spa; w aquaparku zjeżdżalnie i płytkie strefy dla dzieci. Wyróżnia się współczesna architektura, przestronne strefy wypoczynku, aquapark, spa oraz kilka restauracji i barów. Bliskość centrum miasta i bezpośredni dostęp do plaży zapewniają komfortowy pobyt.</p>",
+        ru:
+          "<p>Kaila Beach Hotel — современный курортный отель в Алании (Анталия) у моря. Подходит для семей, пар и индивидуальных путешественников; концепция «всё включено» объединяет питание, развлечения и отдых.</p><p>Три открытых бассейна и один крытый подогреваемый в спа; аквапарк с горками и зонами для детей. Современная архитектура, просторные зоны отдыха, спа и несколько ресторанов и баров; рядом центр города и выход к пляжу.</p>",
       },
     },
     {

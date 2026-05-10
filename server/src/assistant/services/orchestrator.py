@@ -1532,6 +1532,10 @@ class ChatOrchestrator:
                 effective_sub_intent = "greeting"
                 effective_entity = None
             language_switch_applied = reply_lang != reply_base
+            # Sesli kanal: şikâyet → form rehberi yok; diğer operasyonel niyetlerle aynı «yalnızca bilgi / yazılı sohbet» metni.
+            if payload.channel == "voice" and rule_intent.intent == "complaint":
+                decision_path.append("voice_info_layer_operational_complaint_rule")
+                return self._voice_operational_redirect(reply_lang, ui_language)
             # Operasyonel niyetler — sohbette yalnızca: istek, arıza, misafir bildirimi (şikayet → modül).
             if rule_intent.intent in ("request", "fault_report", "guest_notification"):
                 if payload.channel == "voice":
@@ -1812,6 +1816,11 @@ class ChatOrchestrator:
                 " > ".join(decision_path),
             )
             return response
+
+        # Sesli kanal: LLM şikâyet → compose_complaint / form metni yok.
+        if payload.channel == "voice" and llm_intent.intent == "complaint":
+            decision_path.append("voice_info_layer_operational_llm_complaint")
+            return self._voice_operational_redirect(reply_base, ui_language)
 
         response = self._apply_policy(
             intent=llm_intent.intent,

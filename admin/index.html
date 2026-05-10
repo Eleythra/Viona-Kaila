@@ -17,7 +17,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/styles.css?v=30" />
-    <link rel="stylesheet" href="styles.css?v=60" />
+    <link rel="stylesheet" href="styles.css?v=61" />
   </head>
   <body class="admin-body">
     <section id="admin-login" class="admin-login">
@@ -38,8 +38,18 @@
     </section>
 
     <div id="admin-layout" class="admin-layout hidden">
-      <aside class="admin-sidebar glass-block">
-        <div class="admin-sidebar__body">
+      <a href="#admin-main" class="admin-skip-link">İçeriğe atla</a>
+      <aside class="admin-sidebar glass-block" aria-label="Yan menü">
+        <button
+          type="button"
+          id="admin-nav-toggle"
+          class="admin-nav-toggle btn-small"
+          aria-expanded="true"
+          aria-controls="admin-sidebar-body"
+        >
+          Menüyü gizle
+        </button>
+        <div class="admin-sidebar__body" id="admin-sidebar-body">
           <h1>Viona Admin</h1>
           <nav class="admin-nav" aria-label="Ana menü">
             <button type="button" data-tab="home" aria-controls="tab-dashboard" title="Giriş özeti ve raporlar">Ana sayfa</button>
@@ -65,7 +75,7 @@
         </footer>
       </aside>
 
-      <main class="admin-main">
+      <main id="admin-main" class="admin-main" tabindex="-1">
         <section id="tab-dashboard" class="admin-tab admin-tab--home" aria-label="Ana sayfa">
           <section class="home-panel home-panel--live" aria-labelledby="home-live-heading">
             <header class="home-panel__head">
@@ -372,8 +382,8 @@
                   <option value="">Tüm kayıtlar</option>
                   <option value="pending">Bekliyor</option>
                   <option value="in_progress">Yapılıyor</option>
-                  <option value="done">Tamamlandı</option>
-                  <option value="rejected">Olumsuz</option>
+                  <option value="done">Yapıldı</option>
+                  <option value="rejected">Yapılmadı</option>
                   <option value="cancelled">İptal</option>
                 </select>
               </label>
@@ -773,6 +783,6 @@
     <script src="js/ops-day-pdf.js?v=8"></script>
     <script src="js/rooms-explorer.js?v=1"></script>
     <script src="js/room-history-pdf.js?v=1"></script>
-    <script src="js/app.js?v=71"></script>
+    <script src="js/app.js?v=72"></script>
   </body>
 </html>

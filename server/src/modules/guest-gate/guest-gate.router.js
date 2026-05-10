@@ -32,13 +32,20 @@ function verifyGuestGatePassword(input, acceptedList) {
 }
 
 /**
- * @param {{ guestUiGateRequired: boolean, guestUiGatePasswordList: string[] }} envSlice
+ * @param {{
+ *   guestUiGateRequired: boolean,
+ *   guestUiGatePasswordList: string[],
+ *   guestUiGateStrict: boolean,
+ * }} envSlice
  */
 export function createGuestGateRouter(envSlice) {
   const router = express.Router();
 
   router.get("/status", (_req, res) => {
-    res.json({ required: Boolean(envSlice.guestUiGateRequired) });
+    res.json({
+      required: Boolean(envSlice.guestUiGateRequired),
+      strict: Boolean(envSlice.guestUiGateStrict),
+    });
   });
 
   router.post("/verify", (req, res) => {

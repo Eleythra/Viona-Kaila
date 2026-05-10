@@ -509,6 +509,11 @@ body {
   display: none;
 }
 
+#btn-gate-retry-status:not(.hidden) {
+  margin-top: 6px;
+  margin-bottom: 12px;
+}
+
 .gate-cta {
   margin-top: 4px;
 }
@@ -2505,6 +2510,13 @@ body {
   line-height: 1.38;
   letter-spacing: 0.01em;
   color: rgba(242, 244, 248, 0.55);
+}
+
+.viona-chat__voice-info-only {
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: rgba(200, 230, 245, 0.72);
+  max-width: 340px !important;
 }
 
 .viona-chat__voice-avatar-hint {

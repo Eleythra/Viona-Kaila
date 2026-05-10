@@ -92,6 +92,8 @@
   let gatePasswordRequired = false;
   /** Status isteği bitene kadar «Devam» tıklanmasın (şifreli kapı atlanmasın). */
   let gateStatusResolved = false;
+  /** Sunucu strict / site bayrağı: status düşünce ana sayfaya geçiş bloklu. */
+  let gateStatusFetchFailed = false;
 
   const el = (id) => document.getElementById(id);
 
@@ -234,13 +236,14 @@
   function initCarousel() {
     const track = el("carousel-track");
     track.innerHTML = "";
+    const slideCount = CAROUSEL_IMAGES.length;
     CAROUSEL_IMAGES.forEach((src, i) => {
       const slide = document.createElement("div");
       slide.className = "carousel-slide" + (i === 0 ? " carousel-slide--active" : "");
       slide.setAttribute("aria-hidden", i === 0 ? "false" : "true");
       const img = document.createElement("img");
       img.src = src;
-      img.alt = "";
+      img.alt = slideCount ? `${t("homeCarouselAria")} (${i + 1}/${slideCount})` : "";
       img.decoding = "async";
       img.loading = i === 0 ? "eager" : "lazy";
       if (i === 0 && "fetchPriority" in img) img.fetchPriority = "high";
@@ -682,6 +685,7 @@
       window.vionaChatAfterSiteLangChange();
     }
     applyI18n(document);
+    initCarousel();
     if (typeof window.vionaChatRefreshI18n === "function") window.vionaChatRefreshI18n();
     if (typeof window.vionaVoiceRefreshI18n === "function") window.vionaVoiceRefreshI18n();
     renderModuleGrid();
@@ -730,15 +734,46 @@
       err.textContent = "";
       err.classList.add("hidden");
     }
+    setGateRetryVisible(false);
   }
 
   function vionaApiBase() {
     return typeof window.vionaGetApiBase === "function" ? window.vionaGetApiBase() : "/api";
   }
 
+  const GATE_SS_STRICT = "viona_gate_ss_strict";
+
+  function readGateStrictSession() {
+    try {
+      return sessionStorage.getItem(GATE_SS_STRICT) === "1";
+    } catch (_e) {
+      return false;
+    }
+  }
+
+  function writeGateStrictSession(strictFlag) {
+    try {
+      sessionStorage.setItem(GATE_SS_STRICT, strictFlag ? "1" : "0");
+    } catch (_e) {
+      /* private mode */
+    }
+  }
+
+  function shouldBlockGateWhenStatusFails() {
+    return window.__VIONA_GATE_STRICT__ === true || readGateStrictSession();
+  }
+
+  function setGateRetryVisible(on) {
+    const retry = el("btn-gate-retry-status");
+    if (!retry) return;
+    retry.classList.toggle("hidden", !on);
+  }
+
   async function refreshGuestGateUi() {
     const btn = el("btn-gate-continue");
     gateStatusResolved = false;
+    gateStatusFetchFailed = false;
+    setGateRetryVisible(false);
     if (btn) {
       btn.disabled = true;
       btn.setAttribute("aria-busy", "true");
@@ -755,22 +790,39 @@
         if (!res.ok) throw new Error("gate_status_http");
         const data = await res.json();
         gatePasswordRequired = Boolean(data && data.required);
+        writeGateStrictSession(Boolean(data && data.strict));
       } catch (_e) {
         gatePasswordRequired = false;
+        if (shouldBlockGateWhenStatusFails()) {
+          gateStatusFetchFailed = true;
+        }
         if (typeof console !== "undefined" && console.warn) {
-          console.warn("[viona] guest-gate status fetch failed; gate password hidden");
+          console.warn("[viona] guest-gate status fetch failed");
         }
       }
-      if (gatePasswordRequired) {
-        wrap.classList.remove("hidden");
-        sub.setAttribute("data-i18n", "gateScreenSubtitleWithPassword");
+
+      if (!gateStatusFetchFailed) {
+        if (gatePasswordRequired) {
+          wrap.classList.remove("hidden");
+          sub.setAttribute("data-i18n", "gateScreenSubtitleWithPassword");
+        } else {
+          wrap.classList.add("hidden");
+          if (pwd) pwd.value = "";
+          sub.setAttribute("data-i18n", "gateScreenSubtitle");
+        }
       } else {
         wrap.classList.add("hidden");
         if (pwd) pwd.value = "";
         sub.setAttribute("data-i18n", "gateScreenSubtitle");
       }
+
       const gateRoot = el("view-gate");
       if (gateRoot) applyI18n(gateRoot);
+
+      if (gateStatusFetchFailed) {
+        showGateError("gateErrorGateStrict");
+        setGateRetryVisible(true);
+      }
     } finally {
       gateStatusResolved = true;
       const b = el("btn-gate-continue");
@@ -816,6 +868,11 @@
 
         if (!gateStatusResolved) {
           showGateError("gateErrorGateLoading");
+          return;
+        }
+
+        if (gateStatusFetchFailed) {
+          showGateError("gateErrorGateStrict");
           return;
         }
 
@@ -870,8 +927,26 @@
 
     if (back) {
       back.addEventListener("click", () => {
+        gateStatusFetchFailed = false;
         resetGateForm();
         showView("lang");
+      });
+    }
+
+    const retryStatus = el("btn-gate-retry-status");
+    if (retryStatus) {
+      retryStatus.addEventListener("click", () => {
+        const err = el("gate-error");
+        if (err) {
+          err.textContent = "";
+          err.classList.add("hidden");
+        }
+        void refreshGuestGateUi().then(() => {
+          const pwdEl = el("gate-password");
+          const chkGate = el("gate-check-privacy");
+          if (!gateStatusFetchFailed && gatePasswordRequired && pwdEl) pwdEl.focus();
+          else if (!gateStatusFetchFailed && chkGate) chkGate.focus();
+        });
       });
     }
   }
@@ -900,8 +975,10 @@
       void refreshGuestGateUi().then(() => {
         const pwdEl = el("gate-password");
         const chkGate = el("gate-check-privacy");
-        if (gatePasswordRequired && pwdEl) pwdEl.focus();
-        else if (chkGate) chkGate.focus();
+        const retryBtn = el("btn-gate-retry-status");
+        if (gateStatusFetchFailed && retryBtn) retryBtn.focus();
+        else if (!gateStatusFetchFailed && gatePasswordRequired && pwdEl) pwdEl.focus();
+        else if (!gateStatusFetchFailed && chkGate) chkGate.focus();
       });
     });
   }
@@ -925,7 +1002,6 @@
   }
 
   function init() {
-    initCarousel();
     wireLanguageScreen();
     wireGateScreen();
     wireHome();
@@ -952,6 +1028,7 @@
       selectedLangCode = storedLang;
     }
     applyI18n(document);
+    initCarousel();
     showView("lang");
     if (validLang(storedLang)) {
       document.querySelectorAll(".lang-chip").forEach((c) => {

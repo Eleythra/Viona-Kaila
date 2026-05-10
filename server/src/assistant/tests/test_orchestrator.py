@@ -8,10 +8,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 from assistant.core.chatbot_languages import CHATBOT_UI_LANG_SET  # noqa: E402
 from assistant.core.config import Settings  # noqa: E402
 from assistant.schemas.chat import ChatRequest  # noqa: E402
+from assistant.schemas.intent import IntentResult  # noqa: E402
 from assistant.services.device_extractor import DeviceExtractor  # noqa: E402
 from assistant.services.language_service import LanguageService  # noqa: E402
 from assistant.services.localization_service import LocalizationService  # noqa: E402
 from assistant.services.orchestrator import ChatOrchestrator  # noqa: E402
+from assistant.services.voice_channel_layer import VOICE_OPERATIONAL_USE_TEXT  # noqa: E402
 from assistant.services.policy_service import PolicyService  # noqa: E402
 from assistant.services.response_composer import ResponseComposer  # noqa: E402
 from assistant.services.response_service import ResponseService  # noqa: E402
@@ -139,6 +141,62 @@ def build_orchestrator():
         response_composer=ResponseComposer(LocalizationService()),
     )
     return orch, rag, intent
+
+
+def test_voice_complaint_rule_returns_operational_redirect_not_form_guidance():
+    """Seslide şikâyet kuralı eşleşince form rehberi değil, yazılı sohbet yönlendirmesi."""
+    orch, _, _ = build_orchestrator()
+    res = orch.handle(
+        ChatRequest(message="şikayet", ui_language="tr", locale="tr", channel="voice")
+    )
+    assert res.meta.intent == "hotel_info"
+    assert res.message.strip() == VOICE_OPERATIONAL_USE_TEXT["tr"].strip()
+    assert res.meta.action is None
+
+
+def test_voice_complaint_llm_returns_operational_redirect_not_compose_complaint():
+    """Seslide LLM şikâyet sınıflamasında compose_complaint metni okunmaz."""
+
+    class FixedComplaintIntent:
+        def classify(self, _message):
+            return IntentResult(
+                intent="complaint",
+                sub_intent="service_complaint",
+                entity=None,
+                department="reception",
+                needs_rag=False,
+                response_mode="fixed",
+                confidence=0.99,
+                source="llm",
+            )
+
+    settings = Settings()
+    rag = DummyRagService()
+    orch = ChatOrchestrator(
+        settings=settings,
+        language_service=LanguageService(),
+        localization_service=LocalizationService(),
+        rule_engine=RuleEngine(Path(__file__).resolve().parents[1] / "rules" / "routing_rules.yaml"),
+        intent_service=FixedComplaintIntent(),
+        policy_service=PolicyService(),
+        rag_service=rag,
+        response_service=ResponseService(),
+        throttle_service=ThrottleService(window_seconds=10, max_messages=9999),
+        device_extractor=DeviceExtractor(),
+        response_composer=ResponseComposer(LocalizationService()),
+    )
+    with patch.object(RuleEngine, "match", return_value=None):
+        res = orch.handle(
+            ChatRequest(
+                message="voice_llm_complaint_probe_long_message_about_room",
+                ui_language="tr",
+                locale="tr",
+                channel="voice",
+            )
+        )
+    assert res.meta.intent == "hotel_info"
+    assert res.message.strip() == VOICE_OPERATIONAL_USE_TEXT["tr"].strip()
+    assert res.meta.action is None
 
 
 def test_fault_cases():

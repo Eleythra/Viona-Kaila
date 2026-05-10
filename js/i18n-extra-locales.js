@@ -36,6 +36,9 @@
       gateErrorPasswordEmpty: "Введите пароль доступа.",
       gateErrorGateVerify: "Не удалось проверить пароль. Проверьте подключение и попробуйте снова.",
       gateErrorGateLoading: "Проверка доступа — подождите несколько секунд и нажмите снова.",
+      gateErrorGateStrict:
+        "Нельзя подтвердить доступ (сервер недоступен). Проверьте интернет или нажмите «Повторить».",
+      gateRetryStatus: "Повторить",
       gateErrorPrivacy: "Отметьте галочку подтверждения, чтобы продолжить.",
       homeTitle: "Kaila Beach Hotel",
       introLead:
@@ -122,6 +125,9 @@
       gateErrorPasswordEmpty: "Indtast adgangskoden.",
       gateErrorGateVerify: "Adgangskoden kunne ikke bekræftes. Tjek forbindelsen og prøv igen.",
       gateErrorGateLoading: "Adgang indlæses — vent et øjeblik og prøv igen.",
+      gateErrorGateStrict:
+        "Adgang kan ikke bekræftes (serveren er ikke tilgængelig). Tjek forbindelsen eller tryk «Prøv igen».",
+      gateRetryStatus: "Prøv igen",
       gateErrorPrivacy: "Sæt kryds i feltet for at fortsætte.",
       homeTitle: "Kaila Beach Hotel",
       introLead: "Strandfront i Obagöl, Alanya — All Inclusive til en behagelig ferie.",
@@ -207,6 +213,9 @@
       gateErrorPasswordEmpty: "Zadejte přístupové heslo.",
       gateErrorGateVerify: "Heslo se nepodařilo ověřit. Zkontrolujte připojení a zkuste to znovu.",
       gateErrorGateLoading: "Načítání přístupu — chvíli počkejte a zkuste to znovu.",
+      gateErrorGateStrict:
+        "Přístup nelze ověřit (server nedostupný). Zkontrolujte připojení nebo klepněte na «Zkusit znovu».",
+      gateRetryStatus: "Zkusit znovu",
       gateErrorPrivacy: "Zaškrtněte prosím pole pro pokračování.",
       homeTitle: "Kaila Beach Hotel",
       introLead: "Přímo u moře v Obagöl, Alanya — All Inclusive pro pohodlnou dovolenou.",
@@ -292,6 +301,9 @@
       gateErrorPasswordEmpty: "Introduceți parola de acces.",
       gateErrorGateVerify: "Parola nu a putut fi verificată. Verificați conexiunea și încercați din nou.",
       gateErrorGateLoading: "Se verifică accesul — așteptați puțin și încercați din nou.",
+      gateErrorGateStrict:
+        "Accesul nu poate fi verificat (server indisponibil). Verificați conexiunea sau apăsați «Reîncearcă».",
+      gateRetryStatus: "Reîncearcă",
       gateErrorPrivacy: "Bifați caseta pentru a continua.",
       homeTitle: "Kaila Beach Hotel",
       introLead: "La malul mării în Obagöl, Alanya — All Inclusive pentru o vacanță confortabilă.",
@@ -377,6 +389,9 @@
       gateErrorPasswordEmpty: "Voer het toegangswachtwoord in.",
       gateErrorGateVerify: "Het wachtwoord kon niet worden gecontroleerd. Controleer uw verbinding en probeer opnieuw.",
       gateErrorGateLoading: "Toegang wordt geladen — even geduld en probeer opnieuw.",
+      gateErrorGateStrict:
+        "Toegang kan niet worden gecontroleerd (server niet bereikbaar). Controleer uw verbinding of tik op «Opnieuw».",
+      gateRetryStatus: "Opnieuw",
       gateErrorPrivacy: "Vink het vakje aan om door te gaan.",
       homeTitle: "Kaila Beach Hotel",
       introLead: "Strandzijde in Obagöl, Alanya — all-inclusive voor een comfortabel verblijf.",
@@ -462,6 +477,9 @@
       gateErrorPasswordEmpty: "Zadajte prístupové heslo.",
       gateErrorGateVerify: "Heslo sa nepodarilo overiť. Skontrolujte pripojenie a skúste znova.",
       gateErrorGateLoading: "Načítava sa prístup — počkajte chvíľu a skúste znova.",
+      gateErrorGateStrict:
+        "Prístup sa nepodarilo overiť (server nedostupný). Skontrolujte pripojenie alebo ťuknite na «Skúsiť znova».",
+      gateRetryStatus: "Skúsiť znova",
       gateErrorPrivacy: "Zaškrtnite pole na pokračovanie.",
       homeTitle: "Kaila Beach Hotel",
       introLead: "Pri mori v Obagöl, Alanya — all inclusive pre pohodlnú dovolenku.",
@@ -632,9 +650,21 @@
     if (PATCH[c]) Object.assign(PATCH[c], CHAT_UI_PATCH[c]);
   });
 
-  /** Sesli asistan: durum, ARIA, hata metinleri (STT/TTS locale ayrı; `viona-voice.js` + Azure). */
+  /**
+   * Sesli asistan: bar + ipuçları + durum + ARIA + hata (STT/TTS locale ayrı; `viona-voice.js` + Azure).
+   * Zorunlu: voiceSectionTitle, voiceSectionTapToOpen, voiceInfoOnlyHint, voiceSectionTapAvatar,
+   * voiceAvatarAria, voiceAsideAria, voicePanelAria — en tabanı üzerine aynı anahtarlar.
+   */
   var VOICE_UI_PATCH = {
     ru: {
+      voiceSectionTitle: "Голосовой помощник",
+      voiceSectionTapToOpen: "Нажмите, чтобы открыть голосовой режим",
+      voiceInfoOnlyHint:
+        "Голос только для справок. Для заявок, жалоб и форм откройте текстовый чат.",
+      voiceSectionTapAvatar: "Нажмите на аватар, чтобы говорить",
+      voiceAvatarAria: "Viona — нажмите на аватар, чтобы говорить",
+      voiceAsideAria: "Голосовой помощник (дополнительно)",
+      voicePanelAria: "Аватар голосового помощника",
       voiceStatusIdle: "Коснитесь аватара Viona, чтобы говорить",
       voiceStatusListening: "Слушаю…",
       voiceStatusThinking: "Думаю…",
@@ -653,6 +683,14 @@
         "Ответ не получен. Повторите попытку или перейдите в текстовый чат.",
     },
     da: {
+      voiceSectionTitle: "Stemmeassistent",
+      voiceSectionTapToOpen: "Tryk for at åbne stemmetilstand",
+      voiceInfoOnlyHint:
+        "Stemme kun til oplysninger. Brug tekstchat til forespørgsler, klager eller formularer.",
+      voiceSectionTapAvatar: "Tryk på avataren for at tale",
+      voiceAvatarAria: "Viona — tryk på avataren for at tale",
+      voiceAsideAria: "Stemmeassistent (sekundær)",
+      voicePanelAria: "Stemmeassistent-avatar",
       voiceStatusIdle: "Tryk på Viona-avatar for at tale",
       voiceStatusListening: "Lytter…",
       voiceStatusThinking: "Tænker…",
@@ -669,6 +707,14 @@
       voiceErrorAssistant: "Intet svar. Prøv igen eller skift til tekstchat.",
     },
     cs: {
+      voiceSectionTitle: "Hlasová asistentka",
+      voiceSectionTapToOpen: "Klepněte pro otevření hlasového režimu",
+      voiceInfoOnlyHint:
+        "Hlas jen pro informace. Pro žádosti, stížnosti nebo formuláře použijte textový chat.",
+      voiceSectionTapAvatar: "Klepněte na avatar a mluvte",
+      voiceAvatarAria: "Viona — klepněte na avatar a mluvte",
+      voiceAsideAria: "Hlasová asistentka (vedlejší)",
+      voicePanelAria: "Avatar hlasové asistentky",
       voiceStatusIdle: "Pro mluvení klepněte na avatar Viona",
       voiceStatusListening: "Naslouchám…",
       voiceStatusThinking: "Přemýšlím…",
@@ -685,6 +731,14 @@
       voiceErrorAssistant: "Odpověď nepřišla. Zkuste to znovu nebo přejděte na textový chat.",
     },
     ro: {
+      voiceSectionTitle: "Asistent vocal",
+      voiceSectionTapToOpen: "Atingeți pentru a deschide modul vocal",
+      voiceInfoOnlyHint:
+        "Vocea este doar pentru informații. Pentru cereri, reclamații sau formulare folosiți chatul text.",
+      voiceSectionTapAvatar: "Atingeți avatarul pentru a vorbi",
+      voiceAvatarAria: "Viona — atingeți avatarul pentru a vorbi",
+      voiceAsideAria: "Asistent vocal (secundar)",
+      voicePanelAria: "Avatar asistent vocal",
       voiceStatusIdle: "Atingeți avatarul Viona pentru a vorbi",
       voiceStatusListening: "Ascult…",
       voiceStatusThinking: "Mă gândesc…",
@@ -702,6 +756,14 @@
       voiceErrorAssistant: "Fără răspuns. Reîncercați sau comutați la chat text.",
     },
     nl: {
+      voiceSectionTitle: "Spraakassistent",
+      voiceSectionTapToOpen: "Tik om spraakmodus te openen",
+      voiceInfoOnlyHint:
+        "Spraak alleen voor informatie. Voor verzoeken, klachten of formulieren: tekstchat.",
+      voiceSectionTapAvatar: "Tik op de avatar om te spreken",
+      voiceAvatarAria: "Viona — tik op de avatar om te spreken",
+      voiceAsideAria: "Spraakassistent (secundair)",
+      voicePanelAria: "Spraakassistent-avatar",
       voiceStatusIdle: "Tik op de Viona-avatar om te spreken",
       voiceStatusListening: "Ik luister…",
       voiceStatusThinking: "Even nadenken…",
@@ -718,6 +780,14 @@
       voiceErrorAssistant: "Geen antwoord. Probeer opnieuw of schakel over naar tekstchat.",
     },
     sk: {
+      voiceSectionTitle: "Hlasová asistentka",
+      voiceSectionTapToOpen: "Ťuknite pre otvorenie hlasového režimu",
+      voiceInfoOnlyHint:
+        "Hlas len na informácie. Pre požiadavky, sťažnosti alebo formuláre použite textový chat.",
+      voiceSectionTapAvatar: "Ťuknite na avatar a hovorte",
+      voiceAvatarAria: "Viona — ťuknite na avatar a hovorte",
+      voiceAsideAria: "Hlasová asistentka (vedľajšia)",
+      voicePanelAria: "Avatar hlasovej asistentky",
       voiceStatusIdle: "Ťuknite na avatar Viona a budete hovoriť",
       voiceStatusListening: "Počúvam…",
       voiceStatusThinking: "Premýšľam…",
@@ -744,6 +814,11 @@
         "Голос для этого адреса не подтверждён. Используйте основной домен или текстовый чат.",
       voiceErrorSpeechNotConfigured: "Голосовой сервис не настроен. Попробуйте текстовый чат позже.",
       voiceErrorSpeechAzure: "Распознавание речи временно недоступно. Используйте текст или повторите позже.",
+      voiceErrorAzureKey:
+        "Ключ Azure Speech недействителен или не от этого ресурса. Проверьте AZURE_SPEECH_KEY в Render.",
+      voiceErrorAzureQuota: "Запрос отклонён Azure (квота или политика). Проверьте ресурс в портале Azure.",
+      voiceErrorAzureRegion:
+        "Неверный регион: AZURE_SPEECH_REGION должен совпадать с регионом ресурса Speech в Azure.",
       voiceErrorRateLimit: "Слишком частые попытки. Подождите или используйте текстовый чат.",
     },
     da: {
@@ -751,6 +826,10 @@
         "Stemme kunne ikke verificeres for dette domæne. Brug produktionssitet eller tekstchat.",
       voiceErrorSpeechNotConfigured: "Stemmeservice er ikke konfigureret. Prøv tekstchat eller senere.",
       voiceErrorSpeechAzure: "Stemmegenkendelse er midlertidigt utilgængelig. Brug tekstchat eller prøv igen.",
+      voiceErrorAzureKey:
+        "Azure Speech-nøgle ugyldig eller forkert ressource. Tjek AZURE_SPEECH_KEY i Render.",
+      voiceErrorAzureQuota: "Azure afviste anmodning (kvote/politik). Tjek ressource i Azure Portal.",
+      voiceErrorAzureRegion: "Region mismatch: AZURE_SPEECH_REGION skal matche Speech-ressourcens region.",
       voiceErrorRateLimit: "For mange forsøg. Vent lidt eller brug tekstchat.",
     },
     cs: {
@@ -758,6 +837,10 @@
         "Hlas pro tuto doménu nelze ověřit. Použijte produkční web nebo textový chat.",
       voiceErrorSpeechNotConfigured: "Hlasová služba není nakonfigurována. Zkuste textový chat.",
       voiceErrorSpeechAzure: "Rozpoznávání řeči je dočasně nedostupné. Použijte text nebo zkuste později.",
+      voiceErrorAzureKey:
+        "Klíč Azure Speech je neplatný nebo nepatří k této prostředku. Zkontrolujte AZURE_SPEECH_KEY v Render.",
+      voiceErrorAzureQuota: "Azure žádost zamítnuta (kvóta nebo zásady). Zkontrolujte prostředek v Azure Portal.",
+      voiceErrorAzureRegion: "Neshoda regionu: AZURE_SPEECH_REGION musí odpovídat regionu Speech prostředku.",
       voiceErrorRateLimit: "Příliš mnoho pokusů. Počkejte nebo použijte textový chat.",
     },
     ro: {
@@ -765,6 +848,10 @@
         "Vocea nu poate fi verificată pentru acest domeniu. Folosiți site-ul de producție sau chat text.",
       voiceErrorSpeechNotConfigured: "Serviciul vocal nu este configurat. Încercați chat text sau mai târziu.",
       voiceErrorSpeechAzure: "Recunoașterea vocală este temporar indisponibilă. Folosiți chat text sau reîncercați.",
+      voiceErrorAzureKey:
+        "Cheia Azure Speech este invalidă sau nu este pentru această resursă. Verificați AZURE_SPEECH_KEY în Render.",
+      voiceErrorAzureQuota: "Cerere respinsă de Azure (cotă sau politică). Verificați resursa în Azure Portal.",
+      voiceErrorAzureRegion: "Regiune incorectă: AZURE_SPEECH_REGION trebuie să coincidă cu regiunea resursei Speech.",
       voiceErrorRateLimit: "Prea multe încercări. Așteptați sau folosiți chat text.",
     },
     nl: {
@@ -772,6 +859,10 @@
         "Stem kan voor dit adres niet worden geverifieerd. Gebruik de productiesite of tekstchat.",
       voiceErrorSpeechNotConfigured: "Stemdienst is niet geconfigureerd. Probeer tekstchat of later opnieuw.",
       voiceErrorSpeechAzure: "Spraakherkenning is tijdelijk niet beschikbaar. Gebruik tekstchat of probeer later.",
+      voiceErrorAzureKey:
+        "Azure Speech-sleutel ongeldig of niet voor deze resource. Controleer AZURE_SPEECH_KEY in Render.",
+      voiceErrorAzureQuota: "Azure weigerde het verzoek (quota of beleid). Controleer de resource in Azure Portal.",
+      voiceErrorAzureRegion: "Regio komt niet overeen: AZURE_SPEECH_REGION moet die van de Speech-resource zijn.",
       voiceErrorRateLimit: "Te veel pogingen. Wacht even of gebruik tekstchat.",
     },
     sk: {
@@ -779,6 +870,10 @@
         "Hlas sa pre túto doménu nepodarilo overiť. Použite produkčnú stránku alebo textový chat.",
       voiceErrorSpeechNotConfigured: "Hlasová služba nie je nakonfigurovaná. Skúste textový chat.",
       voiceErrorSpeechAzure: "Rozpoznávanie reči je dočasne nedostupné. Použite text alebo skúste neskôr.",
+      voiceErrorAzureKey:
+        "Kľúč Azure Speech je neplatný alebo nie je pre tento zdroj. Skontrolujte AZURE_SPEECH_KEY v Render.",
+      voiceErrorAzureQuota: "Azure odmietol požiadavku (kvóta alebo pravidlá). Skontrolujte zdroj v Azure Portáli.",
+      voiceErrorAzureRegion: "Nezhoda regiónu: AZURE_SPEECH_REGION musí zodpovedať regiónu Speech zdroja.",
       voiceErrorRateLimit: "Príliš veľa pokusov. Počkajte alebo použite textový chat.",
     },
   };

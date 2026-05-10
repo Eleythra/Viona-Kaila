@@ -4,6 +4,9 @@
  *
  * Canlı Vercel: aynı origin /api kullanılır (vercel.json → Render); tarayıcı CORS gerektirmez.
  * Doğrudan Render alan adı yalnızca yerel / bilinmeyen host veya override ile.
+ *
+ * Özel kök domain (ör. başka CDN): bu dosyada `vionaShouldUseRelativeApiBase` true dönmüyorsa
+ * `window.__VIONA_API_BASE__` veya `js/viona-backend-url.js` içindeki Render URL’sinin CORS’ta izinli olduğundan emin olun.
  */
 (function () {
   "use strict";

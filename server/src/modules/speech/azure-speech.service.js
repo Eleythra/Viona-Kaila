@@ -138,6 +138,24 @@ function pickTranscriptFromDetailedPayload(data) {
   return String(data.DisplayText || "").trim();
 }
 
+/** Azure REST HTTP → istemciye güvenli `err.code` (asıl HTTP err.status’ta kalır). */
+function sttErrorCodeFromHttpStatus(status) {
+  const n = Number(status);
+  if (!Number.isFinite(n)) return "stt_failed";
+  if (n === 401) return "stt_azure_unauthorized";
+  if (n === 403) return "stt_azure_forbidden";
+  if (n === 404) return "stt_azure_endpoint";
+  if (n === 429) return "stt_azure_throttled";
+  if (n >= 500) return "stt_azure_upstream";
+  return "stt_failed";
+}
+
+function truncateForLog(s, max = 280) {
+  const t = String(s || "").replace(/\s+/g, " ").trim();
+  if (t.length <= max) return t;
+  return `${t.slice(0, max)}…`;
+}
+
 /**
  * Kısa ses tanıma (tek parça WAV, 16 kHz mono PCM önerilir).
  * @param {Buffer} wavBuffer
@@ -171,32 +189,58 @@ export async function transcribeWav({ wavBuffer, voiceSpec, key, region, fetchTi
       data = JSON.parse(raw);
     } catch (_e) {
       const err = new Error("stt_bad_response");
-      err.code = "stt_failed";
+      err.code = res.ok ? "stt_failed" : sttErrorCodeFromHttpStatus(res.status);
+      err.status = res.status;
+      err.rawSnippet = truncateForLog(raw);
       throw err;
     }
-    return { res, data };
+    return { res, data, raw };
   }
 
-  let { res, data } = await postStt(urlInteractive);
+  let lastRaw = "";
+  const first = await postStt(urlInteractive);
+  let res = first.res;
+  let data = first.data;
+  lastRaw = first.raw;
 
   if (!res.ok) {
-    console.warn("stt_interactive_http status=%s retrying_conversation", res.status);
-    ({ res, data } = await postStt(urlConversation));
+    console.warn(
+      "stt_interactive_http status=%s region=%s locale=%s detail=%s retrying_conversation",
+      res.status,
+      hostRegion,
+      voiceSpec.locale,
+      truncateForLog(data?.error?.message || data?.message || lastRaw || ""),
+    );
+    const second = await postStt(urlConversation);
+    res = second.res;
+    data = second.data;
+    lastRaw = second.raw;
   } else {
     const interactiveStatus = String(data?.RecognitionStatus || "");
     if (interactiveStatus !== "Success") {
       console.warn("stt_interactive_status=%s retrying_conversation", interactiveStatus || "(empty)");
       const conv = await postStt(urlConversation);
-      if (conv.res.ok) {
-        res = conv.res;
-        data = conv.data;
-      }
+      res = conv.res;
+      data = conv.data;
+      lastRaw = conv.raw;
     }
   }
 
   if (!res.ok) {
+    const snippet = truncateForLog(
+      (data && (data.error?.message || data.message)) || lastRaw || "",
+    );
+    const code = sttErrorCodeFromHttpStatus(res.status);
+    console.warn(
+      "azure_stt_failed status=%s code=%s region=%s locale=%s snippet=%s",
+      res.status,
+      code,
+      hostRegion,
+      voiceSpec.locale,
+      snippet,
+    );
     const err = new Error(`stt_http_${res.status}`);
-    err.code = "stt_failed";
+    err.code = code;
     err.status = res.status;
     throw err;
   }

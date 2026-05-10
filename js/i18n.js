@@ -31,6 +31,9 @@ const I18N = {
     gateErrorPasswordEmpty: "Lütfen erişim şifresini girin.",
     gateErrorGateVerify: "Şifre doğrulanamadı. Bağlantınızı kontrol edip tekrar deneyin.",
     gateErrorGateLoading: "Erişim ayarları yükleniyor; lütfen birkaç saniye bekleyip tekrar deneyin.",
+    gateErrorGateStrict:
+      "Giriş doğrulanamıyor (sunucuya ulaşılamıyor). Bağlantınızı kontrol edin veya Tekrar dene’ye basın.",
+    gateRetryStatus: "Tekrar dene",
     gateErrorPrivacy: "Devam etmek için onayı işaretleyin.",
 
     homeTitle: "Kaila Beach Hotel",
@@ -362,6 +365,8 @@ const I18N = {
     voiceAvatarAria: "Viona — konuşmak için avatara dokunun",
     voiceSectionTitle: "Sesli asistan",
     voiceSectionTapToOpen: "Dokunun — sesli modu açın",
+    voiceInfoOnlyHint:
+      "Sesli mod yalnızca bilgilendirme içindir. Talep, şikâyet veya form için yazılı sohbeti kullanın.",
     voiceSectionTapAvatar: "Avatar ile konuşmak için dokunun",
     voiceToggleExpandAria: "Sesli asistan panelini aç",
     voiceToggleCollapseAria: "Sesli asistan panelini kapat",
@@ -375,6 +380,12 @@ const I18N = {
       "Ses özelliği bu site adresi için doğrulanamadı veya oturum izni eksik. Üretim alan adını kullanın veya metin sohbetini deneyin.",
     voiceErrorSpeechNotConfigured: "Ses sunucusu yapılandırılmamış. Lütfen daha sonra tekrar deneyin veya metin sohbetini kullanın.",
     voiceErrorSpeechAzure: "Ses tanıma şu anda kullanılamıyor. Metin sohbetinden deneyebilir veya bir süre sonra tekrar deneyebilirsiniz.",
+    voiceErrorAzureKey:
+      "Azure Speech anahtarı geçersiz veya bu kaynak için uygun değil. Render’da AZURE_SPEECH_KEY’in Speech kaynağına ait olduğunu doğrulayın.",
+    voiceErrorAzureQuota:
+      "Azure Speech isteği reddedildi (kota veya ilke). Azure Portal’da kaynak ve fiyatlandırmayı kontrol edin.",
+    voiceErrorAzureRegion:
+      "Azure bölgesi uyuşmuyor: AZURE_SPEECH_REGION, Portal’deki Speech kaynağının bölgesiyle aynı olmalı (ör. westeurope).",
     voiceErrorRateLimit: "Çok sık ses denemesi yapıldı. Kısa süre sonra tekrar deneyin veya metin sohbetini kullanın.",
     voiceErrorPlayback: "Yanıt sesi çalınamadı (tarayıcı izni). Tekrar dokunup deneyin veya metin sohbetini kullanın.",
     voiceErrorAssistant: "Yanıt alınamadı. Lütfen tekrar deneyin veya metin sohbetine geçin.",
@@ -688,6 +699,9 @@ const I18N = {
     gateErrorPasswordEmpty: "Please enter the access password.",
     gateErrorGateVerify: "Could not verify the password. Check your connection and try again.",
     gateErrorGateLoading: "Checking access — please wait a moment, then try again.",
+    gateErrorGateStrict:
+      "We could not verify access (server unreachable). Check your connection or tap Retry.",
+    gateRetryStatus: "Retry",
     gateErrorPrivacy: "Please tick the box to confirm and continue.",
 
     homeTitle: "Kaila Beach Hotel",
@@ -1018,6 +1032,8 @@ const I18N = {
     voiceAvatarAria: "Viona — tap the avatar to speak",
     voiceSectionTitle: "Voice assistant",
     voiceSectionTapToOpen: "Tap to open voice mode",
+    voiceInfoOnlyHint:
+      "Voice is for information only. For requests, complaints, or forms, use text chat.",
     voiceSectionTapAvatar: "Tap the avatar to speak",
     voiceToggleExpandAria: "Open voice assistant panel",
     voiceToggleCollapseAria: "Close voice assistant panel",
@@ -1031,6 +1047,12 @@ const I18N = {
       "Voice could not be verified for this site. Use the production domain or try text chat.",
     voiceErrorSpeechNotConfigured: "Voice service is not configured on the server. Try text chat or try again later.",
     voiceErrorSpeechAzure: "Speech recognition is temporarily unavailable. Try text chat or try again shortly.",
+    voiceErrorAzureKey:
+      "Azure Speech key is invalid or not for this resource. Verify AZURE_SPEECH_KEY matches your Speech resource in Render.",
+    voiceErrorAzureQuota:
+      "Azure Speech request was denied (quota or policy). Check your resource and pricing in Azure Portal.",
+    voiceErrorAzureRegion:
+      "Azure region mismatch: AZURE_SPEECH_REGION must match your Speech resource region in Azure Portal (e.g. westeurope).",
     voiceErrorRateLimit: "Too many voice attempts. Wait a moment, or use text chat.",
     voiceErrorPlayback: "Could not play the reply audio (browser restriction). Tap again or use text chat.",
     voiceErrorAssistant: "No reply received. Please try again or switch to text chat.",
@@ -1345,6 +1367,9 @@ const I18N = {
     gateErrorPasswordEmpty: "Bitte geben Sie das Zugangspasswort ein.",
     gateErrorGateVerify: "Passwort konnte nicht geprüft werden. Verbindung prüfen und erneut versuchen.",
     gateErrorGateLoading: "Zugriff wird geladen — bitte kurz warten und erneut versuchen.",
+    gateErrorGateStrict:
+      "Zugang konnte nicht geprüft werden (Server nicht erreichbar). Verbindung prüfen oder «Erneut» tippen.",
+    gateRetryStatus: "Erneut versuchen",
     gateErrorPrivacy: "Bitte aktivieren Sie das Kontrollkästchen, um fortzufahren.",
 
     homeTitle: "Kaila Beach Hotel",
@@ -1676,6 +1701,8 @@ const I18N = {
     voiceAvatarAria: "Viona — zum Sprechen den Avatar antippen",
     voiceSectionTitle: "Sprachassistent",
     voiceSectionTapToOpen: "Tippen — Sprachmodus öffnen",
+    voiceInfoOnlyHint:
+      "Sprache nur zur Information. Für Anfragen, Beschwerden oder Formulare den Textchat nutzen.",
     voiceSectionTapAvatar: "Zum Sprechen auf den Avatar tippen",
     voiceToggleExpandAria: "Sprachassistent-Panel öffnen",
     voiceToggleCollapseAria: "Sprachassistent-Panel schließen",
@@ -1689,6 +1716,12 @@ const I18N = {
       "Sprachfunktion für diese Website-Adresse nicht verifiziert. Produktionsdomain nutzen oder Textchat.",
     voiceErrorSpeechNotConfigured: "Sprachdienst ist nicht konfiguriert. Bitte später erneut oder Textchat.",
     voiceErrorSpeechAzure: "Spracherkennung vorübergehend nicht verfügbar. Textchat oder später erneut versuchen.",
+    voiceErrorAzureKey:
+      "Azure Speech-Schlüssel ungültig oder nicht für diese Ressource. AZURE_SPEECH_KEY in Render prüfen.",
+    voiceErrorAzureQuota:
+      "Azure Speech abgelehnt (Kontingent/Richtlinie). Ressource und Tarif im Azure-Portal prüfen.",
+    voiceErrorAzureRegion:
+      "Azure-Region passt nicht: AZURE_SPEECH_REGION muss der Speech-Ressourcen-Region entsprechen (z. B. westeurope).",
     voiceErrorRateLimit: "Zu viele Sprachversuche. Kurz warten oder Textchat nutzen.",
     voiceErrorPlayback: "Antwortton konnte nicht abgespielt werden (Browser). Erneut tippen oder Textchat nutzen.",
     voiceErrorAssistant: "Keine Antwort erhalten. Bitte erneut versuchen oder zum Textchat wechseln.",
@@ -2003,6 +2036,9 @@ const I18N = {
     gateErrorPasswordEmpty: "Wpisz hasło dostępu.",
     gateErrorGateVerify: "Nie udało się zweryfikować hasła. Sprawdź połączenie i spróbuj ponownie.",
     gateErrorGateLoading: "Sprawdzanie dostępu — proszę chwilę poczekać i spróbować ponownie.",
+    gateErrorGateStrict:
+      "Nie można zweryfikować dostępu (brak połączenia z serwerem). Sprawdź internet lub dotknij «Spróbuj ponownie».",
+    gateRetryStatus: "Spróbuj ponownie",
     gateErrorPrivacy: "Zaznacz pole potwierdzenia, aby kontynuować.",
 
     homeTitle: "Hotel Kaila Beach",
@@ -2295,6 +2331,8 @@ const I18N = {
     voiceAvatarAria: "Viona — dotknij awatara, aby przemówić",
     voiceSectionTitle: "Asystent głosowy",
     voiceSectionTapToOpen: "Dotknij, aby otworzyć tryb głosowy",
+    voiceInfoOnlyHint:
+      "Tryb głosowy tylko informacyjnie. W sprawie próśb, reklamacji lub formularzy użyj czatu tekstowego.",
     voiceSectionTapAvatar: "Dotknij awatara, aby przemówić",
     voiceToggleExpandAria: "Otwórz panel asystenta głosowego",
     voiceToggleCollapseAria: "Zamknij panel asystenta głosowego",
@@ -2308,6 +2346,12 @@ const I18N = {
       "Nie udało się zweryfikować głosu dla tej domeny. Użyj produkcyjnej strony lub czatu tekstowego.",
     voiceErrorSpeechNotConfigured: "Usługa głosowa nie jest skonfigurowana. Spróbuj czatu tekstowego lub później.",
     voiceErrorSpeechAzure: "Rozpoznawanie mowy chwilowo niedostępne. Użyj czatu tekstowego lub spróbuj za chwilę.",
+    voiceErrorAzureKey:
+      "Klucz Azure Speech jest nieprawidłowy lub nie pasuje do zasobu. Sprawdź AZURE_SPEECH_KEY w Render.",
+    voiceErrorAzureQuota:
+      "Azure Speech odrzucił żądanie (limit lub zasady). Sprawdź zasób i rozliczenia w Azure Portal.",
+    voiceErrorAzureRegion:
+      "Niezgodność regionu: AZURE_SPEECH_REGION musi być taki jak region zasobu Speech w Azure (np. westeurope).",
     voiceErrorRateLimit: "Zbyt wiele prób głosowych. Odczekaj chwilę lub użyj czatu tekstowego.",
     voiceErrorPlayback: "Nie można odtworzyć odpowiedzi (ograniczenie przeglądarki). Dotknij ponownie lub użyj czatu.",
     voiceErrorAssistant: "Brak odpowiedzi. Spróbuj ponownie lub przejdź do czatu tekstowego.",

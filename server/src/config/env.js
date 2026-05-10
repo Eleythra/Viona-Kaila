@@ -324,5 +324,7 @@ export function getEnv() {
       if (this.guestUiGateDisabled) return false;
       return this.guestUiGatePasswordList.length > 0;
     },
+    /** `1` ise status yanıtında `strict: true`; istemci önceki oturumda da sıkı blok kullanabilir. */
+    guestUiGateStrict: optional("VIONA_UI_GATE_STRICT", "") === "1",
   };
 }

@@ -11,6 +11,7 @@
   var opsPdfDownloadInFlight = false;
   var LOGIN_OK_KEY = "viona_admin_login_ok";
   var LOGIN_USER_KEY = "viona_admin_login_user";
+  var ADMIN_NAV_COLLAPSED_KEY = "viona_admin_sidebar_collapsed";
   /** Girişte zorunlu; büyük-küçük harf duyarlı tek değer */
   var ADMIN_USERNAME_REQUIRED = "Viona-Kaila";
   /** Misafir bildirimleri sekmesi: notifications | late_checkout */
@@ -3030,6 +3031,55 @@
     } catch (_e) {}
   }
 
+  function wireAdminMobileNav() {
+    var layout = document.getElementById("admin-layout");
+    var toggle = document.getElementById("admin-nav-toggle");
+    if (!layout || !toggle) return;
+    var mq = window.matchMedia("(max-width: 1020px)");
+    function syncToggleUi() {
+      var collapsed = layout.classList.contains("admin-layout--sidebar-collapsed");
+      toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      toggle.textContent = collapsed ? "Menüyü göster" : "Menüyü gizle";
+    }
+    function applyForViewport() {
+      if (!mq.matches) {
+        layout.classList.remove("admin-layout--sidebar-collapsed");
+        syncToggleUi();
+        return;
+      }
+      try {
+        if (localStorage.getItem(ADMIN_NAV_COLLAPSED_KEY) === "1") {
+          layout.classList.add("admin-layout--sidebar-collapsed");
+        } else {
+          layout.classList.remove("admin-layout--sidebar-collapsed");
+        }
+      } catch (_e) {
+        layout.classList.remove("admin-layout--sidebar-collapsed");
+      }
+      syncToggleUi();
+    }
+    if (!toggle.dataset.vionaMobileNavBound) {
+      toggle.dataset.vionaMobileNavBound = "1";
+      toggle.addEventListener("click", function () {
+        if (!mq.matches) return;
+        layout.classList.toggle("admin-layout--sidebar-collapsed");
+        syncToggleUi();
+        try {
+          localStorage.setItem(
+            ADMIN_NAV_COLLAPSED_KEY,
+            layout.classList.contains("admin-layout--sidebar-collapsed") ? "1" : "0",
+          );
+        } catch (_e2) {}
+      });
+      if (typeof mq.addEventListener === "function") {
+        mq.addEventListener("change", applyForViewport);
+      } else if (typeof mq.addListener === "function") {
+        mq.addListener(applyForViewport);
+      }
+    }
+    applyForViewport();
+  }
+
   async function init() {
     if (!staticAdminListenersBound) {
       staticAdminListenersBound = true;
@@ -3049,6 +3099,7 @@
       wireVisibilityRefresh();
       wireOpsBroadcastRefresh();
     }
+    wireAdminMobileNav();
     initOpDayStripFromStorage();
     maybeAdvanceOpHotelToday();
     syncOpFiltersAndDomFromSelectedDay();

@@ -7,6 +7,7 @@
     "qrcode": "^1.5.4"
   },
   "scripts": {
-    "qr:png": "node scripts/generate-site-qr-png.js"
+    "qr:png": "node scripts/generate-site-qr-png.js",
+    "check:voice-i18n": "node scripts/check-voice-i18n.mjs"
   }
 }

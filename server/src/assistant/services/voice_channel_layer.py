@@ -1,7 +1,7 @@
 """
 Sesli asistan katmanı — metin sohbetinden ayrı kanal (channel=voice).
 
-- İşlem / form gerektiren niyetler: kısa yönlendirme (yazılı sohbet / menü).
+- İşlem / form / şikâyet gerektiren niyetler: orchestrator seslide `VOICE_OPERATIONAL_USE_TEXT` ile yazılı sohbete yönlendirme.
 - Bilgi yanıtları: TTS için sadeleştirilmiş metin, meta.action ve exit_chat_after_ms temizlenir.
 """
 
@@ -12,49 +12,47 @@ import re
 from assistant.core.chatbot_languages import voice_dict_lang
 from assistant.schemas.response import ChatResponse
 
-# Talep / şikâyet / arıza / misafir bildirimi — sesli kanalda form yok; zarif yönlendirme (premium ton).
+# Talep / şikâyet / arıza / form — sesli kanal yalnız bilgi; işlem için yazılı sohbet.
 VOICE_OPERATIONAL_USE_TEXT: dict[str, str] = {
     "tr": (
-        "Bu konuda kaydınızın eksiksiz iletilmesi için ana menüden İstekler bölümüne veya yazılı "
-        "sohbetimize geçmenizi rica ederim; ekibimiz böylece her ayrıntıyı anında görebilir. "
-        "Otel, hizmetler ve konaklamanızla ilgili sorularınızda sesli olarak yanınızda olmaya devam ederim."
+        "Sesli asistan yalnızca bilgi verir; talep, şikâyet, arıza veya form gerektiren işlemler için "
+        "lütfen yazılı sohbeti kullanın. Otel, hizmetler ve konaklamanız hakkında sorularınıza sesli yanıt vermeye devam ederim."
     ),
     "en": (
-        "So our team receives every detail, please continue through Requests or text chat from the main menu. "
-        "I'm happy to keep answering by voice anything about the hotel, our services, and your stay."
+        "Voice mode is for information only. For requests, complaints, faults, or any form, please use text chat. "
+        "I can still answer by voice about the hotel, services, and your stay."
     ),
     "de": (
-        "Damit Ihr Anliegen vollständig bei unserem Team ankommt, wählen Sie bitte im Hauptmenü „Anfragen“ "
-        "oder den Textchat. Über die Sprachassistentin beantworte ich Ihre Fragen zum Hotel, zu den Services "
-        "und Ihrem Aufenthalt weiterhin gern."
+        "Die Sprachansage dient nur zur Information. Für Anfragen, Beschwerden, Störungen oder Formulare bitte den Textchat nutzen. "
+        "Zu Hotel, Service und Aufenthalt antworte ich gern weiter per Sprache."
     ),
     "pl": (
-        "Aby zespół otrzymał wszystkie szczegóły, kontynuuj proszę w sekcji „Prośby” lub w czacie tekstowym "
-        "z menu głównego. Głosowo chętnie odpowiem na pytania o hotel, usługi i pobyt."
+        "Tryb głosowy służy tylko do informacji. W sprawie próśb, reklamacji, usterek lub formularzy skorzystaj z czatu tekstowego. "
+        "Na pytania o hotel, usługi i pobyt odpowiadam nadal głosowo."
     ),
     "ru": (
-        "Чтобы команда получила все детали, продолжите в разделе «Запросы» или в текстовом чате из главного меню. "
-        "О гостинице, услугах и проживании с удовольствием отвечу голосом."
+        "Голосовой режим только для справок. Для заявок, жалоб, неисправностей и форм откройте, пожалуйста, текстовый чат. "
+        "О гостинице, услугах и проживании отвечу голосом."
     ),
     "da": (
-        "For at teamet modtager alle detaljer, fortsæt via «Forespørgsler» eller tekstchatten fra forsiden. "
-        "Jeg svarer gerne med stemme om hotellet og dit ophold."
+        "Stemme er kun til oplysninger. For anmodninger, klager, fejl eller formularer: brug tekstchat. "
+        "Jeg svarer gerne med stemme om hotel, service og ophold."
     ),
     "nl": (
-        "Zodat ons team alle details ontvangt, ga verder via «Verzoeken» of de tekstchat vanaf het startscherm. "
-        "Ik beantwoord graag met stem alles over het hotel en uw verblijf."
+        "Spraak is alleen voor informatie. Voor verzoeken, klachten, storingen of formulieren: gebruik de tekstchat. "
+        "Over hotel, diensten en verblijf antwoord ik graag met stem."
     ),
     "cs": (
-        "Aby tým obdržel všechny podrobnosti, pokračujte v sekci «Požadavky» nebo v textovém chatu z úvodní obrazovky. "
-        "Na otázky k hotelu, službám a pobytu vám ráda odpovím hlasem."
+        "Hlas slouží pouze k informacím. Pro požadavky, stížnosti, závady nebo formuláře použijte textový chat. "
+        "K hotelu, službám a pobytu odpovím ráda hlasem."
     ),
     "ro": (
-        "Pentru ca echipa să primească toate detaliile, continuați prin «Cereri» sau prin chatul text de pe ecranul principal. "
-        "Cu plăcere răspund la voce despre hotel, servicii și sejur."
+        "Modul vocal este doar pentru informații. Pentru cereri, reclamații, defecțiuni sau formulare folosiți chatul text. "
+        "Despre hotel, servicii și sejur răspund în continuare la voce."
     ),
     "sk": (
-        "Aby tím dostal všetky podrobnosti, pokračujte v sekcii «Požiadavky» alebo v textovom chate z úvodnej obrazovky. "
-        "O hoteli, službách a pobyte vám rada odpoviem hlasom."
+        "Hlas je len na informácie. Pre požiadavky, sťažnosti, poruchy alebo formuláre použite textový chat. "
+        "O hoteli, službách a pobyte odpoviem hlasom."
     ),
 }
 
