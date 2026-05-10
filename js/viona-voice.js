@@ -98,6 +98,51 @@
     return fallback;
   }
 
+  /** `?viona_voice_debug=1` veya `localStorage.viona_voice_debug=1` — Ağ sekmesi yerine konsola STT/TTS özeti. */
+  function voiceDebugEnabled() {
+    try {
+      if (window.__VIONA_VOICE_DEBUG__ === true) return true;
+      if (typeof localStorage !== "undefined" && localStorage.getItem("viona_voice_debug") === "1") return true;
+      return /[?&]viona_voice_debug=1(?:&|$)/.test(String(window.location.search || ""));
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function voiceDebugLog(label, payload) {
+    if (!voiceDebugEnabled()) return;
+    try {
+      console.warn("[viona-voice]", label, payload !== undefined ? payload : "");
+    } catch (e) {}
+  }
+
+  /** Sunucu `error` + HTTP kodu → hangi i18n anahtarı (plan: ayrıştırılmış sesli hatalar). */
+  function voiceHintKeyFromSttPayload(data) {
+    var code = data && data.error ? String(data.error) : "";
+    var httpSt = data && typeof data.httpStatus === "number" ? data.httpStatus : NaN;
+    if (Number.isFinite(httpSt)) {
+      if (httpSt === 429) return "voiceErrorRateLimit";
+      if (httpSt === 401) return "voiceErrorSpeechUnauthorized";
+      if (httpSt === 503) return "voiceErrorSpeechNotConfigured";
+      if (httpSt >= 500) return "voiceErrorNetwork";
+    }
+    if (code === "speech_unauthorized") return "voiceErrorSpeechUnauthorized";
+    if (code === "speech_not_configured") return "voiceErrorSpeechNotConfigured";
+    if (code === "stt_failed" || code === "stt_error") return "voiceErrorSpeechAzure";
+    if (code === "audio_too_short" || code === "stt_no_match" || code === "stt_empty_text") return "voiceErrorNoSpeech";
+    if (code === "bad_json") return "voiceErrorNetwork";
+    var hm = code.match(/^http_(\d{3})$/);
+    if (hm) {
+      var n = parseInt(hm[1], 10);
+      if (n === 429) return "voiceErrorRateLimit";
+      if (n === 401) return "voiceErrorSpeechUnauthorized";
+      if (n === 503) return "voiceErrorSpeechNotConfigured";
+      if (n >= 500) return "voiceErrorNetwork";
+    }
+    if (!data || !data.ok) return "voiceErrorNetwork";
+    return "voiceErrorNoSpeech";
+  }
+
   function fetchWithTimeout(url, init, timeoutMs) {
     if (!timeoutMs || timeoutMs < 1000) return fetch(url, init);
     var ac = new AbortController();
@@ -554,24 +599,17 @@
         });
       })
       .then(function (data) {
+        voiceDebugLog("stt_done", data);
         if (!data || !data.ok || !String(data.text || "").trim()) {
-          var code = data && data.error;
-          var httpSt = data && data.httpStatus;
-          var serverSide =
-            code === "speech_not_configured" ||
-            code === "stt_failed" ||
-            code === "speech_unauthorized" ||
-            code === "stt_error" ||
-            code === "bad_json" ||
-            (typeof httpSt === "number" && httpSt >= 500) ||
-            (typeof code === "string" && code.indexOf("http_") === 0);
-          goIdleWithVoiceHint(serverSide ? "voiceErrorNetwork" : "voiceErrorNoSpeech");
+          var hintKey = voiceHintKeyFromSttPayload(data || {});
+          goIdleWithVoiceHint(hintKey);
           return;
         }
         var said = String(data.text).trim();
         return runThinkingAndSpeaking(said);
       })
-      .catch(function () {
+      .catch(function (err) {
+        voiceDebugLog("stt_catch", err && err.name ? err.name : err);
         goIdleWithVoiceHint("voiceErrorNetwork");
       });
   }
@@ -654,6 +692,7 @@
         }
       })
       .catch(function (e) {
+        voiceDebugLog("tts_catch", e && e.message ? e.message : e);
         var c = e && e.message ? String(e.message) : "";
         var network =
           (e && e.name === "AbortError") ||
@@ -663,8 +702,17 @@
           c === "empty_text" ||
           c === "text_too_long" ||
           /^http_5\d\d$/.test(c) ||
+          /^http_429$/.test(c) ||
           /aborted|Failed to fetch|NetworkError|Load failed/i.test(c);
-        goIdleWithVoiceHint(network ? "voiceErrorNetwork" : "voiceErrorPlayback");
+        var hint = "voiceErrorPlayback";
+        if (network) {
+          if (c === "speech_unauthorized") hint = "voiceErrorSpeechUnauthorized";
+          else if (c === "speech_not_configured") hint = "voiceErrorSpeechNotConfigured";
+          else if (c === "tts_error") hint = "voiceErrorSpeechAzure";
+          else if (c === "http_429") hint = "voiceErrorRateLimit";
+          else hint = "voiceErrorNetwork";
+        }
+        goIdleWithVoiceHint(hint);
       });
   }
 

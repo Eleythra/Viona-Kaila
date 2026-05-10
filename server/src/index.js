@@ -6,6 +6,7 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import guestRequestsRouter from "./modules/guest-requests/guest-requests.router.js";
+import { createGuestGateRouter } from "./modules/guest-gate/guest-gate.router.js";
 import surveysRouter from "./modules/surveys/surveys.router.js";
 import adminRouter from "./modules/admin/admin.router.js";
 import opsLinkRouter from "./modules/ops-link/ops-link.router.js";
@@ -31,6 +32,7 @@ import {
 } from "./modules/admin/reporting/daily-operation-report.scheduler.js";
 import {
   buildPublicSiteOriginAllowlist,
+  isPublicSiteOriginAllowed,
   normalizePublicSiteOrigin,
 } from "./lib/public-site-origins.js";
 const env = getEnv();
@@ -202,7 +204,7 @@ const corsAllowlist = buildPublicSiteOriginAllowlist(env);
 function isAllowedOrigin(origin = "") {
   const normalized = normalizePublicSiteOrigin(origin);
   if (!normalized) return false;
-  return corsAllowlist.has(normalized);
+  return isPublicSiteOriginAllowed(normalized, corsAllowlist);
 }
 
 /** Supabase chat_observations.chat_obs_response_type_chk */
@@ -740,10 +742,15 @@ app.get("/api/health", (req, res) => {
     opsTrustOpsPageHeader: Boolean(env.opsTrustOpsPageHeader),
     /** Elektra PMS misafir doğrulama: env tam ve GUEST_PMS_VERIFY_ENABLED=1 (değer sızmaz). */
     elektraGuestVerifyActive: Boolean(env.elektraGuestVerifyConfigured),
+    /** Misafir statik site kapı şifresi: VIONA_UI_GATE_PASSWORD dolu ve etkin mi (değer sızmaz). */
+    guestUiGateRequired: Boolean(env.guestUiGateRequired),
     /** Günlük PDF: dış cron GET için `DAILY_OPERATION_REPORT_CRON_KEY` tanımlı mı (değer sızmaz). */
     dailyReportExternalCronKeyConfigured: Boolean(
       String(process.env.DAILY_OPERATION_REPORT_CRON_KEY || "").trim(),
     ),
+    /** Deploy doğrulama (Render otomatik env; değer prod ortamında güvenilir). */
+    deployGitCommit: String(process.env.RENDER_GIT_COMMIT || "").trim() || null,
+    deployServiceHost: String(process.env.RENDER_SERVICE_NAME || "").trim() || null,
   };
   const pretty =
     String(req.query?.pretty || "") === "1" ||
@@ -759,6 +766,17 @@ app.get("/api/health", (req, res) => {
   res.json(payload);
 });
 
+app.use(
+  "/api/public/guest-gate",
+  createGuestGateRouter({
+    get guestUiGateRequired() {
+      return env.guestUiGateRequired;
+    },
+    get guestUiGatePasswordList() {
+      return env.guestUiGatePasswordList;
+    },
+  }),
+);
 app.use("/api/guest-requests", guestRequestsRouter);
 app.use("/api/surveys", surveysRouter);
 app.use("/api/admin", adminRouter);

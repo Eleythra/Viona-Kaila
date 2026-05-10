@@ -19,6 +19,8 @@
       gateScreenTitle: "Добро пожаловать",
       gateScreenSubtitle:
         "Ознакомьтесь с кратким уведомлением ниже и подтвердите, чтобы продолжить.",
+      gateScreenSubtitleWithPassword:
+        "Сначала введите пароль доступа к отелю; затем прочитайте уведомление ниже и подтвердите.",
       gatePasswordLabel: "Пароль доступа",
       gatePasswordPlaceholder: "Введите пароль",
       gatePrivacyTitle: "Персональные данные — краткое уведомление",
@@ -31,6 +33,9 @@
       gateSubmit: "Подтверждаю и продолжаю",
       gateBackLang: "Назад к выбору языка",
       gateErrorPassword: "Неверный пароль. Введите актуальный пароль доступа.",
+      gateErrorPasswordEmpty: "Введите пароль доступа.",
+      gateErrorGateVerify: "Не удалось проверить пароль. Проверьте подключение и попробуйте снова.",
+      gateErrorGateLoading: "Проверка доступа — подождите несколько секунд и нажмите снова.",
       gateErrorPrivacy: "Отметьте галочку подтверждения, чтобы продолжить.",
       homeTitle: "Kaila Beach Hotel",
       introLead:
@@ -100,6 +105,8 @@
       gateScreenTitle: "Velkommen",
       gateScreenSubtitle:
         "Læs den korte meddelelse nedenfor og bekræft for at fortsætte.",
+      gateScreenSubtitleWithPassword:
+        "Indtast først hotellets adgangskode; læs derefter meddelelsen nedenfor og bekræft.",
       gatePasswordLabel: "Adgangskode",
       gatePasswordPlaceholder: "Indtast adgangskode",
       gatePrivacyTitle: "Beskyttelse af persondata — kort meddelelse",
@@ -112,6 +119,9 @@
       gateSubmit: "Jeg accepterer og fortsætter",
       gateBackLang: "Tilbage til sprogvalg",
       gateErrorPassword: "Forkert adgangskode. Indtast den aktuelle kode.",
+      gateErrorPasswordEmpty: "Indtast adgangskoden.",
+      gateErrorGateVerify: "Adgangskoden kunne ikke bekræftes. Tjek forbindelsen og prøv igen.",
+      gateErrorGateLoading: "Adgang indlæses — vent et øjeblik og prøv igen.",
       gateErrorPrivacy: "Sæt kryds i feltet for at fortsætte.",
       homeTitle: "Kaila Beach Hotel",
       introLead: "Strandfront i Obagöl, Alanya — All Inclusive til en behagelig ferie.",
@@ -180,6 +190,8 @@
       gateScreenTitle: "Vítejte",
       gateScreenSubtitle:
         "Přečtěte si stručnou informaci níže a potvrďte pokračování.",
+      gateScreenSubtitleWithPassword:
+        "Nejprve zadejte přístupové heslo hotelu; poté si přečtěte níže uvedené upozornění a potvrďte.",
       gatePasswordLabel: "Přístupové heslo",
       gatePasswordPlaceholder: "Zadejte heslo",
       gatePrivacyTitle: "Ochrana osobních údajů — stručná informace",
@@ -192,6 +204,9 @@
       gateSubmit: "Souhlasím a pokračuji",
       gateBackLang: "Zpět k výběru jazyka",
       gateErrorPassword: "Nesprávné heslo. Zadejte aktuální přístupové heslo.",
+      gateErrorPasswordEmpty: "Zadejte přístupové heslo.",
+      gateErrorGateVerify: "Heslo se nepodařilo ověřit. Zkontrolujte připojení a zkuste to znovu.",
+      gateErrorGateLoading: "Načítání přístupu — chvíli počkejte a zkuste to znovu.",
       gateErrorPrivacy: "Zaškrtněte prosím pole pro pokračování.",
       homeTitle: "Kaila Beach Hotel",
       introLead: "Přímo u moře v Obagöl, Alanya — All Inclusive pro pohodlnou dovolenou.",
@@ -260,6 +275,8 @@
       gateScreenTitle: "Bun venit",
       gateScreenSubtitle:
         "Citiți informarea scurtă de mai jos și confirmați pentru a continua.",
+      gateScreenSubtitleWithPassword:
+        "Introduceți mai întâi parola de acces la hotel; apoi citiți informarea de mai jos și confirmați.",
       gatePasswordLabel: "Parolă de acces",
       gatePasswordPlaceholder: "Introduceți parola",
       gatePrivacyTitle: "Date personale — informare scurtă",
@@ -272,6 +289,9 @@
       gateSubmit: "Sunt de acord și continui",
       gateBackLang: "Înapoi la limbi",
       gateErrorPassword: "Parolă incorectă. Introduceți parola curentă.",
+      gateErrorPasswordEmpty: "Introduceți parola de acces.",
+      gateErrorGateVerify: "Parola nu a putut fi verificată. Verificați conexiunea și încercați din nou.",
+      gateErrorGateLoading: "Se verifică accesul — așteptați puțin și încercați din nou.",
       gateErrorPrivacy: "Bifați caseta pentru a continua.",
       homeTitle: "Kaila Beach Hotel",
       introLead: "La malul mării în Obagöl, Alanya — All Inclusive pentru o vacanță confortabilă.",
@@ -340,6 +360,8 @@
       gateScreenTitle: "Welkom",
       gateScreenSubtitle:
         "Lees de korte mededeling hieronder en bevestig om door te gaan.",
+      gateScreenSubtitleWithPassword:
+        "Voer eerst het hoteltoegangswachtwoord in; lees daarna de mededeling hieronder en bevestig.",
       gatePasswordLabel: "Toegangswachtwoord",
       gatePasswordPlaceholder: "Wachtwoord invoeren",
       gatePrivacyTitle: "Privacy — korte mededeling",
@@ -352,6 +374,9 @@
       gateSubmit: "Ik ga akkoord en ga verder",
       gateBackLang: "Terug naar taalkeuze",
       gateErrorPassword: "Onjuist wachtwoord. Voer het actuele toegangswachtwoord in.",
+      gateErrorPasswordEmpty: "Voer het toegangswachtwoord in.",
+      gateErrorGateVerify: "Het wachtwoord kon niet worden gecontroleerd. Controleer uw verbinding en probeer opnieuw.",
+      gateErrorGateLoading: "Toegang wordt geladen — even geduld en probeer opnieuw.",
       gateErrorPrivacy: "Vink het vakje aan om door te gaan.",
       homeTitle: "Kaila Beach Hotel",
       introLead: "Strandzijde in Obagöl, Alanya — all-inclusive voor een comfortabel verblijf.",
@@ -420,6 +445,8 @@
       gateScreenTitle: "Vitajte",
       gateScreenSubtitle:
         "Prečítajte si stručnú informáciu nižšie a potvrďte pokračovanie.",
+      gateScreenSubtitleWithPassword:
+        "Najprv zadajte prístupové heslo hotela; potom si prečítajte upozornenie nižšie a potvrďte.",
       gatePasswordLabel: "Prístupové heslo",
       gatePasswordPlaceholder: "Zadajte heslo",
       gatePrivacyTitle: "Osobné údaje — stručná informácia",
@@ -432,6 +459,9 @@
       gateSubmit: "Súhlasím a pokračujem",
       gateBackLang: "Späť na výber jazyka",
       gateErrorPassword: "Nesprávne heslo. Zadajte aktuálne prístupové heslo.",
+      gateErrorPasswordEmpty: "Zadajte prístupové heslo.",
+      gateErrorGateVerify: "Heslo sa nepodarilo overiť. Skontrolujte pripojenie a skúste znova.",
+      gateErrorGateLoading: "Načítava sa prístup — počkajte chvíľu a skúste znova.",
       gateErrorPrivacy: "Zaškrtnite pole na pokračovanie.",
       homeTitle: "Kaila Beach Hotel",
       introLead: "Pri mori v Obagöl, Alanya — all inclusive pre pohodlnú dovolenku.",
@@ -706,6 +736,54 @@
   };
   Object.keys(VOICE_UI_PATCH).forEach(function (c) {
     if (PATCH[c]) Object.assign(PATCH[c], VOICE_UI_PATCH[c]);
+  });
+
+  var VOICE_ERROR_EXTRA = {
+    ru: {
+      voiceErrorSpeechUnauthorized:
+        "Голос для этого адреса не подтверждён. Используйте основной домен или текстовый чат.",
+      voiceErrorSpeechNotConfigured: "Голосовой сервис не настроен. Попробуйте текстовый чат позже.",
+      voiceErrorSpeechAzure: "Распознавание речи временно недоступно. Используйте текст или повторите позже.",
+      voiceErrorRateLimit: "Слишком частые попытки. Подождите или используйте текстовый чат.",
+    },
+    da: {
+      voiceErrorSpeechUnauthorized:
+        "Stemme kunne ikke verificeres for dette domæne. Brug produktionssitet eller tekstchat.",
+      voiceErrorSpeechNotConfigured: "Stemmeservice er ikke konfigureret. Prøv tekstchat eller senere.",
+      voiceErrorSpeechAzure: "Stemmegenkendelse er midlertidigt utilgængelig. Brug tekstchat eller prøv igen.",
+      voiceErrorRateLimit: "For mange forsøg. Vent lidt eller brug tekstchat.",
+    },
+    cs: {
+      voiceErrorSpeechUnauthorized:
+        "Hlas pro tuto doménu nelze ověřit. Použijte produkční web nebo textový chat.",
+      voiceErrorSpeechNotConfigured: "Hlasová služba není nakonfigurována. Zkuste textový chat.",
+      voiceErrorSpeechAzure: "Rozpoznávání řeči je dočasně nedostupné. Použijte text nebo zkuste později.",
+      voiceErrorRateLimit: "Příliš mnoho pokusů. Počkejte nebo použijte textový chat.",
+    },
+    ro: {
+      voiceErrorSpeechUnauthorized:
+        "Vocea nu poate fi verificată pentru acest domeniu. Folosiți site-ul de producție sau chat text.",
+      voiceErrorSpeechNotConfigured: "Serviciul vocal nu este configurat. Încercați chat text sau mai târziu.",
+      voiceErrorSpeechAzure: "Recunoașterea vocală este temporar indisponibilă. Folosiți chat text sau reîncercați.",
+      voiceErrorRateLimit: "Prea multe încercări. Așteptați sau folosiți chat text.",
+    },
+    nl: {
+      voiceErrorSpeechUnauthorized:
+        "Stem kan voor dit adres niet worden geverifieerd. Gebruik de productiesite of tekstchat.",
+      voiceErrorSpeechNotConfigured: "Stemdienst is niet geconfigureerd. Probeer tekstchat of later opnieuw.",
+      voiceErrorSpeechAzure: "Spraakherkenning is tijdelijk niet beschikbaar. Gebruik tekstchat of probeer later.",
+      voiceErrorRateLimit: "Te veel pogingen. Wacht even of gebruik tekstchat.",
+    },
+    sk: {
+      voiceErrorSpeechUnauthorized:
+        "Hlas sa pre túto doménu nepodarilo overiť. Použite produkčnú stránku alebo textový chat.",
+      voiceErrorSpeechNotConfigured: "Hlasová služba nie je nakonfigurovaná. Skúste textový chat.",
+      voiceErrorSpeechAzure: "Rozpoznávanie reči je dočasne nedostupné. Použite text alebo skúste neskôr.",
+      voiceErrorRateLimit: "Príliš veľa pokusov. Počkajte alebo použite textový chat.",
+    },
+  };
+  Object.keys(VOICE_ERROR_EXTRA).forEach(function (c) {
+    if (PATCH[c]) Object.assign(PATCH[c], VOICE_ERROR_EXTRA[c]);
   });
 
   window.VIONA_LANG.EXTRA.forEach(function (code) {

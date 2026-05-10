@@ -307,5 +307,22 @@ export function getEnv() {
           String(this.elektraToken || "").trim(),
       );
     },
+    /**
+     * Misafir kapı şifreleri — yalnızca sunucuda; tarayıcıya gönderilmez.
+     * İkinci şifre isteğe bağlı: `VIONA_UI_GATE_PASSWORD_2`. Karşılaştırma büyük/küçük harf duyarsız (tr).
+     */
+    guestUiGatePassword: optional("VIONA_UI_GATE_PASSWORD", ""),
+    guestUiGatePassword2: optional("VIONA_UI_GATE_PASSWORD_2", ""),
+    /** `0` ise şifre dolu olsa bile kapı doğrulaması kapalı (bakım / geçici). */
+    guestUiGateDisabled: optional("VIONA_UI_GATE_ENABLED", "1") === "0",
+    get guestUiGatePasswordList() {
+      return [this.guestUiGatePassword, this.guestUiGatePassword2]
+        .map((s) => String(s || "").trim())
+        .filter(Boolean);
+    },
+    get guestUiGateRequired() {
+      if (this.guestUiGateDisabled) return false;
+      return this.guestUiGatePasswordList.length > 0;
+    },
   };
 }

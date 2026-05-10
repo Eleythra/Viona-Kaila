@@ -23,6 +23,34 @@ export function normalizePublicSiteOrigin(value = "") {
 }
 
 /**
+ * Vercel önizleme / dağıtım hostları (`*.vercel.app`).
+ * Tarayıcı Origin başlığı güvenilir sayılır; doğrudan curl ile köken taklit edilebilir (rate limit / secret ile sınırlama).
+ */
+export function isTrustedVercelAppPreviewOrigin(normalizedOrigin) {
+  const n = normalizePublicSiteOrigin(normalizedOrigin);
+  if (!n) return false;
+  try {
+    const u = new URL(n);
+    if (u.protocol !== "https:" && u.protocol !== "http:") return false;
+    return u.hostname.toLowerCase().endsWith(".vercel.app");
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Sabit allowlist veya Vercel önizleme kökeni.
+ * @param {string} origin — normalize edilmiş tam köken (`https://host`)
+ * @param {Set<string>} allowlist
+ */
+export function isPublicSiteOriginAllowed(origin, allowlist) {
+  const n = normalizePublicSiteOrigin(origin);
+  if (!n) return false;
+  if (allowlist.has(n)) return true;
+  return isTrustedVercelAppPreviewOrigin(n);
+}
+
+/**
  * @param {{ corsAllowedOrigins?: string[] }} env
  * @returns {Set<string>}
  */
@@ -98,13 +126,13 @@ export function requestHasAllowedPublicSiteOrigin(req, allowlist, opts = {}) {
   const trustForwarded = opts.trustForwardedHeaders !== false;
 
   const origin = normalizePublicSiteOrigin(req.headers?.origin);
-  if (origin && allowlist.has(origin)) return true;
+  if (origin && isPublicSiteOriginAllowed(origin, allowlist)) return true;
 
   const ref = String(req.headers?.referer || "").trim();
   if (ref) {
     try {
       const o = normalizePublicSiteOrigin(new URL(ref).origin);
-      if (o && allowlist.has(o)) return true;
+      if (o && isPublicSiteOriginAllowed(o, allowlist)) return true;
     } catch {
       /* ignore */
     }
@@ -113,10 +141,10 @@ export function requestHasAllowedPublicSiteOrigin(req, allowlist, opts = {}) {
   if (!trustForwarded) return false;
 
   const fromXfh = syntheticOriginFromForwardedHeaders(req);
-  if (fromXfh && allowlist.has(fromXfh)) return true;
+  if (fromXfh && isPublicSiteOriginAllowed(fromXfh, allowlist)) return true;
 
   const fromFwd = syntheticOriginFromForwardedHeader(req);
-  if (fromFwd && allowlist.has(fromFwd)) return true;
+  if (fromFwd && isPublicSiteOriginAllowed(fromFwd, allowlist)) return true;
 
   return false;
 }

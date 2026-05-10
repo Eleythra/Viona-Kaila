@@ -280,6 +280,7 @@ body {
   white-space: normal;
   overflow-wrap: anywhere;
   word-break: normal;
+  touch-action: manipulation;
   box-shadow:
     0 4px 0 rgba(0, 0, 0, 0.12) inset,
     0 12px 36px rgba(0, 0, 0, 0.35);
@@ -356,6 +357,12 @@ body {
   hyphens: auto;
 }
 
+.gate-password-wrap {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 2px;
+}
+
 .gate-field {
   margin-bottom: 18px;
 }
@@ -382,12 +389,14 @@ body {
   background: rgba(5, 10, 18, 0.55);
   color: var(--text);
   font: inherit;
-  font-size: 1rem;
+  /* iOS: 16px altında odakta sayfa yakınlaştırır */
+  font-size: max(1rem, 16px);
   font-weight: 500;
   letter-spacing: 0.04em;
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
+  touch-action: manipulation;
 }
 
 .gate-input::placeholder {

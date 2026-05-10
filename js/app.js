@@ -88,6 +88,11 @@
   let requestSub = null;
   let surveySub = null;
 
+  /** Sunucu `GET /public/guest-gate/status` ile belirlenir; şifre alanı yalnızca true iken görünür. */
+  let gatePasswordRequired = false;
+  /** Status isteği bitene kadar «Devam» tıklanmasın (şifreli kapı atlanmasın). */
+  let gateStatusResolved = false;
+
   const el = (id) => document.getElementById(id);
 
   const SURVEY_TITLE_FALLBACK = {
@@ -717,11 +722,62 @@
 
   function resetGateForm() {
     const c1 = el("gate-check-privacy");
+    const pwd = el("gate-password");
     const err = el("gate-error");
     if (c1) c1.checked = false;
+    if (pwd) pwd.value = "";
     if (err) {
       err.textContent = "";
       err.classList.add("hidden");
+    }
+  }
+
+  function vionaApiBase() {
+    return typeof window.vionaGetApiBase === "function" ? window.vionaGetApiBase() : "/api";
+  }
+
+  async function refreshGuestGateUi() {
+    const btn = el("btn-gate-continue");
+    gateStatusResolved = false;
+    if (btn) {
+      btn.disabled = true;
+      btn.setAttribute("aria-busy", "true");
+    }
+    try {
+      const wrap = el("gate-password-wrap");
+      const sub = el("gate-screen-subtitle");
+      const pwd = el("gate-password");
+      if (!wrap || !sub) return;
+
+      gatePasswordRequired = false;
+      try {
+        const res = await fetch(`${vionaApiBase()}/public/guest-gate/status`, { cache: "no-store" });
+        if (!res.ok) throw new Error("gate_status_http");
+        const data = await res.json();
+        gatePasswordRequired = Boolean(data && data.required);
+      } catch (_e) {
+        gatePasswordRequired = false;
+        if (typeof console !== "undefined" && console.warn) {
+          console.warn("[viona] guest-gate status fetch failed; gate password hidden");
+        }
+      }
+      if (gatePasswordRequired) {
+        wrap.classList.remove("hidden");
+        sub.setAttribute("data-i18n", "gateScreenSubtitleWithPassword");
+      } else {
+        wrap.classList.add("hidden");
+        if (pwd) pwd.value = "";
+        sub.setAttribute("data-i18n", "gateScreenSubtitle");
+      }
+      const gateRoot = el("view-gate");
+      if (gateRoot) applyI18n(gateRoot);
+    } finally {
+      gateStatusResolved = true;
+      const b = el("btn-gate-continue");
+      if (b) {
+        b.disabled = false;
+        b.removeAttribute("aria-busy");
+      }
     }
   }
 
@@ -745,24 +801,71 @@
       }
     }
     const chk = el("gate-check-privacy");
+    const pwdInput = el("gate-password");
     if (chk) chk.addEventListener("change", clearGateError);
+    if (pwdInput) pwdInput.addEventListener("input", clearGateError);
 
     btn.addEventListener("click", () => {
-      const errEl = el("gate-error");
-      if (errEl) {
-        errEl.textContent = "";
-        errEl.classList.add("hidden");
-      }
-      const okPrivacy = el("gate-check-privacy") && el("gate-check-privacy").checked;
+      void (async () => {
+        const errEl = el("gate-error");
+        if (errEl) {
+          errEl.textContent = "";
+          errEl.classList.add("hidden");
+        }
+        const okPrivacy = el("gate-check-privacy") && el("gate-check-privacy").checked;
 
-      if (!okPrivacy) {
-        showGateError("gateErrorPrivacy");
-        return;
-      }
+        if (!gateStatusResolved) {
+          showGateError("gateErrorGateLoading");
+          return;
+        }
 
-      resetGateForm();
-      showView("home");
-      scheduleDiscountPopup();
+        if (!okPrivacy) {
+          showGateError("gateErrorPrivacy");
+          return;
+        }
+
+        if (gatePasswordRequired) {
+          const raw = (el("gate-password") && el("gate-password").value) || "";
+          const pw = String(raw).trim();
+          if (!pw) {
+            showGateError("gateErrorPasswordEmpty");
+            return;
+          }
+          btn.disabled = true;
+          btn.setAttribute("aria-busy", "true");
+          try {
+            const res = await fetch(`${vionaApiBase()}/public/guest-gate/verify`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ password: pw }),
+            });
+            let data = {};
+            try {
+              data = await res.json();
+            } catch (_j) {
+              data = {};
+            }
+            if (!res.ok || !data.ok) {
+              if (res.status === 400) showGateError("gateErrorPasswordEmpty");
+              else showGateError("gateErrorPassword");
+              btn.disabled = false;
+              btn.removeAttribute("aria-busy");
+              return;
+            }
+          } catch (_e) {
+            showGateError("gateErrorGateVerify");
+            btn.disabled = false;
+            btn.removeAttribute("aria-busy");
+            return;
+          }
+          btn.disabled = false;
+          btn.removeAttribute("aria-busy");
+        }
+
+        resetGateForm();
+        showView("home");
+        scheduleDiscountPopup();
+      })();
     });
 
     if (back) {
@@ -794,8 +897,12 @@
       setLang(selectedLangCode);
       showView("gate");
       applyI18n(document);
-      const chkGate = el("gate-check-privacy");
-      if (chkGate) chkGate.focus();
+      void refreshGuestGateUi().then(() => {
+        const pwdEl = el("gate-password");
+        const chkGate = el("gate-check-privacy");
+        if (gatePasswordRequired && pwdEl) pwdEl.focus();
+        else if (chkGate) chkGate.focus();
+      });
     });
   }
 

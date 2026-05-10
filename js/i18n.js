@@ -14,6 +14,8 @@ const I18N = {
     gateScreenTitle: "Hoş geldiniz",
     gateScreenSubtitle:
       "Kısa bilgilendirmeyi okuyup onaylayarak devam edebilirsiniz.",
+    gateScreenSubtitleWithPassword:
+      "Önce erişim şifresini girin; ardından aşağıdaki bilgilendirmeyi okuyup onaylayın.",
     gatePasswordLabel: "Erişim şifresi",
     gatePasswordPlaceholder: "Şifreyi girin",
     gatePrivacyTitle: "Kişisel veriler — kısa bilgilendirme",
@@ -26,6 +28,9 @@ const I18N = {
     gateSubmit: "Onaylıyorum ve devam ediyorum",
     gateBackLang: "Dil seçimine dön",
     gateErrorPassword: "Şifre doğru değil. Güncel şifreyi girin.",
+    gateErrorPasswordEmpty: "Lütfen erişim şifresini girin.",
+    gateErrorGateVerify: "Şifre doğrulanamadı. Bağlantınızı kontrol edip tekrar deneyin.",
+    gateErrorGateLoading: "Erişim ayarları yükleniyor; lütfen birkaç saniye bekleyip tekrar deneyin.",
     gateErrorPrivacy: "Devam etmek için onayı işaretleyin.",
 
     homeTitle: "Kaila Beach Hotel",
@@ -366,6 +371,11 @@ const I18N = {
     voiceBackToChatAria: "Metin sohbetine dön",
     voiceErrorNoSpeech: "Konuşma algılanamadı; biraz daha yüksek veya yakından tekrar deneyin.",
     voiceErrorNetwork: "Ses veya sunucu bağlantısı kesildi. Metin sohbetinden de deneyebilirsiniz.",
+    voiceErrorSpeechUnauthorized:
+      "Ses özelliği bu site adresi için doğrulanamadı veya oturum izni eksik. Üretim alan adını kullanın veya metin sohbetini deneyin.",
+    voiceErrorSpeechNotConfigured: "Ses sunucusu yapılandırılmamış. Lütfen daha sonra tekrar deneyin veya metin sohbetini kullanın.",
+    voiceErrorSpeechAzure: "Ses tanıma şu anda kullanılamıyor. Metin sohbetinden deneyebilir veya bir süre sonra tekrar deneyebilirsiniz.",
+    voiceErrorRateLimit: "Çok sık ses denemesi yapıldı. Kısa süre sonra tekrar deneyin veya metin sohbetini kullanın.",
     voiceErrorPlayback: "Yanıt sesi çalınamadı (tarayıcı izni). Tekrar dokunup deneyin veya metin sohbetini kullanın.",
     voiceErrorAssistant: "Yanıt alınamadı. Lütfen tekrar deneyin veya metin sohbetine geçin.",
     chatNavBackAria: "Geri — uygulamaya dön",
@@ -662,6 +672,8 @@ const I18N = {
     gateScreenTitle: "Welcome",
     gateScreenSubtitle:
       "Please read the brief notice below and confirm to continue.",
+    gateScreenSubtitleWithPassword:
+      "Enter the hotel access password first, then read the notice below and confirm to continue.",
     gatePasswordLabel: "Access password",
     gatePasswordPlaceholder: "Enter password",
     gatePrivacyTitle: "Privacy — brief notice",
@@ -673,6 +685,9 @@ const I18N = {
     gateSubmit: "I agree and continue",
     gateBackLang: "Back to language selection",
     gateErrorPassword: "Incorrect password. Please enter the current access password.",
+    gateErrorPasswordEmpty: "Please enter the access password.",
+    gateErrorGateVerify: "Could not verify the password. Check your connection and try again.",
+    gateErrorGateLoading: "Checking access — please wait a moment, then try again.",
     gateErrorPrivacy: "Please tick the box to confirm and continue.",
 
     homeTitle: "Kaila Beach Hotel",
@@ -1012,6 +1027,11 @@ const I18N = {
     voiceBackToChatAria: "Return to text chat",
     voiceErrorNoSpeech: "No speech detected — try again a bit louder or closer to the microphone.",
     voiceErrorNetwork: "Voice or server connection failed. You can try text chat instead.",
+    voiceErrorSpeechUnauthorized:
+      "Voice could not be verified for this site. Use the production domain or try text chat.",
+    voiceErrorSpeechNotConfigured: "Voice service is not configured on the server. Try text chat or try again later.",
+    voiceErrorSpeechAzure: "Speech recognition is temporarily unavailable. Try text chat or try again shortly.",
+    voiceErrorRateLimit: "Too many voice attempts. Wait a moment, or use text chat.",
     voiceErrorPlayback: "Could not play the reply audio (browser restriction). Tap again or use text chat.",
     voiceErrorAssistant: "No reply received. Please try again or switch to text chat.",
     chatNavBackAria: "Back — return to app",
@@ -1308,6 +1328,8 @@ const I18N = {
     gateScreenTitle: "Willkommen",
     gateScreenSubtitle:
       "Bitte lesen Sie den Kurzhinweis und bestätigen Sie unten, um fortzufahren.",
+    gateScreenSubtitleWithPassword:
+      "Geben Sie zuerst das Hotel-Zugangspasswort ein; lesen Sie dann den Hinweis unten und bestätigen Sie.",
     gatePasswordLabel: "Zugangspasswort",
     gatePasswordPlaceholder: "Passwort eingeben",
     gatePrivacyTitle: "Datenschutz — Kurzhinweis",
@@ -1320,6 +1342,9 @@ const I18N = {
     gateSubmit: "Zustimmen und fortfahren",
     gateBackLang: "Zurück zur Sprachauswahl",
     gateErrorPassword: "Passwort ungültig. Bitte das aktuelle Zugangspasswort eingeben.",
+    gateErrorPasswordEmpty: "Bitte geben Sie das Zugangspasswort ein.",
+    gateErrorGateVerify: "Passwort konnte nicht geprüft werden. Verbindung prüfen und erneut versuchen.",
+    gateErrorGateLoading: "Zugriff wird geladen — bitte kurz warten und erneut versuchen.",
     gateErrorPrivacy: "Bitte aktivieren Sie das Kontrollkästchen, um fortzufahren.",
 
     homeTitle: "Kaila Beach Hotel",
@@ -1660,6 +1685,11 @@ const I18N = {
     voiceBackToChatAria: "Zurück zum Textchat",
     voiceErrorNoSpeech: "Keine Sprache erkannt — etwas lauter oder näher am Mikrofon erneut versuchen.",
     voiceErrorNetwork: "Sprach- oder Serververbindung unterbrochen. Bitte Textchat versuchen.",
+    voiceErrorSpeechUnauthorized:
+      "Sprachfunktion für diese Website-Adresse nicht verifiziert. Produktionsdomain nutzen oder Textchat.",
+    voiceErrorSpeechNotConfigured: "Sprachdienst ist nicht konfiguriert. Bitte später erneut oder Textchat.",
+    voiceErrorSpeechAzure: "Spracherkennung vorübergehend nicht verfügbar. Textchat oder später erneut versuchen.",
+    voiceErrorRateLimit: "Zu viele Sprachversuche. Kurz warten oder Textchat nutzen.",
     voiceErrorPlayback: "Antwortton konnte nicht abgespielt werden (Browser). Erneut tippen oder Textchat nutzen.",
     voiceErrorAssistant: "Keine Antwort erhalten. Bitte erneut versuchen oder zum Textchat wechseln.",
     chatNavBackAria: "Zurück zur App",
@@ -1956,6 +1986,8 @@ const I18N = {
     gateScreenTitle: "Witamy",
     gateScreenSubtitle:
       "Przeczytaj krótką informację poniżej i potwierdź, aby kontynuować.",
+    gateScreenSubtitleWithPassword:
+      "Najpierw wpisz hasło dostępu do hotelu; następnie przeczytaj informację poniżej i potwierdź.",
     gatePasswordLabel: "Hasło dostępu",
     gatePasswordPlaceholder: "Wpisz hasło",
     gatePrivacyTitle: "Prywatność — krótka informacja",
@@ -1968,6 +2000,9 @@ const I18N = {
     gateSubmit: "Akceptuję i kontynuuję",
     gateBackLang: "Powrót do wyboru języka",
     gateErrorPassword: "Nieprawidłowe hasło. Wpisz aktualne hasło dostępu.",
+    gateErrorPasswordEmpty: "Wpisz hasło dostępu.",
+    gateErrorGateVerify: "Nie udało się zweryfikować hasła. Sprawdź połączenie i spróbuj ponownie.",
+    gateErrorGateLoading: "Sprawdzanie dostępu — proszę chwilę poczekać i spróbować ponownie.",
     gateErrorPrivacy: "Zaznacz pole potwierdzenia, aby kontynuować.",
 
     homeTitle: "Hotel Kaila Beach",
@@ -2269,6 +2304,11 @@ const I18N = {
     voiceBackToChatAria: "Wróć do czatu tekstowego",
     voiceErrorNoSpeech: "Nie wykryto mowy — spróbuj ponownie głośniej lub bliżej mikrofonu.",
     voiceErrorNetwork: "Połączenie głosowe lub z serwerem przerwane. Możesz użyć czatu tekstowego.",
+    voiceErrorSpeechUnauthorized:
+      "Nie udało się zweryfikować głosu dla tej domeny. Użyj produkcyjnej strony lub czatu tekstowego.",
+    voiceErrorSpeechNotConfigured: "Usługa głosowa nie jest skonfigurowana. Spróbuj czatu tekstowego lub później.",
+    voiceErrorSpeechAzure: "Rozpoznawanie mowy chwilowo niedostępne. Użyj czatu tekstowego lub spróbuj za chwilę.",
+    voiceErrorRateLimit: "Zbyt wiele prób głosowych. Odczekaj chwilę lub użyj czatu tekstowego.",
     voiceErrorPlayback: "Nie można odtworzyć odpowiedzi (ograniczenie przeglądarki). Dotknij ponownie lub użyj czatu.",
     voiceErrorAssistant: "Brak odpowiedzi. Spróbuj ponownie lub przejdź do czatu tekstowego.",
     chatNavBackAria: "Wstecz — wróć do aplikacji",
