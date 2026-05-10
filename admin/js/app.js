@@ -36,6 +36,9 @@
   /** Chatbot log tablosu sayfalama */
   var logsPage = 1;
   var LOGS_PAGE_SIZE = 70;
+  var appGatePage = 1;
+  var APP_GATE_PAGE_SIZE = 50;
+  var appGateCsvInFlight = false;
 
   var INTENT_LABEL_TR = {
     unknown: "Bilinmeyen",
@@ -92,6 +95,7 @@
     evaluations: "tab-evaluations",
     "pdf-report": "tab-pdf-report",
     logs: "tab-logs",
+    app_entries: "tab-app-entries",
     rooms: "tab-rooms",
   };
   /** Odalar sekmesi: seçili oda detayı (HK istek + teknik arıza). */
@@ -2193,6 +2197,61 @@
     };
   }
 
+  function getAppGateParams() {
+    return {
+      page: appGatePage,
+      pageSize: APP_GATE_PAGE_SIZE,
+      from: (document.getElementById("app-gate-from") || {}).value || "",
+      to: (document.getElementById("app-gate-to") || {}).value || "",
+      verification_method: (document.getElementById("app-gate-method") || {}).value || "",
+      room_number: (document.getElementById("app-gate-room") || {}).value || "",
+      search: (document.getElementById("app-gate-search") || {}).value || "",
+    };
+  }
+
+  async function loadAppGateEntries(opts) {
+    opts = opts || {};
+    var sumEl = document.getElementById("app-gate-summary");
+    var tableEl = document.getElementById("app-gate-table");
+    try {
+      var params = getAppGateParams();
+      var pair = await Promise.all([
+        adapter.getGuestGateEntriesSummary(params),
+        adapter.getGuestGateEntries(params),
+      ]);
+      var summary = pair[0];
+      var result = pair[1];
+      var pag = result.pagination || {};
+      var totalPages = pag.totalPages != null ? pag.totalPages : 1;
+      if (totalPages >= 1 && appGatePage > totalPages) {
+        appGatePage = Math.max(1, totalPages);
+        return loadAppGateEntries(opts);
+      }
+      ui.renderAppGateSummary(sumEl, summary || {});
+      ui.renderAppGateTable(tableEl, result.items || [], {
+        pagination: pag,
+        onPage: function (nextPage) {
+          appGatePage = nextPage;
+          void loadAppGateEntries({ scrollToTable: true });
+        },
+      });
+      if (opts.scrollToTable) {
+        var anchor = document.getElementById("app-gate-table-anchor");
+        if (anchor) {
+          requestAnimationFrame(function () {
+            anchor.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
+        }
+      }
+    } catch (_e) {
+      if (sumEl) sumEl.innerHTML = "";
+      if (tableEl) {
+        tableEl.innerHTML =
+          '<p class="admin-load-error">Giriş kayıtları yüklenemedi. Filtreleri sadeleştirip tekrar deneyin.</p>';
+      }
+    }
+  }
+
   function downloadBlob(blob, fileName) {
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
@@ -2245,6 +2304,34 @@
         } finally {
           logsExportInFlight = false;
           jsonBtn.disabled = false;
+        }
+      });
+    }
+  }
+
+  function wireAppGateControls() {
+    var applyBtn = document.getElementById("app-gate-apply");
+    var csvBtn = document.getElementById("app-gate-csv");
+    if (applyBtn) {
+      applyBtn.addEventListener("click", function () {
+        appGatePage = 1;
+        void loadAppGateEntries();
+      });
+    }
+    if (csvBtn) {
+      csvBtn.addEventListener("click", async function () {
+        if (appGateCsvInFlight) return;
+        appGateCsvInFlight = true;
+        csvBtn.disabled = true;
+        try {
+          var params = getAppGateParams();
+          var blob = await adapter.downloadGuestGateEntriesCsv(params);
+          downloadBlob(blob, "guest_gate_entries.csv");
+        } catch (e) {
+          window.alert("CSV indirilemedi: " + (e && e.message ? e.message : "bilinmeyen hata"));
+        } finally {
+          appGateCsvInFlight = false;
+          csvBtn.disabled = false;
         }
       });
     }
@@ -2807,6 +2894,7 @@
         if (tab === "evaluations") await loadEvaluations();
         if (tab === "pdf-report") setPdfCustomRangeUi(Boolean(document.getElementById("pdf-custom-range") && document.getElementById("pdf-custom-range").checked));
         if (tab === "logs") await loadLogs();
+        if (tab === "app_entries") await loadAppGateEntries();
         if (tab === "rooms") exitRoomDetailToGrid();
         if (isOperasyonAdminTab(tab) && isOperasyonAdminTab(previousActive) && tab !== previousActive) {
           resetOpCalendarToHotelToday();
@@ -3088,6 +3176,7 @@
       wireEvaluationsToolbar();
       wirePdfReportPanel();
       wireLogsControls();
+      wireAppGateControls();
       wireBackHomeButtons();
       wireOpFilterBars();
       wireOpsManualFormsOnce();

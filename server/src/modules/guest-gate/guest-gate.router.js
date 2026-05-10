@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import { normalizeGuestMatchString } from "../../lib/guest-match-normalize.js";
 import { verifyGuestIdentityAtGate } from "../guest-verification/guest-verification.service.js";
 import { guestVerificationUserMessage } from "../guest-verification/guest-verification-messages.js";
+import { recordGuestGateEntry } from "./guest-gate-log.service.js";
 
 function sha256Utf8(s) {
   return crypto.createHash("sha256").update(String(s ?? ""), "utf8").digest();
@@ -102,6 +103,9 @@ export function createGuestGateRouter(envSlice) {
       return res.status(400).json({ ok: false, error: "identity_required" });
     }
 
+    const clientIp = String(req.ip || req.socket?.remoteAddress || "unknown").trim() || "unknown";
+    const userAgent = String(req.get("user-agent") || "").trim();
+
     /** Operatör bypass: env’deki ad+oda ile eşleşirse Elektra çağrılmaz. */
     if (hasDeployBypass) {
       const expName = normalizeGuestMatchString(envSlice.vionaDeployGuestFullName);
@@ -109,12 +113,18 @@ export function createGuestGateRouter(envSlice) {
       const gotName = normalizeGuestMatchString(fn);
       const gotRoom = normalizeGuestMatchString(rn);
       if (expName && expRoom && timingSafeEqualUtf8(gotName, expName) && timingSafeEqualUtf8(gotRoom, expRoom)) {
+        await recordGuestGateEntry({
+          fullName: fn,
+          roomNumber: rn,
+          verificationMethod: "deploy_bypass",
+          clientIp,
+          userAgent,
+        });
         return res.status(200).json({ ok: true, bypass: true });
       }
     }
 
     if (hasElektraIdentity) {
-      const clientIp = String(req.ip || req.socket?.remoteAddress || "unknown").trim() || "unknown";
       try {
         await verifyGuestIdentityAtGate(fn, rn, { clientIp });
       } catch (e) {
@@ -125,6 +135,13 @@ export function createGuestGateRouter(envSlice) {
           guestVerificationUserMessage(reason);
         return res.status(status).json({ ok: false, error: reason, message });
       }
+      await recordGuestGateEntry({
+        fullName: fn,
+        roomNumber: rn,
+        verificationMethod: "elektra",
+        clientIp,
+        userAgent,
+      });
       return res.status(200).json({ ok: true });
     }
 

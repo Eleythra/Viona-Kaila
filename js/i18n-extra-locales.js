@@ -16,19 +16,19 @@
       langScreenSubtitle: "Kaila Beach Hotel · Умный отельный помощник",
       continue: "Продолжить",
       langGridAria: "Выбор языка",
-      gateScreenTitle: "Проверка гостя",
+      gateScreenTitle: "Подтверждение проживания",
       gateScreenSubtitle:
         "Прочитайте уведомление ниже и подтвердите продолжение.",
       gateScreenSubtitleWithPassword:
         "Введите код доступа отеля; затем прочитайте уведомление и подтвердите.",
       gateScreenSubtitleWithIdentity:
-        "Введите имя и фамилию, затем номер комнаты как в бронировании.",
+        "Имя, фамилия и номер комнаты сверяются со списком гостей отеля.",
       gateScreenSubtitleWithPasswordAndIdentity:
-        "Сначала подтвердите проживание; при необходимости добавьте код доступа.",
+        "Сначала имя и номер комнаты; при необходимости добавьте код доступа.",
       gateIdentityKicker: "Проживание",
       gateIdentityTitle: "Подтвердите личность",
       gateIdentityLead:
-        "Данные сверяются с активным списком гостей отеля — доступ только для зарегистрированных гостей.",
+        "Доступ открывается только при совпадении с регистрацией отеля.",
       gatePasswordSectionLead:
         "По желанию — код доступа, выданный отелем (если предусмотрен).",
       gateFullNameLabel: "Имя и фамилия",
@@ -119,19 +119,19 @@
       langScreenSubtitle: "Kaila Beach Hotel · Smart hotelassistent",
       continue: "Fortsæt",
       langGridAria: "Sprogvalg",
-      gateScreenTitle: "Gæste verifikation",
+      gateScreenTitle: "Bekræft dit ophold",
       gateScreenSubtitle:
         "Læs den korte meddelelse og bekræft for at fortsætte.",
       gateScreenSubtitleWithPassword:
         "Indtast hotellets adgangskode; læs meddelelsen og bekræft.",
       gateScreenSubtitleWithIdentity:
-        "Indtast for- og efternavn og derefter værelsesnummer som i reservationen.",
+        "Fulde navn og værelsesnummer matches med hotellets gæsteliste.",
       gateScreenSubtitleWithPasswordAndIdentity:
-        "Bekræft først dit ophold; tilføj adgangskode om nødvendigt.",
+        "Navn og værelse først; tilføj adgangskode om nødvendigt.",
       gateIdentityKicker: "Ophold",
       gateIdentityTitle: "Bekræft din identitet",
       gateIdentityLead:
-        "Vi matcher dine oplysninger med hotellets aktive gæsteliste — kun registrerede gæster får adgang.",
+        "Kun gæster med matchende registrering får adgang til hotellets services.",
       gatePasswordSectionLead:
         "Valgfrit — hotellets adgangskode til gæster (hvis relevant).",
       gateFullNameLabel: "Fulde navn",
@@ -221,19 +221,19 @@
       langScreenSubtitle: "Kaila Beach Hotel · Chytrý hotelový asistent",
       continue: "Pokračovat",
       langGridAria: "Volba jazyka",
-      gateScreenTitle: "Ověření hosta",
+      gateScreenTitle: "Potvrzení pobytu",
       gateScreenSubtitle:
         "Přečtěte si stručnou informaci a potvrďte pokračování.",
       gateScreenSubtitleWithPassword:
         "Zadejte přístupový kód hotelu; poté si přečtěte informaci a potvrďte.",
       gateScreenSubtitleWithIdentity:
-        "Zadejte jméno a příjmení a číslo pokoje jako v rezervaci.",
+        "Jméno, příjmení a číslo pokoje se porovnávají se seznamem hostů hotelu.",
       gateScreenSubtitleWithPasswordAndIdentity:
-        "Nejprve potvrďte pobyt; v případě potřeby doplňte přístupový kód.",
+        "Nejprve jméno a pokoj; v případě potřeby doplňte přístupový kód.",
       gateIdentityKicker: "Pobyt",
       gateIdentityTitle: "Potvrďte totožnost",
       gateIdentityLead:
-        "Údaje porovnáváme s aktivním seznamem hostů hotelu — přístup mají jen registrovaní hosté.",
+        "Přístup mají jen hosté, jejichž údaje souhlasí s registrací hotelu.",
       gatePasswordSectionLead:
         "Volitelně — přístupový kód sdílený hotelem (pokud platí).",
       gateFullNameLabel: "Jméno a příjmení",
@@ -323,19 +323,19 @@
       langScreenSubtitle: "Kaila Beach Hotel · Asistent hotelier inteligent",
       continue: "Continuare",
       langGridAria: "Opțiuni limbă",
-      gateScreenTitle: "Verificare oaspete",
+      gateScreenTitle: "Confirmarea sejurului",
       gateScreenSubtitle:
         "Citiți informarea scurtă și confirmați pentru a continua.",
       gateScreenSubtitleWithPassword:
         "Introduceți codul de acces al hotelului; apoi citiți informarea și confirmați.",
       gateScreenSubtitleWithIdentity:
-        "Introduceți numele complet și numărul camerei ca în rezervare.",
+        "Numele și camera sunt verificate față de lista de oaspeți a hotelului.",
       gateScreenSubtitleWithPasswordAndIdentity:
-        "Confirmați mai întâi sejurul; adăugați codul de acces dacă este necesar.",
+        "Mai întâi numele și camera; adăugați codul de acces dacă este necesar.",
       gateIdentityKicker: "Sejur",
       gateIdentityTitle: "Confirmați identitatea",
       gateIdentityLead:
-        "Datele sunt comparate cu lista activă de oaspeți a hotelului — acces doar pentru oaspeți înregistrați.",
+        "Doar oaspeții înregistrați cu date corespunzătoare pot continua.",
       gatePasswordSectionLead:
         "Opțional — cod de acces oferit de hotel (dacă este cazul).",
       gateFullNameLabel: "Nume complet",
@@ -425,19 +425,19 @@
       langScreenSubtitle: "Kaila Beach Hotel · Slimme hotelassistent",
       continue: "Doorgaan",
       langGridAria: "Taalkeuze",
-      gateScreenTitle: "Gastverificatie",
+      gateScreenTitle: "Verblijf bevestigen",
       gateScreenSubtitle:
         "Lees de korte mededeling en bevestig om door te gaan.",
       gateScreenSubtitleWithPassword:
         "Voer de hoteltoegangscode in; lees de mededeling en bevestig.",
       gateScreenSubtitleWithIdentity:
-        "Voer uw voor- en achternaam en kamernummer in zoals in de reservering.",
+        "Naam en kamernummer worden vergeleken met de gastenlijst van het hotel.",
       gateScreenSubtitleWithPasswordAndIdentity:
-        "Bevestig eerst uw verblijf; voeg indien nodig een toegangscode toe.",
+        "Eerst naam en kamer; voeg zo nodig een toegangscode toe.",
       gateIdentityKicker: "Verblijf",
       gateIdentityTitle: "Bevestig uw identiteit",
       gateIdentityLead:
-        "We vergelijken uw gegevens met de actieve gastenlijst van het hotel — alleen geregistreerde gasten krijgen toegang.",
+        "Alleen gasten met overeenkomende registratie krijgen toegang tot de diensten.",
       gatePasswordSectionLead:
         "Optioneel — toegangscode van het hotel (indien van toepassing).",
       gateFullNameLabel: "Voor- en achternaam",
@@ -527,19 +527,19 @@
       langScreenSubtitle: "Kaila Beach Hotel · Inteligentný hotelový asistent",
       continue: "Pokračovať",
       langGridAria: "Voľba jazyka",
-      gateScreenTitle: "Overenie hosťa",
+      gateScreenTitle: "Potvrdenie pobytu",
       gateScreenSubtitle:
         "Prečítajte si stručnú informáciu a potvrďte pokračovanie.",
       gateScreenSubtitleWithPassword:
         "Zadajte prístupový kód hotela; potom si prečítajte informáciu a potvrďte.",
       gateScreenSubtitleWithIdentity:
-        "Zadajte meno a priezvisko a číslo izby ako v rezervácii.",
+        "Meno, priezvisko a číslo izby sa porovnávajú so zoznamom hostí hotela.",
       gateScreenSubtitleWithPasswordAndIdentity:
-        "Najprv potvrďte pobyt; v prípade potreby doplňte prístupový kód.",
+        "Najprv meno a izba; v prípade potreby doplňte prístupový kód.",
       gateIdentityKicker: "Pobyt",
       gateIdentityTitle: "Potvrďte identitu",
       gateIdentityLead:
-        "Údaje porovnávame s aktívnym zoznamom hostí hotela — prístup majú len registrovaní hostia.",
+        "Prístup majú len hostia s údajmi zhodnými s registráciou hotela.",
       gatePasswordSectionLead:
         "Voliteľné — prístupový kód poskytnutý hotelom (ak platí).",
       gateFullNameLabel: "Meno a priezvisko",

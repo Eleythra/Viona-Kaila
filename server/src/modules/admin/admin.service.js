@@ -1001,6 +1001,166 @@ export async function listChatObservations(query = {}) {
   };
 }
 
+function stripGuestGatePagingKeys(query = {}) {
+  const q = { ...query };
+  delete q.page;
+  delete q.pageSize;
+  return q;
+}
+
+/** Loglar ile uyumlu: from/to boşsa pano ile aynı ~30 gün penceresi (`resolveDateRange`). */
+function normalizeGuestGateEntriesQuery(query = {}) {
+  const q = stripGuestGatePagingKeys(query);
+  const fromE = !String(q.from || "").trim();
+  const toE = !String(q.to || "").trim();
+  if (fromE && toE) {
+    const range = resolveDateRange({});
+    q.from = range.from;
+    q.to = range.to;
+  }
+  return q;
+}
+
+function escapeForIlikeFragment(s) {
+  return String(s)
+    .replace(/\\/g, "\\\\")
+    .replace(/%/g, "\\%")
+    .replace(/_/g, "\\_")
+    .replace(/,/g, "");
+}
+
+function applyGuestGateEntryFilters(qb, query = {}) {
+  let out = applyDateFilters(qb, query, "created_at");
+  const method = String(query.verification_method || "").trim().toLowerCase();
+  if (method === "deploy_bypass" || method === "elektra") {
+    out = out.eq("verification_method", method);
+  }
+  const rn = String(query.room_number || "").trim();
+  if (rn) {
+    out = out.eq("room_number", rn);
+  }
+  const search = String(query.search || "").trim();
+  if (search) {
+    const esc = escapeForIlikeFragment(search);
+    const pattern = `%${esc}%`;
+    out = out.or(`full_name.ilike.${pattern},room_number.ilike.${pattern}`);
+  }
+  return out;
+}
+
+/** Misafir web kapısı başarılı doğrulama kayıtları — sayfalı liste. */
+export async function listGuestGateEntries(query = {}) {
+  const paging = parsePaging(query);
+  const filterQuery = normalizeGuestGateEntriesQuery(stripGuestGatePagingKeys(query));
+  let qb = getSupabase().from("guest_gate_entries").select("*", { count: "exact" });
+  qb = applyGuestGateEntryFilters(qb, filterQuery);
+  qb = qb.order("created_at", { ascending: false });
+  const { data, error, count } = await sb(() => qb.range(paging.from, paging.to));
+  if (error) rethrowSupabaseError(error);
+  return {
+    items: data || [],
+    pagination: {
+      page: paging.page,
+      pageSize: paging.pageSize,
+      total: count ?? 0,
+      totalPages: Math.max(1, Math.ceil((count ?? 0) / paging.pageSize)),
+    },
+  };
+}
+
+/**
+ * Özet: filtreli toplam + (tarih/oda/arama penceresinde) yöntem kırılımı.
+ * `verification_method` süzgeci yalnızca «toplam» kartına uygulanır; iki alt kart penceredeki dağılımı gösterir.
+ */
+export async function getGuestGateEntriesSummary(query = {}) {
+  const filterFull = normalizeGuestGateEntriesQuery(stripGuestGatePagingKeys(query));
+  const filterSplit = { ...filterFull };
+  delete filterSplit.verification_method;
+
+  async function countFiltered(q) {
+    let qb = getSupabase().from("guest_gate_entries").select("*", { count: "exact", head: true });
+    qb = applyGuestGateEntryFilters(qb, q);
+    const { error, count } = await sb(() => qb);
+    if (error) rethrowSupabaseError(error);
+    return count ?? 0;
+  }
+
+  async function countMethod(method, baseQ) {
+    let qb = getSupabase().from("guest_gate_entries").select("*", { count: "exact", head: true });
+    qb = applyGuestGateEntryFilters(qb, { ...baseQ, verification_method: method });
+    const { error, count } = await sb(() => qb);
+    if (error) rethrowSupabaseError(error);
+    return count ?? 0;
+  }
+
+  const total = await countFiltered(filterFull);
+  const deployBypassCount = await countMethod("deploy_bypass", filterSplit);
+  const elektraCount = await countMethod("elektra", filterSplit);
+
+  return {
+    total,
+    deployBypassCount,
+    elektraCount,
+  };
+}
+
+const GUEST_GATE_EXPORT_CAP = 5000;
+
+export async function exportGuestGateEntriesCsv(query = {}) {
+  const filterQuery = normalizeGuestGateEntriesQuery(stripGuestGatePagingKeys(query));
+  let qb = getSupabase().from("guest_gate_entries").select("*").order("created_at", { ascending: false });
+  qb = applyGuestGateEntryFilters(qb, filterQuery);
+  const { data, error } = await sb(() => qb.limit(GUEST_GATE_EXPORT_CAP));
+  if (error) rethrowSupabaseError(error);
+  const rows = data || [];
+
+  const columns = [
+    "created_at",
+    "full_name",
+    "room_number",
+    "verification_method",
+    "client_ip",
+    "user_agent",
+    "id",
+  ];
+  const trHeaders = {
+    created_at: "zaman_utc",
+    full_name: "ad_soyad",
+    room_number: "oda",
+    verification_method: "dogrulama",
+    client_ip: "istemci_ip",
+    user_agent: "user_agent",
+    id: "kayit_id",
+  };
+  const exportedAt = new Date().toISOString();
+  const preamble = [
+    csvCommentLine("Viona — Misafir web kapısı girişleri (guest_gate_entries)"),
+    csvCommentLine("Bu dosya yönetim panelindeki liste ile aynı filtre mantığını kullanır."),
+    csvCommentLine(`Dışa aktarım zamanı (ISO UTC): ${exportedAt}`),
+    csvCommentLine(`Satır üst sınırı: ${GUEST_GATE_EXPORT_CAP}; daha fazla kayıt varsa kesilir.`),
+    csvCommentLine("dogrulama: deploy_bypass (kurulum eşleşmesi) | elektra (Hotspot listesi)."),
+    csvCommentLine(""),
+    csvCommentLine("--- Sütunlar ---"),
+    ...columns.map((c) => csvCommentLine(`${trHeaders[c] || c} (${c})`)),
+    csvCommentLine("--- Veri ---"),
+  ];
+
+  const headerRow = columns.map((c) => csvEscape(trHeaders[c] || c)).join(",");
+  const lines = [...preamble, headerRow];
+  rows.forEach((r) => {
+    lines.push(
+      columns
+        .map((c) => {
+          const v = r[c];
+          if (v == null) return csvEscape("");
+          return csvEscape(String(v));
+        })
+        .join(","),
+    );
+  });
+  return lines.join("\n");
+}
+
 export async function updateChatObservationReview(id, payload = {}) {
   if (!id) throw new Error("id is required");
   const patch = {

@@ -367,5 +367,26 @@
       if (!r.ok) throw new Error("logs_json_export_failed");
       return r.blob();
     },
+    getGuestGateEntriesSummary: function (params) {
+      var query = buildQuery(params || {});
+      var url = getApiBase() + "/admin/guest-gate-entries/summary" + (query ? "?" + query : "");
+      return jfetch(url).then(function (d) {
+        return d.summary || {};
+      });
+    },
+    getGuestGateEntries: function (params) {
+      var query = buildQuery(params || {});
+      var url = getApiBase() + "/admin/guest-gate-entries" + (query ? "?" + query : "");
+      return jfetch(url).then(function (d) {
+        return { items: d.items || [], pagination: d.pagination || {} };
+      });
+    },
+    downloadGuestGateEntriesCsv: async function (params) {
+      var query = buildQuery(params || {});
+      var url = getApiBase() + "/admin/guest-gate-entries/export.csv" + (query ? "?" + query : "");
+      var r = await fetch(url, { cache: "no-store", headers: mergeAuthHeaders() });
+      if (!r.ok) throw new Error("guest_gate_csv_export_failed");
+      return r.blob();
+    },
   };
 })();

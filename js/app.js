@@ -99,7 +99,18 @@
   /** Sunucu strict / site bayrağı: status düşünce ana sayfaya geçiş bloklu. */
   let gateStatusFetchFailed = false;
 
+  /**
+   * Kapı ekranında şifre alanı ve «isteğe bağlı iç erişim kodu» metni gizli (kimlik testi).
+   * İstemci şifre göndermez. Sunucu hâlâ şifre istiyorsa doğrulama başarısız olur — test için
+   * sunucuda kapı şifresini kapatın (`VIONA_UI_GATE_*`). Tekrar göstermek için false yapın.
+   */
+  const GATE_PASSWORD_UI_SUPPRESSED = true;
+
   const el = (id) => document.getElementById(id);
+
+  function gatePasswordUiActive() {
+    return Boolean(gatePasswordRequired && !GATE_PASSWORD_UI_SUPPRESSED);
+  }
 
   const SURVEY_TITLE_FALLBACK = {
     tr: "Deneyiminizi Değerlendirin",
@@ -829,22 +840,24 @@
       }
 
       if (!gateStatusFetchFailed) {
-        if (gatePasswordRequired) {
+        const pwUi = gatePasswordUiActive();
+        if (pwUi) {
           if (pwdStack) pwdStack.classList.remove("hidden");
           if (pwdWrap) pwdWrap.classList.remove("hidden");
         } else {
           if (pwdStack) pwdStack.classList.add("hidden");
           if (pwdWrap) pwdWrap.classList.add("hidden");
+          if (pwdLead) pwdLead.classList.add("hidden");
           if (pwd) pwd.value = "";
         }
         if (pwdLead) {
-          pwdLead.classList.toggle("hidden", !(gatePasswordRequired && gateIdentityRequired));
+          pwdLead.classList.toggle("hidden", !(pwUi && gateIdentityRequired));
         }
-        if (gatePasswordRequired && gateIdentityRequired) {
+        if (pwUi && gateIdentityRequired) {
           sub.setAttribute("data-i18n", "gateScreenSubtitleWithPasswordAndIdentity");
         } else if (gateIdentityRequired) {
           sub.setAttribute("data-i18n", "gateScreenSubtitleWithIdentity");
-        } else if (gatePasswordRequired) {
+        } else if (pwUi) {
           sub.setAttribute("data-i18n", "gateScreenSubtitleWithPassword");
         } else {
           sub.setAttribute("data-i18n", "gateScreenSubtitle");
@@ -892,10 +905,30 @@
     node.classList.remove("hidden");
   }
 
+  function gateScrollFocused(target) {
+    if (!target || typeof target.scrollIntoView !== "function") return;
+    requestAnimationFrame(() => {
+      try {
+        target.scrollIntoView({ block: "nearest", behavior: "smooth", inline: "nearest" });
+      } catch (_e) {
+        try {
+          target.scrollIntoView(true);
+        } catch (_e2) {
+          /* yoksay */
+        }
+      }
+    });
+  }
+
   function wireGateScreen() {
     const btn = el("btn-gate-continue");
     const back = el("btn-gate-back-lang");
     if (!btn) return;
+
+    ["gate-full-name", "gate-room", "gate-password"].forEach((id) => {
+      const node = el(id);
+      if (node) node.addEventListener("focus", () => gateScrollFocused(node));
+    });
 
     function clearGateError() {
       const err = el("gate-error");
@@ -941,7 +974,7 @@
 
         if (needsApiVerify) {
           const payload = {};
-          if (gatePasswordRequired) {
+          if (gatePasswordUiActive()) {
             const raw = (el("gate-password") && el("gate-password").value) || "";
             const pw = String(raw).trim();
             if (!pw) {
@@ -1074,7 +1107,7 @@
           const pwdEl = el("gate-password");
           const fnEl = el("gate-full-name");
           const chkGate = el("gate-check-privacy");
-          if (!gateStatusFetchFailed && gatePasswordRequired && pwdEl) pwdEl.focus();
+          if (!gateStatusFetchFailed && gatePasswordUiActive() && pwdEl) pwdEl.focus();
           else if (!gateStatusFetchFailed && gateIdentityRequired && fnEl) fnEl.focus();
           else if (!gateStatusFetchFailed && chkGate) chkGate.focus();
         });
@@ -1105,10 +1138,12 @@
       applyI18n(document);
       void refreshGuestGateUi().then(() => {
         const pwdEl = el("gate-password");
+        const fnEl = el("gate-full-name");
         const chkGate = el("gate-check-privacy");
         const retryBtn = el("btn-gate-retry-status");
         if (gateStatusFetchFailed && retryBtn) retryBtn.focus();
-        else if (!gateStatusFetchFailed && gatePasswordRequired && pwdEl) pwdEl.focus();
+        else if (!gateStatusFetchFailed && gatePasswordUiActive() && pwdEl) pwdEl.focus();
+        else if (!gateStatusFetchFailed && gateIdentityRequired && fnEl) fnEl.focus();
         else if (!gateStatusFetchFailed && chkGate) chkGate.focus();
       });
     });

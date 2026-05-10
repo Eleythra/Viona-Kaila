@@ -5679,6 +5679,96 @@
         attachAdminPager(mountEl, pag, rows, handlers.onPage);
       }
     },
+    renderAppGateSummary: function (mountEl, summary) {
+      if (!mountEl) return;
+      var s = summary || {};
+      function card(mod, label, value, hint) {
+        return (
+          '<div class="logs-kpi-card ' +
+          mod +
+          '">' +
+          '<p class="logs-kpi-card__label">' +
+          esc(label) +
+          "</p>" +
+          '<p class="logs-kpi-card__value">' +
+          esc(value) +
+          "</p>" +
+          '<p class="logs-kpi-card__hint">' +
+          esc(hint) +
+          "</p>" +
+          "</div>"
+        );
+      }
+      mountEl.innerHTML =
+        '<div class="logs-kpi-grid logs-kpi-grid--three" role="list">' +
+        card(
+          "logs-kpi-card--total",
+          "Filtreli toplam",
+          String(s.total != null ? s.total : 0),
+          "Seçili tarih, oda ve arama ile uyumlu kayıt sayısı.",
+        ) +
+        card(
+          "logs-kpi-card--fallback",
+          "Kurulum eşleşmesi",
+          String(s.deployBypassCount != null ? s.deployBypassCount : 0),
+          "VIONA_DEPLOY ad+oda eşleşmesi (aynı tarih penceresi; yöntem süzgeci bu sayıma dahil edilmez).",
+        ) +
+        card(
+          "logs-kpi-card--multi",
+          "Elektra / Hotspot",
+          String(s.elektraCount != null ? s.elektraCount : 0),
+          "PMS Hotspot listesi ile doğrulanan girişler (aynı pencere).",
+        ) +
+        "</div>";
+    },
+    renderAppGateTable: function (mountEl, rows, handlers) {
+      if (!mountEl) return;
+      var pag = handlers && handlers.pagination;
+      if (!rows || !rows.length) {
+        mountEl.innerHTML =
+          '<p class="logs-empty">Bu filtrelerle eşleşen kayıt yok. Tarih aralığını veya arama terimini genişletin.</p>';
+        return;
+      }
+      function methodLabel(m) {
+        var x = String(m || "").toLowerCase();
+        if (x === "deploy_bypass") return "Kurulum eşleşmesi";
+        if (x === "elektra") return "Elektra (Hotspot)";
+        return esc(String(m || "-"));
+      }
+      function truncateUa(ua, max) {
+        var t = String(ua || "").trim();
+        if (!t) return "-";
+        var n = max || 72;
+        return t.length <= n ? t : t.slice(0, n) + "…";
+      }
+      var html =
+        '<div class="bucket-table-wrap bucket-table-wrap--app-gate"><table class="admin-table admin-table--app-gate"><thead><tr>' +
+        "<th>Zaman</th><th>Ad soyad</th><th>Oda</th><th>Doğrulama</th><th>IP</th><th>User-Agent</th><th>Kayıt ID</th>" +
+        "</tr></thead><tbody>";
+      rows.forEach(function (r) {
+        var uaFull = String(r.user_agent || "").trim();
+        var uaDisp = truncateUa(uaFull, 72);
+        html += "<tr>";
+        html += "<td>" + esc(formatSubmittedAtTr(r.created_at)) + "</td>";
+        html += "<td>" + esc(String(r.full_name || "-")) + "</td>";
+        html += "<td>" + esc(String(r.room_number || "-")) + "</td>";
+        html += "<td>" + methodLabel(r.verification_method) + "</td>";
+        html += "<td>" + esc(String(r.client_ip || "-")) + "</td>";
+        html +=
+          '<td class="logs-cell"><div class="logs-cell__body" title="' +
+          esc(uaFull || "-") +
+          '">' +
+          esc(uaDisp) +
+          "</div></td>";
+        html += '<td><code class="admin-code">' + esc(String(r.id || "-")) + "</code></td>";
+        html += "</tr>";
+      });
+      html += "</tbody></table></div>";
+      mountEl.innerHTML = html;
+      if (pag && typeof handlers.onPage === "function") {
+        attachAdminPager(mountEl, pag, rows, handlers.onPage);
+      }
+    },
     /** Tablo / metin: gg/aa/yyyy ss:dd (yerel). */
     formatDateTimeDisplayTr: function (iso) {
       return formatSubmittedAtTr(iso);

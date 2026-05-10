@@ -17,7 +17,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/styles.css?v=30" />
-    <link rel="stylesheet" href="styles.css?v=61" />
+    <link rel="stylesheet" href="styles.css?v=63" />
   </head>
   <body class="admin-body">
     <section id="admin-login" class="admin-login">
@@ -66,6 +66,7 @@
             <button type="button" data-tab="guest_notifications" aria-controls="tab-guest-notifications" title="Misafir bildirim kayıtlarını açar">Misafir bildirimleri</button>
             <button type="button" data-tab="evaluations" aria-controls="tab-evaluations" title="Misafir anket özeti">Değerlendirmeler</button>
             <button type="button" data-tab="logs" aria-controls="tab-logs" title="Sohbet günlükleri: filtre, tablo ve dışa aktarım">Loglar</button>
+            <button type="button" data-tab="app_entries" aria-controls="tab-app-entries" title="Misafir web kapısı — doğrulanmış giriş kayıtları (ad, oda, yöntem)">Uygulama girişleri</button>
             <button type="button" data-tab="rooms" aria-controls="tab-rooms" title="Oda haritası: HK istek ve teknik arıza geçmişi">Odalar</button>
             <button type="button" data-tab="pdf-report" aria-controls="tab-pdf-report" title="PDF rapor oluşturma ekranını açar">Rapor</button>
           </nav>
@@ -767,6 +768,85 @@
             <div id="logs-table" class="logs-table-mount"></div>
           </article>
         </section>
+
+        <section id="tab-app-entries" class="admin-tab admin-tab--logs hidden" aria-label="Uygulama girişleri">
+          <div class="section-head">
+            <div class="logs-page-title">
+              <p class="home-panel__eyebrow section-head__eyebrow">Kapı audit</p>
+              <h2>Uygulama girişleri</h2>
+              <p class="logs-page-title__sub">
+                Misafir web arayüzünde başarılı kimlik doğrulaması (ad soyad + oda). Kayıtlar Supabase
+                <code class="inline-code">guest_gate_entries</code> tablosundandır; kişisel veri içerir — yalnız yetkili personel için.
+              </p>
+            </div>
+            <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
+          </div>
+          <p class="section-lead">
+            Tarih aralığı boşken özet panosu ile aynı yaklaşık pencere kullanılır (son ~30 gün). İki alt kart, seçtiğiniz tarih/oda/arama
+            penceresindeki <strong>yöntem dağılımını</strong> gösterir; üstteki «Doğrulama» süzgeci yalnızca tablo ve «Filtreli toplam» özetine uygulanır.
+          </p>
+          <article class="glass-block logs-section logs-section--kpi">
+            <header class="logs-section__head">
+              <p class="logs-section__eyebrow">Özet</p>
+              <h3 class="logs-section__title">Giriş göstergeleri</h3>
+              <p class="logs-section__desc">Filtrelerle uyumlu sayılar; tablo sayfası değiştikçe özet sabit kalır.</p>
+            </header>
+            <div id="app-gate-summary" class="logs-summary-mount"></div>
+          </article>
+          <article class="glass-block logs-section logs-section--filters">
+            <header class="logs-section__head">
+              <p class="logs-section__eyebrow">Sorgu</p>
+              <h3 class="logs-section__title">Filtreler ve dışa aktarım</h3>
+              <p class="logs-section__desc">
+                Tarih, doğrulama yöntemi, oda ve metin araması ile daraltın. CSV, bu ekrandaki filtrelerle aynı mantığı kullanır (üst sınır 5000 satır).
+              </p>
+            </header>
+            <div class="logs-toolbar">
+              <input
+                id="app-gate-search"
+                class="logs-toolbar__search"
+                type="search"
+                placeholder="Ad soyad veya oda içinde ara…"
+                autocomplete="off"
+              />
+              <div class="logs-toolbar__dates">
+                <label class="logs-field-label">Başlangıç <input id="app-gate-from" type="date" /></label>
+                <label class="logs-field-label">Bitiş <input id="app-gate-to" type="date" /></label>
+              </div>
+              <label class="logs-field-label app-gate-room-label">
+                Oda (tam)
+                <input id="app-gate-room" type="text" class="logs-toolbar__room" placeholder="örn. 0007" autocomplete="off" />
+              </label>
+              <select id="app-gate-method" class="logs-toolbar__select" aria-label="Doğrulama yöntemi">
+                <option value="">Yöntem (tümü)</option>
+                <option value="deploy_bypass">Kurulum eşleşmesi</option>
+                <option value="elektra">Elektra (Hotspot)</option>
+              </select>
+              <button id="app-gate-apply" type="button" class="btn-small logs-toolbar__apply">Uygula</button>
+              <div class="logs-toolbar__exports">
+                <button id="app-gate-csv" type="button" class="btn-small">CSV indir</button>
+              </div>
+            </div>
+            <p class="logs-toolbar__date-hint" role="note">
+              İki tarih de boşsa sunucu pano ile benzer varsayılan pencere uygulanır; CSV ile liste aynı parametreleri paylaşır.
+            </p>
+          </article>
+          <article
+            id="app-gate-table-anchor"
+            class="glass-block logs-section logs-section--table app-gate-table-section"
+            tabindex="-1"
+          >
+            <header class="logs-section__head">
+              <p class="logs-section__eyebrow">Kayıtlar</p>
+              <h3 class="logs-section__title">Giriş tablosu</h3>
+              <p class="logs-section__desc">
+                Sayfa başına <strong>50</strong> kayıt; önceki / sonraki ile sayfa değişince liste güncellenir ve görünüm tablo başına kayar.
+                Dar ekranda yatay kaydırma ile tüm sütunlar okunur. Liste salt okunurdur (audit).
+              </p>
+            </header>
+            <div id="app-gate-table" class="logs-table-mount"></div>
+          </article>
+        </section>
       </main>
     </div>
 
@@ -777,12 +857,12 @@
     <script src="../js/api-config.js?v=13"></script>
     <script src="../js/requests/config.js?v=20"></script>
     <script src="../js/hotel-room-numbers.js?v=2"></script>
-    <script src="js/data-adapter.js?v=25"></script>
-    <script src="js/ui.js?v=76"></script>
+    <script src="js/data-adapter.js?v=26"></script>
+    <script src="js/ui.js?v=78"></script>
     <script src="js/ops-manual-form.js?v=1"></script>
     <script src="js/ops-day-pdf.js?v=8"></script>
     <script src="js/rooms-explorer.js?v=1"></script>
     <script src="js/room-history-pdf.js?v=1"></script>
-    <script src="js/app.js?v=72"></script>
+    <script src="js/app.js?v=74"></script>
   </body>
 </html>

@@ -11,19 +11,19 @@ const I18N = {
     langGridAria: "Dil seçenekleri",
     continue: "Devam et",
 
-    gateScreenTitle: "Misafir doğrulama",
+    gateScreenTitle: "Giriş doğrulaması",
     gateScreenSubtitle:
-      "Devam etmek için kısa bilgilendirmeyi okuyup onaylayın.",
+      "Kısa bilgilendirmeyi okuyup onaylayarak devam edin.",
     gateScreenSubtitleWithPassword:
       "İç erişim kodunu girin; bilgilendirmeyi okuyup onaylayın.",
     gateScreenSubtitleWithIdentity:
-      "Konaklamanızı doğrulamak için adınızı, soyadınızı ve oda numaranızı girin.",
+      "Adınız, soyadınız ve oda numaranız otelin kayıtlarıyla güvenli şekilde eşleştirilir.",
     gateScreenSubtitleWithPasswordAndIdentity:
-      "Önce konaklama bilgilerinizi doğrulayın; ardından gerekiyorsa iç erişim kodunu ekleyin.",
+      "Önce ad ve soyad ile oda numaranızı doğrulayın; gerekiyorsa iç erişim kodunu ekleyin.",
     gateIdentityKicker: "Konaklama",
     gateIdentityTitle: "Kimliğinizi doğrulayın",
     gateIdentityLead:
-      "Rezervasyonunuzdaki ad ve soyadınızı, ardından oda numaranızı yazın. Bilgiler otelin kayıtlarıyla güvenli şekilde eşleştirilir.",
+      "Kayıtlı misafir bilgileriyle eşleştiğinde otelin dijital hizmetlerine erişim açılır.",
     gatePasswordSectionLead:
       "İsteğe bağlı — otelin misafirleriyle paylaştığı iç erişim kodu (varsa).",
     gateFullNameLabel: "Ad ve soyad",
@@ -697,19 +697,19 @@ const I18N = {
     langGridAria: "Language options",
     continue: "Continue",
 
-    gateScreenTitle: "Guest verification",
+    gateScreenTitle: "Verify your stay",
     gateScreenSubtitle:
-      "Read the brief notice below and confirm to continue.",
+      "Read the notice below and confirm to continue.",
     gateScreenSubtitleWithPassword:
       "Enter your hotel access code, then read the notice and confirm.",
     gateScreenSubtitleWithIdentity:
-      "Enter your first and last name as on your reservation, then your room number.",
+      "Your full name and room number are matched with the hotel’s guest records.",
     gateScreenSubtitleWithPasswordAndIdentity:
-      "Verify your stay first; add the hotel access code if required.",
+      "Confirm your name and room first; add the access code if prompted.",
     gateIdentityKicker: "Your stay",
     gateIdentityTitle: "Confirm who you are",
     gateIdentityLead:
-      "We match your details with the hotel’s active guest records so only registered guests can use these services.",
+      "Only guests whose details match our records can access hotel services here.",
     gatePasswordSectionLead:
       "Optional — hotel access code shared with guests, when applicable.",
     gateFullNameLabel: "Full name",
@@ -1381,19 +1381,19 @@ const I18N = {
     langGridAria: "Sprachauswahl",
     continue: "Weiter",
 
-    gateScreenTitle: "Gäste-Verifizierung",
+    gateScreenTitle: "Aufenthalt bestätigen",
     gateScreenSubtitle:
       "Lesen Sie den Kurzhinweis und bestätigen Sie, um fortzufahren.",
     gateScreenSubtitleWithPassword:
       "Geben Sie den Hotel-Zugangscode ein; lesen Sie den Hinweis und bestätigen Sie.",
     gateScreenSubtitleWithIdentity:
-      "Geben Sie Vor- und Nachname sowie Zimmernummer wie in der Reservierung ein.",
+      "Vor- und Nachname sowie Zimmernummer werden wie in der Reservierung geprüft.",
     gateScreenSubtitleWithPasswordAndIdentity:
-      "Bestätigen Sie zuerst Ihren Aufenthalt; bei Bedarf ergänzen Sie den Zugangscode.",
+      "Zuerst Name und Zimmer bestätigen; bei Bedarf den Zugangscode ergänzen.",
     gateIdentityKicker: "Aufenthalt",
     gateIdentityTitle: "Identität bestätigen",
     gateIdentityLead:
-      "Wir gleichen Ihre Angaben mit den aktiven Hoteldaten ab — nur registrierte Gäste erhalten Zugang.",
+      "Nur registrierte Gäste mit übereinstimmenden Daten erhalten Zugang zu den Hotel-Diensten.",
     gatePasswordSectionLead:
       "Optional — Hotel-Zugangscode für Gäste, falls vorgesehen.",
     gateFullNameLabel: "Vor- und Nachname",
@@ -2067,19 +2067,19 @@ const I18N = {
     langGridAria: "Wybór języka",
     continue: "Kontynuuj",
 
-    gateScreenTitle: "Weryfikacja gościa",
+    gateScreenTitle: "Potwierdzenie pobytu",
     gateScreenSubtitle:
       "Przeczytaj krótką informację i potwierdź, aby kontynuować.",
     gateScreenSubtitleWithPassword:
       "Wpisz kod dostępu do hotelu; następnie przeczytaj informację i potwierdź.",
     gateScreenSubtitleWithIdentity:
-      "Podaj imię i nazwisko oraz numer pokoju jak w rezerwacji.",
+      "Imię, nazwisko i numer pokoju są porównywane z listą gości hotelu.",
     gateScreenSubtitleWithPasswordAndIdentity:
-      "Najpierw potwierdź pobyt; w razie potrzeby dodaj kod dostępu.",
+      "Najpierw imię, nazwisko i pokój; w razie potrzeby dodaj kod dostępu.",
     gateIdentityKicker: "Pobyt",
     gateIdentityTitle: "Potwierdź tożsamość",
     gateIdentityLead:
-      "Dane porównujemy z aktywną listą gości hotelu — z usług mogą korzystać wyświetleni goście.",
+      "Z usług mogą korzystać wyłącznie goście, których dane zgadzają się z rejestracją hotelu.",
     gatePasswordSectionLead:
       "Opcjonalnie — kod dostępu przekazany gościom przez hotel (jeśli dotyczy).",
     gateFullNameLabel: "Imię i nazwisko",

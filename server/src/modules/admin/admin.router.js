@@ -16,6 +16,9 @@ import {
   getAdminBucketItem,
   listAdminBucket,
   listChatObservations,
+  listGuestGateEntries,
+  getGuestGateEntriesSummary,
+  exportGuestGateEntriesCsv,
   listSurveySubmissions,
   updateChatObservationReview,
   updateAdminItemStatus,
@@ -221,6 +224,35 @@ router.get("/reports/dashboard", async (req, res) => {
     return res.status(200).json({ ok: true, report });
   } catch (error) {
     return adminErr(res, error, "dashboard_report_failed");
+  }
+});
+
+router.get("/guest-gate-entries", async (req, res) => {
+  try {
+    const result = await listGuestGateEntries(req.query || {});
+    return res.status(200).json({ ok: true, ...result });
+  } catch (error) {
+    return adminErr(res, error, "admin_guest_gate_entries_failed");
+  }
+});
+
+router.get("/guest-gate-entries/summary", async (req, res) => {
+  try {
+    const summary = await getGuestGateEntriesSummary(req.query || {});
+    return res.status(200).json({ ok: true, summary });
+  } catch (error) {
+    return adminErr(res, error, "admin_guest_gate_summary_failed");
+  }
+});
+
+router.get("/guest-gate-entries/export.csv", async (req, res) => {
+  try {
+    const csv = await exportGuestGateEntriesCsv(req.query || {});
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", 'attachment; filename="guest_gate_entries.csv"');
+    return res.status(200).send(csv);
+  } catch (error) {
+    return adminErr(res, error, "admin_guest_gate_export_failed");
   }
 });
 
