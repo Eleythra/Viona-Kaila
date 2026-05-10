@@ -5,6 +5,7 @@ import {
   buildElektraBearerToken,
   buildHotspotAuthHeaders,
   buildHotspotListUrl,
+  parseHotspotListEnvelope,
 } from "./elektra-hotspot.provider.js";
 
 test("buildHotspotListCacheKey — path ve auth farkı ayrı anahtar", () => {
@@ -39,6 +40,33 @@ test("buildHotspotListUrl — HOTELID ve isteğe bağlı query token", () => {
 test("buildHotspotListUrl — base sonundaki slash temizlenir", () => {
   const u = buildHotspotListUrl("https://x.com///", "/p", "1", "", "");
   assert.equal(u, "https://x.com/p?HOTELID=1");
+});
+
+test("parseHotspotListEnvelope — STATUS + DATA", () => {
+  const out = parseHotspotListEnvelope({
+    STATUS: true,
+    DATA: [{ ROOMNO: "101", LNAME: "Test" }],
+  });
+  assert.equal(out.records.length, 1);
+  assert.equal(out.statusFieldPresent, true);
+  assert.equal(out.statusOk, true);
+});
+
+test("parseHotspotListEnvelope — STATUS false throws", () => {
+  assert.throws(
+    () =>
+      parseHotspotListEnvelope({
+        STATUS: false,
+        DATA: [],
+      }),
+    /elektra_status_false/,
+  );
+});
+
+test("parseHotspotListEnvelope — kök dizi (STATUS yok)", () => {
+  const out = parseHotspotListEnvelope([{ x: 1 }]);
+  assert.equal(out.records.length, 1);
+  assert.equal(out.statusFieldPresent, false);
 });
 
 test("buildHotspotAuthHeaders — bearer / raw / query / none", () => {

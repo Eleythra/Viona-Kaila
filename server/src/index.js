@@ -27,6 +27,15 @@ import {
 import { runDailyOperationReportJob, ymdTodayInHotelTz } from "./modules/admin/reporting/daily-operation-report.job.js";
 import { runOperationalPendingReminderJob } from "./services/operational-pending-reminder.service.js";
 import {
+  extractAdminToken,
+  isAdminTokenValid,
+} from "./lib/admin-auth.js";
+import { clearHotspotListCache } from "./modules/pms/elektra/hotspot-list-cache.js";
+import {
+  buildElektraBearerToken,
+  fetchHotspotGuestList,
+} from "./modules/pms/elektra/elektra-hotspot.provider.js";
+import {
   pingDailyOperationReportFromHttpTraffic,
   startDailyOperationReportScheduler,
 } from "./modules/admin/reporting/daily-operation-report.scheduler.js";
@@ -687,6 +696,87 @@ app.get("/api/internal/operational-pending-reminder-cron", async (req, res) => {
   }
 });
 
+function authorizeCronSecretOrAdmin(req) {
+  const cronSecret = String(process.env.CRON_SECRET || "").trim();
+  const auth = String(req.headers.authorization || "").trim();
+  if (cronSecret && auth === `Bearer ${cronSecret}`) return true;
+  return isAdminTokenValid(extractAdminToken(req));
+}
+
+/**
+ * Elektra `GetHotspotList` bağlantı testi — yanıtta misafir listesi veya token yok (yalnızca özet).
+ * Yetki: `Authorization: Bearer $CRON_SECRET` veya admin token (`Authorization` / `X-Admin-Token`).
+ * `?nocache=1`: hotspot önbelleğini temizleyip yeni istek (Elektra’ya gider).
+ */
+app.get("/api/internal/elektra-hotspot-smoke", async (req, res) => {
+  try {
+    if (!authorizeCronSecretOrAdmin(req)) {
+      return res.status(401).json({ ok: false, error: "unauthorized" });
+    }
+    if (!env.elektraHotspotCredentialsConfigured) {
+      return res.status(503).json({
+        ok: false,
+        error: "elektra_env_incomplete",
+        hint:
+          "Set ELEKTRA_BASE_URL, ELEKTRA_HOTEL_ID, ELEKTRA_TOKEN (and ELEKTRA_AUTH_QUERY_KEY when ELEKTRA_AUTH_MODE=query).",
+      });
+    }
+    const nocache = String(req.query.nocache || "") === "1";
+    if (nocache) clearHotspotListCache();
+
+    const hid = String(env.elektraHotelId || "").trim();
+    const bearer = buildElektraBearerToken(hid, env.elektraToken);
+    const authQk = String(env.elektraAuthQueryKey || "").trim();
+    const started = Date.now();
+    let records;
+    try {
+      records = await fetchHotspotGuestList({
+        baseUrl: env.elektraBaseUrl,
+        hotelId: hid,
+        bearerToken: bearer,
+        hotspotPath: env.elektraHotspotPath,
+        authMode: env.elektraAuthModeNormalized,
+        authHeaderName: env.elektraAuthHeader,
+        authQueryKey: authQk,
+        timeoutMs: env.elektraFetchTimeoutMs,
+        maxRetries: env.elektraFetchMaxRetries,
+        cacheTtlMs: env.elektraCacheTtlMs,
+      });
+    } catch (e) {
+      const code = String(e?.message || e || "");
+      console.warn("[elektra_hotspot_smoke] fetch_failed code=%s", code.slice(0, 80));
+      return res.status(503).json({
+        ok: false,
+        error: "elektra_fetch_failed",
+        code: code.slice(0, 120),
+        elapsed_ms: Date.now() - started,
+      });
+    }
+
+    const sample = records[0];
+    const fieldsPresent = sample
+      ? {
+          roomNo: Boolean(String(sample.roomNo || "").trim()),
+          lname: Boolean(String(sample.lname || "").trim()),
+          checkin: Boolean(String(sample.checkin || "").trim()),
+          checkout: Boolean(String(sample.checkout || "").trim()),
+        }
+      : null;
+
+    return res.status(200).json({
+      ok: true,
+      hotel_id: hid,
+      guest_record_count: records.length,
+      sample_row_fields_present: fieldsPresent,
+      elapsed_ms: Date.now() - started,
+      nocache,
+    });
+  } catch (e) {
+    console.error("[elektra_hotspot_smoke]", e);
+    return res.status(500).json({ ok: false, error: String(e?.message || e) });
+  }
+});
+
 const speechLimiter = rateLimit({
   windowMs: env.rateLimitWindowMs,
   max: Math.min(60, Math.max(24, Math.floor(env.rateLimitMax / 4))),
@@ -740,11 +830,17 @@ app.get("/api/health", (req, res) => {
     },
     /** 1 iken /api/ops token olmadan yalnızca güvenilir origin + X-Viona-Ops-Page ile açılır (dahili kullanım). */
     opsTrustOpsPageHeader: Boolean(env.opsTrustOpsPageHeader),
-    /** Elektra PMS misafir doğrulama: env tam ve GUEST_PMS_VERIFY_ENABLED=1 (değer sızmaz). */
-    elektraGuestVerifyActive: Boolean(env.elektraGuestVerifyConfigured),
+    /** Kapı: Elektra ile kimlik doğrulama açık mı (`GUEST_PMS_GATE_VERIFY_ENABLED` + env). */
+    elektraGateVerifyActive: Boolean(env.elektraGateVerifyConfigured),
+    /** Formlar: insert öncesi PMS doğrulama açık mı (`GUEST_PMS_VERIFY_ENABLED` + env). */
+    elektraInsertVerifyActive: Boolean(env.elektraInsertVerifyConfigured),
+    /** `ELEKTRA_BASE_URL` + `ELEKTRA_HOTEL_ID` + `ELEKTRA_TOKEN` (+ query modunda query key) — smoke test için. */
+    elektraHotspotCredentialsConfigured: Boolean(env.elektraHotspotCredentialsConfigured),
     /** Misafir statik site kapı şifresi: VIONA_UI_GATE_PASSWORD dolu ve etkin mi (değer sızmaz). */
     guestUiGateRequired: Boolean(env.guestUiGateRequired),
     guestUiGateStrict: Boolean(env.guestUiGateStrict),
+    /** Kapıda ad+oda kontrolü (`VIONA_DEPLOY_GUEST_*`) tanımlı mı — değer sızmaz. */
+    guestDeployIdentityConfigured: Boolean(env.guestDeployIdentityConfigured),
     /** Günlük PDF: dış cron GET için `DAILY_OPERATION_REPORT_CRON_KEY` tanımlı mı (değer sızmaz). */
     dailyReportExternalCronKeyConfigured: Boolean(
       String(process.env.DAILY_OPERATION_REPORT_CRON_KEY || "").trim(),
@@ -778,6 +874,18 @@ app.use(
     },
     get guestUiGateStrict() {
       return env.guestUiGateStrict;
+    },
+    get guestDeployIdentityConfigured() {
+      return env.guestDeployIdentityConfigured;
+    },
+    get vionaDeployGuestFullName() {
+      return env.vionaDeployGuestFullName;
+    },
+    get vionaDeployGuestRoom() {
+      return env.vionaDeployGuestRoom;
+    },
+    get elektraGateVerifyConfigured() {
+      return env.elektraGateVerifyConfigured;
     },
   }),
 );

@@ -11,13 +11,27 @@ const I18N = {
     langGridAria: "Dil seçenekleri",
     continue: "Devam et",
 
-    gateScreenTitle: "Hoş geldiniz",
+    gateScreenTitle: "Misafir doğrulama",
     gateScreenSubtitle:
-      "Kısa bilgilendirmeyi okuyup onaylayarak devam edebilirsiniz.",
+      "Devam etmek için kısa bilgilendirmeyi okuyup onaylayın.",
     gateScreenSubtitleWithPassword:
-      "Önce erişim şifresini girin; ardından aşağıdaki bilgilendirmeyi okuyup onaylayın.",
-    gatePasswordLabel: "Erişim şifresi",
-    gatePasswordPlaceholder: "Şifreyi girin",
+      "İç erişim kodunu girin; bilgilendirmeyi okuyup onaylayın.",
+    gateScreenSubtitleWithIdentity:
+      "Konaklamanızı doğrulamak için adınızı, soyadınızı ve oda numaranızı girin.",
+    gateScreenSubtitleWithPasswordAndIdentity:
+      "Önce konaklama bilgilerinizi doğrulayın; ardından gerekiyorsa iç erişim kodunu ekleyin.",
+    gateIdentityKicker: "Konaklama",
+    gateIdentityTitle: "Kimliğinizi doğrulayın",
+    gateIdentityLead:
+      "Rezervasyonunuzdaki ad ve soyadınızı, ardından oda numaranızı yazın. Bilgiler otelin kayıtlarıyla güvenli şekilde eşleştirilir.",
+    gatePasswordSectionLead:
+      "İsteğe bağlı — otelin misafirleriyle paylaştığı iç erişim kodu (varsa).",
+    gateFullNameLabel: "Ad ve soyad",
+    gateFullNamePlaceholder: "Pasaport veya kimlikteki gibi",
+    gateRoomLabel: "Oda numarası",
+    gateRoomPlaceholder: "Örn. 1204, 0007 veya VIP01",
+    gatePasswordLabel: "İç erişim kodu",
+    gatePasswordPlaceholder: "Otel tarafından verilen kod",
     gatePrivacyTitle: "Kişisel veriler — kısa bilgilendirme",
     gatePrivacyBody:
       "Viona üzerinden ilettiğiniz bilgiler, Kaila Beach Hotel’de konaklamanızla ilgili taleplerinizi karşılamak ve sizi bilgilendirmek için işlenir; hukuka aykırı şekilde yayımlanmaz. Ayrıntılı aydınlatma ve haklarınız için otelin resmi bilgilendirme metnine başvurabilirsiniz.",
@@ -25,7 +39,7 @@ const I18N = {
       "• Reşit olduğunuzu (18 yaş ve üzeri) beyan edersiniz; aksi halde bu uygulamayı kullanmamanız gerekir.",
     gateCheckPrivacy:
       "Yukarıdaki bilgilendirmeyi ve reşitlik maddesini okudum, kabul ediyorum.",
-    gateSubmit: "Onaylıyorum ve devam ediyorum",
+    gateSubmit: "Doğrula ve devam et",
     gateBackLang: "Dil seçimine dön",
     gateErrorPassword: "Şifre doğru değil. Güncel şifreyi girin.",
     gateErrorPasswordEmpty: "Lütfen erişim şifresini girin.",
@@ -35,6 +49,9 @@ const I18N = {
       "Giriş doğrulanamıyor (sunucuya ulaşılamıyor). Bağlantınızı kontrol edin veya Tekrar dene’ye basın.",
     gateRetryStatus: "Tekrar dene",
     gateErrorPrivacy: "Devam etmek için onayı işaretleyin.",
+    gateErrorIdentityRequired: "Lütfen ad soyad ve oda numarasını girin.",
+    gateErrorIdentityMismatch:
+      "Ad soyad veya oda bilgisi doğrulanamadı. Kayıtlı bilgilerle tekrar deneyin veya resepsiyon ile görüşün.",
 
     homeTitle: "Kaila Beach Hotel",
 
@@ -680,20 +697,34 @@ const I18N = {
     langGridAria: "Language options",
     continue: "Continue",
 
-    gateScreenTitle: "Welcome",
+    gateScreenTitle: "Guest verification",
     gateScreenSubtitle:
-      "Please read the brief notice below and confirm to continue.",
+      "Read the brief notice below and confirm to continue.",
     gateScreenSubtitleWithPassword:
-      "Enter the hotel access password first, then read the notice below and confirm to continue.",
-    gatePasswordLabel: "Access password",
-    gatePasswordPlaceholder: "Enter password",
+      "Enter your hotel access code, then read the notice and confirm.",
+    gateScreenSubtitleWithIdentity:
+      "Enter your first and last name as on your reservation, then your room number.",
+    gateScreenSubtitleWithPasswordAndIdentity:
+      "Verify your stay first; add the hotel access code if required.",
+    gateIdentityKicker: "Your stay",
+    gateIdentityTitle: "Confirm who you are",
+    gateIdentityLead:
+      "We match your details with the hotel’s active guest records so only registered guests can use these services.",
+    gatePasswordSectionLead:
+      "Optional — hotel access code shared with guests, when applicable.",
+    gateFullNameLabel: "Full name",
+    gateFullNamePlaceholder: "As shown on your ID or reservation",
+    gateRoomLabel: "Room number",
+    gateRoomPlaceholder: "e.g. 1204, 0007 or VIP01",
+    gatePasswordLabel: "Hotel access code",
+    gatePasswordPlaceholder: "Code provided by the hotel",
     gatePrivacyTitle: "Privacy — brief notice",
     gatePrivacyBody:
       "Information you share through Viona is used to handle requests related to your stay at Kaila Beach Hotel and to keep you informed appropriately; it is not published unlawfully. Please refer to the hotel’s official privacy notice for full details and your rights.",
     gatePrivacyAgeLine:
       "• You declare that you are of legal age (18+); otherwise you must not use this application.",
     gateCheckPrivacy: "I have read the notice and the age statement above and I agree.",
-    gateSubmit: "I agree and continue",
+    gateSubmit: "Verify and continue",
     gateBackLang: "Back to language selection",
     gateErrorPassword: "Incorrect password. Please enter the current access password.",
     gateErrorPasswordEmpty: "Please enter the access password.",
@@ -703,6 +734,9 @@ const I18N = {
       "We could not verify access (server unreachable). Check your connection or tap Retry.",
     gateRetryStatus: "Retry",
     gateErrorPrivacy: "Please tick the box to confirm and continue.",
+    gateErrorIdentityRequired: "Please enter your full name and room number.",
+    gateErrorIdentityMismatch:
+      "We could not verify your name or room. Please check your details or contact reception.",
 
     homeTitle: "Kaila Beach Hotel",
 
@@ -1347,13 +1381,27 @@ const I18N = {
     langGridAria: "Sprachauswahl",
     continue: "Weiter",
 
-    gateScreenTitle: "Willkommen",
+    gateScreenTitle: "Gäste-Verifizierung",
     gateScreenSubtitle:
-      "Bitte lesen Sie den Kurzhinweis und bestätigen Sie unten, um fortzufahren.",
+      "Lesen Sie den Kurzhinweis und bestätigen Sie, um fortzufahren.",
     gateScreenSubtitleWithPassword:
-      "Geben Sie zuerst das Hotel-Zugangspasswort ein; lesen Sie dann den Hinweis unten und bestätigen Sie.",
-    gatePasswordLabel: "Zugangspasswort",
-    gatePasswordPlaceholder: "Passwort eingeben",
+      "Geben Sie den Hotel-Zugangscode ein; lesen Sie den Hinweis und bestätigen Sie.",
+    gateScreenSubtitleWithIdentity:
+      "Geben Sie Vor- und Nachname sowie Zimmernummer wie in der Reservierung ein.",
+    gateScreenSubtitleWithPasswordAndIdentity:
+      "Bestätigen Sie zuerst Ihren Aufenthalt; bei Bedarf ergänzen Sie den Zugangscode.",
+    gateIdentityKicker: "Aufenthalt",
+    gateIdentityTitle: "Identität bestätigen",
+    gateIdentityLead:
+      "Wir gleichen Ihre Angaben mit den aktiven Hoteldaten ab — nur registrierte Gäste erhalten Zugang.",
+    gatePasswordSectionLead:
+      "Optional — Hotel-Zugangscode für Gäste, falls vorgesehen.",
+    gateFullNameLabel: "Vor- und Nachname",
+    gateFullNamePlaceholder: "Wie im Ausweis oder in der Buchung",
+    gateRoomLabel: "Zimmernummer",
+    gateRoomPlaceholder: "z. B. 1204, 0007 oder VIP01",
+    gatePasswordLabel: "Hotel-Zugangscode",
+    gatePasswordPlaceholder: "Vom Hotel mitgeteilter Code",
     gatePrivacyTitle: "Datenschutz — Kurzhinweis",
     gatePrivacyBody:
       "Die über Viona übermittelten Informationen werden zur Bearbeitung Ihrer Anliegen im Zusammenhang mit Ihrem Aufenthalt im Kaila Beach Hotel und zur angemessenen Information verwendet; eine rechtswidrige Veröffentlichung erfolgt nicht. Ausführliche Informationen und Ihre Rechte entnehmen Sie bitte der offiziellen Datenschutzerklärung des Hotels.",
@@ -1361,7 +1409,7 @@ const I18N = {
       "• Sie erklären, dass Sie volljährig sind (18 Jahre oder älter); andernfalls dürfen Sie diese Anwendung nicht nutzen.",
     gateCheckPrivacy:
       "Ich habe den Hinweis und die Altersangabe oben gelesen und stimme zu.",
-    gateSubmit: "Zustimmen und fortfahren",
+    gateSubmit: "Bestätigen und fortfahren",
     gateBackLang: "Zurück zur Sprachauswahl",
     gateErrorPassword: "Passwort ungültig. Bitte das aktuelle Zugangspasswort eingeben.",
     gateErrorPasswordEmpty: "Bitte geben Sie das Zugangspasswort ein.",
@@ -1371,6 +1419,9 @@ const I18N = {
       "Zugang konnte nicht geprüft werden (Server nicht erreichbar). Verbindung prüfen oder «Erneut» tippen.",
     gateRetryStatus: "Erneut versuchen",
     gateErrorPrivacy: "Bitte aktivieren Sie das Kontrollkästchen, um fortzufahren.",
+    gateErrorIdentityRequired: "Bitte geben Sie Vor- und Nachnamen sowie Zimmernummer ein.",
+    gateErrorIdentityMismatch:
+      "Name oder Zimmernummer konnte nicht bestätigt werden. Bitte prüfen oder die Rezeption kontaktieren.",
 
     homeTitle: "Kaila Beach Hotel",
 
@@ -2016,13 +2067,27 @@ const I18N = {
     langGridAria: "Wybór języka",
     continue: "Kontynuuj",
 
-    gateScreenTitle: "Witamy",
+    gateScreenTitle: "Weryfikacja gościa",
     gateScreenSubtitle:
-      "Przeczytaj krótką informację poniżej i potwierdź, aby kontynuować.",
+      "Przeczytaj krótką informację i potwierdź, aby kontynuować.",
     gateScreenSubtitleWithPassword:
-      "Najpierw wpisz hasło dostępu do hotelu; następnie przeczytaj informację poniżej i potwierdź.",
-    gatePasswordLabel: "Hasło dostępu",
-    gatePasswordPlaceholder: "Wpisz hasło",
+      "Wpisz kod dostępu do hotelu; następnie przeczytaj informację i potwierdź.",
+    gateScreenSubtitleWithIdentity:
+      "Podaj imię i nazwisko oraz numer pokoju jak w rezerwacji.",
+    gateScreenSubtitleWithPasswordAndIdentity:
+      "Najpierw potwierdź pobyt; w razie potrzeby dodaj kod dostępu.",
+    gateIdentityKicker: "Pobyt",
+    gateIdentityTitle: "Potwierdź tożsamość",
+    gateIdentityLead:
+      "Dane porównujemy z aktywną listą gości hotelu — z usług mogą korzystać wyświetleni goście.",
+    gatePasswordSectionLead:
+      "Opcjonalnie — kod dostępu przekazany gościom przez hotel (jeśli dotyczy).",
+    gateFullNameLabel: "Imię i nazwisko",
+    gateFullNamePlaceholder: "Jak w dowodzie lub rezerwacji",
+    gateRoomLabel: "Numer pokoju",
+    gateRoomPlaceholder: "np. 1204, 0007 lub VIP01",
+    gatePasswordLabel: "Kod dostępu do hotelu",
+    gatePasswordPlaceholder: "Kod podany przez hotel",
     gatePrivacyTitle: "Prywatność — krótka informacja",
     gatePrivacyBody:
       "Informacje przekazywane przez Viona są wykorzystywane do realizacji związanych z pobytem w Kaila Beach Hotel oraz do odpowiedniego informowania; nie są publikowane w sposób niezgodny z prawem. Pełne informacje i Państwa prawa znajdują się w oficjalnej polityce prywatności hotelu.",
@@ -2030,7 +2095,7 @@ const I18N = {
       "• Oświadczasz, że jesteś osobą pełnoletnią (18+); w przeciwnym razie nie powinieneś/powinnaś korzystać z aplikacji.",
     gateCheckPrivacy:
       "Przeczytałem/am powyższą informację i punkt o wieku oraz akceptuję.",
-    gateSubmit: "Akceptuję i kontynuuję",
+    gateSubmit: "Potwierdź i przejdź",
     gateBackLang: "Powrót do wyboru języka",
     gateErrorPassword: "Nieprawidłowe hasło. Wpisz aktualne hasło dostępu.",
     gateErrorPasswordEmpty: "Wpisz hasło dostępu.",
@@ -2040,6 +2105,9 @@ const I18N = {
       "Nie można zweryfikować dostępu (brak połączenia z serwerem). Sprawdź internet lub dotknij «Spróbuj ponownie».",
     gateRetryStatus: "Spróbuj ponownie",
     gateErrorPrivacy: "Zaznacz pole potwierdzenia, aby kontynuować.",
+    gateErrorIdentityRequired: "Podaj imię i nazwisko oraz numer pokoju.",
+    gateErrorIdentityMismatch:
+      "Nie udało się zweryfikować imienia lub numeru pokoju. Sprawdź dane lub skontaktuj się z recepcją.",
 
     homeTitle: "Hotel Kaila Beach",
     introLead: "Przy plaży w Obagöl, Alanya — All Inclusive dla komfortowych wakacji.",

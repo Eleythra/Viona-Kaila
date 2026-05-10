@@ -279,8 +279,21 @@ export function getEnv() {
     get elektraAuthModeNormalized() {
       return normalizeElektraAuthMode(this.elektraAuthMode);
     },
-    /** `1` ise ve Elektra env tam ise insert öncesi PMS doğrulaması. Varsayılan kapalı. */
+    /**
+     * `1` ise misafir istekleri (POST guest-requests vb.) Supabase insert öncesi Elektra ile doğrulanır.
+     * Kapı ekranı için ayrıca `GUEST_PMS_GATE_VERIFY_ENABLED` kullanılır — ikisi bağımsız.
+     */
     guestPmsVerifyEnabled: optional("GUEST_PMS_VERIFY_ENABLED", "") === "1",
+    /**
+     * Kapıda Elektra ile ad+oda doğrulaması.
+     * `GUEST_PMS_GATE_VERIFY_ENABLED` açıkça `0`/`1` değilse, geriye dönük olarak `GUEST_PMS_VERIFY_ENABLED` ile aynı kabul edilir.
+     */
+    guestPmsGateVerifyEnabled: (() => {
+      const raw = String(optional("GUEST_PMS_GATE_VERIFY_ENABLED", "") || "").trim();
+      if (raw === "1") return true;
+      if (raw === "0") return false;
+      return optional("GUEST_PMS_VERIFY_ENABLED", "") === "1";
+    })(),
     guestPmsVerifyTypesCsv: optional(
       "GUEST_PMS_VERIFY_TYPES",
       "request,complaint,fault,guest_notification",
@@ -297,12 +310,34 @@ export function getEnv() {
         .filter(Boolean);
       return new Set(raw.length ? raw : ["request", "complaint", "fault", "guest_notification"]);
     },
-    get elektraGuestVerifyConfigured() {
+    /** Form / insert öncesi PMS doğrulaması açık mı. */
+    get elektraInsertVerifyConfigured() {
       const qk = String(this.elektraAuthQueryKey || "").trim();
       if (this.elektraAuthModeNormalized === "query" && !qk) return false;
       return Boolean(
         this.guestPmsVerifyEnabled &&
           String(this.elektraBaseUrl || "").trim() &&
+          String(this.elektraHotelId || "").trim() &&
+          String(this.elektraToken || "").trim(),
+      );
+    },
+    /** Kapı ekranında Elektra ile doğrulama açık mı. */
+    get elektraGateVerifyConfigured() {
+      const qk = String(this.elektraAuthQueryKey || "").trim();
+      if (this.elektraAuthModeNormalized === "query" && !qk) return false;
+      return Boolean(
+        this.guestPmsGateVerifyEnabled &&
+          String(this.elektraBaseUrl || "").trim() &&
+          String(this.elektraHotelId || "").trim() &&
+          String(this.elektraToken || "").trim(),
+      );
+    },
+    /** Hotspot URL + otel + token dolu mu (`GUEST_PMS_VERIFY_ENABLED` şart değil — smoke / kurulum). */
+    get elektraHotspotCredentialsConfigured() {
+      const qk = String(this.elektraAuthQueryKey || "").trim();
+      if (this.elektraAuthModeNormalized === "query" && !qk) return false;
+      return Boolean(
+        String(this.elektraBaseUrl || "").trim() &&
           String(this.elektraHotelId || "").trim() &&
           String(this.elektraToken || "").trim(),
       );
@@ -313,12 +348,25 @@ export function getEnv() {
      */
     guestUiGatePassword: optional("VIONA_UI_GATE_PASSWORD", ""),
     guestUiGatePassword2: optional("VIONA_UI_GATE_PASSWORD_2", ""),
+    /**
+     * Kurulum / test: otelde konaklamadan uygulamaya girmek için sunucuda sabit ad+oda çifti.
+     * Eşleşirse Elektra çağrılmadan kapı geçilir (canlı konak listesinde olmak şart değildir).
+     * Üretimde yalnız gerçek misafir + Elektra ile çalışılacaksa boş bırakın.
+     */
+    vionaDeployGuestFullName: optional("VIONA_DEPLOY_GUEST_FULL_NAME", ""),
+    vionaDeployGuestRoom: optional("VIONA_DEPLOY_GUEST_ROOM", ""),
     /** `0` ise şifre dolu olsa bile kapı doğrulaması kapalı (bakım / geçici). */
     guestUiGateDisabled: optional("VIONA_UI_GATE_ENABLED", "1") === "0",
     get guestUiGatePasswordList() {
       return [this.guestUiGatePassword, this.guestUiGatePassword2]
         .map((s) => String(s || "").trim())
         .filter(Boolean);
+    },
+    get guestDeployIdentityConfigured() {
+      return Boolean(
+        String(this.vionaDeployGuestFullName || "").trim() &&
+          String(this.vionaDeployGuestRoom || "").trim(),
+      );
     },
     get guestUiGateRequired() {
       if (this.guestUiGateDisabled) return false;

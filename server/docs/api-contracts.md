@@ -23,7 +23,7 @@ Postman’daki istekle hizalamak için isteğe bağlı: `ELEKTRA_HOTSPOT_PATH`, 
 - **POST `/api/guest-requests`:** Başarısız doğrulamada `422` (veya `503` PMS erişilemez, `429` çok deneme); gövde `{ ok: false, error: "<TR mesaj>", reason: "<kod>" }`.
 - **reason:** `room_not_found` | `surname_mismatch` | `stay_not_active` | `ambiguous_guest` | `pms_unavailable` | `too_many_verification_attempts`
 - **Sohbet:** Aynı doğrulama `createGuestRequest` içinde; hata durumunda yanıt metni güncellenir, `meta.action` kaldırılır, `meta.guest_verification_failed` reason kodu ile işaretlenir.
-- **`/api/health`:** `elektraGuestVerifyActive` — env tam ve doğrulama açık mı (değer sızmaz).
+- **`/api/health`:** `elektraGateVerifyActive` (kapı), `elektraInsertVerifyActive` (form insert öncesi) — env tam ve ilgili bayrak açık mı (değer sızmaz).
 
 ### Meta Cloud API — gönderim uç noktası
 

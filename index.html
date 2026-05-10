@@ -52,7 +52,7 @@
         </div>
       </section>
 
-      <!-- Erişim: isteğe bağlı şifre (API) → KVKK özeti → onay -->
+      <!-- Erişim: misafir kimliği → isteğe bağlı iç şifre → KVKK → onay -->
       <section id="view-gate" class="view view--gate hidden" aria-hidden="true" aria-labelledby="gate-screen-heading">
         <div class="lang-bg gate-bg" aria-hidden="true"></div>
         <div class="lang-overlay"></div>
@@ -64,20 +64,57 @@
             <p id="gate-screen-subtitle" class="lang-sub gate-sub" data-i18n="gateScreenSubtitle"></p>
           </header>
 
-          <div class="gate-password-wrap hidden" id="gate-password-wrap">
-            <label class="gate-field" for="gate-password">
-              <span class="gate-label" data-i18n="gatePasswordLabel"></span>
-              <input
-                type="password"
-                id="gate-password"
-                class="gate-input"
-                autocomplete="current-password"
-                autocorrect="off"
-                autocapitalize="none"
-                spellcheck="false"
-                data-i18n-placeholder="gatePasswordPlaceholder"
-              />
-            </label>
+          <div class="gate-identity-panel glass-block hidden" id="gate-identity-panel">
+            <p class="gate-panel-kicker" data-i18n="gateIdentityKicker"></p>
+            <h2 class="gate-panel-title" data-i18n="gateIdentityTitle"></h2>
+            <p class="gate-panel-lead" data-i18n="gateIdentityLead"></p>
+            <div class="gate-identity-fields" id="gate-identity-wrap">
+              <label class="gate-field" for="gate-full-name">
+                <span class="gate-label" data-i18n="gateFullNameLabel"></span>
+                <input
+                  type="text"
+                  id="gate-full-name"
+                  class="gate-input gate-input--hero"
+                  autocomplete="name"
+                  autocorrect="off"
+                  autocapitalize="words"
+                  spellcheck="false"
+                  data-i18n-placeholder="gateFullNamePlaceholder"
+                />
+              </label>
+              <label class="gate-field" for="gate-room">
+                <span class="gate-label" data-i18n="gateRoomLabel"></span>
+                <input
+                  type="text"
+                  id="gate-room"
+                  class="gate-input gate-input--hero"
+                  inputmode="text"
+                  autocomplete="off"
+                  autocorrect="off"
+                  spellcheck="false"
+                  data-i18n-placeholder="gateRoomPlaceholder"
+                />
+              </label>
+            </div>
+          </div>
+
+          <div class="gate-password-stack hidden" id="gate-password-stack">
+            <p class="gate-password-lead hidden" id="gate-password-lead" data-i18n="gatePasswordSectionLead"></p>
+            <div class="gate-password-wrap hidden" id="gate-password-wrap">
+              <label class="gate-field" for="gate-password">
+                <span class="gate-label gate-label--muted" data-i18n="gatePasswordLabel"></span>
+                <input
+                  type="password"
+                  id="gate-password"
+                  class="gate-input gate-input--secondary"
+                  autocomplete="current-password"
+                  autocorrect="off"
+                  autocapitalize="none"
+                  spellcheck="false"
+                  data-i18n-placeholder="gatePasswordPlaceholder"
+                />
+              </label>
+            </div>
           </div>
 
           <div class="gate-privacy glass-block gate-privacy-card" role="region" aria-labelledby="gate-privacy-heading">

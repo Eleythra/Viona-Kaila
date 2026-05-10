@@ -90,6 +90,10 @@
 
   /** Sunucu `GET /public/guest-gate/status` ile belirlenir; şifre alanı yalnızca true iken görünür. */
   let gatePasswordRequired = false;
+  /** Sunucu — ad soyad + oda zorunlu (Elektra veya deploy listesi). */
+  let gateIdentityRequired = false;
+  /** Sunucu — kimlik Elektra PMS ile doğrulanıyor (`pmsIdentity` status alanı). */
+  let gatePmsIdentity = false;
   /** Status isteği bitene kadar «Devam» tıklanmasın (şifreli kapı atlanmasın). */
   let gateStatusResolved = false;
   /** Sunucu strict / site bayrağı: status düşünce ana sayfaya geçiş bloklu. */
@@ -724,12 +728,28 @@
     });
   }
 
+  function clearGuestIdentitySession() {
+    try {
+      sessionStorage.removeItem("viona_guest_identity_verified");
+      sessionStorage.removeItem("viona_guest_identity_name");
+      sessionStorage.removeItem("viona_guest_identity_room");
+      sessionStorage.removeItem("viona_guest_pms_verified");
+      sessionStorage.removeItem("viona_guest_operator_bypass");
+    } catch (_e) {
+      /* private mode */
+    }
+  }
+
   function resetGateForm() {
     const c1 = el("gate-check-privacy");
     const pwd = el("gate-password");
+    const fn = el("gate-full-name");
+    const rm = el("gate-room");
     const err = el("gate-error");
     if (c1) c1.checked = false;
     if (pwd) pwd.value = "";
+    if (fn) fn.value = "";
+    if (rm) rm.value = "";
     if (err) {
       err.textContent = "";
       err.classList.add("hidden");
@@ -779,20 +799,27 @@
       btn.setAttribute("aria-busy", "true");
     }
     try {
-      const wrap = el("gate-password-wrap");
+      const pwdStack = el("gate-password-stack");
+      const pwdWrap = el("gate-password-wrap");
+      const pwdLead = el("gate-password-lead");
       const sub = el("gate-screen-subtitle");
       const pwd = el("gate-password");
-      if (!wrap || !sub) return;
+      if (!sub) return;
 
       gatePasswordRequired = false;
+      gateIdentityRequired = false;
       try {
         const res = await fetch(`${vionaApiBase()}/public/guest-gate/status`, { cache: "no-store" });
         if (!res.ok) throw new Error("gate_status_http");
         const data = await res.json();
         gatePasswordRequired = Boolean(data && data.required);
+        gateIdentityRequired = Boolean(data && data.identityRequired);
+        gatePmsIdentity = Boolean(data && data.pmsIdentity);
         writeGateStrictSession(Boolean(data && data.strict));
       } catch (_e) {
         gatePasswordRequired = false;
+        gateIdentityRequired = false;
+        gatePmsIdentity = false;
         if (shouldBlockGateWhenStatusFails()) {
           gateStatusFetchFailed = true;
         }
@@ -803,17 +830,42 @@
 
       if (!gateStatusFetchFailed) {
         if (gatePasswordRequired) {
-          wrap.classList.remove("hidden");
+          if (pwdStack) pwdStack.classList.remove("hidden");
+          if (pwdWrap) pwdWrap.classList.remove("hidden");
+        } else {
+          if (pwdStack) pwdStack.classList.add("hidden");
+          if (pwdWrap) pwdWrap.classList.add("hidden");
+          if (pwd) pwd.value = "";
+        }
+        if (pwdLead) {
+          pwdLead.classList.toggle("hidden", !(gatePasswordRequired && gateIdentityRequired));
+        }
+        if (gatePasswordRequired && gateIdentityRequired) {
+          sub.setAttribute("data-i18n", "gateScreenSubtitleWithPasswordAndIdentity");
+        } else if (gateIdentityRequired) {
+          sub.setAttribute("data-i18n", "gateScreenSubtitleWithIdentity");
+        } else if (gatePasswordRequired) {
           sub.setAttribute("data-i18n", "gateScreenSubtitleWithPassword");
         } else {
-          wrap.classList.add("hidden");
-          if (pwd) pwd.value = "";
           sub.setAttribute("data-i18n", "gateScreenSubtitle");
         }
       } else {
-        wrap.classList.add("hidden");
+        if (pwdStack) pwdStack.classList.add("hidden");
+        if (pwdWrap) pwdWrap.classList.add("hidden");
+        if (pwdLead) pwdLead.classList.add("hidden");
         if (pwd) pwd.value = "";
         sub.setAttribute("data-i18n", "gateScreenSubtitle");
+      }
+
+      const idPanel = el("gate-identity-panel");
+      if (!gateStatusFetchFailed && gateIdentityRequired && idPanel) {
+        idPanel.classList.remove("hidden");
+      } else if (idPanel) {
+        idPanel.classList.add("hidden");
+        const fnEl = el("gate-full-name");
+        const rmEl = el("gate-room");
+        if (fnEl) fnEl.value = "";
+        if (rmEl) rmEl.value = "";
       }
 
       const gateRoot = el("view-gate");
@@ -854,8 +906,12 @@
     }
     const chk = el("gate-check-privacy");
     const pwdInput = el("gate-password");
+    const fnInput = el("gate-full-name");
+    const rmInput = el("gate-room");
     if (chk) chk.addEventListener("change", clearGateError);
     if (pwdInput) pwdInput.addEventListener("input", clearGateError);
+    if (fnInput) fnInput.addEventListener("input", clearGateError);
+    if (rmInput) rmInput.addEventListener("input", clearGateError);
 
     btn.addEventListener("click", () => {
       void (async () => {
@@ -881,20 +937,39 @@
           return;
         }
 
-        if (gatePasswordRequired) {
-          const raw = (el("gate-password") && el("gate-password").value) || "";
-          const pw = String(raw).trim();
-          if (!pw) {
-            showGateError("gateErrorPasswordEmpty");
-            return;
+        const needsApiVerify = gatePasswordRequired || gateIdentityRequired;
+
+        if (needsApiVerify) {
+          const payload = {};
+          if (gatePasswordRequired) {
+            const raw = (el("gate-password") && el("gate-password").value) || "";
+            const pw = String(raw).trim();
+            if (!pw) {
+              showGateError("gateErrorPasswordEmpty");
+              return;
+            }
+            payload.password = pw;
           }
+          if (gateIdentityRequired) {
+            const rawN = (el("gate-full-name") && el("gate-full-name").value) || "";
+            const rawR = (el("gate-room") && el("gate-room").value) || "";
+            const fn = String(rawN).trim();
+            const rn = String(rawR).trim();
+            if (!fn || !rn) {
+              showGateError("gateErrorIdentityRequired");
+              return;
+            }
+            payload.fullName = fn;
+            payload.room = rn;
+          }
+
           btn.disabled = true;
           btn.setAttribute("aria-busy", "true");
           try {
             const res = await fetch(`${vionaApiBase()}/public/guest-gate/verify`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ password: pw }),
+              body: JSON.stringify(payload),
             });
             let data = {};
             try {
@@ -903,8 +978,30 @@
               data = {};
             }
             if (!res.ok || !data.ok) {
-              if (res.status === 400) showGateError("gateErrorPasswordEmpty");
-              else showGateError("gateErrorPassword");
+              const apiMsg =
+                data && typeof data.message === "string" && String(data.message).trim()
+                  ? String(data.message).trim()
+                  : "";
+              if (apiMsg) {
+                const errNode = el("gate-error");
+                if (errNode) {
+                  errNode.textContent = apiMsg;
+                  errNode.classList.remove("hidden");
+                }
+              } else {
+                const errCode = data && data.error;
+                if (res.status === 400) {
+                  if (errCode === "identity_required") showGateError("gateErrorIdentityRequired");
+                  else showGateError("gateErrorPasswordEmpty");
+                } else if (res.status === 401) {
+                  if (errCode === "identity_mismatch") showGateError("gateErrorIdentityMismatch");
+                  else showGateError("gateErrorPassword");
+                } else if (res.status === 503) {
+                  showGateError("gateErrorGateVerify");
+                } else {
+                  showGateError("gateErrorGateVerify");
+                }
+              }
               btn.disabled = false;
               btn.removeAttribute("aria-busy");
               return;
@@ -917,6 +1014,37 @@
           }
           btn.disabled = false;
           btn.removeAttribute("aria-busy");
+
+          try {
+            if (gateIdentityRequired) {
+              const fnEl = el("gate-full-name");
+              const rmEl = el("gate-room");
+              sessionStorage.setItem("viona_guest_identity_verified", "1");
+              sessionStorage.setItem(
+                "viona_guest_identity_name",
+                String((fnEl && fnEl.value) || "").trim(),
+              );
+              sessionStorage.setItem(
+                "viona_guest_identity_room",
+                String((rmEl && rmEl.value) || "").trim(),
+              );
+              if (data && data.bypass) {
+                sessionStorage.setItem("viona_guest_operator_bypass", "1");
+                sessionStorage.removeItem("viona_guest_pms_verified");
+              } else {
+                sessionStorage.removeItem("viona_guest_operator_bypass");
+              }
+              if (gatePmsIdentity && !(data && data.bypass)) {
+                sessionStorage.setItem("viona_guest_pms_verified", "1");
+              }
+            } else {
+              clearGuestIdentitySession();
+            }
+          } catch (_ss) {
+            /* private mode */
+          }
+        } else {
+          clearGuestIdentitySession();
         }
 
         resetGateForm();
@@ -928,6 +1056,7 @@
     if (back) {
       back.addEventListener("click", () => {
         gateStatusFetchFailed = false;
+        clearGuestIdentitySession();
         resetGateForm();
         showView("lang");
       });
@@ -943,8 +1072,10 @@
         }
         void refreshGuestGateUi().then(() => {
           const pwdEl = el("gate-password");
+          const fnEl = el("gate-full-name");
           const chkGate = el("gate-check-privacy");
           if (!gateStatusFetchFailed && gatePasswordRequired && pwdEl) pwdEl.focus();
+          else if (!gateStatusFetchFailed && gateIdentityRequired && fnEl) fnEl.focus();
           else if (!gateStatusFetchFailed && chkGate) chkGate.focus();
         });
       });

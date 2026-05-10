@@ -33,59 +33,14 @@ function compositeFullNameNorm(r) {
 }
 
 /**
- * Insert öncesi PMS doğrulaması. Env kapalıysa veya tip listede yoksa no-op.
- * @param {object} normalized createGuestRequest içi normalize edilmiş payload
- * @param {{ clientIp?: string }} options
- * @returns {Promise<object|null>} meta veya null
+ * Hotspot kayıtlarında ad + oda + tarih eşlemesi (kapı ve insert öncesi ortak).
+ * @param {{ name: string, room: string }} normalized
+ * @param {object[]} records — `normalizeHotspotRow` çıktısı
+ * @param {string} clientIp
+ * @param {string} [hotelIdFallback]
+ * @returns {{ verified: true, resId: string|null, resNameId: string|null, checkin: string|null, checkout: string|null, hotelId: string }}
  */
-export async function maybeVerifyGuestForPms(normalized, options = {}) {
-  const env = getEnv();
-  if (!env.guestPmsVerifyEnabled) return null;
-
-  const typ = String(normalized.type || "").trim().toLowerCase();
-  if (!env.guestPmsVerifyTypeSet.has(typ)) return null;
-
-  const base = String(env.elektraBaseUrl || "").trim();
-  const hid = String(env.elektraHotelId || "").trim();
-  const tok = String(env.elektraToken || "").trim();
-  const authQk = String(env.elektraAuthQueryKey || "").trim();
-  if (!base || !hid || !tok) {
-    throw createGuestVerificationHttpError("pms_unavailable");
-  }
-  if (env.elektraAuthModeNormalized === "query" && !authQk) {
-    throw createGuestVerificationHttpError("pms_unavailable");
-  }
-
-  const clientIp = String(options.clientIp || "unknown").trim() || "unknown";
-  if (
-    shouldBlockVerificationAttempts(clientIp, {
-      max: env.guestVerifyFailMax,
-      windowMs: env.guestVerifyFailWindowMs,
-    })
-  ) {
-    throw createGuestVerificationHttpError("too_many_verification_attempts");
-  }
-
-  const bearer = buildElektraBearerToken(hid, tok);
-  let records;
-  try {
-    records = await fetchHotspotGuestList({
-      baseUrl: base,
-      hotelId: hid,
-      bearerToken: bearer,
-      hotspotPath: env.elektraHotspotPath,
-      authMode: env.elektraAuthModeNormalized,
-      authHeaderName: env.elektraAuthHeader,
-      authQueryKey: authQk,
-      timeoutMs: env.elektraFetchTimeoutMs,
-      maxRetries: env.elektraFetchMaxRetries,
-      cacheTtlMs: env.elektraCacheTtlMs,
-    });
-  } catch {
-    recordVerificationFailure(clientIp);
-    throw createGuestVerificationHttpError("pms_unavailable");
-  }
-
+export function matchGuestToHotspotRecords(normalized, records, clientIp, hotelIdFallback = "") {
   const normRoom = normalizeGuestMatchString(normalized.room);
   const normLname = normalizeGuestMatchString(extractSurnameFromFullName(normalized.name));
   const givenNorm = normalizeGuestMatchString(extractGivenNamesPart(normalized.name));
@@ -140,6 +95,91 @@ export async function maybeVerifyGuestForPms(normalized, options = {}) {
     resNameId: row.resNameId || null,
     checkin: row.checkin || null,
     checkout: row.checkout || null,
-    hotelId: row.hotelId || hid,
+    hotelId: String(row.hotelId || hotelIdFallback || "").trim() || String(hotelIdFallback || "").trim(),
   };
+}
+
+/**
+ * @param {string} clientIp
+ * @returns {Promise<object[]>}
+ */
+async function fetchHotspotRecordsForVerification(clientIp) {
+  const env = getEnv();
+  const base = String(env.elektraBaseUrl || "").trim();
+  const hid = String(env.elektraHotelId || "").trim();
+  const tok = String(env.elektraToken || "").trim();
+  const authQk = String(env.elektraAuthQueryKey || "").trim();
+  if (!base || !hid || !tok) {
+    throw createGuestVerificationHttpError("pms_unavailable");
+  }
+  if (env.elektraAuthModeNormalized === "query" && !authQk) {
+    throw createGuestVerificationHttpError("pms_unavailable");
+  }
+
+  if (
+    shouldBlockVerificationAttempts(clientIp, {
+      max: env.guestVerifyFailMax,
+      windowMs: env.guestVerifyFailWindowMs,
+    })
+  ) {
+    throw createGuestVerificationHttpError("too_many_verification_attempts");
+  }
+
+  const bearer = buildElektraBearerToken(hid, tok);
+  try {
+    const records = await fetchHotspotGuestList({
+      baseUrl: base,
+      hotelId: hid,
+      bearerToken: bearer,
+      hotspotPath: env.elektraHotspotPath,
+      authMode: env.elektraAuthModeNormalized,
+      authHeaderName: env.elektraAuthHeader,
+      authQueryKey: authQk,
+      timeoutMs: env.elektraFetchTimeoutMs,
+      maxRetries: env.elektraFetchMaxRetries,
+      cacheTtlMs: env.elektraCacheTtlMs,
+    });
+    return { records, hotelIdDefault: hid };
+  } catch {
+    recordVerificationFailure(clientIp);
+    throw createGuestVerificationHttpError("pms_unavailable");
+  }
+}
+
+/**
+ * Kapı ekranı: Elektra ile ad + oda doğrulaması. `GUEST_PMS_GATE_VERIFY_ENABLED` (veya geriye dönük: `GUEST_PMS_VERIFY_ENABLED`) ve `ELEKTRA_*` tam olmalı.
+ * @param {string} fullName
+ * @param {string} room
+ * @param {{ clientIp?: string }} options
+ */
+export async function verifyGuestIdentityAtGate(fullName, room, options = {}) {
+  const env = getEnv();
+  if (!env.guestPmsGateVerifyEnabled) {
+    throw createGuestVerificationHttpError("pms_unavailable");
+  }
+  const clientIp = String(options.clientIp || "unknown").trim() || "unknown";
+  const normalized = {
+    name: String(fullName ?? "").trim(),
+    room: String(room ?? "").trim(),
+  };
+  const { records, hotelIdDefault } = await fetchHotspotRecordsForVerification(clientIp);
+  return matchGuestToHotspotRecords(normalized, records, clientIp, hotelIdDefault);
+}
+
+/**
+ * Insert öncesi PMS doğrulaması. Env kapalıysa veya tip listede yoksa no-op.
+ * @param {object} normalized createGuestRequest içi normalize edilmiş payload
+ * @param {{ clientIp?: string }} options
+ * @returns {Promise<object|null>} meta veya null
+ */
+export async function maybeVerifyGuestForPms(normalized, options = {}) {
+  const env = getEnv();
+  if (!env.guestPmsVerifyEnabled) return null;
+
+  const typ = String(normalized.type || "").trim().toLowerCase();
+  if (!env.guestPmsVerifyTypeSet.has(typ)) return null;
+
+  const clientIp = String(options.clientIp || "unknown").trim() || "unknown";
+  const { records, hotelIdDefault } = await fetchHotspotRecordsForVerification(clientIp);
+  return matchGuestToHotspotRecords(normalized, records, clientIp, hotelIdDefault);
 }

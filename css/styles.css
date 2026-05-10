@@ -357,6 +357,67 @@ body {
   hyphens: auto;
 }
 
+.gate-identity-panel {
+  margin-bottom: 20px;
+  padding: clamp(18px, 4vw, 22px) clamp(16px, 3.5vw, 20px);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(212, 168, 83, 0.22);
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 42%, rgba(12, 18, 28, 0.35) 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 18px 48px rgba(0, 0, 0, 0.28);
+}
+
+.gate-panel-kicker {
+  margin: 0 0 10px;
+  font-size: clamp(0.68rem, 2vw, 0.74rem);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(120, 212, 224, 0.88);
+  text-align: center;
+}
+
+.gate-panel-title {
+  margin: 0 0 12px;
+  font-size: clamp(1.18rem, 3.6vw, 1.35rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+  color: rgba(252, 252, 255, 0.98);
+  text-align: center;
+}
+
+.gate-panel-lead {
+  margin: 0 0 18px;
+  font-size: clamp(0.88rem, 2.6vw, 0.95rem);
+  line-height: 1.55;
+  color: rgba(228, 232, 240, 0.82);
+  text-align: center;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+.gate-identity-fields {
+  margin-top: 4px;
+}
+
+.gate-password-stack {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 8px;
+}
+
+.gate-password-lead {
+  margin: 0 0 12px;
+  font-size: clamp(0.78rem, 2.3vw, 0.84rem);
+  line-height: 1.45;
+  color: rgba(200, 206, 218, 0.72);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
 .gate-password-wrap {
   width: 100%;
   min-width: 0;
@@ -377,6 +438,11 @@ body {
   margin-bottom: 10px;
   line-height: 1.35;
   overflow-wrap: anywhere;
+}
+
+.gate-label--muted {
+  color: rgba(170, 182, 198, 0.72);
+  letter-spacing: 0.08em;
 }
 
 .gate-input {
@@ -408,6 +474,22 @@ body {
   outline: none;
   border-color: rgba(212, 168, 83, 0.55);
   box-shadow: 0 0 0 3px rgba(212, 168, 83, 0.18);
+}
+
+.gate-input--hero {
+  border-color: rgba(120, 212, 224, 0.28);
+  background: rgba(6, 14, 22, 0.62);
+}
+
+.gate-input--hero:focus {
+  border-color: rgba(120, 212, 224, 0.48);
+  box-shadow: 0 0 0 3px rgba(120, 212, 224, 0.16);
+}
+
+.gate-input--secondary {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(5, 10, 18, 0.42);
+  font-size: max(0.94rem, 15px);
 }
 
 .gate-privacy-card {

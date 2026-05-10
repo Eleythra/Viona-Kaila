@@ -35,6 +35,7 @@ export function normalizeHotspotRow(row) {
     resId: pick(["RESID", "ResId", "resid"]),
     resNameId: pick(["RESNAMEID", "ResNameId", "resnameid"]),
     hotelId: pick(["HOTELID", "HotelId", "hotelid"]),
+    pax: pick(["PAX", "Pax", "pax"]),
   };
 }
 
@@ -52,6 +53,92 @@ export function extractHotspotRecordArray(parsed) {
     }
   }
   return [];
+}
+
+/**
+ * Elektra Hotspot tipik gövde: `{ STATUS: true, DATA: [...] }`.
+ * STATUS varsa ve yanlışsa hata fırlatılır (yanlış başarılı doğrulama önlenir).
+ *
+ * @param {unknown} parsed
+ * @returns {{ records: object[], statusFieldPresent: boolean, statusOk: boolean }}
+ */
+export function parseHotspotListEnvelope(parsed) {
+  if (parsed == null) {
+    return { records: [], statusFieldPresent: false, statusOk: true };
+  }
+  if (Array.isArray(parsed)) {
+    return {
+      records: parsed.filter((x) => x && typeof x === "object"),
+      statusFieldPresent: false,
+      statusOk: true,
+    };
+  }
+  if (typeof parsed !== "object") {
+    return { records: [], statusFieldPresent: false, statusOk: true };
+  }
+  /** @type {Record<string, unknown>} */
+  const o = parsed;
+
+  let statusFieldPresent = false;
+  let statusOk = true;
+  for (const key of ["STATUS", "Status", "status"]) {
+    if (Object.prototype.hasOwnProperty.call(o, key)) {
+      statusFieldPresent = true;
+      statusOk = isTruthyElektraStatus(o[key]);
+      break;
+    }
+  }
+  if (statusFieldPresent && !statusOk) {
+    const err = new Error("elektra_status_false");
+    err.code = "elektra_status_false";
+    throw err;
+  }
+
+  const dataKeys = [
+    "DATA",
+    "Data",
+    "data",
+    "GUESTDATA",
+    "GuestData",
+    "GuestDATA",
+    "GuestDataList",
+    "RECORDS",
+    "Records",
+    "GuestList",
+    "guestList",
+  ];
+  for (const dk of dataKeys) {
+    if (!Object.prototype.hasOwnProperty.call(o, dk)) continue;
+    const v = o[dk];
+    if (Array.isArray(v)) {
+      return {
+        records: v.filter((x) => x && typeof x === "object"),
+        statusFieldPresent,
+        statusOk,
+      };
+    }
+  }
+
+  return {
+    records: extractHotspotRecordArray(parsed),
+    statusFieldPresent,
+    statusOk,
+  };
+}
+
+/**
+ * @param {unknown} v
+ */
+function isTruthyElektraStatus(v) {
+  if (v === true) return true;
+  if (v === false) return false;
+  if (typeof v === "number" && Number.isFinite(v)) return v !== 0;
+  const s = String(v ?? "")
+    .trim()
+    .toLowerCase();
+  if (s === "true" || s === "1" || s === "yes") return true;
+  if (s === "false" || s === "0" || s === "no") return false;
+  return Boolean(v);
 }
 
 function sleep(ms) {
@@ -191,7 +278,16 @@ export async function fetchHotspotGuestList(opts) {
         lastErr = new Error("elektra_invalid_json");
         throw lastErr;
       }
-      const rawRows = extractHotspotRecordArray(parsed);
+      let envelope;
+      try {
+        envelope = parseHotspotListEnvelope(parsed);
+      } catch (e) {
+        if (e && e.code === "elektra_status_false") {
+          console.warn("[elektra] GetHotspotList STATUS=false hotel_id=%s", key);
+        }
+        throw e;
+      }
+      const rawRows = envelope.records;
       const records = rawRows.map((r) => normalizeHotspotRow(r));
       setHotspotListCached(cacheKey, records);
       return records;
