@@ -388,5 +388,10 @@
       if (!r.ok) throw new Error("guest_gate_csv_export_failed");
       return r.blob();
     },
+    deleteGuestGateEntry: function (id) {
+      var endpoint =
+        getApiBase() + "/admin/guest-gate-entries/" + encodeURIComponent(String(id || ""));
+      return jfetch(endpoint, { method: "DELETE" });
+    },
   };
 })();

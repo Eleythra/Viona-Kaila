@@ -2298,7 +2298,24 @@
   border: 1px solid rgba(255, 120, 120, 0.4);
 }
 .status-cancelled { background: #2a323c; color: #9aa7b8; }
-.row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.row-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+/* Satır Sil — Loglar «Seçilenleri sil» ile aynı kırmızı ton (tehlikeli eylem) */
+.btn-small.btn-sil--danger {
+  border-color: rgba(248, 113, 113, 0.45) !important;
+  color: #fecaca !important;
+  background: rgba(127, 29, 29, 0.22) !important;
+}
+.btn-small.btn-sil--danger:hover:not(:disabled) {
+  border-color: rgba(252, 165, 165, 0.65) !important;
+  color: #fff !important;
+  background: rgba(153, 27, 27, 0.35) !important;
+}
+#tab-app-entries .admin-table--app-gate th:last-child,
+#tab-app-entries .admin-table--app-gate td:last-child {
+  width: 1%;
+  white-space: nowrap;
+  vertical-align: middle;
+}
 .btn-wa-resend {
   border-color: rgba(34, 197, 94, 0.42);
   background: linear-gradient(180deg, #14532d 0%, #0f3d24 100%);

@@ -5608,7 +5608,9 @@
           "</div></td>";
         html +=
           '<td><div class="row-actions">' +
-          '<button class="btn-small js-log-delete" data-id="' + esc(r.id) + '">Sil</button>' +
+          '<button type="button" class="btn-small btn-sil--danger js-log-delete" data-id="' +
+          esc(r.id) +
+          '" aria-label="Bu log kaydını sil">Sil</button>' +
           "</div></td>";
         html += "</tr>";
       });
@@ -5743,7 +5745,7 @@
       }
       var html =
         '<div class="bucket-table-wrap bucket-table-wrap--app-gate"><table class="admin-table admin-table--app-gate"><thead><tr>' +
-        "<th>Zaman</th><th>Ad soyad</th><th>Oda</th><th>Doğrulama</th><th>IP</th><th>User-Agent</th><th>Kayıt ID</th>" +
+        "<th>Zaman</th><th>Ad soyad</th><th>Oda</th><th>Doğrulama</th><th>IP</th><th>User-Agent</th><th>Kayıt ID</th><th>İşlem</th>" +
         "</tr></thead><tbody>";
       rows.forEach(function (r) {
         var uaFull = String(r.user_agent || "").trim();
@@ -5761,10 +5763,22 @@
           esc(uaDisp) +
           "</div></td>";
         html += '<td><code class="admin-code">' + esc(String(r.id || "-")) + "</code></td>";
+        html +=
+          '<td><div class="row-actions">' +
+          '<button type="button" class="btn-small btn-sil--danger js-app-gate-delete" data-id="' +
+          esc(String(r.id || "")) +
+          '" aria-label="Bu giriş kaydını sil">Sil</button>' +
+          "</div></td>";
         html += "</tr>";
       });
       html += "</tbody></table></div>";
       mountEl.innerHTML = html;
+      mountEl.querySelectorAll(".js-app-gate-delete").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          if (!handlers || typeof handlers.onDelete !== "function") return;
+          handlers.onDelete(btn.getAttribute("data-id"));
+        });
+      });
       if (pag && typeof handlers.onPage === "function") {
         attachAdminPager(mountEl, pag, rows, handlers.onPage);
       }

@@ -1161,6 +1161,16 @@ export async function exportGuestGateEntriesCsv(query = {}) {
   return lines.join("\n");
 }
 
+const GUEST_GATE_ENTRY_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export async function deleteGuestGateEntry(id) {
+  const idStr = String(id ?? "").trim();
+  if (!idStr || !GUEST_GATE_ENTRY_ID_RE.test(idStr)) throw new Error("invalid_id");
+  const { error } = await sb(() => getSupabase().from("guest_gate_entries").delete().eq("id", idStr));
+  if (error) rethrowSupabaseError(error);
+  return { id: idStr };
+}
+
 export async function updateChatObservationReview(id, payload = {}) {
   if (!id) throw new Error("id is required");
   const patch = {

@@ -2234,6 +2234,15 @@
           appGatePage = nextPage;
           void loadAppGateEntries({ scrollToTable: true });
         },
+        onDelete: async function (id) {
+          if (!id || !window.confirm("Bu giriş kaydı kalıcı olarak silinsin mi? (Kişisel veri audit kaydı)")) return;
+          try {
+            await adapter.deleteGuestGateEntry(id);
+            await loadAppGateEntries();
+          } catch (e) {
+            window.alert("Silinemedi: " + (e && e.message ? e.message : "bilinmeyen hata"));
+          }
+        },
       });
       if (opts.scrollToTable) {
         var anchor = document.getElementById("app-gate-table-anchor");

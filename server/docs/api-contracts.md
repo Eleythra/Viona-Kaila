@@ -162,3 +162,4 @@ Tüm uçlar diğer admin API’leri gibi **admin bearer token** gerektirir (`Aut
 - **`GET /api/admin/guest-gate-entries`** — Sayfalı liste. Query: `page`, `pageSize`, `from`, `to` (`created_at`), `verification_method` (`deploy_bypass` \| `elektra`), `room_number` (tam eşleşme), `search` (ad veya oda için `ilike`). Yanıt: `{ ok, items, pagination }`.
 - **`GET /api/admin/guest-gate-entries/summary`** — Aynı filtrelerle özet: toplam ve yöntem bazlı sayılar (`deployBypassCount`, `elektraCount`).
 - **`GET /api/admin/guest-gate-entries/export.csv`** — Filtrelerle uyumlu CSV indirimi (`Content-Disposition`).
+- **`DELETE /api/admin/guest-gate-entries/:id`** — Tek kayıt silme (UUID); yanıt `{ ok: true, id }`.

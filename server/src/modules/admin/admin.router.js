@@ -19,6 +19,7 @@ import {
   listGuestGateEntries,
   getGuestGateEntriesSummary,
   exportGuestGateEntriesCsv,
+  deleteGuestGateEntry,
   listSurveySubmissions,
   updateChatObservationReview,
   updateAdminItemStatus,
@@ -253,6 +254,15 @@ router.get("/guest-gate-entries/export.csv", async (req, res) => {
     return res.status(200).send(csv);
   } catch (error) {
     return adminErr(res, error, "admin_guest_gate_export_failed");
+  }
+});
+
+router.delete("/guest-gate-entries/:id", async (req, res) => {
+  try {
+    const data = await deleteGuestGateEntry(req.params.id);
+    return res.status(200).json({ ok: true, ...data });
+  } catch (error) {
+    return adminErr(res, error, "admin_guest_gate_delete_failed");
   }
 });
 
