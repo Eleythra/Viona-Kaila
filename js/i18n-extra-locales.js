@@ -16,6 +16,8 @@
       langScreenSubtitle: "Kaila Beach Hotel · Умный отельный помощник",
       continue: "Продолжить",
       langGridAria: "Выбор языка",
+      langIdleNotice:
+        "Сессия завершена из-за отсутствия активности. Выберите язык и войдите снова.",
       gateScreenTitle: "Подтверждение проживания",
       gateScreenSubtitle:
         "Прочитайте уведомление ниже и подтвердите продолжение.",
@@ -119,6 +121,8 @@
       langScreenSubtitle: "Kaila Beach Hotel · Smart hotelassistent",
       continue: "Fortsæt",
       langGridAria: "Sprogvalg",
+      langIdleNotice:
+        "Din session blev afsluttet efter inaktivitet. Vælg sprog og log ind igen.",
       gateScreenTitle: "Bekræft dit ophold",
       gateScreenSubtitle:
         "Læs den korte meddelelse og bekræft for at fortsætte.",
@@ -221,6 +225,8 @@
       langScreenSubtitle: "Kaila Beach Hotel · Chytrý hotelový asistent",
       continue: "Pokračovat",
       langGridAria: "Volba jazyka",
+      langIdleNotice:
+        "Relace byla ukončena z důvodu nečinnosti. Vyberte jazyk a přihlaste se znovu.",
       gateScreenTitle: "Potvrzení pobytu",
       gateScreenSubtitle:
         "Přečtěte si stručnou informaci a potvrďte pokračování.",
@@ -323,6 +329,8 @@
       langScreenSubtitle: "Kaila Beach Hotel · Asistent hotelier inteligent",
       continue: "Continuare",
       langGridAria: "Opțiuni limbă",
+      langIdleNotice:
+        "Sesiunea s-a încheiat din cauza inactivității. Alegeți limba și autentificați-vă din nou.",
       gateScreenTitle: "Confirmarea sejurului",
       gateScreenSubtitle:
         "Citiți informarea scurtă și confirmați pentru a continua.",
@@ -425,6 +433,8 @@
       langScreenSubtitle: "Kaila Beach Hotel · Slimme hotelassistent",
       continue: "Doorgaan",
       langGridAria: "Taalkeuze",
+      langIdleNotice:
+        "Uw sessie is beëindigd na inactiviteit. Kies uw taal en meld u opnieuw aan.",
       gateScreenTitle: "Verblijf bevestigen",
       gateScreenSubtitle:
         "Lees de korte mededeling en bevestig om door te gaan.",
@@ -527,6 +537,8 @@
       langScreenSubtitle: "Kaila Beach Hotel · Inteligentný hotelový asistent",
       continue: "Pokračovať",
       langGridAria: "Voľba jazyka",
+      langIdleNotice:
+        "Relácia bola ukončená z dôvodu nečinnosti. Vyberte jazyk a prihláste sa znova.",
       gateScreenTitle: "Potvrdenie pobytu",
       gateScreenSubtitle:
         "Prečítajte si stručnú informáciu a potvrďte pokračovanie.",

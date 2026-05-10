@@ -206,6 +206,24 @@ body {
   hyphens: auto;
 }
 
+.lang-idle-notice {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  font-size: clamp(0.82rem, 2.5vw, 0.92rem);
+  font-weight: 600;
+  line-height: 1.45;
+  color: rgba(255, 212, 170, 0.95);
+  text-align: center;
+  background: rgba(212, 168, 83, 0.12);
+  border: 1px solid rgba(212, 168, 83, 0.28);
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+
+.lang-idle-notice.hidden {
+  display: none;
+}
+
 /* Dil butonları: her ekranda 2 sütun; dar alanda taşma yok */
 .lang-grid-wrap {
   margin: 20px 0 22px;

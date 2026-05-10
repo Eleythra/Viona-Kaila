@@ -9,6 +9,8 @@ const I18N = {
     langScreenTitle: "Dil seçin",
     langScreenSubtitle: "Kaila Beach Hotel · Akıllı otel asistanı",
     langGridAria: "Dil seçenekleri",
+    langIdleNotice:
+      "Uzun süre işlem yapılmadığı için oturum sonlandı. Dil seçip yeniden giriş yapın.",
     continue: "Devam et",
 
     gateScreenTitle: "Giriş doğrulaması",
@@ -695,6 +697,8 @@ const I18N = {
     langScreenTitle: "Choose your language",
     langScreenSubtitle: "Kaila Beach Hotel · Smart hotel assistant",
     langGridAria: "Language options",
+    langIdleNotice:
+      "Your session ended after a period of inactivity. Choose your language and sign in again.",
     continue: "Continue",
 
     gateScreenTitle: "Verify your stay",
@@ -1379,6 +1383,8 @@ const I18N = {
     langScreenTitle: "Sprache wählen",
     langScreenSubtitle: "Kaila Beach Hotel · Intelligenter Hotel-Assistent",
     langGridAria: "Sprachauswahl",
+    langIdleNotice:
+      "Ihre Sitzung wurde nach Inaktivität beendet. Bitte Sprache wählen und erneut bestätigen.",
     continue: "Weiter",
 
     gateScreenTitle: "Aufenthalt bestätigen",
@@ -2065,6 +2071,8 @@ const I18N = {
     langScreenTitle: "Wybierz język",
     langScreenSubtitle: "Kaila Beach Hotel · Inteligentny asystent hotelowy",
     langGridAria: "Wybór języka",
+    langIdleNotice:
+      "Sesja została zakończona z powodu braku aktywności. Wybierz język i zaloguj się ponownie.",
     continue: "Kontynuuj",
 
     gateScreenTitle: "Potwierdzenie pobytu",

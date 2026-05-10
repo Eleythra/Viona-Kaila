@@ -66,8 +66,6 @@
 
   /** i18n.js ile aynı anahtar; burada da tanımlı olsun (bağımsız yükleme). */
   const LANG_STORAGE_KEY = "viona_lang";
-  /** Eski sürümlerde kullanılıyordu; artık dil/giriş atlama yok — kalıntı temizliği için. */
-  const SESSION_LANG_OK = "viona_lang_session_ok";
 
   let lang = null;
   let selectedLangCode = null;
@@ -751,6 +749,180 @@
     }
   }
 
+  /** Aynı sekmede kapı tamamlandıktan sonra yenilemede ana sayfaya dönmek için; sekme kapanınca silinir. */
+  const GATE_SESSION_OK = "viona_gate_session_ok";
+  const GATE_LAST_ACTIVITY = "viona_gate_last_activity";
+  /** Boşta kalma nedeniyle dil ekranına düşünce tek seferlik bilgi (sessionStorage). */
+  const GATE_IDLE_NOTICE_FLAG = "viona_gate_idle_notice";
+
+  let gateIdleIntervalId = null;
+  let gateActivityThrottleTs = 0;
+
+  function getGateIdleMs() {
+    const w = window.__VIONA_GATE_IDLE_MS__;
+    if (typeof w === "number" && Number.isFinite(w) && w >= 10000 && w <= 86400000) return w;
+    return 180000;
+  }
+
+  function readGateSessionOk() {
+    try {
+      return sessionStorage.getItem(GATE_SESSION_OK) === "1";
+    } catch (_e) {
+      return false;
+    }
+  }
+
+  function isGateSessionFresh() {
+    if (!readGateSessionOk()) return false;
+    try {
+      const raw = sessionStorage.getItem(GATE_LAST_ACTIVITY);
+      const last = raw ? parseInt(raw, 10) : NaN;
+      if (!Number.isFinite(last)) return false;
+      return Date.now() - last <= getGateIdleMs();
+    } catch (_e) {
+      return false;
+    }
+  }
+
+  function clearGateSessionKeysOnly() {
+    try {
+      sessionStorage.removeItem(GATE_SESSION_OK);
+      sessionStorage.removeItem(GATE_LAST_ACTIVITY);
+    } catch (_e) {
+      /* private mode */
+    }
+  }
+
+  function stopGateIdleWatch() {
+    if (gateIdleIntervalId != null) {
+      clearInterval(gateIdleIntervalId);
+      gateIdleIntervalId = null;
+    }
+    document.removeEventListener("keydown", onGateUserActivityEvent, true);
+    document.removeEventListener("pointerdown", onGateUserActivityEvent, true);
+    document.removeEventListener("touchstart", onGateUserActivityEvent, true);
+    window.removeEventListener("scroll", onGateUserActivityEvent, { passive: true });
+    document.removeEventListener("visibilitychange", onGateVisibilityForIdle);
+  }
+
+  function touchGateActivity() {
+    try {
+      if (sessionStorage.getItem(GATE_SESSION_OK) !== "1") return;
+      sessionStorage.setItem(GATE_LAST_ACTIVITY, String(Date.now()));
+    } catch (_e) {
+      /* private mode */
+    }
+  }
+
+  function onGateUserActivityEvent() {
+    const now = Date.now();
+    if (now - gateActivityThrottleTs < 8000) return;
+    gateActivityThrottleTs = now;
+    touchGateActivity();
+  }
+
+  function checkGateIdleExpiry() {
+    if (!readGateSessionOk()) return;
+    try {
+      const raw = sessionStorage.getItem(GATE_LAST_ACTIVITY);
+      const last = raw ? parseInt(raw, 10) : NaN;
+      if (!Number.isFinite(last) || Date.now() - last <= getGateIdleMs()) return;
+    } catch (_e) {
+      return;
+    }
+    forceGateReloginDueToIdle();
+  }
+
+  function onGateVisibilityForIdle() {
+    if (document.visibilityState === "visible") checkGateIdleExpiry();
+  }
+
+  function startGateIdleWatch() {
+    stopGateIdleWatch();
+    gateActivityThrottleTs = Date.now();
+    gateIdleIntervalId = setInterval(checkGateIdleExpiry, 30000);
+    document.addEventListener("keydown", onGateUserActivityEvent, true);
+    document.addEventListener("pointerdown", onGateUserActivityEvent, true);
+    document.addEventListener("touchstart", onGateUserActivityEvent, true);
+    window.addEventListener("scroll", onGateUserActivityEvent, { passive: true });
+    document.addEventListener("visibilitychange", onGateVisibilityForIdle);
+  }
+
+  function clearGateBrowserSession() {
+    stopGateIdleWatch();
+    clearGateSessionKeysOnly();
+  }
+
+  function cleanupModuleInnerForHardReset() {
+    const inner = el("module-inner");
+    if (!inner) return;
+    if (inner._whereCleanup && typeof inner._whereCleanup === "function") {
+      inner._whereCleanup();
+      delete inner._whereCleanup;
+    }
+    if (inner._nearExploreCleanup && typeof inner._nearExploreCleanup === "function") {
+      inner._nearExploreCleanup();
+      delete inner._nearExploreCleanup;
+    }
+    delete inner._nearExplorePopState;
+    inner.innerHTML = "";
+  }
+
+  /** Boşta kalma süresi doldu: oturum düşer, dil ekranına dönülür. */
+  function forceGateReloginDueToIdle() {
+    clearGateBrowserSession();
+    clearGuestIdentitySession();
+    cleanupModuleInnerForHardReset();
+    moduleId = null;
+    requestSub = null;
+    surveySub = null;
+    lang = null;
+    gateStatusFetchFailed = false;
+    closeModals();
+    try {
+      sessionStorage.setItem(GATE_IDLE_NOTICE_FLAG, "1");
+    } catch (_e) {
+      /* private mode */
+    }
+    showView("lang");
+    applyI18n(document);
+    renderModuleGrid();
+    renderRateLinks();
+    maybeShowLangIdleNotice();
+    scrollMainViewportToTop();
+  }
+
+  function hideLangIdleNotice() {
+    const node = el("lang-idle-notice");
+    if (!node) return;
+    node.textContent = "";
+    node.classList.add("hidden");
+  }
+
+  /** Dil ekranında — yalnızca idle ile düşüşten sonra bir kez. */
+  function maybeShowLangIdleNotice() {
+    try {
+      if (sessionStorage.getItem(GATE_IDLE_NOTICE_FLAG) !== "1") return;
+      sessionStorage.removeItem(GATE_IDLE_NOTICE_FLAG);
+    } catch (_e) {
+      return;
+    }
+    const node = el("lang-idle-notice");
+    if (!node) return;
+    node.textContent = t("langIdleNotice");
+    node.classList.remove("hidden");
+  }
+
+  function markGateSessionCompleted() {
+    try {
+      sessionStorage.setItem(GATE_SESSION_OK, "1");
+      sessionStorage.setItem(GATE_LAST_ACTIVITY, String(Date.now()));
+    } catch (_e) {
+      /* private mode */
+    }
+    startGateIdleWatch();
+  }
+
   function resetGateForm() {
     const c1 = el("gate-check-privacy");
     const pwd = el("gate-password");
@@ -1080,6 +1252,7 @@
           clearGuestIdentitySession();
         }
 
+        markGateSessionCompleted();
         resetGateForm();
         showView("home");
         scheduleDiscountPopup();
@@ -1090,6 +1263,7 @@
       back.addEventListener("click", () => {
         gateStatusFetchFailed = false;
         clearGuestIdentitySession();
+        clearGateBrowserSession();
         resetGateForm();
         showView("lang");
       });
@@ -1121,6 +1295,7 @@
 
     chips.forEach((chip) => {
       chip.addEventListener("click", () => {
+        hideLangIdleNotice();
         selectedLangCode = chip.dataset.lang;
         chips.forEach((c) => {
           c.classList.toggle("lang-chip--active", c === chip);
@@ -1172,12 +1347,6 @@
     wireGateScreen();
     wireHome();
 
-    try {
-      sessionStorage.removeItem(SESSION_LANG_OK);
-    } catch (_e) {
-      /* private mode */
-    }
-
     let storedLang = null;
     try {
       storedLang = localStorage.getItem(LANG_STORAGE_KEY);
@@ -1194,15 +1363,35 @@
       selectedLangCode = storedLang;
     }
     applyI18n(document);
-    initCarousel();
-    showView("lang");
-    if (validLang(storedLang)) {
-      document.querySelectorAll(".lang-chip").forEach((c) => {
-        const on = c.dataset.lang === storedLang;
-        c.classList.toggle("lang-chip--active", on);
-        c.setAttribute("aria-pressed", on ? "true" : "false");
-      });
-      el("btn-lang-continue").disabled = false;
+
+    try {
+      if (sessionStorage.getItem(GATE_SESSION_OK) === "1" && !isGateSessionFresh()) {
+        clearGateSessionKeysOnly();
+      } else if (sessionStorage.getItem(GATE_SESSION_OK) !== "1" && sessionStorage.getItem(GATE_LAST_ACTIVITY)) {
+        sessionStorage.removeItem(GATE_LAST_ACTIVITY);
+      }
+    } catch (_g) {
+      /* private mode */
+    }
+
+    if (validLang(storedLang) && isGateSessionFresh()) {
+      setLang(storedLang);
+      showView("home");
+      scheduleDiscountPopup();
+      touchGateActivity();
+      startGateIdleWatch();
+    } else {
+      initCarousel();
+      showView("lang");
+      if (validLang(storedLang)) {
+        document.querySelectorAll(".lang-chip").forEach((c) => {
+          const on = c.dataset.lang === storedLang;
+          c.classList.toggle("lang-chip--active", on);
+          c.setAttribute("aria-pressed", on ? "true" : "false");
+        });
+        el("btn-lang-continue").disabled = false;
+      }
+      maybeShowLangIdleNotice();
     }
 
     renderModuleGrid();
