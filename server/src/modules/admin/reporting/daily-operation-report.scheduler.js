@@ -60,9 +60,8 @@ function tryFireDailyOperationReport(trigger) {
     if (trigger !== "interval" && lastFiredYmd === ymd) return;
     const { h, mi } = readHourMinuteHotelTz(cfg.tz);
     const inCronMinuteWindow = h === cfg.targetHour && mi >= cfg.targetMin && mi <= cfg.maxMinuteInHour;
-    const isAtOrAfterScheduleToday = h > cfg.targetHour || (h === cfg.targetHour && mi >= cfg.targetMin);
-    const allow = trigger === "interval" ? inCronMinuteWindow : isAtOrAfterScheduleToday;
-    if (!allow) return;
+    /** Deploy veya ilk API isteği günün ilerleyen saatinde «zaten 18:00 geçti» diye rapor göndermesin; yalnız hedef saat-dakika penceresi (örn. 18:00–18:59). */
+    if (!inCronMinuteWindow) return;
     if (trigger !== "interval") lastFiredYmd = ymd;
     if (trigger === "startup_catchup" || trigger === "http_ping") {
       const lhm = `${String(h).padStart(2, "0")}:${String(mi).padStart(2, "0")}`;
@@ -86,7 +85,8 @@ function tryFireDailyOperationReport(trigger) {
 
 /**
  * HTTP sunucusu açılınca: periyodik kontrol + kısa gecikmeyle startup catch-up.
- * Render ücretsiz planda dyno uyuduğunda timer çalışmaz; {@link pingDailyOperationReportFromHttpTraffic} ile uyandırınca aynı gün raporu tetiklenir.
+ * Render ücretsiz planda dyno uyuduğunda timer çalışmaz; {@link pingDailyOperationReportFromHttpTraffic} ile
+ * uyanınca **yalnız hedef saat penceresi içindeyse** (örn. 18:00–18:59) aynı gün raporu tetiklenir — deploy saati akşam olsa bile pencere dışında gönderilmez.
  */
 export function startDailyOperationReportScheduler() {
   if (String(process.env.DAILY_OPERATION_REPORT_ENABLED || "").trim() !== "1") return;
@@ -113,8 +113,9 @@ export function startDailyOperationReportScheduler() {
 }
 
 /**
- * Herhangi bir `/api` isteği geldiğinde (throttle): program saatinden sonra ve o gün henüz ateşlenmediyse job’u dene.
- * Ücretsiz hostta süreç uyumuş olsa bile ilk istekte rapor kaçmasın diye.
+ * Herhangi bir `/api` isteği geldiğinde (throttle): **otel saatinde hedef saat-dakika penceresi içindeyse**
+ * ve o gün `http_ping` / `startup_catchup` ile henüz ateşlenmediyse job’u dene (dyno uyku sonrası 18:xx’e denk gelen ilk trafik).
+ * Pencere dışında deploy veya istek raporu göndermez (`DAILY_OPERATION_REPORT_HTTP_PING=0` ile tamamen kapatılabilir).
  */
 export function pingDailyOperationReportFromHttpTraffic() {
   if (String(process.env.DAILY_OPERATION_REPORT_ENABLED || "").trim() !== "1") return;
