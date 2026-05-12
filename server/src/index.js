@@ -27,18 +27,6 @@ import {
 import { runDailyOperationReportJob, ymdTodayInHotelTz } from "./modules/admin/reporting/daily-operation-report.job.js";
 import { runOperationalPendingReminderJob } from "./services/operational-pending-reminder.service.js";
 import {
-  extractAdminToken,
-  isAdminTokenValid,
-} from "./lib/admin-auth.js";
-import { clearHotspotListCache } from "./modules/pms/elektra/hotspot-list-cache.js";
-import { parseVerifiedGuestCookie, setVerifiedGuestCookie } from "./lib/guest-verified-session.js";
-import { verifyGuestIdentityRoomBirthdate } from "./modules/guest-verification/guest-verification.service.js";
-import { guestVerificationUserMessage } from "./modules/guest-verification/guest-verification-messages.js";
-import {
-  buildElektraBearerToken,
-  fetchHotspotGuestList,
-} from "./modules/pms/elektra/elektra-hotspot.provider.js";
-import {
   pingDailyOperationReportFromHttpTraffic,
   startDailyOperationReportScheduler,
 } from "./modules/admin/reporting/daily-operation-report.scheduler.js";
@@ -363,34 +351,6 @@ async function processCreateGuestRequestAction(data, httpCtx = {}) {
         },
       };
     }
-    if (
-      err &&
-      typeof err === "object" &&
-      err.guestVerificationReason &&
-      data &&
-      typeof data === "object" &&
-      prevAction &&
-      prevAction.kind === "create_guest_request"
-    ) {
-      const msg =
-        typeof err.guestVerificationMessage === "string" && err.guestVerificationMessage.trim()
-          ? err.guestVerificationMessage.trim()
-          : String(err.message || "").trim();
-      const ptype = prevAction.payload?.type;
-      const intentFix = metaIntentFromGuestPayloadType(ptype);
-      return {
-        ...data,
-        type: "inform",
-        message: msg || pickChatLangMessage(SAFE_FALLBACK_BY_LANG, normalizeLocale(data?.meta?.language || "tr")),
-        meta: {
-          ...(data.meta || {}),
-          intent: intentFix,
-          source: "rule",
-          guest_verification_failed: String(err.guestVerificationReason),
-          action: null,
-        },
-      };
-    }
     console.warn("chat_form_create_guest_request_failed error=%s", err?.message || err);
     return data;
   }
@@ -699,89 +659,6 @@ app.get("/api/internal/operational-pending-reminder-cron", async (req, res) => {
   }
 });
 
-function authorizeCronSecretOrAdmin(req) {
-  const cronSecret = String(process.env.CRON_SECRET || "").trim();
-  const auth = String(req.headers.authorization || "").trim();
-  if (cronSecret && auth === `Bearer ${cronSecret}`) return true;
-  return isAdminTokenValid(extractAdminToken(req));
-}
-
-/**
- * Elektra `GetHotspotList` bağlantı testi — yanıtta misafir listesi veya token yok (yalnızca özet).
- * Yetki: `Authorization: Bearer $CRON_SECRET` veya admin token (`Authorization` / `X-Admin-Token`).
- * `?nocache=1`: hotspot önbelleğini temizleyip yeni istek (Elektra’ya gider).
- */
-app.get("/api/internal/elektra-hotspot-smoke", async (req, res) => {
-  try {
-    if (!authorizeCronSecretOrAdmin(req)) {
-      return res.status(401).json({ ok: false, error: "unauthorized" });
-    }
-    if (!env.elektraHotspotCredentialsConfigured) {
-      return res.status(503).json({
-        ok: false,
-        error: "elektra_env_incomplete",
-        hint:
-          "Set ELEKTRA_BASE_URL, ELEKTRA_HOTEL_ID, ELEKTRA_TOKEN (and ELEKTRA_AUTH_QUERY_KEY when ELEKTRA_AUTH_MODE=query).",
-      });
-    }
-    const nocache = String(req.query.nocache || "") === "1";
-    if (nocache) clearHotspotListCache();
-
-    const hid = String(env.elektraHotelId || "").trim();
-    const bearer = buildElektraBearerToken(hid, env.elektraToken);
-    const authQk = String(env.elektraAuthQueryKey || "").trim();
-    const started = Date.now();
-    let records;
-    try {
-      records = await fetchHotspotGuestList({
-        baseUrl: env.elektraBaseUrl,
-        hotelId: hid,
-        bearerToken: bearer,
-        hotspotPath: env.elektraHotspotPath,
-        authMode: env.elektraAuthModeNormalized,
-        authHeaderName: env.elektraAuthHeader,
-        authQueryKey: authQk,
-        timeoutMs: env.elektraFetchTimeoutMs,
-        maxRetries: env.elektraFetchMaxRetries,
-        cacheTtlMs: env.elektraCacheTtlMs,
-      });
-    } catch (e) {
-      const code = String(e?.message || e || "");
-      console.warn("[elektra_hotspot_smoke] fetch_failed code=%s", code.slice(0, 80));
-      return res.status(503).json({
-        ok: false,
-        error: "elektra_fetch_failed",
-        code: code.slice(0, 120),
-        elapsed_ms: Date.now() - started,
-      });
-    }
-
-    const sample = records[0];
-    const fieldsPresent = sample
-      ? {
-          roomNo: Boolean(String(sample.roomNo || "").trim()),
-          lname: Boolean(String(sample.lname || "").trim()),
-          checkin: Boolean(String(sample.checkin || "").trim()),
-          checkout: Boolean(String(sample.checkout || "").trim()),
-          birthDate: Boolean(String(sample.birthDateRaw || "").trim()),
-        }
-      : null;
-
-    return res.status(200).json({
-      ok: true,
-      hotel_id: hid,
-      guest_record_count: records.length,
-      sample_row_fields_present: fieldsPresent,
-      sample_has_birthdate: Boolean(sample && String(sample.birthDateRaw || "").trim()),
-      elapsed_ms: Date.now() - started,
-      nocache,
-    });
-  } catch (e) {
-    console.error("[elektra_hotspot_smoke]", e);
-    return res.status(500).json({ ok: false, error: String(e?.message || e) });
-  }
-});
-
 const speechLimiter = rateLimit({
   windowMs: env.rateLimitWindowMs,
   max: Math.min(60, Math.max(24, Math.floor(env.rateLimitMax / 4))),
@@ -835,19 +712,11 @@ app.get("/api/health", (req, res) => {
     },
     /** 1 iken /api/ops token olmadan yalnızca güvenilir origin + X-Viona-Ops-Page ile açılır (dahili kullanım). */
     opsTrustOpsPageHeader: Boolean(env.opsTrustOpsPageHeader),
-    /** Kapı: Elektra ile kimlik doğrulama açık mı (`GUEST_PMS_GATE_VERIFY_ENABLED` + env). */
-    elektraGateVerifyActive: Boolean(env.elektraGateVerifyConfigured),
-    /** Kapı: `GUEST_GATE_ROOM_ALLOWLIST` dolu mu — doluysa liste dışı oda için Elektra çağrılmaz (değer sızmaz). */
-    guestGateRoomAllowlistActive: Boolean(env.guestGateRoomAllowlistActive),
-    /** Formlar: insert öncesi PMS doğrulama açık mı (`GUEST_PMS_VERIFY_ENABLED` + env). */
-    elektraInsertVerifyActive: Boolean(env.elektraInsertVerifyConfigured),
-    /** `ELEKTRA_BASE_URL` + `ELEKTRA_HOTEL_ID` + `ELEKTRA_TOKEN` (+ query modunda query key) — smoke test için. */
-    elektraHotspotCredentialsConfigured: Boolean(env.elektraHotspotCredentialsConfigured),
-    /** Misafir statik site kapı şifresi: VIONA_UI_GATE_PASSWORD dolu ve etkin mi (değer sızmaz). */
+    /** Misafir kapısı: iki env kodu tanımlı ve etkin mi (değer sızmaz). */
+    guestGateDualPasswordConfigured: Boolean(env.guestGateDualPasswordConfigured),
+    /** Misafir statik site kapısı zorunlu mu (`VIONA_GATE_PASSWORD_1` + `_2` veya `VIONA_UI_GATE_PASSWORD` çifti). */
     guestUiGateRequired: Boolean(env.guestUiGateRequired),
     guestUiGateStrict: Boolean(env.guestUiGateStrict),
-    /** Kapıda ad+oda kontrolü (`VIONA_DEPLOY_GUEST_*`) tanımlı mı — değer sızmaz. */
-    guestDeployIdentityConfigured: Boolean(env.guestDeployIdentityConfigured),
     /** Günlük PDF: dış cron GET için `DAILY_OPERATION_REPORT_CRON_KEY` tanımlı mı (değer sızmaz). */
     dailyReportExternalCronKeyConfigured: Boolean(
       String(process.env.DAILY_OPERATION_REPORT_CRON_KEY || "").trim(),
@@ -870,68 +739,17 @@ app.get("/api/health", (req, res) => {
   res.json(payload);
 });
 
-/**
- * Oda + doğum tarihi (`YYYY-MM-DD`) ile Elektra Hotspot doğrulaması; başarıda `viona_guest_verified` HttpOnly çerezi set edilir.
- * Önkoşul: `GUEST_PMS_GATE_VERIFY_ENABLED=1` ve `ELEKTRA_*` tam (kapı ile aynı liste önbelleği).
- */
-app.post("/api/public/guest-verify", async (req, res) => {
-  try {
-    if (!env.guestPmsGateVerifyEnabled || !env.elektraGateVerifyConfigured) {
-      return res.status(503).json({
-        ok: false,
-        error: "not_configured",
-        message: guestVerificationUserMessage("pms_unavailable"),
-      });
-    }
-    const body = req.body && typeof req.body === "object" ? req.body : {};
-    const room = String(body.room ?? body.roomNumber ?? body.room_number ?? "").trim();
-    const birthDate = String(body.birthDate ?? body.birth_date ?? body.birthdate ?? "").trim();
-    const clientIp = String(req.ip || req.socket?.remoteAddress || "unknown").trim() || "unknown";
-    if (!room || !birthDate) {
-      return res.status(400).json({
-        ok: false,
-        error: "identity_required",
-        message: guestVerificationUserMessage("identity_required"),
-      });
-    }
-    try {
-      await verifyGuestIdentityRoomBirthdate(room, birthDate, { clientIp });
-      setVerifiedGuestCookie(res, room);
-      return res.status(200).json({ ok: true });
-    } catch (e) {
-      const reason = e && e.guestVerificationReason ? String(e.guestVerificationReason) : "pms_unavailable";
-      const status = Number(e && e.statusCode) || 422;
-      const message =
-        (e && e.guestVerificationMessage && String(e.guestVerificationMessage).trim()) ||
-        guestVerificationUserMessage(reason);
-      return res.status(status).json({ ok: false, error: reason, message });
-    }
-  } catch (e) {
-    console.error("[guest_verify] handler", e);
-    return res.status(500).json({ ok: false, error: "server_error" });
-  }
-});
-
 app.use(
   "/api/public/guest-gate",
   createGuestGateRouter({
     get guestUiGateRequired() {
       return env.guestUiGateRequired;
     },
-    get guestUiGatePasswordList() {
-      return env.guestUiGatePasswordList;
-    },
     get guestUiGateStrict() {
       return env.guestUiGateStrict;
     },
-    get elektraGateVerifyConfigured() {
-      return env.elektraGateVerifyConfigured;
-    },
-    get guestGateRoomAllowlistActive() {
-      return env.guestGateRoomAllowlistActive;
-    },
-    get guestDeployRoomBirthBypassConfigured() {
-      return env.guestDeployRoomBirthBypassConfigured;
+    get guestGateDualPasswordConfigured() {
+      return env.guestGateDualPasswordConfigured;
     },
   }),
 );
@@ -974,13 +792,13 @@ app.get("/api/webhooks/whatsapp", (req, res) => {
 app.post("/api/chat", async (req, res) => {
   const rawClientChannel = String(req.body?.client_channel || "").toLowerCase().trim();
   const channel = rawClientChannel === "voice" ? "voice" : "web";
-  if (env.guestPmsGateVerifyEnabled && channel === "web") {
+  if (env.guestGateDualPasswordConfigured && channel === "web") {
     const guestOk = parseVerifiedGuestCookie(req.get("cookie"));
     if (!guestOk) {
       return res.status(403).json({
         ok: false,
         type: "error",
-        message: "Önce otel giriş ekranından kimlik doğrulaması yapın.",
+        message: "Önce giriş ekranında iki erişim kodunuzu doğrulayın.",
         meta: { intent: "auth_gate", source: "viona_node" },
       });
     }

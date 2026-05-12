@@ -1032,7 +1032,7 @@ function escapeForIlikeFragment(s) {
 function applyGuestGateEntryFilters(qb, query = {}) {
   let out = applyDateFilters(qb, query, "created_at");
   const method = String(query.verification_method || "").trim().toLowerCase();
-  if (method === "deploy_bypass" || method === "elektra") {
+  if (method === "deploy_bypass" || method === "elektra" || method === "password_dual") {
     out = out.eq("verification_method", method);
   }
   const rn = String(query.room_number || "").trim();
@@ -1096,11 +1096,13 @@ export async function getGuestGateEntriesSummary(query = {}) {
   const total = await countFiltered(filterFull);
   const deployBypassCount = await countMethod("deploy_bypass", filterSplit);
   const elektraCount = await countMethod("elektra", filterSplit);
+  const passwordDualCount = await countMethod("password_dual", filterSplit);
 
   return {
     total,
     deployBypassCount,
     elektraCount,
+    passwordDualCount,
   };
 }
 
@@ -1138,7 +1140,7 @@ export async function exportGuestGateEntriesCsv(query = {}) {
     csvCommentLine("Bu dosya yönetim panelindeki liste ile aynı filtre mantığını kullanır."),
     csvCommentLine(`Dışa aktarım zamanı (ISO UTC): ${exportedAt}`),
     csvCommentLine(`Satır üst sınırı: ${GUEST_GATE_EXPORT_CAP}; daha fazla kayıt varsa kesilir.`),
-    csvCommentLine("dogrulama: deploy_bypass (kurulum eşleşmesi) | elektra (Hotspot listesi)."),
+    csvCommentLine("dogrulama: password_dual (çift şifre) | deploy_bypass | elektra (eski)."),
     csvCommentLine(""),
     csvCommentLine("--- Sütunlar ---"),
     ...columns.map((c) => csvCommentLine(`${trHeaders[c] || c} (${c})`)),

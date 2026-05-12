@@ -1,8 +1,7 @@
 import express from "express";
 import crypto from "node:crypto";
+import { getEnv } from "../../config/env.js";
 import { clearVerifiedGuestCookie, setVerifiedGuestCookie } from "../../lib/guest-verified-session.js";
-import { verifyGuestIdentityRoomBirthdate } from "../guest-verification/guest-verification.service.js";
-import { guestVerificationUserMessage } from "../guest-verification/guest-verification-messages.js";
 import { recordGuestGateEntry } from "./guest-gate-log.service.js";
 
 function sha256Utf8(s) {
@@ -14,35 +13,46 @@ function normalizeGatePassword(s) {
   return String(s ?? "").trim().toLocaleLowerCase("tr");
 }
 
+const OPTIONAL_LOG_NAME_MAX = 120;
+const OPTIONAL_LOG_ROOM_MAX = 32;
+
+/** İsteğe bağlı ad/oda — yalnızca kayıt; rezervasyonla doğrulanmaz. */
+function optionalGateLogField(value, maxLen) {
+  const t = String(value ?? "")
+    .replace(/\0/g, "")
+    .trim()
+    .replace(/\s+/g, " ");
+  if (!t) return "";
+  return t.length <= maxLen ? t : t.slice(0, maxLen);
+}
+
 /**
- * @param {unknown} input
- * @param {string[]} acceptedList
+ * İki kodun da beklenen değerlerle eşleşmesi (AND).
+ * @param {unknown} input1
+ * @param {unknown} input2
+ * @param {string} expected1
+ * @param {string} expected2
  */
-function verifyGuestGatePassword(input, acceptedList) {
-  const list = Array.isArray(acceptedList) ? acceptedList : [];
-  if (!list.length) return true;
-  const normalizedInput = normalizeGatePassword(input);
-  if (!normalizedInput) return false;
-  const inputHash = sha256Utf8(normalizedInput);
-  for (const cand of list) {
-    const nc = normalizeGatePassword(cand);
-    if (!nc) continue;
-    const candHash = sha256Utf8(nc);
-    if (inputHash.length === candHash.length && crypto.timingSafeEqual(inputHash, candHash)) {
-      return true;
-    }
-  }
-  return false;
+function verifyDualGatePasswords(input1, input2, expected1, expected2) {
+  const e1 = String(expected1 ?? "").trim();
+  const e2 = String(expected2 ?? "").trim();
+  if (!e1 || !e2) return false;
+  const n1 = normalizeGatePassword(input1);
+  const n2 = normalizeGatePassword(input2);
+  if (!n1 || !n2) return false;
+  const h1 = sha256Utf8(n1);
+  const h1e = sha256Utf8(normalizeGatePassword(e1));
+  const h2 = sha256Utf8(n2);
+  const h2e = sha256Utf8(normalizeGatePassword(e2));
+  if (h1.length !== h1e.length || h2.length !== h2e.length) return false;
+  return crypto.timingSafeEqual(h1, h1e) && crypto.timingSafeEqual(h2, h2e);
 }
 
 /**
  * @param {{
  *   guestUiGateRequired: boolean,
- *   guestUiGatePasswordList: string[],
  *   guestUiGateStrict: boolean,
- *   elektraGateVerifyConfigured: boolean,
- *   guestGateRoomAllowlistActive: boolean,
- *   guestDeployRoomBirthBypassConfigured: boolean,
+ *   guestGateDualPasswordConfigured: boolean,
  * }} envSlice
  */
 export function createGuestGateRouter(envSlice) {
@@ -52,12 +62,11 @@ export function createGuestGateRouter(envSlice) {
     res.json({
       required: Boolean(envSlice.guestUiGateRequired),
       strict: Boolean(envSlice.guestUiGateStrict),
-      identityRequired: Boolean(envSlice.elektraGateVerifyConfigured),
-      identityRequiresBirthDate: Boolean(envSlice.elektraGateVerifyConfigured),
+      dualPassword: Boolean(envSlice.guestGateDualPasswordConfigured),
+      identityRequired: false,
+      identityRequiresBirthDate: false,
       identityRequiresFullName: false,
-      pmsIdentity: Boolean(envSlice.elektraGateVerifyConfigured),
-      deployBypass: Boolean(envSlice.guestDeployRoomBirthBypassConfigured),
-      roomAllowlistActive: Boolean(envSlice.guestGateRoomAllowlistActive),
+      pmsIdentity: false,
     });
   });
 
@@ -69,61 +78,55 @@ export function createGuestGateRouter(envSlice) {
   router.post("/verify", async (req, res) => {
     const body = req.body && typeof req.body === "object" ? req.body : {};
 
-    const hasElektraIdentity = Boolean(envSlice.elektraGateVerifyConfigured);
-    const needsIdentity = hasElektraIdentity;
-
-    if (!envSlice.guestUiGateRequired && !needsIdentity) {
+    if (!envSlice.guestUiGateRequired) {
       return res.status(200).json({ ok: true });
     }
 
-    if (envSlice.guestUiGateRequired) {
-      const password = body.password;
-      if (password === undefined || password === null || String(password).trim() === "") {
-        return res.status(400).json({ ok: false, error: "password_required" });
-      }
-      const pwOk = verifyGuestGatePassword(password, envSlice.guestUiGatePasswordList);
-      if (!pwOk) {
-        return res.status(401).json({ ok: false, error: "invalid_password" });
-      }
+    const pw1 = body.password ?? body.password1 ?? body.password_primary;
+    const pw2 = body.password2 ?? body.password_secondary;
+    const s1 = String(pw1 ?? "").trim();
+    const s2 = String(pw2 ?? "").trim();
+
+    if (!s1) {
+      return res.status(400).json({
+        ok: false,
+        error: "password_required",
+        message: "İlk erişim kodunu girin.",
+      });
+    }
+    if (!s2) {
+      return res.status(400).json({
+        ok: false,
+        error: "password2_required",
+        message: "İkinci erişim kodunu girin.",
+      });
     }
 
-    if (!needsIdentity) {
-      return res.status(200).json({ ok: true });
+    const env = getEnv();
+    const ok = verifyDualGatePasswords(s1, s2, env.vionaGatePassword1, env.vionaGatePassword2);
+    if (!ok) {
+      return res.status(401).json({
+        ok: false,
+        error: "invalid_password",
+        message: "Erişim kodları doğrulanamadı. Her iki kodu da kontrol edip tekrar deneyin.",
+      });
     }
 
     const clientIp = String(req.ip || req.socket?.remoteAddress || "unknown").trim() || "unknown";
     const userAgent = String(req.get("user-agent") || "").trim();
 
-    const room = body.room ?? body.roomNumber ?? body.room_number;
-    const rn = String(room ?? "").trim();
-    const birthDate = body.birthDate ?? body.birth_date ?? body.birthdate;
-    const bd = String(birthDate ?? "").trim();
+    const optName = optionalGateLogField(body.fullName ?? body.name, OPTIONAL_LOG_NAME_MAX);
+    const optRoom = optionalGateLogField(body.room ?? body.roomNumber, OPTIONAL_LOG_ROOM_MAX);
 
-    if (!rn || !bd) {
-      return res.status(400).json({ ok: false, error: "identity_required" });
-    }
-
-    try {
-      const meta = await verifyGuestIdentityRoomBirthdate(rn, bd, { clientIp });
-      const display = String(meta.displayName || "").trim() || "Misafir";
-      const verificationMethod = meta.deployBypass ? "deploy_bypass" : "elektra";
-      await recordGuestGateEntry({
-        fullName: display,
-        roomNumber: rn,
-        verificationMethod,
-        clientIp,
-        userAgent,
-      });
-      setVerifiedGuestCookie(res, rn);
-      return res.status(200).json({ ok: true, verification: "room_birthdate" });
-    } catch (e) {
-      const reason = e && e.guestVerificationReason ? String(e.guestVerificationReason) : "pms_unavailable";
-      const status = Number(e && e.statusCode) || 422;
-      const message =
-        (e && e.guestVerificationMessage && String(e.guestVerificationMessage).trim()) ||
-        guestVerificationUserMessage(reason);
-      return res.status(status).json({ ok: false, error: reason, message });
-    }
+    await recordGuestGateEntry({
+      fullName: optName || "Misafir",
+      roomNumber: optRoom || "—",
+      verificationMethod: "password_dual",
+      clientIp,
+      userAgent,
+    });
+    setVerifiedGuestCookie(res, "gate");
+    return res.status(200).json({ ok: true, verification: "password_dual" });
   });
 
   return router;

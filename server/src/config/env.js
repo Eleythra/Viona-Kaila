@@ -3,8 +3,6 @@ import dns from "node:dns";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { normalizeGuestRoomForMatch } from "../lib/guest-match-normalize.js";
-import { parsePmsDateToIsoYmd } from "../modules/guest-verification/hotel-date.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 /** `server/` kökü — `env.js` konumuna göre (cwd’den bağımsız). */
@@ -163,15 +161,6 @@ function optionalCsv(name, fallback = []) {
     .filter(Boolean);
 }
 
-/** @returns {"bearer"|"raw"|"query"|"none"} */
-function normalizeElektraAuthMode(raw) {
-  const s = String(raw || "bearer").trim().toLowerCase();
-  if (s === "raw" || s === "header_raw" || s === "plain") return "raw";
-  if (s === "query" || s === "query_only") return "query";
-  if (s === "none" || s === "off") return "none";
-  return "bearer";
-}
-
 /** 0 = özellik kapalı; boş = varsayılan (ms). */
 function optionalNonNegativeMs(name, fallbackMs) {
   const v = process.env[name];
@@ -256,153 +245,21 @@ export function getEnv() {
      * `0`: yalnızca Origin/Referer + doğru secret (doğrudan API erişiminde spoof riskini azaltır).
      */
     speechTrustForwardedOrigin: optional("SPEECH_TRUST_FORWARDED_ORIGIN", "1") !== "0",
-    /** ElektraWeb Hotspot misafir listesi — `GET .../apisequence/GetHotspotList?HOTELID=` */
-    elektraBaseUrl: optional("ELEKTRA_BASE_URL", ""),
-    elektraHotelId: optional("ELEKTRA_HOTEL_ID", ""),
-    /** Tam `hotspot#otelId$secret` veya yalnızca secret (otel id ayrı env’deyse birleştirilir). */
-    elektraToken: optional("ELEKTRA_TOKEN", ""),
     /**
-     * Hotspot listesi path (Postman’daki path ile birebir). Varsayılan Elektra HotelAdvisor sırası.
+     * Misafir kapısı: iki ayrı kod (AND). Öncelik `VIONA_GATE_PASSWORD_*`; yoksa `VIONA_UI_GATE_PASSWORD` / `_2`.
+     * Yalnızca ikisi de doluysa kapı zorunlu (`guestUiGateRequired` / web sohbet çerez kuralı).
      */
-    elektraHotspotPath: optional("ELEKTRA_HOTSPOT_PATH", "/apisequence/GetHotspotList"),
-    /**
-     * bearer = Authorization: Bearer {credential}
-     * raw = Authorization: {credential} (Bearer öneki yok)
-     * query = Authorization yok; credential ELEKTRA_AUTH_QUERY_KEY ile query’de
-     */
-    elektraAuthMode: optional("ELEKTRA_AUTH_MODE", "bearer").toLowerCase(),
-    /** Authorization header adı (varsayılan Postman ile uyumlu). */
-    elektraAuthHeader: optional("ELEKTRA_AUTH_HEADER", "Authorization"),
-    /**
-     * Doluysa URL’e eklenir: &KEY=encodeURIComponent(credential)
-     * MODE=query iken zorunlu; bearer/raw ile birlikte kullanılırsa ek parametre olarak gönderilir.
-     */
-    elektraAuthQueryKey: optional("ELEKTRA_AUTH_QUERY_KEY", ""),
-    get elektraAuthModeNormalized() {
-      return normalizeElektraAuthMode(this.elektraAuthMode);
-    },
-    /**
-     * `1` ise misafir istekleri (POST guest-requests vb.) Supabase insert öncesi Elektra ile doğrulanır.
-     * Kapı ekranı için ayrıca `GUEST_PMS_GATE_VERIFY_ENABLED` kullanılır — ikisi bağımsız.
-     */
-    guestPmsVerifyEnabled: optional("GUEST_PMS_VERIFY_ENABLED", "") === "1",
-    /**
-     * Kapıda Elektra ile ad+oda doğrulaması.
-     * `GUEST_PMS_GATE_VERIFY_ENABLED` açıkça `0`/`1` değilse, geriye dönük olarak `GUEST_PMS_VERIFY_ENABLED` ile aynı kabul edilir.
-     */
-    guestPmsGateVerifyEnabled: (() => {
-      const raw = String(optional("GUEST_PMS_GATE_VERIFY_ENABLED", "") || "").trim();
-      if (raw === "1") return true;
-      if (raw === "0") return false;
-      return optional("GUEST_PMS_VERIFY_ENABLED", "") === "1";
-    })(),
-    guestPmsVerifyTypesCsv: optional(
-      "GUEST_PMS_VERIFY_TYPES",
-      "request,complaint,fault,guest_notification",
-    ),
-    elektraCacheTtlMs: optionalNonNegativeMs("ELEKTRA_CACHE_TTL_MS", 5 * 60 * 1000),
-    elektraFetchTimeoutMs: optionalNonNegativeMs("ELEKTRA_FETCH_TIMEOUT_MS", 12_000),
-    elektraFetchMaxRetries: optionalInt("ELEKTRA_FETCH_MAX_RETRIES", 2),
-    guestVerifyFailMax: optionalInt("GUEST_VERIFY_FAIL_MAX", 5),
-    guestVerifyFailWindowMs: optionalInt("GUEST_VERIFY_FAIL_WINDOW_MS", 10 * 60 * 1000),
-    get guestPmsVerifyTypeSet() {
-      const raw = String(this.guestPmsVerifyTypesCsv || "")
-        .split(",")
-        .map((x) => String(x || "").trim().toLowerCase())
-        .filter(Boolean);
-      return new Set(raw.length ? raw : ["request", "complaint", "fault", "guest_notification"]);
-    },
-    /** Form / insert öncesi PMS doğrulaması açık mı. */
-    get elektraInsertVerifyConfigured() {
-      const qk = String(this.elektraAuthQueryKey || "").trim();
-      if (this.elektraAuthModeNormalized === "query" && !qk) return false;
-      return Boolean(
-        this.guestPmsVerifyEnabled &&
-          String(this.elektraBaseUrl || "").trim() &&
-          String(this.elektraHotelId || "").trim() &&
-          String(this.elektraToken || "").trim(),
-      );
-    },
-    /** Kapı ekranında Elektra ile doğrulama açık mı. */
-    get elektraGateVerifyConfigured() {
-      const qk = String(this.elektraAuthQueryKey || "").trim();
-      if (this.elektraAuthModeNormalized === "query" && !qk) return false;
-      return Boolean(
-        this.guestPmsGateVerifyEnabled &&
-          String(this.elektraBaseUrl || "").trim() &&
-          String(this.elektraHotelId || "").trim() &&
-          String(this.elektraToken || "").trim(),
-      );
-    },
-    /** Hotspot URL + otel + token dolu mu (`GUEST_PMS_VERIFY_ENABLED` şart değil — smoke / kurulum). */
-    get elektraHotspotCredentialsConfigured() {
-      const qk = String(this.elektraAuthQueryKey || "").trim();
-      if (this.elektraAuthModeNormalized === "query" && !qk) return false;
-      return Boolean(
-        String(this.elektraBaseUrl || "").trim() &&
-          String(this.elektraHotelId || "").trim() &&
-          String(this.elektraToken || "").trim(),
-      );
-    },
-    /**
-     * Kapı / `POST /api/public/guest-verify`: otel oda listesi (virgül, `;` veya satır sonu ile ayrılmış).
-     * Doluysa yalnız bu anahtarlar için GetHotspotList çağrılır; liste dışı oda **Elektra’ya istek atmadan** reddedilir.
-     * Girdiler `normalizeGuestRoomForMatch` ile normalize edilir (`01106` → `1106`).
-     */
-    guestGateRoomAllowlistCsv: optional("GUEST_GATE_ROOM_ALLOWLIST", ""),
-    get guestGateRoomAllowlistNormalizedSet() {
-      const raw = String(this.guestGateRoomAllowlistCsv || "").trim();
-      if (!raw) return new Set();
-      const set = new Set();
-      for (const part of raw.split(/[,;\n\r]+/)) {
-        const k = normalizeGuestRoomForMatch(String(part || "").trim());
-        if (k) set.add(k);
-      }
-      return set;
-    },
-    get guestGateRoomAllowlistActive() {
-      return this.guestGateRoomAllowlistNormalizedSet.size > 0;
-    },
-    /**
-     * Misafir kapı şifreleri — yalnızca sunucuda; tarayıcıya gönderilmez.
-     * İkinci şifre isteğe bağlı: `VIONA_UI_GATE_PASSWORD_2`. Karşılaştırma büyük/küçük harf duyarsız (tr).
-     */
-    guestUiGatePassword: optional("VIONA_UI_GATE_PASSWORD", ""),
-    guestUiGatePassword2: optional("VIONA_UI_GATE_PASSWORD_2", ""),
-    /**
-     * Kurulum / test: kapıda oda + doğum tarihi sunucu değerleriyle birebir eşleşirse Elektra çağrılmadan geçilir.
-     * `VIONA_DEPLOY_GUEST_BIRTHDATE`: `YYYY-MM-DD` veya `DD.MM.YYYY` (misafirin gönderdiği ISO gün ile eşlenir).
-     * Görünen ad: `VIONA_DEPLOY_GUEST_FULL_NAME` (boşsa "Misafir"). Üretimde boş bırakın.
-     */
-    vionaDeployGuestFullName: optional("VIONA_DEPLOY_GUEST_FULL_NAME", ""),
-    vionaDeployGuestRoom: optional("VIONA_DEPLOY_GUEST_ROOM", ""),
-    vionaDeployGuestBirthDateRaw: optional("VIONA_DEPLOY_GUEST_BIRTHDATE", ""),
+    vionaGatePassword1: optionalAny(["VIONA_GATE_PASSWORD_1", "VIONA_UI_GATE_PASSWORD"], ""),
+    vionaGatePassword2: optionalAny(["VIONA_GATE_PASSWORD_2", "VIONA_UI_GATE_PASSWORD_2"], ""),
     /** `0` ise şifre dolu olsa bile kapı doğrulaması kapalı (bakım / geçici). */
     guestUiGateDisabled: optional("VIONA_UI_GATE_ENABLED", "1") === "0",
-    get guestUiGatePasswordList() {
-      return [this.guestUiGatePassword, this.guestUiGatePassword2]
-        .map((s) => String(s || "").trim())
-        .filter(Boolean);
-    },
-    /** Oda + doğum env’i dolu ve doğum günü parse edilebiliyor mu (kapı bypass). */
-    get guestDeployRoomBirthBypassConfigured() {
-      const room = String(this.vionaDeployGuestRoom || "").trim();
-      const rawBirth = String(this.vionaDeployGuestBirthDateRaw || "").trim();
-      if (!room || !rawBirth) return false;
-      const ymd = parsePmsDateToIsoYmd(rawBirth);
-      return Boolean(ymd && normalizeGuestRoomForMatch(room));
-    },
-    /** Health: eski ad+oda env’i veya oda+doğum bypass’ı tanımlı mı. */
-    get guestDeployIdentityConfigured() {
-      return Boolean(
-        this.guestDeployRoomBirthBypassConfigured ||
-          (String(this.vionaDeployGuestFullName || "").trim() &&
-            String(this.vionaDeployGuestRoom || "").trim()),
-      );
+    /** İki kapı şifresi env’de tanımlı mı (HttpOnly oturum + `/api/chat` web koruması). */
+    get guestGateDualPasswordConfigured() {
+      return Boolean(String(this.vionaGatePassword1 || "").trim() && String(this.vionaGatePassword2 || "").trim());
     },
     get guestUiGateRequired() {
       if (this.guestUiGateDisabled) return false;
-      return this.guestUiGatePasswordList.length > 0;
+      return this.guestGateDualPasswordConfigured;
     },
     /** `1` ise status yanıtında `strict: true`; istemci önceki oturumda da sıkı blok kullanabilir. */
     guestUiGateStrict: optional("VIONA_UI_GATE_STRICT", "") === "1",

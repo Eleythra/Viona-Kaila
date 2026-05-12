@@ -5702,7 +5702,7 @@
         );
       }
       mountEl.innerHTML =
-        '<div class="logs-kpi-grid logs-kpi-grid--three" role="list">' +
+        '<div class="logs-kpi-grid logs-kpi-grid--four" role="list">' +
         card(
           "logs-kpi-card--total",
           "Filtreli toplam",
@@ -5710,16 +5710,22 @@
           "Seçili tarih, oda ve arama ile uyumlu kayıt sayısı.",
         ) +
         card(
+          "logs-kpi-card--multi",
+          "Çift şifre kapısı",
+          String(s.passwordDualCount != null ? s.passwordDualCount : 0),
+          "İki env erişim kodunun birlikte doğrulandığı girişler (aynı pencere).",
+        ) +
+        card(
           "logs-kpi-card--fallback",
-          "Kurulum eşleşmesi",
+          "Kurulum eşleşmesi (eski)",
           String(s.deployBypassCount != null ? s.deployBypassCount : 0),
-          "VIONA_DEPLOY ad+oda eşleşmesi (aynı tarih penceresi; yöntem süzgeci bu sayıma dahil edilmez).",
+          "Geçmiş kayıtlar; yöntem süzgeci toplam kartına uygulanır.",
         ) +
         card(
           "logs-kpi-card--multi",
-          "Elektra / Hotspot",
+          "Elektra / Hotspot (eski)",
           String(s.elektraCount != null ? s.elektraCount : 0),
-          "PMS Hotspot listesi ile doğrulanan girişler (aynı pencere).",
+          "Geçmiş PMS doğrulama kayıtları (aynı pencere).",
         ) +
         "</div>";
     },
@@ -5733,8 +5739,9 @@
       }
       function methodLabel(m) {
         var x = String(m || "").toLowerCase();
-        if (x === "deploy_bypass") return "Kurulum eşleşmesi";
-        if (x === "elektra") return "Elektra (Hotspot)";
+        if (x === "password_dual") return "Çift şifre kapısı";
+        if (x === "deploy_bypass") return "Kurulum eşleşmesi (eski)";
+        if (x === "elektra") return "Elektra (eski)";
         return esc(String(m || "-"));
       }
       function truncateUa(ua, max) {

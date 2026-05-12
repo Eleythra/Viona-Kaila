@@ -13,7 +13,6 @@ import {
 } from "../../lib/guest-full-name.js";
 import { sendOperationalWhatsappNotification } from "../../services/whatsapp-operational-notification.service.js";
 import { normalizeVionaUiLanguage } from "../../lib/viona-ui-languages.js";
-import { maybeVerifyGuestForPms } from "../guest-verification/guest-verification.service.js";
 import { getEnv } from "../../config/env.js";
 
 /** Personel operasyon panelinden eklenen kayıtlar; liste / raporlarda `source` ile ayırt edilir. */
@@ -783,14 +782,6 @@ export async function createGuestRequest(payload, options = {}) {
     const err = new Error("quiet_hours_reception_only");
     err.statusCode = 409;
     throw err;
-  }
-
-    const pmsMeta = await maybeVerifyGuestForPms(normalized, {
-      clientIp: options.clientIp,
-      cookieHeader: options.cookieHeader,
-    });
-  if (pmsMeta) {
-    normalized.pms_guest_verification = pmsMeta;
   }
 
   if (normalized.type === "request") {

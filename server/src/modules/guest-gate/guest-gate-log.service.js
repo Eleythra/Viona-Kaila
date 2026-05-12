@@ -22,7 +22,7 @@ function sliceUtf8(s, max) {
  * @param {{
  *   fullName: string,
  *   roomNumber: string,
- *   verificationMethod: 'deploy_bypass' | 'elektra',
+ *   verificationMethod: 'deploy_bypass' | 'elektra' | 'password_dual',
  *   clientIp?: string,
  *   userAgent?: string,
  * }} p
@@ -30,7 +30,11 @@ function sliceUtf8(s, max) {
 export async function recordGuestGateEntry(p) {
   const fullName = sliceUtf8(p.fullName, NAME_MAX);
   const roomNumber = sliceUtf8(p.roomNumber, ROOM_MAX);
-  const verificationMethod = p.verificationMethod === "deploy_bypass" ? "deploy_bypass" : "elektra";
+  const raw = String(p.verificationMethod || "").trim();
+  let verificationMethod = "password_dual";
+  if (raw === "deploy_bypass") verificationMethod = "deploy_bypass";
+  else if (raw === "elektra") verificationMethod = "elektra";
+  else if (raw === "password_dual") verificationMethod = "password_dual";
   const clientIp = sliceUtf8(p.clientIp, IP_MAX) || null;
   const userAgent = sliceUtf8(p.userAgent, UA_MAX) || null;
 

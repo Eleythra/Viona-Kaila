@@ -16,20 +16,23 @@ const I18N = {
     gateScreenTitle: "Giriş doğrulaması",
     gateScreenSubtitle:
       "Kısa bilgilendirmeyi okuyup onaylayarak devam edin.",
-    gateScreenSubtitleWithPassword:
-      "İç erişim kodunu girin; bilgilendirmeyi okuyup onaylayın.",
-    gateScreenSubtitleWithIdentity:
-      "Adınız, soyadınız ve oda numaranız otelin kayıtlarıyla güvenli şekilde eşleştirilir.",
-    gateScreenSubtitleWithPasswordAndIdentity:
-      "Önce ad ve soyad ile oda numaranızı doğrulayın; gerekiyorsa iç erişim kodunu ekleyin.",
-    gateScreenSubtitleRoomBirth:
-      "Oda numaranız ve doğum tarihiniz otelin kayıtlarıyla güvenli şekilde eşleştirilir.",
-    gateScreenSubtitleIdentityBoth:
-      "Ad soyad, oda numarası ve doğum tarihiniz otelin kayıtlarıyla güvenli şekilde eşleştirilir.",
-    gateScreenSubtitleWithPasswordIdentityBirth:
-      "Önce oda ve doğum tarihini doğrulayın; gerekiyorsa iç erişim kodunu ekleyin.",
-    gateScreenSubtitleWithPasswordIdentityBoth:
-      "Önce ad soyad, oda ve doğum tarihini doğrulayın; gerekiyorsa iç erişim kodunu ekleyin.",
+    gateScreenSubtitleDualPassword:
+      "İki kodu girin; bilgilendirmeyi okuyup onaylayın. Kodlar ön büro veya misafir ilişkilerinde.",
+    gateDualPasswordLead: "Güvenli giriş: her iki kodu da bu oturumda, eksiksiz girin.",
+    gatePasswordPrimaryLabel: "Birinci kod",
+    gatePasswordPrimaryHint: "Ön büro veya misafir ilişkilerinden aldığınız kodu aynen yazın.",
+    gatePasswordPrimaryPlaceholder: "Birinci kod",
+    gatePasswordSecondaryLabel: "İkinci kod",
+    gatePasswordSecondaryHint: "Otelin belirttiği ikinci kanaldaki kodu aynen yazın.",
+    gatePasswordSecondaryPlaceholder: "İkinci kod",
+    gateOptionalSectionKicker: "Kayıt",
+    gateOptionalLogLead: "Giriş yalnızca kodlarla. Ad ve oda, isteğe bağlı iç kayıt içindir.",
+    gateOptionalFullNameLabel: "Ad soyad",
+    gateOptionalFullNameHint: "Rezervasyon kontrolü yok; yalnızca otel kaydı.",
+    gateOptionalFullNamePlaceholder: "Ayşe Yılmaz",
+    gateOptionalRoomLabel: "Oda no.",
+    gateOptionalRoomHint: "Zorunlu değil; doğrulanmaz.",
+    gateOptionalRoomPlaceholder: "1204",
     gateIdentityKicker: "Konaklama",
     gateIdentityTitle: "Kimliğinizi doğrulayın",
     gateIdentityLead:
@@ -51,9 +54,10 @@ const I18N = {
       "Yukarıdaki bilgilendirmeyi ve reşitlik maddesini okudum, kabul ediyorum.",
     gateSubmit: "Doğrula ve devam et",
     gateBackLang: "Dil seçimine dön",
-    gateErrorPassword: "Şifre doğru değil. Güncel şifreyi girin.",
-    gateErrorPasswordEmpty: "Lütfen erişim şifresini girin.",
-    gateErrorGateVerify: "Şifre doğrulanamadı. Bağlantınızı kontrol edip tekrar deneyin.",
+    gateErrorPassword: "Kodlar eşleşmedi. Kontrol edip tekrar deneyin.",
+    gateErrorPasswordEmpty: "İlk kodu girin.",
+    gateErrorPassword2Empty: "Lütfen ikinci erişim kodunu da girin.",
+    gateErrorGateVerify: "Doğrulama tamamlanamadı. Bağlantınızı kontrol edip tekrar deneyin.",
     gateErrorGateLoading: "Erişim ayarları yükleniyor; lütfen birkaç saniye bekleyip tekrar deneyin.",
     gateErrorGateStrict:
       "Giriş doğrulanamıyor (sunucuya ulaşılamıyor). Bağlantınızı kontrol edin veya Tekrar dene’ye basın.",
@@ -717,20 +721,23 @@ const I18N = {
     gateScreenTitle: "Verify your stay",
     gateScreenSubtitle:
       "Read the notice below and confirm to continue.",
-    gateScreenSubtitleWithPassword:
-      "Enter your hotel access code, then read the notice and confirm.",
-    gateScreenSubtitleWithIdentity:
-      "Your full name and room number are matched with the hotel’s guest records.",
-    gateScreenSubtitleWithPasswordAndIdentity:
-      "Confirm your name and room first; add the access code if prompted.",
-    gateScreenSubtitleRoomBirth:
-      "Your room number and date of birth are matched securely with the hotel’s guest records.",
-    gateScreenSubtitleIdentityBoth:
-      "Your full name, room number and date of birth are matched securely with the hotel’s guest records.",
-    gateScreenSubtitleWithPasswordIdentityBirth:
-      "Verify your room and date of birth first; add the access code if prompted.",
-    gateScreenSubtitleWithPasswordIdentityBoth:
-      "Verify your name, room and date of birth; add the access code if prompted.",
+    gateScreenSubtitleDualPassword:
+      "Enter both codes, read the notice, then confirm. Codes are issued at Front Office or Guest Relations.",
+    gateDualPasswordLead: "Secure access: enter both codes in full during this session.",
+    gatePasswordPrimaryLabel: "First code",
+    gatePasswordPrimaryHint: "Type the code from the Front Office or Guest Relations exactly as given.",
+    gatePasswordPrimaryPlaceholder: "First code",
+    gatePasswordSecondaryLabel: "Second code",
+    gatePasswordSecondaryHint: "Type the second hotel-issued code exactly as provided.",
+    gatePasswordSecondaryPlaceholder: "Second code",
+    gateOptionalSectionKicker: "Guest log",
+    gateOptionalLogLead: "Access is code-only. Name and room are optional for the hotel’s internal record.",
+    gateOptionalFullNameLabel: "Full name",
+    gateOptionalFullNameHint: "Not verified against reservations.",
+    gateOptionalFullNamePlaceholder: "Jane Doe",
+    gateOptionalRoomLabel: "Room",
+    gateOptionalRoomHint: "Optional; not validated.",
+    gateOptionalRoomPlaceholder: "1204",
     gateIdentityKicker: "Your stay",
     gateIdentityTitle: "Confirm who you are",
     gateIdentityLead:
@@ -751,9 +758,10 @@ const I18N = {
     gateCheckPrivacy: "I have read the notice and the age statement above and I agree.",
     gateSubmit: "Verify and continue",
     gateBackLang: "Back to language selection",
-    gateErrorPassword: "Incorrect password. Please enter the current access password.",
-    gateErrorPasswordEmpty: "Please enter the access password.",
-    gateErrorGateVerify: "Could not verify the password. Check your connection and try again.",
+    gateErrorPassword: "Codes do not match. Check and try again.",
+    gateErrorPasswordEmpty: "Please enter the first access code.",
+    gateErrorPassword2Empty: "Please enter the second access code as well.",
+    gateErrorGateVerify: "Verification could not complete. Check your connection and try again.",
     gateErrorGateLoading: "Checking access — please wait a moment, then try again.",
     gateErrorGateStrict:
       "We could not verify access (server unreachable). Check your connection or tap Retry.",
@@ -1416,20 +1424,23 @@ const I18N = {
     gateScreenTitle: "Aufenthalt bestätigen",
     gateScreenSubtitle:
       "Lesen Sie den Kurzhinweis und bestätigen Sie, um fortzufahren.",
-    gateScreenSubtitleWithPassword:
-      "Geben Sie den Hotel-Zugangscode ein; lesen Sie den Hinweis und bestätigen Sie.",
-    gateScreenSubtitleWithIdentity:
-      "Vor- und Nachname sowie Zimmernummer werden wie in der Reservierung geprüft.",
-    gateScreenSubtitleWithPasswordAndIdentity:
-      "Zuerst Name und Zimmer bestätigen; bei Bedarf den Zugangscode ergänzen.",
-    gateScreenSubtitleRoomBirth:
-      "Zimmernummer und Geburtsdatum werden sicher mit den Hoteldaten abgeglichen.",
-    gateScreenSubtitleIdentityBoth:
-      "Vor- und Nachname, Zimmernummer und Geburtsdatum werden sicher mit den Hoteldaten abgeglichen.",
-    gateScreenSubtitleWithPasswordIdentityBirth:
-      "Zuerst Zimmer und Geburtsdatum bestätigen; bei Bedarf den Zugangscode ergänzen.",
-    gateScreenSubtitleWithPasswordIdentityBoth:
-      "Zuerst Name, Zimmer und Geburtsdatum bestätigen; bei Bedarf den Zugangscode ergänzen.",
+    gateScreenSubtitleDualPassword:
+      "Geben Sie beide Codes ein, lesen Sie den Hinweis und bestätigen Sie. Codes erhalten Sie an der Rezeption oder bei der Gästebetreuung.",
+    gateDualPasswordLead: "Sicherer Zugang: beide Codes vollständig in dieser Sitzung eingeben.",
+    gatePasswordPrimaryLabel: "Erster Code",
+    gatePasswordPrimaryHint: "Den von Rezeption oder Guest Relations mitgeteilten Code exakt übernehmen.",
+    gatePasswordPrimaryPlaceholder: "Erster Code",
+    gatePasswordSecondaryLabel: "Zweiter Code",
+    gatePasswordSecondaryHint: "Den zweiten, vom Hotel kommunizierten Code exakt eingeben.",
+    gatePasswordSecondaryPlaceholder: "Zweiter Code",
+    gateOptionalSectionKicker: "Protokoll",
+    gateOptionalLogLead: "Zugang nur mit beiden Codes. Name und Zimmer sind optional für die interne Liste.",
+    gateOptionalFullNameLabel: "Name",
+    gateOptionalFullNameHint: "Kein Abgleich mit der Reservierung.",
+    gateOptionalFullNamePlaceholder: "Max Mustermann",
+    gateOptionalRoomLabel: "Zimmer",
+    gateOptionalRoomHint: "Optional; keine Prüfung.",
+    gateOptionalRoomPlaceholder: "1204",
     gateIdentityKicker: "Aufenthalt",
     gateIdentityTitle: "Identität bestätigen",
     gateIdentityLead:
@@ -1451,9 +1462,10 @@ const I18N = {
       "Ich habe den Hinweis und die Altersangabe oben gelesen und stimme zu.",
     gateSubmit: "Bestätigen und fortfahren",
     gateBackLang: "Zurück zur Sprachauswahl",
-    gateErrorPassword: "Passwort ungültig. Bitte das aktuelle Zugangspasswort eingeben.",
-    gateErrorPasswordEmpty: "Bitte geben Sie das Zugangspasswort ein.",
-    gateErrorGateVerify: "Passwort konnte nicht geprüft werden. Verbindung prüfen und erneut versuchen.",
+    gateErrorPassword: "Codes stimmen nicht. Bitte prüfen und erneut versuchen.",
+    gateErrorPasswordEmpty: "Bitte geben Sie den ersten Zugangscode ein.",
+    gateErrorPassword2Empty: "Bitte geben Sie auch den zweiten Zugangscode ein.",
+    gateErrorGateVerify: "Prüfung nicht möglich. Verbindung prüfen und erneut versuchen.",
     gateErrorGateLoading: "Zugriff wird geladen — bitte kurz warten und erneut versuchen.",
     gateErrorGateStrict:
       "Zugang konnte nicht geprüft werden (Server nicht erreichbar). Verbindung prüfen oder «Erneut» tippen.",
@@ -2117,20 +2129,23 @@ const I18N = {
     gateScreenTitle: "Potwierdzenie pobytu",
     gateScreenSubtitle:
       "Przeczytaj krótką informację i potwierdź, aby kontynuować.",
-    gateScreenSubtitleWithPassword:
-      "Wpisz kod dostępu do hotelu; następnie przeczytaj informację i potwierdź.",
-    gateScreenSubtitleWithIdentity:
-      "Imię, nazwisko i numer pokoju są porównywane z listą gości hotelu.",
-    gateScreenSubtitleWithPasswordAndIdentity:
-      "Najpierw imię, nazwisko i pokój; w razie potrzeby dodaj kod dostępu.",
-    gateScreenSubtitleRoomBirth:
-      "Numer pokoju i data urodzenia są bezpiecznie porównywane z danymi hotelu.",
-    gateScreenSubtitleIdentityBoth:
-      "Imię, nazwisko, numer pokoju i data urodzenia są bezpiecznie porównywane z danymi hotelu.",
-    gateScreenSubtitleWithPasswordIdentityBirth:
-      "Najpierw potwierdź pokój i datę urodzenia; w razie potrzeby dodaj kod dostępu.",
-    gateScreenSubtitleWithPasswordIdentityBoth:
-      "Najpierw potwierdź imię, nazwisko, pokój i datę urodzenia; w razie potrzeby dodaj kod dostępu.",
+    gateScreenSubtitleDualPassword:
+      "Wpisz oba kody, przeczytaj informację i potwierdź. Kody w recepcji lub u obsługi gościa.",
+    gateDualPasswordLead: "Bezpieczny dostęp: oba kody wpisz w pełni w tej sesji.",
+    gatePasswordPrimaryLabel: "Pierwszy kod",
+    gatePasswordPrimaryHint: "Wpisz pierwszy kod dokładnie tak, jak podano w recepcji lub u obsługi gościa.",
+    gatePasswordPrimaryPlaceholder: "Pierwszy kod",
+    gatePasswordSecondaryLabel: "Drugi kod",
+    gatePasswordSecondaryHint: "Wpisz drugi kod przekazany przez hotel — dokładnie, bez zmian.",
+    gatePasswordSecondaryPlaceholder: "Drugi kod",
+    gateOptionalSectionKicker: "Ewidencja",
+    gateOptionalLogLead: "Wejście tylko kodami. Imię i pokój — opcjonalnie do ewidencji hotelu.",
+    gateOptionalFullNameLabel: "Imię i nazwisko",
+    gateOptionalFullNameHint: "Bez weryfikacji z rezerwacją.",
+    gateOptionalFullNamePlaceholder: "Jan Kowalski",
+    gateOptionalRoomLabel: "Pokój",
+    gateOptionalRoomHint: "Opcjonalnie; bez walidacji.",
+    gateOptionalRoomPlaceholder: "1204",
     gateIdentityKicker: "Pobyt",
     gateIdentityTitle: "Potwierdź tożsamość",
     gateIdentityLead:
@@ -2152,9 +2167,10 @@ const I18N = {
       "Przeczytałem/am powyższą informację i punkt o wieku oraz akceptuję.",
     gateSubmit: "Potwierdź i przejdź",
     gateBackLang: "Powrót do wyboru języka",
-    gateErrorPassword: "Nieprawidłowe hasło. Wpisz aktualne hasło dostępu.",
-    gateErrorPasswordEmpty: "Wpisz hasło dostępu.",
-    gateErrorGateVerify: "Nie udało się zweryfikować hasła. Sprawdź połączenie i spróbuj ponownie.",
+    gateErrorPassword: "Kody się nie zgadzają. Sprawdź i spróbuj ponownie.",
+    gateErrorPasswordEmpty: "Wpisz pierwszy kod dostępu.",
+    gateErrorPassword2Empty: "Wpisz także drugi kod dostępu.",
+    gateErrorGateVerify: "Nie udało się dokończyć weryfikacji. Sprawdź połączenie i spróbuj ponownie.",
     gateErrorGateLoading: "Sprawdzanie dostępu — proszę chwilę poczekać i spróbować ponownie.",
     gateErrorGateStrict:
       "Nie można zweryfikować dostępu (brak połączenia z serwerem). Sprawdź internet lub dotknij «Spróbuj ponownie».",

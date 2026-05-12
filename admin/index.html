@@ -775,7 +775,7 @@
               <p class="home-panel__eyebrow section-head__eyebrow">Kapı audit</p>
               <h2>Uygulama girişleri</h2>
               <p class="logs-page-title__sub">
-                Misafir web arayüzünde başarılı kimlik doğrulaması (ad soyad + oda). Kayıtlar Supabase
+                Misafir web arayüzünde başarılı kapı geçişi (çift erişim kodu; isteğe bağlı ad ve oda yalnızca kayıt). Kayıtlar Supabase
                 <code class="inline-code">guest_gate_entries</code> tablosundandır; kişisel veri içerir — yalnız yetkili personel için.
               </p>
             </div>
@@ -819,8 +819,9 @@
               </label>
               <select id="app-gate-method" class="logs-toolbar__select" aria-label="Doğrulama yöntemi">
                 <option value="">Yöntem (tümü)</option>
-                <option value="deploy_bypass">Kurulum eşleşmesi</option>
-                <option value="elektra">Elektra (Hotspot)</option>
+                <option value="deploy_bypass">Kurulum eşleşmesi (eski)</option>
+                <option value="elektra">Elektra / Hotspot (eski)</option>
+                <option value="password_dual">Çift şifre kapısı</option>
               </select>
               <button id="app-gate-apply" type="button" class="btn-small logs-toolbar__apply">Uygula</button>
               <div class="logs-toolbar__exports">

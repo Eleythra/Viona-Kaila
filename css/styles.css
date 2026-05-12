@@ -332,11 +332,8 @@ body {
   padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
     max(max(20px, env(safe-area-inset-bottom)), 16px) max(16px, env(safe-area-inset-left));
   overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow-y: hidden;
   overscroll-behavior-y: contain;
-  scroll-padding-bottom: max(28px, env(safe-area-inset-bottom));
-  scroll-padding-top: max(8px, env(safe-area-inset-top));
   box-sizing: border-box;
 }
 
@@ -349,6 +346,14 @@ body {
   flex: 0 1 auto;
   box-sizing: border-box;
   min-width: 0;
+  max-height: calc(100dvh - max(12px, env(safe-area-inset-top)) - max(20px, env(safe-area-inset-bottom)) - 8px);
+  max-height: calc(100svh - max(12px, env(safe-area-inset-top)) - max(20px, env(safe-area-inset-bottom)) - 8px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  scroll-padding-bottom: max(28px, env(safe-area-inset-bottom));
+  scroll-padding-top: max(8px, env(safe-area-inset-top));
   text-align: left;
   padding: clamp(22px, 4.5vw, 34px) clamp(16px, 3.5vw, 26px) clamp(20px, 4vw, 28px);
   border-radius: clamp(22px, 4vw, 28px);
@@ -401,6 +406,96 @@ body {
   color: rgba(232, 236, 244, 0.88);
   overflow-wrap: anywhere;
   hyphens: auto;
+}
+
+.gate-password-fields {
+  margin-bottom: 20px;
+  padding: clamp(18px, 4vw, 22px) clamp(16px, 3.5vw, 20px);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(212, 168, 83, 0.22);
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 42%, rgba(12, 18, 28, 0.35) 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 18px 48px rgba(0, 0, 0, 0.28);
+}
+
+.gate-dual-lead {
+  margin: 0 0 1.25rem;
+  font-size: clamp(0.86rem, 2.45vw, 0.94rem);
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  color: rgba(232, 236, 244, 0.9);
+}
+
+.gate-field-hint {
+  display: block;
+  font-size: clamp(0.76rem, 2.1vw, 0.84rem);
+  line-height: 1.42;
+  margin: 0.28rem 0 0.62rem;
+  color: rgba(188, 206, 222, 0.88);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* İki satırlık ipucu alanı — şifre / isteğe bağlı alanlarda dikey hizayı sabitler */
+.gate-field-hint--dual {
+  min-height: 2.85em;
+  max-width: 100%;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.gate-password-stack .gate-field {
+  margin-bottom: 1rem;
+}
+
+.gate-password-stack .gate-field:last-of-type {
+  margin-bottom: 0;
+}
+
+.gate-optional-fields {
+  margin-top: clamp(12px, 2.8vw, 16px);
+  padding: clamp(16px, 3.5vw, 20px) clamp(15px, 3.2vw, 19px);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(212, 168, 83, 0.16);
+  background: linear-gradient(
+    152deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(14, 22, 36, 0.55) 100%
+  );
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 12px 36px rgba(0, 0, 0, 0.22);
+}
+
+.gate-optional-kicker {
+  margin: 0 0 0.45rem;
+  font-size: clamp(0.62rem, 1.75vw, 0.7rem);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(120, 212, 224, 0.82);
+}
+
+.gate-optional-lead {
+  margin: 0 0 1.05rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: clamp(0.82rem, 2.35vw, 0.9rem);
+  line-height: 1.45;
+  letter-spacing: 0.015em;
+  color: rgba(218, 226, 238, 0.9);
+}
+
+.gate-optional-fields .gate-field {
+  margin-bottom: 0.85rem;
+}
+
+.gate-optional-fields .gate-field:last-of-type {
+  margin-bottom: 0;
 }
 
 .gate-identity-panel {
@@ -514,6 +609,7 @@ body {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  min-height: 50px;
   padding: 14px 16px;
   border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.14);
