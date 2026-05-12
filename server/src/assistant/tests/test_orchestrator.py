@@ -13,7 +13,7 @@ from assistant.services.device_extractor import DeviceExtractor  # noqa: E402
 from assistant.services.language_service import LanguageService  # noqa: E402
 from assistant.services.localization_service import LocalizationService  # noqa: E402
 from assistant.services.orchestrator import ChatOrchestrator  # noqa: E402
-from assistant.services.voice_channel_layer import VOICE_OPERATIONAL_USE_TEXT  # noqa: E402
+from assistant.services.voice_channel_layer import VOICE_OUT_OF_SCOPE_PREMIUM_TEXT  # noqa: E402
 from assistant.services.policy_service import PolicyService  # noqa: E402
 from assistant.services.response_composer import ResponseComposer  # noqa: E402
 from assistant.services.response_service import ResponseService  # noqa: E402
@@ -144,13 +144,13 @@ def build_orchestrator():
 
 
 def test_voice_complaint_rule_returns_operational_redirect_not_form_guidance():
-    """Seslide şikâyet kuralı eşleşince form rehberi değil, yazılı sohbet yönlendirmesi."""
+    """Seslide şikâyet kuralı eşleşince form rehberi değil, premium yazılı sohbet daveti (v2)."""
     orch, _, _ = build_orchestrator()
     res = orch.handle(
         ChatRequest(message="şikayet", ui_language="tr", locale="tr", channel="voice")
     )
     assert res.meta.intent == "hotel_info"
-    assert res.message.strip() == VOICE_OPERATIONAL_USE_TEXT["tr"].strip()
+    assert res.message.strip() == VOICE_OUT_OF_SCOPE_PREMIUM_TEXT["tr"].strip()
     assert res.meta.action is None
 
 
@@ -195,8 +195,29 @@ def test_voice_complaint_llm_returns_operational_redirect_not_compose_complaint(
             )
         )
     assert res.meta.intent == "hotel_info"
-    assert res.message.strip() == VOICE_OPERATIONAL_USE_TEXT["tr"].strip()
+    assert res.message.strip() == VOICE_OUT_OF_SCOPE_PREMIUM_TEXT["tr"].strip()
     assert res.meta.action is None
+
+
+def test_voice_reservation_keyword_returns_premium_not_long_hint():
+    """Ses v2: rezervasyon anahtarı seslide uzun resepsiyon metni yerine premium kısa yanıt."""
+    orch, _, _ = build_orchestrator()
+    res = orch.handle(
+        ChatRequest(message="rezervasyon yapmak istiyorum", ui_language="tr", locale="tr", channel="voice")
+    )
+    assert res.meta.intent == "hotel_info"
+    assert res.meta.action is None
+    assert res.message.strip() == VOICE_OUT_OF_SCOPE_PREMIUM_TEXT["tr"].strip()
+    assert "resepsiyon" not in res.message.lower()
+
+
+def test_voice_chitchat_greeting_coerced_to_premium():
+    """Ses v2: sohbet selamı seslide bilgi dışı → coerce ile premium metin."""
+    orch, _, _ = build_orchestrator()
+    res = orch.handle(ChatRequest(message="günaydın", ui_language="tr", locale="tr", channel="voice"))
+    assert res.meta.intent == "hotel_info"
+    assert res.meta.action is None
+    assert "yazılı" in res.message.lower() or "metin" in res.message.lower()
 
 
 def test_fault_cases():

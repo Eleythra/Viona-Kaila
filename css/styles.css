@@ -480,8 +480,17 @@ body {
   margin-bottom: 2px;
 }
 
+.gate-field-wrap {
+  margin-bottom: 0;
+}
+
 .gate-field {
   margin-bottom: 18px;
+}
+
+.gate-input[type="date"] {
+  color-scheme: dark;
+  min-height: 48px;
 }
 
 .gate-label {

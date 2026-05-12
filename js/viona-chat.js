@@ -479,6 +479,7 @@
       response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(body),
         signal: abortController.signal,
       });
@@ -788,35 +789,45 @@
 
   /**
    * Sesli tur: `client_channel=voice` ile bilgi katmanı (sunucu); metin sohbetindeki buton seçenekleri burada gösterilmez.
+   * @param {string} userText
+   * @param {{ skipChatHistory?: boolean }} [opts] — `skipChatHistory: true`: mesajları sohbet listesine yazma (yalnızca sesli).
    */
-  window.vionaChatRunAssistantTurn = async function (userText) {
+  window.vionaChatRunAssistantTurn = async function (userText, opts) {
+    opts = opts || {};
+    var skipChatHistory = !!opts.skipChatHistory;
     var clean = String(userText || "").replace(/\r/g, "").trim();
     if (!clean) throw new Error("empty");
     if (state.pending) throw new Error("busy");
     state.pending = true;
-    state.messages.push({ role: "user", content: clean });
-    trimHistory();
-    renderMessages();
+    if (!skipChatHistory) {
+      state.messages.push({ role: "user", content: clean });
+      trimHistory();
+      renderMessages();
+    }
     setTyping(true);
     try {
       var result = await askViona(clean, getLang(), { clientChannel: "voice" });
-      state.messages.push({
-        role: "assistant",
-        content: result.reply,
-        options: null,
-      });
-      trimHistory();
-      renderMessages();
+      if (!skipChatHistory) {
+        state.messages.push({
+          role: "assistant",
+          content: result.reply,
+          options: null,
+        });
+        trimHistory();
+        renderMessages();
+      }
       return result.reply;
     } catch (e) {
       var errText = getClientErrorReply(e);
-      state.messages.push({
-        role: "assistant",
-        content: errText,
-        error: true,
-      });
-      trimHistory();
-      renderMessages();
+      if (!skipChatHistory) {
+        state.messages.push({
+          role: "assistant",
+          content: errText,
+          error: true,
+        });
+        trimHistory();
+        renderMessages();
+      }
       /* Sesli tur: TTS için metin dönmeli; aksi halde viona-voice sessizce idle’a döner. */
       return errText;
     } finally {

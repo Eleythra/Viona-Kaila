@@ -2,7 +2,7 @@
 
 Resmi koleksiyon: [ElektraWeb — Hotspot API (Postman)](https://www.postman.com/elektrawebinc/elektraweb/collection/w5r4vz9/hotspot-api?sideView=agentMode)
 
-Sayfa tarayıcıda (SPA) açılır; istek ayrıntılarını Postman masaüstü veya web ile inceleyin.
+Sayfa tarayıcıda (SPA) açılır; istek ayrıntılarını Postman masaüstü veya web ile inceleyin. Alan özeti (STATUS/DATA, BIRTHDATE, PII): `elektra-hotspot-gethotspotlist.md`.
 
 ## Kontrol listesi (Viona `.env` ile eşleştirme)
 

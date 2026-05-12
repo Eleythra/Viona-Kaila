@@ -5,13 +5,14 @@ import {
   buildElektraBearerToken,
   fetchHotspotGuestList,
 } from "../pms/elektra/elektra-hotspot.provider.js";
-import { hotelTodayIsoYmd, isStayActiveOnDate } from "./hotel-date.js";
+import { hotelTodayIsoYmd, isStayActiveOnDate, parsePmsDateToIsoYmd } from "./hotel-date.js";
 import { guestVerificationUserMessage } from "./guest-verification-messages.js";
 import {
   clearVerificationFailures,
   recordVerificationFailure,
   shouldBlockVerificationAttempts,
 } from "./verification-failure-tracker.js";
+import { parseVerifiedGuestCookie } from "../../lib/guest-verified-session.js";
 
 /**
  * @param {string} reason
@@ -23,6 +24,7 @@ export function createGuestVerificationHttpError(reason) {
   err.guestVerificationMessage = message;
   if (reason === "pms_unavailable") err.statusCode = 503;
   else if (reason === "too_many_verification_attempts") err.statusCode = 429;
+  else if (reason === "guest_session_required" || reason === "guest_session_room_mismatch") err.statusCode = 401;
   else err.statusCode = 422;
   return err;
 }
@@ -96,6 +98,75 @@ export function matchGuestToHotspotRecords(normalized, records, clientIp, hotelI
     checkin: row.checkin || null,
     checkout: row.checkout || null,
     hotelId: String(row.hotelId || hotelIdFallback || "").trim() || String(hotelIdFallback || "").trim(),
+    displayName: [row.name, row.lname].filter(Boolean).join(" ").trim() || "",
+  };
+}
+
+/**
+ * Oda + doğum tarihi (YYYY-MM-DD) + aktif konak (CHECKIN/CHECKOUT) — Elektra Hotspot `BIRTHDATE` ile.
+ * @param {string} roomInput
+ * @param {string} birthYmd — `YYYY-MM-DD`
+ * @param {object[]} records — `normalizeHotspotRow` çıktısı
+ * @param {string} clientIp
+ * @param {string} [hotelIdFallback]
+ */
+export function matchGuestRoomBirthdateToHotspotRecords(
+  roomInput,
+  birthYmd,
+  records,
+  clientIp,
+  hotelIdFallback = "",
+) {
+  const normRoom = normalizeGuestMatchString(String(roomInput ?? "").trim());
+  const birth = String(birthYmd ?? "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birth)) {
+    recordVerificationFailure(clientIp);
+    throw createGuestVerificationHttpError("invalid_birthdate");
+  }
+  if (!normRoom) {
+    recordVerificationFailure(clientIp);
+    throw createGuestVerificationHttpError("room_not_found");
+  }
+
+  const roomMatches = records.filter((r) => normalizeGuestMatchString(String(r.roomNo ?? "")) === normRoom);
+  if (!roomMatches.length) {
+    recordVerificationFailure(clientIp);
+    throw createGuestVerificationHttpError("room_not_found");
+  }
+
+  const withBirth = roomMatches
+    .map((r) => {
+      const apiYmd = parsePmsDateToIsoYmd(r.birthDateRaw || "");
+      return { r, apiYmd };
+    })
+    .filter((x) => x.apiYmd === birth);
+
+  if (!withBirth.length) {
+    recordVerificationFailure(clientIp);
+    throw createGuestVerificationHttpError("birthdate_mismatch");
+  }
+
+  const today = hotelTodayIsoYmd();
+  const active = withBirth.filter((x) => isStayActiveOnDate(today, x.r.checkin, x.r.checkout));
+  if (!active.length) {
+    recordVerificationFailure(clientIp);
+    throw createGuestVerificationHttpError("stay_not_active");
+  }
+  if (active.length > 1) {
+    recordVerificationFailure(clientIp);
+    throw createGuestVerificationHttpError("ambiguous_guest");
+  }
+
+  const row = active[0].r;
+  clearVerificationFailures(clientIp);
+  return {
+    verified: true,
+    resId: row.resId || null,
+    resNameId: row.resNameId || null,
+    checkin: row.checkin || null,
+    checkout: row.checkout || null,
+    hotelId: String(row.hotelId || hotelIdFallback || "").trim() || String(hotelIdFallback || "").trim(),
+    displayName: [row.name, row.lname].filter(Boolean).join(" ").trim() || "",
   };
 }
 
@@ -167,9 +238,32 @@ export async function verifyGuestIdentityAtGate(fullName, room, options = {}) {
 }
 
 /**
- * Insert öncesi PMS doğrulaması. Env kapalıysa veya tip listede yoksa no-op.
- * @param {object} normalized createGuestRequest içi normalize edilmiş payload
+ * Kapı: Elektra ile oda + doğum tarihi (`YYYY-MM-DD`).
+ * @param {string} room
+ * @param {string} birthDateRaw — `type=date` veya `YYYY-MM-DD`
  * @param {{ clientIp?: string }} options
+ */
+export async function verifyGuestIdentityRoomBirthdate(room, birthDateRaw, options = {}) {
+  const env = getEnv();
+  if (!env.guestPmsGateVerifyEnabled) {
+    throw createGuestVerificationHttpError("pms_unavailable");
+  }
+  const clientIp = String(options.clientIp || "unknown").trim() || "unknown";
+  const s = String(birthDateRaw ?? "").trim();
+  const birthYmd = /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
+  if (!birthYmd) {
+    recordVerificationFailure(clientIp);
+    throw createGuestVerificationHttpError("invalid_birthdate");
+  }
+  const { records, hotelIdDefault } = await fetchHotspotRecordsForVerification(clientIp);
+  return matchGuestRoomBirthdateToHotspotRecords(room, birthYmd, records, clientIp, hotelIdDefault);
+}
+
+/**
+ * Insert öncesi PMS doğrulaması. Env kapalıysa veya tip listede yoksa no-op.
+ * Kapı doğrulaması açıksa (`GUEST_PMS_GATE_VERIFY_ENABLED`) HttpOnly çerez ile oda eşleşmesi yeterlidir (Hotspot tekrar çağrılmaz).
+ * @param {object} normalized createGuestRequest içi normalize edilmiş payload
+ * @param {{ clientIp?: string, cookieHeader?: string|null }} options
  * @returns {Promise<object|null>} meta veya null
  */
 export async function maybeVerifyGuestForPms(normalized, options = {}) {
@@ -180,6 +274,21 @@ export async function maybeVerifyGuestForPms(normalized, options = {}) {
   if (!env.guestPmsVerifyTypeSet.has(typ)) return null;
 
   const clientIp = String(options.clientIp || "unknown").trim() || "unknown";
+
+  if (env.guestPmsGateVerifyEnabled) {
+    const session = parseVerifiedGuestCookie(options.cookieHeader);
+    if (!session) {
+      throw createGuestVerificationHttpError("guest_session_required");
+    }
+    const sr = normalizeGuestMatchString(String(session.room || ""));
+    const pr = normalizeGuestMatchString(String(normalized.room || "").trim());
+    if (!sr || !pr || sr !== pr) {
+      throw createGuestVerificationHttpError("guest_session_room_mismatch");
+    }
+    clearVerificationFailures(clientIp);
+    return { verified_via: "guest_session", room: session.room };
+  }
+
   const { records, hotelIdDefault } = await fetchHotspotRecordsForVerification(clientIp);
   return matchGuestToHotspotRecords(normalized, records, clientIp, hotelIdDefault);
 }

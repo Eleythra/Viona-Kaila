@@ -785,7 +785,10 @@ export async function createGuestRequest(payload, options = {}) {
     throw err;
   }
 
-  const pmsMeta = await maybeVerifyGuestForPms(normalized, { clientIp: options.clientIp });
+    const pmsMeta = await maybeVerifyGuestForPms(normalized, {
+      clientIp: options.clientIp,
+      cookieHeader: options.cookieHeader,
+    });
   if (pmsMeta) {
     normalized.pms_guest_verification = pmsMeta;
   }

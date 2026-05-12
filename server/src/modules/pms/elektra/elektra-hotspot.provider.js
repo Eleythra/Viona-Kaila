@@ -30,6 +30,8 @@ export function normalizeHotspotRow(row) {
     name: pick(["NAME", "Name", "name"]),
     lname: pick(["LNAME", "LName", "lname"]),
     roomNo: pick(["ROOMNO", "RoomNo", "roomno", "ROOM_NO", "roomNo"]),
+    /** Ham Elektra değeri; doğrulamada yalnız `parsePmsDateToIsoYmd` ile gün çıkarılır. */
+    birthDateRaw: pick(["BIRTHDATE", "BirthDate", "birthdate", "BIRTH_DATE", "birthDate"]),
     checkin: pick(["CHECKIN", "CheckIn", "checkin"]),
     checkout: pick(["CHECKOUT", "CheckOut", "checkout"]),
     resId: pick(["RESID", "ResId", "resid"]),
@@ -289,6 +291,14 @@ export async function fetchHotspotGuestList(opts) {
       }
       const rawRows = envelope.records;
       const records = rawRows.map((r) => normalizeHotspotRow(r));
+      const first = records[0];
+      console.info(
+        "[elektra] GetHotspotList ok hotel_id=%s record_count=%s sample_has_room=%s sample_has_birthdate=%s",
+        key,
+        String(records.length),
+        first && String(first.roomNo || "").trim() ? "1" : "0",
+        first && String(first.birthDateRaw || "").trim() ? "1" : "0",
+      );
       setHotspotListCached(cacheKey, records);
       return records;
     } catch (err) {

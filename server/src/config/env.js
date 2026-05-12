@@ -374,5 +374,9 @@ export function getEnv() {
     },
     /** `1` ise status yanıtında `strict: true`; istemci önceki oturumda da sıkı blok kullanabilir. */
     guestUiGateStrict: optional("VIONA_UI_GATE_STRICT", "") === "1",
+    /** Misafir doğrulama oturumu (HttpOnly çerez imzası). Boşsa `ADMIN_API_TOKEN` türevi kullanılır (24+ karakter). */
+    vionaGuestSessionSecret: optional("VIONA_GUEST_SESSION_SECRET", ""),
+    /** Doğrulanmış misafir çerez ömrü (saniye); varsayılan 24 saat. */
+    vionaGuestSessionTtlSec: optionalInt("VIONA_GUEST_SESSION_TTL_SEC", 86400),
   };
 }

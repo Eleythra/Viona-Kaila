@@ -22,6 +22,9 @@ export function parsePmsDateToIsoYmd(raw) {
   const s = String(raw ?? "").trim();
   if (!s) return null;
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  /** Elektra `BIRTHDATE` / `CHECKIN` sıkça `YYYY-MM-DDTHH:mm:ss` döner — yalnız gün kısmı kullanılır. */
+  const isoPrefix = /^(\d{4}-\d{2}-\d{2})[T\s]/.exec(s);
+  if (isoPrefix) return isoPrefix[1];
   const m = /^(\d{1,2})[./](\d{1,2})[./](\d{4})$/.exec(s);
   if (m) {
     const dd = m[1].padStart(2, "0");

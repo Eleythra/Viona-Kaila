@@ -1,8 +1,9 @@
 """
 Sesli asistan katmanı — metin sohbetinden ayrı kanal (channel=voice).
 
-- İşlem / form / şikâyet gerektiren niyetler: orchestrator seslide `VOICE_OPERATIONAL_USE_TEXT` ile yazılı sohbete yönlendirme.
-- Bilgi yanıtları: TTS için sadeleştirilmiş metin, meta.action ve exit_chat_after_ms temizlenir.
+- v2: Seslide yalnızca otel bilgisi (hotel_info / recommendation / current_time); diğer niyetler
+  `coerce_voice_channel_v2_response` ile kısa premium metin + yazılı sohbet daveti.
+- TTS çıkışı: sadeleştirilmiş metin, meta.action ve exit_chat_after_ms temizlenir (`finalize_voice_channel_response`).
 """
 
 from __future__ import annotations
@@ -12,49 +13,35 @@ import re
 from assistant.core.chatbot_languages import voice_dict_lang
 from assistant.schemas.response import ChatResponse
 
-# Talep / şikâyet / arıza / form — sesli kanal yalnız bilgi; işlem için yazılı sohbet.
-VOICE_OPERATIONAL_USE_TEXT: dict[str, str] = {
-    "tr": (
-        "Sesli asistan yalnızca bilgi verir; talep, şikâyet, arıza veya form gerektiren işlemler için "
-        "lütfen yazılı sohbeti kullanın. Otel, hizmetler ve konaklamanız hakkında sorularınıza sesli yanıt vermeye devam ederim."
-    ),
-    "en": (
-        "Voice mode is for information only. For requests, complaints, faults, or any form, please use text chat. "
-        "I can still answer by voice about the hotel, services, and your stay."
-    ),
-    "de": (
-        "Die Sprachansage dient nur zur Information. Für Anfragen, Beschwerden, Störungen oder Formulare bitte den Textchat nutzen. "
-        "Zu Hotel, Service und Aufenthalt antworte ich gern weiter per Sprache."
-    ),
-    "pl": (
-        "Tryb głosowy służy tylko do informacji. W sprawie próśb, reklamacji, usterek lub formularzy skorzystaj z czatu tekstowego. "
-        "Na pytania o hotel, usługi i pobyt odpowiadam nadal głosowo."
-    ),
-    "ru": (
-        "Голосовой режим только для справок. Для заявок, жалоб, неисправностей и форм откройте, пожалуйста, текстовый чат. "
-        "О гостинице, услугах и проживании отвечу голосом."
-    ),
-    "da": (
-        "Stemme er kun til oplysninger. For anmodninger, klager, fejl eller formularer: brug tekstchat. "
-        "Jeg svarer gerne med stemme om hotel, service og ophold."
-    ),
-    "nl": (
-        "Spraak is alleen voor informatie. Voor verzoeken, klachten, storingen of formulieren: gebruik de tekstchat. "
-        "Over hotel, diensten en verblijf antwoord ik graag met stem."
-    ),
-    "cs": (
-        "Hlas slouží pouze k informacím. Pro požadavky, stížnosti, závady nebo formuláře použijte textový chat. "
-        "K hotelu, službám a pobytu odpovím ráda hlasem."
-    ),
-    "ro": (
-        "Modul vocal este doar pentru informații. Pentru cereri, reclamații, defecțiuni sau formulare folosiți chatul text. "
-        "Despre hotel, servicii și sejur răspund în continuare la voce."
-    ),
-    "sk": (
-        "Hlas je len na informácie. Pre požiadavky, sťažnosti, poruchy alebo formuláre použite textový chat. "
-        "O hoteli, službách a pobyte odpoviem hlasom."
-    ),
+# Ses v2: işlem, rezervasyon eli, anlamama ve sohbet dışı — tek premium cümle (TTS kısa); yazılı asistana yönlendirme.
+VOICE_OUT_OF_SCOPE_PREMIUM_TEXT: dict[str, str] = {
+    "tr": "Bunun için en doğru rehberliği yazılı asistanımda sunabilirim; metin sohbetine geçmenizi içtenlikle rica ederim.",
+    "en": "For the fullest care on this, our text chat is the right place—please switch to it, and I will gladly assist you in detail.",
+    "de": "Dafür ist der Textchat der passende Ort — bitte wechseln Sie dorthin; ich betreue Sie dort gern ausführlich.",
+    "pl": "W tej sprawie najlepiej pomoże czat tekstowy — przejdź tam; chętnie udzielę pełnej pomocy.",
+    "ru": "По этому вопросу лучше всего помогу в текстовом чате — перейдите туда, с удовольствием всё оформлю.",
+    "da": "Her er tekstchat det rette sted — skift dertil, så hjælper jeg dig gerne grundigt.",
+    "nl": "Hiervoor is de tekstchat de juiste plek — schakel over; ik help je daar graag volledig verder.",
+    "cs": "V tomto vám nejlépe pomůže textový chat — přejděte tam, ráda vás provedu podrobně.",
+    "ro": "Pentru acest lucru, chatul text este locul potrivit — comutați acolo; vă ajut cu plăcere în detaliu.",
+    "sk": "V tom vám najlepšie pomôže textový chat — prepnite sa tam, rada vás podrobne sprevádzim.",
 }
+
+# Geriye dönük: orchestrator `_voice_operational_redirect` bu adı import eder.
+VOICE_OPERATIONAL_USE_TEXT = VOICE_OUT_OF_SCOPE_PREMIUM_TEXT
+
+VOICE_INTENTS_ALLOWED_SPOKEN: frozenset[str] = frozenset({"hotel_info", "recommendation", "current_time"})
+
+
+def coerce_voice_channel_v2_response(response: ChatResponse, reply_lang: str) -> ChatResponse:
+    """Ses v2: yalnızca izinli niyetler konuşulur; aksi halde premium tek cümle (form/aksiyon yok)."""
+    intent = str(response.meta.intent or "").strip()
+    if intent in VOICE_INTENTS_ALLOWED_SPOKEN:
+        return response
+    lg = voice_dict_lang(reply_lang)
+    msg = VOICE_OUT_OF_SCOPE_PREMIUM_TEXT.get(lg, VOICE_OUT_OF_SCOPE_PREMIUM_TEXT["tr"])
+    meta = response.meta.model_copy(update={"intent": "hotel_info", "action": None, "exit_chat_after_ms": None})
+    return response.model_copy(update={"type": "inform", "message": msg, "meta": meta})
 
 # Rezervasyon — yüz yüze ekip yönlendirmesi; spa / à la carte / genel resepsiyon ayrımı (TTS).
 VOICE_RECEPTION_RESERVATION_HINT: dict[str, str] = {

@@ -2,6 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <!-- Üretimde Render SPEECH_CLIENT_SECRET ile aynı değeri yazın (boş = yalnızca izinli site kökeni). -->
+    <meta name="viona-speech-client-secret" content="" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#0a0e14" />
     <meta
@@ -70,19 +72,21 @@
             <h2 class="gate-panel-title" data-i18n="gateIdentityTitle"></h2>
             <p class="gate-panel-lead" data-i18n="gateIdentityLead"></p>
             <div class="gate-identity-fields" id="gate-identity-wrap">
-              <label class="gate-field" for="gate-full-name">
-                <span class="gate-label" data-i18n="gateFullNameLabel"></span>
-                <input
-                  type="text"
-                  id="gate-full-name"
-                  class="gate-input gate-input--hero"
-                  autocomplete="name"
-                  autocorrect="off"
-                  autocapitalize="words"
-                  spellcheck="false"
-                  data-i18n-placeholder="gateFullNamePlaceholder"
-                />
-              </label>
+              <div class="gate-field-wrap" id="gate-full-name-wrap">
+                <label class="gate-field" for="gate-full-name">
+                  <span class="gate-label" data-i18n="gateFullNameLabel"></span>
+                  <input
+                    type="text"
+                    id="gate-full-name"
+                    class="gate-input gate-input--hero"
+                    autocomplete="name"
+                    autocorrect="off"
+                    autocapitalize="words"
+                    spellcheck="false"
+                    data-i18n-placeholder="gateFullNamePlaceholder"
+                  />
+                </label>
+              </div>
               <label class="gate-field" for="gate-room">
                 <span class="gate-label" data-i18n="gateRoomLabel"></span>
                 <input
@@ -96,6 +100,18 @@
                   data-i18n-placeholder="gateRoomPlaceholder"
                 />
               </label>
+              <div class="gate-field-wrap" id="gate-birth-field-wrap">
+                <label class="gate-field" for="gate-birth-date">
+                  <span class="gate-label" data-i18n="gateBirthDateLabel"></span>
+                  <input
+                    type="date"
+                    id="gate-birth-date"
+                    class="gate-input gate-input--hero"
+                    autocomplete="bday"
+                    inputmode="numeric"
+                  />
+                </label>
+              </div>
             </div>
           </div>
 
@@ -430,8 +446,8 @@
     <script src="js/content-where-locales-extra.js?v=1"></script>
     <script src="js/content-where.js?v=18"></script>
     <script src="js/viona-chat-config.js?v=12"></script>
-    <script src="js/viona-chat.js?v=19"></script>
-    <script src="js/viona-voice.js?v=29"></script>
+    <script src="js/viona-chat.js?v=20"></script>
+    <script src="js/viona-voice.js?v=32"></script>
     <script src="js/survey-schema.js?v=4"></script>
     <script src="js/survey-state.js?v=4"></script>
     <script src="js/survey-submit.js?v=11"></script>

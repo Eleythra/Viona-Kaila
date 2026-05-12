@@ -22,6 +22,14 @@ const I18N = {
       "Adınız, soyadınız ve oda numaranız otelin kayıtlarıyla güvenli şekilde eşleştirilir.",
     gateScreenSubtitleWithPasswordAndIdentity:
       "Önce ad ve soyad ile oda numaranızı doğrulayın; gerekiyorsa iç erişim kodunu ekleyin.",
+    gateScreenSubtitleRoomBirth:
+      "Oda numaranız ve doğum tarihiniz otelin kayıtlarıyla güvenli şekilde eşleştirilir.",
+    gateScreenSubtitleIdentityBoth:
+      "Ad soyad, oda numarası ve doğum tarihiniz otelin kayıtlarıyla güvenli şekilde eşleştirilir.",
+    gateScreenSubtitleWithPasswordIdentityBirth:
+      "Önce oda ve doğum tarihini doğrulayın; gerekiyorsa iç erişim kodunu ekleyin.",
+    gateScreenSubtitleWithPasswordIdentityBoth:
+      "Önce ad soyad, oda ve doğum tarihini doğrulayın; gerekiyorsa iç erişim kodunu ekleyin.",
     gateIdentityKicker: "Konaklama",
     gateIdentityTitle: "Kimliğinizi doğrulayın",
     gateIdentityLead:
@@ -52,6 +60,11 @@ const I18N = {
     gateRetryStatus: "Tekrar dene",
     gateErrorPrivacy: "Devam etmek için onayı işaretleyin.",
     gateErrorIdentityRequired: "Lütfen ad soyad ve oda numarasını girin.",
+    gateErrorIdentityNameRequired: "Lütfen ad ve soyadınızı girin.",
+    gateErrorRoomRequired: "Lütfen oda numaranızı girin.",
+    gateErrorBirthDateRequired: "Lütfen doğum tarihinizi seçin.",
+    gateBirthDateLabel: "Doğum tarihi",
+    gateVerifiedAnonymousName: "Misafir",
     gateErrorIdentityMismatch:
       "Ad soyad veya oda bilgisi doğrulanamadı. Kayıtlı bilgilerle tekrar deneyin veya resepsiyon ile görüşün.",
 
@@ -710,6 +723,14 @@ const I18N = {
       "Your full name and room number are matched with the hotel’s guest records.",
     gateScreenSubtitleWithPasswordAndIdentity:
       "Confirm your name and room first; add the access code if prompted.",
+    gateScreenSubtitleRoomBirth:
+      "Your room number and date of birth are matched securely with the hotel’s guest records.",
+    gateScreenSubtitleIdentityBoth:
+      "Your full name, room number and date of birth are matched securely with the hotel’s guest records.",
+    gateScreenSubtitleWithPasswordIdentityBirth:
+      "Verify your room and date of birth first; add the access code if prompted.",
+    gateScreenSubtitleWithPasswordIdentityBoth:
+      "Verify your name, room and date of birth; add the access code if prompted.",
     gateIdentityKicker: "Your stay",
     gateIdentityTitle: "Confirm who you are",
     gateIdentityLead:
@@ -739,6 +760,11 @@ const I18N = {
     gateRetryStatus: "Retry",
     gateErrorPrivacy: "Please tick the box to confirm and continue.",
     gateErrorIdentityRequired: "Please enter your full name and room number.",
+    gateErrorIdentityNameRequired: "Please enter your full name.",
+    gateErrorRoomRequired: "Please enter your room number.",
+    gateErrorBirthDateRequired: "Please select your date of birth.",
+    gateBirthDateLabel: "Date of birth",
+    gateVerifiedAnonymousName: "Guest",
     gateErrorIdentityMismatch:
       "We could not verify your name or room. Please check your details or contact reception.",
 
@@ -1396,6 +1422,14 @@ const I18N = {
       "Vor- und Nachname sowie Zimmernummer werden wie in der Reservierung geprüft.",
     gateScreenSubtitleWithPasswordAndIdentity:
       "Zuerst Name und Zimmer bestätigen; bei Bedarf den Zugangscode ergänzen.",
+    gateScreenSubtitleRoomBirth:
+      "Zimmernummer und Geburtsdatum werden sicher mit den Hoteldaten abgeglichen.",
+    gateScreenSubtitleIdentityBoth:
+      "Vor- und Nachname, Zimmernummer und Geburtsdatum werden sicher mit den Hoteldaten abgeglichen.",
+    gateScreenSubtitleWithPasswordIdentityBirth:
+      "Zuerst Zimmer und Geburtsdatum bestätigen; bei Bedarf den Zugangscode ergänzen.",
+    gateScreenSubtitleWithPasswordIdentityBoth:
+      "Zuerst Name, Zimmer und Geburtsdatum bestätigen; bei Bedarf den Zugangscode ergänzen.",
     gateIdentityKicker: "Aufenthalt",
     gateIdentityTitle: "Identität bestätigen",
     gateIdentityLead:
@@ -1426,6 +1460,11 @@ const I18N = {
     gateRetryStatus: "Erneut versuchen",
     gateErrorPrivacy: "Bitte aktivieren Sie das Kontrollkästchen, um fortzufahren.",
     gateErrorIdentityRequired: "Bitte geben Sie Vor- und Nachnamen sowie Zimmernummer ein.",
+    gateErrorIdentityNameRequired: "Bitte geben Sie Vor- und Nachnamen ein.",
+    gateErrorRoomRequired: "Bitte geben Sie die Zimmernummer ein.",
+    gateErrorBirthDateRequired: "Bitte wählen Sie Ihr Geburtsdatum.",
+    gateBirthDateLabel: "Geburtsdatum",
+    gateVerifiedAnonymousName: "Gast",
     gateErrorIdentityMismatch:
       "Name oder Zimmernummer konnte nicht bestätigt werden. Bitte prüfen oder die Rezeption kontaktieren.",
 
@@ -2084,6 +2123,14 @@ const I18N = {
       "Imię, nazwisko i numer pokoju są porównywane z listą gości hotelu.",
     gateScreenSubtitleWithPasswordAndIdentity:
       "Najpierw imię, nazwisko i pokój; w razie potrzeby dodaj kod dostępu.",
+    gateScreenSubtitleRoomBirth:
+      "Numer pokoju i data urodzenia są bezpiecznie porównywane z danymi hotelu.",
+    gateScreenSubtitleIdentityBoth:
+      "Imię, nazwisko, numer pokoju i data urodzenia są bezpiecznie porównywane z danymi hotelu.",
+    gateScreenSubtitleWithPasswordIdentityBirth:
+      "Najpierw potwierdź pokój i datę urodzenia; w razie potrzeby dodaj kod dostępu.",
+    gateScreenSubtitleWithPasswordIdentityBoth:
+      "Najpierw potwierdź imię, nazwisko, pokój i datę urodzenia; w razie potrzeby dodaj kod dostępu.",
     gateIdentityKicker: "Pobyt",
     gateIdentityTitle: "Potwierdź tożsamość",
     gateIdentityLead:
@@ -2114,6 +2161,11 @@ const I18N = {
     gateRetryStatus: "Spróbuj ponownie",
     gateErrorPrivacy: "Zaznacz pole potwierdzenia, aby kontynuować.",
     gateErrorIdentityRequired: "Podaj imię i nazwisko oraz numer pokoju.",
+    gateErrorIdentityNameRequired: "Podaj imię i nazwisko.",
+    gateErrorRoomRequired: "Podaj numer pokoju.",
+    gateErrorBirthDateRequired: "Wybierz datę urodzenia.",
+    gateBirthDateLabel: "Data urodzenia",
+    gateVerifiedAnonymousName: "Gość",
     gateErrorIdentityMismatch:
       "Nie udało się zweryfikować imienia lub numeru pokoju. Sprawdź dane lub skontaktuj się z recepcją.",
 

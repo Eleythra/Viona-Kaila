@@ -1,7 +1,11 @@
 import express from "express";
 import crypto from "node:crypto";
 import { normalizeGuestMatchString } from "../../lib/guest-match-normalize.js";
-import { verifyGuestIdentityAtGate } from "../guest-verification/guest-verification.service.js";
+import { clearVerifiedGuestCookie, setVerifiedGuestCookie } from "../../lib/guest-verified-session.js";
+import {
+  verifyGuestIdentityAtGate,
+  verifyGuestIdentityRoomBirthdate,
+} from "../guest-verification/guest-verification.service.js";
 import { guestVerificationUserMessage } from "../guest-verification/guest-verification-messages.js";
 import { recordGuestGateEntry } from "./guest-gate-log.service.js";
 
@@ -64,9 +68,16 @@ export function createGuestGateRouter(envSlice) {
       identityRequired: Boolean(
         envSlice.elektraGateVerifyConfigured || envSlice.guestDeployIdentityConfigured,
       ),
+      identityRequiresBirthDate: Boolean(envSlice.elektraGateVerifyConfigured),
+      identityRequiresFullName: Boolean(envSlice.guestDeployIdentityConfigured),
       pmsIdentity: Boolean(envSlice.elektraGateVerifyConfigured),
       deployBypass: Boolean(envSlice.guestDeployIdentityConfigured),
     });
+  });
+
+  router.post("/logout", (_req, res) => {
+    clearVerifiedGuestCookie(res);
+    return res.status(200).json({ ok: true });
   });
 
   router.post("/verify", async (req, res) => {
@@ -95,19 +106,18 @@ export function createGuestGateRouter(envSlice) {
       return res.status(200).json({ ok: true });
     }
 
-    const fullName = body.fullName ?? body.full_name ?? body.name;
-    const room = body.room ?? body.roomNumber ?? body.room_number;
-    const fn = String(fullName ?? "").trim();
-    const rn = String(room ?? "").trim();
-    if (!fn || !rn) {
-      return res.status(400).json({ ok: false, error: "identity_required" });
-    }
-
     const clientIp = String(req.ip || req.socket?.remoteAddress || "unknown").trim() || "unknown";
     const userAgent = String(req.get("user-agent") || "").trim();
 
+    const room = body.room ?? body.roomNumber ?? body.room_number;
+    const rn = String(room ?? "").trim();
+    const fullName = body.fullName ?? body.full_name ?? body.name;
+    const fn = String(fullName ?? "").trim();
+    const birthDate = body.birthDate ?? body.birth_date ?? body.birthdate;
+    const bd = String(birthDate ?? "").trim();
+
     /** Operatör bypass: env’deki ad+oda ile eşleşirse Elektra çağrılmaz. */
-    if (hasDeployBypass) {
+    if (hasDeployBypass && fn && rn) {
       const expName = normalizeGuestMatchString(envSlice.vionaDeployGuestFullName);
       const expRoom = normalizeGuestMatchString(envSlice.vionaDeployGuestRoom);
       const gotName = normalizeGuestMatchString(fn);
@@ -120,13 +130,24 @@ export function createGuestGateRouter(envSlice) {
           clientIp,
           userAgent,
         });
+        setVerifiedGuestCookie(res, rn);
         return res.status(200).json({ ok: true, bypass: true });
       }
     }
 
-    if (hasElektraIdentity) {
+    if (hasElektraIdentity && rn && bd) {
       try {
-        await verifyGuestIdentityAtGate(fn, rn, { clientIp });
+        const meta = await verifyGuestIdentityRoomBirthdate(rn, bd, { clientIp });
+        const display = String(meta.displayName || "").trim() || "Misafir";
+        await recordGuestGateEntry({
+          fullName: display,
+          roomNumber: rn,
+          verificationMethod: "elektra",
+          clientIp,
+          userAgent,
+        });
+        setVerifiedGuestCookie(res, rn);
+        return res.status(200).json({ ok: true, verification: "room_birthdate" });
       } catch (e) {
         const reason = e && e.guestVerificationReason ? String(e.guestVerificationReason) : "pms_unavailable";
         const status = Number(e && e.statusCode) || 422;
@@ -135,14 +156,37 @@ export function createGuestGateRouter(envSlice) {
           guestVerificationUserMessage(reason);
         return res.status(status).json({ ok: false, error: reason, message });
       }
-      await recordGuestGateEntry({
-        fullName: fn,
-        roomNumber: rn,
-        verificationMethod: "elektra",
-        clientIp,
-        userAgent,
-      });
-      return res.status(200).json({ ok: true });
+    }
+
+    /** Geriye dönük: yalnızca ad+oda (Elektra LNAME eşlemesi). */
+    if (hasElektraIdentity && fn && rn && !bd) {
+      try {
+        const meta = await verifyGuestIdentityAtGate(fn, rn, { clientIp });
+        const display = String(meta.displayName || "").trim() || fn;
+        await recordGuestGateEntry({
+          fullName: display,
+          roomNumber: rn,
+          verificationMethod: "elektra",
+          clientIp,
+          userAgent,
+        });
+        setVerifiedGuestCookie(res, rn);
+        return res.status(200).json({ ok: true, verification: "name_room" });
+      } catch (e) {
+        const reason = e && e.guestVerificationReason ? String(e.guestVerificationReason) : "pms_unavailable";
+        const status = Number(e && e.statusCode) || 422;
+        const message =
+          (e && e.guestVerificationMessage && String(e.guestVerificationMessage).trim()) ||
+          guestVerificationUserMessage(reason);
+        return res.status(status).json({ ok: false, error: reason, message });
+      }
+    }
+
+    if (hasDeployBypass && (!fn || !rn)) {
+      return res.status(400).json({ ok: false, error: "identity_required" });
+    }
+    if (hasElektraIdentity && (!rn || !bd) && !(fn && rn)) {
+      return res.status(400).json({ ok: false, error: "identity_required" });
     }
 
     if (hasDeployBypass) {

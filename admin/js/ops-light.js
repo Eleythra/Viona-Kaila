@@ -383,19 +383,7 @@
     }
   }
 
-  /** WhatsApp derin URL: tam listeye geçince adres çubuğunu sadeleştirir. */
-  function stripOpsDeepQueryKeys(keys) {
-    try {
-      var u = new URL(window.location.href);
-      (keys || []).forEach(function (k) {
-        if (k) u.searchParams.delete(String(k));
-      });
-      var qs = u.searchParams.toString();
-      history.replaceState(null, "", u.pathname + (qs ? "?" + qs : "") + (u.hash || ""));
-    } catch (_e) {}
-  }
-
-  /** WhatsApp «panelde aç»: yalnızca tek kayıt kartı (metin/link yok; tam liste için adres çubuğundan ?id= kaldırılır). */
+  /** WhatsApp «panelde aç»: tek kayıt kartı; `?id=` (ön büroda `type`) adres çubuğunda kalır — yenilemede aynı kayıt açılır. Tam liste için sorgu kaldırılabilir. */
   function waPanelCardOnlyMountHtml() {
     return (
       '<div class="ops-wa-card-only glass-block" role="region" aria-label="Operasyon kaydı">' +
@@ -1225,7 +1213,6 @@
     if (!ui || typeof ui.renderBucketTable !== "function") throw new Error("ui_missing");
     if (typeof ui.renderOpsSingleBucketSummary !== "function") throw new Error("ui_missing");
     var waId = hkDeepLinkUuid();
-    if (waId) stripOpsDeepQueryKeys(["id"]);
 
     if (waId && typeof ui.renderOperationBucket === "function") {
       try {
@@ -1552,7 +1539,6 @@
     if (!ui || typeof ui.renderBucketTable !== "function") throw new Error("ui_missing");
     if (typeof ui.renderOpsSingleBucketSummary !== "function") throw new Error("ui_missing");
     var waTechId = techDeepLinkUuid();
-    if (waTechId) stripOpsDeepQueryKeys(["id"]);
 
     if (waTechId && typeof ui.renderOperationBucket === "function") {
       try {
@@ -1895,7 +1881,6 @@
           "/requests/" + encodeURIComponent(deepLink.type) + "/" + encodeURIComponent(deepLink.id),
         );
         if (frWa && frWa.item) {
-          stripOpsDeepQueryKeys(["id", "type"]);
           pendingFrontHighlight = null;
           try {
             document.body.classList.add("admin-body--ops-wa-card-only");
@@ -1935,10 +1920,6 @@
           return;
         }
       } catch (_waf) {}
-    }
-
-    if (deepLink) {
-      stripOpsDeepQueryKeys(["id", "type"]);
     }
 
     try {

@@ -16,14 +16,26 @@ Web formları (`js/render-requests-module.js` vb.) ve sohbetten gelen `create_gu
 
 ### PMS misafir doğrulama (ElektraWeb Hotspot)
 
-`GUEST_PMS_VERIFY_ENABLED=1` ve `ELEKTRA_BASE_URL`, `ELEKTRA_HOTEL_ID`, `ELEKTRA_TOKEN` doluysa, `request` / `complaint` / `fault` / `guest_notification` için **Supabase insert öncesi** `GetHotspotList` ile `ROOMNO` + `LNAME` (+ konaklama tarihleri) doğrulanır. Kapalıysa veya tip listede değilse davranış önceki gibi.
+`GUEST_PMS_VERIFY_ENABLED=1` ve `ELEKTRA_BASE_URL`, `ELEKTRA_HOTEL_ID`, `ELEKTRA_TOKEN` doluysa, `request` / `complaint` / `fault` / `guest_notification` için **Supabase insert öncesi** `GetHotspotList` ile doğrulama yapılır.
 
-Postman’daki istekle hizalamak için isteğe bağlı: `ELEKTRA_HOTSPOT_PATH`, `ELEKTRA_AUTH_MODE` (`bearer`, `raw`, `query`, `none`), `ELEKTRA_AUTH_HEADER`, `ELEKTRA_AUTH_QUERY_KEY`. Ayrıntı: `server/docs/elektra-hotspot-postman.md`.
+- **`GUEST_PMS_GATE_VERIFY_ENABLED=1`** (ve Elektra tam): misafir tarayıcısında HttpOnly `viona_guest_verified` çerezi (imzalı oda) set edilir; formlar ve web kanalı sohbet bu çerezdeki oda ile gövde `room` eşleşmesini ister — **Hotspot tekrar çağrılmaz**. Çerez yoksa `401` / `guest_session_required`.
+- **Kapalı** (yalnızca insert doğrulama): `ROOMNO` + **soyad (`LNAME`)** (+ konaklama tarihleri) ile eşleme (tam ad ile belirsizlik daraltma).
 
-- **POST `/api/guest-requests`:** Başarısız doğrulamada `422` (veya `503` PMS erişilemez, `429` çok deneme); gövde `{ ok: false, error: "<TR mesaj>", reason: "<kod>" }`.
-- **reason:** `room_not_found` | `surname_mismatch` | `stay_not_active` | `ambiguous_guest` | `pms_unavailable` | `too_many_verification_attempts`
-- **Sohbet:** Aynı doğrulama `createGuestRequest` içinde; hata durumunda yanıt metni güncellenir, `meta.action` kaldırılır, `meta.guest_verification_failed` reason kodu ile işaretlenir.
+Postman’daki istekle hizalamak için isteğe bağlı: `ELEKTRA_HOTSPOT_PATH`, `ELEKTRA_AUTH_MODE` (`bearer`, `raw`, `query`, `none`), `ELEKTRA_AUTH_HEADER`, `ELEKTRA_AUTH_QUERY_KEY`. Ayrıntı: `server/docs/elektra-hotspot-postman.md`, özet: `server/docs/elektra-hotspot-gethotspotlist.md`.
+
+- **POST `/api/guest-requests`:** Başarısız doğrulamada `422` (veya `503` PMS erişilemez, `429` çok deneme, `401` oturum); gövde `{ ok: false, error: "<TR mesaj>", reason: "<kod>" }`.
+- **reason:** `room_not_found` | `surname_mismatch` | `birthdate_mismatch` | `invalid_birthdate` | `stay_not_active` | `ambiguous_guest` | `pms_unavailable` | `too_many_verification_attempts` | `guest_session_required` | `guest_session_room_mismatch`
+- **Sohbet (web):** `GUEST_PMS_GATE_VERIFY_ENABLED=1` iken çerez yoksa `403`; aksi halde proxy.
 - **`/api/health`:** `elektraGateVerifyActive` (kapı), `elektraInsertVerifyActive` (form insert öncesi) — env tam ve ilgili bayrak açık mı (değer sızmaz).
+
+### Misafir kapısı (public)
+
+İstemci `fetch(..., { credentials: "include" })` kullanmalıdır (çerez).
+
+- **`GET /api/public/guest-gate/status`** — `{ required, strict, identityRequired, identityRequiresBirthDate, identityRequiresFullName, pmsIdentity, deployBypass }`. Elektra kapı kimliği açıksa `identityRequiresBirthDate` true; deploy bypass (`VIONA_DEPLOY_GUEST_*`) tanımlıysa `identityRequiresFullName` true.
+- **`POST /api/public/guest-gate/verify`** — Gövde: `password` (kapı şifresi açıksa), `room`, `birthDate` (`YYYY-MM-DD`, Elektra yolu) ve/veya `fullName` (deploy bypass veya geriye dönük ad+oda Elektra). Başarıda `viona_guest_verified` set edilir.
+- **`POST /api/public/guest-gate/logout`** — `{ ok: true }`; çerezi siler.
+- **`POST /api/public/guest-verify`** — Yalnızca **oda + doğum tarihi** (`{ room, birthDate }`); kapı şifresi yok. Aynı Elektra doğrulaması + başarıda aynı çerez. `503` `not_configured` (kapı/Elektra kapalı).
 
 ### Meta Cloud API — gönderim uç noktası
 
@@ -42,6 +54,8 @@ Postman’daki istekle hizalamak için isteğe bağlı: `ELEKTRA_HOTSPOT_PATH`, 
 | `WHATSAPP_TECH_PANEL_URL_BUTTON` | `ops-tech.html?id=<uuid>` (arıza) |
 | `WHATSAPP_FRONT_PANEL_URL_BUTTON` | `ops-front.html?type=` + (`complaint` / `guest_notification` / `late_checkout`) + `&id=<uuid>` |
 
+Ekip sayfası (`ops-light.js`) bu sorguyu **yenilemede silmez**; aynı `?id=` / `?type=&id=` ile tek kayıt kartı açılmaya devam eder. Tam liste için adres çubuğundan ilgili sorgu parametrelerini kaldırıp sayfayı yenileyin.
+
 Buton yoksa veya `=1` yapılmış ama şablonda uyumsuzluk varsa Meta hata döner; bu durumda env’yi `0`/boş bırakın.
 
 ### `/api/health` özeti
@@ -51,6 +65,14 @@ Buton yoksa veya `=1` yapılmış ama şablonda uyumsuzluk varsa Meta hata döne
 ---
 
 ## Public write endpoints
+
+### `POST /api/public/guest-verify`
+
+- Purpose: verify **room + date of birth** against Elektra Hotspot (same cached list as gate). No gate password.
+- Body: `{ "room": "209", "birthDate": "2001-07-16" }` (aliases: `roomNumber`, `birth_date`).
+- Success: `{ "ok": true }` and HttpOnly `viona_guest_verified` cookie (same as successful `POST /api/public/guest-gate/verify` with Elektra birth path).
+- Errors: `400` `identity_required`, `503` `not_configured` (gate/Elektra off), otherwise same HTTP status and `{ ok: false, error, message }` as gate verify (`birthdate_mismatch`, `invalid_birthdate`, `429`, etc.).
+- Client: send `credentials: "include"` if the SPA needs the cookie for subsequent `POST /api/guest-requests` / chat.
 
 ### `POST /api/guest-requests`
 - Purpose: write guest request forms to the correct bucket table.

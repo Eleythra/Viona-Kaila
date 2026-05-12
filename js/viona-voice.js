@@ -1,5 +1,17 @@
 /**
- * Viona sesli asistan — tek akış state makinesi (idle → listening → thinking → speaking → idle).
+ * Viona sesli asistan (v2) — durum makinesi:
+ *
+ *   idle ──(avatar tap, yalnız idle)──► listening
+ *        │                              │ VAD / süre → WAV
+ *        │                              ▼
+ *        │                          thinking  (STT → Python /api/chat channel=voice)
+ *        │                              │
+ *        │                              ▼
+ *        │                          speaking  (TTS WAV)
+ *        │                              │
+ *        └──────────────────────────────┴──► idle
+ *
+ * Bilgi yanıtı sunucuda kısıtlanır (hotel_info / recommendation / current_time); aksi halde premium yazılı sohbet daveti.
  * Azure STT/TTS sunucuda; avatar tıklaması yalnızca idle iken kabul edilir.
  */
 (function () {
@@ -84,12 +96,18 @@
     };
   }
 
-  /** Render’da SPEECH_CLIENT_SECRET ile aynı; boşsa header gönderilmez. */
+  /** Sunucudaki SPEECH_CLIENT_SECRET ile aynı; boşsa header gönderilmez. Öncelik: window → meta[name=viona-speech-client-secret]. */
   function speechAuthHeaders() {
     var s = "";
     try {
       if (typeof window.__VIONA_SPEECH_CLIENT_SECRET__ === "string") {
         s = String(window.__VIONA_SPEECH_CLIENT_SECRET__ || "").trim();
+      }
+      if (!s && typeof document !== "undefined") {
+        var m = document.querySelector('meta[name="viona-speech-client-secret"]');
+        if (m && m.getAttribute("content")) {
+          s = String(m.getAttribute("content") || "").trim();
+        }
       }
     } catch (e) {}
     if (!s) return {};
@@ -121,16 +139,10 @@
     } catch (e) {}
   }
 
-  /** Sunucu `error` + HTTP kodu → hangi i18n anahtarı (plan: ayrıştırılmış sesli hatalar). */
+  /** Sunucu `error` + HTTP kodu → i18n anahtarı (`speech_unauthorized` ≠ Azure STT anahtar hatası). */
   function voiceHintKeyFromSttPayload(data) {
     var code = data && data.error ? String(data.error) : "";
     var httpSt = data && typeof data.httpStatus === "number" ? data.httpStatus : NaN;
-    if (Number.isFinite(httpSt)) {
-      if (httpSt === 429) return "voiceErrorRateLimit";
-      if (httpSt === 401) return "voiceErrorSpeechUnauthorized";
-      if (httpSt === 503) return "voiceErrorSpeechNotConfigured";
-      if (httpSt >= 500) return "voiceErrorNetwork";
-    }
     if (code === "speech_unauthorized") return "voiceErrorSpeechUnauthorized";
     if (code === "speech_not_configured") return "voiceErrorSpeechNotConfigured";
     if (code === "stt_azure_unauthorized") return "voiceErrorAzureKey";
@@ -148,6 +160,12 @@
       if (n === 401) return "voiceErrorSpeechUnauthorized";
       if (n === 503) return "voiceErrorSpeechNotConfigured";
       if (n >= 500) return "voiceErrorNetwork";
+    }
+    if (Number.isFinite(httpSt)) {
+      if (httpSt === 429) return "voiceErrorRateLimit";
+      if (httpSt === 401) return "voiceErrorSpeechUnauthorized";
+      if (httpSt === 503) return "voiceErrorSpeechNotConfigured";
+      if (httpSt >= 500) return "voiceErrorNetwork";
     }
     if (!data || !data.ok) return "voiceErrorNetwork";
     return "voiceErrorNoSpeech";
@@ -631,7 +649,7 @@
     }
 
     return window
-      .vionaChatRunAssistantTurn(userText)
+      .vionaChatRunAssistantTurn(userText, { skipChatHistory: true })
       .then(function (reply) {
         var text = String(reply || "").trim();
         if (!text) {

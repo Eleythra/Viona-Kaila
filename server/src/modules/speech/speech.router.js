@@ -48,10 +48,11 @@ export function speechClientAuthMiddleware(req, res, next) {
     return next();
   }
   console.warn(
-    "speech_auth_reject path=%s origin=%s x_forwarded_host=%s forwarded_present=%s referer_present=%s",
+    "speech_auth_reject path=%s origin=%s x_forwarded_host=%s x_vercel_fwd_host=%s forwarded_present=%s referer_present=%s",
     String(req.path || ""),
     req.headers.origin ? "yes" : "no",
     req.headers["x-forwarded-host"] ? "yes" : "no",
+    req.headers["x-vercel-forwarded-host"] ? "yes" : "no",
     req.headers.forwarded ? "yes" : "no",
     req.headers.referer ? "yes" : "no",
   );

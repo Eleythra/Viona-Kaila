@@ -29,7 +29,7 @@ function routeErr(res, error, fallbackMsg) {
   const sc = error && typeof error.statusCode === "number" ? error.statusCode : null;
   const reason = error && error.guestVerificationReason ? String(error.guestVerificationReason) : null;
   const code =
-    sc === 503 ? 503 : sc === 429 ? 429 : sc === 422 ? 422 : sc === 409 ? 409 : 400;
+    sc === 503 ? 503 : sc === 429 ? 429 : sc === 422 ? 422 : sc === 409 ? 409 : sc === 401 ? 401 : 400;
   const msg = clientFacingErrorMessage(error, fallbackMsg);
   if (code === 409 && msg === "quiet_hours_reception_only") {
     return res.status(409).json({
@@ -48,7 +48,10 @@ function routeErr(res, error, fallbackMsg) {
 router.post("/", guestRequestSubmitLimiter, async (req, res) => {
   try {
     const payload = req.body || {};
-    const result = await createGuestRequest(payload, { clientIp: req.ip || req.socket?.remoteAddress });
+    const result = await createGuestRequest(payload, {
+      clientIp: req.ip || req.socket?.remoteAddress,
+      cookieHeader: req.get("cookie"),
+    });
     const out = {
       ok: true,
       id: String(result.id),

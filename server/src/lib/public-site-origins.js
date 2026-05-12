@@ -65,12 +65,13 @@ export function buildPublicSiteOriginAllowlist(env) {
 }
 
 /**
- * Proxy (Vercel rewrite → Render) bazen `Origin` iletmez; `X-Forwarded-Host` köken üretir.
+ * Proxy (Vercel rewrite → Render) bazen `Origin` iletmez; `X-Forwarded-Host` veya `X-Vercel-Forwarded-Host` ile köken üretir.
  * Not: Doğrudan API’ye istek atan bir istemci bu başlıkları taklit edebilir; maliyet için SPEECH_CLIENT_SECRET veya rate limit ile birlikte düşünün.
  */
 function syntheticOriginFromForwardedHeaders(req) {
-  const raw = String(req.headers?.["x-forwarded-host"] || "").trim();
-  const firstHost = raw.split(",")[0].trim();
+  const rawXfh = String(req.headers?.["x-forwarded-host"] || "").trim();
+  const rawVfh = String(req.headers?.["x-vercel-forwarded-host"] || "").trim();
+  const firstHost = (rawXfh ? rawXfh.split(",")[0] : rawVfh ? rawVfh.split(",")[0] : "").trim();
   if (!firstHost) return "";
 
   let proto = String(req.headers?.["x-forwarded-proto"] || "")

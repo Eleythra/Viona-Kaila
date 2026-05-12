@@ -1,10 +1,20 @@
 """Sesli kanal bilgi katmanı — finalize ve sadeleştirme."""
 
+from assistant.core.chatbot_languages import CHATBOT_UI_LANG_SET
 from assistant.schemas.response import ChatMeta, ChatResponse
 from assistant.services.voice_channel_layer import (
+    VOICE_OUT_OF_SCOPE_PREMIUM_TEXT,
     finalize_voice_channel_response,
     sanitize_message_for_voice,
 )
+
+
+def test_voice_out_of_scope_premium_text_has_exactly_ten_ui_languages():
+    """Premium yönlendirme: `js/lang-registry` / Azure UI dilleri ile anahtar kümesi birebir aynı olmalı."""
+    assert set(VOICE_OUT_OF_SCOPE_PREMIUM_TEXT) == set(CHATBOT_UI_LANG_SET)
+    assert len(VOICE_OUT_OF_SCOPE_PREMIUM_TEXT) == 10
+    for code, text in VOICE_OUT_OF_SCOPE_PREMIUM_TEXT.items():
+        assert text.strip(), f"empty premium string for {code}"
 
 
 def test_sanitize_removes_markdown_bold():
@@ -71,6 +81,38 @@ def test_ru_voice_empty_message_fallback_is_russian():
     fin = finalize_voice_channel_response(resp, "ru")
     assert fin.message.strip()
     assert "чат" in fin.message.lower() or "текст" in fin.message.lower()
+
+
+def test_coerce_voice_v2_replaces_chitchat_with_premium():
+    from assistant.services.voice_channel_layer import coerce_voice_channel_v2_response
+
+    meta = ChatMeta(
+        intent="chitchat",
+        confidence=0.9,
+        language="en",
+        ui_language="en",
+        source="rule",
+    )
+    resp = ChatResponse(type="inform", message="Hello there!", meta=meta)
+    out = coerce_voice_channel_v2_response(resp, "en")
+    assert out.meta.intent == "hotel_info"
+    assert out.meta.action is None
+    assert "text chat" in out.message.lower()
+
+
+def test_coerce_voice_v2_keeps_hotel_info():
+    from assistant.services.voice_channel_layer import coerce_voice_channel_v2_response
+
+    meta = ChatMeta(
+        intent="hotel_info",
+        confidence=1.0,
+        language="de",
+        ui_language="de",
+        source="rag",
+    )
+    resp = ChatResponse(type="inform", message="Pool bis 19 Uhr.", meta=meta)
+    out = coerce_voice_channel_v2_response(resp, "de")
+    assert out.message == "Pool bis 19 Uhr."
 
 
 def test_finalize_clears_action_and_exit_timer():

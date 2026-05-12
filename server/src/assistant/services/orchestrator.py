@@ -30,10 +30,8 @@ import re
 from assistant.services.chat_form_state import ChatFormState, InMemoryChatFormStore, OperationType
 from assistant.services.conversation_session import InMemoryConversationSessionStore
 from assistant.services.voice_channel_layer import (
-    VOICE_ALACARTE_RESERVATION_HINT,
     VOICE_OPERATIONAL_USE_TEXT,
-    VOICE_RECEPTION_RESERVATION_HINT,
-    VOICE_SPA_BOOKING_HINT,
+    coerce_voice_channel_v2_response,
 )
 from assistant.services.hotel_room_numbers import is_valid_hotel_room_number
 from assistant.services.form_name_input import (
@@ -1125,6 +1123,11 @@ class ChatOrchestrator:
     def handle(self, payload: ChatRequest) -> ChatResponse:
         response = self._handle_chat_request(payload)
         response = self._maybe_quiet_hours_strip_operational_actions(payload, response)
+        if payload.channel == "voice":
+            rl = str(response.meta.language or "").strip().lower()
+            if rl not in CHATBOT_UI_LANG_SET:
+                rl = normalize_chatbot_lang(payload.ui_language or payload.locale or "tr")
+            response = coerce_voice_channel_v2_response(response, rl)
         self._conversation_session_record_turn(payload, response)
         return response
 
@@ -1369,28 +1372,7 @@ class ChatOrchestrator:
             )
         ):
             if payload.channel == "voice":
-                if RuleEngine.is_spa_reservation_handoff(normalized):
-                    vtext = VOICE_SPA_BOOKING_HINT.get(
-                        voice_dict_lang(reply_base), VOICE_SPA_BOOKING_HINT["tr"]
-                    )
-                elif RuleEngine.is_ala_carte_reservation_handoff(normalized):
-                    vtext = VOICE_ALACARTE_RESERVATION_HINT.get(
-                        voice_dict_lang(reply_base), VOICE_ALACARTE_RESERVATION_HINT["tr"]
-                    )
-                else:
-                    vtext = VOICE_RECEPTION_RESERVATION_HINT.get(
-                        voice_dict_lang(reply_base), VOICE_RECEPTION_RESERVATION_HINT["tr"]
-                    )
-                return self.response_service.build(
-                    "inform",
-                    vtext,
-                    "reservation",
-                    1.0,
-                    reply_base,
-                    ui_language,
-                    "rule",
-                    action=None,
-                )
+                return self._voice_operational_redirect(reply_base, ui_language)
             self._touch_reservation_context(payload)
             if RuleEngine.is_spa_reservation_handoff(normalized):
                 text = self.response_composer.compose(
@@ -1707,6 +1689,9 @@ class ChatOrchestrator:
             llm_intent.reason,
         )
         if llm_intent.confidence < self.settings.low_confidence_fallback_threshold:
+            if payload.channel == "voice":
+                decision_path.append("voice_low_confidence_premium")
+                return self._voice_operational_redirect(reply_base, ui_language)
             low_confidence_reason = llm_intent.reason or "low_confidence"
             # Çok kısa / belirsiz mesajlarda sert fallback yerine nazik karşılama dön.
             short_norm = (normalized or "").strip()

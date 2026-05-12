@@ -31,6 +31,9 @@ import {
   isAdminTokenValid,
 } from "./lib/admin-auth.js";
 import { clearHotspotListCache } from "./modules/pms/elektra/hotspot-list-cache.js";
+import { parseVerifiedGuestCookie, setVerifiedGuestCookie } from "./lib/guest-verified-session.js";
+import { verifyGuestIdentityRoomBirthdate } from "./modules/guest-verification/guest-verification.service.js";
+import { guestVerificationUserMessage } from "./modules/guest-verification/guest-verification-messages.js";
 import {
   buildElektraBearerToken,
   fetchHotspotGuestList,
@@ -760,6 +763,7 @@ app.get("/api/internal/elektra-hotspot-smoke", async (req, res) => {
           lname: Boolean(String(sample.lname || "").trim()),
           checkin: Boolean(String(sample.checkin || "").trim()),
           checkout: Boolean(String(sample.checkout || "").trim()),
+          birthDate: Boolean(String(sample.birthDateRaw || "").trim()),
         }
       : null;
 
@@ -768,6 +772,7 @@ app.get("/api/internal/elektra-hotspot-smoke", async (req, res) => {
       hotel_id: hid,
       guest_record_count: records.length,
       sample_row_fields_present: fieldsPresent,
+      sample_has_birthdate: Boolean(sample && String(sample.birthDateRaw || "").trim()),
       elapsed_ms: Date.now() - started,
       nocache,
     });
@@ -863,6 +868,48 @@ app.get("/api/health", (req, res) => {
   res.json(payload);
 });
 
+/**
+ * Oda + doğum tarihi (`YYYY-MM-DD`) ile Elektra Hotspot doğrulaması; başarıda `viona_guest_verified` HttpOnly çerezi set edilir.
+ * Önkoşul: `GUEST_PMS_GATE_VERIFY_ENABLED=1` ve `ELEKTRA_*` tam (kapı ile aynı liste önbelleği).
+ */
+app.post("/api/public/guest-verify", async (req, res) => {
+  try {
+    if (!env.guestPmsGateVerifyEnabled || !env.elektraGateVerifyConfigured) {
+      return res.status(503).json({
+        ok: false,
+        error: "not_configured",
+        message: guestVerificationUserMessage("pms_unavailable"),
+      });
+    }
+    const body = req.body && typeof req.body === "object" ? req.body : {};
+    const room = String(body.room ?? body.roomNumber ?? body.room_number ?? "").trim();
+    const birthDate = String(body.birthDate ?? body.birth_date ?? body.birthdate ?? "").trim();
+    const clientIp = String(req.ip || req.socket?.remoteAddress || "unknown").trim() || "unknown";
+    if (!room || !birthDate) {
+      return res.status(400).json({
+        ok: false,
+        error: "identity_required",
+        message: guestVerificationUserMessage("identity_required"),
+      });
+    }
+    try {
+      await verifyGuestIdentityRoomBirthdate(room, birthDate, { clientIp });
+      setVerifiedGuestCookie(res, room);
+      return res.status(200).json({ ok: true });
+    } catch (e) {
+      const reason = e && e.guestVerificationReason ? String(e.guestVerificationReason) : "pms_unavailable";
+      const status = Number(e && e.statusCode) || 422;
+      const message =
+        (e && e.guestVerificationMessage && String(e.guestVerificationMessage).trim()) ||
+        guestVerificationUserMessage(reason);
+      return res.status(status).json({ ok: false, error: reason, message });
+    }
+  } catch (e) {
+    console.error("[guest_verify] handler", e);
+    return res.status(500).json({ ok: false, error: "server_error" });
+  }
+});
+
 app.use(
   "/api/public/guest-gate",
   createGuestGateRouter({
@@ -926,6 +973,20 @@ app.get("/api/webhooks/whatsapp", (req, res) => {
 
 // Single chatbot entrypoint: proxy only, no business logic.
 app.post("/api/chat", async (req, res) => {
+  const rawClientChannel = String(req.body?.client_channel || "").toLowerCase().trim();
+  const channel = rawClientChannel === "voice" ? "voice" : "web";
+  if (env.guestPmsGateVerifyEnabled && channel === "web") {
+    const guestOk = parseVerifiedGuestCookie(req.get("cookie"));
+    if (!guestOk) {
+      return res.status(403).json({
+        ok: false,
+        type: "error",
+        message: "Önce otel giriş ekranından kimlik doğrulaması yapın.",
+        meta: { intent: "auth_gate", source: "viona_node" },
+      });
+    }
+  }
+
   const message = String(req.body?.message || "").trim();
   const locale = normalizeLocale(req.body?.locale);
   const uiLanguage = normalizeLocale(req.body?.ui_language || req.body?.locale);
@@ -942,9 +1003,6 @@ app.post("/api/chat", async (req, res) => {
   }
 
   const timeoutMs = safeTimeoutMs(process.env.ASSISTANT_TIMEOUT_MS, 12000);
-  /** Tarayıcıdan yalnızca sesli tur için "voice"; aksi halde web (WhatsApp ayrı webhook). */
-  const rawClientChannel = String(req.body?.client_channel || "").toLowerCase().trim();
-  const channel = rawClientChannel === "voice" ? "voice" : "web";
   try {
     const payload = {
       message,
