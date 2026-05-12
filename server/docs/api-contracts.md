@@ -18,11 +18,11 @@ Web formları (`js/render-requests-module.js` vb.) ve sohbetten gelen `create_gu
 
 İstemci `fetch(..., { credentials: "include" })` kullanmalıdır (çerez).
 
-- **`GET /api/public/guest-gate/status`** — `{ required, strict, dualPassword, identityRequired, identityRequiresBirthDate, identityRequiresFullName, pmsIdentity }`. Kimlik alanları ve `pmsIdentity` uyumluluk için `false` döner. `required`: iki kapı şifresi env’de tanımlı ve kapı devre dışı değilse `true`. `dualPassword`: `VIONA_GATE_PASSWORD_1` + `VIONA_GATE_PASSWORD_2` (veya `VIONA_UI_GATE_PASSWORD` + `VIONA_UI_GATE_PASSWORD_2`) ikisi de doluysa `true`.
-- **`POST /api/public/guest-gate/verify`** — Gövde: `password` ve `password2` (veya `password_secondary`). KVKK onayı istemcidedir; sunucu `privacy` beklemez. İki kod AND ile eşleşmeli (büyük/küçük harf duyarsız). İsteğe bağlı kayıt (rezervasyonla **doğrulanmaz**): `fullName` / `name`, `room` / `roomNumber` → `guest_gate_entries`; boşsa `Misafir` / `—`. Başarı: HttpOnly `viona_guest_verified` (`room` iç kullanım `"gate"`), `200` `{ ok: true, verification: "password_dual" }`. Hatalar: `400` `password_required` | `password2_required`, `401` `invalid_password`. Kapı kapalıysa: `200` `{ ok: true }`.
+- **`GET /api/public/guest-gate/status`** — `{ required, strict, dualPassword, identityRequired, identityRequiresBirthDate, identityRequiresFullName, pmsIdentity }`. Kimlik alanları ve `pmsIdentity` uyumluluk için `false` döner. `required`: iki kapı şifresi env’de tanımlı ve kapı devre dışı değilse `true`. `dualPassword`: `VIONA_GATE_PASSWORD_1` + `VIONA_GATE_PASSWORD_2` (veya `VIONA_UI_GATE_PASSWORD` + `VIONA_UI_GATE_PASSWORD_2`) ikisi de doluysa `true` (istemci tek alanda girer; sunucu iki değerden **biriyle** OR eşler).
+- **`POST /api/public/guest-gate/verify`** — Gövde: `password` (veya `password1` / `password_primary`). KVKK onayı istemcidedir; sunucu `privacy` beklemez. Girilen değer, env’deki iki gizli değerden **biriyle** eşleşmelidir (OR; büyük/küçük harf duyarsız). Başarılı girişte isteğe bağlı audit: yalnızca `VIONA_GUEST_GATE_AUDIT_LOG=1` iken `guest_gate_entries` + structured log (`Misafir` / `gate`); varsayılan kapalı. Başarı: HttpOnly `viona_guest_verified` (`room` iç kullanım `"gate"`), `200` `{ ok: true, verification: "password_dual" }`. Hatalar: `400` `password_required`, `401` `invalid_password`. Kapı kapalıysa: `200` `{ ok: true }`.
 - **`POST /api/public/guest-gate/logout`** — `{ ok: true }`; çerezi siler.
 
-**Web sohbet:** `guestGateDualPasswordConfigured` iken (bkz. `/api/health`) tarayıcıda geçerli doğrulama çerezi yoksa web kanalı `POST /api/chat` reddedilir; aksi halde istek Python asistana proxylanır.
+**Web sohbet:** `guestGateDualPasswordConfigured` iken (bkz. `/api/health`; iki env değeri dolu demektir) tarayıcıda geçerli doğrulama çerezi yoksa web kanalı `POST /api/chat` reddedilir; aksi halde istek Python asistana proxylanır.
 
 ### Meta Cloud API — gönderim uç noktası
 
@@ -157,6 +157,8 @@ Buton yoksa veya `=1` yapılmış ama şablonda uyumsuzluk varsa Meta hata döne
 ```
 
 ### Misafir kapısı girişleri (`guest_gate_entries`)
+
+Yeni satırlar yalnızca ortamda `VIONA_GUEST_GATE_AUDIT_LOG=1` iken yazılır (varsayılan kapalı).
 
 Tüm uçlar diğer admin API’leri gibi **admin bearer token** gerektirir (`Authorization` veya panelin kullandığı başlık).
 

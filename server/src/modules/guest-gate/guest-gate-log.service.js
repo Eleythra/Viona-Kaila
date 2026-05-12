@@ -1,3 +1,4 @@
+import { getEnv } from "../../config/env.js";
 import {
   getSupabase,
   isSupabaseConfigured,
@@ -18,7 +19,7 @@ function sliceUtf8(s, max) {
 
 /**
  * Başarılı kapı girişi: yapılandırılmış log + isteğe bağlı Supabase satırı (hata giriş yanıtını bozmaz).
- *
+ * `VIONA_GUEST_GATE_AUDIT_LOG` kapalıyken (varsayılan) hiçbir log/insert yapılmaz; açmak için `=1`.
  * @param {{
  *   fullName: string,
  *   roomNumber: string,
@@ -28,6 +29,8 @@ function sliceUtf8(s, max) {
  * }} p
  */
 export async function recordGuestGateEntry(p) {
+  if (!getEnv().guestGateAuditLogEnabled) return;
+
   const fullName = sliceUtf8(p.fullName, NAME_MAX);
   const roomNumber = sliceUtf8(p.roomNumber, ROOM_MAX);
   const raw = String(p.verificationMethod || "").trim();

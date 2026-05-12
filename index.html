@@ -18,7 +18,7 @@
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="css/styles.css?v=90" />
+    <link rel="stylesheet" href="css/styles.css?v=91" />
     <link rel="stylesheet" href="css/promo-popup.css?v=2" />
   </head>
   <body>
@@ -55,107 +55,66 @@
         </div>
       </section>
 
-      <!-- Erişim: iki erişim kodu (AND) + KVKK + onay -->
+      <!-- Erişim: tek kod alanı (env’de iki değerden biriyle OR) + KVKK + onay -->
       <section id="view-gate" class="view view--gate hidden" aria-hidden="true" aria-labelledby="gate-screen-heading">
         <div class="lang-bg gate-bg" aria-hidden="true"></div>
         <div class="lang-overlay"></div>
         <div class="gate-content">
-          <div class="lang-content-accent" aria-hidden="true"></div>
-          <header class="lang-header gate-header">
-            <p class="lang-brand">Viona</p>
-            <h1 id="gate-screen-heading" class="lang-title" data-i18n="gateScreenTitle">Welcome</h1>
-            <p id="gate-screen-subtitle" class="lang-sub gate-sub" data-i18n="gateScreenSubtitle"></p>
-          </header>
+          <div class="gate-content-scroll" id="gate-content-scroll">
+            <div class="lang-content-accent" aria-hidden="true"></div>
+            <header class="lang-header gate-header">
+              <p class="lang-brand">Viona</p>
+              <h1 id="gate-screen-heading" class="lang-title" data-i18n="gateScreenTitle">Welcome</h1>
+              <p id="gate-screen-subtitle" class="lang-sub gate-sub" data-i18n="gateScreenSubtitle"></p>
+            </header>
 
-          <div class="gate-password-stack hidden" id="gate-password-stack">
-            <div class="gate-password-fields glass-block" id="gate-password-fields">
-              <p class="gate-dual-lead" data-i18n="gateDualPasswordLead"></p>
-              <label class="gate-field" for="gate-password">
-                <span class="gate-label" data-i18n="gatePasswordPrimaryLabel"></span>
-                <span class="gate-field-hint gate-field-hint--dual" data-i18n="gatePasswordPrimaryHint"></span>
-                <input
-                  type="password"
-                  id="gate-password"
-                  class="gate-input gate-input--secondary"
-                  autocomplete="new-password"
-                  autocorrect="off"
-                  autocapitalize="none"
-                  spellcheck="false"
-                  data-i18n-placeholder="gatePasswordPrimaryPlaceholder"
-                />
-              </label>
-              <label class="gate-field" for="gate-password-2">
-                <span class="gate-label" data-i18n="gatePasswordSecondaryLabel"></span>
-                <span class="gate-field-hint gate-field-hint--dual" data-i18n="gatePasswordSecondaryHint"></span>
-                <input
-                  type="password"
-                  id="gate-password-2"
-                  class="gate-input gate-input--secondary"
-                  autocomplete="new-password"
-                  autocorrect="off"
-                  autocapitalize="none"
-                  spellcheck="false"
-                  data-i18n-placeholder="gatePasswordSecondaryPlaceholder"
-                />
+            <div class="gate-password-stack gate-password-stack--single hidden" id="gate-password-stack">
+              <div class="gate-password-fields glass-block" id="gate-password-fields">
+                <label class="gate-field gate-field--single" for="gate-password">
+                  <span class="gate-label" data-i18n="gatePasswordSingleLabel"></span>
+                  <span class="gate-field-hint gate-field-hint--single" data-i18n="gatePasswordSingleHint"></span>
+                  <input
+                    type="password"
+                    id="gate-password"
+                    class="gate-input gate-input--secondary"
+                    autocomplete="new-password"
+                    autocorrect="off"
+                    autocapitalize="none"
+                    spellcheck="false"
+                    data-i18n-placeholder="gatePasswordSinglePlaceholder"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div class="gate-privacy glass-block gate-privacy-card" role="region" aria-labelledby="gate-privacy-heading">
+              <h2 id="gate-privacy-heading" class="gate-privacy-title" data-i18n="gatePrivacyTitle"></h2>
+              <div class="gate-privacy-scroll">
+                <p class="gate-privacy-body" data-i18n="gatePrivacyBody"></p>
+                <p class="gate-privacy-body gate-privacy-age-line" data-i18n="gatePrivacyAgeLine"></p>
+              </div>
+            </div>
+
+            <div class="gate-checks">
+              <label class="gate-check">
+                <input type="checkbox" id="gate-check-privacy" class="gate-check-input" />
+                <span class="gate-check-text" data-i18n="gateCheckPrivacy"></span>
               </label>
             </div>
 
-            <div class="gate-optional-fields" id="gate-optional-fields">
-              <p class="gate-optional-kicker" data-i18n="gateOptionalSectionKicker"></p>
-              <p class="gate-optional-lead" data-i18n="gateOptionalLogLead"></p>
-              <label class="gate-field" for="gate-full-name">
-                <span class="gate-label" data-i18n="gateOptionalFullNameLabel"></span>
-                <span class="gate-field-hint gate-field-hint--dual" data-i18n="gateOptionalFullNameHint"></span>
-                <input
-                  type="text"
-                  id="gate-full-name"
-                  class="gate-input gate-input--secondary"
-                  autocomplete="name"
-                  maxlength="120"
-                  data-i18n-placeholder="gateOptionalFullNamePlaceholder"
-                />
-              </label>
-              <label class="gate-field" for="gate-room">
-                <span class="gate-label" data-i18n="gateOptionalRoomLabel"></span>
-                <span class="gate-field-hint gate-field-hint--dual" data-i18n="gateOptionalRoomHint"></span>
-                <input
-                  type="text"
-                  id="gate-room"
-                  class="gate-input gate-input--secondary"
-                  autocomplete="off"
-                  inputmode="text"
-                  maxlength="32"
-                  data-i18n-placeholder="gateOptionalRoomPlaceholder"
-                />
-              </label>
-            </div>
+            <p id="gate-error" class="gate-error hidden" role="alert" aria-live="polite"></p>
+
+            <button type="button" class="gate-back hidden" id="btn-gate-retry-status" data-i18n="gateRetryStatus">
+              Retry
+            </button>
           </div>
 
-          <div class="gate-privacy glass-block gate-privacy-card" role="region" aria-labelledby="gate-privacy-heading">
-            <h2 id="gate-privacy-heading" class="gate-privacy-title" data-i18n="gatePrivacyTitle"></h2>
-            <div class="gate-privacy-scroll">
-              <p class="gate-privacy-body" data-i18n="gatePrivacyBody"></p>
-              <p class="gate-privacy-body gate-privacy-age-line" data-i18n="gatePrivacyAgeLine"></p>
-            </div>
-          </div>
-
-          <div class="gate-checks">
-            <label class="gate-check">
-              <input type="checkbox" id="gate-check-privacy" class="gate-check-input" />
-              <span class="gate-check-text" data-i18n="gateCheckPrivacy"></span>
-            </label>
-          </div>
-
-          <p id="gate-error" class="gate-error hidden" role="alert" aria-live="polite"></p>
-
-          <button type="button" class="gate-back hidden" id="btn-gate-retry-status" data-i18n="gateRetryStatus">
-            Retry
-          </button>
-
-          <button type="button" class="btn-primary lang-cta gate-cta" id="btn-gate-continue" data-i18n="gateSubmit">
-            Continue
-          </button>
-          <button type="button" class="gate-back" id="btn-gate-back-lang" data-i18n="gateBackLang"></button>
+          <footer class="gate-content-footer">
+            <button type="button" class="btn-primary lang-cta gate-cta" id="btn-gate-continue" data-i18n="gateSubmit">
+              Continue
+            </button>
+            <button type="button" class="gate-back" id="btn-gate-back-lang" data-i18n="gateBackLang"></button>
+          </footer>
         </div>
       </section>
 
@@ -407,8 +366,8 @@
     </div>
 
     <script src="js/lang-registry.js?v=4"></script>
-    <script src="js/i18n.js?v=74"></script>
-    <script src="js/i18n-extra-locales.js?v=16"></script>
+    <script src="js/i18n.js?v=75"></script>
+    <script src="js/i18n-extra-locales.js?v=17"></script>
     <script src="js/i18n-extra-module-overlays.js?v=4"></script>
     <script src="js/i18n-survey-overlays-extra.js?v=2"></script>
     <script src="js/viona-backend-url.js?v=11"></script>

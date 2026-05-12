@@ -246,14 +246,15 @@ export function getEnv() {
      */
     speechTrustForwardedOrigin: optional("SPEECH_TRUST_FORWARDED_ORIGIN", "1") !== "0",
     /**
-     * Misafir kapısı: iki ayrı kod (AND). Öncelik `VIONA_GATE_PASSWORD_*`; yoksa `VIONA_UI_GATE_PASSWORD` / `_2`.
-     * Yalnızca ikisi de doluysa kapı zorunlu (`guestUiGateRequired` / web sohbet çerez kuralı).
+     * Misafir kapısı: env’de iki gizli değer tanımlıdır; istemci **tek** alan girer — **hangisiyle eşleşirse** geçer (OR).
+     * Öncelik `VIONA_GATE_PASSWORD_*`; yoksa `VIONA_UI_GATE_PASSWORD` / `_2`.
+     * İkisi de dolu değilse kapı kapalı. Büyük/küçük harf duyarsız (Türkçe İ/I dahil).
      */
     vionaGatePassword1: optionalAny(["VIONA_GATE_PASSWORD_1", "VIONA_UI_GATE_PASSWORD"], ""),
     vionaGatePassword2: optionalAny(["VIONA_GATE_PASSWORD_2", "VIONA_UI_GATE_PASSWORD_2"], ""),
     /** `0` ise şifre dolu olsa bile kapı doğrulaması kapalı (bakım / geçici). */
     guestUiGateDisabled: optional("VIONA_UI_GATE_ENABLED", "1") === "0",
-    /** İki kapı şifresi env’de tanımlı mı (HttpOnly oturum + `/api/chat` web koruması). */
+    /** İki env gizli değer tanımlı mı (HttpOnly oturum + `/api/chat` web koruması). Tek alanda OR eşleşme. */
     get guestGateDualPasswordConfigured() {
       return Boolean(String(this.vionaGatePassword1 || "").trim() && String(this.vionaGatePassword2 || "").trim());
     },
@@ -263,6 +264,11 @@ export function getEnv() {
     },
     /** `1` ise status yanıtında `strict: true`; istemci önceki oturumda da sıkı blok kullanabilir. */
     guestUiGateStrict: optional("VIONA_UI_GATE_STRICT", "") === "1",
+    /**
+     * `1` ise başarılı kapı doğrulamasında `guest_gate_entries` + structured `guest_gate_entry` log yazılır.
+     * Varsayılan kapalı — tekrar açmak için `VIONA_GUEST_GATE_AUDIT_LOG=1`.
+     */
+    guestGateAuditLogEnabled: optional("VIONA_GUEST_GATE_AUDIT_LOG", "0") === "1",
     /** Misafir doğrulama oturumu (HttpOnly çerez imzası). Boşsa `ADMIN_API_TOKEN` türevi kullanılır (24+ karakter). */
     vionaGuestSessionSecret: optional("VIONA_GUEST_SESSION_SECRET", ""),
     /** Doğrulanmış misafir çerez ömrü (saniye); varsayılan 24 saat. */

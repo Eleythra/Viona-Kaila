@@ -911,15 +911,9 @@
   function resetGateForm() {
     const c1 = el("gate-check-privacy");
     const pwd = el("gate-password");
-    const pwd2 = el("gate-password-2");
     const err = el("gate-error");
-    const nameEl = el("gate-full-name");
-    const roomEl = el("gate-room");
     if (c1) c1.checked = false;
     if (pwd) pwd.value = "";
-    if (pwd2) pwd2.value = "";
-    if (nameEl) nameEl.value = "";
-    if (roomEl) roomEl.value = "";
     if (err) {
       err.textContent = "";
       err.classList.add("hidden");
@@ -996,28 +990,16 @@
         } else {
           if (pwdStack) pwdStack.classList.add("hidden");
           const pwd = el("gate-password");
-          const pwd2 = el("gate-password-2");
-          const gn = el("gate-full-name");
-          const gr = el("gate-room");
           if (pwd) pwd.value = "";
-          if (pwd2) pwd2.value = "";
-          if (gn) gn.value = "";
-          if (gr) gr.value = "";
         }
         sub.setAttribute(
           "data-i18n",
-          gatePasswordRequired ? "gateScreenSubtitleDualPassword" : "gateScreenSubtitle",
+          gatePasswordRequired ? "gateScreenSubtitlePassword" : "gateScreenSubtitle",
         );
       } else {
         if (pwdStack) pwdStack.classList.add("hidden");
         const pwd = el("gate-password");
-        const pwd2 = el("gate-password-2");
-        const gn = el("gate-full-name");
-        const gr = el("gate-room");
         if (pwd) pwd.value = "";
-        if (pwd2) pwd2.value = "";
-        if (gn) gn.value = "";
-        if (gr) gr.value = "";
         sub.setAttribute("data-i18n", "gateScreenSubtitle");
       }
 
@@ -1065,7 +1047,7 @@
     const back = el("btn-gate-back-lang");
     if (!btn) return;
 
-    ["gate-password", "gate-password-2", "gate-full-name", "gate-room"].forEach((id) => {
+    ["gate-password"].forEach((id) => {
       const node = el(id);
       if (node) node.addEventListener("focus", () => gateScrollFocused(node));
     });
@@ -1079,14 +1061,8 @@
     }
     const chk = el("gate-check-privacy");
     const pwdInput = el("gate-password");
-    const pwd2Input = el("gate-password-2");
-    const nameInput = el("gate-full-name");
-    const roomInput = el("gate-room");
     if (chk) chk.addEventListener("change", clearGateError);
     if (pwdInput) pwdInput.addEventListener("input", clearGateError);
-    if (pwd2Input) pwd2Input.addEventListener("input", clearGateError);
-    if (nameInput) nameInput.addEventListener("input", clearGateError);
-    if (roomInput) roomInput.addEventListener("input", clearGateError);
 
     btn.addEventListener("click", () => {
       void (async () => {
@@ -1114,19 +1090,9 @@
 
         if (gatePasswordRequired) {
           const raw = (el("gate-password") && el("gate-password").value) || "";
-          const raw2 = (el("gate-password-2") && el("gate-password-2").value) || "";
-          const rawName = (el("gate-full-name") && el("gate-full-name").value) || "";
-          const rawRoom = (el("gate-room") && el("gate-room").value) || "";
           const pw = String(raw).trim();
-          const pw2 = String(raw2).trim();
-          const fullNameOpt = String(rawName).trim();
-          const roomOpt = String(rawRoom).trim();
           if (!pw) {
             showGateError("gateErrorPasswordEmpty");
-            return;
-          }
-          if (!pw2) {
-            showGateError("gateErrorPassword2Empty");
             return;
           }
 
@@ -1137,12 +1103,7 @@
               method: "POST",
               headers: { "Content-Type": "application/json" },
               credentials: "include",
-              body: JSON.stringify({
-                password: pw,
-                password2: pw2,
-                fullName: fullNameOpt,
-                room: roomOpt,
-              }),
+              body: JSON.stringify({ password: pw }),
             });
             let data = {};
             try {
@@ -1162,10 +1123,8 @@
                   errNode.classList.remove("hidden");
                 }
               } else {
-                const errCode = data && data.error;
                 if (res.status === 400) {
-                  if (errCode === "password2_required") showGateError("gateErrorPassword2Empty");
-                  else showGateError("gateErrorPasswordEmpty");
+                  showGateError("gateErrorPasswordEmpty");
                 } else if (res.status === 401) {
                   showGateError("gateErrorPassword");
                 } else {

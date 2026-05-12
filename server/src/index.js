@@ -798,7 +798,7 @@ app.post("/api/chat", async (req, res) => {
       return res.status(403).json({
         ok: false,
         type: "error",
-        message: "Önce giriş ekranında iki erişim kodunuzu doğrulayın.",
+        message: "Önce giriş ekranında erişim kodunuzu doğrulayın.",
         meta: { intent: "auth_gate", source: "viona_node" },
       });
     }
