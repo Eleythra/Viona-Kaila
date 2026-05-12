@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { normalizeGuestRoomForMatch } from "../lib/guest-match-normalize.js";
+import { parsePmsDateToIsoYmd } from "../modules/guest-verification/hotel-date.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 /** `server/` kökü — `env.js` konumuna göre (cwd’den bağımsız). */
@@ -369,12 +370,13 @@ export function getEnv() {
     guestUiGatePassword: optional("VIONA_UI_GATE_PASSWORD", ""),
     guestUiGatePassword2: optional("VIONA_UI_GATE_PASSWORD_2", ""),
     /**
-     * Kurulum / test: otelde konaklamadan uygulamaya girmek için sunucuda sabit ad+oda çifti.
-     * Eşleşirse Elektra çağrılmadan kapı geçilir (canlı konak listesinde olmak şart değildir).
-     * Üretimde yalnız gerçek misafir + Elektra ile çalışılacaksa boş bırakın.
+     * Kurulum / test: kapıda oda + doğum tarihi sunucu değerleriyle birebir eşleşirse Elektra çağrılmadan geçilir.
+     * `VIONA_DEPLOY_GUEST_BIRTHDATE`: `YYYY-MM-DD` veya `DD.MM.YYYY` (misafirin gönderdiği ISO gün ile eşlenir).
+     * Görünen ad: `VIONA_DEPLOY_GUEST_FULL_NAME` (boşsa "Misafir"). Üretimde boş bırakın.
      */
     vionaDeployGuestFullName: optional("VIONA_DEPLOY_GUEST_FULL_NAME", ""),
     vionaDeployGuestRoom: optional("VIONA_DEPLOY_GUEST_ROOM", ""),
+    vionaDeployGuestBirthDateRaw: optional("VIONA_DEPLOY_GUEST_BIRTHDATE", ""),
     /** `0` ise şifre dolu olsa bile kapı doğrulaması kapalı (bakım / geçici). */
     guestUiGateDisabled: optional("VIONA_UI_GATE_ENABLED", "1") === "0",
     get guestUiGatePasswordList() {
@@ -382,10 +384,20 @@ export function getEnv() {
         .map((s) => String(s || "").trim())
         .filter(Boolean);
     },
+    /** Oda + doğum env’i dolu ve doğum günü parse edilebiliyor mu (kapı bypass). */
+    get guestDeployRoomBirthBypassConfigured() {
+      const room = String(this.vionaDeployGuestRoom || "").trim();
+      const rawBirth = String(this.vionaDeployGuestBirthDateRaw || "").trim();
+      if (!room || !rawBirth) return false;
+      const ymd = parsePmsDateToIsoYmd(rawBirth);
+      return Boolean(ymd && normalizeGuestRoomForMatch(room));
+    },
+    /** Health: eski ad+oda env’i veya oda+doğum bypass’ı tanımlı mı. */
     get guestDeployIdentityConfigured() {
       return Boolean(
-        String(this.vionaDeployGuestFullName || "").trim() &&
-          String(this.vionaDeployGuestRoom || "").trim(),
+        this.guestDeployRoomBirthBypassConfigured ||
+          (String(this.vionaDeployGuestFullName || "").trim() &&
+            String(this.vionaDeployGuestRoom || "").trim()),
       );
     },
     get guestUiGateRequired() {

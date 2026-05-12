@@ -930,6 +930,9 @@ app.use(
     get guestGateRoomAllowlistActive() {
       return env.guestGateRoomAllowlistActive;
     },
+    get guestDeployRoomBirthBypassConfigured() {
+      return env.guestDeployRoomBirthBypassConfigured;
+    },
   }),
 );
 app.use("/api/guest-requests", guestRequestsRouter);

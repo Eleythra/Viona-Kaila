@@ -42,6 +42,7 @@ function verifyGuestGatePassword(input, acceptedList) {
  *   guestUiGateStrict: boolean,
  *   elektraGateVerifyConfigured: boolean,
  *   guestGateRoomAllowlistActive: boolean,
+ *   guestDeployRoomBirthBypassConfigured: boolean,
  * }} envSlice
  */
 export function createGuestGateRouter(envSlice) {
@@ -55,7 +56,7 @@ export function createGuestGateRouter(envSlice) {
       identityRequiresBirthDate: Boolean(envSlice.elektraGateVerifyConfigured),
       identityRequiresFullName: false,
       pmsIdentity: Boolean(envSlice.elektraGateVerifyConfigured),
-      deployBypass: false,
+      deployBypass: Boolean(envSlice.guestDeployRoomBirthBypassConfigured),
       roomAllowlistActive: Boolean(envSlice.guestGateRoomAllowlistActive),
     });
   });
@@ -105,10 +106,11 @@ export function createGuestGateRouter(envSlice) {
     try {
       const meta = await verifyGuestIdentityRoomBirthdate(rn, bd, { clientIp });
       const display = String(meta.displayName || "").trim() || "Misafir";
+      const verificationMethod = meta.deployBypass ? "deploy_bypass" : "elektra";
       await recordGuestGateEntry({
         fullName: display,
         roomNumber: rn,
-        verificationMethod: "elektra",
+        verificationMethod,
         clientIp,
         userAgent,
       });

@@ -5,7 +5,12 @@ import {
   buildElektraBearerToken,
   fetchHotspotGuestList,
 } from "../pms/elektra/elektra-hotspot.provider.js";
-import { hotelTodayIsoYmd, isPlausibleGuestBirthYmd, isStayActiveOnDate, parsePmsDateToIsoYmd } from "./hotel-date.js";
+import {
+  hotelTodayIsoYmd,
+  isPlausibleGuestBirthYmd,
+  isStayActiveOnDate,
+  parsePmsDateToIsoYmd,
+} from "./hotel-date.js";
 import { guestVerificationUserMessage } from "./guest-verification-messages.js";
 import {
   clearVerificationFailures,
@@ -255,14 +260,9 @@ export async function verifyGuestIdentityRoomBirthdate(room, birthDateRaw, optio
     recordVerificationFailure(clientIp);
     throw createGuestVerificationHttpError("room_not_found");
   }
-  const allow = env.guestGateRoomAllowlistNormalizedSet;
-  if (allow.size > 0 && !allow.has(normRoom)) {
-    recordVerificationFailure(clientIp);
-    throw createGuestVerificationHttpError("invalid_room");
-  }
 
   const s = String(birthDateRaw ?? "").trim();
-  const birthYmd = /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
+  const birthYmd = /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : parsePmsDateToIsoYmd(s);
   if (!birthYmd) {
     recordVerificationFailure(clientIp);
     throw createGuestVerificationHttpError("invalid_birthdate");
@@ -271,6 +271,35 @@ export async function verifyGuestIdentityRoomBirthdate(room, birthDateRaw, optio
   if (!isPlausibleGuestBirthYmd(birthYmd, today)) {
     recordVerificationFailure(clientIp);
     throw createGuestVerificationHttpError("invalid_birthdate");
+  }
+
+  const deployBirthRaw = String(env.vionaDeployGuestBirthDateRaw || "").trim();
+  const deployRoomNorm = normalizeGuestRoomForMatch(String(env.vionaDeployGuestRoom || "").trim());
+  const deployBirthYmd = deployBirthRaw ? parsePmsDateToIsoYmd(deployBirthRaw) : null;
+  if (
+    deployBirthYmd &&
+    deployRoomNorm &&
+    deployRoomNorm === normRoom &&
+    deployBirthYmd === birthYmd
+  ) {
+    clearVerificationFailures(clientIp);
+    const displayName = String(env.vionaDeployGuestFullName || "").trim() || "Misafir";
+    return {
+      verified: true,
+      resId: null,
+      resNameId: null,
+      checkin: null,
+      checkout: null,
+      hotelId: String(env.elektraHotelId || "").trim(),
+      displayName,
+      deployBypass: true,
+    };
+  }
+
+  const allow = env.guestGateRoomAllowlistNormalizedSet;
+  if (allow.size > 0 && !allow.has(normRoom)) {
+    recordVerificationFailure(clientIp);
+    throw createGuestVerificationHttpError("invalid_room");
   }
 
   const { records, hotelIdDefault } = await fetchHotspotRecordsForVerification(clientIp);
