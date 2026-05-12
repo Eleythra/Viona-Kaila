@@ -1,11 +1,11 @@
 import { getEnv } from "../../config/env.js";
 import { extractGivenNamesPart, extractSurnameFromFullName } from "../../lib/extract-surname-from-full-name.js";
-import { normalizeGuestMatchString } from "../../lib/guest-match-normalize.js";
+import { normalizeGuestMatchString, normalizeGuestRoomForMatch } from "../../lib/guest-match-normalize.js";
 import {
   buildElektraBearerToken,
   fetchHotspotGuestList,
 } from "../pms/elektra/elektra-hotspot.provider.js";
-import { hotelTodayIsoYmd, isStayActiveOnDate, parsePmsDateToIsoYmd } from "./hotel-date.js";
+import { hotelTodayIsoYmd, isPlausibleGuestBirthYmd, isStayActiveOnDate, parsePmsDateToIsoYmd } from "./hotel-date.js";
 import { guestVerificationUserMessage } from "./guest-verification-messages.js";
 import {
   clearVerificationFailures,
@@ -43,7 +43,7 @@ function compositeFullNameNorm(r) {
  * @returns {{ verified: true, resId: string|null, resNameId: string|null, checkin: string|null, checkout: string|null, hotelId: string }}
  */
 export function matchGuestToHotspotRecords(normalized, records, clientIp, hotelIdFallback = "") {
-  const normRoom = normalizeGuestMatchString(normalized.room);
+  const normRoom = normalizeGuestRoomForMatch(normalized.room);
   const normLname = normalizeGuestMatchString(extractSurnameFromFullName(normalized.name));
   const givenNorm = normalizeGuestMatchString(extractGivenNamesPart(normalized.name));
   const fullNorm = normalizeGuestMatchString(normalized.name);
@@ -53,7 +53,7 @@ export function matchGuestToHotspotRecords(normalized, records, clientIp, hotelI
     throw createGuestVerificationHttpError("surname_mismatch");
   }
 
-  const roomMatches = records.filter((r) => normalizeGuestMatchString(r.roomNo) === normRoom);
+  const roomMatches = records.filter((r) => normalizeGuestRoomForMatch(String(r.roomNo ?? "")) === normRoom);
   if (!roomMatches.length) {
     recordVerificationFailure(clientIp);
     throw createGuestVerificationHttpError("room_not_found");
@@ -117,7 +117,7 @@ export function matchGuestRoomBirthdateToHotspotRecords(
   clientIp,
   hotelIdFallback = "",
 ) {
-  const normRoom = normalizeGuestMatchString(String(roomInput ?? "").trim());
+  const normRoom = normalizeGuestRoomForMatch(String(roomInput ?? "").trim());
   const birth = String(birthYmd ?? "").trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(birth)) {
     recordVerificationFailure(clientIp);
@@ -128,7 +128,7 @@ export function matchGuestRoomBirthdateToHotspotRecords(
     throw createGuestVerificationHttpError("room_not_found");
   }
 
-  const roomMatches = records.filter((r) => normalizeGuestMatchString(String(r.roomNo ?? "")) === normRoom);
+  const roomMatches = records.filter((r) => normalizeGuestRoomForMatch(String(r.roomNo ?? "")) === normRoom);
   if (!roomMatches.length) {
     recordVerificationFailure(clientIp);
     throw createGuestVerificationHttpError("room_not_found");
@@ -249,12 +249,30 @@ export async function verifyGuestIdentityRoomBirthdate(room, birthDateRaw, optio
     throw createGuestVerificationHttpError("pms_unavailable");
   }
   const clientIp = String(options.clientIp || "unknown").trim() || "unknown";
+
+  const normRoom = normalizeGuestRoomForMatch(String(room ?? "").trim());
+  if (!normRoom) {
+    recordVerificationFailure(clientIp);
+    throw createGuestVerificationHttpError("room_not_found");
+  }
+  const allow = env.guestGateRoomAllowlistNormalizedSet;
+  if (allow.size > 0 && !allow.has(normRoom)) {
+    recordVerificationFailure(clientIp);
+    throw createGuestVerificationHttpError("invalid_room");
+  }
+
   const s = String(birthDateRaw ?? "").trim();
   const birthYmd = /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
   if (!birthYmd) {
     recordVerificationFailure(clientIp);
     throw createGuestVerificationHttpError("invalid_birthdate");
   }
+  const today = hotelTodayIsoYmd();
+  if (!isPlausibleGuestBirthYmd(birthYmd, today)) {
+    recordVerificationFailure(clientIp);
+    throw createGuestVerificationHttpError("invalid_birthdate");
+  }
+
   const { records, hotelIdDefault } = await fetchHotspotRecordsForVerification(clientIp);
   return matchGuestRoomBirthdateToHotspotRecords(room, birthYmd, records, clientIp, hotelIdDefault);
 }
@@ -280,8 +298,8 @@ export async function maybeVerifyGuestForPms(normalized, options = {}) {
     if (!session) {
       throw createGuestVerificationHttpError("guest_session_required");
     }
-    const sr = normalizeGuestMatchString(String(session.room || ""));
-    const pr = normalizeGuestMatchString(String(normalized.room || "").trim());
+    const sr = normalizeGuestRoomForMatch(String(session.room || ""));
+    const pr = normalizeGuestRoomForMatch(String(normalized.room || "").trim());
     if (!sr || !pr || sr !== pr) {
       throw createGuestVerificationHttpError("guest_session_room_mismatch");
     }

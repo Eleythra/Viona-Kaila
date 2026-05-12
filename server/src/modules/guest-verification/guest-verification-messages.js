@@ -1,7 +1,8 @@
-/** @typedef {'room_not_found'|'surname_mismatch'|'stay_not_active'|'ambiguous_guest'|'pms_unavailable'|'too_many_verification_attempts'} GuestVerifyReason */
+/** @typedef {'room_not_found'|'invalid_room'|'surname_mismatch'|'stay_not_active'|'ambiguous_guest'|'birthdate_mismatch'|'invalid_birthdate'|'pms_unavailable'|'too_many_verification_attempts'|'guest_session_required'|'guest_session_room_mismatch'} GuestVerifyReason */
 
 const TR_MESSAGES = {
   identity_required: "Oda numarası ve doğum tarihi gerekli.",
+  invalid_room: "Bu oda numarası otelimiz için tanımlı değil. Lütfen resepsiyonla aynı oda numarasını doğrulayın.",
   room_not_found: "Bu oda numarasına ait aktif kayıt bulunamadı.",
   surname_mismatch: "Soyad bilgisi doğrulanamadı.",
   stay_not_active: "Konaklama süresi aktif görünmüyor.",

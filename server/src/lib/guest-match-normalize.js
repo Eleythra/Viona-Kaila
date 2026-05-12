@@ -39,3 +39,17 @@ export function normalizeGuestMatchString(input) {
   }
   return out.replace(/\s+/g, " ").trim();
 }
+
+/**
+ * Oda eşlemesi: önce `normalizeGuestMatchString`, sonra yalnızca rakamlardan oluşuyorsa
+ * baştaki sıfırları kaldırır (`01106` ile `1106` aynı anahtar).
+ * Harf / tire / suffix içeren odalar (örn. `1204a`, `vip01`) olduğu gibi kalır.
+ * @param {string} input
+ * @returns {string}
+ */
+export function normalizeGuestRoomForMatch(input) {
+  const base = normalizeGuestMatchString(input);
+  if (!base) return "";
+  if (/^\d+$/.test(base)) return String(parseInt(base, 10));
+  return base;
+}

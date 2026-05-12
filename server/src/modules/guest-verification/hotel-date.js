@@ -47,3 +47,19 @@ export function isStayActiveOnDate(todayYmd, checkinRaw, checkoutRaw) {
   if (!cin || !cout) return false;
   return todayYmd >= cin && todayYmd <= cout;
 }
+
+/**
+ * Kapı doğrulaması: gelecek tarih veya 120 yaşından büyük doğum kabul edilmez (Hotspot çağrılmadan).
+ * @param {string} birthYmd `YYYY-MM-DD`
+ * @param {string} todayYmd `YYYY-MM-DD`
+ */
+export function isPlausibleGuestBirthYmd(birthYmd, todayYmd) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birthYmd) || !/^\d{4}-\d{2}-\d{2}$/.test(todayYmd)) return false;
+  if (birthYmd > todayYmd) return false;
+  const b = new Date(`${birthYmd}T12:00:00.000Z`);
+  const t = new Date(`${todayYmd}T12:00:00.000Z`);
+  if (Number.isNaN(b.getTime()) || Number.isNaN(t.getTime())) return false;
+  const min = new Date(t);
+  min.setUTCFullYear(min.getUTCFullYear() - 120);
+  return b >= min;
+}

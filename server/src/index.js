@@ -837,6 +837,8 @@ app.get("/api/health", (req, res) => {
     opsTrustOpsPageHeader: Boolean(env.opsTrustOpsPageHeader),
     /** Kapı: Elektra ile kimlik doğrulama açık mı (`GUEST_PMS_GATE_VERIFY_ENABLED` + env). */
     elektraGateVerifyActive: Boolean(env.elektraGateVerifyConfigured),
+    /** Kapı: `GUEST_GATE_ROOM_ALLOWLIST` dolu mu — doluysa liste dışı oda için Elektra çağrılmaz (değer sızmaz). */
+    guestGateRoomAllowlistActive: Boolean(env.guestGateRoomAllowlistActive),
     /** Formlar: insert öncesi PMS doğrulama açık mı (`GUEST_PMS_VERIFY_ENABLED` + env). */
     elektraInsertVerifyActive: Boolean(env.elektraInsertVerifyConfigured),
     /** `ELEKTRA_BASE_URL` + `ELEKTRA_HOTEL_ID` + `ELEKTRA_TOKEN` (+ query modunda query key) — smoke test için. */
@@ -922,17 +924,11 @@ app.use(
     get guestUiGateStrict() {
       return env.guestUiGateStrict;
     },
-    get guestDeployIdentityConfigured() {
-      return env.guestDeployIdentityConfigured;
-    },
-    get vionaDeployGuestFullName() {
-      return env.vionaDeployGuestFullName;
-    },
-    get vionaDeployGuestRoom() {
-      return env.vionaDeployGuestRoom;
-    },
     get elektraGateVerifyConfigured() {
       return env.elektraGateVerifyConfigured;
+    },
+    get guestGateRoomAllowlistActive() {
+      return env.guestGateRoomAllowlistActive;
     },
   }),
 );

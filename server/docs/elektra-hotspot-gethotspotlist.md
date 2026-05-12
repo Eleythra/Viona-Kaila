@@ -38,4 +38,5 @@ Kök dizi veya nesne içinde:
 ## İlgili uçlar ve env
 
 - Smoke: `GET /api/internal/elektra-hotspot-smoke` (`CRON_SECRET` veya admin token). `?nocache=1` önbelleği temizler.
+- İsteğe bağlı **`GUEST_GATE_ROOM_ALLOWLIST`**: doluysa kapı / `guest-verify` yalnız listedeki oda anahtarları için `GetHotspotList` çağırır; liste dışı oda için **Elektra isteği atılmaz** (`invalid_room`).
 - Env: `ELEKTRA_BASE_URL`, `ELEKTRA_HOTEL_ID`, `ELEKTRA_TOKEN`, `ELEKTRA_HOTSPOT_PATH`, `ELEKTRA_AUTH_MODE`, `ELEKTRA_CACHE_TTL_MS`, timeout/retry — ayrıntı: `server/.env.example`, `elektra-hotspot-postman.md`.

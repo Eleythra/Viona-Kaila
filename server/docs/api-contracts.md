@@ -24,16 +24,16 @@ Web formları (`js/render-requests-module.js` vb.) ve sohbetten gelen `create_gu
 Postman’daki istekle hizalamak için isteğe bağlı: `ELEKTRA_HOTSPOT_PATH`, `ELEKTRA_AUTH_MODE` (`bearer`, `raw`, `query`, `none`), `ELEKTRA_AUTH_HEADER`, `ELEKTRA_AUTH_QUERY_KEY`. Ayrıntı: `server/docs/elektra-hotspot-postman.md`, özet: `server/docs/elektra-hotspot-gethotspotlist.md`.
 
 - **POST `/api/guest-requests`:** Başarısız doğrulamada `422` (veya `503` PMS erişilemez, `429` çok deneme, `401` oturum); gövde `{ ok: false, error: "<TR mesaj>", reason: "<kod>" }`.
-- **reason:** `room_not_found` | `surname_mismatch` | `birthdate_mismatch` | `invalid_birthdate` | `stay_not_active` | `ambiguous_guest` | `pms_unavailable` | `too_many_verification_attempts` | `guest_session_required` | `guest_session_room_mismatch`
+- **reason:** `room_not_found` | `invalid_room` | `surname_mismatch` | `birthdate_mismatch` | `invalid_birthdate` | `stay_not_active` | `ambiguous_guest` | `pms_unavailable` | `too_many_verification_attempts` | `guest_session_required` | `guest_session_room_mismatch`
 - **Sohbet (web):** `GUEST_PMS_GATE_VERIFY_ENABLED=1` iken çerez yoksa `403`; aksi halde proxy.
-- **`/api/health`:** `elektraGateVerifyActive` (kapı), `elektraInsertVerifyActive` (form insert öncesi) — env tam ve ilgili bayrak açık mı (değer sızmaz).
+- **`/api/health`:** `elektraGateVerifyActive`, `guestGateRoomAllowlistActive` (kapı oda allowlist dolu mu), `elektraInsertVerifyActive` — env tam ve ilgili bayrak açık mı (değer sızmaz).
 
 ### Misafir kapısı (public)
 
 İstemci `fetch(..., { credentials: "include" })` kullanmalıdır (çerez).
 
-- **`GET /api/public/guest-gate/status`** — `{ required, strict, identityRequired, identityRequiresBirthDate, identityRequiresFullName, pmsIdentity, deployBypass }`. Elektra kapı kimliği açıksa `identityRequiresBirthDate` true; deploy bypass (`VIONA_DEPLOY_GUEST_*`) tanımlıysa `identityRequiresFullName` true.
-- **`POST /api/public/guest-gate/verify`** — Gövde: `password` (kapı şifresi açıksa), `room`, `birthDate` (`YYYY-MM-DD`, Elektra yolu) ve/veya `fullName` (deploy bypass veya geriye dönük ad+oda Elektra). Başarıda `viona_guest_verified` set edilir.
+- **`GET /api/public/guest-gate/status`** — `{ required, strict, identityRequired, identityRequiresBirthDate, identityRequiresFullName, pmsIdentity, deployBypass, roomAllowlistActive }`. Kapı kimliği Elektra **oda + doğum tarihi**; `roomAllowlistActive`: `GUEST_GATE_ROOM_ALLOWLIST` doluysa liste dışı odada Elektra çağrılmaz.
+- **`POST /api/public/guest-gate/verify`** — Gövde: isteğe bağlı `password` (kapı şifresi açıksa), zorunlu `room`, `birthDate` (`YYYY-MM-DD`). Başarıda `viona_guest_verified` set edilir.
 - **`POST /api/public/guest-gate/logout`** — `{ ok: true }`; çerezi siler.
 - **`POST /api/public/guest-verify`** — Yalnızca **oda + doğum tarihi** (`{ room, birthDate }`); kapı şifresi yok. Aynı Elektra doğrulaması + başarıda aynı çerez. `503` `not_configured` (kapı/Elektra kapalı).
 
@@ -71,7 +71,7 @@ Buton yoksa veya `=1` yapılmış ama şablonda uyumsuzluk varsa Meta hata döne
 - Purpose: verify **room + date of birth** against Elektra Hotspot (same cached list as gate). No gate password.
 - Body: `{ "room": "209", "birthDate": "2001-07-16" }` (aliases: `roomNumber`, `birth_date`).
 - Success: `{ "ok": true }` and HttpOnly `viona_guest_verified` cookie (same as successful `POST /api/public/guest-gate/verify` with Elektra birth path).
-- Errors: `400` `identity_required`, `503` `not_configured` (gate/Elektra off), otherwise same HTTP status and `{ ok: false, error, message }` as gate verify (`birthdate_mismatch`, `invalid_birthdate`, `429`, etc.).
+- Errors: `400` `identity_required`, `503` `not_configured` (gate/Elektra off), otherwise same HTTP status and `{ ok: false, error, message }` as gate verify (`invalid_room` if `GUEST_GATE_ROOM_ALLOWLIST` set and room not listed — **no Hotspot request**; `invalid_birthdate` for bad format / future / >120y — **no Hotspot**; then `birthdate_mismatch`, `room_not_found`, `429`, etc.).
 - Client: send `credentials: "include"` if the SPA needs the cookie for subsequent `POST /api/guest-requests` / chat.
 
 ### `POST /api/guest-requests`

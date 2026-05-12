@@ -3,6 +3,7 @@ import dns from "node:dns";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { normalizeGuestRoomForMatch } from "../lib/guest-match-normalize.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 /** `server/` kökü — `env.js` konumuna göre (cwd’den bağımsız). */
@@ -341,6 +342,25 @@ export function getEnv() {
           String(this.elektraHotelId || "").trim() &&
           String(this.elektraToken || "").trim(),
       );
+    },
+    /**
+     * Kapı / `POST /api/public/guest-verify`: otel oda listesi (virgül, `;` veya satır sonu ile ayrılmış).
+     * Doluysa yalnız bu anahtarlar için GetHotspotList çağrılır; liste dışı oda **Elektra’ya istek atmadan** reddedilir.
+     * Girdiler `normalizeGuestRoomForMatch` ile normalize edilir (`01106` → `1106`).
+     */
+    guestGateRoomAllowlistCsv: optional("GUEST_GATE_ROOM_ALLOWLIST", ""),
+    get guestGateRoomAllowlistNormalizedSet() {
+      const raw = String(this.guestGateRoomAllowlistCsv || "").trim();
+      if (!raw) return new Set();
+      const set = new Set();
+      for (const part of raw.split(/[,;\n\r]+/)) {
+        const k = normalizeGuestRoomForMatch(String(part || "").trim());
+        if (k) set.add(k);
+      }
+      return set;
+    },
+    get guestGateRoomAllowlistActive() {
+      return this.guestGateRoomAllowlistNormalizedSet.size > 0;
     },
     /**
      * Misafir kapı şifreleri — yalnızca sunucuda; tarayıcıya gönderilmez.
