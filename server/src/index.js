@@ -35,6 +35,7 @@ import {
   isPublicSiteOriginAllowed,
   normalizePublicSiteOrigin,
 } from "./lib/public-site-origins.js";
+import { parseVerifiedGuestCookie } from "./lib/guest-verified-session.js";
 const env = getEnv();
 const app = express();
 app.set("trust proxy", 1);
