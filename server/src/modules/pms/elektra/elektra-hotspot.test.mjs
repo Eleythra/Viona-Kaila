@@ -5,6 +5,7 @@ import {
   buildElektraBearerToken,
   buildHotspotAuthHeaders,
   buildHotspotListUrl,
+  normalizeHotspotRow,
   parseHotspotListEnvelope,
 } from "./elektra-hotspot.provider.js";
 
@@ -67,6 +68,20 @@ test("parseHotspotListEnvelope — kök dizi (STATUS yok)", () => {
   const out = parseHotspotListEnvelope([{ x: 1 }]);
   assert.equal(out.records.length, 1);
   assert.equal(out.statusFieldPresent, false);
+});
+
+test("normalizeHotspotRow — düz ROOMNO", () => {
+  const r = normalizeHotspotRow({ ROOMNO: "1106", BIRTHDATE: "1990-01-15" });
+  assert.equal(r.roomNo, "1106");
+  assert.equal(r.birthDateRaw, "1990-01-15");
+});
+
+test("normalizeHotspotRow — Guest içinde RoomNumber", () => {
+  const r = normalizeHotspotRow({
+    Guest: { RoomNumber: "01106", BirthDate: "15.01.1990" },
+  });
+  assert.equal(r.roomNo, "01106");
+  assert.equal(r.birthDateRaw, "15.01.1990");
 });
 
 test("buildHotspotAuthHeaders — bearer / raw / query / none", () => {

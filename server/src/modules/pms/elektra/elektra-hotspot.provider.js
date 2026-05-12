@@ -18,18 +18,43 @@ export function buildElektraBearerToken(hotelId, tokenRaw) {
  */
 export function normalizeHotspotRow(row) {
   const o = row && typeof row === "object" ? row : {};
+  /** Bazı Elektra yanıtlarında misafir alanları iç nesnede gelir. */
+  const nestedSources = [o];
+  for (const nk of ["Guest", "guest", "GUEST", "GuestInfo", "guestInfo", "Misafir", "misafir"]) {
+    const inner = o[nk];
+    if (inner && typeof inner === "object" && !Array.isArray(inner)) nestedSources.push(inner);
+  }
   const pick = (keys) => {
-    for (const k of keys) {
-      if (k in o && o[k] != null && String(o[k]).trim() !== "") return String(o[k]).trim();
-      const ku = k.toUpperCase();
-      if (ku in o && o[ku] != null && String(o[ku]).trim() !== "") return String(o[ku]).trim();
+    for (const src of nestedSources) {
+      for (const k of keys) {
+        if (k in src && src[k] != null && String(src[k]).trim() !== "") return String(src[k]).trim();
+        const ku = k.toUpperCase();
+        if (ku in src && src[ku] != null && String(src[ku]).trim() !== "") return String(src[ku]).trim();
+      }
     }
     return "";
   };
   return {
-    name: pick(["NAME", "Name", "name"]),
-    lname: pick(["LNAME", "LName", "lname"]),
-    roomNo: pick(["ROOMNO", "RoomNo", "roomno", "ROOM_NO", "roomNo"]),
+    name: pick(["NAME", "Name", "name", "FIRSTNAME", "FirstName", "Firstname"]),
+    lname: pick(["LNAME", "LName", "lname", "LASTNAME", "LastName", "Lastname", "SURNAME", "Surname"]),
+    roomNo: pick([
+      "ROOMNO",
+      "RoomNo",
+      "roomno",
+      "ROOM_NO",
+      "roomNo",
+      "ROOMNUMBER",
+      "RoomNumber",
+      "roomNumber",
+      "ROOM",
+      "Room",
+      "room",
+      "ODANO",
+      "OdaNo",
+      "odano",
+      "Zimmer",
+      "ZIMMER",
+    ]),
     /** Ham Elektra değeri; doğrulamada yalnız `parsePmsDateToIsoYmd` ile gün çıkarılır. */
     birthDateRaw: pick(["BIRTHDATE", "BirthDate", "birthdate", "BIRTH_DATE", "birthDate"]),
     checkin: pick(["CHECKIN", "CheckIn", "checkin"]),
