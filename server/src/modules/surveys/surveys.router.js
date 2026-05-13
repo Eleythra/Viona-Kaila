@@ -1,5 +1,22 @@
 import { Router } from "express";
+import rateLimit from "express-rate-limit";
+import { getEnv } from "../../config/env.js";
 import { createSurveySubmission } from "./surveys.service.js";
+
+const env = getEnv();
+const surveySubmitLimiter = rateLimit({
+  windowMs: Math.max(60_000, Number(env.surveySubmitWindowMs) || 60_000),
+  max: Math.min(120, Math.max(15, Number(env.surveySubmitMax) || 45)),
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req, res) => {
+    res.status(429).json({
+      ok: false,
+      error: "rate_limit_exceeded",
+    });
+  },
+});
 
 const router = Router();
 
@@ -16,7 +33,7 @@ function routeErr(res, error, fallbackMsg) {
   });
 }
 
-router.post("/", async (req, res) => {
+router.post("/", surveySubmitLimiter, async (req, res) => {
   try {
     const result = await createSurveySubmission(req.body || {});
     return res.status(201).json({

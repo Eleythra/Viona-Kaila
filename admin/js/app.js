@@ -54,6 +54,23 @@
     current_time: "Saat",
   };
 
+  /** «Odalar» sekmesi: `hotel-room-numbers.js` ile aynı geçerli oda sayısı (sabit 363 metninden kaçın). */
+  function applyValidRoomCountToDom() {
+    var el = document.getElementById("viona-valid-room-count");
+    if (!el) return;
+    var n = 0;
+    try {
+      if (typeof window.VIONA_HOTEL_VALID_ROOM_COUNT === "number" && window.VIONA_HOTEL_VALID_ROOM_COUNT > 0) {
+        n = window.VIONA_HOTEL_VALID_ROOM_COUNT;
+      } else if (typeof window.vionaEnumerateHotelRoomsMeta === "function") {
+        n = window.vionaEnumerateHotelRoomsMeta().length;
+      }
+    } catch (_e) {
+      n = 0;
+    }
+    if (n > 0) el.textContent = String(n);
+  }
+
   function dashboardFmtPct(part, total) {
     var p = Number(part) || 0;
     var t = Number(total) || 0;
@@ -3286,6 +3303,7 @@
   }
 
   async function bootstrap() {
+    applyValidRoomCountToDom();
     wireLogin();
     wireLogout();
     var ok = false;

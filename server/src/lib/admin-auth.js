@@ -22,6 +22,22 @@ export function isAdminTokenValid(candidate = "") {
   return timingSafeEqual(left, right);
 }
 
+/**
+ * `Authorization` başlığının tamamını `Bearer <secret>` ile timing-safe karşılaştırır (CRON vb.).
+ * @param {string|undefined} authorizationHeader — örn. req.headers.authorization
+ * @param {string|undefined} secret
+ */
+export function isBearerSecretAuthValid(authorizationHeader, secret) {
+  const s = String(secret ?? "").trim();
+  if (!s) return false;
+  const expected = `Bearer ${s}`;
+  const auth = String(authorizationHeader ?? "").trim();
+  const a = Buffer.from(auth, "utf8");
+  const b = Buffer.from(expected, "utf8");
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
+}
+
 /** Express middleware: ADMIN_API_TOKEN yoksa 503; token uyuşmazsa 401. */
 export function requireAdminAuth(req, res, next) {
   const ADMIN_API_TOKEN = getAdminApiToken();

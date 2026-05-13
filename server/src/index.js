@@ -36,6 +36,7 @@ import {
   normalizePublicSiteOrigin,
 } from "./lib/public-site-origins.js";
 import { parseVerifiedGuestCookie } from "./lib/guest-verified-session.js";
+import { isBearerSecretAuthValid } from "./lib/admin-auth.js";
 const env = getEnv();
 const app = express();
 app.set("trust proxy", 1);
@@ -489,6 +490,19 @@ app.use(
   }),
 );
 
+/** Admin / operasyon / iç cron yanıtlarının ara katmanda önbelleğe alınmasını engeller (hassas JSON). */
+app.use((req, res, next) => {
+  const pathOnly = String(req.originalUrl || req.url || "").split("?")[0];
+  if (
+    pathOnly.startsWith("/api/admin") ||
+    pathOnly.startsWith("/api/ops") ||
+    pathOnly.startsWith("/api/internal")
+  ) {
+    res.setHeader("Cache-Control", "no-store, private");
+  }
+  next();
+});
+
 app.use(
   cors({
     origin(origin, callback) {
@@ -567,7 +581,7 @@ app.post("/api/internal/daily-operation-report", async (req, res) => {
   try {
     const secret = String(process.env.CRON_SECRET || "").trim();
     const auth = String(req.headers.authorization || "").trim();
-    if (!secret || auth !== `Bearer ${secret}`) {
+    if (!secret || !isBearerSecretAuthValid(auth, secret)) {
       return res.status(401).json({ ok: false, error: "unauthorized" });
     }
     const body = req.body && typeof req.body === "object" ? req.body : {};

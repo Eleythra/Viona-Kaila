@@ -332,7 +332,7 @@
           }, 3000);
         })
         .catch(function () {
-          window.open(absHref || relHref, "_blank", "noopener");
+          window.open(absHref || relHref, "_blank", "noopener,noreferrer");
         });
     });
   }
@@ -348,7 +348,7 @@
     btn.className = "spa-pdf-strip__btn";
     btn.href = absHref || relHref;
     btn.setAttribute("download", dlName);
-    btn.setAttribute("rel", "noopener");
+    btn.setAttribute("rel", "noopener noreferrer");
     wireSpaPdfButton(btn, relHref, dlName, absHref);
     var lbl = T(SPA_PRICE_STRIP.btnLabel);
     btn.setAttribute("aria-label", lbl);

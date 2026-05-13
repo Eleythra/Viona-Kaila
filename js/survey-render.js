@@ -472,9 +472,15 @@
           else renderActiveSection();
         }, SURVEY_SUCCESS_THEN_HOME_MS);
       })
-      .catch(function () {
+      .catch(function (err) {
         submitInFlight = false;
-        state.submittedMessage = tr("surveyErrorSubmit", "Gönderim sırasında bir hata oluştu.");
+        var msg;
+        if (err && err.status === 429) {
+          msg = tr("surveyErrorRateLimit", "Çok sık gönderim yapıldı. Lütfen bir süre sonra tekrar deneyin.");
+        } else {
+          msg = tr("surveyErrorSubmit", "Gönderim sırasında bir hata oluştu.");
+        }
+        state.submittedMessage = msg;
         state.submittedIsError = true;
         state.submitExtraLine = "";
         renderActiveSection();

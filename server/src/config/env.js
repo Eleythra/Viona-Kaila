@@ -231,6 +231,15 @@ export function getEnv() {
     rateLimitWindowMs: optionalInt("RATE_LIMIT_WINDOW_MS", 60_000),
     rateLimitMax: optionalInt("RATE_LIMIT_MAX", 180),
     adminRateLimitMax: optionalInt("ADMIN_RATE_LIMIT_MAX", 80),
+    /**
+     * Misafir kapısı `POST /verify`: pencere başına IP; yalnızca başarısız yanıtlar (status >= 400) sayılır
+     * (`skipSuccessfulRequests`). Varsayılan 15 dk / 40 başarısız deneme.
+     */
+    guestGateVerifyWindowMs: optionalInt("GUEST_GATE_VERIFY_WINDOW_MS", 900_000),
+    guestGateVerifyMax: optionalInt("GUEST_GATE_VERIFY_MAX", 40),
+    /** `POST /api/surveys`: başarılı gönderimler sayaca eklenmez. */
+    surveySubmitWindowMs: optionalInt("SURVEY_SUBMIT_WINDOW_MS", 60_000),
+    surveySubmitMax: optionalInt("SURVEY_SUBMIT_MAX", 45),
     /** Meta WhatsApp App Secret (Render: WHATSAPP_APP_SECRET). Webhook POST imzası; boşsa doğrulama yok. */
     get whatsappAppSecret() {
       return readWhatsappMetaAppSecret();

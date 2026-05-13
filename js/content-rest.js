@@ -618,7 +618,7 @@
         cta.href = href;
         if (dl) cta.setAttribute("download", dl);
         cta.setAttribute("target", "_blank");
-        cta.setAttribute("rel", "noopener");
+        cta.setAttribute("rel", "noopener noreferrer");
         var lbl = T(item.action.label || {});
         cta.setAttribute("aria-label", lbl);
         if (item.action.icon) {
@@ -659,7 +659,7 @@
       btn.href = href;
       if (dl) btn.setAttribute("download", dl);
       btn.setAttribute("target", "_blank");
-      btn.setAttribute("rel", "noopener");
+      btn.setAttribute("rel", "noopener noreferrer");
       var btnLabel = T((item.drink && item.drink.label) || {});
       btn.setAttribute("aria-label", btnLabel);
       btn.appendChild(createPdfCtaIcon());

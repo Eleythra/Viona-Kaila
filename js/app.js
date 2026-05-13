@@ -81,6 +81,11 @@
   }
   let carouselTimer = null;
   let carouselIndex = 0;
+  /** Tek MediaQuery — carousel başlatma ve tercih değişimi aynı örneği kullanır (gereksiz tekrar yok). */
+  const mqPrefersReduceMotion =
+    typeof window !== "undefined" && typeof window.matchMedia === "function"
+      ? window.matchMedia("(prefers-reduced-motion: reduce)")
+      : null;
 
   let moduleId = null;
   let requestSub = null;
@@ -258,11 +263,70 @@
     }
   }
 
+  /** Modül içeriğindeki ilk başlığı bölge etiketi yap; yoksa kısa aria-label. */
+  function wireModuleRegionA11y() {
+    const modView = el("view-module");
+    const inner = el("module-inner");
+    if (!modView || !inner || !moduleId) return;
+    const h = inner.querySelector("h1, h2");
+    if (h) {
+      if (!h.id) h.id = "viona-module-heading";
+      modView.setAttribute("aria-labelledby", h.id);
+      modView.removeAttribute("aria-label");
+      return;
+    }
+    modView.removeAttribute("aria-labelledby");
+    const def = MODULE_DEFS.find((d) => d.id === moduleId);
+    let lab = "";
+    if (def) {
+      if (def.isSurvey) lab = surveyTitleText();
+      else if (def.isRequests) {
+        if (requestSub) {
+          const sub = REQUEST_SUBS.find((s) => s.id === requestSub);
+          lab = sub ? t(sub.i18nKey) : t(def.i18nKey);
+        } else {
+          lab = t(def.i18nKey);
+        }
+      } else {
+        lab = t(def.i18nKey);
+      }
+    }
+    modView.setAttribute("aria-label", lab || t("homeTitle"));
+  }
+
+  /** Klavye / ekran okuyucu: modül açılınca içerik başlığına odak (görünür kaydırmayı tetikleme). */
+  function focusModulePrimaryTarget() {
+    const inner = el("module-inner");
+    if (!inner) return;
+    const h = inner.querySelector("h1, h2");
+    if (h && typeof h.focus === "function") {
+      try {
+        if (!h.hasAttribute("tabindex")) h.setAttribute("tabindex", "-1");
+        if (typeof FocusOptions !== "undefined") {
+          h.focus({ preventScroll: true });
+        } else {
+          h.focus();
+        }
+      } catch (_e) {}
+      return;
+    }
+    const back = el("btn-back");
+    if (back && typeof back.focus === "function") {
+      try {
+        if (typeof FocusOptions !== "undefined") {
+          back.focus({ preventScroll: true });
+        } else {
+          back.focus();
+        }
+      } catch (_e2) {}
+    }
+  }
+
   function startCarousel() {
     stopCarousel();
     const slides = document.querySelectorAll(".carousel-slide");
     if (slides.length < 2) return;
-    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (mqPrefersReduceMotion && mqPrefersReduceMotion.matches) {
       return;
     }
     carouselTimer = setInterval(() => {
@@ -528,8 +592,12 @@
       inner.appendChild(p);
     } finally {
       if (moduleId) {
+        wireModuleRegionA11y();
         scrollMainViewportToTop();
-        requestAnimationFrame(() => scrollMainViewportToTop());
+        requestAnimationFrame(() => {
+          scrollMainViewportToTop();
+          focusModulePrimaryTarget();
+        });
       }
     }
   }
@@ -1123,7 +1191,9 @@
                   errNode.classList.remove("hidden");
                 }
               } else {
-                if (res.status === 400) {
+                if (res.status === 429) {
+                  showGateError("gateErrorRateLimit");
+                } else if (res.status === 400) {
                   showGateError("gateErrorPasswordEmpty");
                 } else if (res.status === 401) {
                   showGateError("gateErrorPassword");
@@ -1296,6 +1366,24 @@
       },
       false
     );
+
+    try {
+      if (mqPrefersReduceMotion) {
+        function onReducedMotionPreferenceChange() {
+          const homeView = el("view-home");
+          if (!homeView || homeView.classList.contains("hidden")) return;
+          if (mqPrefersReduceMotion.matches) stopCarousel();
+          else startCarousel();
+        }
+        if (mqPrefersReduceMotion.addEventListener) {
+          mqPrefersReduceMotion.addEventListener("change", onReducedMotionPreferenceChange);
+        } else if (mqPrefersReduceMotion.addListener) {
+          mqPrefersReduceMotion.addListener(onReducedMotionPreferenceChange);
+        }
+      }
+    } catch (_rm) {
+      /* matchMedia yok */
+    }
   }
 
   init();

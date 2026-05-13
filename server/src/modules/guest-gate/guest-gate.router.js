@@ -1,5 +1,6 @@
 import express from "express";
 import crypto from "node:crypto";
+import rateLimit from "express-rate-limit";
 import { getEnv } from "../../config/env.js";
 import { clearVerifiedGuestCookie, setVerifiedGuestCookie } from "../../lib/guest-verified-session.js";
 import { recordGuestGateEntry } from "./guest-gate-log.service.js";
@@ -41,6 +42,23 @@ function verifyEitherConfiguredPassword(input, expected1, expected2) {
  */
 export function createGuestGateRouter(envSlice) {
   const router = express.Router();
+  const env = getEnv();
+  const gateWindowMs = Math.max(120_000, Number(env.guestGateVerifyWindowMs) || 900_000);
+  const gateMax = Math.min(200, Math.max(15, Number(env.guestGateVerifyMax) || 40));
+  const verifyFailLimiter = rateLimit({
+    windowMs: gateWindowMs,
+    max: gateMax,
+    skipSuccessfulRequests: true,
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (_req, res) => {
+      res.status(429).json({
+        ok: false,
+        error: "rate_limit_exceeded",
+        message: "Çok fazla başarısız deneme yapıldı. Lütfen bir süre sonra tekrar deneyin.",
+      });
+    },
+  });
 
   router.get("/status", (_req, res) => {
     res.json({
@@ -59,7 +77,7 @@ export function createGuestGateRouter(envSlice) {
     return res.status(200).json({ ok: true });
   });
 
-  router.post("/verify", async (req, res) => {
+  router.post("/verify", verifyFailLimiter, async (req, res) => {
     const body = req.body && typeof req.body === "object" ? req.body : {};
 
     if (!envSlice.guestUiGateRequired) {
@@ -77,7 +95,6 @@ export function createGuestGateRouter(envSlice) {
       });
     }
 
-    const env = getEnv();
     const ok = verifyEitherConfiguredPassword(s, env.vionaGatePassword1, env.vionaGatePassword2);
     if (!ok) {
       return res.status(401).json({

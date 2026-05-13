@@ -1,5 +1,5 @@
 /**
- * Kaila Beach geçerli oda numaraları (363 oda). Python `hotel_room_numbers.py` ile senkron tutun.
+ * Kaila Beach geçerli oda numaraları. `HOTEL_VALID_ROOM_COUNT` aralıklardan türetilir; Python `hotel_room_numbers.py` ile senkron tutun.
  * Admin «Odalar» blok/kat ayrımı: tarayıcıda `js/hotel-room-numbers.js` → `vionaParseRoomLayout` (binler=blok A/B/C, yüzler=kat).
  */
 const ROOM_RANGES = [
@@ -33,6 +33,9 @@ function buildSet() {
 }
 
 export const HOTEL_VALID_ROOM_NUMBERS = buildSet();
+
+/** Geçerli oda adedi (`ROOM_RANGES` ile birebir; tarayıcı `VIONA_HOTEL_VALID_ROOM_COUNT` ile aynı mantık). */
+export const HOTEL_VALID_ROOM_COUNT = HOTEL_VALID_ROOM_NUMBERS.size;
 
 export function isValidHotelRoomNumber(value) {
   return HOTEL_VALID_ROOM_NUMBERS.has(String(value ?? "").trim());

@@ -7,7 +7,10 @@ import { buildDailyOperationReportPdfBuffer } from "./daily-operation-report.ser
 
 const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-/** HK → Teknik → Ön büro; her biri kendi PDF’i + alıcı listesi. */
+/** Aynı anda iki `runDailyOperationReportJob` (ör. interval tick üst üste) çift PDF göndermesin. */
+let dailyReportJobInFlight = false;
+
+/** HK → Teknik → Ön büro; her biri kendi PDF’i + alıcı listesi. Aynı numara üç listede ise sırayla 3 mesaj. */
 const SEGMENTS = [
   {
     key: "hk",
@@ -96,6 +99,28 @@ function hkDailyRecipientsFallbackEnabled() {
   return v !== "0" && v !== "false" && v !== "no" && v !== "off";
 }
 
+/** Hangi numaraların birden fazla segment listesinde geçtiğini logla (teşhis). */
+function logDailyReportRecipientOverlap(activeKeys) {
+  const digitToSegs = new Map();
+  for (const seg of SEGMENTS) {
+    if (!activeKeys.has(seg.key)) continue;
+    const { list } = recipientsForSegment(seg.envKeys, seg.key);
+    for (const d of list) {
+      if (!digitToSegs.has(d)) digitToSegs.set(d, new Set());
+      digitToSegs.get(d).add(seg.key);
+    }
+  }
+  let inMultiple = 0;
+  for (const segs of digitToSegs.values()) {
+    if (segs.size > 1) inMultiple += 1;
+  }
+  console.info(
+    "[daily_operation_report] recipient_plan unique_phones=%d phones_in_multiple_segments=%d (üç listede olanlar HK→Teknik→Ön büro sırasıyla 3 PDF alır)",
+    digitToSegs.size,
+    inMultiple,
+  );
+}
+
 /**
  * @param {string[]} envKeys
  * @param {"hk"|"tech"|"front"} segmentKey
@@ -132,9 +157,33 @@ export async function runDailyOperationReportJob(opts = {}) {
     return { ok: false, error: "invalid_report_ymd", ymd };
   }
 
+  if (dailyReportJobInFlight) {
+    console.warn(
+      "[daily_operation_report] skipped reason=job_in_flight ymd=%s source=%s (önceki gönderim bitene kadar bekle)",
+      ymd,
+      String(opts.source || "").trim() || "-",
+    );
+    return { ok: false, skipped: true, reason: "job_in_flight", ymd };
+  }
+
+  dailyReportJobInFlight = true;
+  try {
+    return await runDailyOperationReportJobInner(opts, ymd);
+  } finally {
+    dailyReportJobInFlight = false;
+  }
+}
+
+/**
+ * @param {{ ymd?: string, force?: boolean, source?: string }} opts
+ * @param {string} ymd
+ */
+async function runDailyOperationReportJobInner(opts, ymd) {
   const force = Boolean(opts.force);
   const source = String(opts.source || "").trim() || "-";
   const activeKeys = activeSegmentKeys();
+
+  logDailyReportRecipientOverlap(activeKeys);
 
   if (!force && allActiveSegmentsAlreadySent(ymd, activeKeys)) {
     console.info("[daily_operation_report] skipped reason=all_segments_sent ymd=%s source=%s", ymd, source);

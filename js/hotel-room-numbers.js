@@ -1,5 +1,6 @@
 /**
- * Kaila Beach geçerli oda numaraları (363). Sunucu `server/src/lib/hotel-room-numbers.js` ile senkron.
+ * Kaila Beach geçerli oda numaraları. `VIONA_HOTEL_VALID_ROOM_COUNT` aralıklardan hesaplanır.
+ * Sunucu `server/src/lib/hotel-room-numbers.js` ile senkron.
  */
 (function (global) {
   "use strict";
@@ -25,11 +26,17 @@
     [3601, 3612],
   ];
   var SET = Object.create(null);
+  var validRoomCount = 0;
   for (var ri = 0; ri < RANGES.length; ri++) {
     var a = RANGES[ri][0];
     var b = RANGES[ri][1];
-    for (var n = a; n <= b; n++) SET[String(n)] = true;
+    for (var n = a; n <= b; n++) {
+      SET[String(n)] = true;
+      validRoomCount += 1;
+    }
   }
+  /** Geçerli oda adedi (RANGES ile senkron; admin «Odalar» metni için). */
+  global.VIONA_HOTEL_VALID_ROOM_COUNT = validRoomCount;
   global.isValidVionaHotelRoomNumber = function (v) {
     return !!SET[String(v || "").trim()];
   };

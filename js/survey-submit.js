@@ -26,7 +26,9 @@
     }
 
     if (!response.ok || !data || data.ok !== true || !data.id) {
-      throw new Error((data && data.error) || "survey_submit_failed");
+      var err = new Error((data && data.error) || "survey_submit_failed");
+      err.status = response.status;
+      throw err;
     }
 
     return {

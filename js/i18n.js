@@ -45,6 +45,7 @@ const I18N = {
     gateErrorPassword: "Kod doğrulanamadı. Kontrol edip tekrar deneyin.",
     gateErrorPasswordEmpty: "Erişim kodunu girin.",
     gateErrorGateVerify: "Doğrulama tamamlanamadı. Bağlantınızı kontrol edip tekrar deneyin.",
+    gateErrorRateLimit: "Çok fazla başarısız deneme yapıldı. Lütfen bir süre sonra tekrar deneyin.",
     gateErrorGateLoading: "Erişim ayarları yükleniyor; lütfen birkaç saniye bekleyip tekrar deneyin.",
     gateErrorGateStrict:
       "Giriş doğrulanamıyor (sunucuya ulaşılamıyor). Bağlantınızı kontrol edin veya Tekrar dene’ye basın.",
@@ -280,6 +281,7 @@ const I18N = {
     surveyConfirmCancel: "Vazgeç",
     surveyConfirmDismiss: "Onayı kapat",
     surveyErrorSubmit: "Gönderim sırasında bir hata oluştu.",
+    surveyErrorRateLimit: "Çok sık gönderim yapıldı. Lütfen bir süre sonra tekrar deneyin.",
     surveyStarWord: "yıldız",
     surveyScaleHint: "5 üzerinden",
     surveyVionaCommentPlaceholder: "Viona hakkında eklemek istediğiniz not",
@@ -736,6 +738,7 @@ const I18N = {
     gateErrorPassword: "The code could not be verified. Check and try again.",
     gateErrorPasswordEmpty: "Please enter your access code.",
     gateErrorGateVerify: "Verification could not complete. Check your connection and try again.",
+    gateErrorRateLimit: "Too many failed attempts. Please wait a while and try again.",
     gateErrorGateLoading: "Checking access — please wait a moment, then try again.",
     gateErrorGateStrict:
       "We could not verify access (server unreachable). Check your connection or tap Retry.",
@@ -970,6 +973,7 @@ const I18N = {
     surveyConfirmCancel: "Go back",
     surveyConfirmDismiss: "Close confirmation",
     surveyErrorSubmit: "An error occurred while submitting.",
+    surveyErrorRateLimit: "Too many submissions in a short time. Please wait and try again.",
     surveyStarWord: "stars",
     surveyScaleHint: "out of 5",
     surveyVionaCommentPlaceholder: "Optional note about Viona",
@@ -1427,6 +1431,7 @@ const I18N = {
     gateErrorPassword: "Der Code konnte nicht bestätigt werden. Bitte prüfen und erneut versuchen.",
     gateErrorPasswordEmpty: "Bitte geben Sie den Zugangscode ein.",
     gateErrorGateVerify: "Prüfung nicht möglich. Verbindung prüfen und erneut versuchen.",
+    gateErrorRateLimit: "Zu viele fehlgeschlagene Versuche. Bitte warten Sie und versuchen Sie es erneut.",
     gateErrorGateLoading: "Zugriff wird geladen — bitte kurz warten und erneut versuchen.",
     gateErrorGateStrict:
       "Zugang konnte nicht geprüft werden (Server nicht erreichbar). Verbindung prüfen oder «Erneut» tippen.",
@@ -1662,6 +1667,7 @@ const I18N = {
     surveyConfirmCancel: "Zurück",
     surveyConfirmDismiss: "Bestätigung schließen",
     surveyErrorSubmit: "Beim Senden ist ein Fehler aufgetreten.",
+    surveyErrorRateLimit: "Zu viele Sendungen in kurzer Zeit. Bitte warten Sie und versuchen Sie es erneut.",
     surveyStarWord: "Sterne",
     surveyScaleHint: "von 5",
     surveyVionaCommentPlaceholder: "Optional: Hinweis zu Viona",
@@ -2119,6 +2125,7 @@ const I18N = {
     gateErrorPassword: "Kod nie został zweryfikowany. Sprawdź i spróbuj ponownie.",
     gateErrorPasswordEmpty: "Wpisz kod dostępu.",
     gateErrorGateVerify: "Nie udało się dokończyć weryfikacji. Sprawdź połączenie i spróbuj ponownie.",
+    gateErrorRateLimit: "Zbyt wiele nieudanych prób. Odczekaj chwilę i spróbuj ponownie.",
     gateErrorGateLoading: "Sprawdzanie dostępu — proszę chwilę poczekać i spróbować ponownie.",
     gateErrorGateStrict:
       "Nie można zweryfikować dostępu (brak połączenia z serwerem). Sprawdź internet lub dotknij «Spróbuj ponownie».",
@@ -2318,6 +2325,7 @@ const I18N = {
     surveyConfirmCancel: "Wstecz",
     surveyConfirmDismiss: "Zamknij potwierdzenie",
     surveyErrorSubmit: "Wystąpił błąd podczas przesyłania wyników.",
+    surveyErrorRateLimit: "Zbyt wiele wysłań w krótkim czasie. Odczekaj chwilę i spróbuj ponownie.",
     surveyStarWord: "gwiazdki",
     surveyScaleHint: "z 5",
     surveyVionaCommentPlaceholder: "Opcjonalna uwaga o Viona",

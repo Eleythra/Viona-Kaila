@@ -83,6 +83,20 @@ function clipText(t, max = PARAM_MAX) {
   return s.slice(0, max - 1) + "…";
 }
 
+/** Günlük rapor: aynı segment içinde aynı numaraya iki kez gitmesin (env/format farkı). */
+function dedupeDailyReportRecipients(list) {
+  const seen = new Set();
+  const out = [];
+  for (const raw of list) {
+    const d = String(raw ?? "").replace(/\D/g, "");
+    if (d.length < 10 || d.length > 15) continue;
+    if (seen.has(d)) continue;
+    seen.add(d);
+    out.push(d);
+  }
+  return out;
+}
+
 async function uploadPdfMedia(token, pdfBuffer, filename) {
   const url = buildWhatsappGraphMediaUrl();
   if (!url) throw new Error("missing_whatsapp_phone_number_id");
@@ -114,17 +128,28 @@ async function uploadPdfMedia(token, pdfBuffer, filename) {
 
 /**
  * @param {{ pdfBuffer: Buffer, filename: string, reportDateText: string, hotelName: string, recipients: string[], segment: 'hk'|'tech'|'front' }} opts
- * @returns {Promise<{ ok: boolean, skipped?: boolean, reason?: string, deliveredCount?: number, recipients?: number, mediaId?: string, templateName?: string, bodyParamCount?: number }>}
+ * @returns {Promise<{ ok: boolean, skipped?: boolean, reason?: string, deliveredCount?: number, deliveredTo?: string[], recipients?: number, mediaId?: string, templateName?: string, bodyParamCount?: number }>}
  */
 export async function sendDailyOperationReportPdfTemplate(opts = {}) {
   const { token, envKey: tokenEnvKey } = resolveWhatsappAccessToken();
   const phoneNumberId = resolveWhatsappPhoneNumberId();
-  const recipients = Array.isArray(opts.recipients) ? opts.recipients.filter(Boolean) : [];
+  const rawList = Array.isArray(opts.recipients) ? opts.recipients.filter(Boolean) : [];
   const segment = String(opts.segment || "").trim();
 
   if (!["hk", "tech", "front"].includes(segment)) {
     console.warn("[whatsapp_daily_report] skipped reason=invalid_segment segment=%s", segment || "-");
     return { ok: false, skipped: true, reason: "invalid_segment", bodyParamCount: resolveDailyReportWhatsappBodyParamCount() };
+  }
+
+  const beforeDedup = rawList.length;
+  const recipients = dedupeDailyReportRecipients(rawList);
+  if (recipients.length < beforeDedup) {
+    console.info(
+      "[whatsapp_daily_report] recipients_deduped segment=%s before=%d after=%d",
+      segment,
+      beforeDedup,
+      recipients.length,
+    );
   }
 
   if (!token || !phoneNumberId) {
@@ -164,6 +189,7 @@ export async function sendDailyOperationReportPdfTemplate(opts = {}) {
       detail: String(e?.message || e),
       templateName,
       bodyParamCount,
+      deliveredTo: [],
     };
   }
 
@@ -205,6 +231,8 @@ export async function sendDailyOperationReportPdfTemplate(opts = {}) {
   );
 
   let deliveredCount = 0;
+  /** Başarılı Graph yanıtı alan `to` değerleri (job içi dedup / kısmi başarı takibi). */
+  const deliveredTo = [];
   for (const to of recipients) {
     let res;
     let raw = "";
@@ -234,6 +262,7 @@ export async function sendDailyOperationReportPdfTemplate(opts = {}) {
 
     if (res.ok) {
       deliveredCount += 1;
+      deliveredTo.push(to);
       console.info("[whatsapp_daily_report] send_ok to=%s http_status=%s", to, res.status);
       continue;
     }
@@ -254,6 +283,8 @@ export async function sendDailyOperationReportPdfTemplate(opts = {}) {
       ok: false,
       reason: "all_recipients_failed",
       recipients: recipients.length,
+      deliveredCount: 0,
+      deliveredTo,
       mediaId,
       templateName,
       bodyParamCount,
@@ -265,6 +296,7 @@ export async function sendDailyOperationReportPdfTemplate(opts = {}) {
       reason: "partial_failure",
       recipients: recipients.length,
       deliveredCount,
+      deliveredTo,
       mediaId,
       templateName,
       bodyParamCount,
@@ -275,6 +307,7 @@ export async function sendDailyOperationReportPdfTemplate(opts = {}) {
     ok: true,
     recipients: recipients.length,
     deliveredCount,
+    deliveredTo,
     mediaId,
     templateName,
     bodyParamCount,
