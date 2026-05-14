@@ -57,6 +57,10 @@ const I18N = {
     gateErrorRoomRequired: "Lütfen oda numaranızı girin.",
     gateErrorBirthDateRequired: "Lütfen doğum tarihinizi seçin.",
     gateBirthDateLabel: "Doğum tarihi",
+    gateBirthDayShort: "Gün",
+    gateBirthMonthShort: "Ay",
+    gateBirthYearShort: "Yıl",
+    gateErrorBirthDateFuture: "Doğum tarihi bugünden ileri olamaz.",
     gateVerifiedAnonymousName: "Misafir",
     gateErrorIdentityMismatch:
       "Oda numarası veya doğum tarihi doğrulanamadı. Bilgilerinizi kontrol edin veya resepsiyon ile görüşün.",
@@ -752,6 +756,10 @@ const I18N = {
     gateErrorRoomRequired: "Please enter your room number.",
     gateErrorBirthDateRequired: "Please select your date of birth.",
     gateBirthDateLabel: "Date of birth",
+    gateBirthDayShort: "Day",
+    gateBirthMonthShort: "Month",
+    gateBirthYearShort: "Year",
+    gateErrorBirthDateFuture: "Date of birth cannot be in the future.",
     gateVerifiedAnonymousName: "Guest",
     gateErrorIdentityMismatch:
       "Room number or date of birth could not be verified. Check your details or contact reception.",
@@ -1447,6 +1455,10 @@ const I18N = {
     gateErrorRoomRequired: "Bitte geben Sie die Zimmernummer ein.",
     gateErrorBirthDateRequired: "Bitte wählen Sie Ihr Geburtsdatum.",
     gateBirthDateLabel: "Geburtsdatum",
+    gateBirthDayShort: "Tag",
+    gateBirthMonthShort: "Monat",
+    gateBirthYearShort: "Jahr",
+    gateErrorBirthDateFuture: "Das Geburtsdatum darf nicht in der Zukunft liegen.",
     gateVerifiedAnonymousName: "Gast",
     gateErrorIdentityMismatch:
       "Zimmernummer oder Geburtsdatum konnte nicht bestätigt werden. Bitte prüfen oder die Rezeption kontaktieren.",
@@ -2143,6 +2155,10 @@ const I18N = {
     gateErrorRoomRequired: "Podaj numer pokoju.",
     gateErrorBirthDateRequired: "Wybierz datę urodzenia.",
     gateBirthDateLabel: "Data urodzenia",
+    gateBirthDayShort: "Dzień",
+    gateBirthMonthShort: "Miesiąc",
+    gateBirthYearShort: "Rok",
+    gateErrorBirthDateFuture: "Data urodzenia nie może być z przyszłości.",
     gateVerifiedAnonymousName: "Gość",
     gateErrorIdentityMismatch:
       "Nie udało się zweryfikować numeru pokoju lub daty urodzenia. Sprawdź dane lub skontaktuj się z recepcją.",

@@ -1,5 +1,6 @@
 (function (w) {
   "use strict";
+  /* Tam menü metinleri: anahtarlar VIONA_LANG ile aynı (en, tr, de, ru, pl, da, cs, ro, nl, sk). Yeni UI dili eklenince buraya paket ekleyin; yoksa içerik İngilizceye düşer. */
   w.ROOM_SERVICE_MENU_DATA = {
   "en": {
     "brand": "KAILA HOTELS",

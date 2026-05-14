@@ -1,6 +1,11 @@
 (function () {
   "use strict";
 
+  /**
+   * Çok dillilik: menü gövdesi yalnızca ROOM_SERVICE_MENU_DATA içinden gelir (i18n.js ile karıştırılmaz).
+   * Dil: app’teki UI kodu → normalizeToUiLang → paket varsa o dil, yoksa en. Bölüm başlığı/marka anahtarlar JSON’da.
+   * Ana sayfa karosu vb. için modRoomService → i18n (t) kullanılmaya devam eder.
+   */
   function resolveMenuLang(code) {
     var a = String(code || "en").toLowerCase().slice(0, 2);
     if (window.VIONA_LANG && typeof window.VIONA_LANG.normalizeToUiLang === "function") {
@@ -61,6 +66,10 @@
   }
 
   function renderRoomServiceModule(container, t, langFromApp) {
+    var uiLang = String(langFromApp || "en").toLowerCase().slice(0, 2);
+    if (window.VIONA_LANG && typeof window.VIONA_LANG.normalizeToUiLang === "function") {
+      uiLang = window.VIONA_LANG.normalizeToUiLang(uiLang);
+    }
     var menuLang = resolveMenuLang(langFromApp);
     var DATA = window.ROOM_SERVICE_MENU_DATA || {};
     var pack = DATA[menuLang] || DATA.en;
@@ -74,6 +83,8 @@
     var inner = document.createElement("section");
     inner.className = "room-service-mod__inner";
     inner.setAttribute("aria-labelledby", "viona-room-service-menu-heading");
+    inner.setAttribute("data-menu-lang", menuLang);
+    inner.setAttribute("data-ui-lang", uiLang);
     if (window.VIONA_LANG && typeof window.VIONA_LANG.htmlLangFor === "function") {
       inner.setAttribute("lang", window.VIONA_LANG.htmlLangFor(menuLang));
     } else {

@@ -980,14 +980,180 @@
     startGateIdleWatch();
   }
 
+  function clearGateErrorBar() {
+    const err = el("gate-error");
+    if (err) {
+      err.textContent = "";
+      err.classList.add("hidden");
+    }
+  }
+
+  function gateBirthDayEl() {
+    return el("gate-birth-day");
+  }
+  function gateBirthMonthEl() {
+    return el("gate-birth-month");
+  }
+  function gateBirthYearEl() {
+    return el("gate-birth-year");
+  }
+
+  function gateDaysInMonth(year, month1to12) {
+    if (!Number.isFinite(year) || !Number.isFinite(month1to12) || month1to12 < 1 || month1to12 > 12) return 31;
+    return new Date(year, month1to12, 0).getDate();
+  }
+
+  function gateBirthEffectiveMaxDay(year, month1to12) {
+    const dim = gateDaysInMonth(year, month1to12);
+    const now = new Date();
+    const cy = now.getFullYear();
+    const cm = now.getMonth() + 1;
+    const cd = now.getDate();
+    if (year === cy && month1to12 === cm) return Math.min(dim, cd);
+    return dim;
+  }
+
+  function gateFillSelectWithEmpty(selectEl, values, labels, keepValue) {
+    if (!selectEl) return;
+    const prev = keepValue != null ? String(keepValue) : String(selectEl.value || "");
+    const frag = document.createDocumentFragment();
+    const emp = document.createElement("option");
+    emp.value = "";
+    emp.textContent = "—";
+    frag.appendChild(emp);
+    for (let i = 0; i < values.length; i++) {
+      const opt = document.createElement("option");
+      opt.value = String(values[i]);
+      opt.textContent = labels != null ? String(labels[i]) : String(values[i]);
+      frag.appendChild(opt);
+    }
+    selectEl.textContent = "";
+    selectEl.appendChild(frag);
+    if (prev && [...selectEl.options].some((o) => o.value === prev)) selectEl.value = prev;
+  }
+
+  function gateHydrateBirthYearOptions() {
+    const ySel = gateBirthYearEl();
+    if (!ySel) return;
+    const prev = ySel.value;
+    const now = new Date();
+    const maxY = now.getFullYear();
+    const minY = maxY - 120;
+    const vals = [];
+    const labs = [];
+    for (let y = maxY; y >= minY; y--) {
+      vals.push(String(y));
+      labs.push(String(y));
+    }
+    gateFillSelectWithEmpty(ySel, vals, labs, prev);
+  }
+
+  function gateHydrateBirthMonthOptions() {
+    const mSel = gateBirthMonthEl();
+    if (!mSel) return;
+    const prev = mSel.value;
+    const vals = [];
+    const labs = [];
+    for (let m = 1; m <= 12; m++) {
+      const pad = String(m).padStart(2, "0");
+      vals.push(pad);
+      labs.push(String(m));
+    }
+    gateFillSelectWithEmpty(mSel, vals, labs, prev);
+  }
+
+  function gateHydrateBirthDayOptions() {
+    const ySel = gateBirthYearEl();
+    const mSel = gateBirthMonthEl();
+    const dSel = gateBirthDayEl();
+    if (!ySel || !mSel || !dSel) return;
+    const y = parseInt(String(ySel.value || ""), 10);
+    const mo = parseInt(String(mSel.value || ""), 10);
+    const prev = dSel.value;
+    let max = 31;
+    if (Number.isFinite(y) && mo >= 1 && mo <= 12) max = gateBirthEffectiveMaxDay(y, mo);
+    else if (mo >= 1 && mo <= 12) max = gateDaysInMonth(2024, mo);
+    const vals = [];
+    const labs = [];
+    for (let d = 1; d <= max; d++) {
+      const pad = String(d).padStart(2, "0");
+      vals.push(pad);
+      labs.push(String(d));
+    }
+    gateFillSelectWithEmpty(dSel, vals, labs, prev);
+  }
+
+  function gateRefreshBirthSelectorsFromClock() {
+    gateHydrateBirthYearOptions();
+    gateHydrateBirthMonthOptions();
+    gateHydrateBirthDayOptions();
+  }
+
+  function gateWireBirthSelectsOnce() {
+    const ySel = gateBirthYearEl();
+    const mSel = gateBirthMonthEl();
+    const dSel = gateBirthDayEl();
+    if (!ySel || !mSel || !dSel) return;
+    if (ySel.dataset.gateBirthWired === "1") {
+      gateRefreshBirthSelectorsFromClock();
+      return;
+    }
+    ySel.dataset.gateBirthWired = "1";
+    gateHydrateBirthYearOptions();
+    gateHydrateBirthMonthOptions();
+    gateHydrateBirthDayOptions();
+    ySel.addEventListener("change", () => {
+      gateHydrateBirthDayOptions();
+      clearGateErrorBar();
+    });
+    mSel.addEventListener("change", () => {
+      gateHydrateBirthDayOptions();
+      clearGateErrorBar();
+    });
+    dSel.addEventListener("change", clearGateErrorBar);
+  }
+
+  function gateBirthIsoFromSelects() {
+    const dSel = gateBirthDayEl();
+    const mSel = gateBirthMonthEl();
+    const ySel = gateBirthYearEl();
+    if (!dSel || !mSel || !ySel) return "";
+    const ds = String(dSel.value || "").trim();
+    const ms = String(mSel.value || "").trim();
+    const ys = String(ySel.value || "").trim();
+    if (!ds || !ms || !ys) return "";
+    const yi = parseInt(ys, 10);
+    const mi = parseInt(ms, 10);
+    const di = parseInt(ds, 10);
+    if (!Number.isFinite(yi) || !Number.isFinite(mi) || !Number.isFinite(di)) return "";
+    const dim = gateDaysInMonth(yi, mi);
+    if (di < 1 || di > dim) return "";
+    return `${ys}-${ms}-${ds}`;
+  }
+
+  function gateBirthIsoIsFutureLocalMidnight(iso) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+    const p = iso.split("-");
+    const dt = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    dt.setHours(0, 0, 0, 0);
+    return dt > today;
+  }
+
   function resetGateForm() {
     const c1 = el("gate-check-privacy");
     const room = el("gate-room");
-    const bd = el("gate-birth-date");
     const err = el("gate-error");
     if (c1) c1.checked = false;
     if (room) room.value = "";
-    if (bd) bd.value = "";
+    const ySel = gateBirthYearEl();
+    const mSel = gateBirthMonthEl();
+    const dSel = gateBirthDayEl();
+    if (ySel) ySel.value = "";
+    if (mSel) mSel.value = "";
+    if (dSel) dSel.value = "";
+    gateHydrateBirthDayOptions();
     if (err) {
       err.textContent = "";
       err.classList.add("hidden");
@@ -1071,36 +1237,33 @@
         } else {
           if (idStack) idStack.classList.add("hidden");
           const room = el("gate-room");
-          const bd = el("gate-birth-date");
           if (room) room.value = "";
-          if (bd) bd.value = "";
+          const ySel = gateBirthYearEl();
+          const mSel = gateBirthMonthEl();
+          const dSel = gateBirthDayEl();
+          if (ySel) ySel.value = "";
+          if (mSel) mSel.value = "";
+          if (dSel) dSel.value = "";
+          gateHydrateBirthDayOptions();
         }
         sub.setAttribute("data-i18n", "gateScreenSubtitle");
       } else {
         if (idStack) idStack.classList.add("hidden");
         const room = el("gate-room");
-        const bd = el("gate-birth-date");
         if (room) room.value = "";
-        if (bd) bd.value = "";
+        const ySel = gateBirthYearEl();
+        const mSel = gateBirthMonthEl();
+        const dSel = gateBirthDayEl();
+        if (ySel) ySel.value = "";
+        if (mSel) mSel.value = "";
+        if (dSel) dSel.value = "";
+        gateHydrateBirthDayOptions();
         sub.setAttribute("data-i18n", "gateScreenSubtitle");
       }
 
       const gateRoot = el("view-gate");
       if (gateRoot) applyI18n(gateRoot);
-
-      const bdMax = el("gate-birth-date");
-      if (bdMax && typeof bdMax.max !== "undefined") {
-        try {
-          const d = new Date();
-          const y = d.getFullYear();
-          const m = String(d.getMonth() + 1).padStart(2, "0");
-          const day = String(d.getDate()).padStart(2, "0");
-          bdMax.max = `${y}-${m}-${day}`;
-        } catch (_d) {
-          /* yoksay */
-        }
-      }
-
+      gateWireBirthSelectsOnce();
       if (gateStatusFetchFailed) {
         showGateError("gateErrorGateStrict");
         setGateRetryVisible(true);
@@ -1142,24 +1305,24 @@
     const back = el("btn-gate-back-lang");
     if (!btn) return;
 
-    ["gate-room", "gate-birth-date"].forEach((id) => {
+    function clearGateError() {
+      clearGateErrorBar();
+    }
+
+    ["gate-room", "gate-birth-day", "gate-birth-month", "gate-birth-year"].forEach((id) => {
       const node = el(id);
-      if (node) node.addEventListener("focus", () => gateScrollFocused(node));
+      if (!node) return;
+      node.addEventListener("focus", () => {
+        gateScrollFocused(node);
+        clearGateError();
+      });
     });
 
-    function clearGateError() {
-      const err = el("gate-error");
-      if (err) {
-        err.textContent = "";
-        err.classList.add("hidden");
-      }
-    }
+    gateWireBirthSelectsOnce();
     const chk = el("gate-check-privacy");
     const roomInput = el("gate-room");
-    const birthInput = el("gate-birth-date");
     if (chk) chk.addEventListener("change", clearGateError);
     if (roomInput) roomInput.addEventListener("input", clearGateError);
-    if (birthInput) birthInput.addEventListener("change", clearGateError);
 
     btn.addEventListener("click", () => {
       void (async () => {
@@ -1188,13 +1351,17 @@
 
         if (gateIdentityRequired) {
           const roomNo = String((el("gate-room") && el("gate-room").value) || "").trim();
-          const birthDate = String((el("gate-birth-date") && el("gate-birth-date").value) || "").trim();
           if (!roomNo) {
             showGateError("gateErrorRoomRequired");
             return;
           }
+          const birthDate = gateBirthIsoFromSelects();
           if (!birthDate) {
             showGateError("gateErrorBirthDateRequired");
+            return;
+          }
+          if (gateBirthIsoIsFutureLocalMidnight(birthDate)) {
+            showGateError("gateErrorBirthDateFuture");
             return;
           }
 
