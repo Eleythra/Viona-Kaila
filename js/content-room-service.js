@@ -71,10 +71,9 @@
     }
 
     var root = el("div", "room-service-mod viona-mod viona-mod--room-service");
-    var scroll = el("div", "room-service-mod__scroll");
-    scroll.setAttribute("role", "region");
-    scroll.setAttribute("tabindex", "0");
-    var inner = el("div", "room-service-mod__inner");
+    var inner = document.createElement("section");
+    inner.className = "room-service-mod__inner";
+    inner.setAttribute("aria-labelledby", "viona-room-service-menu-heading");
     if (window.VIONA_LANG && typeof window.VIONA_LANG.htmlLangFor === "function") {
       inner.setAttribute("lang", window.VIONA_LANG.htmlLangFor(menuLang));
     } else {
@@ -88,7 +87,6 @@
     menuTitle.id = "viona-room-service-menu-heading";
     menuTitle.textContent = pack.menuTitle || "";
     header.appendChild(menuTitle);
-    scroll.setAttribute("aria-labelledby", "viona-room-service-menu-heading");
     inner.appendChild(header);
 
     var panel = el("div", "room-service-mod__menu");
@@ -116,11 +114,7 @@
     inner.appendChild(panel);
     inner.appendChild(foot);
 
-    var hint = el("p", "room-service-mod__hint", t("roomServiceHint"));
-    inner.appendChild(hint);
-
-    scroll.appendChild(inner);
-    root.appendChild(scroll);
+    root.appendChild(inner);
     container.appendChild(root);
   }
 

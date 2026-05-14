@@ -3,6 +3,7 @@
  * Sesli asistan i18n tutarlılığı:
  * - js/i18n.js: tr, en, de, pl aynı voice* anahtar kümesi
  * - server voice_channel_layer.py: ana TTS metin sözlükleri 10 dil (tr…sk)
+ *   (VOICE_OPERATIONAL_USE_TEXT sözlük değil, VOICE_OUT_OF_SCOPE_PREMIUM_TEXT ile aynı.)
  *
  * Çalıştır: node scripts/check-voice-i18n.mjs
  */
@@ -57,7 +58,7 @@ function main() {
   const py = fs.readFileSync(pyPath, "utf8");
   const need = ["tr", "en", "de", "pl", "ru", "da", "nl", "cs", "ro", "sk"];
   const dicts = [
-    "VOICE_OPERATIONAL_USE_TEXT",
+    "VOICE_OUT_OF_SCOPE_PREMIUM_TEXT",
     "VOICE_RECEPTION_RESERVATION_HINT",
     "VOICE_SPA_BOOKING_HINT",
     "VOICE_ALACARTE_RESERVATION_HINT",

@@ -83,7 +83,6 @@
       alanyaGuideDownload: "Скачать гид",
       roomServiceLead:
         "Заказ еды в номер — по телефону с ресепшена: меню и часы сервиса уточнят у стойки.",
-      roomServiceHint: "Письменные просьбы и особые пожелания — в разделе «Запросы» на главном экране.",
       transferListTitle: "ПРАЙС ТРАНСФЕРОВ",
       transferListSubtitle: "НДС включён · действует весь сезон · индивидуальный трансфер",
       transferColFrom: "Откуда",
@@ -198,7 +197,6 @@
       alanyaGuideDownload: "Download guide",
       roomServiceLead:
         "Til roomservice: ring til receptionen — de kan oplyse aktuel menu og serveringstider.",
-      roomServiceHint: "Skriftlige ønsker eller særlige noter: åbn «Forespørgsler» fra forsiden.",
       transferListTitle: "TRANSFERPRISLISTE",
       transferListSubtitle: "Inkl. moms · gælder hele sæsonen · privat transfer",
       transferColFrom: "Fra",
@@ -313,7 +311,6 @@
       alanyaGuideDownload: "Stáhnout průvodce",
       roomServiceLead:
         "Objednávky do pokoje: volejte na recepci — sdělí aktuální menu a dobu služby.",
-      roomServiceHint: "Písemné požadavky nebo poznámky otevřete v «Požadavky» na hlavní obrazovce.",
       transferListTitle: "CENÍK TRANSFERŮ",
       transferListSubtitle: "Včetně DPH · platí celou sezónu · soukromý transfer",
       transferColFrom: "Odkud",
@@ -428,7 +425,6 @@
       alanyaGuideDownload: "Descarcă ghidul",
       roomServiceLead:
         "Pentru room service sunați la recepție — vă pot comunica meniul actual și orele de serviciu.",
-      roomServiceHint: "Pentru cereri scrise sau note speciale, deschideți «Cereri» de pe ecranul principal.",
       transferListTitle: "LISTĂ PREȚURI TRANSFER",
       transferListSubtitle: "TVA inclus · valabil tot sezonul · transfer privat",
       transferColFrom: "De la",
@@ -543,7 +539,6 @@
       alanyaGuideDownload: "Gids downloaden",
       roomServiceLead:
         "Voor roomservice: bel de receptie — zij geven het actuele menu en de serviceuren door.",
-      roomServiceHint: "Voor schriftelijke verzoeken of bijzonderheden: open «Verzoeken» op het startscherm.",
       transferListTitle: "TRANSFERPRIJZEN",
       transferListSubtitle: "Incl. btw · het hele seizoen geldig · privétransfer",
       transferColFrom: "Van",
@@ -658,7 +653,6 @@
       alanyaGuideDownload: "Stiahnuť sprievodcu",
       roomServiceLead:
         "Objednávky na izbu: zavolajte na recepciu — poskytnú aktuálne menu a časy obsluhy.",
-      roomServiceHint: "Písomné požiadavky alebo poznámky otvorte v «Požiadavky» na hlavnej obrazovke.",
       transferListTitle: "CENNÍK TRANSFEROV",
       transferListSubtitle: "Vrátane DPH · platí celú sezónu · súkromný transfer",
       transferColFrom: "Odkiaľ",

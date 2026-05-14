@@ -342,7 +342,7 @@ body {
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: min(480px, 100%);
+  max-width: min(520px, 100%);
   margin-inline: auto;
   flex: 1 1 auto;
   min-height: 0;
@@ -354,18 +354,19 @@ body {
   min-width: 0;
   overflow: hidden;
   text-align: left;
-  padding: clamp(12px, 3vw, 18px) clamp(14px, 3.5vw, 22px) 0;
-  border-radius: clamp(22px, 4vw, 28px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: clamp(14px, 3.2vw, 22px) clamp(16px, 3.8vw, 26px) 0;
+  border-radius: clamp(24px, 4.2vw, 32px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   background:
-    linear-gradient(165deg, rgba(22, 32, 52, 0.98) 0%, rgba(10, 14, 24, 0.93) 48%, rgba(8, 12, 22, 0.96) 100%);
-  backdrop-filter: blur(26px) saturate(1.5);
-  -webkit-backdrop-filter: blur(26px) saturate(1.5);
+    linear-gradient(168deg, rgba(26, 38, 58, 0.99) 0%, rgba(12, 18, 30, 0.94) 46%, rgba(8, 12, 22, 0.98) 100%);
+  backdrop-filter: blur(28px) saturate(1.65);
+  -webkit-backdrop-filter: blur(28px) saturate(1.65);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.1) inset,
-    0 0 0 1px rgba(212, 168, 83, 0.12),
-    0 36px 100px rgba(0, 0, 0, 0.62),
-    0 0 140px rgba(46, 184, 199, 0.07);
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 0 0 1px rgba(212, 168, 83, 0.16),
+    0 44px 120px rgba(0, 0, 0, 0.68),
+    0 0 160px rgba(46, 184, 199, 0.09),
+    0 0 1px rgba(0, 0, 0, 0.5);
   animation: langPanelIn 0.72s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -382,10 +383,11 @@ body {
 }
 
 .gate-identity-card {
-  border: 1px solid rgba(212, 168, 83, 0.22);
+  border: 1px solid rgba(212, 168, 83, 0.28);
   box-shadow:
-    0 0 0 1px rgba(46, 184, 199, 0.12),
-    0 20px 48px rgba(0, 0, 0, 0.35);
+    0 0 0 1px rgba(46, 184, 199, 0.14),
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 24px 56px rgba(0, 0, 0, 0.42);
 }
 
 .gate-identity-kicker {
@@ -404,11 +406,10 @@ body {
 
 .gate-content-footer {
   flex: 0 0 auto;
+  width: 100%;
   padding: 12px clamp(14px, 3.5vw, 22px) max(16px, calc(12px + env(safe-area-inset-bottom)));
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   background: linear-gradient(180deg, rgba(10, 14, 24, 0.55) 0%, rgba(14, 20, 34, 0.98) 55%, rgba(8, 12, 22, 1) 100%);
-}
-  width: 100%;
 }
 
 .gate-content-footer .gate-back {
@@ -505,6 +506,15 @@ body {
   overflow-wrap: anywhere;
   hyphens: auto;
   text-wrap: balance;
+}
+
+.gate-field-hint--whisper {
+  font-size: clamp(0.68rem, 1.85vw, 0.76rem);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(200, 218, 228, 0.52);
+  margin-bottom: 12px;
 }
 
 .gate-field-hint {
@@ -8090,218 +8100,153 @@ select.req-input option {
   list-style: disc;
 }
 
-/* ----- Oda servisi (modül) — menü ----- */
+/* ----- Oda servisi (modül) — menü: sade yüzey, net hiyerarşi, az süs ----- */
 .room-service-mod {
-  max-width: 46rem;
+  max-width: 44rem;
   margin: 0 auto;
-  position: relative;
-}
-
-.room-service-mod__scroll {
-  max-height: min(78vh, 52rem);
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-  padding: 3px 0 8px;
-  border-radius: 22px;
-  border: 1px solid rgba(46, 184, 199, 0.22);
-  border-top: 1px solid rgba(212, 168, 83, 0.38);
-  background:
-    radial-gradient(120% 80% at 50% -20%, rgba(212, 168, 83, 0.12), transparent 55%),
-    linear-gradient(180deg, rgba(212, 168, 83, 0.06) 0%, transparent 42%),
-    linear-gradient(168deg, rgba(46, 184, 199, 0.09) 0%, rgba(10, 14, 22, 0.96) 48%, rgba(5, 9, 16, 0.99) 100%);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.06) inset,
-    0 22px 56px rgba(0, 0, 0, 0.32);
-}
-
-.room-service-mod__scroll:focus-visible {
-  outline: 2px solid rgba(46, 184, 199, 0.65);
-  outline-offset: 3px;
-}
-
-.room-service-mod__scroll::-webkit-scrollbar {
-  width: 8px;
-}
-
-.room-service-mod__scroll::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.18);
-  border-radius: 8px;
-  margin: 6px 0;
-}
-
-.room-service-mod__scroll::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(212, 168, 83, 0.45), rgba(46, 184, 199, 0.35));
-  border-radius: 8px;
-  border: 2px solid rgba(8, 12, 18, 0.5);
-}
-
-.room-service-mod__scroll {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(46, 184, 199, 0.55) rgba(0, 0, 0, 0.2);
 }
 
 .room-service-mod__inner {
-  padding: 1.4rem 1.35rem 1.55rem;
+  padding: 1.25rem 1.1rem 1.35rem;
   text-align: start;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(10, 14, 22, 0.92);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
 }
 
 .room-service-mod__header {
   text-align: center;
-  margin-bottom: 1.4rem;
-  padding-bottom: 1.15rem;
+  margin: 0 0 1.25rem;
+  padding: 0 0 1rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 100%);
-  border-radius: 14px 14px 0 0;
-  margin-left: -0.15rem;
-  margin-right: -0.15rem;
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
 }
 
 .room-service-mod__brand {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   font-weight: 600;
-  letter-spacing: 0.32em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: rgba(212, 168, 83, 0.94);
-  margin-bottom: 0.5rem;
+  color: rgba(212, 168, 83, 0.9);
+  margin: 0 0 0.4rem;
 }
 
 .room-service-mod__menu-title {
   margin: 0;
   font-family: Georgia, "Times New Roman", ui-serif, serif;
-  font-size: clamp(1.22rem, 4vw, 1.58rem);
+  font-size: clamp(1.1rem, 3.6vw, 1.42rem);
   font-weight: 600;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: rgba(252, 252, 255, 0.99);
-  line-height: 1.2;
+  color: rgba(252, 252, 255, 0.98);
+  line-height: 1.25;
   text-wrap: balance;
 }
 
 .room-service-mod__section-title {
-  margin: 1.4rem 0 0.7rem;
-  padding: 0.75rem 0 0 0.65rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  border-left: 3px solid rgba(212, 168, 83, 0.75);
-  font-size: 0.76rem;
+  margin: 1.5rem 0 0.75rem;
+  padding: 0 0 0.35rem;
+  border-bottom: 1px solid rgba(46, 184, 199, 0.35);
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(46, 184, 199, 0.96);
+  color: rgba(72, 210, 224, 0.95);
   line-height: 1.35;
 }
 
 .room-service-mod__section-title:first-of-type {
-  margin-top: 0.2rem;
-  padding-top: 0;
-  border-top: none;
+  margin-top: 0.25rem;
 }
 
 .room-service-mod__dish {
-  margin-bottom: 0.95rem;
-  padding: 0.35rem 0.4rem 0.85rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
-  border-radius: 0 0 10px 10px;
-  transition: background 0.2s ease;
-}
-
-@media (hover: hover) {
-  .room-service-mod__dish:hover {
-    background: rgba(255, 255, 255, 0.02);
-  }
+  margin: 0;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .room-service-mod__dish:last-of-type {
   border-bottom: none;
-  margin-bottom: 0.4rem;
-  padding-bottom: 0;
+  padding-bottom: 0.25rem;
 }
 
 .room-service-mod__dish-head {
   display: flex;
   align-items: baseline;
-  gap: 0.55rem;
+  gap: 0.5rem;
   flex-wrap: wrap;
 }
 
 .room-service-mod__ref {
   flex-shrink: 0;
-  min-width: 1.55rem;
-  font-size: 0.7rem;
+  min-width: 1.4rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  color: rgba(212, 168, 83, 0.96);
+  letter-spacing: 0.04em;
+  color: rgba(212, 168, 83, 0.92);
 }
 
 .room-service-mod__name {
-  flex: 1 1 12rem;
-  font-size: 0.94rem;
+  flex: 1 1 11rem;
+  font-size: 0.92rem;
   font-weight: 600;
-  letter-spacing: 0.015em;
+  letter-spacing: 0.01em;
   color: rgba(248, 250, 255, 0.98);
-  line-height: 1.38;
+  line-height: 1.4;
 }
 
 .room-service-mod__price {
   flex-shrink: 0;
   margin-left: auto;
-  min-width: 4.5rem;
+  min-width: 4.25rem;
   text-align: end;
-  font-size: 0.86rem;
+  font-size: 0.84rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.04em;
-  color: rgba(212, 168, 83, 0.99);
+  color: rgba(212, 168, 83, 0.96);
   white-space: nowrap;
 }
 
 .room-service-mod__desc {
-  margin: 0.42rem 0 0;
-  padding-left: 0.15rem;
-  max-width: 40rem;
-  font-size: 0.81rem;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  max-width: none;
+  font-size: 0.8rem;
   font-weight: 400;
-  line-height: 1.58;
-  color: rgba(218, 226, 236, 0.84);
+  line-height: 1.55;
+  color: rgba(210, 218, 228, 0.82);
 }
 
 .room-service-mod__desc--sub {
-  margin-top: 0.28rem;
-  font-size: 0.77rem;
-  color: rgba(198, 208, 220, 0.8);
+  margin-top: 0.2rem;
+  font-size: 0.76rem;
+  color: rgba(190, 200, 212, 0.78);
 }
 
 .room-service-mod__opts {
-  margin: 0.48rem 0 0;
-  padding-left: 1.2rem;
-  font-size: 0.81rem;
-  line-height: 1.58;
-  color: rgba(228, 234, 242, 0.9);
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: rgba(224, 230, 238, 0.88);
 }
 
 .room-service-mod__opts li {
-  margin-bottom: 0.18rem;
-  padding-left: 0.15rem;
+  margin: 0.1rem 0;
 }
 
 .room-service-mod__opts li::marker {
-  color: rgba(212, 168, 83, 0.75);
+  color: rgba(255, 255, 255, 0.35);
 }
 
 .room-service-mod__subs {
-  margin-top: 0.68rem;
-  padding: 0.15rem 0 0.15rem 0.55rem;
-  border-left: 3px solid rgba(46, 184, 199, 0.42);
-  border-radius: 0 10px 10px 0;
-  background: rgba(46, 184, 199, 0.04);
+  margin-top: 0.55rem;
+  padding: 0.25rem 0 0 0.85rem;
+  border-left: 1px solid rgba(46, 184, 199, 0.28);
 }
 
 .room-service-mod__sub {
-  margin-bottom: 0.78rem;
+  margin-bottom: 0.65rem;
 }
 
 .room-service-mod__sub:last-child {
@@ -8311,42 +8256,39 @@ select.req-input option {
 .room-service-mod__sub-head {
   display: flex;
   align-items: baseline;
-  gap: 0.5rem;
+  gap: 0.45rem;
   flex-wrap: wrap;
 }
 
 .room-service-mod__sub-name {
-  flex: 1 1 10rem;
-  font-size: 0.87rem;
+  flex: 1 1 9rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: rgba(242, 246, 252, 0.95);
+  color: rgba(242, 246, 252, 0.94);
 }
 
 .room-service-mod__note {
-  margin: 0.55rem 0 0.9rem;
-  padding: 0.5rem 0.65rem;
-  font-size: 0.79rem;
+  margin: 0.5rem 0 0.75rem;
+  padding: 0.45rem 0 0.45rem 0.65rem;
+  font-size: 0.78rem;
   font-style: italic;
-  line-height: 1.52;
-  color: rgba(176, 192, 206, 0.88);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.03);
+  line-height: 1.5;
+  color: rgba(180, 192, 204, 0.88);
+  border-left: 2px solid rgba(255, 255, 255, 0.12);
 }
 
 .room-service-mod__foot {
-  margin-top: 1.55rem;
-  padding: 1rem 0.85rem 0.85rem;
-  border-top: 1px solid rgba(212, 168, 83, 0.28);
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(212, 168, 83, 0.06), rgba(0, 0, 0, 0.12));
+  margin-top: 1.35rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .room-service-mod__foot-line {
-  margin: 0 0 0.48rem;
-  font-size: 0.79rem;
-  line-height: 1.52;
-  font-weight: 500;
-  color: rgba(218, 226, 236, 0.9);
+  margin: 0 0 0.4rem;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  font-weight: 400;
+  color: rgba(218, 224, 232, 0.88);
   text-wrap: balance;
 }
 
@@ -8356,47 +8298,20 @@ select.req-input option {
 
 .room-service-mod__foot-line--order {
   font-weight: 600;
-  color: rgba(250, 248, 240, 0.95);
-  padding: 0.45rem 0.55rem;
-  margin-left: -0.2rem;
-  margin-right: -0.2rem;
-  border-radius: 10px;
-  border: 1px solid rgba(46, 184, 199, 0.28);
-  background: rgba(46, 184, 199, 0.08);
+  color: rgba(248, 250, 252, 0.96);
+  margin-top: 0.15rem;
 }
 
 .room-service-mod__foot-line--brand {
-  margin-top: 0.7rem;
-  padding-top: 0.5rem;
-  font-size: 0.65rem;
+  margin-top: 0.85rem;
+  padding-top: 0.65rem;
+  font-size: 0.62rem;
   font-weight: 600;
-  letter-spacing: 0.26em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   text-align: center;
-  color: rgba(212, 168, 83, 0.92);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.room-service-mod__hint {
-  margin: 1.2rem 0 0;
-  padding-top: 0.9rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-  font-size: 0.79rem;
-  line-height: 1.52;
-  font-weight: 500;
-  color: rgba(46, 184, 199, 0.9);
-  text-wrap: balance;
-  text-align: center;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .room-service-mod__dish {
-    transition: none;
-  }
-
-  .room-service-mod__dish:hover {
-    background: transparent !important;
-  }
+  color: rgba(212, 168, 83, 0.88);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 @media print {
@@ -8416,15 +8331,9 @@ select.req-input option {
     print-color-adjust: exact;
   }
 
-  .room-service-mod__scroll {
-    max-height: none !important;
-    overflow: visible !important;
+  .room-service-mod__inner {
     box-shadow: none !important;
     border-color: #444 !important;
-  }
-
-  .room-service-mod__scroll:focus-visible {
-    outline: none !important;
   }
 }
 

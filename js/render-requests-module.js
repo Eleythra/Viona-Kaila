@@ -1835,6 +1835,8 @@
     var setSub = api.setSub || function () {};
     var moduleTitleKey = api.moduleTitleKey || "modRequests";
     var subDefs = api.subDefs || [];
+    /* Hub başlık + giriş + kart ipuçları: yalnızca i18n anahtarları (modRequests, reqIntro, sub*Hint).
+       Metinler API’den gelmez; ürün onaylı kopya — değişiklik için js/i18n.js / i18n-extra-locales.js. */
     var onSuccessGoHome =
       typeof api.onRequestSuccessGoHome === "function" ? api.onRequestSuccessGoHome : null;
 
