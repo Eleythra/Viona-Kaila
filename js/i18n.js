@@ -15,13 +15,13 @@ const I18N = {
 
     gateScreenTitle: "Misafir doğrulaması",
     gateScreenSubtitle:
-      "Oda numaranız ve doğum tarihiniz kayıtlı konaklamayla eşleştiğinde devam edebilirsiniz. Aşağıdaki bilgilendirmeyi okuyup onaylayın.",
+      "Oda numaranız ve doğum tarihiniz oteldeki kayıtlarınızla eşleşince ilerleyebilirsiniz. Aşağıdaki bilgilendirme metnini okuyup onay kutusunu işaretleyin.",
     gateScreenSubtitlePassword:
       "Oda numaranız ve doğum tarihinizi girin; bilgilendirmeyi okuyup onaylayın.",
     gatePasswordSingleLabel: "Erişim kodu",
     gatePasswordSingleHint: "Otelin verdiği kodlardan biri yeterli; büyük/küçük harf fark etmez.",
     gatePasswordSinglePlaceholder: "Kod",
-    gateIdentityKicker: "Konaklama",
+    gateIdentityKicker: "Kayıtlı konaklama",
     gateIdentityTitle: "Kimliğinizi doğrulayın",
     gateIdentityLead:
       "Kayıtlı misafir bilgileriyle eşleştiğinde otelin dijital hizmetlerine erişim açılır.",
@@ -60,6 +60,7 @@ const I18N = {
     gateBirthDayShort: "Gün",
     gateBirthMonthShort: "Ay",
     gateBirthYearShort: "Yıl",
+    gateBirthSelectPlaceholder: "Seçin",
     gateErrorBirthDateFuture: "Doğum tarihi bugünden ileri olamaz.",
     gateVerifiedAnonymousName: "Misafir",
     gateErrorIdentityMismatch:
@@ -617,6 +618,7 @@ const I18N = {
     reqErrNameInvalid: "Ad soyad yalnızca harf içermeli; rakam veya geçersiz karakter kullanmayın.",
     reqHintNameForm:
       "Kimlikteki gibi ad ve soyadınızı arada boşluk olacak şekilde yazın (ör. Ayşe Yılmaz). En fazla 120 karakter.",
+    reqIdentityLockedTitle: "Doğrulanan konaklama bilgisinden gelir; değiştirilemez.",
     reqErrNameNeedTwoWords: "Lütfen adınızı ve soyadınızı iki kelime olarak yazın (ör. Ayşe Yılmaz).",
     reqErrNameTooLongForm: "Ad soyad en fazla 120 karakter olabilir.",
     reqErrNameTooShortForm: "Ad soyad çok kısa; lütfen ad ve soyadınızı yazın.",
@@ -715,13 +717,13 @@ const I18N = {
 
     gateScreenTitle: "Guest verification",
     gateScreenSubtitle:
-      "Enter your room number and date of birth as registered for your stay, then read and confirm the notice below.",
+      "When your room number and date of birth match the hotel’s records, you can continue. Read the notice below and tick the confirmation box.",
     gateScreenSubtitlePassword:
       "Enter your room number and date of birth; read the notice and confirm.",
     gatePasswordSingleLabel: "Access code",
     gatePasswordSingleHint: "Any code from the hotel works. Not case-sensitive.",
     gatePasswordSinglePlaceholder: "Code",
-    gateIdentityKicker: "Your stay",
+    gateIdentityKicker: "Registered stay",
     gateIdentityTitle: "Confirm who you are",
     gateIdentityLead:
       "Only guests whose details match our records can access hotel services here.",
@@ -759,6 +761,7 @@ const I18N = {
     gateBirthDayShort: "Day",
     gateBirthMonthShort: "Month",
     gateBirthYearShort: "Year",
+    gateBirthSelectPlaceholder: "Choose",
     gateErrorBirthDateFuture: "Date of birth cannot be in the future.",
     gateVerifiedAnonymousName: "Guest",
     gateErrorIdentityMismatch:
@@ -1315,6 +1318,7 @@ const I18N = {
     reqErrNameInvalid: "Full name must contain letters only — no digits or invalid characters.",
     reqHintNameForm:
       "Type your first and last name as on your ID, separated by a space (e.g. Jane Smith). Max. 120 characters.",
+    reqIdentityLockedTitle: "From your verified stay; cannot be changed.",
     reqErrNameNeedTwoWords: "Please enter your first and last name as two words (e.g. Jane Smith).",
     reqErrNameTooLongForm: "Full name must be at most 120 characters.",
     reqErrNameTooShortForm: "Full name looks too short; please enter your first and last name.",
@@ -1413,13 +1417,13 @@ const I18N = {
 
     gateScreenTitle: "Gäste-Verifizierung",
     gateScreenSubtitle:
-      "Geben Sie Ihre Zimmernummer und Ihr Geburtsdatum wie in der Reservierung ein; lesen Sie den Hinweis und bestätigen Sie.",
+      "Wenn Zimmernummer und Geburtsdatum mit den Hotelunterlagen übereinstimmen, können Sie fortfahren. Lesen Sie den Hinweis unten und aktivieren Sie das Kontrollkästchen.",
     gateScreenSubtitlePassword:
       "Zimmernummer und Geburtsdatum eingeben, Hinweis lesen und bestätigen.",
     gatePasswordSingleLabel: "Zugangscode",
     gatePasswordSingleHint: "Ein Hotelcode genügt; Groß-/Kleinschreibung egal.",
     gatePasswordSinglePlaceholder: "Code",
-    gateIdentityKicker: "Aufenthalt",
+    gateIdentityKicker: "Registrierter Aufenthalt",
     gateIdentityTitle: "Identität bestätigen",
     gateIdentityLead:
       "Nur registrierte Gäste mit übereinstimmenden Daten erhalten Zugang zu den Hotel-Diensten.",
@@ -1458,6 +1462,7 @@ const I18N = {
     gateBirthDayShort: "Tag",
     gateBirthMonthShort: "Monat",
     gateBirthYearShort: "Jahr",
+    gateBirthSelectPlaceholder: "Wählen",
     gateErrorBirthDateFuture: "Das Geburtsdatum darf nicht in der Zukunft liegen.",
     gateVerifiedAnonymousName: "Gast",
     gateErrorIdentityMismatch:
@@ -2015,6 +2020,7 @@ const I18N = {
     reqErrNameInvalid: "Vor- und Nachname dürfen nur Buchstaben enthalten — keine Ziffern.",
     reqHintNameForm:
       "Vor- und Nachname wie im Ausweis, mit Leerzeichen dazwischen (z. B. Maria Schmidt). Max. 120 Zeichen.",
+    reqIdentityLockedTitle: "Aus bestätigtem Aufenthalt übernommen; nicht änderbar.",
     reqErrNameNeedTwoWords: "Bitte Vor- und Nachname als zwei Wörter eingeben (z. B. Maria Schmidt).",
     reqErrNameTooLongForm: "Name darf höchstens 120 Zeichen lang sein.",
     reqErrNameTooShortForm: "Der Name ist zu kurz; bitte Vor- und Nachname angeben.",
@@ -2113,13 +2119,13 @@ const I18N = {
 
     gateScreenTitle: "Weryfikacja gościa",
     gateScreenSubtitle:
-      "Podaj numer pokoju i datę urodzenia zgodnie z rezerwacją; przeczytaj informację i potwierdź.",
+      "Gdy numer pokoju i data urodzenia zgadzają się z danymi hotelu, możesz kontynuować. Przeczytaj informację poniżej i zaznacz pole potwierdzenia.",
     gateScreenSubtitlePassword:
       "Wpisz numer pokoju i datę urodzenia; przeczytaj informację i potwierdź.",
     gatePasswordSingleLabel: "Kod dostępu",
     gatePasswordSingleHint: "Wystarczy jeden kod od hotelu; wielkość liter bez znaczenia.",
     gatePasswordSinglePlaceholder: "Kod",
-    gateIdentityKicker: "Pobyt",
+    gateIdentityKicker: "Zapisany pobyt",
     gateIdentityTitle: "Potwierdź tożsamość",
     gateIdentityLead:
       "Z usług mogą korzystać wyłącznie goście, których dane zgadzają się z rejestracją hotelu.",
@@ -2158,6 +2164,7 @@ const I18N = {
     gateBirthDayShort: "Dzień",
     gateBirthMonthShort: "Miesiąc",
     gateBirthYearShort: "Rok",
+    gateBirthSelectPlaceholder: "Wybierz",
     gateErrorBirthDateFuture: "Data urodzenia nie może być z przyszłości.",
     gateVerifiedAnonymousName: "Gość",
     gateErrorIdentityMismatch:
@@ -2664,6 +2671,7 @@ const I18N = {
     reqErrFaultCategoryRequired: "Wybierz kategorię usterki.",
     reqErrNameInvalid: "Imię i nazwisko mogą zawierać wyłącznie litery — bez cyfr i niedozwolonych znaków.",
     reqHintNameForm: "Imię i nazwisko jak w dokumencie, oddzielone spacją (np. Jan Kowalski). Maks. 120 znaków.",
+    reqIdentityLockedTitle: "Z potwierdzonego pobytu; nie można zmienić.",
     reqErrNameNeedTwoWords: "Podaj imię i nazwisko jako dwa wyrazy (np. Jan Kowalski).",
     reqErrNameTooLongForm: "Imię i nazwisko mogą mieć co najwyżej 120 znaków.",
     reqErrNameTooShortForm: "Imię i nazwisko są zbyt krótkie; uzupełnij oba.",

@@ -1019,7 +1019,7 @@
     const frag = document.createDocumentFragment();
     const emp = document.createElement("option");
     emp.value = "";
-    emp.textContent = "—";
+    emp.textContent = t("gateBirthSelectPlaceholder");
     frag.appendChild(emp);
     for (let i = 0; i < values.length; i++) {
       const opt = document.createElement("option");

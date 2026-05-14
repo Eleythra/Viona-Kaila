@@ -208,7 +208,9 @@ def test_voice_reservation_keyword_returns_premium_not_long_hint():
     assert res.meta.intent == "hotel_info"
     assert res.meta.action is None
     assert res.message.strip() == VOICE_OUT_OF_SCOPE_PREMIUM_TEXT["tr"].strip()
-    assert "resepsiyon" not in res.message.lower()
+    low = res.message.lower()
+    assert "metin" in low or "ön büro" in low
+    assert "rezervasyon yapmak" not in low
 
 
 def test_voice_chitchat_greeting_coerced_to_premium():

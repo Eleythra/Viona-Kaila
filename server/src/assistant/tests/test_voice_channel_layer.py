@@ -100,8 +100,41 @@ def test_coerce_voice_v2_replaces_chitchat_with_premium():
     assert "text chat" in out.message.lower()
 
 
-def test_coerce_voice_v2_keeps_hotel_info():
-    from assistant.services.voice_channel_layer import coerce_voice_channel_v2_response
+def test_coerce_voice_v2_rule_hotel_info_becomes_premium():
+    from assistant.services.voice_channel_layer import VOICE_OUT_OF_SCOPE_PREMIUM_TEXT, coerce_voice_channel_v2_response
+
+    meta = ChatMeta(
+        intent="hotel_info",
+        confidence=1.0,
+        language="tr",
+        ui_language="tr",
+        source="rule",
+    )
+    resp = ChatResponse(type="inform", message="Havuz 09–19.", meta=meta)
+    out = coerce_voice_channel_v2_response(resp, "tr")
+    assert out.message.strip() == VOICE_OUT_OF_SCOPE_PREMIUM_TEXT["tr"].strip()
+    assert out.meta.intent == "hotel_info"
+    assert out.meta.action is None
+
+
+def test_coerce_voice_v2_recommendation_becomes_premium():
+    from assistant.services.voice_channel_layer import VOICE_OUT_OF_SCOPE_PREMIUM_TEXT, coerce_voice_channel_v2_response
+
+    meta = ChatMeta(
+        intent="recommendation",
+        confidence=0.95,
+        language="en",
+        ui_language="en",
+        source="rule",
+    )
+    resp = ChatResponse(type="answer", message="Try the terrace at sunset.", meta=meta)
+    out = coerce_voice_channel_v2_response(resp, "en")
+    assert out.message.strip() == VOICE_OUT_OF_SCOPE_PREMIUM_TEXT["en"].strip()
+    assert out.type == "inform"
+
+
+def test_coerce_voice_v2_hotel_info_rag_with_action_becomes_premium():
+    from assistant.services.voice_channel_layer import VOICE_OUT_OF_SCOPE_PREMIUM_TEXT, coerce_voice_channel_v2_response
 
     meta = ChatMeta(
         intent="hotel_info",
@@ -109,10 +142,11 @@ def test_coerce_voice_v2_keeps_hotel_info():
         language="de",
         ui_language="de",
         source="rag",
+        action=ChatMeta.ChatAction(kind="open_where_module"),
     )
-    resp = ChatResponse(type="inform", message="Pool bis 19 Uhr.", meta=meta)
+    resp = ChatResponse(type="answer", message="Karte hier.", meta=meta)
     out = coerce_voice_channel_v2_response(resp, "de")
-    assert out.message == "Pool bis 19 Uhr."
+    assert out.message.strip() == VOICE_OUT_OF_SCOPE_PREMIUM_TEXT["de"].strip()
 
 
 def test_finalize_clears_action_and_exit_timer():

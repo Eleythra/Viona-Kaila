@@ -459,19 +459,18 @@
     if (reqOpts.clientChannel === "voice") {
       body.channel = "voice";
       body.client_channel = "voice";
-    } else {
-      try {
-        var prof =
-          typeof window.vionaGuestProfile === "object" &&
-          window.vionaGuestProfile &&
-          typeof window.vionaGuestProfile.get === "function"
-            ? window.vionaGuestProfile.get()
-            : null;
-        var gnm = prof && String(prof.guestName || "").trim();
-        if (gnm) body.guest_full_name = gnm.slice(0, 120);
-      } catch (_p) {
-        /* yoksay */
-      }
+    }
+    try {
+      var prof =
+        typeof window.vionaGuestProfile === "object" &&
+        window.vionaGuestProfile &&
+        typeof window.vionaGuestProfile.get === "function"
+          ? window.vionaGuestProfile.get()
+          : null;
+      var gnm = prof && String(prof.guestName || "").trim();
+      if (gnm) body.guest_full_name = gnm.slice(0, 120);
+    } catch (_p) {
+      /* yoksay */
     }
     var timeoutMs = Number(cfg.timeoutMs || 15000);
     if (!Number.isFinite(timeoutMs) || timeoutMs < 3000) timeoutMs = 15000;

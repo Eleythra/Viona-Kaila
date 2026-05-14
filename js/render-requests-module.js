@@ -70,9 +70,26 @@
     return s;
   }
 
-  /** PMS kapısı sonrası sessionStorage profili: ad/oda boşsa doldurur. */
-  function prefillGuestIdentityFromProfile(form) {
+  /** PMS kapısı sonrası profil: ad/oda boşsa doldurur; bu çağrıda doldurulan alanlar düzenlenemez (readOnly). */
+  function prefillGuestIdentityFromProfile(form, t) {
     if (!form || typeof form.querySelector !== "function") return;
+    var tfn = typeof t === "function" ? t : function (k) { return k; };
+    function lockIdentityInput(el) {
+      if (!el) return;
+      el.readOnly = true;
+      el.setAttribute("aria-readonly", "true");
+      el.classList.add("req-input--locked");
+      var tk = "reqIdentityLockedTitle";
+      var tx = tfn(tk);
+      if (!tx || tx === tk) {
+        try {
+          if (typeof I18N !== "undefined" && I18N.en && I18N.en[tk]) tx = I18N.en[tk];
+        } catch (_x) {
+          tx = "";
+        }
+      }
+      if (tx && tx !== tk) el.title = tx;
+    }
     try {
       var gp =
         typeof window.vionaGuestProfile === "object" &&
@@ -85,8 +102,18 @@
       var nm = String(gp.guestName || "").trim();
       var roomEl = form.querySelector('[name="room"]');
       var nameEl = form.querySelector('[name="name"]');
-      if (room && roomEl && !String(roomEl.value || "").trim()) roomEl.value = room;
-      if (nm && nameEl && !String(nameEl.value || "").trim()) nameEl.value = nm.slice(0, GUEST_NAME_MAX_LEN);
+      var setRoom = false;
+      var setName = false;
+      if (room && roomEl && !String(roomEl.value || "").trim()) {
+        roomEl.value = room;
+        setRoom = true;
+      }
+      if (nm && nameEl && !String(nameEl.value || "").trim()) {
+        nameEl.value = nm.slice(0, GUEST_NAME_MAX_LEN);
+        setName = true;
+      }
+      if (setRoom && roomEl) lockIdentityInput(roomEl);
+      if (setName && nameEl) lockIdentityInput(nameEl);
     } catch (_e) {
       /* private mode */
     }
@@ -1002,7 +1029,7 @@
 
     bundle.appendChild(form);
 
-    prefillGuestIdentityFromProfile(form);
+    prefillGuestIdentityFromProfile(form, t);
 
     var success = document.createElement("div");
     success.className = "req-success";
@@ -1151,7 +1178,7 @@
       runSubmit(payload, form, err, success, submit, t, { onSuccessGoHome: onSuccessGoHome });
     });
 
-    prefillGuestIdentityFromProfile(form);
+    prefillGuestIdentityFromProfile(form, t);
     return { form: form, success: success };
   }
 
@@ -1280,7 +1307,7 @@
       runSubmit(payload, form, err, success, submit, t, { onSuccessGoHome: onSuccessGoHome });
     });
 
-    prefillGuestIdentityFromProfile(form);
+    prefillGuestIdentityFromProfile(form, t);
     return { form: form, success: success };
   }
 
@@ -1561,7 +1588,7 @@
       });
     });
 
-    prefillGuestIdentityFromProfile(form);
+    prefillGuestIdentityFromProfile(form, t);
     return { form: form, success: success };
   }
 
@@ -1678,7 +1705,7 @@
       });
     });
 
-    prefillGuestIdentityFromProfile(form);
+    prefillGuestIdentityFromProfile(form, t);
     return { form: form, success: success };
   }
 
@@ -1826,7 +1853,7 @@
     success.innerHTML = '<h3 class="req-success__title"></h3><p class="req-success__body"></p>';
 
     wireSimpleSubmit(form, err, success, submit, typeKey, t, onSuccessGoHome);
-    prefillGuestIdentityFromProfile(form);
+    prefillGuestIdentityFromProfile(form, t);
     return { form: form, success: success };
   }
 

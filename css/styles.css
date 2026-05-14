@@ -382,6 +382,21 @@ body {
   padding: clamp(8px, 2vw, 12px) 0 clamp(14px, 3.5vw, 20px);
 }
 
+.gate-credentials {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 3vw, 18px);
+  margin-top: 2px;
+}
+
+.gate-credentials .gate-password-fields {
+  margin-bottom: 0;
+}
+
+.gate-credentials .gate-birth-panel {
+  margin-top: 0;
+}
+
 .gate-identity-card {
   border: 1px solid rgba(212, 168, 83, 0.28);
   box-shadow:
@@ -392,13 +407,13 @@ body {
 
 /* Doğum tarihi: üst oda kutusundan ayrı panel, gün / ay / yıl açılır listeler */
 .gate-birth-panel {
-  margin-top: clamp(18px, 4vw, 26px);
   padding: clamp(16px, 3.8vw, 22px) clamp(16px, 3.5vw, 20px) clamp(18px, 4vw, 22px);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: linear-gradient(168deg, rgba(14, 20, 34, 0.92) 0%, rgba(8, 12, 22, 0.88) 100%);
+  border: 1px solid rgba(212, 168, 83, 0.22);
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.06) 0%, rgba(12, 18, 28, 0.42) 52%, rgba(8, 12, 22, 0.9) 100%);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 0 0 1px rgba(46, 184, 199, 0.1),
     0 18px 44px rgba(0, 0, 0, 0.38);
   position: relative;
 }
@@ -499,7 +514,7 @@ body {
 
 .gate-header {
   text-align: center;
-  margin-bottom: 2px;
+  margin-bottom: 8px;
 }
 
 .gate-header .lang-title {
@@ -528,10 +543,12 @@ body {
 .gate-sub {
   text-align: center;
   max-width: min(100%, 26rem);
-  margin: 0 auto 6px;
-  padding: 0 4px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(232, 236, 244, 0.88);
+  margin: 0 auto 4px;
+  padding: 0 6px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  font-size: clamp(0.88rem, 2.55vw, 0.95rem);
+  line-height: 1.55;
+  color: rgba(228, 234, 242, 0.9);
   overflow-wrap: anywhere;
   hyphens: auto;
   text-wrap: balance;
@@ -767,6 +784,32 @@ body {
   background: rgba(5, 10, 18, 0.42);
   /* iOS: 16px altında odakta yakınlaştırma — kahraman alanlarla aynı eşik */
   font-size: max(1rem, 16px);
+}
+
+.gate-legal-card {
+  margin-top: clamp(12px, 2.8vw, 20px);
+  padding: clamp(12px, 2.6vw, 16px);
+  border-radius: clamp(18px, 3.2vw, 22px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(10, 16, 26, 0.55) 0%, rgba(6, 10, 18, 0.42) 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gate-legal-card .gate-privacy-card {
+  margin: 0 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%);
+}
+
+.gate-legal-card .gate-checks {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  gap: 10px;
 }
 
 .gate-privacy-card {
@@ -5712,6 +5755,16 @@ body {
   box-shadow:
     0 0 0 1px rgba(46, 184, 199, 0.3),
     0 0 0 4px rgba(46, 184, 199, 0.12);
+}
+
+.req-input.req-input--locked,
+.req-input.req-input--locked:focus {
+  cursor: default;
+  color: rgba(232, 236, 244, 0.88);
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(6, 12, 20, 0.45);
+  box-shadow: none;
+  user-select: text;
 }
 
 select.req-input {

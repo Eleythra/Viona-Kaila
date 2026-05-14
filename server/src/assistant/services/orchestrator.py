@@ -1460,17 +1460,33 @@ class ChatOrchestrator:
             return resp
 
         if not normalized:
-            decision_path.append("empty_input")
-            resp = self._fallback_response("unknown", 0.0, reply_base, ui_language, fallback_reason="validation_error")
-            logger.info(
-                "chat_request empty_input reply_lang=%s ui_lang=%s type=%s decision_path=%s fallback_reason=%s",
-                reply_base,
-                ui_language,
-                resp.type,
-                " > ".join(decision_path),
-                "validation_error",
-            )
-            return resp
+            # Misafir bildirimi: açıklama zorunlu değilse boş tur = ilk mesajı kullan (istemci «Gönder» boş bırakabilir).
+            allow_empty_for_form = False
+            if payload.channel != "voice":
+                fs_empty = self.form_store.get(payload.channel, payload.user_id, payload.session_id)
+                cat_e = (fs_empty.category or "").strip() if fs_empty else ""
+                if (
+                    fs_empty is not None
+                    and fs_empty.operation == "guest_notification"
+                    and fs_empty.step == "description"
+                    and cat_e
+                    and cat_e not in GUEST_NOTIF_DESC_REQUIRED
+                ):
+                    allow_empty_for_form = True
+            if not allow_empty_for_form:
+                decision_path.append("empty_input")
+                resp = self._fallback_response(
+                    "unknown", 0.0, reply_base, ui_language, fallback_reason="validation_error"
+                )
+                logger.info(
+                    "chat_request empty_input reply_lang=%s ui_lang=%s type=%s decision_path=%s fallback_reason=%s",
+                    reply_base,
+                    ui_language,
+                    resp.type,
+                    " > ".join(decision_path),
+                    "validation_error",
+                )
+                return resp
 
         early_sess = self._session_try_early_reply(payload, normalized, reply_base, ui_language)
         if early_sess is not None:
@@ -1597,6 +1613,7 @@ class ChatOrchestrator:
             original_message=payload.message,
             reply_language=reply_base,
             ui_language=ui_language,
+            channel=payload.channel,
         )
         if multi_clause_response is not None:
             decision_path.append("multi_clause_rule")
@@ -1686,6 +1703,7 @@ class ChatOrchestrator:
                         ui_language=ui_language,
                         needs_rag=rule_intent.needs_rag,
                         response_mode=rule_intent.response_mode,
+                        channel=payload.channel,
                     )
                     response = self._attach_action(
                         response=response,
@@ -1749,6 +1767,7 @@ class ChatOrchestrator:
                     ui_language=ui_language,
                     needs_rag=rule_intent.needs_rag,
                     response_mode=rule_intent.response_mode,
+                    channel=payload.channel,
                 )
                 if rule_intent.intent == "reservation" and _is_early_checkin_reception_handoff(
                     normalized, rule_intent.sub_intent, rule_intent.entity
@@ -1941,6 +1960,7 @@ class ChatOrchestrator:
             ui_language=ui_language,
             needs_rag=llm_intent.needs_rag,
             response_mode=llm_intent.response_mode,
+            channel=payload.channel,
         )
         if llm_intent.intent == "reservation" and _is_early_checkin_reception_handoff(
             normalized, llm_intent.sub_intent, llm_intent.entity
@@ -2005,6 +2025,7 @@ class ChatOrchestrator:
         *,
         needs_rag: bool = True,
         response_mode: str = "fallback",
+        channel: str | None = None,
     ) -> ChatResponse:
         policy = self.policy_service.choose(
             intent,
@@ -2336,7 +2357,7 @@ class ChatOrchestrator:
                     ).strip()
                     if s and s != "hotel_info_soft_followup_request_form_hint":
                         suffix = s
-                if suffix:
+                if suffix and (channel or "") != "voice":
                     rag_answer = rag_answer.rstrip() + "\n\n" + suffix
                 return self.response_service.build(
                     "answer",
@@ -2440,8 +2461,20 @@ class ChatOrchestrator:
             and _request_category_prefills_description_from_first_message(chosen_category)
             and _initial_message_substantive_for_request_prefill(first_turn)
         ):
-            state.step = "full_name"
             state.description = first_turn
+            pre_name, pre_room = _parsed_guest_identity_for_chat_form_skip(payload)
+            if pre_name and pre_room:
+                state.full_name = pre_name
+                state.room = pre_room
+                state.step = "confirm"
+                self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+                return self._build_chat_form_confirm_inform(
+                    state,
+                    intent=intent,
+                    reply_language=reply_language,
+                    ui_language=ui_language,
+                )
+            state.step = "full_name"
             self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
             msg = _localized_full_name_prompt_request_prefill(chosen_category, reply_language)
             return self.response_service.build(
@@ -2749,6 +2782,7 @@ class ChatOrchestrator:
                             ui_language=ui_language,
                             needs_rag=re_intent.needs_rag,
                             response_mode=re_intent.response_mode,
+                            channel=payload.channel,
                         )
                         return self._attach_action(
                             response=response,
@@ -2786,6 +2820,7 @@ class ChatOrchestrator:
                             ui_language=ui_language,
                             needs_rag=re_intent.needs_rag,
                             response_mode=re_intent.response_mode,
+                            channel=payload.channel,
                         )
                         return self._attach_action(
                             response=response,
@@ -2810,6 +2845,7 @@ class ChatOrchestrator:
                             ui_language=ui_language,
                             needs_rag=re_intent.needs_rag,
                             response_mode=re_intent.response_mode,
+                            channel=payload.channel,
                         )
                         return self._attach_action(
                             response=response,
@@ -3973,6 +4009,7 @@ class ChatOrchestrator:
         original_message: str,
         reply_language: str,
         ui_language: str,
+        channel: str | None = None,
     ) -> ChatResponse | None:
         clauses = self._split_multi_intent_clauses(normalized)
         if len(clauses) != 2:
@@ -4000,6 +4037,7 @@ class ChatOrchestrator:
             ui_language=ui_language,
             needs_rag=first_intent.needs_rag,
             response_mode=first_intent.response_mode,
+            channel=channel,
         )
         first_response = self._attach_action(
             response=first_response,
@@ -4019,6 +4057,7 @@ class ChatOrchestrator:
             ui_language=ui_language,
             needs_rag=second_intent.needs_rag,
             response_mode=second_intent.response_mode,
+            channel=channel,
         )
         second_response = self._attach_action(
             response=second_response,

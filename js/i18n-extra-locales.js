@@ -20,14 +20,14 @@
         "Сессия завершена из-за отсутствия активности. Выберите язык и войдите снова.",
       gateScreenTitle: "Проверка гостя",
       gateScreenSubtitle:
-        "Введите номер комнаты и дату рождения по регистрации; прочитайте уведомление и подтвердите.",
+        "Когда номер комнаты и дата рождения совпадают с записями отеля, вы можете продолжить. Прочитайте уведомление ниже и установите флажок.",
       gateScreenSubtitleWithPassword:
         "Введите номер комнаты и дату рождения; прочитайте уведомление и подтвердите.",
       gateScreenSubtitleWithIdentity:
         "Имя, фамилия и номер комнаты сверяются со списком гостей отеля.",
       gateScreenSubtitleWithPasswordAndIdentity:
         "Сначала имя и номер комнаты; при необходимости добавьте код доступа.",
-      gateIdentityKicker: "Проживание",
+      gateIdentityKicker: "Регистрация проживания",
       gateIdentityTitle: "Подтвердите личность",
       gateIdentityLead:
         "Доступ открывается только при совпадении с регистрацией отеля.",
@@ -42,6 +42,7 @@
       gateBirthDayShort: "День",
       gateBirthMonthShort: "Месяц",
       gateBirthYearShort: "Год",
+      gateBirthSelectPlaceholder: "Выберите",
       gateErrorBirthDateFuture: "Дата рождения не может быть в будущем.",
       gatePasswordLabel: "Код доступа отеля",
       gatePasswordPlaceholder: "Код от отеля",
@@ -140,14 +141,14 @@
         "Din session blev afsluttet efter inaktivitet. Vælg sprog og log ind igen.",
       gateScreenTitle: "Gæsteverifikation",
       gateScreenSubtitle:
-        "Indtast værelsesnummer og fødselsdato som registreret; læs meddelelsen og bekræft.",
+        "Når dit værelsesnummer og fødselsdato stemmer overens med hotellets oplysninger, kan du fortsætte. Læs meddelelsen nedenfor og sæt kryds i bekræftelsesfeltet.",
       gateScreenSubtitleWithPassword:
         "Indtast værelsesnummer og fødselsdato; læs meddelelsen og bekræft.",
       gateScreenSubtitleWithIdentity:
         "Fulde navn og værelsesnummer matches med hotellets gæsteliste.",
       gateScreenSubtitleWithPasswordAndIdentity:
         "Navn og værelse først; tilføj adgangskode om nødvendigt.",
-      gateIdentityKicker: "Ophold",
+      gateIdentityKicker: "Registreret ophold",
       gateIdentityTitle: "Bekræft din identitet",
       gateIdentityLead:
         "Kun gæster med matchende registrering får adgang til hotellets services.",
@@ -162,6 +163,7 @@
       gateBirthDayShort: "Dag",
       gateBirthMonthShort: "Måned",
       gateBirthYearShort: "År",
+      gateBirthSelectPlaceholder: "Vælg",
       gateErrorBirthDateFuture: "Fødselsdatoen kan ikke ligge i fremtiden.",
       gatePasswordLabel: "Hotel adgangskode",
       gatePasswordPlaceholder: "Kode fra hotellet",
@@ -259,14 +261,14 @@
         "Relace byla ukončena z důvodu nečinnosti. Vyberte jazyk a přihlaste se znovu.",
       gateScreenTitle: "Ověření hosta",
       gateScreenSubtitle:
-        "Zadejte číslo pokoje a datum narození podle registrace; přečtěte si informaci a potvrďte.",
+        "Jakmile se číslo pokoje a datum narození shodují s údaji hotelu, můžete pokračovat. Přečtěte si informaci níže a zaškrtněte pole souhlasu.",
       gateScreenSubtitleWithPassword:
         "Zadejte číslo pokoje a datum narození; přečtěte informaci a potvrďte.",
       gateScreenSubtitleWithIdentity:
         "Jméno, příjmení a číslo pokoje se porovnávají se seznamem hostů hotelu.",
       gateScreenSubtitleWithPasswordAndIdentity:
         "Nejprve jméno a pokoj; v případě potřeby doplňte přístupový kód.",
-      gateIdentityKicker: "Pobyt",
+      gateIdentityKicker: "Registrovaný pobyt",
       gateIdentityTitle: "Potvrďte totožnost",
       gateIdentityLead:
         "Přístup mají jen hosté, jejichž údaje souhlasí s registrací hotelu.",
@@ -281,8 +283,8 @@
       gateBirthDayShort: "Den",
       gateBirthMonthShort: "Měsíc",
       gateBirthYearShort: "Rok",
+      gateBirthSelectPlaceholder: "Vyberte",
       gateErrorBirthDateFuture: "Datum narození nemůže být v budoucnosti.",
-      gatePasswordLabel: "Přístupový kód hotelu",
       gatePasswordPlaceholder: "Kód od hotelu",
       gatePrivacyTitle: "Ochrana osobních údajů — stručná informace",
       gatePrivacyBody:
@@ -378,14 +380,14 @@
         "Sesiunea s-a încheiat din cauza inactivității. Alegeți limba și autentificați-vă din nou.",
       gateScreenTitle: "Verificare oaspete",
       gateScreenSubtitle:
-        "Introduceți numărul camerei și data nașterii conform înregistrării; citiți informarea și confirmați.",
+        "Când numărul camerei și data nașterii corespund înregistrărilor hotelului, puteți continua. Citiți informarea de mai jos și bifați caseta de confirmare.",
       gateScreenSubtitleWithPassword:
         "Introduceți numărul camerei și data nașterii; citiți informarea și confirmați.",
       gateScreenSubtitleWithIdentity:
         "Numele și camera sunt verificate față de lista de oaspeți a hotelului.",
       gateScreenSubtitleWithPasswordAndIdentity:
         "Mai întâi numele și camera; adăugați codul de acces dacă este necesar.",
-      gateIdentityKicker: "Sejur",
+      gateIdentityKicker: "Sejur înregistrat",
       gateIdentityTitle: "Confirmați identitatea",
       gateIdentityLead:
         "Doar oaspeții înregistrați cu date corespunzătoare pot continua.",
@@ -400,8 +402,8 @@
       gateBirthDayShort: "Zi",
       gateBirthMonthShort: "Lună",
       gateBirthYearShort: "An",
+      gateBirthSelectPlaceholder: "Selectați",
       gateErrorBirthDateFuture: "Data nașterii nu poate fi în viitor.",
-      gatePasswordLabel: "Cod acces hotel",
       gatePasswordPlaceholder: "Cod furnizat de hotel",
       gatePrivacyTitle: "Date personale — informare scurtă",
       gatePrivacyBody:
@@ -497,14 +499,14 @@
         "Uw sessie is beëindigd na inactiviteit. Kies uw taal en meld u opnieuw aan.",
       gateScreenTitle: "Gastverificatie",
       gateScreenSubtitle:
-        "Voer kamernummer en geboortedatum in zoals geregistreerd; lees de mededeling en bevestig.",
+        "Als uw kamernummer en geboortedatum overeenkomen met de gegevens van het hotel, kunt u doorgaan. Lees de mededeling hieronder en vink het bevestigingsvakje aan.",
       gateScreenSubtitleWithPassword:
         "Voer kamernummer en geboortedatum in; lees de mededeling en bevestig.",
       gateScreenSubtitleWithIdentity:
         "Naam en kamernummer worden vergeleken met de gastenlijst van het hotel.",
       gateScreenSubtitleWithPasswordAndIdentity:
         "Eerst naam en kamer; voeg zo nodig een toegangscode toe.",
-      gateIdentityKicker: "Verblijf",
+      gateIdentityKicker: "Geregistreerd verblijf",
       gateIdentityTitle: "Bevestig uw identiteit",
       gateIdentityLead:
         "Alleen gasten met overeenkomende registratie krijgen toegang tot de diensten.",
@@ -519,8 +521,8 @@
       gateBirthDayShort: "Dag",
       gateBirthMonthShort: "Maand",
       gateBirthYearShort: "Jaar",
+      gateBirthSelectPlaceholder: "Kies",
       gateErrorBirthDateFuture: "Geboortedatum mag niet in de toekomst liggen.",
-      gatePasswordLabel: "Hoteltoegangscode",
       gatePasswordPlaceholder: "Code van het hotel",
       gatePrivacyTitle: "Privacy — korte mededeling",
       gatePrivacyBody:
@@ -616,14 +618,14 @@
         "Relácia bola ukončená z dôvodu nečinnosti. Vyberte jazyk a prihláste sa znova.",
       gateScreenTitle: "Overenie hosťa",
       gateScreenSubtitle:
-        "Zadajte číslo izby a dátum narodenia podľa registrácie; prečítajte informáciu a potvrďte.",
+        "Keď sa číslo izby a dátum narodenia zhodujú s údajmi hotela, môžete pokračovať. Prečítajte si informáciu nižšie a zaškrtnite pole súhlasu.",
       gateScreenSubtitleWithPassword:
         "Zadajte číslo izby a dátum narodenia; prečítajte informáciu a potvrďte.",
       gateScreenSubtitleWithIdentity:
         "Meno, priezvisko a číslo izby sa porovnávajú so zoznamom hostí hotela.",
       gateScreenSubtitleWithPasswordAndIdentity:
         "Najprv meno a izba; v prípade potreby doplňte prístupový kód.",
-      gateIdentityKicker: "Pobyt",
+      gateIdentityKicker: "Registrovaný pobyt",
       gateIdentityTitle: "Potvrďte identitu",
       gateIdentityLead:
         "Prístup majú len hostia s údajmi zhodnými s registráciou hotela.",
@@ -638,8 +640,8 @@
       gateBirthDayShort: "Deň",
       gateBirthMonthShort: "Mesiac",
       gateBirthYearShort: "Rok",
+      gateBirthSelectPlaceholder: "Vyberte",
       gateErrorBirthDateFuture: "Dátum narodenia nemôže byť v budúcnosti.",
-      gatePasswordLabel: "Prístupový kód hotela",
       gatePasswordPlaceholder: "Kód od hotela",
       gatePrivacyTitle: "Osobné údaje — stručná informácia",
       gatePrivacyBody:
@@ -793,6 +795,7 @@
       reqLabelRoom: "Номер комнаты",
       reqHintNameForm:
         "Введите имя и фамилию как в документе, через пробел (напр. Иван Иванов). Макс. 120 символов.",
+      reqIdentityLockedTitle: "Из подтверждённого проживания; изменить нельзя.",
       reqLabelNationality: "Гражданство",
       reqNatPlaceholder: "Выберите",
       reqLabelDesc: "Описание",
@@ -819,6 +822,7 @@
       reqLabelRoom: "Værelsesnummer",
       reqHintNameForm:
         "Skriv for- og efternavn som på ID, adskilt af mellemrum (f.eks. Jane Smith). Maks. 120 tegn.",
+      reqIdentityLockedTitle: "Fra dit verificerede ophold; kan ikke ændres.",
       reqLabelNationality: "Nationalitet",
       reqNatPlaceholder: "Vælg",
       reqLabelDesc: "Beskrivelse",
@@ -845,6 +849,7 @@
       reqLabelRoom: "Číslo pokoje",
       reqHintNameForm:
         "Zadejte jméno a příjmení jako v dokladu, oddělené mezerou (např. Jan Novák). Max. 120 znaků.",
+      reqIdentityLockedTitle: "Z potvrzeného pobytu; nelze měnit.",
       reqLabelNationality: "Státní příslušnost",
       reqNatPlaceholder: "Vyberte",
       reqLabelDesc: "Popis",
@@ -871,6 +876,7 @@
       reqLabelRoom: "Număr cameră",
       reqHintNameForm:
         "Introduceți prenumele și numele ca în act, separate prin spațiu (ex. Maria Popescu). Max. 120 caractere.",
+      reqIdentityLockedTitle: "Din sejurul verificat; nu se poate modifica.",
       reqLabelNationality: "Naționalitate",
       reqNatPlaceholder: "Selectați",
       reqLabelDesc: "Descriere",
@@ -897,6 +903,7 @@
       reqLabelRoom: "Kamernummer",
       reqHintNameForm:
         "Typ voor- en achternaam zoals op uw ID, gescheiden door een spatie (bijv. Jan Jansen). Max. 120 tekens.",
+      reqIdentityLockedTitle: "Van uw geverifieerd verblijf; niet te wijzigen.",
       reqLabelNationality: "Nationaliteit",
       reqNatPlaceholder: "Kies",
       reqLabelDesc: "Beschrijving",
@@ -923,6 +930,7 @@
       reqLabelRoom: "Číslo izby",
       reqHintNameForm:
         "Zadajte meno a priezvisko ako v doklade, oddelené medzerou (napr. Ján Novák). Max. 120 znakov.",
+      reqIdentityLockedTitle: "Z overeného pobytu; nemožno zmeniť.",
       reqLabelNationality: "Štátna príslušnosť",
       reqNatPlaceholder: "Vyberte",
       reqLabelDesc: "Popis",

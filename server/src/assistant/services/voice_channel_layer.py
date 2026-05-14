@@ -1,8 +1,9 @@
 """
 Sesli asistan katmanı — metin sohbetinden ayrı kanal (channel=voice).
 
-- v2: Seslide yalnızca otel bilgisi (hotel_info / recommendation / current_time); diğer niyetler
-  `coerce_voice_channel_v2_response` ile kısa premium metin + yazılı sohbet daveti.
+- v2: Seslide yalnızca bilgi tabanı (RAG) yanıtı veya saat (`current_time`); modül/form/aksiyon
+  veya RAG dışı metin `coerce_voice_channel_v2_response` ile kısa premium yönlendirme
+  (metin sohbet + ön büro).
 - TTS çıkışı: sadeleştirilmiş metin, meta.action ve exit_chat_after_ms temizlenir (`finalize_voice_channel_response`).
 """
 
@@ -13,30 +14,42 @@ import re
 from assistant.core.chatbot_languages import voice_dict_lang
 from assistant.schemas.response import ChatResponse
 
-# Ses v2: işlem, rezervasyon eli, anlamama ve sohbet dışı — tek premium cümle (TTS kısa); yazılı asistana yönlendirme.
+# Ses v2: bilgi tabanı dışı / form / işlem — tek premium cümle (TTS); metin sohbet + ön büro.
 VOICE_OUT_OF_SCOPE_PREMIUM_TEXT: dict[str, str] = {
-    "tr": "Bunun için en doğru rehberliği yazılı asistanımda sunabilirim; metin sohbetine geçmenizi içtenlikle rica ederim.",
-    "en": "For the fullest care on this, our text chat is the right place—please switch to it, and I will gladly assist you in detail.",
-    "de": "Dafür ist der Textchat der passende Ort — bitte wechseln Sie dorthin; ich betreue Sie dort gern ausführlich.",
-    "pl": "W tej sprawie najlepiej pomoże czat tekstowy — przejdź tam; chętnie udzielę pełnej pomocy.",
-    "ru": "По этому вопросу лучше всего помогу в текстовом чате — перейдите туда, с удовольствием всё оформлю.",
-    "da": "Her er tekstchat det rette sted — skift dertil, så hjælper jeg dig gerne grundigt.",
-    "nl": "Hiervoor is de tekstchat de juiste plek — schakel over; ik help je daar graag volledig verder.",
-    "cs": "V tomto vám nejlépe pomůže textový chat — přejděte tam, ráda vás provedu podrobně.",
-    "ro": "Pentru acest lucru, chatul text este locul potrivit — comutați acolo; vă ajut cu plăcere în detaliu.",
-    "sk": "V tom vám najlepšie pomôže textový chat — prepnite sa tam, rada vás podrobne sprevádzim.",
+    "tr": "Bunun tam yanıtı bilgi tabanımda veya yazılı kanalda; metin sohbetine geçmenizi ya da ön büroya danışmanızı içtenlikle rica ederim.",
+    "en": "For the full answer—whether from our knowledge base or a form—please use text chat or visit the front desk; I will gladly assist you there in writing.",
+    "de": "Die vollständige Antwort dazu finden Sie im Textchat oder an der Rezeption — bitte wechseln Sie dorthin; dort helfe ich Ihnen gern schriftlich weiter.",
+    "pl": "Pełnej odpowiedzi udzielę w czacie tekstowym lub poproszę recepcję — przejdź tam; chętnie pomogę na piśmie.",
+    "ru": "Полный ответ — в текстовом чате или на ресепшене; перейдите туда, с удовольствием помогу письменно.",
+    "da": "Det fulde svar får du i tekstchatten eller i receptionen — skift dertil; jeg hjælper dig gerne skriftligt der.",
+    "nl": "Het volledige antwoord vindt u in de tekstchat of bij de receptie — schakel over; ik help u daar graag schriftelijk.",
+    "cs": "Úplnou odpověď získáte v textovém chatu nebo na recepci — přejděte tam; rád vám pomohu písemně.",
+    "ro": "Răspunsul complet este în chatul text sau la recepție — comutați acolo; vă ajut cu plăcere în scris.",
+    "sk": "Úplnú odpoveď dostanete v textovom chate alebo na recepcii — prepnite sa tam; rád pomôžem písomne.",
 }
 
 # Geriye dönük: orchestrator `_voice_operational_redirect` bu adı import eder.
 VOICE_OPERATIONAL_USE_TEXT = VOICE_OUT_OF_SCOPE_PREMIUM_TEXT
 
-VOICE_INTENTS_ALLOWED_SPOKEN: frozenset[str] = frozenset({"hotel_info", "recommendation", "current_time"})
+def _voice_response_allowed_for_tts(response: ChatResponse) -> bool:
+    """Ses: yalnızca bilgi tabanı (RAG) cevabı veya saat; modül/form meta.action yok, mesaj dolu."""
+    intent = str(response.meta.intent or "").strip()
+    source = str(response.meta.source or "").strip().lower()
+    if response.meta.action is not None:
+        return False
+    msg = (response.message or "").strip()
+    if not msg:
+        return False
+    if intent == "hotel_info" and source == "rag":
+        return True
+    if intent == "current_time":
+        return True
+    return False
 
 
 def coerce_voice_channel_v2_response(response: ChatResponse, reply_lang: str) -> ChatResponse:
-    """Ses v2: yalnızca izinli niyetler konuşulur; aksi halde premium tek cümle (form/aksiyon yok)."""
-    intent = str(response.meta.intent or "").strip()
-    if intent in VOICE_INTENTS_ALLOWED_SPOKEN:
+    """Ses v2: yalnızca RAG bilgisi veya saat; diğer her şey premium yönlendirme (metin + resepsiyon)."""
+    if _voice_response_allowed_for_tts(response):
         return response
     lg = voice_dict_lang(reply_lang)
     msg = VOICE_OUT_OF_SCOPE_PREMIUM_TEXT.get(lg, VOICE_OUT_OF_SCOPE_PREMIUM_TEXT["tr"])

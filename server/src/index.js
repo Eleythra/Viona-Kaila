@@ -859,10 +859,8 @@ app.post("/api/chat", async (req, res) => {
     .trim();
   const conversationLanguage = VIONA_UI_LANGUAGE_CODES.includes(rawConv) ? rawConv : null;
 
-  if (!message) {
-    const fb = safeFallback(locale, "validation_error", message);
-    return res.status(200).json(fb);
-  }
+  /* Boş metin: Python orchestrator işler (çoğu durumda validation_error; misafir bildirimi formunda
+     isteğe bağlı not adımında ilk mesaj + kimlik ile devam için boş tur gerekli olabilir). */
 
   const timeoutMs = safeTimeoutMs(process.env.ASSISTANT_TIMEOUT_MS, 12000);
   try {
