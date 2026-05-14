@@ -41,6 +41,21 @@
     return !!SET[String(v || "").trim()];
   };
 
+  /** Status’tan gelen ek odalar (ör. operatör bypass); SET ve sayaç güncellenir. */
+  global.vionaMergeExtraHotelRoomNumbers = function (arr) {
+    if (!Array.isArray(arr)) return;
+    var i;
+    for (i = 0; i < arr.length; i++) {
+      var sn = String(arr[i] == null ? "" : arr[i]).trim();
+      if (!sn) continue;
+      if (!SET[sn]) {
+        SET[sn] = true;
+        validRoomCount += 1;
+      }
+    }
+    global.VIONA_HOTEL_VALID_ROOM_COUNT = validRoomCount;
+  };
+
   /** Admin «Odalar» grid: binler = blok (1→A, 2→B, 3→C), yüzler = kat. */
   global.vionaParseRoomLayout = function (numStr) {
     var s = String(numStr == null ? "" : numStr).trim();

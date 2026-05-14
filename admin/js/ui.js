@@ -5702,7 +5702,7 @@
         );
       }
       mountEl.innerHTML =
-        '<div class="logs-kpi-grid logs-kpi-grid--four" role="list">' +
+        '<div class="logs-kpi-grid logs-kpi-grid--five" role="list">' +
         card(
           "logs-kpi-card--total",
           "Filtreli toplam",
@@ -5711,9 +5711,15 @@
         ) +
         card(
           "logs-kpi-card--multi",
-          "Çift şifre kapısı",
-          String(s.passwordDualCount != null ? s.passwordDualCount : 0),
-          "İki env erişim kodunun birlikte doğrulandığı girişler (aynı pencere).",
+          "HotelAdvisor (PMS)",
+          String(s.hotelAdvisorCount != null ? s.hotelAdvisorCount : 0),
+          "Oda + doğum tarihi ile doğrulanan girişler (aynı pencere).",
+        ) +
+        card(
+          "logs-kpi-card--multi",
+          "Operatör bypass",
+          String(s.operatorBypassCount != null ? s.operatorBypassCount : 0),
+          "Env oda + doğum eşleşmesi (test); aynı tarih penceresi.",
         ) +
         card(
           "logs-kpi-card--fallback",
@@ -5742,6 +5748,8 @@
         if (x === "password_dual") return "Çift şifre kapısı";
         if (x === "deploy_bypass") return "Kurulum eşleşmesi (eski)";
         if (x === "elektra") return "Elektra (eski)";
+        if (x === "hotel_advisor") return "HotelAdvisor (PMS)";
+        if (x === "operator_bypass") return "Operatör bypass";
         return esc(String(m || "-"));
       }
       function truncateUa(ua, max) {

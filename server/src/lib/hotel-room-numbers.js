@@ -29,6 +29,11 @@ function buildSet() {
   for (const [a, b] of ROOM_RANGES) {
     for (let n = a; n <= b; n++) s.add(String(n));
   }
+  if (process.env.VIONA_OPERATOR_GATE_BYPASS === "1") {
+    const extra = String(process.env.VIONA_OPERATOR_GATE_ROOM || "").trim();
+    const birth = String(process.env.VIONA_OPERATOR_GATE_BIRTHDATE || "").trim();
+    if (extra && /^\d{4}-\d{2}-\d{2}$/.test(birth)) s.add(extra);
+  }
   return s;
 }
 

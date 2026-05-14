@@ -70,6 +70,28 @@
     return s;
   }
 
+  /** PMS kapısı sonrası sessionStorage profili: ad/oda boşsa doldurur. */
+  function prefillGuestIdentityFromProfile(form) {
+    if (!form || typeof form.querySelector !== "function") return;
+    try {
+      var gp =
+        typeof window.vionaGuestProfile === "object" &&
+        window.vionaGuestProfile &&
+        typeof window.vionaGuestProfile.get === "function"
+          ? window.vionaGuestProfile.get()
+          : null;
+      if (!gp) return;
+      var room = String(gp.roomNo || "").trim();
+      var nm = String(gp.guestName || "").trim();
+      var roomEl = form.querySelector('[name="room"]');
+      var nameEl = form.querySelector('[name="name"]');
+      if (room && roomEl && !String(roomEl.value || "").trim()) roomEl.value = room;
+      if (nm && nameEl && !String(nameEl.value || "").trim()) nameEl.value = nm.slice(0, GUEST_NAME_MAX_LEN);
+    } catch (_e) {
+      /* private mode */
+    }
+  }
+
   var HUB_ICONS = {
     request:
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M21 15a4 4 0 01-4 4H8l-5 3v-3H5a4 4 0 01-4-4V7a4 4 0 014-4h14a4 4 0 014 4v8z"/><path d="M8 10h.01M12 10h.01M16 10h.01"/></svg>',
@@ -980,6 +1002,8 @@
 
     bundle.appendChild(form);
 
+    prefillGuestIdentityFromProfile(form);
+
     var success = document.createElement("div");
     success.className = "req-success";
     success.hidden = true;
@@ -1127,6 +1151,7 @@
       runSubmit(payload, form, err, success, submit, t, { onSuccessGoHome: onSuccessGoHome });
     });
 
+    prefillGuestIdentityFromProfile(form);
     return { form: form, success: success };
   }
 
@@ -1255,6 +1280,7 @@
       runSubmit(payload, form, err, success, submit, t, { onSuccessGoHome: onSuccessGoHome });
     });
 
+    prefillGuestIdentityFromProfile(form);
     return { form: form, success: success };
   }
 
@@ -1535,6 +1561,7 @@
       });
     });
 
+    prefillGuestIdentityFromProfile(form);
     return { form: form, success: success };
   }
 
@@ -1651,6 +1678,7 @@
       });
     });
 
+    prefillGuestIdentityFromProfile(form);
     return { form: form, success: success };
   }
 
@@ -1798,6 +1826,7 @@
     success.innerHTML = '<h3 class="req-success__title"></h3><p class="req-success__body"></p>';
 
     wireSimpleSubmit(form, err, success, submit, typeKey, t, onSuccessGoHome);
+    prefillGuestIdentityFromProfile(form);
     return { form: form, success: success };
   }
 

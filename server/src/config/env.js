@@ -255,9 +255,8 @@ export function getEnv() {
      */
     speechTrustForwardedOrigin: optional("SPEECH_TRUST_FORWARDED_ORIGIN", "1") !== "0",
     /**
-     * Misafir kapısı: env’de iki gizli değer tanımlıdır; istemci **tek** alan girer — **hangisiyle eşleşirse** geçer (OR).
+     * Misafir kapısı (eski): çift şifre env değerleri — artık kapı zorunluluğu için kullanılmaz; yalnızca bilgi/health.
      * Öncelik `VIONA_GATE_PASSWORD_*`; yoksa `VIONA_UI_GATE_PASSWORD` / `_2`.
-     * İkisi de dolu değilse kapı kapalı. Büyük/küçük harf duyarsız (Türkçe İ/I dahil).
      */
     vionaGatePassword1: optionalAny(["VIONA_GATE_PASSWORD_1", "VIONA_UI_GATE_PASSWORD"], ""),
     vionaGatePassword2: optionalAny(["VIONA_GATE_PASSWORD_2", "VIONA_UI_GATE_PASSWORD_2"], ""),
@@ -267,9 +266,13 @@ export function getEnv() {
     get guestGateDualPasswordConfigured() {
       return Boolean(String(this.vionaGatePassword1 || "").trim() && String(this.vionaGatePassword2 || "").trim());
     },
+    /**
+     * Misafir web kapısı: HotelAdvisor (oda + doğum tarihi) env tamamsa zorunlu.
+     * Çift şifre kapısı artık kapı açılması için kullanılmaz (`guestGateDualPasswordConfigured` yalnızca bilgi/health).
+     */
     get guestUiGateRequired() {
       if (this.guestUiGateDisabled) return false;
-      return this.guestGateDualPasswordConfigured;
+      return this.hotelAdvisorConfigured;
     },
     /** `1` ise status yanıtında `strict: true`; istemci önceki oturumda da sıkı blok kullanabilir. */
     guestUiGateStrict: optional("VIONA_UI_GATE_STRICT", "") === "1",
@@ -282,5 +285,36 @@ export function getEnv() {
     vionaGuestSessionSecret: optional("VIONA_GUEST_SESSION_SECRET", ""),
     /** Doğrulanmış misafir çerez ömrü (saniye); varsayılan 24 saat. */
     vionaGuestSessionTtlSec: optionalInt("VIONA_GUEST_SESSION_TTL_SEC", 86400),
+    /**
+     * Operatör kapı bypass: `1` + `VIONA_OPERATOR_GATE_ROOM` + `VIONA_OPERATOR_GATE_BIRTHDATE` (YYYY-MM-DD) ile
+     * PMS çağrılmadan doğrulama (yalnızca kendi test ortamınızda açın).
+     */
+    operatorGateBypassEnabled: optional("VIONA_OPERATOR_GATE_BYPASS", "0") === "1",
+    operatorGateRoom: optional("VIONA_OPERATOR_GATE_ROOM", ""),
+    operatorGateBirthdate: optional("VIONA_OPERATOR_GATE_BIRTHDATE", ""),
+    operatorGateDisplayName: optional("VIONA_OPERATOR_GATE_DISPLAY_NAME", "Viona Kontrol"),
+    get operatorGateBypassConfigured() {
+      if (!this.operatorGateBypassEnabled) return false;
+      const r = String(this.operatorGateRoom || "").trim();
+      const b = String(this.operatorGateBirthdate || "").trim();
+      if (!r) return false;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(b)) return false;
+      return true;
+    },
+    /** HotelAdvisor / Elektra Hotspot — yalnızca sunucu; token istemciye gitmez. */
+    hotelAdvisorBaseUrl: optional("HOTEL_ADVISOR_BASE_URL", ""),
+    hotelAdvisorHotelId: optional("HOTEL_ADVISOR_HOTEL_ID", ""),
+    hotelAdvisorToken: optional("HOTEL_ADVISOR_TOKEN", ""),
+    /** Hotspot misafir listesi kısa önbellek (ms); `0` = kapalı. Üst sınır 120000. */
+    hotelAdvisorGuestsCacheMs: optionalNonNegativeMs("HOTEL_ADVISOR_GUESTS_CACHE_MS", 12_000),
+    /** `1` iken `POST /api/test/hotel-login` ve `GET /test/hotel-advisor` açılır; aksi halde 404. */
+    hotelAdvisorTestEnabled: optional("HOTEL_ADVISOR_TEST_ENABLED", "") === "1",
+    get hotelAdvisorConfigured() {
+      return Boolean(
+        String(this.hotelAdvisorBaseUrl || "").trim() &&
+          String(this.hotelAdvisorHotelId || "").trim() &&
+          String(this.hotelAdvisorToken || "").trim(),
+      );
+    },
   };
 }

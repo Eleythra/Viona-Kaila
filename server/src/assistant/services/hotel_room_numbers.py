@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import os
+import re
+
 _ROOM_RANGES: tuple[tuple[int, int], ...] = (
     (1001, 1008),
     (1101, 1123),
@@ -29,6 +32,11 @@ def _build_frozenset() -> frozenset[str]:
     s: set[str] = set()
     for a, b in _ROOM_RANGES:
         s.update(str(n) for n in range(a, b + 1))
+    if os.environ.get("VIONA_OPERATOR_GATE_BYPASS", "").strip() == "1":
+        extra = (os.environ.get("VIONA_OPERATOR_GATE_ROOM") or "").strip()
+        birth = (os.environ.get("VIONA_OPERATOR_GATE_BIRTHDATE") or "").strip()
+        if extra and re.fullmatch(r"\d{4}-\d{2}-\d{2}", birth):
+            s.add(extra)
     return frozenset(s)
 
 

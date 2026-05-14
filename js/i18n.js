@@ -13,11 +13,11 @@ const I18N = {
       "Uzun süre işlem yapılmadığı için oturum sonlandı. Dil seçip yeniden giriş yapın.",
     continue: "Devam et",
 
-    gateScreenTitle: "Giriş doğrulaması",
+    gateScreenTitle: "Misafir doğrulaması",
     gateScreenSubtitle:
-      "Kısa bilgilendirmeyi okuyup onaylayarak devam edin.",
+      "Oda numaranız ve doğum tarihiniz kayıtlı konaklamayla eşleştiğinde devam edebilirsiniz. Aşağıdaki bilgilendirmeyi okuyup onaylayın.",
     gateScreenSubtitlePassword:
-      "Kodu girin; bilgilendirmeyi okuyup onaylayın.",
+      "Oda numaranız ve doğum tarihinizi girin; bilgilendirmeyi okuyup onaylayın.",
     gatePasswordSingleLabel: "Erişim kodu",
     gatePasswordSingleHint: "Otelin verdiği kodlardan biri yeterli; büyük/küçük harf fark etmez.",
     gatePasswordSinglePlaceholder: "Kod",
@@ -58,7 +58,9 @@ const I18N = {
     gateBirthDateLabel: "Doğum tarihi",
     gateVerifiedAnonymousName: "Misafir",
     gateErrorIdentityMismatch:
-      "Ad soyad veya oda bilgisi doğrulanamadı. Kayıtlı bilgilerle tekrar deneyin veya resepsiyon ile görüşün.",
+      "Oda numarası veya doğum tarihi doğrulanamadı. Bilgilerinizi kontrol edin veya resepsiyon ile görüşün.",
+    gateErrorPmsUnavailable:
+      "Misafir doğrulaması şu anda kullanılamıyor. Lütfen bir süre sonra tekrar deneyin veya resepsiyon ile görüşün.",
 
     homeTitle: "Kaila Beach Hotel",
 
@@ -707,11 +709,11 @@ const I18N = {
       "Your session ended after a period of inactivity. Choose your language and sign in again.",
     continue: "Continue",
 
-    gateScreenTitle: "Verify your stay",
+    gateScreenTitle: "Guest verification",
     gateScreenSubtitle:
-      "Read the notice below and confirm to continue.",
+      "Enter your room number and date of birth as registered for your stay, then read and confirm the notice below.",
     gateScreenSubtitlePassword:
-      "Enter your code, read the notice, and confirm.",
+      "Enter your room number and date of birth; read the notice and confirm.",
     gatePasswordSingleLabel: "Access code",
     gatePasswordSingleHint: "Any code from the hotel works. Not case-sensitive.",
     gatePasswordSinglePlaceholder: "Code",
@@ -751,7 +753,9 @@ const I18N = {
     gateBirthDateLabel: "Date of birth",
     gateVerifiedAnonymousName: "Guest",
     gateErrorIdentityMismatch:
-      "We could not verify your name or room. Please check your details or contact reception.",
+      "Room number or date of birth could not be verified. Check your details or contact reception.",
+    gateErrorPmsUnavailable:
+      "Guest verification is temporarily unavailable. Please try again later or contact reception.",
 
     homeTitle: "Kaila Beach Hotel",
 
@@ -1399,11 +1403,11 @@ const I18N = {
       "Ihre Sitzung wurde nach Inaktivität beendet. Bitte Sprache wählen und erneut bestätigen.",
     continue: "Weiter",
 
-    gateScreenTitle: "Aufenthalt bestätigen",
+    gateScreenTitle: "Gäste-Verifizierung",
     gateScreenSubtitle:
-      "Lesen Sie den Kurzhinweis und bestätigen Sie, um fortzufahren.",
+      "Geben Sie Ihre Zimmernummer und Ihr Geburtsdatum wie in der Reservierung ein; lesen Sie den Hinweis und bestätigen Sie.",
     gateScreenSubtitlePassword:
-      "Code eingeben, Hinweis lesen, bestätigen.",
+      "Zimmernummer und Geburtsdatum eingeben, Hinweis lesen und bestätigen.",
     gatePasswordSingleLabel: "Zugangscode",
     gatePasswordSingleHint: "Ein Hotelcode genügt; Groß-/Kleinschreibung egal.",
     gatePasswordSinglePlaceholder: "Code",
@@ -1444,7 +1448,9 @@ const I18N = {
     gateBirthDateLabel: "Geburtsdatum",
     gateVerifiedAnonymousName: "Gast",
     gateErrorIdentityMismatch:
-      "Name oder Zimmernummer konnte nicht bestätigt werden. Bitte prüfen oder die Rezeption kontaktieren.",
+      "Zimmernummer oder Geburtsdatum konnte nicht bestätigt werden. Bitte prüfen oder die Rezeption kontaktieren.",
+    gateErrorPmsUnavailable:
+      "Die Gäste-Verifizierung ist derzeit nicht verfügbar. Bitte später erneut versuchen oder die Rezeption kontaktieren.",
 
     homeTitle: "Kaila Beach Hotel",
 
@@ -2093,11 +2099,11 @@ const I18N = {
       "Sesja została zakończona z powodu braku aktywności. Wybierz język i zaloguj się ponownie.",
     continue: "Kontynuuj",
 
-    gateScreenTitle: "Potwierdzenie pobytu",
+    gateScreenTitle: "Weryfikacja gościa",
     gateScreenSubtitle:
-      "Przeczytaj krótką informację i potwierdź, aby kontynuować.",
+      "Podaj numer pokoju i datę urodzenia zgodnie z rezerwacją; przeczytaj informację i potwierdź.",
     gateScreenSubtitlePassword:
-      "Wpisz kod, przeczytaj informację i potwierdź.",
+      "Wpisz numer pokoju i datę urodzenia; przeczytaj informację i potwierdź.",
     gatePasswordSingleLabel: "Kod dostępu",
     gatePasswordSingleHint: "Wystarczy jeden kod od hotelu; wielkość liter bez znaczenia.",
     gatePasswordSinglePlaceholder: "Kod",
@@ -2138,7 +2144,9 @@ const I18N = {
     gateBirthDateLabel: "Data urodzenia",
     gateVerifiedAnonymousName: "Gość",
     gateErrorIdentityMismatch:
-      "Nie udało się zweryfikować imienia lub numeru pokoju. Sprawdź dane lub skontaktuj się z recepcją.",
+      "Nie udało się zweryfikować numeru pokoju lub daty urodzenia. Sprawdź dane lub skontaktuj się z recepcją.",
+    gateErrorPmsUnavailable:
+      "Weryfikacja gościa jest chwilowo niedostępna. Spróbuj później lub skontaktuj się z recepcją.",
 
     homeTitle: "Hotel Kaila Beach",
     introLead: "Przy plaży w Obagöl, Alanya — All Inclusive dla komfortowych wakacji.",

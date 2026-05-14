@@ -31,4 +31,14 @@ class ChatRequest(BaseModel):
             "İstemci uyumluluğu: `client_channel` alanı da kabul edilir (sesli tur)."
         ),
     )
+    guest_full_name: Optional[str] = Field(
+        default=None,
+        max_length=120,
+        description="PMS kapısı sonrası istemci oturumu (ad soyad); chat formunda adım atlama için.",
+    )
+    verified_guest_room: Optional[str] = Field(
+        default=None,
+        max_length=32,
+        description="Yalnızca Node proxy: HttpOnly misafir çerezinden okunan oda numarası.",
+    )
 

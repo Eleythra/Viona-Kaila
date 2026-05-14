@@ -37,6 +37,9 @@ import {
 } from "./lib/public-site-origins.js";
 import { parseVerifiedGuestCookie } from "./lib/guest-verified-session.js";
 import { isBearerSecretAuthValid } from "./lib/admin-auth.js";
+import hotelAdvisorTestRouter, {
+  getHotelAdvisorTestPageHtml,
+} from "./modules/hotel-advisor-test/hotel-advisor-test.router.js";
 const env = getEnv();
 const app = express();
 app.set("trust proxy", 1);
@@ -573,8 +576,18 @@ app.post(
   handleWhatsappWebhookPost,
 );
 
+/** HotelAdvisor test: dar pencere (oda+doğum denemesi yüzeyi). Tanım, aşağıdaki `app.use` öncesinde olmalı. */
+const hotelAdvisorTestLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true, limit: "15mb" }));
+
+app.use("/api/test", hotelAdvisorTestLimiter, hotelAdvisorTestRouter);
 
 /** Günlük operasyon PDF + WhatsApp; dış cron veya manuel test: `Authorization: Bearer $CRON_SECRET`. */
 app.post("/api/internal/daily-operation-report", async (req, res) => {
@@ -684,6 +697,9 @@ app.use("/api/tts", speechLimiter);
 
 /** Tarayıcıda http://localhost:PORT/ açıldığında boş / "Cannot GET /" yerine kısa yönlendirme. */
 app.get("/", (_req, res) => {
+  const hotelAdvisorTestLink = env.hotelAdvisorTestEnabled
+    ? `<p><strong>HotelAdvisor test:</strong> <a href="/test/hotel-advisor">/test/hotel-advisor</a> — <code>POST /api/test/hotel-login</code></p>`
+    : "";
   res
     .type("text/html; charset=utf-8")
     .send(
@@ -691,9 +707,17 @@ app.get("/", (_req, res) => {
 <h1>Viona Node API</h1>
 <p>Bu süreç yalnızca REST API sunar; misafir arayüzü ayrı (statik site / domain).</p>
 <p><strong>Test:</strong> <a href="/api/health?pretty=1">/api/health?pretty=1</a> (tarayıcıda okunaklı) — ham JSON: <a href="/api/health">/api/health</a></p>
+${hotelAdvisorTestLink}
 <p>Operasyon WhatsApp (Cloud API): <code>WHATSAPP_ACCESS_TOKEN</code>, <code>WHATSAPP_PHONE_NUMBER_ID</code>, <code>WHATSAPP_TECH_RECIPIENTS</code> / <code>WHATSAPP_HK_RECIPIENTS</code> / <code>WHATSAPP_FRONT_RECIPIENTS</code> — ayrıntı <code>server/.env.example</code>.</p>
 </body></html>`,
     );
+});
+
+app.get("/test/hotel-advisor", (_req, res) => {
+  if (!env.hotelAdvisorTestEnabled) {
+    return res.status(404).end();
+  }
+  return res.type("text/html; charset=utf-8").send(getHotelAdvisorTestPageHtml());
 });
 
 function escapeHtmlJsonPreview(s) {
@@ -727,9 +751,9 @@ app.get("/api/health", (req, res) => {
     },
     /** 1 iken /api/ops token olmadan yalnızca güvenilir origin + X-Viona-Ops-Page ile açılır (dahili kullanım). */
     opsTrustOpsPageHeader: Boolean(env.opsTrustOpsPageHeader),
-    /** Misafir kapısı: iki env kodu tanımlı ve etkin mi (değer sızmaz). */
+    /** Misafir kapısı: çift şifre env’de tanımlı mı (bilgi; kapı için kullanılmaz). */
     guestGateDualPasswordConfigured: Boolean(env.guestGateDualPasswordConfigured),
-    /** Misafir statik site kapısı zorunlu mu (`VIONA_GATE_PASSWORD_1` + `_2` veya `VIONA_UI_GATE_PASSWORD` çifti). */
+    /** Misafir web kapısı zorunlu mu (HotelAdvisor env tam ve VIONA_UI_GATE_ENABLED kapalı değil). */
     guestUiGateRequired: Boolean(env.guestUiGateRequired),
     guestUiGateStrict: Boolean(env.guestUiGateStrict),
     /** Günlük PDF: dış cron GET için `DAILY_OPERATION_REPORT_CRON_KEY` tanımlı mı (değer sızmaz). */
@@ -739,6 +763,10 @@ app.get("/api/health", (req, res) => {
     /** Deploy doğrulama (Render otomatik env; değer prod ortamında güvenilir). */
     deployGitCommit: String(process.env.RENDER_GIT_COMMIT || "").trim() || null,
     deployServiceHost: String(process.env.RENDER_SERVICE_NAME || "").trim() || null,
+    /** HotelAdvisor: base URL + hotel id + token tanımlı mı (değer sızmaz). */
+    hotelAdvisorConfigured: Boolean(env.hotelAdvisorConfigured),
+    /** `HOTEL_ADVISOR_TEST_ENABLED=1` iken /api/test/hotel-login ve /test/hotel-advisor açık. */
+    hotelAdvisorTestEnabled: Boolean(env.hotelAdvisorTestEnabled),
   };
   const pretty =
     String(req.query?.pretty || "") === "1" ||
@@ -807,9 +835,10 @@ app.get("/api/webhooks/whatsapp", (req, res) => {
 app.post("/api/chat", async (req, res) => {
   const rawClientChannel = String(req.body?.client_channel || "").toLowerCase().trim();
   const channel = rawClientChannel === "voice" ? "voice" : "web";
-  if (env.guestGateDualPasswordConfigured && channel === "web") {
+  let verifiedGuestRoom = null;
+  if (channel === "web") {
     const guestOk = parseVerifiedGuestCookie(req.get("cookie"));
-    if (!guestOk) {
+    if (env.guestUiGateRequired && !guestOk) {
       return res.status(403).json({
         ok: false,
         type: "error",
@@ -817,6 +846,7 @@ app.post("/api/chat", async (req, res) => {
         meta: { intent: "auth_gate", source: "viona_node" },
       });
     }
+    if (guestOk && guestOk.room) verifiedGuestRoom = guestOk.room;
   }
 
   const message = String(req.body?.message || "").trim();
@@ -845,6 +875,9 @@ app.post("/api/chat", async (req, res) => {
       channel,
     };
     if (conversationLanguage) payload.conversation_language = conversationLanguage;
+    if (verifiedGuestRoom) payload.verified_guest_room = verifiedGuestRoom;
+    const guestFullName = String(req.body?.guest_full_name ?? "").trim().slice(0, 120);
+    if (guestFullName) payload.guest_full_name = guestFullName;
     const abortController = new AbortController();
     const timer = setTimeout(() => abortController.abort(), timeoutMs);
     const upstream = await fetch(ASSISTANT_CHAT_ENDPOINT, {

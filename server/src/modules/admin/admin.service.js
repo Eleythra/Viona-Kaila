@@ -1032,7 +1032,13 @@ function escapeForIlikeFragment(s) {
 function applyGuestGateEntryFilters(qb, query = {}) {
   let out = applyDateFilters(qb, query, "created_at");
   const method = String(query.verification_method || "").trim().toLowerCase();
-  if (method === "deploy_bypass" || method === "elektra" || method === "password_dual") {
+  if (
+    method === "deploy_bypass" ||
+    method === "elektra" ||
+    method === "password_dual" ||
+    method === "hotel_advisor" ||
+    method === "operator_bypass"
+  ) {
     out = out.eq("verification_method", method);
   }
   const rn = String(query.room_number || "").trim();
@@ -1097,12 +1103,16 @@ export async function getGuestGateEntriesSummary(query = {}) {
   const deployBypassCount = await countMethod("deploy_bypass", filterSplit);
   const elektraCount = await countMethod("elektra", filterSplit);
   const passwordDualCount = await countMethod("password_dual", filterSplit);
+  const hotelAdvisorCount = await countMethod("hotel_advisor", filterSplit);
+  const operatorBypassCount = await countMethod("operator_bypass", filterSplit);
 
   return {
     total,
     deployBypassCount,
     elektraCount,
     passwordDualCount,
+    hotelAdvisorCount,
+    operatorBypassCount,
   };
 }
 
@@ -1121,6 +1131,10 @@ export async function exportGuestGateEntriesCsv(query = {}) {
     "full_name",
     "room_number",
     "verification_method",
+    "hotel_id",
+    "res_id",
+    "res_name_id",
+    "birth_date",
     "client_ip",
     "user_agent",
     "id",
@@ -1130,6 +1144,10 @@ export async function exportGuestGateEntriesCsv(query = {}) {
     full_name: "ad_soyad",
     room_number: "oda",
     verification_method: "dogrulama",
+    hotel_id: "otel_id",
+    res_id: "res_id",
+    res_name_id: "res_name_id",
+    birth_date: "dogum_tarihi",
     client_ip: "istemci_ip",
     user_agent: "user_agent",
     id: "kayit_id",
@@ -1140,7 +1158,7 @@ export async function exportGuestGateEntriesCsv(query = {}) {
     csvCommentLine("Bu dosya yönetim panelindeki liste ile aynı filtre mantığını kullanır."),
     csvCommentLine(`Dışa aktarım zamanı (ISO UTC): ${exportedAt}`),
     csvCommentLine(`Satır üst sınırı: ${GUEST_GATE_EXPORT_CAP}; daha fazla kayıt varsa kesilir.`),
-    csvCommentLine("dogrulama: password_dual (çift şifre) | deploy_bypass | elektra (eski)."),
+    csvCommentLine("dogrulama: hotel_advisor (PMS) | operator_bypass (env test) | password_dual (eski) | deploy_bypass | elektra (eski)."),
     csvCommentLine(""),
     csvCommentLine("--- Sütunlar ---"),
     ...columns.map((c) => csvCommentLine(`${trHeaders[c] || c} (${c})`)),

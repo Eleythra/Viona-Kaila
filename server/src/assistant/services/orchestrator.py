@@ -95,6 +95,20 @@ GUEST_NOTIF_DESC_REQUIRED = frozenset(
 )
 
 
+def _parsed_guest_identity_for_chat_form_skip(payload: ChatRequest) -> tuple[str | None, str | None]:
+    """Node `verified_guest_room` + istemci `guest_full_name` geçerliyse (ad, oda); aksi (None, None)."""
+    room_raw = str(payload.verified_guest_room or "").strip()
+    name_raw = str(payload.guest_full_name or "").strip()
+    if not room_raw or not is_valid_hotel_room_number(room_raw):
+        return None, None
+    if validate_chat_form_full_name(name_raw):
+        return None, None
+    normalized = normalize_full_name_for_storage(name_raw)
+    if not normalized:
+        return None, None
+    return normalized, room_raw
+
+
 def _guest_notification_description_lead(category: str, reply_language: str) -> str:
     """Kategori seçiminden sonra açıklama adımı: zorunlu / isteğe bağlı (web formu ile aynı mantık)."""
     need = (category or "") in GUEST_NOTIF_DESC_REQUIRED
@@ -510,7 +524,8 @@ def _request_rule_uses_reception_redirect_not_chat_form(sub_intent: str | None, 
     return False
 
 
-# Kayıt özeti satırı — `orchestrator_branch_lang` ile değil, gerçek UI dilinde gösterilir.
+# Kayıt özeti «Tip» satırı — `_build_chat_form_confirm_inform` içinde `branch_lang` ile
+# (tr/en/de/pl şablon yolu; ek diller EN) başlık/etiketlerle aynı dil setine hizalanır.
 _FORM_RECORD_TYPE_LABELS: dict[str, dict[str, str]] = {
     "tr": {
         "fault": "Arıza bildirimi",
@@ -1025,6 +1040,114 @@ class ChatOrchestrator:
             ui_language,
             "rule",
             action=None,
+        )
+
+    def _build_chat_form_confirm_inform(
+        self,
+        state: ChatFormState,
+        *,
+        intent: str,
+        reply_language: str,
+        ui_language: str,
+    ) -> ChatResponse:
+        """Kayıt özeti + onay seçenekleri (state.step == confirm varsayılır)."""
+        guest_type = (
+            "fault"
+            if state.operation == "fault"
+            else (
+                "complaint"
+                if state.operation == "complaint"
+                else ("guest_notification" if state.operation == "guest_notification" else "request")
+            )
+        )
+        category = state.category or "other"
+        details = dict(state.details or {})
+        location = details.get("location") if guest_type == "fault" else None
+        urgency = details.get("urgency") if guest_type == "fault" else None
+        cat_intent = (
+            "guest_notification"
+            if guest_type == "guest_notification"
+            else (
+                "request"
+                if guest_type == "request"
+                else ("fault" if guest_type == "fault" else "complaint")
+            )
+        )
+        # Şablon dalları (tr/en/de/pl): ek UI dilleri `orchestrator_branch_lang` ile EN’e hizalanır;
+        # özet satırlarında başlık ile kategori/lokasyon/aciliyet/tip aynı dil setinden gelsin.
+        branch_lang = _tpl_lang(reply_language)
+        category_display = category_label(cat_intent, category, branch_lang)
+        type_display = _form_record_type_label(guest_type, branch_lang)
+
+        if branch_lang == "en":
+            header = "Please confirm the record details:\n"
+            type_label = "Type"
+            cat_label = "Category"
+            loc_label = "Location"
+            urg_label = "Urgency"
+            desc_label = "Description"
+            name_label = "Name"
+            room_label = "Room"
+            confirm_line = "\nPlease choose:\n1. Confirm and create record\n2. Cancel"
+        elif branch_lang == "de":
+            header = "Bitte bestätigen Sie die folgenden Angaben:\n"
+            type_label = "Typ"
+            cat_label = "Kategorie"
+            loc_label = "Ort"
+            urg_label = "Dringlichkeit"
+            desc_label = "Beschreibung"
+            name_label = "Name"
+            room_label = "Zimmer"
+            confirm_line = "\nBitte wählen Sie:\n1. Bestätigen und Eintrag erstellen\n2. Abbrechen"
+        elif branch_lang == "pl":
+            header = "Proszę potwierdzić podsumowanie zgłoszenia:\n"
+            type_label = "Typ"
+            cat_label = "Kategoria"
+            loc_label = "Lokalizacja"
+            urg_label = "Pilność"
+            desc_label = "Opis"
+            name_label = "Imię i nazwisko"
+            room_label = "Pokój"
+            confirm_line = "\nWybierz:\n1. Potwierdź i utwórz wpis\n2. Anuluj"
+        else:
+            header = "Lütfen aşağıdaki kayıt özetini kontrol edin:\n"
+            type_label = "Tip"
+            cat_label = "Kategori"
+            loc_label = "Lokasyon"
+            urg_label = "Aciliyet"
+            desc_label = "Açıklama"
+            name_label = "Ad Soyad"
+            room_label = "Oda"
+            confirm_line = "\nLütfen seçin:\n1. Onayla ve kayıt aç\n2. İptal et"
+
+        lines = [header.rstrip()]
+        lines.append(f"- {type_label}: {type_display}")
+        lines.append(f"- {cat_label}: {category_display}")
+        if location:
+            loc_disp = value_label("location", location, branch_lang) or location
+            lines.append(f"- {loc_label}: {loc_disp}")
+        if urgency:
+            urg_disp = value_label("urgency", urgency, branch_lang) or urgency
+            lines.append(f"- {urg_label}: {urg_disp}")
+        lines.append(f"- {desc_label}: {state.description or state.initial_message or ''}")
+        lines.append(f"- {name_label}: {state.full_name or ''}")
+        lines.append(f"- {room_label}: {state.room or ''}")
+        lines.append(confirm_line.strip())
+        msg = "\n".join(lines)
+
+        return self.response_service.build(
+            "inform",
+            msg,
+            intent,
+            1.0,
+            reply_language,
+            ui_language,
+            "rule",
+            action={
+                "kind": "chat_form",
+                "operation": state.operation,
+                "step": "confirm",
+            },
         )
 
     def _maybe_quiet_hours_strip_operational_actions(
@@ -3308,6 +3431,18 @@ class ChatOrchestrator:
                     and cat not in GUEST_NOTIF_DESC_REQUIRED
                 ):
                     state.description = (state.initial_message or "").strip()
+                    pre_name, pre_room = _parsed_guest_identity_for_chat_form_skip(payload)
+                    if pre_name and pre_room:
+                        state.full_name = pre_name
+                        state.room = pre_room
+                        state.step = "confirm"
+                        self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+                        return self._build_chat_form_confirm_inform(
+                            state,
+                            intent=intent,
+                            reply_language=reply_language,
+                            ui_language=ui_language,
+                        )
                     state.step = "full_name"
                     self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
                     msg = _localized_full_name_prompt_guest_notif_skip_description(cat, reply_language)
@@ -3350,6 +3485,18 @@ class ChatOrchestrator:
                     },
                 )
             state.description = text
+            pre_name, pre_room = _parsed_guest_identity_for_chat_form_skip(payload)
+            if pre_name and pre_room:
+                state.full_name = pre_name
+                state.room = pre_room
+                state.step = "confirm"
+                self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+                return self._build_chat_form_confirm_inform(
+                    state,
+                    intent=intent,
+                    reply_language=reply_language,
+                    ui_language=ui_language,
+                )
             state.step = "full_name"
             self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
             msg = _localized_full_name_prompt_after_description_step(state.operation, cat, reply_language)
@@ -3588,105 +3735,13 @@ class ChatOrchestrator:
                     action={"kind": "chat_form", "operation": state.operation, "step": "room"},
                 )
             state.room = room_clean
-            # Oda alındı; şimdi özet + onay adımına geç.
             state.step = "confirm"
             self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
-
-            guest_type = (
-                "fault"
-                if state.operation == "fault"
-                else (
-                    "complaint"
-                    if state.operation == "complaint"
-                    else ("guest_notification" if state.operation == "guest_notification" else "request")
-                )
-            )
-            category = state.category or "other"
-            details = dict(state.details or {})
-            location = details.get("location") if guest_type == "fault" else None
-            urgency = details.get("urgency") if guest_type == "fault" else None
-            cat_intent = (
-                "guest_notification"
-                if guest_type == "guest_notification"
-                else (
-                    "request"
-                    if guest_type == "request"
-                    else ("fault" if guest_type == "fault" else "complaint")
-                )
-            )
-            category_display = category_label(cat_intent, category, reply_language)
-            type_display = _form_record_type_label(guest_type, reply_language)
-
-            # Özet metni (kayıt açılmadan önce).
-            if _tpl_lang(reply_language) == "en":
-                header = "Please confirm the record details:\n"
-                type_label = "Type"
-                cat_label = "Category"
-                loc_label = "Location"
-                urg_label = "Urgency"
-                desc_label = "Description"
-                name_label = "Name"
-                room_label = "Room"
-                confirm_line = "\nPlease choose:\n1. Confirm and create record\n2. Cancel"
-            elif _tpl_lang(reply_language) == "de":
-                header = "Bitte bestätigen Sie die folgenden Angaben:\n"
-                type_label = "Typ"
-                cat_label = "Kategorie"
-                loc_label = "Ort"
-                urg_label = "Dringlichkeit"
-                desc_label = "Beschreibung"
-                name_label = "Name"
-                room_label = "Zimmer"
-                confirm_line = "\nBitte wählen Sie:\n1. Bestätigen und Eintrag erstellen\n2. Abbrechen"
-            elif _tpl_lang(reply_language) == "pl":
-                header = "Proszę potwierdzić podsumowanie zgłoszenia:\n"
-                type_label = "Typ"
-                cat_label = "Kategoria"
-                loc_label = "Lokalizacja"
-                urg_label = "Pilność"
-                desc_label = "Opis"
-                name_label = "Imię i nazwisko"
-                room_label = "Pokój"
-                confirm_line = "\nWybierz:\n1. Potwierdź i utwórz wpis\n2. Anuluj"
-            else:
-                header = "Lütfen aşağıdaki kayıt özetini kontrol edin:\n"
-                type_label = "Tip"
-                cat_label = "Kategori"
-                loc_label = "Lokasyon"
-                urg_label = "Aciliyet"
-                desc_label = "Açıklama"
-                name_label = "Ad Soyad"
-                room_label = "Oda"
-                confirm_line = "\nLütfen seçin:\n1. Onayla ve kayıt aç\n2. İptal et"
-
-            lines = [header.rstrip()]
-            lines.append(f"- {type_label}: {type_display}")
-            lines.append(f"- {cat_label}: {category_display}")
-            if location:
-                loc_disp = value_label("location", location, reply_language) or location
-                lines.append(f"- {loc_label}: {loc_disp}")
-            if urgency:
-                urg_disp = value_label("urgency", urgency, reply_language) or urgency
-                lines.append(f"- {urg_label}: {urg_disp}")
-            lines.append(f"- {desc_label}: {state.description or state.initial_message or ''}")
-            lines.append(f"- {name_label}: {state.full_name or ''}")
-            lines.append(f"- {room_label}: {state.room or ''}")
-            lines.append(confirm_line.strip())
-            msg = "\n".join(lines)
-
-            return self.response_service.build(
-                "inform",
-                msg,
-                intent,
-                1.0,
-                reply_language,
-                ui_language,
-                "rule",
-                action={
-                    "kind": "chat_form",
-                    "operation": state.operation,
-                    "step": "confirm",
-                },
+            return self._build_chat_form_confirm_inform(
+                state,
+                intent=intent,
+                reply_language=reply_language,
+                ui_language=ui_language,
             )
 
         if state.step == "confirm":

@@ -91,8 +91,8 @@
   let requestSub = null;
   let surveySub = null;
 
-  /** Sunucu `GET /public/guest-gate/status` — `required`: iki env şifresi tanımlı ve kapı açık. */
-  let gatePasswordRequired = false;
+  /** Sunucu `GET /public/guest-gate/status` — `required`: HotelAdvisor / Elektra Hotspot env dolu ve `VIONA_UI_GATE_ENABLED` kapalı değil. */
+  let gateIdentityRequired = false;
   /** Status isteği bitene kadar «Devam» tıklanmasın. */
   let gateStatusResolved = false;
   /** Sunucu strict / site bayrağı: status düşünce ana sayfaya geçiş bloklu. */
@@ -792,11 +792,15 @@
 
   function clearGuestIdentitySession() {
     try {
-      sessionStorage.removeItem("viona_guest_identity_verified");
-      sessionStorage.removeItem("viona_guest_identity_name");
-      sessionStorage.removeItem("viona_guest_identity_room");
-      sessionStorage.removeItem("viona_guest_pms_verified");
-      sessionStorage.removeItem("viona_guest_operator_bypass");
+      if (typeof window.vionaGuestProfile === "object" && window.vionaGuestProfile && typeof window.vionaGuestProfile.clear === "function") {
+        window.vionaGuestProfile.clear();
+      } else {
+        sessionStorage.removeItem("viona_guest_identity_verified");
+        sessionStorage.removeItem("viona_guest_identity_name");
+        sessionStorage.removeItem("viona_guest_identity_room");
+        sessionStorage.removeItem("viona_guest_pms_verified");
+        sessionStorage.removeItem("viona_guest_pms_meta_json");
+      }
     } catch (_e) {
       /* private mode */
     }
@@ -978,10 +982,12 @@
 
   function resetGateForm() {
     const c1 = el("gate-check-privacy");
-    const pwd = el("gate-password");
+    const room = el("gate-room");
+    const bd = el("gate-birth-date");
     const err = el("gate-error");
     if (c1) c1.checked = false;
-    if (pwd) pwd.value = "";
+    if (room) room.value = "";
+    if (bd) bd.value = "";
     if (err) {
       err.textContent = "";
       err.classList.add("hidden");
@@ -1031,19 +1037,26 @@
       btn.setAttribute("aria-busy", "true");
     }
     try {
-      const pwdStack = el("gate-password-stack");
+      const idStack = el("gate-identity-stack");
       const sub = el("gate-screen-subtitle");
       if (!sub) return;
 
-      gatePasswordRequired = false;
+      gateIdentityRequired = false;
       try {
         const res = await fetch(`${vionaApiBase()}/public/guest-gate/status`, { cache: "no-store" });
         if (!res.ok) throw new Error("gate_status_http");
         const data = await res.json();
-        gatePasswordRequired = Boolean(data && data.required);
+        gateIdentityRequired = Boolean(data && data.required);
         writeGateStrictSession(Boolean(data && data.strict));
+        if (
+          data &&
+          Array.isArray(data.extraValidRoomNumbers) &&
+          typeof window.vionaMergeExtraHotelRoomNumbers === "function"
+        ) {
+          window.vionaMergeExtraHotelRoomNumbers(data.extraValidRoomNumbers);
+        }
       } catch (_e) {
-        gatePasswordRequired = false;
+        gateIdentityRequired = false;
         if (shouldBlockGateWhenStatusFails()) {
           gateStatusFetchFailed = true;
         }
@@ -1053,26 +1066,40 @@
       }
 
       if (!gateStatusFetchFailed) {
-        if (gatePasswordRequired) {
-          if (pwdStack) pwdStack.classList.remove("hidden");
+        if (gateIdentityRequired) {
+          if (idStack) idStack.classList.remove("hidden");
         } else {
-          if (pwdStack) pwdStack.classList.add("hidden");
-          const pwd = el("gate-password");
-          if (pwd) pwd.value = "";
+          if (idStack) idStack.classList.add("hidden");
+          const room = el("gate-room");
+          const bd = el("gate-birth-date");
+          if (room) room.value = "";
+          if (bd) bd.value = "";
         }
-        sub.setAttribute(
-          "data-i18n",
-          gatePasswordRequired ? "gateScreenSubtitlePassword" : "gateScreenSubtitle",
-        );
+        sub.setAttribute("data-i18n", "gateScreenSubtitle");
       } else {
-        if (pwdStack) pwdStack.classList.add("hidden");
-        const pwd = el("gate-password");
-        if (pwd) pwd.value = "";
+        if (idStack) idStack.classList.add("hidden");
+        const room = el("gate-room");
+        const bd = el("gate-birth-date");
+        if (room) room.value = "";
+        if (bd) bd.value = "";
         sub.setAttribute("data-i18n", "gateScreenSubtitle");
       }
 
       const gateRoot = el("view-gate");
       if (gateRoot) applyI18n(gateRoot);
+
+      const bdMax = el("gate-birth-date");
+      if (bdMax && typeof bdMax.max !== "undefined") {
+        try {
+          const d = new Date();
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, "0");
+          const day = String(d.getDate()).padStart(2, "0");
+          bdMax.max = `${y}-${m}-${day}`;
+        } catch (_d) {
+          /* yoksay */
+        }
+      }
 
       if (gateStatusFetchFailed) {
         showGateError("gateErrorGateStrict");
@@ -1115,7 +1142,7 @@
     const back = el("btn-gate-back-lang");
     if (!btn) return;
 
-    ["gate-password"].forEach((id) => {
+    ["gate-room", "gate-birth-date"].forEach((id) => {
       const node = el(id);
       if (node) node.addEventListener("focus", () => gateScrollFocused(node));
     });
@@ -1128,12 +1155,15 @@
       }
     }
     const chk = el("gate-check-privacy");
-    const pwdInput = el("gate-password");
+    const roomInput = el("gate-room");
+    const birthInput = el("gate-birth-date");
     if (chk) chk.addEventListener("change", clearGateError);
-    if (pwdInput) pwdInput.addEventListener("input", clearGateError);
+    if (roomInput) roomInput.addEventListener("input", clearGateError);
+    if (birthInput) birthInput.addEventListener("change", clearGateError);
 
     btn.addEventListener("click", () => {
       void (async () => {
+        let pmsVerifiedOk = false;
         const errEl = el("gate-error");
         if (errEl) {
           errEl.textContent = "";
@@ -1156,11 +1186,15 @@
           return;
         }
 
-        if (gatePasswordRequired) {
-          const raw = (el("gate-password") && el("gate-password").value) || "";
-          const pw = String(raw).trim();
-          if (!pw) {
-            showGateError("gateErrorPasswordEmpty");
+        if (gateIdentityRequired) {
+          const roomNo = String((el("gate-room") && el("gate-room").value) || "").trim();
+          const birthDate = String((el("gate-birth-date") && el("gate-birth-date").value) || "").trim();
+          if (!roomNo) {
+            showGateError("gateErrorRoomRequired");
+            return;
+          }
+          if (!birthDate) {
+            showGateError("gateErrorBirthDateRequired");
             return;
           }
 
@@ -1171,7 +1205,7 @@
               method: "POST",
               headers: { "Content-Type": "application/json" },
               credentials: "include",
-              body: JSON.stringify({ password: pw }),
+              body: JSON.stringify({ roomNo, birthDate }),
             });
             let data = {};
             try {
@@ -1180,30 +1214,35 @@
               data = {};
             }
             if (!res.ok || !data.ok) {
-              const apiMsg =
-                data && typeof data.message === "string" && String(data.message).trim()
-                  ? String(data.message).trim()
-                  : "";
-              if (apiMsg) {
-                const errNode = el("gate-error");
-                if (errNode) {
-                  errNode.textContent = apiMsg;
-                  errNode.classList.remove("hidden");
-                }
+              const errCode = data && typeof data.error === "string" ? String(data.error).trim() : "";
+              let gateKey = "";
+              if (errCode === "rate_limit_exceeded") gateKey = "gateErrorRateLimit";
+              else if (errCode === "identity_required") gateKey = "gateErrorIdentityRequired";
+              else if (errCode === "invalid_identity") gateKey = "gateErrorIdentityMismatch";
+              else if (errCode === "hotel_advisor_not_configured") gateKey = "gateErrorPmsUnavailable";
+              else if (errCode === "verification_failed") gateKey = "gateErrorGateVerify";
+              if (gateKey) {
+                showGateError(gateKey);
+              } else if (res.status === 429) {
+                showGateError("gateErrorRateLimit");
+              } else if (res.status === 400) {
+                showGateError("gateErrorIdentityRequired");
+              } else if (res.status === 401) {
+                showGateError("gateErrorIdentityMismatch");
+              } else if (res.status === 503) {
+                showGateError("gateErrorPmsUnavailable");
               } else {
-                if (res.status === 429) {
-                  showGateError("gateErrorRateLimit");
-                } else if (res.status === 400) {
-                  showGateError("gateErrorPasswordEmpty");
-                } else if (res.status === 401) {
-                  showGateError("gateErrorPassword");
-                } else {
-                  showGateError("gateErrorGateVerify");
-                }
+                showGateError("gateErrorGateVerify");
               }
               btn.disabled = false;
               btn.removeAttribute("aria-busy");
               return;
+            }
+            pmsVerifiedOk = true;
+            if (data && data.guest && typeof window.vionaGuestProfile === "object" && window.vionaGuestProfile) {
+              if (typeof window.vionaGuestProfile.persist === "function") {
+                window.vionaGuestProfile.persist(data.guest);
+              }
             }
           } catch (_e) {
             showGateError("gateErrorGateVerify");
@@ -1215,7 +1254,9 @@
           btn.removeAttribute("aria-busy");
         }
 
-        clearGuestIdentitySession();
+        if (!pmsVerifiedOk) {
+          clearGuestIdentitySession();
+        }
         markGateSessionCompleted();
         resetGateForm();
         showView("home");
@@ -1242,9 +1283,9 @@
           err.classList.add("hidden");
         }
         void refreshGuestGateUi().then(() => {
-          const pwdEl = el("gate-password");
+          const roomEl = el("gate-room");
           const chkGate = el("gate-check-privacy");
-          if (!gateStatusFetchFailed && gatePasswordRequired && pwdEl) pwdEl.focus();
+          if (!gateStatusFetchFailed && gateIdentityRequired && roomEl) roomEl.focus();
           else if (!gateStatusFetchFailed && chkGate) chkGate.focus();
         });
       });
@@ -1274,11 +1315,11 @@
       showView("gate");
       applyI18n(document);
       void refreshGuestGateUi().then(() => {
-        const pwdEl = el("gate-password");
+        const roomEl = el("gate-room");
         const chkGate = el("gate-check-privacy");
         const retryBtn = el("btn-gate-retry-status");
         if (gateStatusFetchFailed && retryBtn) retryBtn.focus();
-        else if (!gateStatusFetchFailed && gatePasswordRequired && pwdEl) pwdEl.focus();
+        else if (!gateStatusFetchFailed && gateIdentityRequired && roomEl) roomEl.focus();
         else if (!gateStatusFetchFailed && chkGate) chkGate.focus();
       });
     });

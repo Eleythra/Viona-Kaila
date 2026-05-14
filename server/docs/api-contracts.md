@@ -18,11 +18,11 @@ Web formları (`js/render-requests-module.js` vb.) ve sohbetten gelen `create_gu
 
 İstemci `fetch(..., { credentials: "include" })` kullanmalıdır (çerez).
 
-- **`GET /api/public/guest-gate/status`** — `{ required, strict, dualPassword, identityRequired, identityRequiresBirthDate, identityRequiresFullName, pmsIdentity }`. Kimlik alanları ve `pmsIdentity` uyumluluk için `false` döner. `required`: iki kapı şifresi env’de tanımlı ve kapı devre dışı değilse `true`. `dualPassword`: `VIONA_GATE_PASSWORD_1` + `VIONA_GATE_PASSWORD_2` (veya `VIONA_UI_GATE_PASSWORD` + `VIONA_UI_GATE_PASSWORD_2`) ikisi de doluysa `true` (istemci tek alanda girer; sunucu iki değerden **biriyle** OR eşler).
-- **`POST /api/public/guest-gate/verify`** — Gövde: `password` (veya `password1` / `password_primary`). KVKK onayı istemcidedir; sunucu `privacy` beklemez. Girilen değer, env’deki iki gizli değerden **biriyle** eşleşmelidir (OR; büyük/küçük harf duyarsız). Başarılı girişte isteğe bağlı audit: yalnızca `VIONA_GUEST_GATE_AUDIT_LOG=1` iken `guest_gate_entries` + structured log (`Misafir` / `gate`); varsayılan kapalı. Başarı: HttpOnly `viona_guest_verified` (`room` iç kullanım `"gate"`), `200` `{ ok: true, verification: "password_dual" }`. Hatalar: `400` `password_required`, `401` `invalid_password`. Kapı kapalıysa: `200` `{ ok: true }`.
+- **`GET /api/public/guest-gate/status`** — `{ required, strict, dualPassword, identityRequired, identityRequiresBirthDate, identityRequiresFullName, pmsIdentity }`; operatör bypass açıkken isteğe bağlı `extraValidRoomNumbers` (tarayıcıda geçerli oda kümesine eklenir). `required`: `HOTEL_ADVISOR_BASE_URL` + `HOTEL_ADVISOR_HOTEL_ID` + `HOTEL_ADVISOR_TOKEN` dolu ve `VIONA_UI_GATE_ENABLED` kapalı değilse `true`. `pmsIdentity`: HotelAdvisor env tamamsa `true`. `dualPassword`: uyumluluk için `false` (çift şifre kapısı kaldırıldı). `identityRequiresBirthDate`: `pmsIdentity` ile aynı mantık.
+- **`POST /api/public/guest-gate/verify`** — Kapı açıksa gövde: `roomNo` (veya `room`) ve `birthDate` (`YYYY-MM-DD`). KVKK onayı istemcidedir. Varsayılan: HotelAdvisor misafir listesi ile eşleştirir. Başarı: HttpOnly `viona_guest_verified`, `200` `{ ok: true, verification: "hotel_advisor", guest: { guestName, roomNo, resId, resNameId } }`. **Operatör bypass** (yalnızca test): `VIONA_OPERATOR_GATE_BYPASS=1` ve env’de tanımlı oda+doğum eşleşirse PMS atlanır, `verification: "operator_bypass"`, `guest.resId` / `resNameId` `null`. `guest_gate_entries`: `hotel_advisor` ve `operator_bypass` Supabase yapılandırıysa **her zaman** insert; CHECK güncellemesi: `server/docs/migrations/guest-gate-entries-operator-bypass.sql`. Diğer yöntemler: `VIONA_GUEST_GATE_AUDIT_LOG=1`. Hatalar: `400` `identity_required`, `401` `invalid_identity`, `503` `hotel_advisor_not_configured`, `500` `verification_failed`. Kapı kapalıysa: `200` `{ ok: true }`.
 - **`POST /api/public/guest-gate/logout`** — `{ ok: true }`; çerezi siler.
 
-**Web sohbet:** `guestGateDualPasswordConfigured` iken (bkz. `/api/health`; iki env değeri dolu demektir) tarayıcıda geçerli doğrulama çerezi yoksa web kanalı `POST /api/chat` reddedilir; aksi halde istek Python asistana proxylanır.
+**Web sohbet:** `guestUiGateRequired` iken (HotelAdvisor env tam; bkz. `/api/health`) tarayıcıda geçerli doğrulama çerezi yoksa web kanalı `POST /api/chat` reddedilir; aksi halde istek Python asistana proxylanır. Web kanalında geçerli misafir çerezi varsa Node, upstream gövdeye `verified_guest_room` ekler; istemci isteğe bağlı `guest_full_name` gönderebilir (PMS sonrası `vionaGuestProfile`) — Python sohbet formunda ad/oda adımlarını atlamak için kullanılır.
 
 ### Meta Cloud API — gönderim uç noktası
 
@@ -47,7 +47,7 @@ Buton yoksa veya `=1` yapılmış ama şablonda uyumsuzluk varsa Meta hata döne
 
 ### `/api/health` özeti
 
-`whatsappOperational` içinde `cloudRecipientCounts`, `panelUrlButtons` (`hk` / `tech` / `front` boolean) yer alır (gizli anahtar sızdırmaz). Misafir kapısı için ayrıca `guestGateDualPasswordConfigured`, `guestUiGateRequired`, `guestUiGateStrict` döner (değer sızmaz).
+`whatsappOperational` içinde `cloudRecipientCounts`, `panelUrlButtons` (`hk` / `tech` / `front` boolean) yer alır (gizli anahtar sızdırmaz). Misafir kapısı için ayrıca `guestGateDualPasswordConfigured`, `hotelAdvisorConfigured`, `guestUiGateRequired`, `guestUiGateStrict` döner (değer sızmaz).
 
 ---
 
@@ -158,11 +158,11 @@ Buton yoksa veya `=1` yapılmış ama şablonda uyumsuzluk varsa Meta hata döne
 
 ### Misafir kapısı girişleri (`guest_gate_entries`)
 
-Yeni satırlar yalnızca ortamda `VIONA_GUEST_GATE_AUDIT_LOG=1` iken yazılır (varsayılan kapalı).
+Supabase yapılandırıysa `hotel_advisor` ve `operator_bypass` başarılı doğrulamaları **her zaman** bu tabloya yazılır (denetim). Diğer yöntemler (`password_dual`, `deploy_bypass`, `elektra`) yalnızca `VIONA_GUEST_GATE_AUDIT_LOG=1` iken eklenir (varsayılan kapalı).
 
 Tüm uçlar diğer admin API’leri gibi **admin bearer token** gerektirir (`Authorization` veya panelin kullandığı başlık).
 
-- **`GET /api/admin/guest-gate-entries`** — Sayfalı liste. Query: `page`, `pageSize`, `from`, `to` (`created_at`), `verification_method` (`password_dual` \| `deploy_bypass` \| `elektra`), `room_number` (tam eşleşme), `search` (ad veya oda için `ilike`). Yanıt: `{ ok, items, pagination }`.
-- **`GET /api/admin/guest-gate-entries/summary`** — Aynı filtrelerle özet: toplam ve yöntem bazlı sayılar (`passwordDualCount`, `deployBypassCount`, `elektraCount`).
+- **`GET /api/admin/guest-gate-entries`** — Sayfalı liste. Query: `page`, `pageSize`, `from`, `to` (`created_at`), `verification_method` (`hotel_advisor` \| `operator_bypass` \| `password_dual` \| `deploy_bypass` \| `elektra`), `room_number` (tam eşleşme), `search` (ad veya oda için `ilike`). Yanıt: `{ ok, items, pagination }`.
+- **`GET /api/admin/guest-gate-entries/summary`** — Aynı filtrelerle özet: toplam ve yöntem bazlı sayılar (`hotelAdvisorCount`, `operatorBypassCount`, `passwordDualCount`, `deployBypassCount`, `elektraCount`).
 - **`GET /api/admin/guest-gate-entries/export.csv`** — Filtrelerle uyumlu CSV indirimi (`Content-Disposition`).
 - **`DELETE /api/admin/guest-gate-entries/:id`** — Tek kayıt silme (UUID); yanıt `{ ok: true, id }`.

@@ -18,11 +18,11 @@
       langGridAria: "Выбор языка",
       langIdleNotice:
         "Сессия завершена из-за отсутствия активности. Выберите язык и войдите снова.",
-      gateScreenTitle: "Подтверждение проживания",
+      gateScreenTitle: "Проверка гостя",
       gateScreenSubtitle:
-        "Прочитайте уведомление ниже и подтвердите продолжение.",
+        "Введите номер комнаты и дату рождения по регистрации; прочитайте уведомление и подтвердите.",
       gateScreenSubtitleWithPassword:
-        "Введите код доступа отеля; затем прочитайте уведомление и подтвердите.",
+        "Введите номер комнаты и дату рождения; прочитайте уведомление и подтвердите.",
       gateScreenSubtitleWithIdentity:
         "Имя, фамилия и номер комнаты сверяются со списком гостей отеля.",
       gateScreenSubtitleWithPasswordAndIdentity:
@@ -61,6 +61,10 @@
         "Нельзя подтвердить доступ (сервер недоступен). Проверьте интернет или нажмите «Повторить».",
       gateRetryStatus: "Повторить",
       gateErrorPrivacy: "Отметьте галочку подтверждения, чтобы продолжить.",
+      gateErrorIdentityMismatch:
+        "Номер комнаты или дата рождения не подтверждены. Проверьте данные или обратитесь на ресепшн.",
+      gateErrorPmsUnavailable:
+        "Проверка гостя временно недоступна. Попробуйте позже или обратитесь на ресепшн.",
       homeTitle: "Kaila Beach Hotel",
       introLead:
         "Первая линия у моря в Обагёле, Аланья — концепция «всё включено» для комфортного отдыха.",
@@ -128,11 +132,11 @@
       langGridAria: "Sprogvalg",
       langIdleNotice:
         "Din session blev afsluttet efter inaktivitet. Vælg sprog og log ind igen.",
-      gateScreenTitle: "Bekræft dit ophold",
+      gateScreenTitle: "Gæsteverifikation",
       gateScreenSubtitle:
-        "Læs den korte meddelelse og bekræft for at fortsætte.",
+        "Indtast værelsesnummer og fødselsdato som registreret; læs meddelelsen og bekræft.",
       gateScreenSubtitleWithPassword:
-        "Indtast hotellets adgangskode; læs meddelelsen og bekræft.",
+        "Indtast værelsesnummer og fødselsdato; læs meddelelsen og bekræft.",
       gateScreenSubtitleWithIdentity:
         "Fulde navn og værelsesnummer matches med hotellets gæsteliste.",
       gateScreenSubtitleWithPasswordAndIdentity:
@@ -171,6 +175,10 @@
         "Adgang kan ikke bekræftes (serveren er ikke tilgængelig). Tjek forbindelsen eller tryk «Prøv igen».",
       gateRetryStatus: "Prøv igen",
       gateErrorPrivacy: "Sæt kryds i feltet for at fortsætte.",
+      gateErrorIdentityMismatch:
+        "Værelsesnummer eller fødselsdato kunne ikke bekræftes. Tjek oplysningerne eller kontakt receptionen.",
+      gateErrorPmsUnavailable:
+        "Gæsteverifikation er midlertidigt utilgængelig. Prøv igen senere eller kontakt receptionen.",
       homeTitle: "Kaila Beach Hotel",
       introLead: "Strandfront i Obagöl, Alanya — All Inclusive til en behagelig ferie.",
       appVionaTitle: "Viona · Din smarte opholdsledsager",
@@ -237,11 +245,11 @@
       langGridAria: "Volba jazyka",
       langIdleNotice:
         "Relace byla ukončena z důvodu nečinnosti. Vyberte jazyk a přihlaste se znovu.",
-      gateScreenTitle: "Potvrzení pobytu",
+      gateScreenTitle: "Ověření hosta",
       gateScreenSubtitle:
-        "Přečtěte si stručnou informaci a potvrďte pokračování.",
+        "Zadejte číslo pokoje a datum narození podle registrace; přečtěte si informaci a potvrďte.",
       gateScreenSubtitleWithPassword:
-        "Zadejte přístupový kód hotelu; poté si přečtěte informaci a potvrďte.",
+        "Zadejte číslo pokoje a datum narození; přečtěte informaci a potvrďte.",
       gateScreenSubtitleWithIdentity:
         "Jméno, příjmení a číslo pokoje se porovnávají se seznamem hostů hotelu.",
       gateScreenSubtitleWithPasswordAndIdentity:
@@ -280,6 +288,10 @@
         "Přístup nelze ověřit (server nedostupný). Zkontrolujte připojení nebo klepněte na «Zkusit znovu».",
       gateRetryStatus: "Zkusit znovu",
       gateErrorPrivacy: "Zaškrtněte prosím pole pro pokračování.",
+      gateErrorIdentityMismatch:
+        "Číslo pokoje nebo datum narození nelze ověřit. Zkontrolujte údaje nebo kontaktujte recepci.",
+      gateErrorPmsUnavailable:
+        "Ověření hosta je dočasně nedostupné. Zkuste to později nebo kontaktujte recepci.",
       homeTitle: "Kaila Beach Hotel",
       introLead: "Přímo u moře v Obagöl, Alanya — All Inclusive pro pohodlnou dovolenou.",
       appVionaTitle: "Viona · Chytrý průvodce pobytem",
@@ -346,11 +358,11 @@
       langGridAria: "Opțiuni limbă",
       langIdleNotice:
         "Sesiunea s-a încheiat din cauza inactivității. Alegeți limba și autentificați-vă din nou.",
-      gateScreenTitle: "Confirmarea sejurului",
+      gateScreenTitle: "Verificare oaspete",
       gateScreenSubtitle:
-        "Citiți informarea scurtă și confirmați pentru a continua.",
+        "Introduceți numărul camerei și data nașterii conform înregistrării; citiți informarea și confirmați.",
       gateScreenSubtitleWithPassword:
-        "Introduceți codul de acces al hotelului; apoi citiți informarea și confirmați.",
+        "Introduceți numărul camerei și data nașterii; citiți informarea și confirmați.",
       gateScreenSubtitleWithIdentity:
         "Numele și camera sunt verificate față de lista de oaspeți a hotelului.",
       gateScreenSubtitleWithPasswordAndIdentity:
@@ -389,6 +401,10 @@
         "Accesul nu poate fi verificat (server indisponibil). Verificați conexiunea sau apăsați «Reîncearcă».",
       gateRetryStatus: "Reîncearcă",
       gateErrorPrivacy: "Bifați caseta pentru a continua.",
+      gateErrorIdentityMismatch:
+        "Numărul camerei sau data nașterii nu a putut fi verificat. Verificați datele sau contactați recepția.",
+      gateErrorPmsUnavailable:
+        "Verificarea oaspetelui nu este disponibilă momentan. Încercați mai târziu sau contactați recepția.",
       homeTitle: "Kaila Beach Hotel",
       introLead: "La malul mării în Obagöl, Alanya — All Inclusive pentru o vacanță confortabilă.",
       appVionaTitle: "Viona · Companionul inteligent al sejurului",
@@ -455,11 +471,11 @@
       langGridAria: "Taalkeuze",
       langIdleNotice:
         "Uw sessie is beëindigd na inactiviteit. Kies uw taal en meld u opnieuw aan.",
-      gateScreenTitle: "Verblijf bevestigen",
+      gateScreenTitle: "Gastverificatie",
       gateScreenSubtitle:
-        "Lees de korte mededeling en bevestig om door te gaan.",
+        "Voer kamernummer en geboortedatum in zoals geregistreerd; lees de mededeling en bevestig.",
       gateScreenSubtitleWithPassword:
-        "Voer de hoteltoegangscode in; lees de mededeling en bevestig.",
+        "Voer kamernummer en geboortedatum in; lees de mededeling en bevestig.",
       gateScreenSubtitleWithIdentity:
         "Naam en kamernummer worden vergeleken met de gastenlijst van het hotel.",
       gateScreenSubtitleWithPasswordAndIdentity:
@@ -498,6 +514,10 @@
         "Toegang kan niet worden gecontroleerd (server niet bereikbaar). Controleer uw verbinding of tik op «Opnieuw».",
       gateRetryStatus: "Opnieuw",
       gateErrorPrivacy: "Vink het vakje aan om door te gaan.",
+      gateErrorIdentityMismatch:
+        "Kamernummer of geboortedatum kon niet worden geverifieerd. Controleer de gegevens of neem contact op met de receptie.",
+      gateErrorPmsUnavailable:
+        "Gastverificatie is tijdelijk niet beschikbaar. Probeer het later opnieuw of neem contact op met de receptie.",
       homeTitle: "Kaila Beach Hotel",
       introLead: "Strandzijde in Obagöl, Alanya — all-inclusive voor een comfortabel verblijf.",
       appVionaTitle: "Viona · Uw slimme verblijfsmetgezel",
@@ -564,11 +584,11 @@
       langGridAria: "Voľba jazyka",
       langIdleNotice:
         "Relácia bola ukončená z dôvodu nečinnosti. Vyberte jazyk a prihláste sa znova.",
-      gateScreenTitle: "Potvrdenie pobytu",
+      gateScreenTitle: "Overenie hosťa",
       gateScreenSubtitle:
-        "Prečítajte si stručnú informáciu a potvrďte pokračovanie.",
+        "Zadajte číslo izby a dátum narodenia podľa registrácie; prečítajte informáciu a potvrďte.",
       gateScreenSubtitleWithPassword:
-        "Zadajte prístupový kód hotela; potom si prečítajte informáciu a potvrďte.",
+        "Zadajte číslo izby a dátum narodenia; prečítajte informáciu a potvrďte.",
       gateScreenSubtitleWithIdentity:
         "Meno, priezvisko a číslo izby sa porovnávajú so zoznamom hostí hotela.",
       gateScreenSubtitleWithPasswordAndIdentity:
@@ -607,6 +627,10 @@
         "Prístup sa nepodarilo overiť (server nedostupný). Skontrolujte pripojenie alebo ťuknite na «Skúsiť znova».",
       gateRetryStatus: "Skúsiť znova",
       gateErrorPrivacy: "Zaškrtnite pole na pokračovanie.",
+      gateErrorIdentityMismatch:
+        "Číslo izby alebo dátum narodenia sa nepodarilo overiť. Skontrolujte údaje alebo kontaktujte recepciu.",
+      gateErrorPmsUnavailable:
+        "Overenie hosťa je dočasne nedostupné. Skúste to neskôr alebo kontaktujte recepciu.",
       homeTitle: "Kaila Beach Hotel",
       introLead: "Pri mori v Obagöl, Alanya — all inclusive pre pohodlnú dovolenku.",
       appVionaTitle: "Viona · Váš inteligentný sprievodca pobytom",
@@ -666,6 +690,218 @@
       hintCheck24: "CHECK24 (Nemecko) — hodnotenie hotela po pobyte.",
     },
   };
+
+  /** Kapı formu: oran sınırı + zorunlu alanlar (app.js gate hata kodları). */
+  var GATE_FIELD_ERRORS_EXTRA = {
+    ru: {
+      gateErrorRateLimit: "Слишком много неудачных попыток. Подождите немного и попробуйте снова.",
+      gateErrorRoomRequired: "Введите номер комнаты.",
+      gateErrorBirthDateRequired: "Выберите дату рождения.",
+      gateErrorIdentityRequired: "Введите номер комнаты и дату рождения.",
+      gateErrorIdentityNameRequired: "Введите имя и фамилию.",
+    },
+    da: {
+      gateErrorRateLimit: "For mange mislykkede forsøg. Vent lidt og prøv igen.",
+      gateErrorRoomRequired: "Indtast venligst dit værelsesnummer.",
+      gateErrorBirthDateRequired: "Vælg venligst din fødselsdato.",
+      gateErrorIdentityRequired: "Indtast venligst værelsesnummer og fødselsdato.",
+      gateErrorIdentityNameRequired: "Indtast venligst dit fulde navn.",
+    },
+    cs: {
+      gateErrorRateLimit: "Příliš mnoho neúspěšných pokusů. Chvíli počkejte a zkuste to znovu.",
+      gateErrorRoomRequired: "Zadejte prosím číslo pokoje.",
+      gateErrorBirthDateRequired: "Vyberte prosím datum narození.",
+      gateErrorIdentityRequired: "Zadejte prosím číslo pokoje a datum narození.",
+      gateErrorIdentityNameRequired: "Zadejte prosím jméno a příjmení.",
+    },
+    ro: {
+      gateErrorRateLimit: "Prea multe încercări eșuate. Așteptați puțin și încercați din nou.",
+      gateErrorRoomRequired: "Introduceți numărul camerei.",
+      gateErrorBirthDateRequired: "Selectați data nașterii.",
+      gateErrorIdentityRequired: "Introduceți numărul camerei și data nașterii.",
+      gateErrorIdentityNameRequired: "Introduceți numele complet.",
+    },
+    nl: {
+      gateErrorRateLimit: "Te veel mislukte pogingen. Wacht even en probeer opnieuw.",
+      gateErrorRoomRequired: "Voer uw kamernummer in.",
+      gateErrorBirthDateRequired: "Selecteer uw geboortedatum.",
+      gateErrorIdentityRequired: "Voer kamernummer en geboortedatum in.",
+      gateErrorIdentityNameRequired: "Voer uw volledige naam in.",
+    },
+    sk: {
+      gateErrorRateLimit: "Príliš veľa neúspešných pokusov. Počkajte chvíľu a skúste znova.",
+      gateErrorRoomRequired: "Zadajte číslo izby.",
+      gateErrorBirthDateRequired: "Vyberte dátum narodenia.",
+      gateErrorIdentityRequired: "Zadajte číslo izby a dátum narodenia.",
+      gateErrorIdentityNameRequired: "Zadajte meno a priezvisko.",
+    },
+  };
+  Object.keys(GATE_FIELD_ERRORS_EXTRA).forEach(function (c) {
+    if (PATCH[c]) Object.assign(PATCH[c], GATE_FIELD_ERRORS_EXTRA[c]);
+  });
+
+  /** Talepler hub’u + ortak alanlar (İngilizce yedeği yerine yerel kopya). */
+  var REQ_HUB_FORMS_EXTRA = {
+    ru: {
+      reqIntro:
+        "Здесь вы отправляете запросы, жалобы, сообщения о неисправностях в номере или уведомления (диета, здоровье, праздники). Выберите тип ниже и заполните форму — сообщение уйдёт команде отеля.",
+      reqBackToHub: "Назад к категориям",
+      reqSubmit: "Отправить",
+      reqSending: "Отправка…",
+      reqSuccessTitle: "Спасибо",
+      reqErrSend: "Не удалось отправить; попробуйте снова.",
+      reqErrApi: "Не удалось загрузить модуль отправки.",
+      reqApiErrNetwork: "Ошибка сети; проверьте соединение и повторите.",
+      reqApiErrHttpStatus: "Ответ сервера: HTTP {code}. Проверьте соединение и настройки API.",
+      reqLabelName: "Полное имя",
+      reqLabelRoom: "Номер комнаты",
+      reqHintNameForm:
+        "Введите имя и фамилию как в документе, через пробел (напр. Иван Иванов). Макс. 120 символов.",
+      reqLabelNationality: "Гражданство",
+      reqNatPlaceholder: "Выберите",
+      reqLabelDesc: "Описание",
+      reqSectionRequestPickHint: "Выберите по одному варианту в каждой группе; заголовки разделов не являются кнопками.",
+      reqLabelRequestCategory: "Тип запроса",
+      reqLabelCategories: "Категории (выберите хотя бы одну)",
+      reqGuestNotifMainHeading: "Ваше уведомление",
+      reqGuestNotifModuleSub: "Питание, здоровье, праздники и поздний выезд",
+      reqNotifIntro:
+        "Сообщите об аллергенах и предпочтениях в питании, здоровье / особых потребностях или праздниках, выбрав тему ниже. Обязательные поля нужно заполнить; данные используются только для поддержки вашего проживания.",
+    },
+    da: {
+      reqIntro:
+        "Send forespørgsler, klager, fejlrapporter fra værelset eller gæstemeldinger (kost, helbred, fejringer) her. Vælg en type nedenfor og udfyld formularen — beskeden går til hotelteamet.",
+      reqBackToHub: "Tilbage til kategorier",
+      reqSubmit: "Send",
+      reqSending: "Sender…",
+      reqSuccessTitle: "Tak",
+      reqErrSend: "Kunne ikke sende; prøv igen.",
+      reqErrApi: "Sendemodulet kunne ikke indlæses.",
+      reqApiErrNetwork: "Netværksfejl; tjek forbindelsen og prøv igen.",
+      reqApiErrHttpStatus: "Server svar: HTTP {code}. Tjek forbindelse og API-konfiguration.",
+      reqLabelName: "Fulde navn",
+      reqLabelRoom: "Værelsesnummer",
+      reqHintNameForm:
+        "Skriv for- og efternavn som på ID, adskilt af mellemrum (f.eks. Jane Smith). Maks. 120 tegn.",
+      reqLabelNationality: "Nationalitet",
+      reqNatPlaceholder: "Vælg",
+      reqLabelDesc: "Beskrivelse",
+      reqSectionRequestPickHint: "Vælg én mulighed pr. gruppe; sektionstitler er ikke valgbare.",
+      reqLabelRequestCategory: "Forespørgselstype",
+      reqLabelCategories: "Kategorier (vælg mindst én)",
+      reqGuestNotifMainHeading: "Din meddelelse",
+      reqGuestNotifModuleSub: "Kost, helbred, fejringer og sen udtjekning",
+      reqNotifIntro:
+        "Del allergener og kostpræferencer, helbred / særlige behov eller fejringsønsker ved at vælge et emne nedenfor. Obligatoriske felter skal udfyldes; oplysningerne bruges kun til at understøtte dit ophold.",
+    },
+    cs: {
+      reqIntro:
+        "Zde odesíláte požadavky, stížnosti, hlášení závad na pokoji nebo oznámení hostů (strava, zdraví, oslavy). Vyberte typ níže a vyplňte formulář — zpráva se odešle týmu hotelu.",
+      reqBackToHub: "Zpět ke kategoriím",
+      reqSubmit: "Odeslat",
+      reqSending: "Odesílání…",
+      reqSuccessTitle: "Děkujeme",
+      reqErrSend: "Odeslání se nezdařilo; zkuste to znovu.",
+      reqErrApi: "Modul pro odeslání se nepodařilo načíst.",
+      reqApiErrNetwork: "Chyba sítě; zkontrolujte připojení a zkuste to znovu.",
+      reqApiErrHttpStatus: "Odpověď serveru: HTTP {code}. Zkontrolujte připojení a konfiguraci API.",
+      reqLabelName: "Jméno a příjmení",
+      reqLabelRoom: "Číslo pokoje",
+      reqHintNameForm:
+        "Zadejte jméno a příjmení jako v dokladu, oddělené mezerou (např. Jan Novák). Max. 120 znaků.",
+      reqLabelNationality: "Státní příslušnost",
+      reqNatPlaceholder: "Vyberte",
+      reqLabelDesc: "Popis",
+      reqSectionRequestPickHint: "V každé skupině vyberte jednu možnost; nadpisy sekcí nejsou tlačítka.",
+      reqLabelRequestCategory: "Typ požadavku",
+      reqLabelCategories: "Kategorie (vyberte alespoň jednu)",
+      reqGuestNotifMainHeading: "Vaše oznámení",
+      reqGuestNotifModuleSub: "Strava, zdraví, oslavy a pozdější odhlášení",
+      reqNotifIntro:
+        "Sdělte alergeny a stravovací preference, zdravotní / speciální potřeby nebo žádosti o oslavu výběrem tématu níže. Povinná pole je třeba vyplnit; údaje slouží pouze k podpoře vašeho pobytu.",
+    },
+    ro: {
+      reqIntro:
+        "Aici trimiteți cereri, reclamații, rapoarte de defecțiuni din cameră sau înștiințări pentru oaspeți (dietă, sănătate, sărbători). Alegeți un tip mai jos și completați formularul — mesajul merge la echipa hotelului.",
+      reqBackToHub: "Înapoi la categorii",
+      reqSubmit: "Trimite",
+      reqSending: "Se trimite…",
+      reqSuccessTitle: "Mulțumim",
+      reqErrSend: "Nu s-a putut trimite; încercați din nou.",
+      reqErrApi: "Modulul de trimitere nu s-a încărcat.",
+      reqApiErrNetwork: "Eroare de rețea; verificați conexiunea și reîncercați.",
+      reqApiErrHttpStatus: "Răspuns server: HTTP {code}. Verificați conexiunea și configurația API.",
+      reqLabelName: "Nume complet",
+      reqLabelRoom: "Număr cameră",
+      reqHintNameForm:
+        "Introduceți prenumele și numele ca în act, separate prin spațiu (ex. Maria Popescu). Max. 120 caractere.",
+      reqLabelNationality: "Naționalitate",
+      reqNatPlaceholder: "Selectați",
+      reqLabelDesc: "Descriere",
+      reqSectionRequestPickHint: "Alegeți câte o opțiune pe grup; titlurile de secțiune nu sunt selectabile.",
+      reqLabelRequestCategory: "Tip cerere",
+      reqLabelCategories: "Categorii (selectați cel puțin una)",
+      reqGuestNotifMainHeading: "Înștiințarea dvs.",
+      reqGuestNotifModuleSub: "Dietă, sănătate, sărbători și check-out târziu",
+      reqNotifIntro:
+        "Distribuiți alergeni și preferințe alimentare, nevoi de sănătate / speciale sau cereri de celebrare alegând un subiect mai jos. Câmpurile obligatorii trebuie completate; informațiile sunt folosite doar pentru a vă sprijini sejurul.",
+    },
+    nl: {
+      reqIntro:
+        "Hier verstuurt u verzoeken, klachten, storingsmeldingen vanaf de kamer of gastmeldingen (dieet, gezondheid, vieringen). Kies hieronder een type en vul het formulier in — het bericht gaat naar het hotelteam.",
+      reqBackToHub: "Terug naar categorieën",
+      reqSubmit: "Verzenden",
+      reqSending: "Bezig met verzenden…",
+      reqSuccessTitle: "Dank u",
+      reqErrSend: "Verzenden mislukt; probeer opnieuw.",
+      reqErrApi: "Verzendmodule kon niet worden geladen.",
+      reqApiErrNetwork: "Netwerkfout; controleer uw verbinding en probeer opnieuw.",
+      reqApiErrHttpStatus: "Serverantwoord: HTTP {code}. Controleer verbinding en API-configuratie.",
+      reqLabelName: "Voor- en achternaam",
+      reqLabelRoom: "Kamernummer",
+      reqHintNameForm:
+        "Typ voor- en achternaam zoals op uw ID, gescheiden door een spatie (bijv. Jan Jansen). Max. 120 tekens.",
+      reqLabelNationality: "Nationaliteit",
+      reqNatPlaceholder: "Kies",
+      reqLabelDesc: "Beschrijving",
+      reqSectionRequestPickHint: "Kies één optie per groep; sectiekoppen zijn niet selecteerbaar.",
+      reqLabelRequestCategory: "Soort verzoek",
+      reqLabelCategories: "Categorieën (kies minstens één)",
+      reqGuestNotifMainHeading: "Uw melding",
+      reqGuestNotifModuleSub: "Dieet, gezondheid, vieringen en late check-out",
+      reqNotifIntro:
+        "Deel allergenen en dieetvoorkeuren, gezondheid / bijzondere behoeften of feestverzoeken door hieronder een onderwerp te kiezen. Verplichte velden moeten worden ingevuld; gegevens worden alleen gebruikt om uw verblijf te ondersteunen.",
+    },
+    sk: {
+      reqIntro:
+        "Tu odosielate požiadavky, sťažnosti, hlásenia porúch z izby alebo oznámenia hostov (strava, zdravie, oslavy). Nižšie vyberte typ a vyplňte formulár — správa pôjde tímu hotela.",
+      reqBackToHub: "Späť na kategórie",
+      reqSubmit: "Odoslať",
+      reqSending: "Odosielanie…",
+      reqSuccessTitle: "Ďakujeme",
+      reqErrSend: "Odoslanie zlyhalo; skúste znova.",
+      reqErrApi: "Modul na odoslanie sa nepodarilo načítať.",
+      reqApiErrNetwork: "Chyba siete; skontrolujte pripojenie a skúste znova.",
+      reqApiErrHttpStatus: "Odpoveď servera: HTTP {code}. Skontrolujte pripojenie a konfiguráciu API.",
+      reqLabelName: "Meno a priezvisko",
+      reqLabelRoom: "Číslo izby",
+      reqHintNameForm:
+        "Zadajte meno a priezvisko ako v doklade, oddelené medzerou (napr. Ján Novák). Max. 120 znakov.",
+      reqLabelNationality: "Štátna príslušnosť",
+      reqNatPlaceholder: "Vyberte",
+      reqLabelDesc: "Popis",
+      reqSectionRequestPickHint: "V každej skupine vyberte jednu možnosť; nadpisy sekcií nie sú tlačidlá.",
+      reqLabelRequestCategory: "Typ požiadavky",
+      reqLabelCategories: "Kategórie (vyberte aspoň jednu)",
+      reqGuestNotifMainHeading: "Vaše oznámenie",
+      reqGuestNotifModuleSub: "Strava, zdravie, oslavy a neskorší odchod",
+      reqNotifIntro:
+        "Zdieľajte alergény a preferencie stravy, zdravotné / špeciálne potreby alebo žiadosti o oslavu výberom témy nižšie. Povinné polia treba vyplniť; údaje slúžia len na podporu vášho pobytu.",
+    },
+  };
+  Object.keys(REQ_HUB_FORMS_EXTRA).forEach(function (c) {
+    if (PATCH[c]) Object.assign(PATCH[c], REQ_HUB_FORMS_EXTRA[c]);
+  });
 
   /** Sohbet modülü: karşılama, kısayollar, «Din besked» — ek UI dilleri (en tabanı üzerine). */
   var CHAT_UI_PATCH = {
@@ -772,6 +1008,182 @@
       chatOpenRoomService: "Otvoriť room service",
     },
   };
+
+  /** Sohbet: ARIA, tlačidlá, chyby, otvorenie modulov (doplnenie k CHAT_UI_PATCH). */
+  var CHAT_I18N_COMPLETION = {
+    ru: {
+      chatAriaPrimary: "Текстовый чат",
+      chatAriaToolbar: "Действия в чате",
+      chatAriaLog: "Диалог с ассистентом",
+      chatAriaQuick: "Быстрые вопросы",
+      chatAriaInput: "Сообщение в чате",
+      chatNavBackAria: "Назад — в приложение",
+      chatSend: "Отправить",
+      chatClear: "Очистить чат",
+      chatTyping: "Готовится ответ…",
+      chatError: "Не удалось получить ответ. Проверьте соединение и повторите.",
+      chatErrorTimeout: "Время ожидания истекло. Проверьте соединение и повторите чуть позже.",
+      chatErrorServer:
+        "Сервер временно не отвечает. Повторите позже или обратитесь на ресепшн.",
+      chatErrorClient: "Запрос не выполнен. Сократите сообщение и отправьте снова.",
+      chatErrorBadJson: "Ответ сервера не удалось прочитать. Повторите попытку.",
+      chatErrorEmpty: "Получен пустой ответ. Повторите попытку.",
+      chatRetry: "Повторить",
+      chatClearConfirm: "Удалить все сообщения в этом чате?",
+      chatRoleUser: "Вы",
+      chatRoleAssistant: "Ассистент Viona",
+      chatOpenRestaurantsBars: "Открыть раздел «Рестораны и бары»",
+      chatOpenGuestNotifications: "Открыть запросы и поздний выезд",
+      chatOpenDiscoverAlanya: "Открыть «Откройте Аланью»",
+      chatOpenSpa: "Открыть раздел «Спа и wellness»",
+      chatOpenTransfer: "Открыть раздел «Трансфер»",
+      chatOpenWhere: "Открыть справочник по расположению",
+    },
+    da: {
+      chatAriaPrimary: "Tekstchat",
+      chatAriaToolbar: "Chat-handlinger",
+      chatAriaLog: "Assistent-samtale",
+      chatAriaQuick: "Hurtige spørgsmål",
+      chatAriaInput: "Chatbesked",
+      chatNavBackAria: "Tilbage — til appen",
+      chatSend: "Send",
+      chatClear: "Ryd chat",
+      chatTyping: "Forbereder svar…",
+      chatError: "Kunne ikke hente svar. Tjek forbindelsen og prøv igen.",
+      chatErrorTimeout: "Anmodningen fik timeout. Tjek forbindelsen og prøv igen om lidt.",
+      chatErrorServer:
+        "Serveren kunne ikke svare midlertidigt. Prøv igen om et øjeblik eller kontakt receptionen.",
+      chatErrorClient: "Anmodningen kunne ikke fuldføres. Forkort beskeden og send igen.",
+      chatErrorBadJson: "Serverens svar kunne ikke læses. Prøv igen.",
+      chatErrorEmpty: "Vi modtog et tomt svar. Prøv igen.",
+      chatRetry: "Prøv igen",
+      chatClearConfirm: "Slet alle beskeder i denne chat?",
+      chatRoleUser: "Dig",
+      chatRoleAssistant: "Viona-assistent",
+      chatOpenRestaurantsBars: "Åbn Restaurants & barer",
+      chatOpenGuestNotifications: "Åbn forespørgsler og sen udtjekning",
+      chatOpenDiscoverAlanya: "Åbn Oplev Alanya",
+      chatOpenSpa: "Åbn Spa & wellness",
+      chatOpenTransfer: "Åbn Transfer",
+      chatOpenWhere: "Åbn lokationsguide",
+    },
+    cs: {
+      chatAriaPrimary: "Textový chat",
+      chatAriaToolbar: "Akce chatu",
+      chatAriaLog: "Konverzace s asistentem",
+      chatAriaQuick: "Rychlé otázky",
+      chatAriaInput: "Zpráva v chatu",
+      chatNavBackAria: "Zpět — do aplikace",
+      chatSend: "Odeslat",
+      chatClear: "Vymazat chat",
+      chatTyping: "Připravuje se odpověď…",
+      chatError: "Nepodařilo se získat odpověď. Zkontrolujte připojení a zkuste to znovu.",
+      chatErrorTimeout: "Vypršel čas požadavku. Zkontrolujte připojení a zkuste to znovu za chvíli.",
+      chatErrorServer:
+        "Server dočasně neodpověděl. Zkuste to znovu za chvíli nebo kontaktujte recepci.",
+      chatErrorClient: "Požadavek nelze dokončit. Zkraťte zprávu a odešlete znovu.",
+      chatErrorBadJson: "Odpověď serveru nelze přečíst. Zkuste to znovu.",
+      chatErrorEmpty: "Obdrželi jsme prázdnou odpověď. Zkuste to znovu.",
+      chatRetry: "Zkusit znovu",
+      chatClearConfirm: "Smazat všechny zprávy v tomto chatu?",
+      chatRoleUser: "Vy",
+      chatRoleAssistant: "Asistent Viona",
+      chatOpenRestaurantsBars: "Otevřít Restaurace a bary",
+      chatOpenGuestNotifications: "Otevřít Požadavky a pozdější odhlášení",
+      chatOpenDiscoverAlanya: "Otevřít sekci Objevte Alanyu",
+      chatOpenSpa: "Otevřít Spa a wellness",
+      chatOpenTransfer: "Otevřít Transfer",
+      chatOpenWhere: "Otevřít průvodce polohou",
+    },
+    ro: {
+      chatAriaPrimary: "Chat text",
+      chatAriaToolbar: "Acțiuni chat",
+      chatAriaLog: "Conversația cu asistentul",
+      chatAriaQuick: "Întrebări rapide",
+      chatAriaInput: "Mesaj în chat",
+      chatNavBackAria: "Înapoi — la aplicație",
+      chatSend: "Trimite",
+      chatClear: "Șterge chatul",
+      chatTyping: "Se pregătește răspunsul…",
+      chatError: "Nu s-a putut obține răspunsul. Verificați conexiunea și reîncercați.",
+      chatErrorTimeout: "Cererea a expirat. Verificați conexiunea și reîncercați în curând.",
+      chatErrorServer:
+        "Serverul nu a putut răspunde temporar. Reîncercați în câteva momente sau contactați recepția.",
+      chatErrorClient: "Cererea nu a putut fi finalizată. Scurtați mesajul și trimiteți din nou.",
+      chatErrorBadJson: "Răspunsul serverului nu a putut fi citit. Reîncercați.",
+      chatErrorEmpty: "Am primit un răspuns gol. Reîncercați.",
+      chatRetry: "Reîncearcă",
+      chatClearConfirm: "Ștergeți toate mesajele din acest chat?",
+      chatRoleUser: "Dvs.",
+      chatRoleAssistant: "Asistent Viona",
+      chatOpenRestaurantsBars: "Deschide Restaurante și baruri",
+      chatOpenGuestNotifications: "Deschide Cereri și check-out târziu",
+      chatOpenDiscoverAlanya: "Deschide Descoperiți Alanya",
+      chatOpenSpa: "Deschide Spa și wellness",
+      chatOpenTransfer: "Deschide Transfer",
+      chatOpenWhere: "Deschide ghidul de locație",
+    },
+    nl: {
+      chatAriaPrimary: "Tekstchat",
+      chatAriaToolbar: "Chatacties",
+      chatAriaLog: "Gesprek met assistent",
+      chatAriaQuick: "Snelle vragen",
+      chatAriaInput: "Chatbericht",
+      chatNavBackAria: "Terug — naar de app",
+      chatSend: "Verzenden",
+      chatClear: "Chat wissen",
+      chatTyping: "Antwoord wordt voorbereid…",
+      chatError: "Kon geen antwoord krijgen. Controleer uw verbinding en probeer opnieuw.",
+      chatErrorTimeout: "Time-out van het verzoek. Controleer uw verbinding en probeer het zo weer.",
+      chatErrorServer:
+        "Server reageerde tijdelijk niet. Probeer het zo weer of neem contact op met de receptie.",
+      chatErrorClient: "Het verzoek kon niet worden voltooid. Maak het bericht korter en stuur opnieuw.",
+      chatErrorBadJson: "Het antwoord van de server kon niet worden gelezen. Probeer opnieuw.",
+      chatErrorEmpty: "We ontvingen een leeg antwoord. Probeer opnieuw.",
+      chatRetry: "Opnieuw",
+      chatClearConfirm: "Alle berichten in deze chat verwijderen?",
+      chatRoleUser: "U",
+      chatRoleAssistant: "Viona-assistent",
+      chatOpenRestaurantsBars: "Restaurants en bars openen",
+      chatOpenGuestNotifications: "Verzoeken en late check-out openen",
+      chatOpenDiscoverAlanya: "Ontdek Alanya openen",
+      chatOpenSpa: "Spa en wellness openen",
+      chatOpenTransfer: "Transfer openen",
+      chatOpenWhere: "Locatiegids openen",
+    },
+    sk: {
+      chatAriaPrimary: "Textový chat",
+      chatAriaToolbar: "Akcie chatu",
+      chatAriaLog: "Rozhovor s asistentom",
+      chatAriaQuick: "Rýchle otázky",
+      chatAriaInput: "Správa v chate",
+      chatNavBackAria: "Späť — do aplikácie",
+      chatSend: "Odoslať",
+      chatClear: "Vymazať chat",
+      chatTyping: "Pripravuje sa odpoveď…",
+      chatError: "Nepodarilo sa získať odpoveď. Skontrolujte pripojenie a skúste znova.",
+      chatErrorTimeout: "Časový limit požiadavky. Skontrolujte pripojenie a skúste o chvíľu znova.",
+      chatErrorServer:
+        "Server dočasne neodpovedal. Skúste to znova o chvíľu alebo kontaktujte recepciu.",
+      chatErrorClient: "Požiadavku sa nepodarilo dokončiť. Skráťte správu a odošlite znova.",
+      chatErrorBadJson: "Odpoveď servera sa nepodarilo prečítať. Skúste znova.",
+      chatErrorEmpty: "Dostali sme prázdnu odpoveď. Skúste znova.",
+      chatRetry: "Skúsiť znova",
+      chatClearConfirm: "Zmazať všetky správy v tomto chate?",
+      chatRoleUser: "Vy",
+      chatRoleAssistant: "Asistent Viona",
+      chatOpenRestaurantsBars: "Otvoriť Reštaurácie a bary",
+      chatOpenGuestNotifications: "Otvoriť Požiadavky a neskorší odchod",
+      chatOpenDiscoverAlanya: "Otvoriť sekciu Objavte Alanyu",
+      chatOpenSpa: "Otvoriť Spa a wellness",
+      chatOpenTransfer: "Otvoriť Transfer",
+      chatOpenWhere: "Otvoriť sprievodcu polohou",
+    },
+  };
+  Object.keys(CHAT_I18N_COMPLETION).forEach(function (c) {
+    if (CHAT_UI_PATCH[c]) Object.assign(CHAT_UI_PATCH[c], CHAT_I18N_COMPLETION[c]);
+  });
+
   Object.keys(CHAT_UI_PATCH).forEach(function (c) {
     if (PATCH[c]) Object.assign(PATCH[c], CHAT_UI_PATCH[c]);
   });

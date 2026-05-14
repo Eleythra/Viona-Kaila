@@ -1,37 +1,10 @@
 import express from "express";
-import crypto from "node:crypto";
 import rateLimit from "express-rate-limit";
 import { getEnv } from "../../config/env.js";
 import { clearVerifiedGuestCookie, setVerifiedGuestCookie } from "../../lib/guest-verified-session.js";
 import { recordGuestGateEntry } from "./guest-gate-log.service.js";
-
-function sha256Utf8(s) {
-  return crypto.createHash("sha256").update(String(s ?? ""), "utf8").digest();
-}
-
-/** Büyük/küçük harf duyarsızlık; Türkçe İ/I için `tr`. */
-function normalizeGatePassword(s) {
-  return String(s ?? "").trim().toLocaleLowerCase("tr");
-}
-
-/**
- * Tek giriş alanı; env’deki iki değerden biriyle eşleşirse geçer (OR).
- * Her iki eşleşmeyi de timing-safe hesaplar (hangi kod olduğu sızmasın diye).
- */
-function verifyEitherConfiguredPassword(input, expected1, expected2) {
-  const e1 = String(expected1 ?? "").trim();
-  const e2 = String(expected2 ?? "").trim();
-  if (!e1 || !e2) return false;
-  const n = normalizeGatePassword(input);
-  if (!n) return false;
-  const h = sha256Utf8(n);
-  const h1e = sha256Utf8(normalizeGatePassword(e1));
-  const h2e = sha256Utf8(normalizeGatePassword(e2));
-  if (h.length !== h1e.length || h.length !== h2e.length) return false;
-  const ok1 = crypto.timingSafeEqual(h, h1e);
-  const ok2 = crypto.timingSafeEqual(h, h2e);
-  return ok1 || ok2;
-}
+import { normalizeGuestRoomForMatch } from "../../lib/guest-match-normalize.js";
+import { verifyHotelGuest } from "../../services/hotel-advisor.service.js";
 
 /**
  * @param {{
@@ -55,21 +28,30 @@ export function createGuestGateRouter(envSlice) {
       res.status(429).json({
         ok: false,
         error: "rate_limit_exceeded",
-        message: "Çok fazla başarısız deneme yapıldı. Lütfen bir süre sonra tekrar deneyin.",
       });
     },
   });
 
   router.get("/status", (_req, res) => {
-    res.json({
+    const e = getEnv();
+    const pms = Boolean(e.hotelAdvisorConfigured);
+    const out = {
       required: Boolean(envSlice.guestUiGateRequired),
       strict: Boolean(envSlice.guestUiGateStrict),
-      dualPassword: Boolean(envSlice.guestGateDualPasswordConfigured),
-      identityRequired: false,
-      identityRequiresBirthDate: false,
+      dualPassword: false,
+      pmsIdentity: pms,
+      identityRequired: Boolean(envSlice.guestUiGateRequired),
+      identityRequiresBirthDate: pms,
       identityRequiresFullName: false,
-      pmsIdentity: false,
-    });
+    };
+    if (e.operatorGateBypassConfigured) {
+      const r = String(e.operatorGateRoom || "").trim();
+      if (r) {
+        const canon = normalizeGuestRoomForMatch(r) || r;
+        out.extraValidRoomNumbers = [canon];
+      }
+    }
+    res.json(out);
   });
 
   router.post("/logout", (_req, res) => {
@@ -84,38 +66,106 @@ export function createGuestGateRouter(envSlice) {
       return res.status(200).json({ ok: true });
     }
 
-    const raw = body.password ?? body.password1 ?? body.password_primary;
-    const s = String(raw ?? "").trim();
+    const roomNo = String(body.roomNo ?? body.room ?? "").trim();
+    const birthDate = String(body.birthDate ?? "").trim();
 
-    if (!s) {
+    if (!roomNo || !birthDate) {
       return res.status(400).json({
         ok: false,
-        error: "password_required",
-        message: "Erişim kodunu girin.",
+        error: "identity_required",
       });
     }
 
-    const ok = verifyEitherConfiguredPassword(s, env.vionaGatePassword1, env.vionaGatePassword2);
-    if (!ok) {
-      return res.status(401).json({
+    const cfg = getEnv();
+    if (cfg.operatorGateBypassConfigured) {
+      const wantRoom = String(cfg.operatorGateRoom || "").trim();
+      const wantBirth = String(cfg.operatorGateBirthdate || "").trim();
+      if (
+        normalizeGuestRoomForMatch(roomNo) === normalizeGuestRoomForMatch(wantRoom) &&
+        birthDate === wantBirth
+      ) {
+        const clientIp = String(req.ip || req.socket?.remoteAddress || "unknown").trim() || "unknown";
+        const userAgent = String(req.get("user-agent") || "").trim();
+        const displayName = String(cfg.operatorGateDisplayName || "Viona Kontrol").trim() || "Viona Kontrol";
+        const roomCanonical = normalizeGuestRoomForMatch(roomNo) || roomNo;
+        await recordGuestGateEntry({
+          fullName: displayName,
+          roomNumber: roomCanonical,
+          verificationMethod: "operator_bypass",
+          clientIp,
+          userAgent,
+          birthDate,
+        });
+        setVerifiedGuestCookie(res, roomCanonical);
+        return res.status(200).json({
+          ok: true,
+          verification: "operator_bypass",
+          guest: {
+            guestName: displayName,
+            roomNo: roomCanonical,
+            resId: null,
+            resNameId: null,
+          },
+        });
+      }
+    }
+
+    if (!getEnv().hotelAdvisorConfigured) {
+      return res.status(503).json({
         ok: false,
-        error: "invalid_password",
-        message: "Kod doğrulanamadı. Kontrol edip tekrar deneyin.",
+        error: "hotel_advisor_not_configured",
       });
     }
 
-    const clientIp = String(req.ip || req.socket?.remoteAddress || "unknown").trim() || "unknown";
-    const userAgent = String(req.get("user-agent") || "").trim();
+    try {
+      const guest = await verifyHotelGuest({ roomNo, birthDate });
+      if (!guest) {
+        return res.status(401).json({
+          ok: false,
+          error: "invalid_identity",
+        });
+      }
 
-    await recordGuestGateEntry({
-      fullName: "Misafir",
-      roomNumber: "gate",
-      verificationMethod: "password_dual",
-      clientIp,
-      userAgent,
-    });
-    setVerifiedGuestCookie(res, "gate");
-    return res.status(200).json({ ok: true, verification: "password_dual" });
+      const clientIp = String(req.ip || req.socket?.remoteAddress || "unknown").trim() || "unknown";
+      const userAgent = String(req.get("user-agent") || "").trim();
+
+      await recordGuestGateEntry({
+        fullName: guest.guestName || "Misafir",
+        roomNumber: guest.roomNo,
+        verificationMethod: "hotel_advisor",
+        clientIp,
+        userAgent,
+        hotelId: guest.hotelId,
+        resId: guest.resId,
+        resNameId: guest.resNameId,
+        birthDate,
+      });
+
+      setVerifiedGuestCookie(res, guest.roomNo);
+      return res.status(200).json({
+        ok: true,
+        verification: "hotel_advisor",
+        guest: {
+          guestName: guest.guestName || "Misafir",
+          roomNo: guest.roomNo,
+          resId: guest.resId,
+          resNameId: guest.resNameId,
+        },
+      });
+    } catch (err) {
+      const msg = String(err?.message || err);
+      if (msg.includes("HotelAdvisor env variables are missing")) {
+        return res.status(503).json({
+          ok: false,
+          error: "hotel_advisor_not_configured",
+        });
+      }
+      console.error("[guest_gate] verify_hotel_advisor_failed", msg);
+      return res.status(500).json({
+        ok: false,
+        error: "verification_failed",
+      });
+    }
   });
 
   return router;

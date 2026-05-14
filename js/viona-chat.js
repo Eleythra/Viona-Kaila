@@ -459,6 +459,19 @@
     if (reqOpts.clientChannel === "voice") {
       body.channel = "voice";
       body.client_channel = "voice";
+    } else {
+      try {
+        var prof =
+          typeof window.vionaGuestProfile === "object" &&
+          window.vionaGuestProfile &&
+          typeof window.vionaGuestProfile.get === "function"
+            ? window.vionaGuestProfile.get()
+            : null;
+        var gnm = prof && String(prof.guestName || "").trim();
+        if (gnm) body.guest_full_name = gnm.slice(0, 120);
+      } catch (_p) {
+        /* yoksay */
+      }
     }
     var timeoutMs = Number(cfg.timeoutMs || 15000);
     if (!Number.isFinite(timeoutMs) || timeoutMs < 3000) timeoutMs = 15000;
@@ -519,63 +532,63 @@
       options = [
         {
           value: "__open_restaurants_bars_module__",
-          label: t("chatOpenRestaurantsBars") || "Restaurant & barlar",
+          label: t("chatOpenRestaurantsBars"),
         },
       ];
     } else if (action && action.kind === "open_guest_notifications_form") {
       options = [
         {
           value: "__open_guest_notifications_form__",
-          label: t("chatOpenGuestNotifications") || "Geç çıkış formunu aç",
+          label: t("chatOpenGuestNotifications"),
         },
       ];
     } else if (action && action.kind === "open_alanya_module") {
       options = [
         {
           value: "__open_alanya_module__",
-          label: t("chatOpenDiscoverAlanya") || "Alanya'yı keşfedin",
+          label: t("chatOpenDiscoverAlanya"),
         },
       ];
     } else if (action && action.kind === "open_spa_module") {
       options = [
         {
           value: "__open_spa_module__",
-          label: t("chatOpenSpa") || "Spa & wellness",
+          label: t("chatOpenSpa"),
         },
       ];
     } else if (action && action.kind === "open_restaurants_bars_module") {
       options = [
         {
           value: "__open_restaurants_bars_module__",
-          label: t("chatOpenRestaurantsBars") || "Restaurant & barlar",
+          label: t("chatOpenRestaurantsBars"),
         },
       ];
     } else if (action && action.kind === "open_transfer_module") {
       options = [
         {
           value: "__open_transfer_module__",
-          label: t("chatOpenTransfer") || "Transfer",
+          label: t("chatOpenTransfer"),
         },
       ];
     } else if (action && action.kind === "open_room_service_module") {
       options = [
         {
           value: "__open_room_service_module__",
-          label: t("chatOpenRoomService") || "Oda servisi",
+          label: t("chatOpenRoomService"),
         },
       ];
     } else if (action && action.kind === "open_where_module") {
       options = [
         {
           value: "__open_where_module__",
-          label: t("chatOpenWhere") || "Konum rehberini aç",
+          label: t("chatOpenWhere"),
         },
       ];
     } else if (action && action.kind === "open_complaint_form") {
       options = [
         {
           value: "__open_complaint_form__",
-          label: t("chatOpenComplaint") || "Şikayet formunu aç",
+          label: t("chatOpenComplaint"),
         },
       ];
     } else if (action && action.kind === "chat_form" && action.step) {

@@ -1,4 +1,5 @@
 -- Misafir kapısı: `password_dual` doğrulama yöntemi (çift env şifresi).
+-- UYARI: Bu betik CHECK’i yalnızca üç değere indirir; güncel şema için `guest-gate-entries-table.sql` kullanın.
 -- Mevcut CHECK `deploy_bypass` | `elektra` ise Supabase SQL Editor’da bir kez çalıştırın.
 
 alter table public.guest_gate_entries drop constraint if exists guest_gate_entries_verification_method_check;
