@@ -41,6 +41,18 @@ function isoCalendarDateOnly(v) {
   return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : "";
 }
 
+/** `guest_gate_entries.created_at`: YYYY-MM-DD için otel takvim günü (Loglar / operasyon ile aynı); ham ISO veya `to_lt` için legacy. */
+function applyGuestGateCreatedAtFilters(qb, query = {}) {
+  const toLtEarly = String(query.to_lt || "").trim();
+  if (!toLtEarly) {
+    const hf = submittedAtHotelCalendarFilter(query);
+    if (hf?.kind === "range") return qb.gte("created_at", hf.fromIso).lt("created_at", hf.toExclusiveIso);
+    if (hf?.kind === "from") return qb.gte("created_at", hf.fromIso);
+    if (hf?.kind === "to") return qb.lt("created_at", hf.toExclusiveIso);
+  }
+  return applyDateFilters(qb, query, "created_at");
+}
+
 /** Takvim `YYYY-MM-DD`: önce İstanbul otel günü (submitted_at); aksi halde UTC takvim günü veya ham ISO. */
 function applyDateFilters(qb, query = {}, column = "submitted_at") {
   const toLtEarly = String(query.to_lt || "").trim();
@@ -145,7 +157,9 @@ function applyChatObservationListFilters(qb, query = {}) {
       q = q.or(
         [
           `user_message.ilike.%${escaped}%`,
+          `user_message_tr.ilike.%${escaped}%`,
           `assistant_response.ilike.%${escaped}%`,
+          `assistant_response_tr.ilike.%${escaped}%`,
           `intent.ilike.%${escaped}%`,
           `domain.ilike.%${escaped}%`,
         ].join(",")
@@ -1030,7 +1044,7 @@ function escapeForIlikeFragment(s) {
 }
 
 function applyGuestGateEntryFilters(qb, query = {}) {
-  let out = applyDateFilters(qb, query, "created_at");
+  let out = applyGuestGateCreatedAtFilters(qb, query);
   const method = String(query.verification_method || "").trim().toLowerCase();
   if (
     method === "deploy_bypass" ||
@@ -1191,6 +1205,32 @@ export async function deleteGuestGateEntry(id) {
   return { id: idStr };
 }
 
+/** Loglar toplu silme ile aynı üst sınır. */
+const GUEST_GATE_ENTRIES_BULK_DELETE_MAX = 200;
+
+/**
+ * @param {unknown} ids
+ * @returns {Promise<{ deleted: number, ids: string[] }>}
+ */
+export async function deleteGuestGateEntriesBulk(ids) {
+  const raw = Array.isArray(ids) ? ids : [];
+  const seen = new Set();
+  const unique = [];
+  for (const x of raw) {
+    const id = String(x ?? "").trim();
+    if (!id || !GUEST_GATE_ENTRY_ID_RE.test(id) || seen.has(id)) continue;
+    seen.add(id);
+    unique.push(id);
+    if (unique.length >= GUEST_GATE_ENTRIES_BULK_DELETE_MAX) break;
+  }
+  if (!unique.length) {
+    return { deleted: 0, ids: [] };
+  }
+  const { error } = await sb(() => getSupabase().from("guest_gate_entries").delete().in("id", unique));
+  if (error) rethrowSupabaseError(error);
+  return { deleted: unique.length, ids: unique };
+}
+
 export async function updateChatObservationReview(id, payload = {}) {
   if (!id) throw new Error("id is required");
   const patch = {
@@ -1308,6 +1348,7 @@ function mapObservationRow(row = {}, includeRawPayload = false) {
     session_id: row.session_id || "",
     user_id: row.user_id || "",
     user_message: cleanText(row.user_message),
+    user_message_tr: cleanText(row.user_message_tr),
     ui_language: row.ui_language || "",
     detected_language: row.detected_language || "",
     intent: row.intent || "",
@@ -1323,6 +1364,7 @@ function mapObservationRow(row = {}, includeRawPayload = false) {
     fallback_reason: row.fallback_reason || "",
     decision_path: cleanText(row.decision_path),
     assistant_response: cleanText(row.assistant_response),
+    assistant_response_tr: cleanText(row.assistant_response_tr),
     is_correct: boolToYesNo(row.is_correct),
     review_note: cleanText(row.review_note),
     reviewed_by: row.reviewed_by || "",
@@ -1369,6 +1411,10 @@ const CHAT_OBS_CSV_COL_META = {
   user_message: {
     trHeader: "misafir_mesaji",
     trDesc: "Misafirin gönderdiği metin (tek satıra indirgenmiş).",
+  },
+  user_message_tr: {
+    trHeader: "misafir_mesaji_tr",
+    trDesc: "Misafir mesajının Türkçe operasyon özeti (çeviri veya TR arayüzde orijinalle aynı).",
   },
   ui_language: {
     trHeader: "arayuz_dili",
@@ -1429,6 +1475,10 @@ const CHAT_OBS_CSV_COL_META = {
   assistant_response: {
     trHeader: "asistan_yaniti",
     trDesc: "Misafire gösterilen asistan yanıtı (tek satıra indirgenmiş).",
+  },
+  assistant_response_tr: {
+    trHeader: "asistan_yaniti_tr",
+    trDesc: "Asistan yanıtının Türkçe operasyon özeti (çeviri veya TR arayüzde orijinalle aynı).",
   },
   is_correct: {
     trHeader: "inceleme_dogru_evet_hayir",

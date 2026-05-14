@@ -2988,6 +2988,7 @@ def _has_strong_service_request_intent(text: str) -> bool:
 
 RECOMMENDATION_WORDS = [
     "öner", "oner", "öneri", "oneri",
+    "recommend", "suggestion", "suggest",
     "ne yesem", "karar veremedim",
     "romantik", "romantic",
     "çok açım", "cok acim", "hızlı bir şey", "hizli bir sey",
@@ -3029,6 +3030,39 @@ URGENT_RECEPTION_SHORT_MARKERS = [
 OUTSIDE_HOTEL_WORDS = [
     "otel dışında", "otel disinda", "outside hotel", "outside the hotel", "dışarıda", "disarida",
 ]
+
+# Otel içi açık uçlu «ne önerirsin» / recommend — spesifik entity yokken `general_dining_pref` yolunu açar.
+_OPEN_ENDED_RECOMMENDATION_VERB_MARKERS: tuple[str, ...] = (
+    "öner",
+    "oner",
+    "recommend",
+    "suggestion",
+    "suggest",
+    "empfehl",
+    "ratet ihr",
+    "was würdest",
+    "was wuerdest",
+    "polec",
+    "poleć",
+    "co polec",
+    "recomiend",
+    "consigli",
+    "посовет",
+    "совет",
+    "suosit",
+    "advise",
+    "advice",
+    "anbefal",
+    "aanbevel",
+    "aanraden",
+    "recomand",
+    "recomanda",
+    "doporuč",
+    "doporuc",
+    "odporúč",
+    "odporuc",
+    "recommand",
+)
 
 
 def _matches_alanya_discover_intent(normalized_text: str) -> bool:
@@ -4508,7 +4542,10 @@ class RuleEngine:
             rec_entity = None
         else:
             rec_entity = self._recommendation_entity(normalized_text)
-        if rec_entity and any(_fuzzy_has(normalized_text, w) for w in RECOMMENDATION_WORDS):
+        if rec_entity is None and RuleEngine._wants_open_ended_on_property_recommendation(normalized_text):
+            rec_entity = "general_dining_pref"
+        has_rec_marker = any(_fuzzy_has(normalized_text, w) for w in RECOMMENDATION_WORDS)
+        if rec_entity and (has_rec_marker or rec_entity == "general_dining_pref"):
             logger.info("RULE MATCH: recommendation (%s)", rec_entity)
             return IntentResult(
                 intent="recommendation",
@@ -5681,6 +5718,26 @@ class RuleEngine:
         if any(k in t for k in ["çocuk", "cocuk", "çocuğum", "cocugum", "kids", "mini club", "mini disco", "5 yaş", "5 yas"]):
             return "kids_activity_pref"
         return None
+
+    @staticmethod
+    def _wants_open_ended_on_property_recommendation(text: str) -> bool:
+        """
+        Bağlamı net olmayan «Kaila Beach'te ne önerirsin» / «what would you recommend» gibi ifadeler:
+        spa/yorgunluk, erken çıkış öğle kutusu, otel dışı ve iptal kısayolları dışında genel yemek önerisi için kullanılır.
+        """
+        raw = (text or "").strip()
+        if not raw:
+            return False
+        tl = raw.lower()
+        if RuleEngine._text_is_cancel_like_short_message(raw):
+            return False
+        if RuleEngine._is_relaxation_query(raw):
+            return False
+        if RuleEngine._is_early_departure_query(raw):
+            return False
+        if _has_any_phrase_strict(raw, OUTSIDE_HOTEL_WORDS):
+            return False
+        return any(m in tl for m in _OPEN_ENDED_RECOMMENDATION_VERB_MARKERS)
 
     @staticmethod
     def _is_night_food_query(text: str) -> bool:

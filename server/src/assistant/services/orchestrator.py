@@ -95,6 +95,43 @@ GUEST_NOTIF_DESC_REQUIRED = frozenset(
 )
 
 
+def _guest_notif_optional_no_extra_note_phrases_normalized() -> frozenset[str]:
+    """
+    `guest_notif_description_optional` metninde önerilen «ek not yok» yanıtları (normalize_text ile eşleşir).
+    Bunlar iptal ifadesi değildir; `_CONFIRM_NO_PHRASES` ile çakışmasın diye açıklama adımında ayrı işlenir.
+    """
+    raw = (
+        "-",
+        "—",
+        "–",
+        ".",
+        "..",
+        "yok",
+        "yok.",
+        "hayır",
+        "hayir",
+        "gerek yok",
+        "no",
+        "no.",
+        "none",
+        "n/a",
+        "na",
+        "nein",
+        "nein.",
+        "nie",
+        "nie.",
+        "nej",
+        "nee",
+        "нет",
+        "ne",
+        "nu",
+    )
+    return frozenset(normalize_text(x) for x in raw if normalize_text(x))
+
+
+_GN_OPT_DESC_NO_NOTE = _guest_notif_optional_no_extra_note_phrases_normalized()
+
+
 def _parsed_guest_identity_for_chat_form_skip(payload: ChatRequest) -> tuple[str | None, str | None]:
     """Node `verified_guest_room` + istemci `guest_full_name` geçerliyse (ad, oda); aksi (None, None)."""
     room_raw = str(payload.verified_guest_room or "").strip()
@@ -880,12 +917,28 @@ _CHAT_FORM_LIST_STEP_NO_LIKE = frozenset(
 )
 
 
-def _user_wants_chat_form_abort_message(normalized: str, *, at_list_selection_step: bool = False) -> bool:
+def _user_wants_chat_form_abort_message(
+    normalized: str,
+    *,
+    at_list_selection_step: bool = False,
+    operation: str | None = None,
+    step: str | None = None,
+    category: str | None = None,
+) -> bool:
     """Kategori / detay / açıklama / isim / oda adımlarında formu iptal ifadesi (menüde «2» seçimi ile karışmaz)."""
     t = (normalized or "").strip()
     if not t:
         return False
     if t == "2":
+        return False
+    cat = (category or "").strip()
+    if (
+        operation == "guest_notification"
+        and step == "description"
+        and cat
+        and cat not in GUEST_NOTIF_DESC_REQUIRED
+        and t in _GN_OPT_DESC_NO_NOTE
+    ):
         return False
     if t in _CONFIRM_NO_PHRASES:
         # Liste adımında «hayır» / «yok» genelde «arıza yok» anlamı; bağlamlı geri çekilme ayrı işlenir.
@@ -2665,6 +2718,9 @@ class ChatOrchestrator:
         if text and _user_wants_chat_form_abort_message(
             normalized,
             at_list_selection_step=state.step in _CHAT_FORM_LIST_SELECTION_STEPS,
+            operation=state.operation,
+            step=state.step,
+            category=state.category,
         ):
             self.form_store.clear(payload.channel, payload.user_id, payload.session_id)
             self.conversation_session_store.get(
@@ -3460,7 +3516,14 @@ class ChatOrchestrator:
         # Açıklama → isim → oda adımları (ortak alanlar).
         if state.step == "description":
             cat = state.category or ""
-            if not text:
+            skip_optional_gn_note = (
+                state.operation == "guest_notification"
+                and cat
+                and cat not in GUEST_NOTIF_DESC_REQUIRED
+                and bool(text)
+                and (normalize_text(text) in _GN_OPT_DESC_NO_NOTE)
+            )
+            if not text or skip_optional_gn_note:
                 if (
                     state.operation == "guest_notification"
                     and cat

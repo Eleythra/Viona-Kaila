@@ -1,17 +1,15 @@
 /**
- * Sesli asistan API: TTS (JSON) ve STT (ham WAV gövdesi).
+ * Sesli asistan API: OpenAI Realtime (ephemeral session) — istemci WebRTC.
  */
 import express from "express";
+import rateLimit from "express-rate-limit";
 import { timingSafeEqual } from "node:crypto";
 import { getEnv } from "../../config/env.js";
 import {
   buildPublicSiteOriginAllowlist,
   requestHasAllowedPublicSiteOrigin,
 } from "../../lib/public-site-origins.js";
-import { resolveVoiceForRequest, synthesizeToWav, transcribeWav } from "./azure-speech.service.js";
-
-const MAX_TTS_CHARS = 4000;
-const STT_RAW_LIMIT = "4mb";
+import { buildOpenAiRealtimeSessionBody } from "./openai-realtime-session.js";
 
 function speechSecretMatches(candidate, expected) {
   const left = Buffer.from(String(candidate || ""), "utf8");
@@ -32,7 +30,6 @@ function getSpeechTrustedOriginAllowlist() {
 
 /**
  * SPEECH_CLIENT_SECRET doluysa: doğru `X-Viona-Speech-Secret` veya CORS ile aynı allowlist’te Origin/Referer.
- * Böylece statik sitede gizli enjekte edilmeden Vercel→Render misafir sitesi STT/TTS kullanabilir.
  */
 export function speechClientAuthMiddleware(req, res, next) {
   const env = getEnv();
@@ -59,83 +56,117 @@ export function speechClientAuthMiddleware(req, res, next) {
   return res.status(401).json({ ok: false, error: "speech_unauthorized" });
 }
 
+const OPENAI_REALTIME_SESSION_URL = "https://api.openai.com/v1/realtime/sessions";
+const OPENAI_SESSION_FETCH_MS = 18_000;
+
+let realtimeSessionLimiterMemo = null;
+function getRealtimeSessionLimiter() {
+  if (realtimeSessionLimiterMemo) return realtimeSessionLimiterMemo;
+  const env = getEnv();
+  realtimeSessionLimiterMemo = rateLimit({
+    windowMs: env.rateLimitWindowMs,
+    max: Math.min(60, Math.max(24, Math.floor(env.rateLimitMax / 4))),
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  return realtimeSessionLimiterMemo;
+}
+
 export function createSpeechRouter() {
   const router = express.Router();
 
-  // POST /api/tts — { text, locale }
-  router.post("/tts", speechClientAuthMiddleware, express.json({ limit: "512kb" }), async (req, res) => {
-    const env = getEnv();
-    if (!env.azureSpeechKey || !env.azureSpeechRegion) {
-      return res.status(503).json({ ok: false, error: "speech_not_configured" });
-    }
+  /**
+   * POST /api/realtime/session — OpenAI ephemeral client_secret (Realtime WebRTC).
+   * Gövde: { ui_language?, locale?, voice? } — anahtar sızmaz.
+   */
+  router.post(
+    "/realtime/session",
+    getRealtimeSessionLimiter(),
+    speechClientAuthMiddleware,
+    express.json({ limit: "64kb" }),
+    async (req, res) => {
+      const env = getEnv();
+      if (!String(env.openAiApiKey || "").trim()) {
+        return res.status(503).json({ ok: false, error: "realtime_not_configured" });
+      }
 
-    const text = String(req.body?.text ?? "");
-    const locale = req.body?.locale ?? "tr";
+      const uiLang = String(req.body?.ui_language ?? req.body?.locale ?? "tr").trim();
+      const voice = String(req.body?.voice ?? "").trim();
+      const model = String(env.openAiRealtimeModel || "gpt-realtime").trim();
 
-    if (text.length > MAX_TTS_CHARS) {
-      return res.status(400).json({ ok: false, error: "text_too_long" });
-    }
-
-    const voiceSpec = resolveVoiceForRequest(locale);
-
-    try {
-      const wav = await synthesizeToWav({
-        text,
-        voiceSpec,
-        key: env.azureSpeechKey,
-        region: env.azureSpeechRegion,
-        fetchTimeoutMs: env.azureSpeechFetchTimeoutMs,
+      const sessionBody = buildOpenAiRealtimeSessionBody({
+        model,
+        uiLanguage: uiLang,
+        voice,
       });
-      res.setHeader("Content-Type", "audio/wav");
-      res.setHeader("Cache-Control", "no-store");
-      return res.status(200).send(wav);
-    } catch (err) {
-      const code = err?.code || "tts_error";
-      console.warn("tts_error code=%s msg=%s", code, err?.message || err);
-      return res.status(500).json({ ok: false, error: code });
-    }
-  });
+
+      try {
+        const ac = new AbortController();
+        const tid = setTimeout(() => ac.abort(), OPENAI_SESSION_FETCH_MS);
+        let upstream;
+        try {
+          upstream = await fetch(OPENAI_REALTIME_SESSION_URL, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${env.openAiApiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(sessionBody),
+            signal: ac.signal,
+          });
+        } finally {
+          clearTimeout(tid);
+        }
+
+        const rawText = await upstream.text();
+        let data = null;
+        try {
+          data = rawText ? JSON.parse(rawText) : null;
+        } catch {
+          data = null;
+        }
+
+        if (!upstream.ok) {
+          const snippet = String(rawText || "").slice(0, 200);
+          console.warn(
+            "openai_realtime_session_upstream status=%s snippet=%s",
+            upstream.status,
+            snippet,
+          );
+          return res.status(502).json({ ok: false, error: "realtime_upstream" });
+        }
+
+        const cs = data?.client_secret;
+        const value = cs && typeof cs.value === "string" ? cs.value.trim() : "";
+        const expiresAt =
+          cs && (typeof cs.expires_at === "number" || typeof cs.expires_at === "string") ? cs.expires_at : null;
+        if (!value) {
+          console.warn(
+            "openai_realtime_session_missing_client_secret keys=%s",
+            data ? Object.keys(data).join(",") : "",
+          );
+          return res.status(502).json({ ok: false, error: "realtime_bad_response" });
+        }
+
+        return res.status(200).json({
+          ok: true,
+          model: data?.model || model,
+          session_id: data?.id || null,
+          client_secret: {
+            value,
+            expires_at: expiresAt,
+          },
+        });
+      } catch (err) {
+        const name = err?.name || "";
+        console.warn("openai_realtime_session_error name=%s msg=%s", name, err?.message || err);
+        if (name === "AbortError") {
+          return res.status(504).json({ ok: false, error: "realtime_upstream_timeout" });
+        }
+        return res.status(502).json({ ok: false, error: "realtime_upstream" });
+      }
+    },
+  );
 
   return router;
-}
-
-/**
- * STT için ham gövde gerekir; router’dan ayrı mount edilir.
- */
-export function createSttRawMiddleware() {
-  return express.raw({ limit: STT_RAW_LIMIT, type: "application/octet-stream" });
-}
-
-export async function handleStt(req, res) {
-  const env = getEnv();
-  if (!env.azureSpeechKey || !env.azureSpeechRegion) {
-    return res.status(503).json({ ok: false, error: "speech_not_configured" });
-  }
-
-  const localeParam = String(req.query?.locale || req.headers["x-viona-speech-locale"] || "tr");
-  const voiceSpec = resolveVoiceForRequest(localeParam);
-  const buf = Buffer.isBuffer(req.body) ? req.body : Buffer.from(req.body || []);
-
-  try {
-    const transcript = await transcribeWav({
-      wavBuffer: buf,
-      voiceSpec,
-      key: env.azureSpeechKey,
-      region: env.azureSpeechRegion,
-      fetchTimeoutMs: env.azureSpeechFetchTimeoutMs,
-    });
-    return res.status(200).json({ ok: true, text: transcript });
-  } catch (err) {
-    const code = err?.code || "stt_error";
-    console.warn("stt_error code=%s msg=%s", code, err?.message || err);
-    if (err?.rawSnippet) {
-      console.warn("stt_error raw_snippet=%s", String(err.rawSnippet).slice(0, 400));
-    }
-    const out = { ok: false, error: code };
-    const st = err?.status;
-    if (st != null && Number.isFinite(Number(st))) {
-      out.httpStatus = Number(st);
-    }
-    return res.status(200).json(out);
-  }
 }

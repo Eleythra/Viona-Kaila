@@ -1940,6 +1940,34 @@ def test_food_decision_and_romantic_queries_route_to_recommendation():
     assert intent.calls == 0
 
 
+def test_open_ended_kaila_beach_recommend_routes_to_general_dining():
+    """Bağlam belirtmeden «ne önerirsin» → venue entity yokken genel yemek önerisi şablonu."""
+    orch, _, intent = build_orchestrator()
+    res = orch.handle(
+        ChatRequest(message="Kaila beach de bana ne önerirsin", ui_language="tr", locale="tr", user_id="u-rec1", session_id="s-rec1")
+    )
+    assert res.meta.intent == "recommendation"
+    assert res.meta.source == "rule"
+    assert "Sinton" in res.message or "ana restoran" in res.message.lower()
+    assert intent.calls == 0
+
+
+def test_open_ended_what_would_you_recommend_en_general_dining():
+    orch, _, intent = build_orchestrator()
+    res = orch.handle(
+        ChatRequest(
+            message="What would you recommend for tonight at the hotel?",
+            ui_language="en",
+            locale="en",
+            user_id="u-rec2",
+            session_id="s-rec2",
+        )
+    )
+    assert res.meta.intent == "recommendation"
+    assert "Sinton" in res.message or "main restaurant" in res.message.lower()
+    assert intent.calls == 0
+
+
 def test_kid_night_food_and_early_departure_queries_are_routed_deterministically():
     orch, _, intent = build_orchestrator()
     kid = orch.handle(ChatRequest(message="çocuğum var 5 yaşında onun için ne var", ui_language="tr", locale="tr"))
@@ -2636,6 +2664,21 @@ def test_guest_notification_description_abort_matches_guest_ack():
     low = r.message.lower()
     assert "misafir bildirimini iptal" in low
     assert "adınızı" not in low
+
+
+def test_guest_notification_optional_description_yok_means_no_extra_note_not_cancel():
+    """İsteğe bağlı not adımında «yok» = ek not yok; sohbet formu iptali değil."""
+    orch, _, _ = build_orchestrator()
+    uid, sid = "u-gn-yok-skip", "s-gn-yok-skip"
+    base = dict(ui_language="tr", locale="tr", user_id=uid, session_id=sid)
+    orch.handle(ChatRequest(message="misafir bildirimi doldurmak istiyorum", **base))
+    r1 = orch.handle(ChatRequest(message="1", **base))
+    assert r1.meta.action and r1.meta.action.step == "description"
+    r2 = orch.handle(ChatRequest(message="yok", **base))
+    assert r2.meta.action and r2.meta.action.kind == "chat_form"
+    low = r2.message.lower()
+    assert "iptal ettim" not in low
+    assert r2.meta.action.step in ("full_name", "confirm")
 
 
 def test_anlamadim_after_form_cancel_uses_context_not_only_greeting():

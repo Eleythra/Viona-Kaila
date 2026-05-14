@@ -49,6 +49,9 @@ create table if not exists public.chat_observations (
 
   assistant_response text not null,
 
+  user_message_tr text,
+  assistant_response_tr text,
+
   is_correct boolean,
   review_note text,
   reviewed_by text,
@@ -80,6 +83,8 @@ alter table if exists public.chat_observations
   add column if not exists fallback_reason text,
   add column if not exists decision_path text,
   add column if not exists assistant_response text,
+  add column if not exists user_message_tr text,
+  add column if not exists assistant_response_tr text,
   add column if not exists is_correct boolean,
   add column if not exists review_note text,
   add column if not exists reviewed_by text,

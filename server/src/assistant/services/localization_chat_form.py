@@ -152,70 +152,80 @@ GUEST_NOTIF_DESCRIPTION: dict[str, dict[str, str]] = {
         "required": "Bu konu için kısa bir açıklama yazmanız gerekir (zorunlu).",
         "optional": (
             "İsteğe bağlı: ekip için ek not ekleyebilirsiniz. Eklemeyecekseniz “-” veya “yok” yazın; "
-            "sohbetteki ilk mesajınız da bağlam olarak kullanılabilir."
+            "sohbetteki ilk mesajınız da bağlam olarak kullanılabilir. "
+            "Tüm bildirimi iptal etmek için «iptal», «formu iptal» veya «talebi iptal et» yazın — «yok» yalnızca ek not istemediğinizi belirtir."
         ),
     },
     "en": {
         "required": "Please write a short description for this notice category (required).",
         "optional": (
             "Optional: add any details for the team. If you have nothing to add, reply with “-” or “no”; "
-            "your first message in this chat may also be kept as context."
+            "your first message in this chat may also be kept as context. "
+            "To cancel the whole notice, type “cancel form” or “cancel”—“no” here only means no extra note."
         ),
     },
     "de": {
         "required": "Bitte eine kurze Beschreibung zu dieser Kategorie (erforderlich).",
         "optional": (
             "Optional: ergänzen Sie Details. Wenn nichts hinzukommt, antworten Sie mit „-“ oder „nein“; "
-            "Ihre erste Nachricht in diesem Chat kann als Kontext dienen."
+            "Ihre erste Nachricht in diesem Chat kann als Kontext dienen. "
+            "Um die ganze Meldung abzubrechen, schreiben Sie „Abbrechen“ oder „Formular abbrechen“ — „nein“ bedeutet hier nur keine Zusatznotiz."
         ),
     },
     "pl": {
         "required": "Proszę krótko opisać wybraną kategorię (wymagane).",
         "optional": (
             "Możesz dodać szczegóły. Jeśli nie ma nic do dodania, odpowiedz „-” lub „nie”; "
-            "pierwsza wiadomość w tym czacie może też służyć jako kontekst."
+            "pierwsza wiadomość w tym czacie może też służyć jako kontekst. "
+            "Aby anulować całe zgłoszenie, napisz „anuluj formularz” lub „anuluj” — „nie” oznacza tu tylko brak dodatkowej notatki."
         ),
     },
     "da": {
         "required": "Skriv venligst en kort beskrivelse for denne kategori (påkrævet).",
         "optional": (
             "Valgfrit: tilføj detaljer til teamet. Hvis du ikke har noget at tilføje, svar med «-» eller «nej»; "
-            "din første besked i chatten kan også bruges som kontekst."
+            "din første besked i chatten kan også bruges som kontekst. "
+            "For at annullere hele meddelelsen skriv «annuller» eller «afbryd formularen» — «nej» betyder her kun ingen ekstra note."
         ),
     },
     "nl": {
         "required": "Schrijf een korte omschrijving voor deze categorie (verplicht).",
         "optional": (
             "Optioneel: voeg details toe voor het team. Als u niets wilt toevoegen, antwoord met «-» of «nee»; "
-            "uw eerste bericht in deze chat kan ook als context worden gebruikt."
+            "uw eerste bericht in deze chat kan ook als context worden gebruikt. "
+            "Annuleer de volledige melding met «annuleren» of «formulier annuleren» — «nee» betekent hier alleen geen extra opmerking."
         ),
     },
     "cs": {
         "required": "Napište prosím krátký popis této kategorie (povinné).",
         "optional": (
             "Volitelné: doplňte podrobnosti pro tým. Pokud nic nepřidáváte, odpovězte «-» nebo «ne»; "
-            "vaše první zpráva v tomto chatu může sloužit jako kontext."
+            "vaše první zpráva v tomto chatu může sloužit jako kontext. "
+            "Pro zrušení celého oznámení napište «zrušit» nebo «zrušit formulář» — «ne» zde znamená jen žádnou dodatečnou poznámku."
         ),
     },
     "ro": {
         "required": "Vă rugăm să scrieți o scurtă descriere pentru această categorie (obligatoriu).",
         "optional": (
             "Opțional: adăugați detalii pentru echipă. Dacă nu aveți nimic de adăugat, răspundeți cu «-» sau «nu»; "
-            "primul mesaj din acest chat poate servi și ca context."
+            "primul mesaj din acest chat poate servi și ca context. "
+            "Pentru a anula întregul mesaj scrieți «anulare» sau «anulează formularul» — «nu» înseamnă aici doar fără notă suplimentară."
         ),
     },
     "sk": {
         "required": "Napíšte prosím krátky popis tejto kategórie (povinné).",
         "optional": (
             "Voliteľné: doplňte podrobnosti pre tím. Ak nič nepridávate, odpovedzte «-» alebo «nie»; "
-            "vaša prvá správa v tomto chate môže slúžiť ako kontext."
+            "vaša prvá správa v tomto chate môže slúžiť ako kontext. "
+            "Zrušiť celé oznámenie môžete slovami «zrušiť» alebo «zrušiť formulár» — «nie» tu znamená len bez dodatočnej poznámky."
         ),
     },
     "ru": {
         "required": "Пожалуйста, кратко опишите выбранную категорию (обязательно).",
         "optional": (
             "По желанию: добавьте детали для команды. Если добавлять нечего, ответьте «-» или «нет»; "
-            "ваше первое сообщение в этом чате также может использоваться как контекст."
+            "ваше первое сообщение в этом чате также может использоваться как контекст. "
+            "Чтобы отменить всё уведомление, напишите «отмена» или «отменить форму» — «нет» здесь означает только отсутствие дополнительной заметки."
         ),
     },
 }

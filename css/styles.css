@@ -3812,8 +3812,8 @@ body {
   }
 
   .where-module--premium.where-module--kroki-locked .where-kroki {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
     flex: 1 1 auto;
     min-width: 0;
     max-height: none;

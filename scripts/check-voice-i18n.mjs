@@ -2,7 +2,7 @@
 /**
  * Sesli asistan i18n tutarlılığı:
  * - js/i18n.js: tr, en, de, pl aynı voice* anahtar kümesi
- * - server voice_channel_layer.py: ana TTS metin sözlükleri 10 dil (tr…sk)
+ * - server voice_channel_layer.py: sesli kanal metin sözlükleri 10 dil (tr…sk)
  *   (VOICE_OPERATIONAL_USE_TEXT sözlük değil, VOICE_OUT_OF_SCOPE_PREMIUM_TEXT ile aynı.)
  *
  * Çalıştır: node scripts/check-voice-i18n.mjs

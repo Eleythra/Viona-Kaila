@@ -135,7 +135,8 @@
                 <article class="glass-block report-card">
                   <h3 class="report-card__h">Niyet ve yönlendirme</h3>
                   <p class="report-help">
-                    Aynı <code class="report-help__code">chat_observations</code> kayıtlarından: assistant’ın sınıfladığı niyet, öneri bayrağı, operasyon hedefi ve misafirin seçtiği arayüz dili.
+                    Aynı <code class="report-help__code">chat_observations</code> kayıtlarından: niyet, öneri bayrağı, operasyon hedefi, arayüz dili; metinler orijinal dilde, ayrıca
+                    <code class="report-help__code">*_tr</code> Türkçe operasyon alanlarında aranabilir.
                   </p>
                   <div id="report-chat-insights"></div>
                 </article>
@@ -636,7 +637,9 @@
             <div class="logs-page-title">
               <h2>Sohbet logları</h2>
               <p class="logs-page-title__sub">
-                Asistanın her turda kaydettiği gözlemler: niyet, katman, güven ve fallback bilgisi eğitim, izleme ve raporlama için burada listelenir. Liste ve CSV aynı filtreleri kullanır; CSV en fazla 5000 satır ve en yeni kayıt üsttedir.
+                Her turda kaydedilen gözlemler: misafir ve asistan metni <strong>orijinal dilde</strong> saklanır; TR dışı arayüzlerde ayrıca
+                <strong>Türkçe operasyon sütunu</strong> (sunucuda çeviri) dolar. Niyet, katman, güven ve fallback bilgisi eğitim ve raporlama içindir.
+                Liste ve CSV aynı filtreleri kullanır; arama hem orijinal hem Türkçe metinde çalışır. CSV en fazla 5000 satır, en yeni kayıt üsttedir.
               </p>
             </div>
             <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
@@ -707,11 +710,17 @@
               <p class="logs-section__eyebrow">Sorgu</p>
               <h3 class="logs-section__title">Filtreler ve dışa aktarım</h3>
               <p class="logs-section__desc">
-                Tarih, dil, intent ve katman ile daraltın. Başlangıç ve bitiş boşken dönem ana sayfa panosuyla aynıdır (son ~30 gün; test kayıtları hariç). CSV dosyasının başında Türkçe açıklama ve sütun sözlüğü vardır; ham teknik alan adları açıklama satırlarında parantez içinde verilir. Liste ile aynı filtreler geçerlidir.
+                Tarih, dil, intent ve katman ile daraltın. Başlangıç ve bitiş boşken dönem ana sayfa panosuyla aynıdır (son ~30 gün; test kayıtları hariç). CSV başlığında <code class="inline-code">misafir_mesaji_tr</code> ve
+                <code class="inline-code">asistan_yaniti_tr</code> Türkçe yansımalardır. Liste ile aynı filtreler geçerlidir.
               </p>
             </header>
             <div class="logs-toolbar">
-              <input id="logs-search" class="logs-toolbar__search" type="search" placeholder="Mesaj, cevap veya intent ara…" />
+              <input
+                id="logs-search"
+                class="logs-toolbar__search"
+                type="search"
+                placeholder="Orijinal veya Türkçe mesaj/cevap, intent…"
+              />
               <div class="logs-toolbar__dates">
                 <label class="logs-field-label">Başlangıç <input id="logs-from" type="date" /></label>
                 <label class="logs-field-label">Bitiş <input id="logs-to" type="date" /></label>
@@ -725,6 +734,12 @@
                 <option value="en">EN</option>
                 <option value="de">DE</option>
                 <option value="pl">PL</option>
+                <option value="ru">RU</option>
+                <option value="da">DA</option>
+                <option value="cs">CS</option>
+                <option value="ro">RO</option>
+                <option value="nl">NL</option>
+                <option value="sk">SK</option>
               </select>
               <select id="logs-intent" class="logs-toolbar__select" aria-label="Intent">
                 <option value="">Intent (tümü)</option>
@@ -760,9 +775,9 @@
           <article class="glass-block logs-section logs-section--table">
             <header class="logs-section__head">
               <p class="logs-section__eyebrow">Kayıtlar</p>
-              <h3 class="logs-section__title">Ham log tablosu</h3>
+              <h3 class="logs-section__title">Kayıt tablosu (orijinal + TR)</h3>
               <p class="logs-section__desc">
-                Sayfa başına 70 kayıt; önceki ve sonraki ile gezinin. Tablo geniştir: sağdaki <strong>Cevap</strong> sütununu görmek için tablo alanında veya ana içerikte <strong>yatay kaydırma</strong> kullanın (trackpad ile yatay sürükleyin veya kaydır çubuğuna bakın). Laptop ve geniş monitörde tam metin bu şekilde okunur.
+                Sayfa başına 70 kayıt; önceki ve sonraki ile gezinin. Her hücrede üstte <strong>Kaynak</strong> (misafirin / asistanın dili), altta varsa <strong>TR</strong> operasyon metni. TR arayüzünde ikisi aynıysa yalnızca tek blok gösterilir. Tablo geniştir; sağdaki cevap sütunu için yatay kaydırma kullanın.
               </p>
             </header>
             <div id="logs-table" class="logs-table-mount"></div>
@@ -782,7 +797,7 @@
             <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
           </div>
           <p class="section-lead">
-            Tarih aralığı boşken özet panosu ile aynı yaklaşık pencere kullanılır (son ~30 gün). İki alt kart, seçtiğiniz tarih/oda/arama
+            Tarih alanları <strong>Europe/Istanbul</strong> otel takvim günü ile eşlenir; aralık boşken pano ile aynı yaklaşık pencere (son ~30 gün). İki alt kart, seçtiğiniz tarih/oda/arama
             penceresindeki <strong>yöntem dağılımını</strong> gösterir; üstteki «Doğrulama» süzgeci yalnızca tablo ve «Filtreli toplam» özetine uygulanır.
           </p>
           <article class="glass-block logs-section logs-section--kpi">
@@ -798,7 +813,7 @@
               <p class="logs-section__eyebrow">Sorgu</p>
               <h3 class="logs-section__title">Filtreler ve dışa aktarım</h3>
               <p class="logs-section__desc">
-                Tarih, doğrulama yöntemi, oda ve metin araması ile daraltın. CSV, bu ekrandaki filtrelerle aynı mantığı kullanır (üst sınır 5000 satır).
+                Tarihler <strong>otel takvim günü</strong> (Europe/Istanbul) ile eşlenir; tek gün modunda yalnızca seçtiğiniz günün kayıtları gelir. CSV aynı filtreleri kullanır (üst sınır 5000 satır).
               </p>
             </header>
             <div class="logs-toolbar">
@@ -809,13 +824,27 @@
                 placeholder="Ad soyad veya oda içinde ara…"
                 autocomplete="off"
               />
-              <div class="logs-toolbar__dates">
+              <div class="logs-toolbar__dates logs-toolbar__dates--app-gate">
                 <label class="logs-field-label">Başlangıç <input id="app-gate-from" type="date" /></label>
-                <label class="logs-field-label">Bitiş <input id="app-gate-to" type="date" /></label>
+                <label class="logs-field-label app-gate-to-wrap">Bitiş <input id="app-gate-to" type="date" /></label>
+                <label class="logs-field-label logs-field-label--checkbox">
+                  <input id="app-gate-single-day" type="checkbox" />
+                  Yalnızca bu gün
+                </label>
+              </div>
+              <div class="logs-toolbar__quick-dates">
+                <button id="app-gate-today" type="button" class="btn-small">Bugün (otel)</button>
+                <button id="app-gate-clear-dates" type="button" class="btn-small">Tarihleri temizle</button>
               </div>
               <label class="logs-field-label app-gate-room-label">
                 Oda (tam)
-                <input id="app-gate-room" type="text" class="logs-toolbar__room" placeholder="örn. 0007" autocomplete="off" />
+                <input
+                  id="app-gate-room"
+                  type="text"
+                  class="logs-toolbar__room"
+                  placeholder="PMS ile aynı oda kodu"
+                  autocomplete="off"
+                />
               </label>
               <select id="app-gate-method" class="logs-toolbar__select" aria-label="Doğrulama yöntemi">
                 <option value="">Yöntem (tümü)</option>
@@ -831,7 +860,7 @@
               </div>
             </div>
             <p class="logs-toolbar__date-hint" role="note">
-              İki tarih de boşsa sunucu pano ile benzer varsayılan pencere uygulanır; CSV ile liste aynı parametreleri paylaşır.
+              İki tarih de boşsa sunucu pano ile benzer varsayılan pencere uygulanır. Başlangıç–bitiş aralığı veya «Yalnızca bu gün» ile tek otel günü; CSV ile liste aynı parametreleri paylaşır.
             </p>
           </article>
           <article

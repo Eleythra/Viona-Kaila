@@ -27,7 +27,7 @@ API kökü: `js/viona-backend-url.js` → `https://viona-node-api.onrender.com/a
 - `ASSISTANT_CHAT_ENDPOINT` (Python `/api/chat` tam URL)
 - Operasyon WhatsApp: `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, isteğe bağlı `WHATSAPP_BUSINESS_ACCOUNT_ID`, `WHATSAPP_TEMPLATE_LANGUAGE` (veya `WHATSAPP_OPERATIONAL_TEMPLATE_LANGUAGE`, genelde `tr`), `WHATSAPP_*_RECIPIENTS` (virgülle; ayrıntı `server/.env.example`)
 - İsteğe bağlı: `OPENAI_*`, `GEMINI_*` (PDF metin katmanı), `TELEGRAM_*` (Telegram bildirimleri)
-- Sesli asistan: `AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION` (boşsa `/api/tts` ve `/api/stt` 503 döner)
+- Sesli asistan: `OPENAI_API_KEY` (Realtime; `POST /api/realtime/session` + istemci WebRTC). Azure Speech kaldırıldı; yalnızca bu yol.
 - **Elektra / HotelAdvisor Hotspot (misafir kapısı):** `HOTEL_ADVISOR_BASE_URL`, `HOTEL_ADVISOR_HOTEL_ID`, `HOTEL_ADVISOR_TOKEN` (üçü doluysa uygulama girişinde oda + doğum tarihi doğrulaması açılır; `VIONA_UI_GATE_ENABLED` `0` olmamalı). Sunucu `FN_EASYPMS_HOTSPOT_GUESTS` ile listeyi çeker; isteğe bağlı `HOTEL_ADVISOR_GUESTS_CACHE_MS` (varsayılan 12000 ms, `0` = önbellek kapalı). Kod: [`server/src/services/hotel-advisor.service.js`](server/src/services/hotel-advisor.service.js), [`server/src/modules/guest-gate/guest-gate.router.js`](server/src/modules/guest-gate/guest-gate.router.js).
 
 Ayrıntılı şablon: `server/.env.example`.
@@ -54,6 +54,7 @@ Ayrıntılı şablon: `server/.env.example`.
 `GET https://<node-host>/api/health`
 
 - `ok`, `hasSupabase`, `adminAuthConfigured`, `whatsappOperational` (Cloud API; token/numara sızmaz)
+- Ses: `openAiRealtimeConfigured` (`OPENAI_API_KEY` ile Realtime oturumu)
 - Operasyon WhatsApp (Cloud API): `whatsappOperational.cloudApiSendReady`, `whatsappOperational.cloudRecipientCounts` (sayılar; numara sızmaz)
 
 ---

@@ -20,6 +20,7 @@ import {
   getGuestGateEntriesSummary,
   exportGuestGateEntriesCsv,
   deleteGuestGateEntry,
+  deleteGuestGateEntriesBulk,
   listSurveySubmissions,
   updateChatObservationReview,
   updateAdminItemStatus,
@@ -254,6 +255,17 @@ router.get("/guest-gate-entries/export.csv", async (req, res) => {
     return res.status(200).send(csv);
   } catch (error) {
     return adminErr(res, error, "admin_guest_gate_export_failed");
+  }
+});
+
+router.post("/guest-gate-entries/bulk-delete", async (req, res) => {
+  try {
+    const body = req.body && typeof req.body === "object" ? req.body : {};
+    const ids = Array.isArray(body.ids) ? body.ids : [];
+    const data = await deleteGuestGateEntriesBulk(ids);
+    return res.status(200).json({ ok: true, ...data });
+  } catch (error) {
+    return adminErr(res, error, "admin_guest_gate_bulk_delete_failed");
   }
 });
 

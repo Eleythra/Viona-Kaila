@@ -20,14 +20,17 @@
 
   window.VIONA_CHAT_CONFIG = {
     endpoint: chatEndpoint,
-    ttsEndpoint: apiBase + "/tts",
-    sttEndpoint: apiBase + "/stt",
+    realtimeSessionEndpoint: apiBase + "/realtime/session",
+    /** OpenAI Realtime built-in ses adı (ör. marin, alloy). */
+    openAiRealtimeVoice: "marin",
+    realtimeSessionTimeoutMs: 22000,
+    realtimeCallsTimeoutMs: 35000,
+    /** Realtime: output_audio_buffer.stopped gelmezse idle (ms). */
+    realtimeSpeakFallbackMs: 14000,
     timeoutMs: 15000,
-    /** Sesli tur: STT sonrası /api/chat (Python) daha uzun sürebilir */
+    /** Sesli tur: tool sonrası /api/chat (Python) daha uzun sürebilir */
     voiceUpstreamTimeoutMs: 35000,
     voiceUpstreamMaxCapMs: 90000,
-    speechSttTimeoutMs: 25000,
-    speechTtsTimeoutMs: 35000,
     errorReply:
       "Şu anda asistana kısa süreli erişim sorunu yaşıyorum. Lütfen birkaç saniye sonra tekrar deneyiniz.",
   };

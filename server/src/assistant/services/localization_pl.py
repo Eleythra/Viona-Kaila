@@ -48,7 +48,10 @@ TRANSLATIONS_PL: Dict[str, str] = {
     'recommendation_coffee_dessert': 'Na kawę lub deser idealne są Libum Cafe i Lobby Bar.',
     'recommendation_kids_activity': 'Dla dzieci główne opcje to Mini Club, Mini Disco i plac zabaw.',
     'recommendation_romantic_dinner': 'Na romantyczny wieczór pasują La Terrace A La Carte lub Moss Beach Restaurant & Bar nad brzegiem; na à la carte zalecam rezerwację.',
-    'recommendation_general_dining': 'Jeśli nie wiesz, co wybrać, na kolację dobre są Sinton BBQ lub restauracja główna; na szybki kęs praktyczne są Dolphin Snack i Gusto Snack.',
+    'recommendation_general_dining': (
+        'Jeśli wahasz się przy kolacji, pewne są Sinton BBQ lub restauracja główna; na szybki kęs wygodne są Dolphin Snack i Gusto Snack. '
+        'Na wieczory à la carte w La Terrace zarezerwuj proszę przez Guest Relations lub recepcję.'
+    ),
     'fault_template_with_device': 'Gdy {device} nie działa, skontaktuj się z recepcją — w hotelu zapewniamy wsparcie techniczne.',
     'fault_template_generic': 'W tej awarii skontaktuj się z recepcją — w hotelu zapewniamy wsparcie techniczne.',
     'complaint_noise': 'Najpierw zgłoś tę reklamację do Guest Relations. W razie potrzeby recepcja też może pomóc w eskalacji.',

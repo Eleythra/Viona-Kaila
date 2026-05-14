@@ -393,5 +393,15 @@
         getApiBase() + "/admin/guest-gate-entries/" + encodeURIComponent(String(id || ""));
       return jfetch(endpoint, { method: "DELETE" });
     },
+    deleteGuestGateEntriesBulk: function (ids) {
+      var list = Array.isArray(ids) ? ids : [];
+      return jfetch(getApiBase() + "/admin/guest-gate-entries/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: list }),
+      }).then(function (d) {
+        return { deleted: d.deleted != null ? d.deleted : 0, ids: d.ids || [] };
+      });
+    },
   };
 })();

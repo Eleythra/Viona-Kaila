@@ -10,7 +10,7 @@ from assistant.services.voice_channel_layer import (
 
 
 def test_voice_out_of_scope_premium_text_has_exactly_ten_ui_languages():
-    """Premium yönlendirme: `js/lang-registry` / Azure UI dilleri ile anahtar kümesi birebir aynı olmalı."""
+    """Premium yönlendirme: `js/lang-registry` / Realtime UI dilleri ile anahtar kümesi birebir aynı olmalı."""
     assert set(VOICE_OUT_OF_SCOPE_PREMIUM_TEXT) == set(CHATBOT_UI_LANG_SET)
     assert len(VOICE_OUT_OF_SCOPE_PREMIUM_TEXT) == 10
     for code, text in VOICE_OUT_OF_SCOPE_PREMIUM_TEXT.items():

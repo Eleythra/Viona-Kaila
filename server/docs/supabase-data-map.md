@@ -60,6 +60,8 @@ Admin tarafta “bucket” isimleri API ile hizalıdır: `request`, `complaint`,
 
 **Okuyan:** Admin Loglar, dashboard sohbet metrikleri.
 
+**Kolonlar (çok dil):** `user_message` ve `assistant_response` misafirin / asistanın **orijinal** metnidir. Operasyon araması ve rapor için `user_message_tr` ile `assistant_response_tr` (Türkçe) alanları kullanılır; şema güncellemesi: [`server/docs/migrations/chat-observations-tr-columns.sql`](migrations/chat-observations-tr-columns.sql) ve ana betik [`server/docs/supabase-paste-viona.sql`](supabase-paste-viona.sql).
+
 ---
 
 ## Dashboard raporu (`getDashboardReports`)

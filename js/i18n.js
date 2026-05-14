@@ -419,6 +419,11 @@ const I18N = {
     voiceErrorAzureRegion:
       "Azure bölgesi uyuşmuyor: AZURE_SPEECH_REGION, Portal’deki Speech kaynağının bölgesiyle aynı olmalı (ör. westeurope).",
     voiceErrorRateLimit: "Çok sık ses denemesi yapıldı. Kısa süre sonra tekrar deneyin veya metin sohbetini kullanın.",
+    voiceErrorRealtimeSession:
+      "Ses oturumu başlatılamadı. Metin sohbetini deneyin veya bir süre sonra tekrar deneyin.",
+    voiceErrorRealtimeUpstream:
+      "Ses hizmeti geçici olarak yanıt vermedi. Metin sohbetini kullanabilir veya kısa süre sonra tekrar deneyebilirsiniz.",
+    voiceErrorRealtimeTimeout: "Ses oturumu zaman aşımına uğradı. Metin sohbetini deneyin.",
     voiceErrorPlayback: "Yanıt sesi çalınamadı (tarayıcı izni). Tekrar dokunup deneyin veya metin sohbetini kullanın.",
     voiceErrorAssistant: "Yanıt alınamadı. Lütfen tekrar deneyin veya metin sohbetine geçin.",
     chatNavBackAria: "Geri — uygulamaya dön",
@@ -1119,6 +1124,10 @@ const I18N = {
     voiceErrorAzureRegion:
       "Azure region mismatch: AZURE_SPEECH_REGION must match your Speech resource region in Azure Portal (e.g. westeurope).",
     voiceErrorRateLimit: "Too many voice attempts. Wait a moment, or use text chat.",
+    voiceErrorRealtimeSession: "Could not start the voice session. Try text chat or try again shortly.",
+    voiceErrorRealtimeUpstream:
+      "The voice service did not respond in time. You can use text chat or try again in a moment.",
+    voiceErrorRealtimeTimeout: "The voice session timed out. Try text chat.",
     voiceErrorPlayback: "Could not play the reply audio (browser restriction). Tap again or use text chat.",
     voiceErrorAssistant: "No reply received. Please try again or switch to text chat.",
     chatNavBackAria: "Back — return to app",
@@ -1821,6 +1830,10 @@ const I18N = {
     voiceErrorAzureRegion:
       "Azure-Region passt nicht: AZURE_SPEECH_REGION muss der Speech-Ressourcen-Region entsprechen (z. B. westeurope).",
     voiceErrorRateLimit: "Zu viele Sprachversuche. Kurz warten oder Textchat nutzen.",
+    voiceErrorRealtimeSession: "Sprachsitzung konnte nicht gestartet werden. Textchat versuchen oder später erneut.",
+    voiceErrorRealtimeUpstream:
+      "Sprachdienst hat vorübergehend nicht geantwortet. Textchat nutzen oder kurz warten und erneut versuchen.",
+    voiceErrorRealtimeTimeout: "Sprachsitzung hat das Zeitlimit überschritten. Bitte Textchat nutzen.",
     voiceErrorPlayback: "Antwortton konnte nicht abgespielt werden (Browser). Erneut tippen oder Textchat nutzen.",
     voiceErrorAssistant: "Keine Antwort erhalten. Bitte erneut versuchen oder zum Textchat wechseln.",
     chatNavBackAria: "Zurück zur App",
@@ -2484,6 +2497,10 @@ const I18N = {
     voiceErrorAzureRegion:
       "Niezgodność regionu: AZURE_SPEECH_REGION musi być taki jak region zasobu Speech w Azure (np. westeurope).",
     voiceErrorRateLimit: "Zbyt wiele prób głosowych. Odczekaj chwilę lub użyj czatu tekstowego.",
+    voiceErrorRealtimeSession: "Nie można uruchomić sesji głosowej. Spróbuj czatu tekstowego lub ponów później.",
+    voiceErrorRealtimeUpstream:
+      "Usługa głosowa chwilowo nie odpowiada. Użyj czatu tekstowego lub spróbuj ponownie za chwilę.",
+    voiceErrorRealtimeTimeout: "Sesja głosowa przekroczyła limit czasu. Użyj czatu tekstowego.",
     voiceErrorPlayback: "Nie można odtworzyć odpowiedzi (ograniczenie przeglądarki). Dotknij ponownie lub użyj czatu.",
     voiceErrorAssistant: "Brak odpowiedzi. Spróbuj ponownie lub przejdź do czatu tekstowego.",
     chatNavBackAria: "Wstecz — wróć do aplikacji",

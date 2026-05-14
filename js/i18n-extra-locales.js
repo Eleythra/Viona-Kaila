@@ -1233,7 +1233,7 @@
   });
 
   /**
-   * Sesli asistan: bar + ipuçları + durum + ARIA + hata (STT/TTS locale ayrı; `viona-voice.js` + Azure).
+   * Sesli asistan: bar + ipuçları + durum + ARIA + hata (`viona-voice.js`; OpenAI Realtime WebRTC).
    * Zorunlu: voiceSectionTitle, voiceSectionTapToOpen, voiceInfoOnlyHint, voiceSectionTapAvatar,
    * voiceAvatarAria, voiceAsideAria, voicePanelAria — en tabanı üzerine aynı anahtarlar.
    */
@@ -1402,6 +1402,11 @@
       voiceErrorAzureRegion:
         "Неверный регион: AZURE_SPEECH_REGION должен совпадать с регионом ресурса Speech в Azure.",
       voiceErrorRateLimit: "Слишком частые попытки. Подождите или используйте текстовый чат.",
+      voiceErrorRealtimeSession:
+        "Не удалось запустить голосовую сессию. Попробуйте текстовый чат или повторите позже.",
+      voiceErrorRealtimeUpstream:
+        "Голосовой сервис временно не отвечает. Используйте текстовый чат или повторите попытку.",
+      voiceErrorRealtimeTimeout: "Голосовая сессия прервана по времени. Используйте текстовый чат.",
     },
     da: {
       voiceErrorSpeechUnauthorized:
@@ -1413,6 +1418,10 @@
       voiceErrorAzureQuota: "Azure afviste anmodning (kvote/politik). Tjek ressource i Azure Portal.",
       voiceErrorAzureRegion: "Region mismatch: AZURE_SPEECH_REGION skal matche Speech-ressourcens region.",
       voiceErrorRateLimit: "For mange forsøg. Vent lidt eller brug tekstchat.",
+      voiceErrorRealtimeSession: "Stemmesessionen kunne ikke startes. Prøv tekstchat eller prøv igen senere.",
+      voiceErrorRealtimeUpstream:
+        "Stemmetjenesten svarede ikke i tide. Brug tekstchat eller prøv igen om lidt.",
+      voiceErrorRealtimeTimeout: "Stemmesessionen fik timeout. Prøv tekstchat.",
     },
     cs: {
       voiceErrorSpeechUnauthorized:
@@ -1424,6 +1433,10 @@
       voiceErrorAzureQuota: "Azure žádost zamítnuta (kvóta nebo zásady). Zkontrolujte prostředek v Azure Portal.",
       voiceErrorAzureRegion: "Neshoda regionu: AZURE_SPEECH_REGION musí odpovídat regionu Speech prostředku.",
       voiceErrorRateLimit: "Příliš mnoho pokusů. Počkejte nebo použijte textový chat.",
+      voiceErrorRealtimeSession: "Hlasovou relaci nelze spustit. Zkuste textový chat nebo to zkuste později.",
+      voiceErrorRealtimeUpstream:
+        "Hlasová služba dočasně neodpověděla. Použijte textový chat nebo to zkuste znovu za chvíli.",
+      voiceErrorRealtimeTimeout: "Hlasová relace vypršela. Použijte textový chat.",
     },
     ro: {
       voiceErrorSpeechUnauthorized:
@@ -1435,6 +1448,11 @@
       voiceErrorAzureQuota: "Cerere respinsă de Azure (cotă sau politică). Verificați resursa în Azure Portal.",
       voiceErrorAzureRegion: "Regiune incorectă: AZURE_SPEECH_REGION trebuie să coincidă cu regiunea resursei Speech.",
       voiceErrorRateLimit: "Prea multe încercări. Așteptați sau folosiți chat text.",
+      voiceErrorRealtimeSession:
+        "Sesiunea vocală nu a putut porni. Încercați chat text sau reîncercați mai târziu.",
+      voiceErrorRealtimeUpstream:
+        "Serviciul vocal nu răspunde momentan. Folosiți chat text sau reîncercați în câteva momente.",
+      voiceErrorRealtimeTimeout: "Sesiunea vocală a expirat. Folosiți chat text.",
     },
     nl: {
       voiceErrorSpeechUnauthorized:
@@ -1446,6 +1464,11 @@
       voiceErrorAzureQuota: "Azure weigerde het verzoek (quota of beleid). Controleer de resource in Azure Portal.",
       voiceErrorAzureRegion: "Regio komt niet overeen: AZURE_SPEECH_REGION moet die van de Speech-resource zijn.",
       voiceErrorRateLimit: "Te veel pogingen. Wacht even of gebruik tekstchat.",
+      voiceErrorRealtimeSession:
+        "De spraaksessie kon niet worden gestart. Probeer tekstchat of probeer het later opnieuw.",
+      voiceErrorRealtimeUpstream:
+        "De spraakservice reageerde niet op tijd. Gebruik tekstchat of probeer het zo opnieuw.",
+      voiceErrorRealtimeTimeout: "De spraaksessie is verlopen. Gebruik tekstchat.",
     },
     sk: {
       voiceErrorSpeechUnauthorized:
@@ -1457,6 +1480,11 @@
       voiceErrorAzureQuota: "Azure odmietol požiadavku (kvóta alebo pravidlá). Skontrolujte zdroj v Azure Portáli.",
       voiceErrorAzureRegion: "Nezhoda regiónu: AZURE_SPEECH_REGION musí zodpovedať regiónu Speech zdroja.",
       voiceErrorRateLimit: "Príliš veľa pokusov. Počkajte alebo použite textový chat.",
+      voiceErrorRealtimeSession:
+        "Hlasovú reláciu sa nepodarilo spustiť. Skúste textový chat alebo to skúste neskôr.",
+      voiceErrorRealtimeUpstream:
+        "Hlasová služba dočasne neodpovedala. Použite textový chat alebo skúste znova o chvíľu.",
+      voiceErrorRealtimeTimeout: "Hlasová relácia vypršala. Použite textový chat.",
     },
   };
   Object.keys(VOICE_ERROR_EXTRA).forEach(function (c) {

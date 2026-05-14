@@ -2214,12 +2214,40 @@
     };
   }
 
+  function syncAppGateSingleDayUi() {
+    var single = document.getElementById("app-gate-single-day");
+    var fromEl = document.getElementById("app-gate-from");
+    var toEl = document.getElementById("app-gate-to");
+    var toWrap = document.querySelector("#tab-app-entries .app-gate-to-wrap");
+    if (!single || !fromEl || !toEl) return;
+    var on = single.checked;
+    if (toWrap) {
+      toWrap.style.display = on ? "none" : "";
+    }
+    if (on) {
+      if (fromEl.value) {
+        toEl.value = fromEl.value;
+      } else {
+        toEl.value = "";
+      }
+    }
+  }
+
   function getAppGateParams() {
+    syncAppGateSingleDayUi();
+    var singleEl = document.getElementById("app-gate-single-day");
+    var fromEl = document.getElementById("app-gate-from");
+    var toEl = document.getElementById("app-gate-to");
+    var fromV = (fromEl && fromEl.value) || "";
+    var toV = (toEl && toEl.value) || "";
+    if (singleEl && singleEl.checked && fromV) {
+      toV = fromV;
+    }
     return {
       page: appGatePage,
       pageSize: APP_GATE_PAGE_SIZE,
-      from: (document.getElementById("app-gate-from") || {}).value || "",
-      to: (document.getElementById("app-gate-to") || {}).value || "",
+      from: fromV,
+      to: toV,
       verification_method: (document.getElementById("app-gate-method") || {}).value || "",
       room_number: (document.getElementById("app-gate-room") || {}).value || "",
       search: (document.getElementById("app-gate-search") || {}).value || "",
@@ -2259,6 +2287,26 @@
           } catch (e) {
             window.alert("Silinemedi: " + (e && e.message ? e.message : "bilinmeyen hata"));
           }
+        },
+        onBulkDelete: async function (ids) {
+          var list = (ids || []).filter(Boolean);
+          if (!list.length) return;
+          if (
+            !window.confirm(
+              list.length +
+                " giriş kaydı kalıcı olarak silinsin mi? Kişisel veri için audit izi gerekir; işlem geri alınamaz.",
+            )
+          ) {
+            return;
+          }
+          try {
+            var res = await adapter.deleteGuestGateEntriesBulk(list);
+            var n = res && res.deleted != null ? res.deleted : list.length;
+            window.alert(String(n) + " kayıt silindi.");
+          } catch (e) {
+            window.alert("Toplu silme başarısız: " + (e && e.message ? e.message : "bilinmeyen hata"));
+          }
+          await loadAppGateEntries();
         },
       });
       if (opts.scrollToTable) {
@@ -2338,6 +2386,43 @@
   function wireAppGateControls() {
     var applyBtn = document.getElementById("app-gate-apply");
     var csvBtn = document.getElementById("app-gate-csv");
+    var singleDay = document.getElementById("app-gate-single-day");
+    var fromEl = document.getElementById("app-gate-from");
+    var toEl = document.getElementById("app-gate-to");
+    var todayBtn = document.getElementById("app-gate-today");
+    var clearDatesBtn = document.getElementById("app-gate-clear-dates");
+    if (singleDay) {
+      singleDay.addEventListener("change", function () {
+        syncAppGateSingleDayUi();
+      });
+    }
+    if (fromEl) {
+      fromEl.addEventListener("change", function () {
+        if (singleDay && singleDay.checked) syncAppGateSingleDayUi();
+      });
+    }
+    if (todayBtn && fromEl && toEl) {
+      todayBtn.addEventListener("click", function () {
+        var y = hotelCalendarYmd(new Date());
+        fromEl.value = y;
+        toEl.value = y;
+        if (singleDay) singleDay.checked = true;
+        syncAppGateSingleDayUi();
+        appGatePage = 1;
+        void loadAppGateEntries();
+      });
+    }
+    if (clearDatesBtn && fromEl && toEl) {
+      clearDatesBtn.addEventListener("click", function () {
+        fromEl.value = "";
+        toEl.value = "";
+        if (singleDay) singleDay.checked = false;
+        syncAppGateSingleDayUi();
+        appGatePage = 1;
+        void loadAppGateEntries();
+      });
+    }
+    syncAppGateSingleDayUi();
     if (applyBtn) {
       applyBtn.addEventListener("click", function () {
         appGatePage = 1;

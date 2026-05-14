@@ -5557,11 +5557,93 @@
         "</div>" +
         '<div class="bucket-table-wrap bucket-table-wrap--logs"><table class="admin-table admin-table--logs"><thead><tr>' +
         '<th class="admin-table__th--check"><span class="sr-only">Seç</span></th>' +
-        "<th>Tarih</th><th>Kullanıcı Mesajı</th><th>Dil</th><th>Intent</th><th>Domain</th><th>Alt niyet</th><th>Güven</th><th>Fallback</th><th>Multi</th><th>Karar</th><th>Route</th><th>Öneri</th><th>Katman</th><th>Cevap</th><th>İşlem</th>" +
+        "<th>Tarih</th><th>Misafir <span class=\"logs-th-hint\">(Kaynak · TR)</span></th><th>Arayüz / algı</th><th>Intent</th><th>Domain</th><th>Alt niyet</th><th>Güven</th><th>Fallback</th><th>Multi</th><th>Karar</th><th>Route</th><th>Öneri</th><th>Katman</th><th>Yanıt <span class=\"logs-th-hint\">(Kaynak · TR)</span></th><th>İşlem</th>" +
         "</tr></thead><tbody>";
       rows.forEach(function (r) {
+        var uiLang = String(r.ui_language || "").trim().toLowerCase();
+        var expectTrCol = Boolean(uiLang) && uiLang !== "tr";
         var userMsg = String(r.user_message || "-");
-        var assistantMsg = String(r.assistant_response || "-");
+        var rawAssistant = String(r.assistant_response ?? "");
+        var rawAssistantTrim = rawAssistant.trim();
+        var assistantMsg = rawAssistantTrim ? rawAssistant : "-";
+        var userMsgTr = String(r.user_message_tr || "").trim();
+        var assistantMsgTr = String(r.assistant_response_tr || "").trim();
+        var userCellInner;
+        if (!expectTrCol) {
+          userCellInner =
+            '<div class="logs-cell__body" title="' +
+            esc(userMsg) +
+            '">' +
+            esc(userMsg) +
+            "</div>";
+        } else {
+          var userTrBlock = "";
+          if (userMsgTr && userMsgTr !== userMsg) {
+            userTrBlock =
+              '<div class="logs-cell__tr">' +
+              '<span class="logs-cell__tag">TR</span>' +
+              '<div class="logs-cell__body logs-cell__body--nested" title="' +
+              esc(userMsgTr) +
+              '">' +
+              esc(userMsgTr) +
+              "</div></div>";
+          } else if (!userMsgTr) {
+            userTrBlock =
+              '<div class="logs-cell__tr logs-cell__tr--pending">' +
+              '<span class="logs-cell__tag logs-cell__tag--pending">TR</span>' +
+              "<span>Çeviri henüz yok veya kapalı (<code class=\"logs-cell__code\">OPENAI_API_KEY</code> / <code class=\"logs-cell__code\">CHAT_OBS_TRANSLATION_ENABLED</code>).</span>" +
+              "</div>";
+          }
+          userCellInner =
+            '<div class="logs-cell__stack">' +
+            '<div class="logs-cell__orig">' +
+            '<span class="logs-cell__tag logs-cell__tag--src">Kaynak</span>' +
+            '<div class="logs-cell__body logs-cell__body--tight" title="' +
+            esc(userMsg) +
+            '">' +
+            esc(userMsg) +
+            "</div></div>" +
+            userTrBlock +
+            "</div>";
+        }
+        var assistantCellInner;
+        if (!expectTrCol) {
+          assistantCellInner =
+            '<div class="logs-cell__body" title="' +
+            esc(assistantMsg) +
+            '">' +
+            esc(assistantMsg) +
+            "</div>";
+        } else {
+          var asstTrBlock = "";
+          if (assistantMsgTr && assistantMsgTr !== rawAssistantTrim) {
+            asstTrBlock =
+              '<div class="logs-cell__tr">' +
+              '<span class="logs-cell__tag">TR</span>' +
+              '<div class="logs-cell__body logs-cell__body--nested" title="' +
+              esc(assistantMsgTr) +
+              '">' +
+              esc(assistantMsgTr) +
+              "</div></div>";
+          } else if (rawAssistantTrim && !assistantMsgTr) {
+            asstTrBlock =
+              '<div class="logs-cell__tr logs-cell__tr--pending">' +
+              '<span class="logs-cell__tag logs-cell__tag--pending">TR</span>' +
+              "<span>Çeviri henüz yok veya kapalı.</span>" +
+              "</div>";
+          }
+          assistantCellInner =
+            '<div class="logs-cell__stack">' +
+            '<div class="logs-cell__orig">' +
+            '<span class="logs-cell__tag logs-cell__tag--src">Kaynak</span>' +
+            '<div class="logs-cell__body logs-cell__body--tight" title="' +
+            esc(assistantMsg) +
+            '">' +
+            esc(assistantMsg) +
+            "</div></div>" +
+            asstTrBlock +
+            "</div>";
+        }
         var confRaw = r.confidence;
         var confStr = "-";
         if (confRaw != null && confRaw !== "") {
@@ -5579,11 +5661,7 @@
           '" aria-label="Bu satırı seç" /></td>';
         html += "<td>" + esc(formatSubmittedAtTr(r.created_at)) + "</td>";
         html +=
-          '<td class="logs-cell logs-cell--user"><div class="logs-cell__body" title="' +
-          esc(userMsg) +
-          '">' +
-          esc(userMsg) +
-          "</div></td>";
+          '<td class="logs-cell logs-cell--user">' + userCellInner + "</td>";
         html += "<td>" + esc((r.ui_language || "-") + " / " + (r.detected_language || "-")) + "</td>";
         html += "<td>" + esc(r.intent || "-") + "</td>";
         html += "<td>" + esc(r.domain || "-") + "</td>";
@@ -5600,12 +5678,7 @@
         html += "<td>" + esc(r.route_target || "none") + "</td>";
         html += "<td>" + esc(r.recommendation_made ? "Evet" : "Hayır") + "</td>";
         html += "<td>" + esc(r.layer_used || "-") + "</td>";
-        html +=
-          '<td class="logs-cell logs-cell--assistant"><div class="logs-cell__body" title="' +
-          esc(assistantMsg) +
-          '">' +
-          esc(assistantMsg) +
-          "</div></td>";
+        html += '<td class="logs-cell logs-cell--assistant">' + assistantCellInner + "</td>";
         html +=
           '<td><div class="row-actions">' +
           '<button type="button" class="btn-small btn-sil--danger js-log-delete" data-id="' +
@@ -5707,7 +5780,7 @@
           "logs-kpi-card--total",
           "Filtreli toplam",
           String(s.total != null ? s.total : 0),
-          "Seçili tarih, oda ve arama ile uyumlu kayıt sayısı.",
+          "Seçili otel takvim tarihi veya aralığı, oda ve arama ile uyumlu kayıt sayısı.",
         ) +
         card(
           "logs-kpi-card--multi",
@@ -5743,6 +5816,8 @@
           '<p class="logs-empty">Bu filtrelerle eşleşen kayıt yok. Tarih aralığını veya arama terimini genişletin.</p>';
         return;
       }
+      var gatePageSize =
+        pag && Number(pag.pageSize) > 0 ? Math.floor(Number(pag.pageSize)) : 50;
       function methodLabel(m) {
         var x = String(m || "").toLowerCase();
         if (x === "password_dual") return "Çift şifre kapısı";
@@ -5759,13 +5834,29 @@
         return t.length <= n ? t : t.slice(0, n) + "…";
       }
       var html =
+        '<div class="logs-bulk-toolbar" role="toolbar" aria-label="Toplu seçim">' +
+        '<label class="logs-bulk-toolbar__check">' +
+        '<input type="checkbox" class="js-app-gate-select-page" aria-label="Bu sayfadaki tüm satırları seç" />' +
+        "<span>Bu sayfadakilerin tümünü seç</span>" +
+        "</label>" +
+        '<button type="button" class="btn-small logs-bulk-toolbar__btn js-app-gate-clear-selection">Seçimi kaldır</button>' +
+        '<button type="button" class="btn-small logs-bulk-toolbar__btn logs-bulk-toolbar__btn--danger js-app-gate-bulk-delete">Seçilenleri sil</button>' +
+        '<p class="logs-bulk-toolbar__hint">Yalnızca işaretli satırlar silinir; bu sayfada en fazla ' +
+        esc(String(gatePageSize)) +
+        " seçebilirsiniz. Sunucu tek istekte en fazla 200 kimlik kabul eder; daha fazlası için sayfa değiştirip işlemi yineleyin.</p>" +
+        "</div>" +
         '<div class="bucket-table-wrap bucket-table-wrap--app-gate"><table class="admin-table admin-table--app-gate"><thead><tr>' +
+        '<th class="admin-table__th--check"><span class="sr-only">Seç</span></th>' +
         "<th>Zaman</th><th>Ad soyad</th><th>Oda</th><th>Doğrulama</th><th>IP</th><th>User-Agent</th><th>Kayıt ID</th><th>İşlem</th>" +
         "</tr></thead><tbody>";
       rows.forEach(function (r) {
         var uaFull = String(r.user_agent || "").trim();
         var uaDisp = truncateUa(uaFull, 72);
         html += "<tr>";
+        html +=
+          '<td class="admin-table__td--check"><input type="checkbox" class="js-app-gate-select" data-id="' +
+          esc(String(r.id || "")) +
+          '" aria-label="Bu satırı seç" /></td>';
         html += "<td>" + esc(formatSubmittedAtTr(r.created_at)) + "</td>";
         html += "<td>" + esc(String(r.full_name || "-")) + "</td>";
         html += "<td>" + esc(String(r.room_number || "-")) + "</td>";
@@ -5788,6 +5879,61 @@
       });
       html += "</tbody></table></div>";
       mountEl.innerHTML = html;
+
+      var selectPage = mountEl.querySelector(".js-app-gate-select-page");
+      var bulkDeleteBtn = mountEl.querySelector(".js-app-gate-bulk-delete");
+      var clearSelBtn = mountEl.querySelector(".js-app-gate-clear-selection");
+
+      function updateAppGateBulkDeleteLabel() {
+        var n = mountEl.querySelectorAll(".js-app-gate-select:checked").length;
+        if (bulkDeleteBtn) {
+          bulkDeleteBtn.textContent = n ? "Seçilenleri sil (" + n + ")" : "Seçilenleri sil";
+          bulkDeleteBtn.disabled = n === 0;
+        }
+        if (selectPage) {
+          var boxes = mountEl.querySelectorAll(".js-app-gate-select");
+          var allChecked = boxes.length > 0 && n === boxes.length;
+          var noneChecked = n === 0;
+          selectPage.checked = allChecked;
+          selectPage.indeterminate = !allChecked && !noneChecked;
+        }
+      }
+
+      if (selectPage) {
+        selectPage.addEventListener("change", function () {
+          var on = selectPage.checked;
+          mountEl.querySelectorAll(".js-app-gate-select").forEach(function (cb) {
+            cb.checked = on;
+          });
+          updateAppGateBulkDeleteLabel();
+        });
+      }
+      mountEl.querySelectorAll(".js-app-gate-select").forEach(function (cb) {
+        cb.addEventListener("change", updateAppGateBulkDeleteLabel);
+      });
+      if (clearSelBtn) {
+        clearSelBtn.addEventListener("click", function () {
+          mountEl.querySelectorAll(".js-app-gate-select").forEach(function (cb) {
+            cb.checked = false;
+          });
+          if (selectPage) {
+            selectPage.checked = false;
+            selectPage.indeterminate = false;
+          }
+          updateAppGateBulkDeleteLabel();
+        });
+      }
+      if (bulkDeleteBtn && handlers && typeof handlers.onBulkDelete === "function") {
+        bulkDeleteBtn.addEventListener("click", function () {
+          var ids = [];
+          mountEl.querySelectorAll(".js-app-gate-select:checked").forEach(function (cb) {
+            ids.push(cb.getAttribute("data-id"));
+          });
+          handlers.onBulkDelete(ids);
+        });
+      }
+      updateAppGateBulkDeleteLabel();
+
       mountEl.querySelectorAll(".js-app-gate-delete").forEach(function (btn) {
         btn.addEventListener("click", function () {
           if (!handlers || typeof handlers.onDelete !== "function") return;

@@ -89,7 +89,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "recommendation_coffee_dessert": "Kahve veya tatlı için Libum Cafe ve Lobby Bar ideal seçeneklerdir.",
         "recommendation_kids_activity": "Çocuk aktiviteleri için Mini Club, Mini Disco ve Çocuk Oyun Parkı öne çıkan seçeneklerdir.",
         "recommendation_romantic_dinner": "Romantik akşam için La Terrace A La Carte veya sahilde Moss Beach Restaurant & Bar uygun seçeneklerdir; à la carte kullanımda rezervasyon önerilir.",
-        "recommendation_general_dining": "Karar veremediyseniz akşam için Sinton BBQ veya ana restoran iyi seçeneklerdir; hızlı atıştırmalık için Dolphin Snack ve Gusto Snack pratiktir.",
+        "recommendation_general_dining": (
+            "Bu akşam için net bir tercih yoksa Sinton BBQ veya ana restoran güvenli ve lezzetli seçeneklerdir; "
+            "hızlı atıştırmalık için Dolphin Snack ve Gusto Snack pratiktir. "
+            "À la carte akşamlarında La Terrace için Misafir İlişkileri veya resepsiyondan rezervasyon alabilirsiniz."
+        ),
         "fault_template_with_device": "{device} arızası durumunda lütfen resepsiyon ile iletişime geçiniz; otelde teknik destek sağlanmaktadır.",
         "fault_template_generic": "Bu arıza durumu için lütfen resepsiyon ile iletişime geçiniz; otelde teknik destek sağlanmaktadır.",
         "complaint_noise": "Bu şikayetinizi öncelikle Misafir İlişkileri ile paylaşmanızı öneririm. Gerekirse resepsiyon üzerinden de hızlıca iletebilirsiniz.",
@@ -276,7 +280,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "recommendation_coffee_dessert": "For coffee or desserts, Libum Cafe and Lobby Bar are ideal choices.",
         "recommendation_kids_activity": "For children, Mini Club, Mini Disco, and the Kids Playground are the main activity options.",
         "recommendation_romantic_dinner": "For a romantic evening, La Terrace A La Carte or Moss Beach Restaurant & Bar on the shore are good choices; reservation is recommended for à la carte.",
-        "recommendation_general_dining": "If you are undecided, Sinton BBQ or the main restaurant are solid dinner options; for a quick bite, Dolphin Snack and Gusto Snack are practical.",
+        "recommendation_general_dining": (
+            "If you are still deciding on dinner, Sinton BBQ or the main restaurant are reliable choices; "
+            "for a quick bite, Dolphin Snack and Gusto Snack are handy. "
+            "For à la carte evenings at La Terrace, please book via Guest Relations or reception."
+        ),
         "fault_template_with_device": "If your {device} is not working, please contact reception; technical support is provided at the hotel.",
         "fault_template_generic": "For this fault, please contact reception; technical support is provided at the hotel.",
         "complaint_noise": "Please share this complaint with Guest Relations first. Reception can also assist with escalation if needed.",
@@ -462,7 +470,11 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "recommendation_coffee_dessert": "Für Kaffee oder Dessert sind Libum Cafe und Lobby Bar ideale Optionen.",
         "recommendation_kids_activity": "Für Kinderaktivitäten sind Mini Club, Mini Disco und der Kinderspielplatz die wichtigsten Optionen.",
         "recommendation_romantic_dinner": "Für einen romantischen Abend eignen sich La Terrace A La Carte oder Moss Beach Restaurant & Bar am Strand; für À-la-carte wird eine Reservierung empfohlen.",
-        "recommendation_general_dining": "Wenn Sie unsicher sind, sind Sinton BBQ oder das Hauptrestaurant gute Abendoptionen; für einen schnellen Snack eignen sich Dolphin Snack und Gusto Snack.",
+        "recommendation_general_dining": (
+            "Wenn Sie beim Abendessen noch unsicher sind, sind Sinton BBQ oder das Hauptrestaurant verlässliche Optionen; "
+            "für einen schnellen Snack eignen sich Dolphin Snack und Gusto Snack. "
+            "Für À-la-carte-Abende in La Terrace reservieren Sie bitte über die Gästebetreuung oder die Rezeption."
+        ),
         "fault_template_with_device": "Bei einem {device}-Defekt wenden Sie sich bitte an die Rezeption; im Hotel wird technischer Support bereitgestellt.",
         "fault_template_generic": "Bei dieser Störung wenden Sie sich bitte an die Rezeption; im Hotel wird technischer Support bereitgestellt.",
         "complaint_noise": "Bitte wenden Sie sich mit dieser Beschwerde zuerst an die Gästebetreuung. Bei Bedarf kann auch die Rezeption unterstützen.",
@@ -713,6 +725,34 @@ _ROOM_SERVICE_MODULE_HINT_EXTRA: dict[str, str] = {
     ),
 }
 
+_RECOMMENDATION_GENERAL_DINING_EXTRA: dict[str, str] = {
+    "da": (
+        "Er du stadig i tvivl om aftensmad, er Sinton BBQ eller hovedrestauranten pålidelige valg; "
+        "til en hurtig snack er Dolphin Snack og Gusto Snack praktiske. "
+        "For à la carte-aftener på La Terrace bedes du booke via Guest Relations eller receptionen."
+    ),
+    "nl": (
+        "Weet u 's avonds nog niet wat u wilt, dan zijn Sinton BBQ of het hoofdrestaurant betrouwbare keuzes; "
+        "voor een snelle hap zijn Dolphin Snack en Gusto Snack handig. "
+        "Voor à la carte-avonden bij La Terrace: reserveer via Guest Relations of de receptie."
+    ),
+    "cs": (
+        "Pokud si stále nejste jisti večeří, Sinton BBQ nebo hlavní restaurace jsou spolehlivé volby; "
+        "na rychlé občerstvení se hodí Dolphin Snack a Gusto Snack. "
+        "Na večery à la carte v La Terrace si prosím rezervujte přes Guest Relations nebo recepci."
+    ),
+    "ro": (
+        "Dacă încă nu v-ați decis pentru cină, Sinton BBQ sau restaurantul principal sunt variante sigure; "
+        "pentru ceva rapid, Dolphin Snack și Gusto Snack sunt practice. "
+        "Pentru serile à la carte la La Terrace, vă rugăm să rezervați prin Guest Relations sau recepție."
+    ),
+    "sk": (
+        "Ak ešte neviete pri večeri, Sinton BBQ alebo hlavná reštaurácia sú spoľahlivé voľby; "
+        "na rýchle občerstvenie sa hodia Dolphin Snack a Gusto Snack. "
+        "Na večery à la carte v La Terrace si prosím rezervujte cez Guest Relations alebo recepciu."
+    ),
+}
+
 # Ek UI dilleri: tam kopya İngilizce yerine ince sözlük + `get()` zinciri (da/nl→de, cs/sk→pl, ro→en, ru→en yedeği).
 # Böylece selamlama / anahtar otel cümleleri «tamamen İngilizce» kalmaz; eksik anahtar anlamlı dilde devam eder.
 _RU_SURFACE: dict[str, str] = {
@@ -775,6 +815,11 @@ _RU_SURFACE: dict[str, str] = {
         "По времени подачи, аллергенам или особым пожеланиям поможет ресепшн.\n\n"
         "Откройте модуль кнопкой ниже."
     ),
+    "recommendation_general_dining": (
+        "Если вы ещё не определились с ужином, Sinton BBQ или главный ресторан — надёжный выбор; "
+        "для быстрого перекуса удобны Dolphin Snack и Gusto Snack. "
+        "Для вечеров à la carte в La Terrace забронируйте через Guest Relations или ресепшн."
+    ),
 }
 
 _I18N_LOOKUP_CHAIN: dict[str, tuple[str, ...]] = {
@@ -802,6 +847,8 @@ for _code in EXTRA_CHATBOT_UI_LANGS:
         _extra_row["late_checkout_guest_notif_redirect"] = _LATE_CHECKOUT_GUEST_NOTIF_REDIRECT_EXTRA[_code]
     if _code in _ROOM_SERVICE_MODULE_HINT_EXTRA:
         _extra_row["fixed_room_service_module_hint"] = _ROOM_SERVICE_MODULE_HINT_EXTRA[_code]
+    if _code in _RECOMMENDATION_GENERAL_DINING_EXTRA:
+        _extra_row["recommendation_general_dining"] = _RECOMMENDATION_GENERAL_DINING_EXTRA[_code]
     TRANSLATIONS[_code] = _extra_row
     if _code == "ru":
         TRANSLATIONS["ru"].update(_RU_SURFACE)

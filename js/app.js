@@ -818,7 +818,7 @@
   function getGateIdleMs() {
     const w = window.__VIONA_GATE_IDLE_MS__;
     if (typeof w === "number" && Number.isFinite(w) && w >= 10000 && w <= 86400000) return w;
-    return 180000;
+    return 120000; /* 2 dk — viona-site-flags.js ile aynı; bayrak yoksa yedek */
   }
 
   function readGateSessionOk() {

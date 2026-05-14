@@ -10,13 +10,12 @@ import { createGuestGateRouter } from "./modules/guest-gate/guest-gate.router.js
 import surveysRouter from "./modules/surveys/surveys.router.js";
 import adminRouter from "./modules/admin/admin.router.js";
 import opsLinkRouter from "./modules/ops-link/ops-link.router.js";
-import {
-  createSpeechRouter,
-  createSttRawMiddleware,
-  handleStt,
-  speechClientAuthMiddleware,
-} from "./modules/speech/speech.router.js";
+import { createSpeechRouter } from "./modules/speech/speech.router.js";
 import { getSupabase, isSupabaseConfigured, withSupabaseFetchGuard } from "./lib/supabase.js";
+import {
+  scheduleChatObservationTrTranslation,
+  shouldRunChatObservationTrTranslation,
+} from "./modules/chat/chat-observation-translate.js";
 import { createGuestRequest } from "./modules/guest-requests/guest-requests.service.js";
 import { normalizeVionaUiLanguage, VIONA_UI_LANGUAGE_CODES } from "./lib/viona-ui-languages.js";
 import {
@@ -59,6 +58,20 @@ const UPSTREAM_UNAVAILABLE_BY_LANG = {
   en: "I am temporarily unavailable at the moment. Please try again in a few seconds.",
   de: "Ich bin momentan kurzzeitig nicht erreichbar. Bitte versuchen Sie es in wenigen Sekunden erneut.",
   pl: "Chwilowo jestem niedostępna. Spróbuj ponownie za kilka sekund.",
+};
+
+/** Misafir web kapısı (403): dil, istek gövdesindeki locale/ui_language ile hizalanır. */
+const CHAT_AUTH_GATE_BY_LANG = {
+  tr: "Sohbet ve dijital hizmetler için lütfen önce giriş ekranında iç erişim kodunuzu doğrulayın.",
+  en: "To use chat and in-app guest services, please verify your access code on the sign-in screen first.",
+  de: "Um den Chat und die digitalen Gästedienste zu nutzen, bestätigen Sie bitte zuerst Ihren Zugangscode auf der Anmeldeseite.",
+  pl: "Aby skorzystać z czatu i usług cyfrowych, potwierdź najpierw kod dostępu na ekranie logowania.",
+  ru: "Чтобы пользоваться чатом и цифровыми сервисами, сначала подтвердите код доступа на экране входа.",
+  da: "For at bruge chat og digitale gæsteservices skal du først bekræfte din adgangskode på loginskærmen.",
+  nl: "Gebruik van chat en digitale gastendiensten vereist eerst verificatie van uw toegangscode op het aanmeldscherm.",
+  cs: "Pro chat a digitální služby hostů prosím nejdříve ověřte vstupní kód na přihlašovací obrazovce.",
+  ro: "Pentru chat și serviciile digitale, confirmați mai întâi codul de acces pe ecranul de autentificare.",
+  sk: "Pre chat a digitálne služby hostí prosím najskôr overte vstupný kód na prihlasovacej obrazovke.",
 };
 
 const RESERVATION_REDIRECT_BY_LANG = {
@@ -263,10 +276,13 @@ async function writeChatObservation({
     const routeTarget = routeTargetForResponse(response);
     const routeValue = routeTarget === "none" ? null : routeTarget;
 
+    const obsLang = normalizeLocale(uiLanguage);
+    const assistantText = String(response?.message || "").trim() || " ";
     const row = {
       session_id: sessionId || null,
       user_id: userId || null,
       user_message: userMessage,
+      user_message_tr: obsLang === "tr" ? userMessage : null,
       ui_language: uiLanguage || null,
       detected_language: response?.meta?.language || null,
       intent,
@@ -284,13 +300,27 @@ async function writeChatObservation({
       layer_used: layerUsed,
       fallback_reason: fallbackReason || null,
       decision_path: decisionPath || null,
-      assistant_response: String(response?.message || "").trim() || " ",
+      assistant_response: assistantText,
+      assistant_response_tr: obsLang === "tr" ? assistantText : null,
       raw_payload: {
         message: userMessage,
         response,
       },
     };
-    await withSupabaseFetchGuard(() => getSupabase().from("chat_observations").insert(row));
+    const { data: inserted, error: insertError } = await withSupabaseFetchGuard(() =>
+      getSupabase().from("chat_observations").insert(row).select("id").single(),
+    );
+    if (insertError) {
+      console.warn("chat_observation_write_failed error=%s", insertError.message || insertError);
+      return;
+    }
+    if (obsLang !== "tr" && inserted?.id && shouldRunChatObservationTrTranslation()) {
+      scheduleChatObservationTrTranslation({
+        id: inserted.id,
+        userMessage,
+        assistantResponse: assistantText,
+      });
+    }
   } catch (err) {
     console.warn("chat_observation_write_failed error=%s", err?.message || err);
   }
@@ -687,14 +717,6 @@ app.get("/api/internal/operational-pending-reminder-cron", async (req, res) => {
   }
 });
 
-const speechLimiter = rateLimit({
-  windowMs: env.rateLimitWindowMs,
-  max: Math.min(60, Math.max(24, Math.floor(env.rateLimitMax / 4))),
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use("/api/tts", speechLimiter);
-
 /** Tarayıcıda http://localhost:PORT/ açıldığında boş / "Cannot GET /" yerine kısa yönlendirme. */
 app.get("/", (_req, res) => {
   const hotelAdvisorTestLink = env.hotelAdvisorTestEnabled
@@ -735,8 +757,8 @@ app.get("/api/health", (req, res) => {
     envBootstrap: getEnvBootstrapDiagnostics(),
     adminAuthConfigured: Boolean(env.adminApiToken),
     hasSupabase: env.hasSupabase,
-    /** TTS/STT için Azure anahtarı yüklü mü (Render’da AZURE_SPEECH_KEY kontrolü). */
-    azureSpeechConfigured: Boolean(String(env.azureSpeechKey || "").trim()),
+    /** Sesli asistan Realtime: OpenAI anahtarı yüklü mü. */
+    openAiRealtimeConfigured: Boolean(String(env.openAiApiKey || "").trim()),
     /** Geç çıkış “bugün” eşiği için kullanılan IANA dilimi (varsayılan Europe/Istanbul). */
     hotelTimezone: hotelTz || "Europe/Istanbul",
     /** WhatsApp operasyon (Cloud): token/phone id ve alıcı sayıları (numara listelenmez). */
@@ -801,13 +823,6 @@ app.use("/api/surveys", surveysRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/ops", opsLinkRouter);
 app.use("/api", createSpeechRouter());
-app.post(
-  "/api/stt",
-  speechLimiter,
-  speechClientAuthMiddleware,
-  createSttRawMiddleware(),
-  handleStt,
-);
 
 // WhatsApp webhook (Meta Cloud API).
 app.get("/api/webhooks/whatsapp", (req, res) => {
@@ -839,11 +854,12 @@ app.post("/api/chat", async (req, res) => {
   if (channel === "web") {
     const guestOk = parseVerifiedGuestCookie(req.get("cookie"));
     if (env.guestUiGateRequired && !guestOk) {
+      const gateLang = normalizeLocale(req.body?.ui_language || req.body?.locale || "tr");
       return res.status(403).json({
         ok: false,
         type: "error",
-        message: "Önce giriş ekranında erişim kodunuzu doğrulayın.",
-        meta: { intent: "auth_gate", source: "viona_node" },
+        message: pickChatLangMessage(CHAT_AUTH_GATE_BY_LANG, gateLang),
+        meta: { intent: "auth_gate", source: "viona_node", language: gateLang },
       });
     }
     if (guestOk && guestOk.room) verifiedGuestRoom = guestOk.room;

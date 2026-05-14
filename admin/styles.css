@@ -1482,12 +1482,6 @@
   max-width: 280px;
   vertical-align: top;
 }
-.logs-cell__body--fallback {
-  max-height: none;
-  overflow: visible;
-  font-size: 0.86rem;
-  line-height: 1.45;
-}
 .logs-cell__body {
   max-height: 14rem;
   overflow-x: hidden;
@@ -1500,6 +1494,80 @@
   color: #dce4f0;
   padding-right: 4px;
 }
+.logs-cell__body--fallback {
+  max-height: none;
+  overflow: visible;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+.logs-th-hint {
+  display: inline;
+  font-weight: 400;
+  font-size: 0.68rem;
+  color: rgba(180, 198, 220, 0.75);
+  letter-spacing: 0.01em;
+  margin-left: 0.25rem;
+  white-space: nowrap;
+}
+.logs-cell__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+}
+.logs-cell__orig {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+.logs-cell__tag {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  background: rgba(80, 120, 180, 0.35);
+  color: #dbe7f8;
+}
+.logs-cell__tag--src {
+  background: rgba(60, 90, 130, 0.45);
+}
+.logs-cell__tag--pending {
+  background: rgba(140, 100, 40, 0.4);
+  color: #ffe8c8;
+}
+.logs-cell__body--tight {
+  margin-top: 0;
+}
+.logs-cell__body--nested {
+  margin-top: 0;
+  font-size: 0.84rem;
+  color: #e8eef8;
+}
+.logs-cell__tr {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  align-items: stretch;
+  min-width: 0;
+}
+.logs-cell__tr--pending {
+  font-size: 0.74rem;
+  line-height: 1.35;
+  color: rgba(255, 200, 160, 0.88);
+}
+.logs-cell__tr--pending .logs-cell__tag {
+  margin-bottom: 0.1rem;
+}
+.logs-cell__code {
+  font-size: 0.68rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: rgba(220, 230, 245, 0.9);
+}
 .logs-cell--assistant .logs-cell__body {
   max-height: 18rem;
 }
@@ -1507,7 +1575,7 @@
 .admin-table--logs {
   overflow: visible;
   table-layout: auto;
-  min-width: 1320px;
+  min-width: 1380px;
 }
 .admin-table--logs .logs-cell__body {
   max-height: none;
@@ -1544,6 +1612,19 @@
   overscroll-behavior-x: contain;
   scrollbar-color: rgba(100, 130, 180, 0.55) rgba(15, 23, 34, 0.9);
   border-radius: 0 0 10px 10px;
+}
+.admin-table--app-gate .admin-table__th--check,
+.admin-table--app-gate .admin-table__td--check {
+  width: 40px;
+  min-width: 40px;
+  text-align: center;
+  vertical-align: middle;
+}
+.admin-table--app-gate .admin-table__td--check input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: rgba(61, 108, 255, 0.95);
 }
 .admin-table--app-gate {
   table-layout: auto;
@@ -2168,6 +2249,35 @@
   gap: 12px;
   max-width: min(520px, 100%);
 }
+#tab-app-entries .logs-toolbar__dates--app-gate {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(140px, 1fr);
+  max-width: min(760px, 100%);
+}
+#tab-app-entries .logs-field-label.logs-field-label--checkbox {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #a3b6d4;
+}
+#tab-app-entries .logs-field-label.logs-field-label--checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: rgba(61, 108, 255, 0.95);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+#tab-app-entries .logs-toolbar__quick-dates {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
 .logs-toolbar__date-hint {
   grid-column: 1 / -1;
   margin: -4px 0 0;
@@ -2265,6 +2375,9 @@
 }
 @media (max-width: 640px) {
   .logs-toolbar__dates {
+    grid-template-columns: 1fr;
+  }
+  #tab-app-entries .logs-toolbar__dates--app-gate {
     grid-template-columns: 1fr;
   }
 }

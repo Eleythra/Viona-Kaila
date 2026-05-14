@@ -177,6 +177,8 @@ export function getEnv() {
     openAiApiKey: optional("OPENAI_API_KEY", ""),
     openAiVectorStoreId: optional("OPENAI_VECTOR_STORE_ID", ""),
     openAiModel: optional("OPENAI_MODEL", "gpt-4.1-mini"),
+    /** Sesli asistan Realtime: `POST /v1/realtime/sessions` modeli (aynı OPENAI_API_KEY). */
+    openAiRealtimeModel: optional("OPENAI_REALTIME_MODEL", "gpt-realtime"),
     /** PDF insight katmanı; boşsa AI devre dışı, deterministic metinler kullanılır. */
     geminiApiKey: optional("GEMINI_API_KEY", ""),
     geminiModel: optional("GEMINI_MODEL", "gemini-2.5-flash-lite"),
@@ -207,11 +209,6 @@ export function getEnv() {
     /** Misafir istek kaydı → HK Telegram grubu (boşsa bildirim atlanır). */
     telegramHkBotToken: optionalAny(["TELEGRAM_HK_BOT_TOKEN", "TELEGRAM_HOUSEKEEPING_BOT_TOKEN"]),
     telegramHkChatId: optionalAny(["TELEGRAM_HK_CHAT_ID", "TELEGRAM_HOUSEKEEPING_CHAT_ID"]),
-    /** Azure Speech (TTS/STT) — yalnızca sunucu; boşsa /api/tts ve /api/stt 503 döner */
-    azureSpeechKey: optional("AZURE_SPEECH_KEY", ""),
-    azureSpeechRegion: optional("AZURE_SPEECH_REGION", "westeurope"),
-    /** Azure REST çağrıları için ms; 0 = zaman sınırı yok (STT iki deneme yapabilir, süre ikiye katlanabilir). */
-    azureSpeechFetchTimeoutMs: optionalNonNegativeMs("AZURE_SPEECH_FETCH_TIMEOUT_MS", 25_000),
     /** Admin API auth token (zorunlu). */
     adminApiToken: optional("ADMIN_API_TOKEN", ""),
     /** Saha ekip sayfaları (admin/ops-*.html): tam admin token’dan ayrı; yalnızca ilgili kova listesi + durum PATCH. */
@@ -245,7 +242,7 @@ export function getEnv() {
       return readWhatsappMetaAppSecret();
     },
     /**
-     * TTS/STT: istemci `X-Viona-Speech-Secret` ile aynı değeri göndermeli. Boşsa kontrol yok (mevcut davranış).
+     * Realtime `/api/realtime/session`: istemci `X-Viona-Speech-Secret` ile aynı değeri göndermeli. Boşsa kontrol yok.
      * Statik sitede aynı değer `window.__VIONA_SPEECH_CLIENT_SECRET__` ile verilir (kaynak görüntülenebilir; maliyet sınırı).
      */
     speechClientSecret: optionalAny(["SPEECH_CLIENT_SECRET", "VIONA_SPEECH_CLIENT_SECRET"], ""),
