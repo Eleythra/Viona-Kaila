@@ -3,6 +3,21 @@
 
   var adapter = window.AdminDataAdapter;
   var ui = window.AdminUI;
+  // #region agent log
+  fetch("http://127.0.0.1:7661/ingest/87b3271b-85b8-4083-a1c1-14ee9b118e7d", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "918956" },
+    body: JSON.stringify({
+      sessionId: "918956",
+      location: "app.js:bootstrap",
+      message: "admin globals before guard",
+      data: { hasAdapter: Boolean(adapter), hasUi: Boolean(ui) },
+      timestamp: Date.now(),
+      runId: "verify",
+      hypothesisId: "H1",
+    }),
+  }).catch(function () {});
+  // #endregion
   if (!adapter || !ui) {
     try {
       var el = document.getElementById("admin-login-error");
@@ -16,6 +31,21 @@
   /** Aynı sayfada app.js iki kez çalışırsa (üretim CDN/şablon hatası) tüm dinleyiciler çoğalır; Loglar CSV/JSON ardı arkasına iner. */
   if (window.__VIONA_ADMIN_APP_BOOTED) return;
   window.__VIONA_ADMIN_APP_BOOTED = true;
+  // #region agent log
+  fetch("http://127.0.0.1:7661/ingest/87b3271b-85b8-4083-a1c1-14ee9b118e7d", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "918956" },
+    body: JSON.stringify({
+      sessionId: "918956",
+      location: "app.js:boot-ok",
+      message: "admin app booted",
+      data: { booted: true },
+      timestamp: Date.now(),
+      runId: "verify",
+      hypothesisId: "H4",
+    }),
+  }).catch(function () {});
+  // #endregion
   /** Operasyon PDF: cift tik / yaris kosusunda tek indirme. */
   var opsPdfDownloadInFlight = false;
   var LOGIN_OK_KEY = "viona_admin_login_ok";

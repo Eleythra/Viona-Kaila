@@ -3215,9 +3215,9 @@
       "<thead><tr>" +
       "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Kategori</th><th>Tür</th><th>Adet</th><th>Açıklama</th>" +
       (ro
-        ? "<th>Personel notu (salt okunur)</th><th>Süre</th><th>Durum</th><th title="WhatsApp sonrası durum; tamamlanınca puanlar ve misafir notu burada görünür">Misafir geri bildirimi</th>" +
+        ? "<th>Personel notu (salt okunur)</th><th>Süre</th><th>Durum</th><th title='WhatsApp sonrası durum; tamamlanınca puanlar ve misafir notu burada görünür'>Misafir geri bildirimi</th>" +
           (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
-        : "<th>Personel notu</th><th>Süre</th><th>Durum</th><th title="WhatsApp sonrası durum; tamamlanınca puanlar ve misafir notu burada görünür">Misafir geri bildirimi</th><th>İşlemler</th>") +
+        : "<th>Personel notu</th><th>Süre</th><th>Durum</th><th title='WhatsApp sonrası durum; tamamlanınca puanlar ve misafir notu burada görünür'>Misafir geri bildirimi</th><th>İşlemler</th>") +
       "</tr></thead><tbody>";
 
     if (!rows.length) {
@@ -4090,9 +4090,9 @@
       "<thead><tr>" +
       "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Arıza grubu</th><th>Arıza türü</th><th>Açıklama</th>" +
       (ro
-        ? "<th>Personel notu (salt okunur)</th><th>Süre</th><th>Durum</th><th title="WhatsApp sonrası durum; tamamlanınca puanlar ve misafir notu burada görünür">Misafir geri bildirimi</th>" +
+        ? "<th>Personel notu (salt okunur)</th><th>Süre</th><th>Durum</th><th title='WhatsApp sonrası durum; tamamlanınca puanlar ve misafir notu burada görünür'>Misafir geri bildirimi</th>" +
           (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
-        : "<th>Personel notu</th><th>Süre</th><th>Durum</th><th title="WhatsApp sonrası durum; tamamlanınca puanlar ve misafir notu burada görünür">Misafir geri bildirimi</th><th>İşlemler</th>") +
+        : "<th>Personel notu</th><th>Süre</th><th>Durum</th><th title='WhatsApp sonrası durum; tamamlanınca puanlar ve misafir notu burada görünür'>Misafir geri bildirimi</th><th>İşlemler</th>") +
       "</tr></thead><tbody>";
 
     if (!rows.length) {
@@ -6256,4 +6256,19 @@
       return normalizeBucketStatus(raw);
     },
   };
+  // #region agent log
+  fetch("http://127.0.0.1:7661/ingest/87b3271b-85b8-4083-a1c1-14ee9b118e7d", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "918956" },
+    body: JSON.stringify({
+      sessionId: "918956",
+      location: "ui.js:end",
+      message: "AdminUI IIFE completed",
+      data: { hasUi: Boolean(window.AdminUI) },
+      timestamp: Date.now(),
+      runId: "verify",
+      hypothesisId: "H1",
+    }),
+  }).catch(function () {});
+  // #endregion
 })();

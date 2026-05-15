@@ -453,4 +453,19 @@
       });
     },
   };
+  // #region agent log
+  fetch("http://127.0.0.1:7661/ingest/87b3271b-85b8-4083-a1c1-14ee9b118e7d", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "918956" },
+    body: JSON.stringify({
+      sessionId: "918956",
+      location: "data-adapter.js:end",
+      message: "AdminDataAdapter IIFE completed",
+      data: { hasAdapter: Boolean(window.AdminDataAdapter) },
+      timestamp: Date.now(),
+      runId: "verify",
+      hypothesisId: "H2",
+    }),
+  }).catch(function () {});
+  // #endregion
 })();
