@@ -1,7 +1,22 @@
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+
+_PATCH_QUIET_OFF = patch(
+    "assistant.services.orchestrator.operational_quiet_hours_active",
+    new=lambda now=None: False,
+)
+
+
+def setup_module():
+    _PATCH_QUIET_OFF.start()
+
+
+def teardown_module():
+    _PATCH_QUIET_OFF.stop()
+
 
 from assistant.schemas.chat import ChatRequest  # noqa: E402
 from assistant.services.device_extractor import DeviceExtractor  # noqa: E402

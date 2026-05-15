@@ -83,6 +83,23 @@ def test_ru_voice_empty_message_fallback_is_russian():
     assert "чат" in fin.message.lower() or "текст" in fin.message.lower()
 
 
+def test_coerce_voice_v2_passes_hotel_info_rag_without_action():
+    """Ses: RAG bilgi yanıtı (aksiyonsuz) aynen TTS'e gider."""
+    from assistant.services.voice_channel_layer import coerce_voice_channel_v2_response
+
+    meta = ChatMeta(
+        intent="hotel_info",
+        confidence=1.0,
+        language="tr",
+        ui_language="tr",
+        source="rag",
+    )
+    resp = ChatResponse(type="answer", message="Lobby zemin katta.", meta=meta)
+    out = coerce_voice_channel_v2_response(resp, "tr")
+    assert out.message == "Lobby zemin katta."
+    assert out.meta.source == "rag"
+
+
 def test_coerce_voice_v2_passes_chitchat_through_for_voice_tts():
     """Ses: kısa selam/sohbet (chitchat, aksiyonsuz) premium'a çevrilmez."""
     from assistant.services.voice_channel_layer import coerce_voice_channel_v2_response

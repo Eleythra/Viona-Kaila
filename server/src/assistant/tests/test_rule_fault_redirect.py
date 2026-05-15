@@ -1,9 +1,23 @@
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+
+_PATCH_QUIET_OFF = patch(
+    "assistant.services.orchestrator.operational_quiet_hours_active",
+    new=lambda now=None: False,
+)
+
+
+def setup_module():
+    _PATCH_QUIET_OFF.start()
+
+
+def teardown_module():
+    _PATCH_QUIET_OFF.stop()
 
 from assistant.main import app  # noqa: E402
 
