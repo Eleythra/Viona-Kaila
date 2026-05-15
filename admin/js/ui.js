@@ -591,6 +591,61 @@
     other: "Diğer",
   };
 
+  /** Sunucu `guest-requests.service.js` REQUEST_CATEGORY_ALIASES ile aynı (panel HER ZAMAN TR gösterir). */
+  var REQUEST_LEGACY_CATEGORY_ALIAS = {
+    extraTowels: "hk_towel_request",
+    extra_towels: "hk_towel_request",
+    towels: "hk_towel_request",
+    towel: "hk_towel_request",
+    hand_towel: "hk_towel_change",
+    bath_towel: "hk_towel_request",
+    linen: "hk_sheet_change",
+    bedding: "hk_pillow_request",
+    roomCleaning: "hk_room_cleaning",
+    room_cleaning_request: "hk_room_cleaning",
+    room_cleaning: "hk_room_cleaning",
+    turndown: "hk_sheet_change",
+    towel_extra: "hk_towel_request",
+    room_towel: "hk_towel_change",
+    bathrobe: "other",
+    bedding_sheet: "hk_sheet_change",
+    bedding_pillow: "hk_pillow_request",
+    bedding_blanket: "hk_duvet_request",
+    slippers: "hk_slippers",
+    minibarRefill: "other",
+    minibar_request: "other",
+    minibar: "other",
+    minibar_refill: "other",
+    babyNeeds: "hk_baby_crib",
+    baby_equipment_request: "hk_baby_crib",
+    baby_equipment: "hk_baby_crib",
+    baby_bed: "hk_baby_crib",
+    roomSupplies: "other",
+    room_equipment_request: "other",
+    room_equipment: "other",
+    otherRequest: "other",
+    bottled_water: "hk_water",
+    tea_coffee: "hk_coffee_tea_supplies",
+    toilet_paper: "hk_toilet_paper",
+    toiletries: "hk_amenity_kit",
+    climate_request: "other",
+    room_refresh: "hk_bad_odor",
+    hanger: "other",
+    kettle: "hk_coffee_tea_supplies",
+    room_safe: "other",
+  };
+
+  function canonicalRequestCategoryKey(catRaw) {
+    var c = String(catRaw || "").trim();
+    if (!c) return "";
+    var norm = c.toLowerCase();
+    if (norm === "other") return "other";
+    if (norm.indexOf("hk_") === 0) return norm;
+    if (REQUEST_LEGACY_CATEGORY_ALIAS[c]) return REQUEST_LEGACY_CATEGORY_ALIAS[c];
+    if (REQUEST_LEGACY_CATEGORY_ALIAS[norm]) return REQUEST_LEGACY_CATEGORY_ALIAS[norm];
+    return c;
+  }
+
   var CATEGORY_LABELS = {
     request: {
       hk_duvet_request: "Yorgan isteği (adet)",
@@ -703,6 +758,92 @@
     },
   };
 
+  /** `operational-template-format.js` FAULT_ID_TO_SECTION / FAULT_OPERATIONAL_SECTION_KEYS ile uyumlu. */
+  var FAULT_FT_TO_SECTION = {
+    ft_ac_not_cooling: "hvac",
+    ft_ac_not_heating: "hvac",
+    ft_ac_remote: "hvac",
+    ft_ac_fault: "hvac",
+    ft_ventilation_fault: "hvac",
+    ft_socket_fault: "electric",
+    ft_electric_fault: "electric",
+    ft_led_fault: "electric",
+    ft_lamp_fault: "electric",
+    ft_sconce_fault: "electric",
+    ft_ceiling_water_leak: "water_bath",
+    ft_bidet_faucet_fault: "water_bath",
+    ft_cold_water_no_flow: "water_bath",
+    ft_hot_water_no_flow: "water_bath",
+    ft_siphon_fault: "water_bath",
+    ft_faucet_fault: "water_bath",
+    ft_sink_drain_fault: "water_bath",
+    ft_toilet_seat_broken: "water_bath",
+    ft_shower_cabin_fault: "water_bath",
+    ft_shower_head_fault: "water_bath",
+    ft_towel_rail_fault: "water_bath",
+    ft_bathroom_drain_clog: "water_bath",
+    ft_tv_remote: "tv_electronics",
+    ft_tv_fault: "tv_electronics",
+    ft_phone_fault: "tv_electronics",
+    ft_minibar_fault: "tv_electronics",
+    ft_safe_fault: "tv_electronics",
+    ft_kettle_fault: "tv_electronics",
+    ft_hair_dryer_fault: "tv_electronics",
+    ft_tv_channel_fault: "tv_electronics",
+    ft_curtain_fallen: "door_window",
+    ft_window_fault: "door_window",
+    ft_window_cleaning: "door_window",
+    ft_room_door_fault: "door_window",
+    ft_bathroom_door_fault: "door_window",
+    ft_balcony_door_fault: "door_window",
+    ft_balcony_railing_loose: "door_window",
+    ft_cornice_fault: "furniture",
+    ft_headboard_fault: "furniture",
+    ft_dresser_drawer_fault: "furniture",
+    ft_drawer_fault: "furniture",
+    ft_wardrobe_fault: "furniture",
+    ft_mirror_damage: "furniture",
+    ft_elevator_fault: "general_facility",
+    ft_indoor_pool_temperature: "general_facility",
+    ft_other: "other",
+  };
+
+  var FAULT_SECTION_LABEL_TR = {
+    hvac: "Klima & Havalandırma",
+    electric: "Elektrik & Aydınlatma",
+    water_bath: "Su & Banyo Sistemleri",
+    tv_electronics: "TV & Elektronik",
+    door_window: "Kapı, Pencere & Balkon",
+    furniture: "Mobilya & Oda Ekipmanları",
+    general_facility: "Genel Tesis & Ortak Alan",
+    other: "Diğer Teknik Arızalar",
+  };
+
+  /** `guest_faults.category` CHECK’teki eski kaba kodlar (`normalizeFaultCategory` öncesi kayıtlar). */
+  var FAULT_COARSE_TO_SECTION_KEY = {
+    hvac: "hvac",
+    electric: "electric",
+    water_bathroom: "water_bath",
+    tv_electronics: "tv_electronics",
+    door_lock: "door_window",
+    furniture_item: "furniture",
+    cleaning_equipment_damage: "other",
+    balcony_window: "door_window",
+    other: "other",
+  };
+
+  var FAULT_COARSE_TYPE_LABEL_TR = {
+    hvac: "Özet kod: klima / havalandırma",
+    electric: "Özet kod: elektrik / aydınlatma",
+    water_bathroom: "Özet kod: su / banyo",
+    tv_electronics: "Özet kod: TV / elektronik",
+    door_lock: "Özet kod: kapı / kilit",
+    furniture_item: "Özet kod: mobilya",
+    cleaning_equipment_damage: "Özet kod: temizlik / ekipman hasarı",
+    balcony_window: "Özet kod: balkon / pencere",
+    other: "Özet kod: diğer",
+  };
+
   function categoryText(type, categories, singleCategory) {
     var arr = Array.isArray(categories) ? categories.slice() : [];
     if (!arr.length && singleCategory) arr = [singleCategory];
@@ -744,8 +885,9 @@
         : raw.details && typeof raw.details === "object"
           ? raw.details
           : {};
-    var cat = String((row && row.category) || raw.category || ((row && row.categories) || [])[0] || "").trim();
-    return { details: details, category: cat, raw: raw };
+    var catRaw = String((row && row.category) || raw.category || ((row && row.categories) || [])[0] || "").trim();
+    var cat = canonicalRequestCategoryKey(catRaw) || catRaw;
+    return { details: details, category: cat, categoryRaw: catRaw, raw: raw };
   }
 
   function requestFormGroupLabel(row) {
@@ -1072,6 +1214,31 @@
     return rc ? [rc] : [];
   }
 
+  /** Birincil arıza kodu (ft_*), küçük harf. */
+  function faultPrimaryFtId(row) {
+    if (!row || typeof row !== "object") return "";
+    var fCats = faultEffectiveCategories(row);
+    var single = String(row.category || "").trim() || (fCats.length ? fCats[0] : "");
+    var raw = row.raw_payload && typeof row.raw_payload === "object" ? row.raw_payload : {};
+    if (!single) single = String(raw.category || "").trim();
+    return String(single || "").trim().toLowerCase();
+  }
+
+  function faultOperationalGroupLabelForRow(row) {
+    var id = faultPrimaryFtId(row);
+    if (!id) return "—";
+    var sec = FAULT_FT_TO_SECTION[id] || FAULT_COARSE_TO_SECTION_KEY[id] || "other";
+    return FAULT_SECTION_LABEL_TR[sec] || FAULT_SECTION_LABEL_TR.other;
+  }
+
+  function faultOperationalTypeLabelForRow(row) {
+    var id = faultPrimaryFtId(row);
+    if (!id) return "—";
+    if (FAULT_COARSE_TYPE_LABEL_TR[id]) return FAULT_COARSE_TYPE_LABEL_TR[id];
+    var map = CATEGORY_LABELS.fault || {};
+    return map[id] || id;
+  }
+
   /** Arıza formu: açıklama; kolon boşsa details / raw_payload yedeği. */
   function faultFormDescription(row) {
     if (!row || typeof row !== "object") return "—";
@@ -1132,13 +1299,9 @@
     }
     if (type === "fault") {
       var outFault = [];
-      var fce = faultEffectiveCategories(row);
-      var fse = String(row.category || "").trim() || (fce.length ? fce[0] : "");
-      var rawE = row.raw_payload && typeof row.raw_payload === "object" ? row.raw_payload : {};
-      if (!fse) fse = String(rawE.category || "").trim();
-      var rCat = String(rawE.requestCategory || "").trim();
-      if (rCat) outFault.push("Talep kategorisi: " + rCat);
-      outFault.push("Talep türü: " + categoryText("fault", fce, fse || null));
+      var fid = faultPrimaryFtId(row);
+      outFault.push("Arıza grubu: " + faultOperationalGroupLabelForRow(row));
+      outFault.push("Arıza türü: " + faultOperationalTypeLabelForRow(row));
       var fd = faultMergedDetails(row);
       var qNum = parseInt(String(fd.quantity != null ? fd.quantity : "1"), 10);
       if (!qNum || qNum < 1) qNum = 1;
@@ -2858,7 +3021,7 @@
 
     var helpReq = ro
       ? "Salt izleme: durum güncellemesi HK operasyon sayfasından yapılır. Misafir memnuniyeti (1–5 + not) yalnızca burada sunucuya kaydedilir."
-      : "Kategori = talep grubu (form başlığı). Tür = seçilen satır. Adet = yalnızca adetli türlerde; diğerinde «-». Açıklama = misafir notu. Gelen kayıtlar operasyon WhatsApp (Cloud API) hattına düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.";
+      : "Kategori = HK üst grubu (Türkçe, sabit). Tür = seçilen talebin Türkçe adı; misafir dili ne olursa olsun veya eski kod (`bedding_pillow` vb.) gelse bile panel Türkçe gösterir. Adet = yalnızca adetli türlerde; diğerinde «-». Açıklama = misafir notu. Gelen kayıtlar operasyon WhatsApp (Cloud API) hattına düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.";
 
     var html =
       '<div class="bucket-shell bucket-shell--requests">' +
@@ -3739,7 +3902,7 @@
       '<p class="bucket-help bucket-help--faults">' +
       (ro
         ? "Salt izleme; durum teknik operasyon sayfasından. Misafir memnuniyeti burada kaydedilir."
-        : "Kategori ve açıklama misafir formundan. Personel notu dahilidir. Gelen kayıtlar operasyon WhatsApp (Cloud API) hattına düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
+        : "Arıza grubu ve arıza türü misafir seçiminden (WhatsApp ile uyumlu); açıklama misafir formundan. Personel notu dahildir. Gelen kayıtlar operasyon WhatsApp (Cloud API) hattına düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
       "</p>" +
       '<div class="bucket-toolbar bucket-toolbar--faults">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
@@ -3748,7 +3911,7 @@
       '<span class="reservation-date-combo__display">Tümü</span>' +
       '<button type="button" class="btn-small bucket-filter-date-clear" title="Tüm tarihler">Temizle</button>' +
       "</div></label>" +
-      '<input class="bucket-search" type="search" placeholder="Oda, misafir, kategori, açıklama veya not ara..." />' +
+      '<input class="bucket-search" type="search" placeholder="Oda, misafir, arıza grubu/türü, açıklama veya not ara..." />' +
       '<select class="bucket-filter-status">' +
       '<option value="all">Tüm Durumlar</option>' +
       '<option value="new_pending">Beklemede</option>' +
@@ -3760,29 +3923,27 @@
       '<div class="viona-table-scroll viona-table-scroll--compact">' +
       '<table class="admin-table viona-table admin-table--faults">' +
       "<thead><tr>" +
-      "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Arıza kategorisi</th><th>Açıklama</th>" +
+      "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Arıza grubu</th><th>Arıza türü</th><th>Açıklama</th>" +
       (ro
         ? "<th>Personel notu (salt okunur)</th><th>Süre</th><th>Durum</th>" + (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
         : "<th>Personel notu</th><th>Süre</th><th>Durum</th><th>İşlemler</th>") +
       "</tr></thead><tbody>";
 
     if (!rows.length) {
-      html += '<tr><td colspan="10" class="admin-table__empty">Henüz arıza kaydı yok.</td></tr>';
+      html += '<tr><td colspan="11" class="admin-table__empty">Henüz arıza kaydı yok.</td></tr>';
     } else {
       rows.forEach(function (r) {
         var st = normalizeBucketStatus(r.status);
-        var fCatsR = faultEffectiveCategories(r);
-        var fSingR = String(r.category || "").trim() || (fCatsR.length ? fCatsR[0] : "");
-        var rawR = r.raw_payload && typeof r.raw_payload === "object" ? r.raw_payload : {};
-        if (!fSingR) fSingR = String(rawR.category || "").trim();
-        var catLabel = categoryText("fault", fCatsR, fSingR || null);
+        var groupLab = faultOperationalGroupLabelForRow(r);
+        var typeLab = faultOperationalTypeLabelForRow(r);
         var descFull = faultFormDescription(r);
         var staffNote = getFaultStaffNote(r.id);
         var rowSearchText = [
           String(r.room_number || ""),
           operationGuestName(r),
           String(r.nationality || ""),
-          catLabel,
+          groupLab,
+          typeLab,
           descFull,
           staffNote,
         ]
@@ -3809,7 +3970,8 @@
         html += "<td>" + esc(r.room_number || "-") + "</td>";
         html += "<td>" + esc(operationGuestName(r) || "-") + "</td>";
         html += "<td>" + esc(r.nationality || "-") + "</td>";
-        html += '<td><span class="cat-badge cat-badge--fault">' + esc(catLabel) + "</span></td>";
+        html += '<td><span class="cat-badge cat-badge--fault-group">' + esc(groupLab) + "</span></td>";
+        html += '<td><span class="cat-badge cat-badge--fault-type">' + esc(typeLab) + "</span></td>";
         html += '<td class="fault-cell-desc">' + esc(descFull) + "</td>";
         if (ro) {
           html += '<td class="request-cell-staff">' + esc(staffNote) + "</td>";
@@ -3874,18 +4036,16 @@
         }
       }
       if (!row) return;
-      var fCatsS = faultEffectiveCategories(row);
-      var fSingS = String(row.category || "").trim() || (fCatsS.length ? fCatsS[0] : "");
-      var rawS = row.raw_payload && typeof row.raw_payload === "object" ? row.raw_payload : {};
-      if (!fSingS) fSingS = String(rawS.category || "").trim();
-      var catLabel = categoryText("fault", fCatsS, fSingS || null);
+      var groupLab = faultOperationalGroupLabelForRow(row);
+      var typeLab = faultOperationalTypeLabelForRow(row);
       var descFull = faultFormDescription(row);
       var staffNote = String(ta.value || "");
       var rowSearchText = [
         String(row.room_number || ""),
         operationGuestName(row),
         String(row.nationality || ""),
-        catLabel,
+        groupLab,
+        typeLab,
         descFull,
         staffNote,
       ]
@@ -3943,12 +4103,10 @@
       if (t) out.push({ k: "Tür", v: t });
       if (d) out.push({ k: "Açıklama", v: d, long: true });
     } else if (bucketType === "fault") {
-      var fc = faultEffectiveCategories(r);
-      var fs = String(r.category || "").trim() || (fc.length ? fc[0] : "");
-      var rwf = r.raw_payload && typeof r.raw_payload === "object" ? r.raw_payload : {};
-      if (!fs) fs = String(rwf.category || "").trim();
-      var c = categoryText("fault", fc, fs || null);
-      if (c && c !== "-" && c !== "—") out.push({ k: "Kategori", v: c });
+      var gF = faultOperationalGroupLabelForRow(r);
+      var tF = faultOperationalTypeLabelForRow(r);
+      if (gF && gF !== "—") out.push({ k: "Arıza grubu", v: gF });
+      if (tF && tF !== "—") out.push({ k: "Arıza türü", v: tF });
       var fd = faultFormDescription(r);
       if (fd) out.push({ k: "Açıklama", v: fd, long: true });
     } else if (bucketType === "complaint" || bucketType === "guest_notification") {
@@ -4335,7 +4493,8 @@
         "Oda",
         "Misafir",
         "Milliyet",
-        "Arıza kategorisi",
+        "Arıza grubu",
+        "Arıza türü",
         "Açıklama",
         "Personel notu",
         "Durum",
@@ -4382,17 +4541,13 @@
       ];
     }
     if (bucketType === "fault") {
-      var fCatsR = faultEffectiveCategories(r);
-      var fSingR = String(r.category || "").trim() || (fCatsR.length ? fCatsR[0] : "");
-      var rawR = r.raw_payload && typeof r.raw_payload === "object" ? r.raw_payload : {};
-      if (!fSingR) fSingR = String(rawR.category || "").trim();
-      var catLabel = categoryText("fault", fCatsR, fSingR || null);
       return [
         formatSubmittedAtTr(r.submitted_at),
         String(r.room_number || "-"),
         String(operationGuestName(r) || "-"),
         String(r.nationality || "-"),
-        catLabel,
+        faultOperationalGroupLabelForRow(r),
+        faultOperationalTypeLabelForRow(r),
         faultFormDescription(r),
         getFaultStaffNote(r.id),
         issueStatusLabel("fault", st),
@@ -4452,15 +4607,13 @@
         .join(" · ");
     }
     if (bucketType === "fault") {
-      var fcats = faultEffectiveCategories(r);
-      var fsingle = String(r.category || "").trim() || (fcats.length ? fcats[0] : "");
-      var rawF = r.raw_payload && typeof r.raw_payload === "object" ? r.raw_payload : {};
-      if (!fsingle) fsingle = String(rawF.category || "").trim();
       var partsOp = [];
       var gnf = operationGuestName(r);
       if (gnf) partsOp.push(gnf);
-      var catLab = categoryText("fault", fcats, fsingle || null);
-      if (catLab && catLab !== "-" && catLab !== "—") partsOp.push(catLab);
+      var gL = faultOperationalGroupLabelForRow(r);
+      var tL = faultOperationalTypeLabelForRow(r);
+      if (gL && gL !== "-" && gL !== "—") partsOp.push(gL);
+      if (tL && tL !== "-" && tL !== "—") partsOp.push(tL);
       var descF = faultFormDescription(r);
       if (descF && descF !== "—") partsOp.push(descF);
       return partsOp.length ? partsOp.join(" · ") : "—";
@@ -5380,11 +5533,8 @@
           var detailText = issueDetailText(r, type);
           var catCell;
           if (type === "fault") {
-            var fcg = faultEffectiveCategories(r);
-            var fsg = String(r.category || "").trim() || (fcg.length ? fcg[0] : "");
-            var rawg = r.raw_payload && typeof r.raw_payload === "object" ? r.raw_payload : {};
-            if (!fsg) fsg = String(rawg.category || "").trim();
-            catCell = categoryText("fault", fcg, fsg || null);
+            catCell =
+              faultOperationalGroupLabelForRow(r) + " · " + faultOperationalTypeLabelForRow(r);
           } else {
             catCell = categoryText(type, r.categories, r.category);
           }

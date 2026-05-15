@@ -2,11 +2,15 @@
 -- guest_faults.category CHECK — teknik ft_* id’leri + eski kaba kategoriler
 -- NOT: Ana yapıştırma betiği server/docs/supabase-paste-viona.sql §8a-fault ile senkron;
 --      yalnızca bu kısıtı çalıştıracaksanız aşağıdaki bloğu kullanın.
+--
+-- Admin panel (js/ui.js): `category` = ft_* → «Arıza grubu» = operational-template-format
+-- üst başlığı; «Arıza türü» = seçilen ft satırının Türkçe adı. Eski kaba kodlar (hvac, …)
+-- için grup aynı haritadan; tür sütunu «Özet kod: …» ile gösterilir.
 -- =========================================================
 -- Run after guest-faults-revision.sql. Yeni granular `category` değerleri
 -- CHECK’e takılmasın diye kümeyi genişletir; NULL ve geçmiş satırlar korunur.
 --
--- Uygulama kaynağı: js/requests/config.js faultSections + guest-requests.service.js FAULT_COARSE_LEGACY
+-- Uygulama kaynağı: js/requests/config.js faultSections + guest-requests.service.js FAULT_TECH_IDS / normalizeFaultCategory
 
 alter table if exists guest_faults drop constraint if exists guest_faults_category_chk;
 

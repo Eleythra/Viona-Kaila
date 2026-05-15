@@ -482,18 +482,24 @@ function validateLateCheckoutPayload(normalized) {
 
 function validate(normalized) {
   if (!normalized.type) throw new Error("type is required");
-  if (normalized.source === VIONA_OPS_MANUAL_SOURCE) {
-    const nm0 = String(normalized.name || "").trim();
-    if (!nm0) normalized.name = "Manuel giriş";
+  const isManual = normalized.source === VIONA_OPS_MANUAL_SOURCE;
+  if (isManual) {
     const nat0 = String(normalized.nationality || "").trim();
     if (!nat0) normalized.nationality = "-";
   }
-  if (!normalized.name) throw new Error("name is required");
+
+  const nmTrim = String(normalized.name || "").trim();
+  if (!nmTrim) {
+    if (!isManual) throw new Error("name is required");
+    normalized.name = "";
+  } else {
+    const nameErr = validateGuestFullName(nmTrim);
+    if (nameErr) throw new Error(guestFullNameErrorMessage(nameErr));
+    normalized.name = normalizeGuestFullNameForStorage(nmTrim);
+  }
+
   if (!normalized.room) throw new Error("room is required");
   if (!normalized.nationality) throw new Error("nationality is required");
-  const nameErr = validateGuestFullName(normalized.name);
-  if (nameErr) throw new Error(guestFullNameErrorMessage(nameErr));
-  normalized.name = normalizeGuestFullNameForStorage(normalized.name);
   if (!isValidHotelRoomNumber(normalized.room)) throw new Error("invalid hotel room number");
   // Chatbot veya operasyon personeli manuel girişte milliyet '-' olabilir.
   if (

@@ -293,7 +293,7 @@
       if (rt === "fault") {
         var fc = root.querySelector(".js-manual-fault-cat");
         var fcat = fc && fc.value ? String(fc.value).trim() : "";
-        if (!fcat) throw new Error("Arıza kategorisi gerekli");
+        if (!fcat) throw new Error("Arıza türü gerekli");
         if ((fcat === "ft_other") && !dtxt) throw new Error("Diğer arıza için açıklama gerekli");
         var fq = root.querySelector(".js-manual-fault-qty");
         var fqN = fq ? parseInt(String(fq.value || "1"), 10) : 1;
@@ -393,7 +393,7 @@
 
     var faultBlock =
       mode === "fixed" && opts.recordType === "fault"
-        ? '<label class="op-filter-field"><span class="op-filter-field__lbl">Arıza kategorisi <abbr class="op-filter-req-star" title="Zorunlu">*</abbr></span>' +
+        ? '<label class="op-filter-field"><span class="op-filter-field__lbl">Arıza türü <abbr class="op-filter-req-star" title="Zorunlu">*</abbr></span>' +
           '<select class="op-filter-input js-manual-fault-cat">' +
           optionsHtml(FAULT_OPTS) +
           "</select></label>" +
@@ -431,18 +431,18 @@
 
     var scopeLine =
       mode === "front"
-        ? '<p class="ops-manual-form__scope">Kayıt türü, alttaki listelerdeki <strong>aktif sekme</strong> ile aynıdır — önce sekmeyi seçin, sonra odayı ve kategori alanlarını doldurun. Misafir adı ve uyruk isteğe bağlı.</p>'
+        ? '<p class="ops-manual-form__scope">Üstte <strong>Misafir adı soyadı</strong> ile uyruk isteğe bağlıdır; sonra <strong>oda numarası</strong> ve (aktif sekmeye göre) kategori alanları zorunludur. Kayıt türü, alttaki listelerdeki <strong>aktif sekme</strong> ile aynıdır. Ad boşsa liste ve WhatsApp’ta «-» görünür.</p>'
         : mode === "fixed" && opts.recordType === "request"
-          ? '<p class="ops-manual-form__scope"><strong>Oda</strong> ve <strong>talep kategorisi</strong> zorunlu. Misafir adı isteğe bağlı — boşsa sistem «Manuel giriş» kullanır.</p>'
-          : '<p class="ops-manual-form__scope"><strong>Oda</strong> ve arıza <strong>kategorisi</strong> zorunlu; «Diğer (teknik)» ve eski «Diğer» için açıklama gerekir. Misafir adı isteğe bağlı.</p>';
+          ? '<p class="ops-manual-form__scope">Üstte <strong>Misafir adı soyadı</strong> ve uyruk isteğe bağlı. <strong>Oda</strong> ve <strong>talep kategorisi</strong> zorunlu. Ad boşsa liste ve WhatsApp’ta «-» görünür.</p>'
+          : '<p class="ops-manual-form__scope">Üstte <strong>Misafir adı soyadı</strong> ve uyruk isteğe bağlı. <strong>Oda</strong> ve arıza <strong>kategorisi</strong> zorunlu; «Diğer (teknik)» ve eski «Diğer» için açıklama gerekir. Ad boşsa liste ve WhatsApp’ta «-» görünür.</p>';
 
     var roomField =
       '<label class="op-filter-field"><span class="op-filter-field__lbl">Oda numarası <abbr class="op-filter-req-star" title="Zorunlu">*</abbr></span>' +
       '<input type="text" class="op-filter-input js-manual-room" maxlength="20" autocomplete="off" /></label>';
 
     var nameField =
-      '<label class="op-filter-field"><span class="op-filter-field__lbl">Misafir adı <span class="op-filter-field__hint">isteğe bağlı</span></span>' +
-      '<input type="text" class="op-filter-input js-manual-name" maxlength="120" autocomplete="name" placeholder="Boş bırakılabilir" /></label>';
+      '<label class="op-filter-field"><span class="op-filter-field__lbl">Misafir adı soyadı <span class="op-filter-field__hint">isteğe bağlı</span></span>' +
+      '<input type="text" class="op-filter-input js-manual-name" maxlength="120" autocomplete="name" placeholder="İsteğe bağlı · boşsa listede ve bildirimde «-»" /></label>';
 
     var natField = nationalitySelectFieldHtml();
 
@@ -452,8 +452,8 @@
 
     var manualFieldsCore =
       mode === "front"
-        ? roomField + frontComplaint + frontGn + frontLc + nameField + natField
-        : roomField + requestBlock + faultBlock + nameField + natField;
+        ? nameField + natField + roomField + frontComplaint + frontGn + frontLc
+        : nameField + natField + roomField + requestBlock + faultBlock;
 
     host.innerHTML =
       '<div class="glass-block ops-manual-form">' +

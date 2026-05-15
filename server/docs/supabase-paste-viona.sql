@@ -422,6 +422,7 @@ alter table if exists public.guest_requests
 
 -- -----------------------------------------------------------------------------
 -- 8a-fault) guest_faults — category CHECK (guest-requests.service.js FAULT_TECH_IDS + eski kaba kodlar)
+-- Admin: ft_* → panelde «Arıza grubu» + «Arıza türü» (Türkçe); eski hvac/electric/… kodları CHECK’te kalır.
 -- -----------------------------------------------------------------------------
 alter table if exists public.guest_faults drop constraint if exists guest_faults_category_chk;
 

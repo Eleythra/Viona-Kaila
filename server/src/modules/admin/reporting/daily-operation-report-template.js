@@ -144,7 +144,7 @@ export function buildDailyOperationReportHtml(data) {
     .join("");
 
   const techHead =
-    "<tr><th>Oda</th><th>Misafir</th><th>Uyruk</th><th>Talep kategorisi</th><th>Talep türü</th><th>Adet</th><th>Açıklama</th><th>Durum</th><th>Kayıt</th></tr>";
+    "<tr><th>Oda</th><th>Misafir</th><th>Uyruk</th><th>Arıza grubu</th><th>Arıza türü</th><th>Adet</th><th>Açıklama</th><th>Durum</th><th>Kayıt</th></tr>";
   const techBody = (data.rowsFault || [])
     .map((r) => {
       return `<tr>
