@@ -20,19 +20,41 @@
 
   var els = {};
 
+  /** localStorage + normalize yalnız dil değişince; setLang sonrası RefreshI18n ile sıfırlanır. */
+  var _cachedUiLangCode = null;
+  var _tLocaleCode = null;
+  var _tLocaleTable = null;
+
+  function invalidateChatLangCache() {
+    _cachedUiLangCode = null;
+    _tLocaleCode = null;
+    _tLocaleTable = null;
+  }
+
   function getLang() {
+    if (_cachedUiLangCode !== null) return _cachedUiLangCode;
     try {
       var raw = localStorage.getItem(LANG_KEY);
-      if (!raw) return "tr";
+      if (!raw) {
+        _cachedUiLangCode = "tr";
+        return "tr";
+      }
       var c = String(raw).trim();
       if (window.VIONA_LANG && typeof window.VIONA_LANG.normalizeToUiLang === "function") {
         c = window.VIONA_LANG.normalizeToUiLang(c);
       } else {
         c = String(raw).toLowerCase().slice(0, 2);
       }
-      if (I18N[c]) return c;
-      if (I18N.en) return "en";
+      if (I18N[c]) {
+        _cachedUiLangCode = c;
+        return c;
+      }
+      if (I18N.en) {
+        _cachedUiLangCode = "en";
+        return "en";
+      }
     } catch (e) {}
+    _cachedUiLangCode = "tr";
     return "tr";
   }
 
@@ -62,6 +84,7 @@
   /** app.js `setLang`: site dili değişince eski session «conversation_language» yanıtı yeni UI dilini ezip TR’ye düşmesin. */
   window.vionaChatAfterSiteLangChange = function () {
     clearConversationLang();
+    invalidateChatLangCache();
   };
 
   function _generateUserId() {
@@ -105,7 +128,12 @@
   }
 
   function t(key) {
-    var L = I18N[getLang()] || I18N.tr;
+    var code = getLang();
+    if (code !== _tLocaleCode) {
+      _tLocaleCode = code;
+      _tLocaleTable = I18N[code] || I18N.tr;
+    }
+    var L = _tLocaleTable;
     return L[key] !== undefined ? L[key] : I18N.tr[key] || key;
   }
 
@@ -469,6 +497,10 @@
           : null;
       var gnm = prof && String(prof.guestName || "").trim();
       if (gnm) body.guest_full_name = gnm.slice(0, 120);
+      var gph = prof && String(prof.guestPhone || "").trim();
+      if (gph) body.guest_phone = gph.slice(0, 40);
+      var gem = prof && String(prof.guestEmail || "").trim();
+      if (gem) body.guest_email = gem.slice(0, 120);
     } catch (_p) {
       /* yoksay */
     }
@@ -867,6 +899,7 @@
 
   /** app.js setLang sonrası çağrılır — modal kapalıyken dil değişince chip metinleri güncellenir */
   window.vionaChatRefreshI18n = function () {
+    invalidateChatLangCache();
     cacheEls();
     wireQuick();
     applyStaticI18n();

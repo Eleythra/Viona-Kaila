@@ -105,6 +105,8 @@ export function createGuestGateRouter(envSlice) {
             roomNo: roomCanonical,
             resId: null,
             resNameId: null,
+            guestPhone: null,
+            guestEmail: null,
           },
         });
       }
@@ -150,6 +152,8 @@ export function createGuestGateRouter(envSlice) {
           roomNo: guest.roomNo,
           resId: guest.resId,
           resNameId: guest.resNameId,
+          guestPhone: guest.guestPhone ?? null,
+          guestEmail: guest.guestEmail ?? null,
         },
       });
     } catch (err) {

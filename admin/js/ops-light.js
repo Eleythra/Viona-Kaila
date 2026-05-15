@@ -1276,8 +1276,8 @@
     }
 
     mount.innerHTML =
-      '<div id="ops-hk-pending-banner" class="ops-pending-banner-host"></div>' +
       '<div id="ops-hk-manual-form-host" class="ops-manual-form-host"></div>' +
+      '<div id="ops-hk-pending-banner" class="ops-pending-banner-host"></div>' +
       opsLightDayStripWrap("op-hk") +
       '<div id="ops-hk-summary-mount" class="ops-hk-mount"></div>' +
       hkFilterBarHtml() +
@@ -1602,8 +1602,8 @@
     }
 
     mount.innerHTML =
-      '<div id="ops-tech-pending-banner" class="ops-pending-banner-host"></div>' +
       '<div id="ops-tech-manual-form-host" class="ops-manual-form-host"></div>' +
+      '<div id="ops-tech-pending-banner" class="ops-pending-banner-host"></div>' +
       opsLightDayStripWrap("op-tech") +
       '<div id="ops-tech-summary-mount" class="ops-hk-mount"></div>' +
       techFilterBarHtml() +
@@ -1930,11 +1930,11 @@
     initSlDayFromStorage();
     maybeAdvanceSlToday();
     mount.innerHTML =
+      '<div id="ops-front-manual-form-host" class="ops-manual-form-host"></div>' +
       '<div id="ops-front-pending-banner" class="ops-pending-banner-host"></div>' +
       opsLightDayStripWrap("op-front") +
       '<p id="op-front-filter-scope" class="op-filter-scope" role="status"></p>' +
       frontFilterBarHtml() +
-      '<div id="ops-front-manual-form-host" class="ops-manual-form-host"></div>' +
       '<div id="op-front-mount" class="ops-hk-mount"></div>';
     syncSlFilterDayForPrefix("op-front");
     renderSlDayStrip("op-front-day-strip");

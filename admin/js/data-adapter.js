@@ -360,6 +360,13 @@
       if (!r.ok) throw new Error("logs_csv_export_failed");
       return r.blob();
     },
+    downloadLogsXlsx: async function (params) {
+      var query = buildQuery(params || {});
+      var url = getApiBase() + "/admin/logs/export.xlsx" + (query ? "?" + query : "");
+      var r = await fetch(url, { cache: "no-store", headers: mergeAuthHeaders() });
+      if (!r.ok) throw new Error("logs_xlsx_export_failed");
+      return r.blob();
+    },
     downloadLogsJson: async function (params) {
       var query = buildQuery(params || {});
       var url = getApiBase() + "/admin/logs/export.json" + (query ? "?" + query : "");

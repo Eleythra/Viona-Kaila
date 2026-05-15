@@ -877,28 +877,87 @@
     return { wrap: root, chips: root };
   }
 
-  /** Sunucu REQUEST_QUANTITY_CATEGORIES / REQUEST_TIMING_CATEGORIES ile aynı. */
-  var REQ_DETAIL_QTY = {
-    towel_extra: true,
-    room_towel: true,
-    bathrobe: true,
-    bedding_sheet: true,
-    bedding_pillow: true,
-    bedding_blanket: true,
-    slippers: true,
-    hanger: true,
-    baby_bed: true,
-    toilet_paper: true,
-    toiletries: true,
-  };
-  var REQ_DETAIL_TIM = { room_cleaning: true, turndown: true };
-
-  function requestCategoryNeedsQuantity(cat) {
-    return !!REQ_DETAIL_QTY[cat];
+  function getFaultCategorySections() {
+    var cfg = getCfg();
+    if (cfg.faultSections && cfg.faultSections.length) return cfg.faultSections;
+    var flat = (cfg.categories && cfg.categories.fault) || [];
+    return [{ sectionKey: null, items: flat.slice() }];
   }
 
+  function findFaultItemMeta(categoryId) {
+    var cat = String(categoryId || "").trim();
+    if (!cat) return null;
+    var sections = getFaultCategorySections();
+    for (var si = 0; si < sections.length; si++) {
+      var sec = sections[si];
+      var items = sec.items || [];
+      for (var ij = 0; ij < items.length; ij++) {
+        if (items[ij].id === cat) return { sectionKey: sec.sectionKey || null, item: items[ij] };
+      }
+    }
+    return null;
+  }
+
+  function buildFaultCategoryPicker(t, nameAttr) {
+    nameAttr = nameAttr || "faultCategory";
+    var root = document.createElement("div");
+    root.className = "req-request-picker";
+    var sections = getFaultCategorySections();
+    var firstRadio = true;
+    sections.forEach(function (sec, gi) {
+      var groupEl = document.createElement("div");
+      groupEl.className = "req-request-picker__group";
+      var titleId = "req-fault-grp-" + gi;
+      if (sec.sectionKey) {
+        var st = document.createElement("div");
+        st.className = "req-request-picker__group-title";
+        st.id = titleId;
+        st.setAttribute("role", "presentation");
+        st.textContent = t(sec.sectionKey);
+        groupEl.appendChild(st);
+      }
+      var chips = document.createElement("div");
+      chips.className = "req-chips req-chips--request-grid";
+      chips.setAttribute("role", "radiogroup");
+      chips.setAttribute(
+        "aria-label",
+        sec.sectionKey ? t(sec.sectionKey) + " — " + t("reqLabelFaultCategory") : t("reqLabelFaultCategory")
+      );
+      if (sec.sectionKey) chips.setAttribute("aria-labelledby", titleId);
+      (sec.items || []).forEach(function (c) {
+        var lab = document.createElement("label");
+        lab.className = "req-chip req-chip--tile";
+        var radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = nameAttr;
+        radio.value = c.id;
+        if (firstRadio) {
+          radio.required = true;
+          firstRadio = false;
+        }
+        var span = document.createElement("span");
+        span.className = "req-chip__text";
+        span.textContent = t(c.key);
+        lab.appendChild(radio);
+        lab.appendChild(span);
+        chips.appendChild(lab);
+      });
+      groupEl.appendChild(chips);
+      root.appendChild(groupEl);
+    });
+    return { wrap: root, chips: root };
+  }
+
+  /** Sunucu REQUEST_QUANTITY_CATEGORIES ile uyum: tüm hk_* (other hariç) adet. */
+  function requestCategoryNeedsQuantity(cat) {
+    var c = String(cat || "");
+    return c !== "other" && /^hk_/.test(c);
+  }
+
+  var REQ_DETAIL_TIM = {};
+
   function getRequestDetailSchema(category) {
-    if (REQ_DETAIL_QTY[category]) {
+    if (requestCategoryNeedsQuantity(category)) {
       return {
         fields: [{ name: "quantity", label: "reqLabelQuantity", required: true, min: 1, max: 20 }],
       };
@@ -1195,57 +1254,35 @@
     guestSection.inner.appendChild(fieldNationality(t));
     form.appendChild(guestSection.section);
 
-    var detailSection = resSection("reqSectionRequestDetails", t);
-    var categoryField = buildSingleCategoryField("fault", "reqLabelFaultCategory", t, "faultCategory");
+    var detailSection = resSection("reqSectionFaultPick", t);
+    var pickHint = document.createElement("p");
+    pickHint.className = "req-request-picker-hint";
+    var hintKey = t("reqSectionFaultPickHint");
+    if (hintKey && hintKey !== "reqSectionFaultPickHint") {
+      pickHint.textContent = hintKey;
+      detailSection.inner.appendChild(pickHint);
+    }
+    var categoryField = buildFaultCategoryPicker(t, "faultCategory");
     detailSection.inner.appendChild(categoryField.wrap);
 
-    var locField = document.createElement("div");
-    locField.className = "req-field";
-    var locLabel = document.createElement("label");
-    locLabel.className = "req-label";
-    locLabel.textContent = t("reqLabelFaultLocation");
-    var locSelect = document.createElement("select");
-    locSelect.className = "req-input";
-    locSelect.name = "location";
-    locSelect.required = true;
-    [
-      { value: "", key: "reqSelectPlaceholder" },
-      { value: "room_inside", key: "reqOptFaultLocationRoomInside" },
-      { value: "bathroom", key: "reqOptFaultLocationBathroom" },
-      { value: "balcony", key: "reqOptFaultLocationBalcony" },
-      { value: "other", key: "reqCatOther" },
-    ].forEach(function (o) {
-      var op = document.createElement("option");
-      op.value = o.value;
-      op.textContent = t(o.key);
-      locSelect.appendChild(op);
-    });
-    locField.appendChild(locLabel);
-    locField.appendChild(locSelect);
-    detailSection.inner.appendChild(locField);
+    var qtyRow = document.createElement("div");
+    qtyRow.className = "req-field";
+    var qtyLab = document.createElement("label");
+    qtyLab.className = "req-label";
+    qtyLab.htmlFor = "req-fault-qty";
+    qtyLab.textContent = t("reqLabelQuantity");
+    var qtyIn = document.createElement("input");
+    qtyIn.type = "number";
+    qtyIn.id = "req-fault-qty";
+    qtyIn.name = "detail_quantity";
+    qtyIn.className = "req-input";
+    qtyIn.min = "1";
+    qtyIn.max = "99";
+    qtyIn.value = "1";
+    qtyRow.appendChild(qtyLab);
+    qtyRow.appendChild(qtyIn);
+    detailSection.inner.appendChild(qtyRow);
 
-    var urgField = document.createElement("div");
-    urgField.className = "req-field";
-    var urgLabel = document.createElement("label");
-    urgLabel.className = "req-label";
-    urgLabel.textContent = t("reqLabelFaultUrgency");
-    var urgSelect = document.createElement("select");
-    urgSelect.className = "req-input";
-    urgSelect.name = "urgency";
-    urgSelect.required = true;
-    [
-      { value: "", key: "reqSelectPlaceholder" },
-      { value: "normal", key: "reqOptFaultUrgencyNormal" },
-      { value: "urgent", key: "reqOptFaultUrgencyUrgent" },
-    ].forEach(function (o2) {
-      var op2 = document.createElement("option");
-      op2.value = o2.value;
-      op2.textContent = t(o2.key);
-      urgSelect.appendChild(op2);
-    });
-    urgField.appendChild(urgLabel);
-    urgField.appendChild(urgSelect);
-    detailSection.inner.appendChild(urgField);
     form.appendChild(detailSection.section);
 
     var noteSection = resSection("reqSectionExtraNote", t);
@@ -1284,24 +1321,35 @@
       if (!validateGuestFields(form, err, t)) return;
       if (!validateGuestDescriptionsLength(form, err, t)) return;
       var description = String((form.querySelector('[name="description"]') || {}).value || "").trim();
-      var location = String((form.querySelector('[name="location"]') || {}).value || "").trim();
-      if ((category === "other" || location === "other") && !description) {
+      if (category === "ft_other" && !description) {
         err.textContent = t("reqErrDescriptionRequiredForOther");
         err.hidden = false;
         return;
       }
+      var qtyEl = form.querySelector('[name="detail_quantity"]');
+      var quantity = 1;
+      if (qtyEl && qtyEl.value !== "") {
+        var qn = parseInt(String(qtyEl.value), 10);
+        if (qn && qn >= 1) quantity = qn;
+      }
+      var faultMeta = findFaultItemMeta(category);
+      var requestCategory = faultMeta && faultMeta.sectionKey ? t(faultMeta.sectionKey) : "";
+      var requestType = faultMeta && faultMeta.item ? t(faultMeta.item.key) : "";
       var payload = {
         type: "fault",
         name: (form.querySelector('[name="name"]') || {}).value,
         room: (form.querySelector('[name="room"]') || {}).value,
         nationality: (form.querySelector('[name="nationality"]') || {}).value,
         category: category,
-        location: location,
-        urgency: (form.querySelector('[name="urgency"]') || {}).value,
+        requestCategory: requestCategory,
+        requestType: requestType,
+        quantity: quantity,
+        details: { quantity: quantity },
+        note: description,
         description: description,
         categories: [category],
       };
-      if (category === "other") {
+      if (category === "ft_other") {
         payload.otherCategoryNote = description;
       }
       runSubmit(payload, form, err, success, submit, t, { onSuccessGoHome: onSuccessGoHome });

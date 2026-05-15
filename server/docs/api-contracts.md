@@ -6,7 +6,7 @@ Kayıt `createGuestRequest` ile Supabase’e yazıldıktan sonra aynı `type` il
 
 | `type` | Şablon (gövde parametre sayısı) | `.env` alıcı listesi |
 |--------|----------------------------------|----------------------|
-| `fault` | Arıza (8) | `WHATSAPP_TECH_RECIPIENTS` |
+| `fault` | Arıza (7; adet yok — `WHATSAPP_CLOUD_FAULT_PARAM_COUNT=8` ile eski 8) | `WHATSAPP_TECH_RECIPIENTS` |
 | `request` | İstek (8) | `WHATSAPP_HK_RECIPIENTS` |
 | `complaint` | Şikayet (6) | `WHATSAPP_FRONT_RECIPIENTS` |
 | `guest_notification` | Misafir bildirimi (7) | `WHATSAPP_FRONT_RECIPIENTS` |
@@ -19,10 +19,10 @@ Web formları (`js/render-requests-module.js` vb.) ve sohbetten gelen `create_gu
 İstemci `fetch(..., { credentials: "include" })` kullanmalıdır (çerez).
 
 - **`GET /api/public/guest-gate/status`** — `{ required, strict, dualPassword, identityRequired, identityRequiresBirthDate, identityRequiresFullName, pmsIdentity }`; operatör bypass açıkken isteğe bağlı `extraValidRoomNumbers` (tarayıcıda geçerli oda kümesine eklenir). `required`: `HOTEL_ADVISOR_BASE_URL` + `HOTEL_ADVISOR_HOTEL_ID` + `HOTEL_ADVISOR_TOKEN` dolu ve `VIONA_UI_GATE_ENABLED` kapalı değilse `true`. `pmsIdentity`: HotelAdvisor env tamamsa `true`. `dualPassword`: uyumluluk için `false` (çift şifre kapısı kaldırıldı). `identityRequiresBirthDate`: `pmsIdentity` ile aynı mantık.
-- **`POST /api/public/guest-gate/verify`** — Kapı açıksa gövde: `roomNo` (veya `room`) ve `birthDate` (`YYYY-MM-DD`). KVKK onayı istemcidedir. Varsayılan: HotelAdvisor misafir listesi ile eşleştirir. Başarı: HttpOnly `viona_guest_verified`, `200` `{ ok: true, verification: "hotel_advisor", guest: { guestName, roomNo, resId, resNameId } }`. **Operatör bypass** (yalnızca test): `VIONA_OPERATOR_GATE_BYPASS=1` ve env’de tanımlı oda+doğum eşleşirse PMS atlanır, `verification: "operator_bypass"`, `guest.resId` / `resNameId` `null`. `guest_gate_entries`: `hotel_advisor` ve `operator_bypass` Supabase yapılandırıysa **her zaman** insert; CHECK güncellemesi: `server/docs/migrations/guest-gate-entries-operator-bypass.sql`. Diğer yöntemler: `VIONA_GUEST_GATE_AUDIT_LOG=1`. Hatalar: `400` `identity_required`, `401` `invalid_identity`, `503` `hotel_advisor_not_configured`, `500` `verification_failed`. Kapı kapalıysa: `200` `{ ok: true }`.
+- **`POST /api/public/guest-gate/verify`** — Kapı açıksa gövde: `roomNo` (veya `room`) ve `birthDate` (`YYYY-MM-DD`). KVKK onayı istemcidedir. Varsayılan: HotelAdvisor misafir listesi ile eşleştirir. Başarı: HttpOnly `viona_guest_verified`, `200` `{ ok: true, verification: "hotel_advisor", guest: { guestName, roomNo, resId, resNameId, guestPhone|null, guestEmail|null } }` (Hotspot’ta alan yoksa `null`). **Operatör bypass** (yalnızca test): `VIONA_OPERATOR_GATE_BYPASS=1` ve env’de tanımlı oda+doğum eşleşirse PMS atlanır, `verification: "operator_bypass"`, `guest.resId` / `resNameId` `null`, `guestPhone` / `guestEmail` `null`. `guest_gate_entries`: `hotel_advisor` ve `operator_bypass` Supabase yapılandırıysa **her zaman** insert; CHECK güncellemesi: `server/docs/migrations/guest-gate-entries-operator-bypass.sql`. Diğer yöntemler: `VIONA_GUEST_GATE_AUDIT_LOG=1`. Hatalar: `400` `identity_required`, `401` `invalid_identity`, `503` `hotel_advisor_not_configured`, `500` `verification_failed`. Kapı kapalıysa: `200` `{ ok: true }`.
 - **`POST /api/public/guest-gate/logout`** — `{ ok: true }`; çerezi siler.
 
-**Web sohbet:** `guestUiGateRequired` iken (HotelAdvisor env tam; bkz. `/api/health`) tarayıcıda geçerli doğrulama çerezi yoksa web kanalı `POST /api/chat` reddedilir; aksi halde istek Python asistana proxylanır. Web kanalında geçerli misafir çerezi varsa Node, upstream gövdeye `verified_guest_room` ekler; istemci isteğe bağlı `guest_full_name` gönderebilir (PMS sonrası `vionaGuestProfile`) — Python sohbet formunda ad/oda adımlarını atlamak için kullanılır.
+**Web sohbet:** `guestUiGateRequired` iken (HotelAdvisor env tam; bkz. `/api/health`) tarayıcıda geçerli doğrulama çerezi yoksa web kanalı `POST /api/chat` reddedilir; aksi halde istek Python asistana proxylanır. Web kanalında geçerli misafir çerezi varsa Node, upstream gövdeye `verified_guest_room` ekler; istemci isteğe bağlı `guest_full_name`, `guest_phone`, `guest_email` gönderebilir (PMS kapısı sonrası `vionaGuestProfile`) — Python şemada tanımlıdır; ad soyad sohbet formunda ad/oda adımlarını atlamak için kullanılır.
 
 ### Meta Cloud API — gönderim uç noktası
 
@@ -81,6 +81,8 @@ Buton yoksa veya `=1` yapılmış ama şablonda uyumsuzluk varsa Meta hata döne
   }
 }
 ```
+- **`type: "fault"`** — `category` granular teknik id (`ft_ac_not_cooling`, … `ft_other`) veya eski kaba değer (`hvac`, …); `details.location` / `details.urgency` / üst düzey `location` / `urgency` yok sayılır (NULL). `ft_other` ve `other` için `description` zorunlu.
+
 - Response (201):
 ```json
 { "ok": true, "id": "uuid", "bucket": "request|complaint|fault|reservation" }

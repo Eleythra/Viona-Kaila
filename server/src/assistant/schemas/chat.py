@@ -36,6 +36,16 @@ class ChatRequest(BaseModel):
         max_length=120,
         description="PMS kapısı sonrası istemci oturumu (ad soyad); chat formunda adım atlama için.",
     )
+    guest_phone: Optional[str] = Field(
+        default=None,
+        max_length=40,
+        description="PMS Hotspot ile gelen misafir telefonu; istemci oturumu (isteğe bağlı).",
+    )
+    guest_email: Optional[str] = Field(
+        default=None,
+        max_length=120,
+        description="PMS Hotspot ile gelen e-posta; istemci oturumu (isteğe bağlı).",
+    )
     verified_guest_room: Optional[str] = Field(
         default=None,
         max_length=32,

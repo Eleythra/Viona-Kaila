@@ -106,6 +106,9 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
             "Eşyanızı aramak veya kaydı netleştirmek için öncelikle Misafir İlişkileri veya resepsiyon ekibimize başvurabilirsiniz. "
             "İsterseniz aşağıdaki şikâyet formunu da doldurarak ayrıntıları yazılı iletebilirsiniz; ekibimiz kaydınızı özenle değerlendirir."
         ),
+        "complaint_lost_property_description_suffix": (
+            "Lütfen durumu kısaca yazın; oda numaranızı da ekleyebilirsiniz."
+        ),
         "complaint_form_guidance": (
             "Şikâyetinizi Viona uygulamasındaki şikâyet formu ile iletebilirsiniz; uygun kategoriyi seçerek ekibimizin kaydı net "
             "incelemesine yardımcı olursunuz. Aşağıdaki düğme formu doğrudan açar — isterseniz resepsiyon veya Misafir İlişkileri’ne de "
@@ -297,6 +300,9 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
             "For the most attentive assistance, please visit Guest Relations or reception. "
             "You may also complete the complaint form below to share details in writing — our team will handle your record with care."
         ),
+        "complaint_lost_property_description_suffix": (
+            "Please briefly describe what happened; you may add your room number."
+        ),
         "complaint_form_guidance": (
             "You can submit your complaint through the complaint form in the Viona app — choosing the right category helps our team "
             "review your case efficiently. The button below opens the form; you may also speak with reception or Guest Relations."
@@ -486,6 +492,9 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
             "sind kein Zimmerdefekt; im Beschwerdeformular unten «Fundsachen / verlorenes Eigentum» wählen.\n\n"
             "Für eine persönliche Betreuung wenden Sie sich bitte an die Gästebetreuung oder die Rezeption. "
             "Optional können Sie unten das Beschwerdeformular ausfüllen und die Details schriftlich mitteilen — unser Team bearbeitet Ihren Eintrag aufmerksam."
+        ),
+        "complaint_lost_property_description_suffix": (
+            "Bitte schildern Sie den Vorfall kurz; Sie können Ihre Zimmernummer ergänzen."
         ),
         "complaint_form_guidance": (
             "Ihre Beschwerde können Sie über das Beschwerdeformular in der Viona-App senden — die passende Kategorie hilft unserem Team, "

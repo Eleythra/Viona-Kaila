@@ -24,8 +24,6 @@ const MAP = {
   "complaint category is required": "Şikâyet kategorisi gerekli.",
   "description is required for selected complaint category": "Seçilen kategori için açıklama zorunludur.",
   "fault category is required": "Arıza kategorisi gerekli.",
-  "fault location is required": "Arıza konumu gerekli.",
-  "fault urgency is required": "Aciliyet seçimi gerekli.",
   "guest notification category is required": "Bildirim kategorisi gerekli.",
   "description is required for selected notification category": "Seçilen bildirim kategorisi için açıklama zorunludur.",
   "checkout date is required (YYYY-MM-DD)": "Çıkış tarihi gerekli (YYYY-AA-GG).",

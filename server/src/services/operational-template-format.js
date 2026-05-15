@@ -9,45 +9,83 @@ import {
   formatIsoCalendarYmdAsDdMmYyyy,
 } from "../lib/hotel-calendar-range.js";
 
-const WH_CATEGORY_LABELS = {
+export const WH_CATEGORY_LABELS = {
   request: {
-    towel_extra: "Ek havlu",
-    room_towel: "Ek oda havlusu",
-    bathrobe: "Bornoz",
-    bedding_sheet: "Çarşaf / nevresim",
-    bedding_pillow: "Yastık",
-    bedding_blanket: "Battaniye",
-    room_cleaning: "Oda temizliği",
-    turndown: "Yatak düzenleme (turndown)",
-    slippers: "Terlik",
-    minibar_refill: "Minibar yenileme",
-    bottled_water: "Şişe su",
-    tea_coffee: "Çay / kahve",
-    toilet_paper: "Tuvalet kağıdı",
-    toiletries: "Şampuan / sabun",
-    climate_request: "Klima ayarı",
-    room_refresh: "Oda kokusu",
-    hanger: "Askı",
-    kettle: "Su ısıtıcı",
-    room_safe: "Kasa",
-    baby_bed: "Bebek yatağı",
-    towel: "Havlu",
-    bedding: "Yatak / nevresim",
-    minibar: "Minibar",
-    baby_equipment: "Bebek ekipmanı",
-    room_equipment: "Oda ekipmanı",
+    hk_duvet_request: "Yorgan isteği (adet)",
+    hk_bed_join: "Yatak birleştirme (adet)",
+    hk_bed_soften: "Yatağın yumuşatılması (adet)",
+    hk_pillow_request: "Yastık isteği (adet)",
+    hk_pique_request: "Pike isteği (adet)",
+    hk_extra_bed: "Ek yatak (adet)",
+    hk_baby_crib: "Bebek yatağı (adet)",
+    hk_sheet_change: "Çarşaf değişimi (adet)",
+    hk_towel_request: "Havlu isteği (adet)",
+    hk_towel_change: "Havlu değişimi (adet)",
+    hk_toilet_paper: "Tuvalet kağıdı (adet)",
+    hk_slippers: "Terlik isteği (adet)",
+    hk_dental_set: "Diş seti isteği (adet)",
+    hk_amenity_kit: "Banyo ve kişisel bakım seti (şampuan, sabun vb.) (adet)",
+    hk_water: "Su isteği (adet)",
+    hk_coffee_tea_supplies: "Kahve, süt tozu, çay isteği (adet)",
+    hk_cup_request: "Kupa isteği (adet)",
+    hk_room_cleaning: "Oda temizliği (adet)",
+    hk_trash_removal: "Çöplerin alınması (adet)",
+    hk_balcony_cleaning: "Balkon temizliği (adet)",
+    hk_cleaning_dnd_coordinate:
+      "Temizlik ve rahatsız etmeyin koordinasyonu / tercih bildirimi (adet)",
+    hk_bad_odor: "Kötü koku şikayeti (adet)",
+    hk_pest_control: "İlaçlama isteği (adet)",
+    hk_iron: "Ütü isteği (adet)",
+    hk_vase: "Vazo isteği (adet)",
     other: "Diğer",
   },
   fault: {
-    hvac: "Klima / ısıtma",
-    electric: "Elektrik",
-    water_bathroom: "Su / banyo",
-    tv_electronics: "TV / elektronik",
-    door_lock: "Kapı kilidi",
-    furniture_item: "Mobilya",
-    cleaning_equipment_damage: "Temizlik ekipmanı hasarı",
-    balcony_window: "Balkon / pencere",
-    other: "Diğer",
+    ft_ac_not_cooling: "Klima soğutmuyor",
+    ft_ac_not_heating: "Klima ısıtmıyor",
+    ft_ac_remote: "Klima kumandası",
+    ft_ac_fault: "Klima Arızası",
+    ft_ventilation_fault: "Havalandırma arızası",
+    ft_socket_fault: "Priz arızası",
+    ft_electric_fault: "Elektrik arızası",
+    ft_led_fault: "LED arızası",
+    ft_lamp_fault: "Lamba arızası",
+    ft_sconce_fault: "Aplik arızası",
+    ft_ceiling_water_leak: "Tavandan su akıyor",
+    ft_bidet_faucet_fault: "Taharet musluğu arızası",
+    ft_cold_water_no_flow: "Su soğuk akmıyor",
+    ft_hot_water_no_flow: "Su sıcak akmıyor",
+    ft_siphon_fault: "Sifon arızası",
+    ft_faucet_fault: "Musluk arızası",
+    ft_sink_drain_fault: "Lavabo gideri arızası",
+    ft_toilet_seat_broken: "Klozet kapağı kırık",
+    ft_shower_cabin_fault: "Duşakabin arızası",
+    ft_shower_head_fault: "Duş başlığı arızası",
+    ft_towel_rail_fault: "Banyo havluluk",
+    ft_bathroom_drain_clog: "Banyo gideri tıkalı",
+    ft_tv_remote: "Televizyon kumandası",
+    ft_tv_fault: "Televizyon arızası",
+    ft_phone_fault: "Telefon arızası",
+    ft_minibar_fault: "Minibar arızası",
+    ft_safe_fault: "Kasa arızası",
+    ft_kettle_fault: "Kettle arızası",
+    ft_hair_dryer_fault: "Fön makinesi çalışmıyor",
+    ft_tv_channel_fault: "Kanal arızası",
+    ft_curtain_fallen: "Perde düşmüş",
+    ft_window_fault: "Pencere arızası",
+    ft_window_cleaning: "Pencere temizliği",
+    ft_room_door_fault: "Oda kapısı arızası",
+    ft_bathroom_door_fault: "Banyo kapısı arızası",
+    ft_balcony_door_fault: "Balkon kapısı arızası",
+    ft_balcony_railing_loose: "Balkon korkuluğu gevşek / sallanıyor",
+    ft_cornice_fault: "Korniş arızası",
+    ft_headboard_fault: "Yatak başlığı arızası",
+    ft_dresser_drawer_fault: "Şifonyer çekmecesi",
+    ft_drawer_fault: "Çekmece arızası",
+    ft_wardrobe_fault: "Gardırop arızası",
+    ft_mirror_damage: "Ayna kırık / çatlak",
+    ft_elevator_fault: "Asansör arızası",
+    ft_indoor_pool_temperature: "Kapalı havuz sıcaklığı / ayar arızası",
+    ft_other: "Diğer (teknik)",
   },
   guest_notification: {
     allergen_notice: "Alerjen bildirimi",
@@ -99,33 +137,213 @@ const WH_CATEGORY_LABELS = {
   },
 };
 
+/** Teknik `ft_*` → HK ile aynı üst başlık mantığı (WhatsApp / önizleme / PDF). */
+const FAULT_OPERATIONAL_SECTION_KEYS = {
+  hvac: "Klima & Havalandırma",
+  electric: "Elektrik & Aydınlatma",
+  water_bath: "Su & Banyo Sistemleri",
+  tv_electronics: "TV & Elektronik",
+  door_window: "Kapı, Pencere & Balkon",
+  furniture: "Mobilya & Oda Ekipmanları",
+  general_facility: "Genel Tesis & Ortak Alan",
+  other: "Diğer Teknik Arızalar",
+};
+
+const FAULT_ID_TO_SECTION = {
+  ft_ac_not_cooling: "hvac",
+  ft_ac_not_heating: "hvac",
+  ft_ac_remote: "hvac",
+  ft_ac_fault: "hvac",
+  ft_ventilation_fault: "hvac",
+  ft_socket_fault: "electric",
+  ft_electric_fault: "electric",
+  ft_led_fault: "electric",
+  ft_lamp_fault: "electric",
+  ft_sconce_fault: "electric",
+  ft_ceiling_water_leak: "water_bath",
+  ft_bidet_faucet_fault: "water_bath",
+  ft_cold_water_no_flow: "water_bath",
+  ft_hot_water_no_flow: "water_bath",
+  ft_siphon_fault: "water_bath",
+  ft_faucet_fault: "water_bath",
+  ft_sink_drain_fault: "water_bath",
+  ft_toilet_seat_broken: "water_bath",
+  ft_shower_cabin_fault: "water_bath",
+  ft_shower_head_fault: "water_bath",
+  ft_towel_rail_fault: "water_bath",
+  ft_bathroom_drain_clog: "water_bath",
+  ft_tv_remote: "tv_electronics",
+  ft_tv_fault: "tv_electronics",
+  ft_phone_fault: "tv_electronics",
+  ft_minibar_fault: "tv_electronics",
+  ft_safe_fault: "tv_electronics",
+  ft_kettle_fault: "tv_electronics",
+  ft_hair_dryer_fault: "tv_electronics",
+  ft_tv_channel_fault: "tv_electronics",
+  ft_curtain_fallen: "door_window",
+  ft_window_fault: "door_window",
+  ft_window_cleaning: "door_window",
+  ft_room_door_fault: "door_window",
+  ft_bathroom_door_fault: "door_window",
+  ft_balcony_door_fault: "door_window",
+  ft_balcony_railing_loose: "door_window",
+  ft_cornice_fault: "furniture",
+  ft_headboard_fault: "furniture",
+  ft_dresser_drawer_fault: "furniture",
+  ft_drawer_fault: "furniture",
+  ft_wardrobe_fault: "furniture",
+  ft_mirror_damage: "furniture",
+  ft_elevator_fault: "general_facility",
+  ft_indoor_pool_temperature: "general_facility",
+  ft_other: "other",
+};
+
+/** @param {string} ftIdRaw */
+export function operationalFaultRequestCategoryTr(ftIdRaw) {
+  const id = String(ftIdRaw || "")
+    .trim()
+    .toLowerCase();
+  const sec = FAULT_ID_TO_SECTION[id] || "other";
+  return FAULT_OPERATIONAL_SECTION_KEYS[sec] || FAULT_OPERATIONAL_SECTION_KEYS.other;
+}
+
+function toPositiveIntOperational(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  const int = Math.floor(n);
+  return int > 0 ? int : null;
+}
+
+const DEFAULT_WHATSAPP_PARAM_MAX = 900;
+
+function clipOperationalParam(s, maxLen) {
+  const t = String(s ?? "");
+  const cap = maxLen > 0 ? maxLen : DEFAULT_WHATSAPP_PARAM_MAX;
+  if (t.length <= cap) return t;
+  return `${t.slice(0, cap - 1)}…`;
+}
+
+/** Boş değerler «-» (WhatsApp gövde parametreleri). */
+function dashWabaBody(v) {
+  const s = String(v ?? "").trim();
+  return s.length ? s : "-";
+}
+
+/**
+ * HK (`request`) ve teknik (`fault`) için sekiz Meta parametre sırası (HK şablonu):
+ * ad, oda, talep kategorisi, talep türü, adet, tarih (gg.aa.yyyy), saat (SS:dd), açıklama (boş olabilir).
+ * Teknik şablonu Meta’da 7 parametre ise `buildOperationalWhatsappTemplateBodyParams` adet satırını düşürür.
+ * @returns {string[]}
+ */
+export function buildOperationalWhatsappEightParamValues(recordType, payload, eventInstant, options = {}) {
+  const paramMax = options.paramMax ?? DEFAULT_WHATSAPP_PARAM_MAX;
+  const clip = (x) => clipOperationalParam(x, paramMax);
+  const rt = String(recordType || "").trim();
+  const p = payload && typeof payload === "object" ? payload : {};
+  const d = p.details && typeof p.details === "object" ? p.details : {};
+  const name = clip(dashWabaBody(p.name));
+  const room = clip(dashWabaBody(p.room));
+  const dateStr = formatInstantHotelDdMmYyyy(eventInstant);
+  const timeStr = formatInstantHotelHhMm(eventInstant);
+  let requestCategory = "-";
+  let requestType = "-";
+  let quantity = "1";
+  const descRaw = String(p.description ?? "").trim();
+
+  if (rt === "request") {
+    const cat = normalizeRequestCategoryKey(p.category);
+    requestCategory = clip(dashWabaBody(requestSectionLabelTr(cat)));
+    requestType = clip(dashWabaBody(buildRequestTypeLineTr(cat, d)));
+    const qLine = buildRequestQuantityLine(cat, d);
+    if (qLine != null) {
+      quantity = clip(String(qLine).trim() || "1");
+    } else {
+      const qFall = toPositiveIntOperational(d.quantity);
+      quantity = clip(qFall != null ? String(qFall) : "1");
+    }
+  } else if (rt === "fault") {
+    const cat = String(p.category || "")
+      .trim()
+      .toLowerCase();
+    requestCategory = clip(dashWabaBody(operationalFaultRequestCategoryTr(cat)));
+    requestType = clip(dashWabaBody(categoryLabel("fault", cat)));
+    const qn = toPositiveIntOperational(d.quantity);
+    quantity = clip(String(qn != null && qn >= 1 ? qn : 1));
+  }
+
+  const note = clip(descRaw);
+
+  return [name, room, requestCategory, requestType, quantity, dateStr, timeStr, note];
+}
+
+function operationalWhatsappTemplateRawParamCount(recordType) {
+  const rt = String(recordType || "").trim();
+  if (rt === "fault") {
+    return String(process.env.WHATSAPP_CLOUD_FAULT_PARAM_COUNT ?? "7").trim();
+  }
+  return String(process.env.WHATSAPP_CLOUD_REQUEST_PARAM_COUNT ?? "8").trim();
+}
+
+/**
+ * Meta şablonu:
+ * - İstek (HK): 8 parametre (adet dahil) veya eski 4 parametre (birleşik kategori+tür).
+ * - Teknik (arıza): varsayılan 7 parametre (adet yok; sıra: ad, oda, üst kategori, tür, tarih, saat, açıklama).
+ *   Eski 8 parametreli Meta şablonu için `WHATSAPP_CLOUD_FAULT_PARAM_COUNT=8`.
+ * @returns {string[]}
+ */
+export function buildOperationalWhatsappTemplateBodyParams(recordType, payload, eventInstant, options = {}) {
+  const paramMax = options.paramMax ?? DEFAULT_WHATSAPP_PARAM_MAX;
+  const eight = buildOperationalWhatsappEightParamValues(recordType, payload, eventInstant, { paramMax });
+  const raw = operationalWhatsappTemplateRawParamCount(recordType);
+  const rt = String(recordType || "").trim();
+  if (raw === "7" || raw === "seven") {
+    if (rt === "fault") {
+      return [eight[0], eight[1], eight[2], eight[3], eight[5], eight[6], eight[7]];
+    }
+  }
+  if (raw === "4" || raw === "four") {
+    const parts = [eight[2], eight[3]].filter((x) => x && x !== "-" && x !== "—");
+    const combined = clipOperationalParam(parts.length ? parts.join(" · ") : "-", paramMax);
+    return [eight[0], eight[1], combined, eight[7]];
+  }
+  return eight;
+}
+
+export function operationalCategoryLabelTr(kind, cat) {
+  return categoryLabel(kind, cat);
+}
+
+export function operationalGuestNotificationMainTr(catId) {
+  return guestNotificationMainCategoryLabel(catId);
+}
+
 /** Web formu «bölüm» başlıkları (WhatsApp sohbet grubu değil). */
 const REQUEST_SECTION_LABELS_TR = {
-  towel_extra: "Yastık, havlu, bornoz ve terlik",
-  room_towel: "Yastık, havlu, bornoz ve terlik",
-  bathrobe: "Yastık, havlu, bornoz ve terlik",
-  slippers: "Yastık, havlu, bornoz ve terlik",
-  towel: "Yastık, havlu, bornoz ve terlik",
-  bedding_sheet: "Çarşaf ve battaniye",
-  bedding_blanket: "Çarşaf ve battaniye",
-  bedding: "Çarşaf ve battaniye",
-  bedding_pillow: "Yastık, havlu, bornoz ve terlik",
-  room_cleaning: "Oda hizmeti",
-  turndown: "Oda hizmeti",
-  minibar_refill: "Şişe su ve çay / kahve",
-  bottled_water: "Şişe su ve çay / kahve",
-  tea_coffee: "Şişe su ve çay / kahve",
-  minibar: "Şişe su ve çay / kahve",
-  toilet_paper: "Tuvalet kağıdı ve şampuan / sabun",
-  toiletries: "Tuvalet kağıdı ve şampuan / sabun",
-  climate_request: "Konfor ve klima",
-  room_refresh: "Konfor ve klima",
-  hanger: "Ekipman",
-  kettle: "Ekipman",
-  room_safe: "Ekipman",
-  baby_bed: "Ekipman",
-  baby_equipment: "Ekipman",
-  room_equipment: "Ekipman",
+  hk_duvet_request: "Yatak & uyku konforu",
+  hk_bed_join: "Yatak & uyku konforu",
+  hk_bed_soften: "Yatak & uyku konforu",
+  hk_pillow_request: "Yatak & uyku konforu",
+  hk_pique_request: "Yatak & uyku konforu",
+  hk_extra_bed: "Yatak & uyku konforu",
+  hk_baby_crib: "Yatak & uyku konforu",
+  hk_sheet_change: "Yatak & uyku konforu",
+  hk_towel_request: "Havlu & banyo ihtiyaçları",
+  hk_towel_change: "Havlu & banyo ihtiyaçları",
+  hk_toilet_paper: "Havlu & banyo ihtiyaçları",
+  hk_slippers: "Havlu & banyo ihtiyaçları",
+  hk_dental_set: "Havlu & banyo ihtiyaçları",
+  hk_amenity_kit: "Havlu & banyo ihtiyaçları",
+  hk_water: "İçecek & oda ikramları",
+  hk_coffee_tea_supplies: "İçecek & oda ikramları",
+  hk_cup_request: "İçecek & oda ikramları",
+  hk_room_cleaning: "Temizlik & hijyen",
+  hk_trash_removal: "Temizlik & hijyen",
+  hk_balcony_cleaning: "Temizlik & hijyen",
+  hk_cleaning_dnd_coordinate: "Temizlik & hijyen",
+  hk_bad_odor: "Temizlik & hijyen",
+  hk_pest_control: "Temizlik & hijyen",
+  hk_iron: "Ekipman & diğer",
+  hk_vase: "Ekipman & diğer",
   other: "Diğer",
 };
 
@@ -161,17 +379,6 @@ const MINIBAR_REQ = {
   check_request: "Kontrol talebi",
 };
 
-const LOCATION_LABELS = {
-  room_inside: "Oda içi",
-  bathroom: "Banyo",
-  balcony: "Balkon",
-  other: "Diğer",
-};
-
-const URGENCY_LABELS = {
-  normal: "Normal",
-  urgent: "Acil",
-};
 
 /**
  * Uygulama modülü → operasyon hedefi (istek=HK, şikâyet/misafir/geç çıkış=ön büro, arıza=teknik).
@@ -255,6 +462,7 @@ function buildRequestTypeLineTr(category, details) {
   const d = details && typeof details === "object" ? details : {};
   const c = normalizeRequestCategoryKey(category);
   const base = requestItemLabelTr(c);
+  if (c.startsWith("hk_") || c === "other") return dash(base);
   if (d.timing && (c === "room_cleaning" || c === "turndown")) {
     return dash(`${base} · ${TIMING_LABELS[d.timing] || String(d.timing)}`);
   }
@@ -278,20 +486,12 @@ function buildRequestTypeLineTr(category, details) {
 
 function buildRequestQuantityLine(category, details) {
   const d = details && typeof details === "object" ? details : {};
+  const c = normalizeRequestCategoryKey(category);
+  if (!/^hk_/.test(c)) return null;
   if (d.quantity != null && String(d.quantity).trim() !== "") {
     return dash(String(d.quantity));
   }
   return null;
-}
-
-function locLabel(v) {
-  const x = String(v || "").trim();
-  return dash(LOCATION_LABELS[x] || x);
-}
-
-function urgLabel(v) {
-  const x = String(v || "").trim();
-  return dash(URGENCY_LABELS[x] || x);
 }
 
 /**
@@ -319,18 +519,29 @@ export function formatOperationalTemplatePreviewText(recordType, payload) {
   if (rt === "request") {
     const cat = normalizeRequestCategoryKey(payload?.category);
     const details = payload?.details && typeof payload.details === "object" ? payload.details : {};
-    lines.push(`Form bölümü: ${requestSectionLabelTr(cat)}`);
+    lines.push(`Talep kategorisi: ${requestSectionLabelTr(cat)}`);
     lines.push(`Talep türü: ${buildRequestTypeLineTr(cat, details)}`);
     const qty = buildRequestQuantityLine(cat, details);
     if (qty != null) lines.push(`Adet: ${qty}`);
     const desc = dash(payload?.description);
-    if (desc !== "—") lines.push(`Misafir notu: ${desc}`);
+    if (desc !== "—") lines.push(`Açıklama notu: ${desc}`);
   } else if (rt === "fault") {
-    lines.push(`Arıza kategorisi: ${categoryLabel("fault", payload?.category)}`);
-    lines.push(`Konum: ${locLabel(payload?.location || payload?.details?.location)}`);
-    lines.push(`Öncelik: ${urgLabel(payload?.urgency || payload?.details?.urgency)}`);
-    const desc = dash(payload?.description);
-    if (desc !== "—") lines.push(`Açıklama: ${desc}`);
+    const catf = String(payload?.category || "")
+      .trim()
+      .toLowerCase();
+    lines.length = 0;
+    lines.push("Arıza Kaydı Oluşturuldu");
+    lines.push("");
+    lines.push("Arıza kaydı detayları aşağıdadır.");
+    lines.push("");
+    lines.push(`Misafir adı: ${dash(payload?.name)}`);
+    lines.push(`Oda numarası: ${dash(payload?.room)}`);
+    lines.push(`Talep kategorisi: ${operationalFaultRequestCategoryTr(catf)}`);
+    lines.push(`Talep türü: ${categoryLabel("fault", catf)}`);
+    lines.push(`Tarih bilgisi: ${dateStr}`);
+    lines.push(`Saat bilgisi: ${timeStr}`);
+    const descRaw = String(payload?.description ?? "").trim();
+    if (descRaw) lines.push(`Açıklama notu: ${descRaw} olarak iletildi`);
   } else if (rt === "complaint") {
     lines.push(`Konu: ${categoryLabel("complaint", payload?.category)}`);
     const desc = dash(payload?.description);
@@ -351,7 +562,9 @@ export function formatOperationalTemplatePreviewText(recordType, payload) {
     if (desc !== "—") lines.push(`Açıklama: ${desc}`);
   }
 
-  lines.push(`Kayıt zamanı: ${dateStr} ${timeStr}`);
+  if (rt !== "fault") {
+    lines.push(`Kayıt zamanı: ${dateStr} ${timeStr}`);
+  }
 
   return lines.join("\n");
 }
@@ -388,16 +601,18 @@ export function opReportFaultCategory(row) {
   return categoryLabel("fault", r.category);
 }
 
-export function opReportFaultLocation(row) {
+/** Günlük operasyon PDF — teknik «talep kategorisi» (üst başlık). */
+export function opReportFaultRequestSection(row) {
   const r = coerceOperationalPayload("fault", row);
-  const d = mergeRowPayloadDetails(r);
-  return locLabel(r.location || d.location);
+  return operationalFaultRequestCategoryTr(String(r.category || "").toLowerCase());
 }
 
-export function opReportFaultUrgency(row) {
+/** Günlük operasyon PDF — teknik adet (yoksa 1). */
+export function opReportFaultQuantityDisplay(row) {
   const r = coerceOperationalPayload("fault", row);
   const d = mergeRowPayloadDetails(r);
-  return urgLabel(r.urgency || d.urgency);
+  const q = toPositiveIntOperational(d.quantity);
+  return String(q != null && q >= 1 ? q : 1);
 }
 
 export function opReportComplaintSubject(row) {

@@ -6,11 +6,14 @@
  *
  * Misafir bildirimi: {{1}} ad, {{2}} oda, {{3}} kategori, {{4}} alt kategori, {{5}} tarih, {{6}} saat, {{7}} açıklama.
  * Şikayet: {{1}}–{{6}} (ad, oda, şikayet kategorisi, tarih, saat, açıklama).
- * İstek: {{1}}–{{8}} (ad, oda, talep kategorisi, talep türü, adet, tarih, saat, açıklama).
- * Arıza: {{1}}–{{8}} (ad, oda, arıza kategorisi, lokasyon, aciliyet, tarih, saat, açıklama).
+ * İstek (HK): {{1}}–{{8}} (ad, oda, talep kategorisi, talep türü, adet, tarih, saat, açıklama — açıklama boş olabilir).
+ * Teknik (arıza): varsayılan {{1}}–{{7}} (ad, oda, talep kategorisi, talep türü, tarih, saat, açıklama; Meta gövdesinde «Açıklama notu: {{7}} olarak iletildi»).
+ *   Eski 8 parametreli arıza şablonu için `WHATSAPP_CLOUD_FAULT_PARAM_COUNT=8`.
  *
  * Yönlendirme: arıza → WHATSAPP_TECH_RECIPIENTS | istek → WHATSAPP_HK_RECIPIENTS |
  * şikayet + misafir bildirimi + geç çıkış → WHATSAPP_FRONT_RECIPIENTS (ön büro).
+ *
+ * Teknik bildirim: HK isteği 8 parametre; arıza şablonu varsayılan 7 parametre (adet yok). Meta’da eski 8 parametreli arıza şablonu varsa `WHATSAPP_CLOUD_FAULT_PARAM_COUNT=8` veya şablonu güncelleyin; `WHATSAPP_TEMPLATE_FAULT` ile HK şablon adını (`viona_request_notification`) paylaşın.
  *
  * Meta «Visit Website / Dynamic URL» butonu: şablonda Base URL (örn. https://viona-admin.eleythra.com/admin/) tanımlı;
  * gövde aynı kalır. Env ile açılır; suffix sunucu üretir (şablonda URL butonu index 0 ile uyumlu olmalı):
@@ -28,10 +31,15 @@ import {
   formatInstantHotelHhMm,
   formatIsoCalendarYmdAsDdMmYyyy,
 } from "../lib/hotel-calendar-range.js";
-import { coerceOperationalPayload, normalizeRequestCategoryKey } from "./operational-template-format.js";
+import {
+  coerceOperationalPayload,
+  buildOperationalWhatsappTemplateBodyParams,
+  operationalCategoryLabelTr,
+  operationalGuestNotificationMainTr,
+} from "./operational-template-format.js";
 import { isOperationalRecordType } from "./operational-notification-routing.service.js";
 
-const TEMPLATE_FAULT = "viona_issue_notification";
+const TEMPLATE_FAULT = "viona_request_notification";
 const TEMPLATE_REQUEST = "viona_request_notification";
 const TEMPLATE_COMPLAINT = "viona_complaint_notification";
 const DEFAULT_TEMPLATE_GUEST_RELATION = "viona_guest_relation_notification";
@@ -82,169 +90,18 @@ export function buildFrontOpsPanelUrlSuffix(recordType, recordId) {
   return `ops-front.html?type=${encodeURIComponent(t)}&id=${id}`;
 }
 
-const WH_CATEGORY_LABELS = {
-  request: {
-    towel_extra: "Ek havlu",
-    room_towel: "Ek oda havlusu",
-    bathrobe: "Bornoz",
-    bedding_sheet: "Çarşaf / nevresim",
-    bedding_pillow: "Yastık",
-    bedding_blanket: "Battaniye",
-    room_cleaning: "Oda temizliği",
-    turndown: "Yatak düzenleme (turndown)",
-    slippers: "Terlik",
-    minibar_refill: "Minibar yenileme",
-    bottled_water: "Şişe su",
-    tea_coffee: "Çay / kahve",
-    toilet_paper: "Tuvalet kağıdı",
-    toiletries: "Şampuan / sabun",
-    climate_request: "Klima ayarı",
-    room_refresh: "Oda kokusu",
-    hanger: "Askı",
-    kettle: "Su ısıtıcı",
-    room_safe: "Kasa",
-    baby_bed: "Bebek yatağı",
-    towel: "Havlu",
-    bedding: "Yatak / nevresim",
-    minibar: "Minibar",
-    baby_equipment: "Bebek ekipmanı",
-    room_equipment: "Oda ekipmanı",
-    other: "Diğer",
-  },
-  fault: {
-    hvac: "Klima / Isıtma",
-    electric: "Elektrik",
-    water_bathroom: "Su / Banyo",
-    tv_electronics: "TV / Elektronik",
-    door_lock: "Kapı kilidi",
-    furniture_item: "Mobilya",
-    cleaning_equipment_damage: "Temizlik ekipmanı hasarı",
-    balcony_window: "Balkon / Pencere",
-    other: "Diğer",
-  },
-  guest_notification: {
-    allergen_notice: "Alerjen bildirimi",
-    gluten_sensitivity: "Gluten hassasiyeti",
-    lactose_sensitivity: "Laktoz hassasiyeti",
-    vegan_vegetarian: "Vegan / vejetaryen",
-    food_sensitivity_general: "Genel gıda hassasiyeti",
-    chronic_condition: "Kronik rahatsızlık",
-    accessibility_special_needs: "Erişilebilirlik / özel ihtiyaç",
-    pregnancy: "Hamilelik",
-    medication_health_sensitivity: "İlaç / sağlık",
-    other_health: "Diğer (sağlık)",
-    birthday_celebration: "Doğum günü",
-    honeymoon_anniversary: "Balayı / yıldönümü",
-    surprise_organization: "Sürpriz organizasyon",
-    room_decoration: "Oda süsleme",
-    other_celebration: "Diğer (kutlama)",
-  },
-  guest_notification_main: {
-    allergen_notice: "Beslenme",
-    gluten_sensitivity: "Beslenme",
-    lactose_sensitivity: "Beslenme",
-    vegan_vegetarian: "Beslenme",
-    food_sensitivity_general: "Beslenme",
-    chronic_condition: "Sağlık",
-    accessibility_special_needs: "Sağlık",
-    pregnancy: "Sağlık",
-    medication_health_sensitivity: "Sağlık",
-    other_health: "Sağlık",
-    birthday_celebration: "Kutlama",
-    honeymoon_anniversary: "Kutlama",
-    surprise_organization: "Kutlama",
-    room_decoration: "Kutlama",
-    other_celebration: "Kutlama",
-  },
-  complaint: {
-    room_cleaning: "Oda temizliği",
-    noise: "Gürültü",
-    climate: "Isı / Klima",
-    room_comfort: "Oda konforu",
-    minibar: "Minibar",
-    restaurant_service: "Restoran servisi",
-    staff_behavior: "Personel davranışı",
-    general_areas: "Genel alanlar",
-    hygiene: "Hijyen",
-    internet_tv: "İnternet / TV",
-    lost_property: "Kayıp eşya",
-    other: "Diğer",
-  },
-};
+function ellipsisEmDashToHyphen(s) {
+  const t = String(s ?? "");
+  return t === "—" ? "-" : t;
+}
 
-/** Şablon {{3}}: form bölümü (web formlarındaki üst başlık; WhatsApp sohbet grubu değil). */
-const REQUEST_SECTION_LABELS_TR = {
-  towel_extra: "Yastık, havlu, bornoz ve terlik",
-  room_towel: "Yastık, havlu, bornoz ve terlik",
-  bathrobe: "Yastık, havlu, bornoz ve terlik",
-  slippers: "Yastık, havlu, bornoz ve terlik",
-  towel: "Yastık, havlu, bornoz ve terlik",
-  bedding_sheet: "Çarşaf ve battaniye",
-  bedding_blanket: "Çarşaf ve battaniye",
-  bedding: "Çarşaf ve battaniye",
-  bedding_pillow: "Yastık, havlu, bornoz ve terlik",
-  room_cleaning: "Oda hizmeti",
-  turndown: "Oda hizmeti",
-  minibar_refill: "Şişe su ve çay / kahve",
-  bottled_water: "Şişe su ve çay / kahve",
-  tea_coffee: "Şişe su ve çay / kahve",
-  minibar: "Şişe su ve çay / kahve",
-  toilet_paper: "Tuvalet kağıdı ve şampuan / sabun",
-  toiletries: "Tuvalet kağıdı ve şampuan / sabun",
-  climate_request: "Konfor ve klima",
-  room_refresh: "Konfor ve klima",
-  hanger: "Ekipman",
-  kettle: "Ekipman",
-  room_safe: "Ekipman",
-  baby_bed: "Ekipman",
-  baby_equipment: "Ekipman",
-  room_equipment: "Ekipman",
-  other: "Diğer",
-};
+function categoryLabel(kind, cat) {
+  return clip(ellipsisEmDashToHyphen(operationalCategoryLabelTr(kind, cat)));
+}
 
-const ITEM_TYPE_LABELS = {
-  bath_towel: "Banyo havlusu",
-  hand_towel: "El havlusu",
-  pillow: "Yastık",
-  duvet_cover: "Nevresim",
-  blanket: "Battaniye",
-  baby_bed: "Bebek yatağı",
-  high_chair: "Mama sandalyesi",
-  bathrobe: "Bornoz",
-  slippers: "Terlik",
-  hanger: "Askı",
-  kettle: "Kettle",
-  other: "Diğer",
-};
-
-const ROOM_CLEANING_REQ = {
-  general_cleaning: "Genel temizlik",
-  towel_change: "Havlu değişimi",
-  room_check: "Oda kontrolü",
-};
-
-const TIMING_LABELS = {
-  now: "Şimdi",
-  later: "Daha sonra",
-};
-
-const MINIBAR_REQ = {
-  refill: "Minibar yenileme",
-  missing_item_report: "Eksik ürün bildirimi",
-  check_request: "Kontrol talebi",
-};
-
-const LOCATION_LABELS = {
-  room_inside: "Oda içi",
-  bathroom: "Banyo",
-  balcony: "Balkon",
-  other: "Diğer",
-};
-
-const URGENCY_LABELS = {
-  normal: "Normal",
-  urgent: "Acil",
-};
+function guestNotificationMainCategoryLabel(catId) {
+  return clip(ellipsisEmDashToHyphen(operationalGuestNotificationMainTr(catId)));
+}
 
 function dash(v) {
   const s = String(v ?? "").trim();
@@ -275,21 +132,6 @@ function appendOperationalReminderSuffix(bodyParams, options) {
   const i = out.length - 1;
   out[i] = clip(String(out[i] ?? "") + suffix);
   return out;
-}
-
-function categoryLabel(kind, cat) {
-  const k = String(kind);
-  const c = String(cat || "").trim();
-  const lower = c.toLowerCase();
-  return clip(dash(WH_CATEGORY_LABELS?.[k]?.[c] || WH_CATEGORY_LABELS?.[k]?.[lower] || c));
-}
-
-function guestNotificationMainCategoryLabel(catId) {
-  const c = String(catId || "")
-    .trim()
-    .toLowerCase();
-  const m = WH_CATEGORY_LABELS?.guest_notification_main?.[c];
-  return clip(dash(m || "Misafir bildirimi"));
 }
 
 /** Misafir kaydı anı — şablonda UTC yerine otel saat diliminde gösterim için. */
@@ -363,116 +205,10 @@ export function recipientsForGuestPayload(payload, intentFallback = "unknown") {
   return [];
 }
 
-function locLabel(v) {
-  const x = String(v || "").trim();
-  return clip(dash(LOCATION_LABELS[x] || x));
-}
-
-function urgLabel(v) {
-  const x = String(v || "").trim();
-  return clip(dash(URGENCY_LABELS[x] || x));
-}
-
-function itemTypeLabel(v) {
-  const x = String(v || "")
-    .trim()
-    .toLowerCase();
-  return clip(dash(ITEM_TYPE_LABELS[x] || String(v || "").trim() || "-"));
-}
-
-function buildFaultBodyParams(payload, eventInstant) {
-  const loc = payload.location || payload.details?.location;
-  const urg = payload.urgency || payload.details?.urgency;
-  return [
-    clip(dash(payload.name)),
-    clip(dash(payload.room)),
-    categoryLabel("fault", payload.category),
-    locLabel(loc),
-    urgLabel(urg),
-    dash(formatInstantHotelDdMmYyyy(eventInstant)),
-    dash(formatInstantHotelHhMm(eventInstant)),
-    clip(dash(payload.description)),
-  ];
-}
-
-function requestItemLabelTr(category) {
-  const c = normalizeRequestCategoryKey(category);
-  if (!c) return "-";
-  return WH_CATEGORY_LABELS.request[c] ? clip(dash(WH_CATEGORY_LABELS.request[c])) : "-";
-}
-
-function requestSectionLabelTr(category) {
-  const c = normalizeRequestCategoryKey(category);
-  if (!c) return "-";
-  const g = REQUEST_SECTION_LABELS_TR[c];
-  if (g) return clip(dash(g));
-  return categoryLabel("request", c);
-}
-
-/** Şablon {{4}}: seçilen talep türü (satır) + varsa zamanlama / eski alt alanlar. */
-function buildRequestTypeLineTr(category, details) {
-  const d = details && typeof details === "object" ? details : {};
-  const c = normalizeRequestCategoryKey(category);
-  const base = requestItemLabelTr(c);
-  if (d.timing && (c === "room_cleaning" || c === "turndown")) {
-    return clip(dash(`${base} · ${TIMING_LABELS[d.timing] || String(d.timing)}`));
-  }
-  if (c === "room_cleaning" && d.requestType) {
-    const parts = [ROOM_CLEANING_REQ[d.requestType] || String(d.requestType)];
-    if (d.timing) parts.push(TIMING_LABELS[d.timing] || String(d.timing));
-    return clip(dash(parts.join(" · ")));
-  }
-  if (c === "towel" || c === "bedding") {
-    return clip(dash(itemTypeLabel(d.itemType) || base));
-  }
-  if (c === "minibar") {
-    return clip(dash(MINIBAR_REQ[d.requestType] || d.requestType || base));
-  }
-  if (c === "baby_equipment" || c === "room_equipment") {
-    return clip(dash(itemTypeLabel(d.itemType) || base));
-  }
-  if (c === "other") return clip(dash(base));
-  return clip(dash(base));
-}
-
-function buildRequestQuantity(category, details) {
-  const d = details && typeof details === "object" ? details : {};
-  if (d.quantity != null && String(d.quantity).trim() !== "") {
-    return clip(dash(String(d.quantity)));
-  }
-  return "-";
-}
-
-function buildRequestBodyParams(payload, eventInstant) {
-  const cat = normalizeRequestCategoryKey(payload.category);
-  const details = payload.details && typeof payload.details === "object" ? payload.details : {};
-  const rawN = String(process.env.WHATSAPP_CLOUD_REQUEST_PARAM_COUNT || "8").trim();
-  const paramCount = Number.parseInt(rawN, 10);
-  /** Meta’da eski 4 değişkenli şablon: {{1}} ad, {{2}} oda, {{3}} kategori (tek satır Türkçe), {{4}} açıklama — 8 parametre gönderilince sıra kayıp ham anahtar düşebilir. */
-  if (paramCount === 4) {
-    const g = requestSectionLabelTr(cat);
-    const t = buildRequestTypeLineTr(cat, details);
-    const parts = [g, t].filter(function (x) {
-      return x && x !== "-" && x !== "—";
-    });
-    const combined = clip(parts.length ? parts.join(" · ") : "-");
-    return [
-      clip(dash(payload.name)),
-      clip(dash(payload.room)),
-      combined,
-      clip(dash(payload.description)),
-    ];
-  }
-  return [
-    clip(dash(payload.name)),
-    clip(dash(payload.room)),
-    requestSectionLabelTr(cat),
-    buildRequestTypeLineTr(cat, details),
-    buildRequestQuantity(cat, details),
-    dash(formatInstantHotelDdMmYyyy(eventInstant)),
-    dash(formatInstantHotelHhMm(eventInstant)),
-    clip(dash(payload.description)),
-  ];
+function buildHkStyleRequestOrFaultBodyParams(recordType, payload, eventInstant) {
+  return buildOperationalWhatsappTemplateBodyParams(recordType, payload, eventInstant, {
+    paramMax: PARAM_MAX,
+  });
 }
 
 function buildComplaintBodyParams(payload, eventInstant) {
@@ -743,9 +479,9 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
 
   const eventInstant = operationalEventInstant(payload);
   let bodyParams = [];
-  if (recordType === "fault") bodyParams = buildFaultBodyParams(payload, eventInstant);
-  else if (recordType === "request") bodyParams = buildRequestBodyParams(payload, eventInstant);
-  else if (recordType === "complaint") bodyParams = buildComplaintBodyParams(payload, eventInstant);
+  if (recordType === "fault" || recordType === "request") {
+    bodyParams = buildHkStyleRequestOrFaultBodyParams(recordType, payload, eventInstant);
+  } else if (recordType === "complaint") bodyParams = buildComplaintBodyParams(payload, eventInstant);
   else if (recordType === "late_checkout") bodyParams = buildLateCheckoutBodyParams(payload);
   else bodyParams = buildGuestNotificationBodyParams(payload, eventInstant);
 
@@ -769,7 +505,13 @@ export async function sendOperationalWhatsappNotification(payload, intentFallbac
     token.length,
   );
 
-  const bodyParameters = bodyParams.map((text) => ({ type: "text", text: dash(text) }));
+  const bodyParameters = bodyParams.map((text, idx, arr) => {
+    const isLast = idx === arr.length - 1;
+    const allowBlankNote =
+      isLast && (recordType === "fault" || recordType === "request") && arr.length === 8;
+    if (allowBlankNote) return { type: "text", text: clip(String(text ?? "").trim()) };
+    return { type: "text", text: dash(text) };
+  });
 
   const components = [{ type: "body", parameters: bodyParameters }];
   let panelSuffix = null;

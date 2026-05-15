@@ -2339,12 +2339,30 @@
 
   function wireLogsControls() {
     var applyBtn = document.getElementById("logs-apply");
+    var xlsxBtn = document.getElementById("logs-xlsx");
     var csvBtn = document.getElementById("logs-csv");
     var jsonBtn = document.getElementById("logs-json");
     if (applyBtn) {
       applyBtn.addEventListener("click", function () {
         logsPage = 1;
         loadLogs();
+      });
+    }
+    if (xlsxBtn) {
+      xlsxBtn.addEventListener("click", async function () {
+        if (logsExportInFlight) return;
+        logsExportInFlight = true;
+        xlsxBtn.disabled = true;
+        try {
+          var params = getLogsParams();
+          var blob = await adapter.downloadLogsXlsx(params);
+          downloadBlob(blob, "chat_observations.xlsx");
+        } catch (e) {
+          window.alert("Excel indirilemedi: " + (e && e.message ? e.message : "bilinmeyen hata"));
+        } finally {
+          logsExportInFlight = false;
+          xlsxBtn.disabled = false;
+        }
       });
     }
     if (csvBtn) {

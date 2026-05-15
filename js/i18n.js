@@ -1,6 +1,6 @@
 /**
  * Viona — Kaila Beach Hotel — çok dilli metinler.
- * Tam çeviri: tr, en, de, pl. Ek UI dilleri (ru, da, cs, ro, nl, sk) `js/lang-registry.js` + `i18n-extra-locales.js` + `i18n-extra-module-overlays.js` ile eklenir;
+ * Tam çeviri: tr, en, de, pl. Ek UI dilleri (ru, da, cs, ro, nl, sk) `js/lang-registry.js` + `i18n-extra-locales.js` + `i18n-requests-fault-catalog-extra.js` + `i18n-extra-module-overlays.js` ile eklenir;
  * sözlük girdisi yoksa `app.js` içindeki t() önce en, sonra tr anahtarlarına düşer.
  */
 const I18N = {
@@ -172,6 +172,11 @@ const I18N = {
     modAlacarte: "A La Carte Restaurantlar",
     alacarteSintonMenuCta: "Menüyü indir",
     alacarteSintonMenuAria: "Sinton BBQ menüsünü indir",
+    alacarteTerraceMenusTitle: "La Terrace · PDF menüler",
+    alacarteTerraceMenuTurkishCta: "Türk mutfağı menüsü",
+    alacarteTerraceMenuTurkishAria: "La Terrace Türk mutfağı menüsünü indir (PDF)",
+    alacarteTerraceMenuItalianCta: "İtalyan mutfağı menüsü",
+    alacarteTerraceMenuItalianAria: "La Terrace İtalyan mutfağı menüsünü indir (PDF)",
     modBeach: "Plaj & Havuzlar",
     // Talepler hub: modRequests, reqIntro, sub*Hint — API’den gelmez; kopya değişikliği yalnızca işletme onayıyla.
     modRequests: "İstekler / Şikayetler / Arıza / Misafir Bildirimleri",
@@ -183,7 +188,7 @@ const I18N = {
       "Konaklama veya hizmetle ilgili memnuniyetsizliğinizi yazın; otel ekibi kaydı inceler ve size dönüş yapabilir.",
     subFault: "Arıza Talep",
     subFaultHint:
-      "Oda içi teknik sorun (klima, TV, banyo, elektrik vb.); lokasyon ve aciliyet seçerek ekibe bildirirsiniz.",
+      "Oda içi teknik sorun (klima, TV, banyo, elektrik vb.); kategori, adet ve isteğe bağlı notla ekibe bildirirsiniz.",
     subGuestNotification: "Misafir Bildirimleri",
     subGuestNotificationHint:
       "Beslenme ve alerji, sağlık / özel durum, kutlama veya geç çıkış planı gibi bilgileri güvenle paylaşın.",
@@ -878,6 +883,11 @@ const I18N = {
     modAlacarte: "À La Carte Restaurants",
     alacarteSintonMenuCta: "Download menu",
     alacarteSintonMenuAria: "Download Sinton BBQ menu",
+    alacarteTerraceMenusTitle: "La Terrace · PDF menus",
+    alacarteTerraceMenuTurkishCta: "Turkish cuisine menu",
+    alacarteTerraceMenuTurkishAria: "Download La Terrace Turkish cuisine menu (PDF)",
+    alacarteTerraceMenuItalianCta: "Italian cuisine menu",
+    alacarteTerraceMenuItalianAria: "Download La Terrace Italian cuisine menu (PDF)",
     modBeach: "Beach & Pools",
     modRequests: "Requests / Complaints / Faults / Guest Notices",
     subRequest: "Requests",
@@ -888,7 +898,7 @@ const I18N = {
       "Describe dissatisfaction with your stay or a service; the hotel reviews the case and may follow up with you.",
     subFault: "Fault Report",
     subFaultHint:
-      "Report in-room technical issues (AC, TV, bathroom, electrics); add location and urgency for maintenance.",
+      "Report in-room technical issues (AC, TV, bathroom, electrics)—pick a category, quantity, and an optional note for maintenance.",
     subGuestNotification: "Guest Notices",
     subGuestNotificationHint:
       "Share diet or allergy info, health notes, celebrations, or a late-checkout request—handled with your stay in mind.",
@@ -1583,6 +1593,11 @@ const I18N = {
     modAlacarte: "À-la-carte-Restaurants",
     alacarteSintonMenuCta: "Speisekarte laden",
     alacarteSintonMenuAria: "Sinton BBQ Speisekarte laden (englische Version)",
+    alacarteTerraceMenusTitle: "La Terrace · PDF-Speisekarten",
+    alacarteTerraceMenuTurkishCta: "Menü · Türkische Küche",
+    alacarteTerraceMenuTurkishAria: "La Terrace: Speisekarte Türkische Küche herunterladen (PDF, Englisch)",
+    alacarteTerraceMenuItalianCta: "Menü · Italienische Küche",
+    alacarteTerraceMenuItalianAria: "La Terrace: Speisekarte Italienische Küche herunterladen (PDF, Englisch)",
     modBeach: "Strand & Pools",
     modRequests: "Wünsche / Beschwerden / Störungen / Gästehinweise",
     subRequest: "Wünsche",
@@ -1593,7 +1608,7 @@ const I18N = {
       "Unzufriedenheit mit Aufenthalt oder Service schildern; das Hotel prüft den Vorgang und kann sich melden.",
     subFault: "Störungsmeldung",
     subFaultHint:
-      "Technische Mängel im Zimmer (Klima, TV, Bad, Elektrik) mit Ort und Dringlichkeit an die Technik melden.",
+      "Technische Mängel im Zimmer (Klima, TV, Bad, Elektrik)—Kategorie, Stückzahl und optional eine Notiz an die Technik.",
     subGuestNotification: "Gästehinweise",
     subGuestNotificationHint:
       "Ernährung und Allergien, Gesundheit, Anlässe oder späterer Check-out—Informationen für einen sicheren Aufenthalt.",
@@ -2268,6 +2283,11 @@ const I18N = {
     modAlacarte: "Restauracje À La Carte",
     alacarteSintonMenuCta: "Pobierz menu",
     alacarteSintonMenuAria: "Pobierz menu Sinton BBQ",
+    alacarteTerraceMenusTitle: "La Terrace · Menu PDF",
+    alacarteTerraceMenuTurkishCta: "Menu kuchni tureckiej",
+    alacarteTerraceMenuTurkishAria: "Pobierz menu kuchni tureckiej La Terrace (PDF, English)",
+    alacarteTerraceMenuItalianCta: "Menu kuchni włoskiej",
+    alacarteTerraceMenuItalianAria: "Pobierz menu kuchni włoskiej La Terrace (PDF, English)",
     modBeach: "Plaża i baseny",
     modRequests: "Żądania / skargi / usterki /powiadomienia dla gości",
     subRequest: "Prośby",
@@ -2275,7 +2295,7 @@ const I18N = {
     subComplaint: "Reklamacje",
     subComplaintHint: "Opisz niezadowolenie z pobytu lub usługi; hotel analizuje sprawę i może skontaktować się z Tobą.",
     subFault: "Zgłoszenie usterki",
-    subFaultHint: "Zgłaszaj problemy techniczne w pomieszczeniu (klimatyzacja, telewizor, łazienka, elektryka); dodaj lokalizację i pilną potrzebę konserwacji.",
+    subFaultHint: "Zgłaszaj usterki techniczne w pokoju (klimatyzacja, TV, łazienka, elektryka)—wybierz kategorię, ilość i opcjonalnie notatkę.",
     subGuestNotification: "Powiadomienia dla gości",
     subGuestNotificationHint: "Udostępnij informacje o diecie lub alergii, informacje o stanie zdrowia, uroczystości lub prośbę o późne wymeldowanie przygotowaną z myślą o pobycie.",
     modSpa: "SPA WELLNESS",

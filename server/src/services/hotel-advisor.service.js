@@ -31,6 +31,20 @@ export function normalizeDate(value) {
 }
 
 /**
+ * Hotspot’tan gelen iletişim alanları — istemciye sızmaması için uzunluk sınırı.
+ * @param {string|null|undefined} value
+ * @param {number} maxLen
+ * @returns {string|null}
+ */
+export function normalizeGuestContact(value, maxLen) {
+  const cap = Math.min(200, Math.max(8, Number(maxLen) || 40));
+  const s = String(value ?? "").trim();
+  if (!s) return null;
+  const t = s.length <= cap ? s : s.slice(0, cap);
+  return t || null;
+}
+
+/**
  * @param {string|null|undefined} checkin
  * @param {string|null|undefined} checkout
  * @returns {boolean}
@@ -137,7 +151,17 @@ export async function getHotelGuests() {
 
 /**
  * @param {{ roomNo: string, birthDate: string }} params
- * @returns {Promise<null | { guestName: string, roomNo: string, resId: number, resNameId: number, hotelId: number|null, checkin: string|null, checkout: string|null }>}
+ * @returns {Promise<null | {
+ *   guestName: string,
+ *   roomNo: string,
+ *   resId: number,
+ *   resNameId: number,
+ *   hotelId: number|null,
+ *   checkin: string|null,
+ *   checkout: string|null,
+ *   guestPhone: string|null,
+ *   guestEmail: string|null,
+ * }>}
  */
 export async function verifyHotelGuest(params) {
   const guests = await getHotelGuests();
@@ -178,5 +202,7 @@ export async function verifyHotelGuest(params) {
     hotelId,
     checkin: matchedGuest.CHECKIN != null ? String(matchedGuest.CHECKIN) : null,
     checkout: matchedGuest.CHECKOUT != null ? String(matchedGuest.CHECKOUT) : null,
+    guestPhone: normalizeGuestContact(matchedGuest.PHONE, 40),
+    guestEmail: normalizeGuestContact(matchedGuest.EMAIL, 120),
   };
 }

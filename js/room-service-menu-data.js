@@ -1,10 +1,17 @@
 (function (w) {
   "use strict";
-  /* Tam menü metinleri: anahtarlar VIONA_LANG ile aynı (en, tr, de, ru, pl, da, cs, ro, nl, sk). Yeni UI dili eklenince buraya paket ekleyin; yoksa içerik İngilizceye düşer. */
+  /* İsteğe bağlı serviceBanner: modülün en üstünde yerel kısa uyarı (kicker + 2 cümle). */
   w.ROOM_SERVICE_MENU_DATA = {
   "en": {
     "brand": "KAILA HOTELS",
     "menuTitle": "ROOM SERVICE",
+    "serviceBanner": {
+      "kicker": "Service notice",
+      "lines": [
+        "Room service is delivered only to your guest room—we cannot serve other areas of the hotel.",
+        "For orders, special requests or questions, please contact reception."
+      ]
+    },
     "flow": [
       {
         "ty": "di",
@@ -183,6 +190,13 @@
   "tr": {
     "brand": "KAILA HOTELS",
     "menuTitle": "ODA SERVİSİ MENÜSÜ",
+    "serviceBanner": {
+      "kicker": "Bilgilendirme",
+      "lines": [
+        "Oda servisi yalnızca misafir odanıza teslim edilir; otelin diğer alanlarına servis yapılamaz.",
+        "Sipariş, özel istek veya sorularınız için lütfen resepsiyonla iletişime geçin."
+      ]
+    },
     "flow": [
       {
         "ty": "di",
@@ -361,6 +375,13 @@
   "de": {
     "brand": "KAILA HOTELS",
     "menuTitle": "ZIMMERSERVICE MENÜ",
+    "serviceBanner": {
+      "kicker": "Hinweis",
+      "lines": [
+        "Der Zimmerservice wird ausschließlich auf Ihr Gästezimmer geliefert; andere Hotelbereiche sind ausgeschlossen.",
+        "Für Bestellungen, Sonderwünsche oder Rückfragen wenden Sie sich bitte an die Rezeption."
+      ]
+    },
     "flow": [
       {
         "ty": "di",
@@ -539,6 +560,13 @@
   "ru": {
     "brand": "KAILA HOTELS",
     "menuTitle": "МЕНЮ ОБСЛУЖИВАНИЯ НОМЕРОВ",
+    "serviceBanner": {
+      "kicker": "Важно",
+      "lines": [
+        "Обслуживание в номере — только доставка в ваш номер; в других зонах отеля обслуживание не осуществляется.",
+        "Для заказов, особых пожеланий и вопросов обратитесь на ресепшен."
+      ]
+    },
     "flow": [
       {
         "ty": "di",
@@ -717,6 +745,13 @@
   "pl": {
     "brand": "KAILA HOTELS",
     "menuTitle": "MENU OBSŁUGI POKOJOWEJ",
+    "serviceBanner": {
+      "kicker": "Informacja",
+      "lines": [
+        "Room service obejmuje wyłącznie dostawę do pokoju gościa; inne strefy hotelu są wykluczone.",
+        "W sprawie zamówień, indywidualnych próśb lub pytań prosimy o kontakt z recepcją."
+      ]
+    },
     "flow": [
       {
         "ty": "di",
@@ -895,6 +930,13 @@
   "da": {
     "brand": "KAILA HOTELS",
     "menuTitle": "ROOMSERVICE MENU",
+    "serviceBanner": {
+      "kicker": "Oplysning",
+      "lines": [
+        "Roomservicen leveres kun til dit gæsteværelse; andre dele af hotellet kan ikke betjenes.",
+        "Kontakt receptionen ved bestilling, særlige ønsker eller spørgsmål."
+      ]
+    },
     "flow": [
       {
         "ty": "di",
@@ -1073,6 +1115,13 @@
   "cs": {
     "brand": "KAILA HOTELS",
     "menuTitle": "MENU POKOJOVÉ SLUŽBY",
+    "serviceBanner": {
+      "kicker": "Upozornění",
+      "lines": [
+        "Pokojová služba znamená donášku pouze na váš pokoj; jiné prostory hotelu nelze obsluhovat.",
+        "Pro objednávky, zvláštní požadavky nebo dotazy kontaktujte recepci."
+      ]
+    },
     "flow": [
       {
         "ty": "di",
@@ -1251,6 +1300,13 @@
   "ro": {
     "brand": "KAILA HOTELS",
     "menuTitle": "MENIU ROOM SERVICE",
+    "serviceBanner": {
+      "kicker": "Informare",
+      "lines": [
+        "Room service se livrează exclusiv în camera dumneavoastră; nu putem livra în alte zone ale hotelului.",
+        "Pentru comenzi, solicitări speciale sau întrebări, vă rugăm să contactați recepția."
+      ]
+    },
     "flow": [
       {
         "ty": "di",
@@ -1429,6 +1485,13 @@
   "nl": {
     "brand": "KAILA HOTELS",
     "menuTitle": "ROOMSERVICE MENU",
+    "serviceBanner": {
+      "kicker": "Mededeling",
+      "lines": [
+        "Roomservice wordt alleen op uw hotelkamer bezorgd; andere delen van het hotel vallen hierbuiten.",
+        "Neem voor bestellingen, bijzondere verzoeken of vragen contact op met de receptie."
+      ]
+    },
     "flow": [
       {
         "ty": "di",
@@ -1607,6 +1670,13 @@
   "sk": {
     "brand": "KAILA HOTELS",
     "menuTitle": "MENU IZBOVEJ SLUŽBY",
+    "serviceBanner": {
+      "kicker": "Upozornenie",
+      "lines": [
+            "Izobový servis znamená donášku výhradne na váš hotelový pokoj; iné priestory hotela nie je možné obsluhovať.",
+        "Pre objednávky, špeciálne požiadavky alebo otázky kontaktujte recepciu."
+      ]
+    },
     "flow": [
       {
         "ty": "di",

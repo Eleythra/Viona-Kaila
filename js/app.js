@@ -79,6 +79,18 @@
     if (code && I18N[code]) return I18N[code];
     return I18N.en || I18N.tr;
   }
+
+  /** `applyI18n` / render sırasında onlarca `t()` çağrısında tablo seçimini tekrarlamayı önler. */
+  let _activeLocaleCode = null;
+  let _activeLocaleTable = null;
+  function localeTableForActiveUiLang() {
+    const code = activeUiLang();
+    if (code !== _activeLocaleCode) {
+      _activeLocaleCode = code;
+      _activeLocaleTable = pickLocaleTable(code);
+    }
+    return _activeLocaleTable;
+  }
   let carouselTimer = null;
   let carouselIndex = 0;
   /** Tek MediaQuery — carousel başlatma ve tercih değişimi aynı örneği kullanır (gereksiz tekrar yok). */
@@ -116,7 +128,7 @@
   })();
 
   function t(key) {
-    const L = pickLocaleTable(activeUiLang());
+    const L = localeTableForActiveUiLang();
     if (L[key] !== undefined) return L[key];
     const E = I18N.en;
     if (E && E[key] !== undefined) return E[key];

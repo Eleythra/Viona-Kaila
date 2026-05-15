@@ -57,7 +57,7 @@ def test_fault_flow_description_with_identity_goes_to_confirm():
     uid, sid = "u-fault-guest-id", "s-fault-guest-id"
     base = dict(ui_language="tr", locale="tr", user_id=uid, session_id=sid)
 
-    r = orch.handle(ChatRequest(message="priz çalışmıyor", **base))
+    r = orch.handle(ChatRequest(message="odada teknik arıza", **base))
     assert r.meta.action and r.meta.action.kind == "chat_form"
     assert r.meta.action.operation == "fault"
 
@@ -117,8 +117,12 @@ def test_request_category_fast_path_skips_full_name_with_verified_identity():
             initial_message="şişe su rica ediyorum",
         ),
     )
-    # request_categories_for_chat_ui: … 7 room_cleaning, 8 bottled_water
-    r = orch.handle(ChatRequest(message="8", **base))
+    # hk_water = 15; tüm HK kalemlerinde adet (detail_int) + kısa açıklama sonrası kimlikle onay
+    r_qty = orch.handle(ChatRequest(message="15", **base))
+    assert r_qty.meta.action and r_qty.meta.action.kind == "chat_form"
+    assert r_qty.meta.action.step == "detail_int"
+    orch.handle(ChatRequest(message="1", **base))
+    r = orch.handle(ChatRequest(message="şişe su rica ediyorum", **base))
     assert r.meta.action and r.meta.action.kind == "chat_form"
     assert r.meta.action.step == "confirm"
     assert "Ahmet Bay" in r.message

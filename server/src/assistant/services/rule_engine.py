@@ -1909,7 +1909,7 @@ SPECIAL_WORDS = [
 # Liste sırası önemli: önce daha özgül ifadeler (turndown, çarşaf…) sonra genel olanlar.
 REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
     (
-        "turndown",
+        "hk_sheet_change",
         [
             "yatak düzenleme",
             "yatak duzenleme",
@@ -1922,7 +1922,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
         ],
     ),
     (
-        "bedding_sheet",
+        "hk_sheet_change",
         [
             "çarşaf değişim",
             "carsaf degisim",
@@ -1956,7 +1956,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
         ],
     ),
     (
-        "bedding_pillow",
+        "hk_pillow_request",
         [
             "yastık",
             "yastik",
@@ -1966,7 +1966,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
         ],
     ),
     (
-        "bedding_blanket",
+        "hk_duvet_request",
         [
             "battaniye",
             "battiye",
@@ -1980,7 +1980,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
         ],
     ),
     (
-        "room_cleaning",
+        "hk_room_cleaning",
         [
             "oda temizliği",
             "oda temizligi",
@@ -2014,7 +2014,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
         ],
     ),
     (
-        "minibar_refill",
+        "other",
         [
             "minibar dolum",
             "minibar yenile",
@@ -2036,7 +2036,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
         ],
     ),
     (
-        "bottled_water",
+        "hk_water",
         [
             "şişe su",
             "sise su",
@@ -2063,7 +2063,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
         ],
     ),
     (
-        "tea_coffee",
+        "hk_coffee_tea_supplies",
         [
             "çay kahve",
             "cay kahve",
@@ -2086,146 +2086,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
             "ceai și cafea",
             "ceai si cafea",
             "чай и кофе",
-        ],
-    ),
-    (
-        "toilet_paper",
-        [
-            "tuvalet kağıdı",
-            "tuvalet kagidi",
-            "toilet paper",
-            "klopapier",
-            "papier toaletowy",
-            "toiletpapir",
-            "wc papir",
-            "toiletpapier",
-            "wc papier",
-            "toaletní papír",
-            "toaletni papir",
-            "hartie igienica",
-            "toaletný papier",
-            "toaletni papier",
-            "туалетная бумага",
-        ],
-    ),
-    (
-        "toiletries",
-        [
-            "şampuan sabun",
-            "sampuan sabun",
-            "şampuan",
-            "sampuan",
-            "sabun",
-            "shampoo",
-            "soap",
-            "toiletries",
-            "shampoo og sæbe",
-            "shampoo og saebe",
-            "shampoo en zeep",
-            "šampon",
-            "sampon",
-            "săpun",
-            "sapun",
-            "mydlo",
-            "гель для душа",
-            "шампунь",
-        ],
-    ),
-    (
-        "climate_request",
-        [
-            "klima ayar",
-            "klima ayarı",
-            "klima ayari",
-            "klima istiyorum",
-            "thermostat",
-            "air conditioning",
-            "klimat",
-            "aircondition",
-            "airco",
-            "klimaanlæg",
-            "klimaanlaeg",
-            "airconditioning",
-            "klimatizace",
-            "aer conditionat",
-            "klimatizácia",
-            "klimatizacia",
-            "кондиционер",
-        ],
-    ),
-    (
-        "room_refresh",
-        [
-            "oda kokusu",
-            "koku giderici",
-            "air freshener",
-            "raumspray",
-            "room spray",
-            "værelsesduft",
-            "vaerelsesduft",
-            "roomspray",
-            "luchtverfrisser",
-            "osvěžovač vzduchu",
-            "osvezovac vzduchu",
-            "odorizant cameră",
-            "odorizant camera",
-            "osviežovač vzduchu",
-            "osviezovac vzduchu",
-            "освежитель воздуха",
-        ],
-    ),
-    (
-        "slippers",
-        [
-            "terlik",
-            "slippers",
-            "hausschuhe",
-            "kapcie",
-            "hjemmesko",
-            "pantoffels",
-            "pantofle",
-            "papuci",
-            "papuci de casa",
-            "papuče",
-            "papuce",
-            "тапочки",
-        ],
-    ),
-    (
-        "bathrobe",
-        [
-            "bornoz",
-            "bathrobe",
-            "bademantel",
-            "szlafrok",
-            "badekåbe",
-            "badekabe",
-            "badjas",
-            "župan",
-            "zupan",
-            "halat de baie",
-            "халат",
-        ],
-    ),
-    (
-        "hanger",
-        [
-            "ek askı",
-            "ek aski",
-            "askı",
-            "aski",
-            "hanger",
-            "kleiderbügel",
-            "kleiderbugel",
-            "wieszak",
-            "oda ekipmanı",
-            "oda ekipmani",
-            "room equipment",
-        ],
-    ),
-    (
-        "kettle",
-        [
+            # Su ısıtıcı / kettle — uygulamada «Kahve, çay … (adet)» satırı altında kayıt (kettle ayrı hk yok).
             "su ısıtıcı",
             "su isitici",
             "su ısıtıcısı",
@@ -2249,7 +2110,142 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
         ],
     ),
     (
-        "room_safe",
+        "hk_toilet_paper",
+        [
+            "tuvalet kağıdı",
+            "tuvalet kagidi",
+            "toilet paper",
+            "klopapier",
+            "papier toaletowy",
+            "toiletpapir",
+            "wc papir",
+            "toiletpapier",
+            "wc papier",
+            "toaletní papír",
+            "toaletni papir",
+            "hartie igienica",
+            "toaletný papier",
+            "toaletni papier",
+            "туалетная бумага",
+        ],
+    ),
+    (
+        "hk_amenity_kit",
+        [
+            "şampuan sabun",
+            "sampuan sabun",
+            "şampuan",
+            "sampuan",
+            "sabun",
+            "shampoo",
+            "soap",
+            "toiletries",
+            "shampoo og sæbe",
+            "shampoo og saebe",
+            "shampoo en zeep",
+            "šampon",
+            "sampon",
+            "săpun",
+            "sapun",
+            "mydlo",
+            "гель для душа",
+            "шампунь",
+        ],
+    ),
+    (
+        "other",
+        [
+            "klima ayar",
+            "klima ayarı",
+            "klima ayari",
+            "klima istiyorum",
+            "thermostat",
+            "air conditioning",
+            "klimat",
+            "aircondition",
+            "airco",
+            "klimaanlæg",
+            "klimaanlaeg",
+            "airconditioning",
+            "klimatizace",
+            "aer conditionat",
+            "klimatizácia",
+            "klimatizacia",
+            "кондиционер",
+        ],
+    ),
+    (
+        "hk_bad_odor",
+        [
+            "oda kokusu",
+            "koku giderici",
+            "air freshener",
+            "raumspray",
+            "room spray",
+            "værelsesduft",
+            "vaerelsesduft",
+            "roomspray",
+            "luchtverfrisser",
+            "osvěžovač vzduchu",
+            "osvezovac vzduchu",
+            "odorizant cameră",
+            "odorizant camera",
+            "osviežovač vzduchu",
+            "osviezovac vzduchu",
+            "освежитель воздуха",
+        ],
+    ),
+    (
+        "hk_slippers",
+        [
+            "terlik",
+            "slippers",
+            "hausschuhe",
+            "kapcie",
+            "hjemmesko",
+            "pantoffels",
+            "pantofle",
+            "papuci",
+            "papuci de casa",
+            "papuče",
+            "papuce",
+            "тапочки",
+        ],
+    ),
+    (
+        "other",
+        [
+            "bornoz",
+            "bathrobe",
+            "bademantel",
+            "szlafrok",
+            "badekåbe",
+            "badekabe",
+            "badjas",
+            "župan",
+            "zupan",
+            "halat de baie",
+            "халат",
+        ],
+    ),
+    (
+        "other",
+        [
+            "ek askı",
+            "ek aski",
+            "askı",
+            "aski",
+            "hanger",
+            "kleiderbügel",
+            "kleiderbugel",
+            "wieszak",
+            "oda ekipmanı",
+            "oda ekipmani",
+            "room equipment",
+        ],
+    ),
+    (
+        "other",
         [
             "kasa aç",
             "kasa ac",
@@ -2270,7 +2266,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
         ],
     ),
     (
-        "baby_bed",
+        "hk_baby_crib",
         [
             "bebek yatağı",
             "bebek yatagi",
@@ -2299,9 +2295,208 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
             "детская кровать",
         ],
     ),
-    # Web: «Ek oda havlusu» (room_towel). «havlu»/towel_extra’dan önce — aksi halde «oda havlusu» ek havluya düşer.
     (
-        "room_towel",
+        "hk_bed_join",
+        [
+            "yatak birleştir",
+            "yatak birlestir",
+            "yatakları birleştir",
+            "yataklari birlestir",
+            "iki yatağı birleştir",
+            "iki yatagi birlestir",
+            "twin to king",
+            "beds together",
+            "betten verbinden",
+            "łóżka razem",
+            "połączyć łóżka",
+            "senger sammen",
+        ],
+    ),
+    (
+        "hk_bed_soften",
+        [
+            "yatak yumuşat",
+            "yatak yumusat",
+            "yatağı yumuşat",
+            "yatagi yumusat",
+            "yumuşak yatak",
+            "yumusak yatak",
+            "softer mattress",
+            "matratze weicher",
+            "weicheres bett",
+            "miększy materac",
+        ],
+    ),
+    (
+        "hk_pique_request",
+        [
+            "pike",
+            "pique",
+            "pik",
+            "turkish pike",
+            "üst çarşaf",
+            "ust carsaf",
+            "üst çarşafla",
+            "top sheet",
+            "flat sheet",
+            "spannbetttuch oben",
+            "prześcieradło wierzchnie",
+            "przescieradlo wierzchnie",
+        ],
+    ),
+    (
+        "hk_extra_bed",
+        [
+            "ek yatak",
+            "ekstra yatak",
+            "extra bed",
+            "zusatzbett",
+            "dodatkowe łóżko",
+            "dodatkowe lozko",
+            "rollaway bed",
+            "ausziehbett",
+            "klappbett",
+        ],
+    ),
+    (
+        "hk_dental_set",
+        [
+            "diş fırçası",
+            "dis fircasi",
+            "diş fırça",
+            "dis firca",
+            "diş seti",
+            "dis seti",
+            "diş macunu",
+            "dis macunu",
+            "dental kit",
+            "toothbrush",
+            "tooth brush",
+            "zahnbürste",
+            "zahnbuerste",
+            "szczoteczka",
+            "tandbørste",
+            "tandborste",
+            "tandenborstel",
+        ],
+    ),
+    (
+        "hk_cup_request",
+        [
+            "bardak iste",
+            "bardak istiyorum",
+            "ekstra bardak",
+            "extra cup",
+            "mug request",
+            "coffee cup",
+            "tasse bitte",
+            "zusätzliche tasse",
+            "kubek do pokoju",
+            "extra beker",
+        ],
+    ),
+    (
+        "hk_trash_removal",
+        [
+            "çöpleri al",
+            "copleri al",
+            "çöp kutusu",
+            "cop kutusu",
+            "çöp dolu",
+            "cop dolu",
+            "trash pickup",
+            "trash removal",
+            "garbage collection",
+            "müll abholen",
+            "śmieci odebrać",
+            "smieci odebrac",
+            "afval ophalen",
+        ],
+    ),
+    (
+        "hk_balcony_cleaning",
+        [
+            "balkon temizlik",
+            "balkon temizliği",
+            "balkon temizligi",
+            "balkonu temizleyin",
+            "balcony cleaning",
+            "balkon reinigen",
+            "balkonreinigung",
+            "sprzątanie balkonu",
+            "sprzatanie balkonu",
+        ],
+    ),
+    (
+        "hk_cleaning_dnd_coordinate",
+        [
+            "rahatsız etmeyin",
+            "rahatsiz etmeyin",
+            "do not disturb",
+            "d.n.d",
+            "disturb sign",
+            "temizlik saati",
+            "temizlik saat",
+            "housekeeping schedule",
+            "cleaning time preference",
+            "reinigung termin",
+            "preferencja sprzątania",
+        ],
+    ),
+    (
+        "hk_pest_control",
+        [
+            "böcek",
+            "bocek",
+            "haşere",
+            "hasere",
+            "hamam böceği",
+            "hamam bocegi",
+            "karınca",
+            "karinca",
+            "ilaçlama",
+            "ilaclama",
+            "pest control",
+            "unwanted insects",
+            "ungeziefer",
+            "insekten",
+            "owady",
+            "deratyzacja",
+        ],
+    ),
+    (
+        "hk_iron",
+        [
+            "ütü iste",
+            "utu iste",
+            "ütü gönder",
+            "utu gonder",
+            "ütü lazım",
+            "utu lazim",
+            "bügeleisen",
+            "bugeleisen",
+            "iron for room",
+            "żelazko",
+            "zelazko",
+            "strygejern",
+        ],
+    ),
+    (
+        "hk_vase",
+        [
+            "vazo iste",
+            "vazo istiyorum",
+            "çiçek vazosu",
+            "cicek vazosu",
+            "flower vase",
+            "blumenvase",
+            "wazon",
+            "wazon na kwiaty",
+        ],
+    ),
+    # Web: «Ek oda havlusu» — havlu/towel talebinden önce eşleşmeli.
+    (
+        "hk_towel_change",
         [
             "oda havlusu",
             "oda havlus",
@@ -2332,7 +2527,7 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
         ],
     ),
     (
-        "towel_extra",
+        "hk_towel_request",
         [
             "ek havlu",
             "extra towel",
@@ -2340,8 +2535,6 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
             "plaj havlusu",
             "beach towel",
             "pool towel",
-            "havlu",
-            "havlum",
             "towel",
             "towels",
             "handtuch",
@@ -2358,6 +2551,365 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
             "plážový uterák",
             "plazovy uterak",
             "пляжное полотенце",
+        ],
+    ),
+]
+
+# Sohbet arıza — yüksek güvenli çok kelimeli eşleme önce; `fault_report` akışında ön seçim.
+FAULT_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
+    (
+        "ft_ac_not_cooling",
+        [
+            "klima soğutmuyor",
+            "klima sogutmuyor",
+            "soğutmuyor klima",
+            "sogutmuyor klima",
+            "ac not cooling",
+            "air con not cooling",
+            "klima kühlt nicht",
+            "klima kuhlt nicht",
+            "klimatyzacja nie chłodzi",
+        ],
+    ),
+    (
+        "ft_ac_not_heating",
+        [
+            "klima ısıtmıyor",
+            "klima isitmiyor",
+            "ısıtmıyor klima",
+            "isitmiyor klima",
+            "ac not heating",
+            "heating not working ac",
+            "klima heizt nicht",
+        ],
+    ),
+    (
+        "ft_ac_remote",
+        [
+            "klima kumandası",
+            "klima kumandasi",
+            "kumanda klima",
+            "ac remote",
+            "air con remote",
+            "klima fernbedienung",
+        ],
+    ),
+    (
+        "ft_ceiling_water_leak",
+        [
+            "tavandan su",
+            "tavan su akıyor",
+            "tavan su akiyor",
+            "ceiling leak",
+            "water from ceiling",
+        ],
+    ),
+    (
+        "ft_cold_water_no_flow",
+        [
+            "soğuk su akmıyor",
+            "soguk su akmiyor",
+            "cold water not running",
+            "kaltes wasser kommt nicht",
+        ],
+    ),
+    (
+        "ft_hot_water_no_flow",
+        [
+            "sıcak su akmıyor",
+            "sicak su akmiyor",
+            "sıcak su yok",
+            "sicak su yok",
+            "no hot water",
+            "kein warmwasser",
+        ],
+    ),
+    (
+        "ft_bathroom_drain_clog",
+        [
+            "banyo tıkalı",
+            "banyo tikali",
+            "gider tıkalı",
+            "gider tikali",
+            "clogged drain bathroom",
+            "abfluss verstopft",
+        ],
+    ),
+    (
+        "ft_toilet_seat_broken",
+        [
+            "klozet kapağı",
+            "klozet kapagi",
+            "toilet seat broken",
+            "wc sitz kaputt",
+        ],
+    ),
+    (
+        "ft_shower_cabin_fault",
+        [
+            "duşakabin",
+            "dusakabin",
+            "shower cabin",
+            "duschkabine",
+        ],
+    ),
+    (
+        "ft_shower_head_fault",
+        [
+            "duş başlığı",
+            "dus basligi",
+            "shower head",
+            "duschkopf",
+        ],
+    ),
+    (
+        "ft_tv_remote",
+        [
+            "tv kumandası",
+            "tv kumandasi",
+            "television remote",
+            "fernbedienung tv",
+        ],
+    ),
+    (
+        "ft_tv_fault",
+        [
+            "tv çalışmıyor",
+            "tv calismiyor",
+            "televizyon açılmıyor",
+            "televizyon acilmiyor",
+            "tv not working",
+            "fernseher defekt",
+        ],
+    ),
+    (
+        "ft_safe_fault",
+        [
+            "kasa açılmıyor",
+            "kasa acilmiyor",
+            "safe not opening",
+            "tresor geht nicht",
+        ],
+    ),
+    (
+        "ft_minibar_fault",
+        [
+            "minibar çalışmıyor",
+            "minibar calismiyor",
+            "minibar arızası",
+            "minibar arizasi",
+        ],
+    ),
+    (
+        "ft_curtain_fallen",
+        [
+            "perde düştü",
+            "perde dustu",
+            "perde indi",
+            "curtain fallen",
+            "vorhang runter",
+        ],
+    ),
+    (
+        "ft_balcony_railing_loose",
+        [
+            "balkon korkuluğu",
+            "balkon korkulugu",
+            "korkuluk sallanıyor",
+            "korkuluk sallaniyor",
+            "railing loose balcony",
+        ],
+    ),
+    (
+        "ft_elevator_fault",
+        [
+            "asansör",
+            "asansor",
+            "elevator broken",
+            "lift kapalı",
+            "lift kapali",
+            "aufzug defekt",
+        ],
+    ),
+    (
+        "ft_indoor_pool_temperature",
+        [
+            "kapalı havuz sıcaklığı",
+            "kapali havuz sicakligi",
+            "indoor pool temperature",
+            "hallenbad temperatur",
+        ],
+    ),
+    (
+        "ft_ventilation_fault",
+        [
+            "havalandırma çalışmıyor",
+            "havalandirma calismiyor",
+            "ventilation not working",
+            "lüftung defekt",
+            "luftung defekt",
+        ],
+    ),
+    (
+        "ft_socket_fault",
+        [
+            "priz çalışmıyor",
+            "priz calismiyor",
+            "socket not working",
+            "steckdose defekt",
+        ],
+    ),
+    (
+        "ft_window_fault",
+        [
+            "pencere kapanmıyor",
+            "pencere kapanmiyor",
+            "window won't close",
+            "fenster geht nicht",
+        ],
+    ),
+    (
+        "ft_room_door_fault",
+        [
+            "oda kapısı",
+            "oda kapisi",
+            "room door lock",
+            "tür klemmt zimmer",
+        ],
+    ),
+]
+
+COMPLAINT_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
+    (
+        "lost_property",
+        [
+            "kaybettim",
+            "kayıp eşya",
+            "kayip esya",
+            "lost my",
+            "lost property",
+            "verloren gegangen",
+            "zginęło",
+            "zginelo",
+        ],
+    ),
+    (
+        "noise",
+        [
+            "gürültü",
+            "gurultu",
+            "noise complaint",
+            "too loud",
+            "lärm",
+            "laerm",
+            "hałas",
+            "halas",
+        ],
+    ),
+    (
+        "room_cleaning",
+        [
+            "temizlik şikayet",
+            "temizlik sikayet",
+            "kirli oda",
+            "oda kirli",
+            "dirty room",
+            "not cleaned",
+            "sauberkeit beschwerde",
+        ],
+    ),
+    (
+        "climate",
+        [
+            "klima şikayet",
+            "klima sikayet",
+            "oda sıcak",
+            "oda sicak",
+            "oda soğuk",
+            "oda soguk",
+            "too hot room",
+            "too cold room",
+            "room temperature complaint",
+        ],
+    ),
+    (
+        "internet_tv",
+        [
+            "internet yavaş",
+            "internet yavas",
+            "wi-fi çalışmıyor",
+            "wifi çalışmıyor",
+            "wifi calismiyor",
+            "wlan problem",
+            "tv sorunu",
+            "tv şikayet",
+            "tv sikayet",
+        ],
+    ),
+    (
+        "minibar",
+        [
+            "minibar şikayet",
+            "minibar sikayet",
+            "minibar yanlış",
+            "minibar yanlis",
+            "minibar wrong charge",
+        ],
+    ),
+    (
+        "restaurant_service",
+        [
+            "restoran şikayet",
+            "restoran sikayet",
+            "restaurant complaint",
+            "açık büfe",
+            "acik bufe",
+            "buffet complaint",
+            "speisesaal",
+        ],
+    ),
+    (
+        "staff_behavior",
+        [
+            "personel davranış",
+            "personel davranis",
+            "personel kabalık",
+            "staff rude",
+            "unhöfliches personal",
+            "obsługa niemiła",
+        ],
+    ),
+    (
+        "hygiene",
+        [
+            "hijyen şikayet",
+            "hijyen sikayet",
+            "hygiene issue",
+            "sağlık riski",
+            "saglik riski",
+            "unsanitary",
+        ],
+    ),
+    (
+        "general_areas",
+        [
+            "ortak alan",
+            "lobi şikayet",
+            "lobi sikayet",
+            "pool area complaint",
+            "koridor kirli",
+            "public area",
+        ],
+    ),
+    (
+        "room_comfort",
+        [
+            "oda konfor",
+            "yatak rahatsız",
+            "yatak rahatsiz",
+            "uncomfortable bed",
+            "room comfort",
+            "matratze unbequem",
         ],
     ),
 ]
@@ -2417,24 +2969,76 @@ def _request_item_category_from_inventory_phrases(normalized_text: str) -> str |
     return None
 
 
+def _fault_item_category_from_inventory_phrases(normalized_text: str) -> str | None:
+    """Sohbet arıza formu: yüksek güvenli ön-seçim (`ft_*`)."""
+    for cat_id, phrases in FAULT_ITEM_CATEGORY_PHRASES:
+        for p in phrases:
+            ps = p.strip()
+            if " " in ps:
+                if _fuzzy_multiword_phrase_matches(normalized_text, ps):
+                    return cat_id
+            elif _fuzzy_has(normalized_text, ps):
+                return cat_id
+    return None
+
+
+def _complaint_item_category_from_inventory_phrases(normalized_text: str) -> str | None:
+    """Şikâyet formu kategori ön-seçimi (`room_cleaning`, `noise`, …)."""
+    for cat_id, phrases in COMPLAINT_ITEM_CATEGORY_PHRASES:
+        for p in phrases:
+            ps = p.strip()
+            if " " in ps:
+                if _fuzzy_multiword_phrase_matches(normalized_text, ps):
+                    return cat_id
+            elif _fuzzy_has(normalized_text, ps):
+                return cat_id
+    return None
+
+
+def extract_fault_category_from_text(normalized_text: str) -> str | None:
+    return _fault_item_category_from_inventory_phrases(normalized_text)
+
+
+def extract_complaint_category_from_text(normalized_text: str) -> str | None:
+    return _complaint_item_category_from_inventory_phrases(normalized_text)
+
+
 def _adjust_water_entity_for_supply_context(normalized_text: str, entity: str | None) -> str | None:
     """
     DEVICE_HINTS «su» → water; metin aslında kettle veya şişe su tedariki ise
     extra_item_request (içme suyu / resepsiyon) yoluna düşmeyi engeller.
-    Envanter eşlemesi kaçırıldığında kettle/bottled ifadeleri alt dizgeden yedeklenir.
+    Envanter eşlemesi kaçırıldığında kettle / şişe su ifadeleri alt dizgeden yedeklenir.
     """
     if entity != "water":
         return entity
     cat = _request_item_category_from_inventory_phrases(normalized_text)
-    if cat in ("bottled_water", "kettle"):
+    if cat == "hk_water":
         return None
     tl = (normalized_text or "").lower()
+    if any(
+        m in tl
+        for m in (
+            "kettle",
+            "wasserkocher",
+            "czajnik",
+            "su ısıtıcı",
+            "su isitici",
+            "su ısıtıcısı",
+            "su isiticisi",
+            "çaydanlık",
+            "caydanlik",
+            "waterkoker",
+            "elkedel",
+            "electric kettle",
+        )
+    ):
+        return None
     for cat_id, phrases in REQUEST_ITEM_CATEGORY_PHRASES:
-        if cat_id not in ("kettle", "bottled_water"):
+        if cat_id != "hk_water":
             continue
         for p in phrases:
             ps = p.strip().lower()
-            if len(ps) < 4 and ps != "kettle":
+            if len(ps) < 3:
                 continue
             if ps in tl:
                 return None
@@ -2473,8 +3077,49 @@ def extract_request_category_from_text(normalized_text: str) -> str | None:
                     "sprzątanie",
                 )
             ):
-                return "room_cleaning"
+                return "hk_room_cleaning"
     return None
+
+
+_BARE_TOWEL_AMBIGUOUS_TOKENS = frozenset(
+    {
+        "havlu",
+        "havlum",
+        "havlunuz",
+        "havlumu",
+        "towel",
+        "towels",
+        "handtuch",
+        "handtücher",
+        "handtucher",
+        "handdoek",
+        "handdoeken",
+        "ręcznik",
+        "ręczniki",
+        "prosop",
+        "prosoape",
+        "utěrák",
+        "uterak",
+        "håndklæde",
+        "haandklaede",
+        "полотенце",
+    }
+)
+
+
+def _is_bare_towel_ambiguous_for_rag(normalized_text: str) -> bool:
+    """Tek–iki kelimelik havlu/towel; talep dili yok → bilgi (RAG, havuz/plaj vs oda ayrımı)."""
+    if _has_strong_service_request_intent(normalized_text):
+        return False
+    raw = (normalized_text or "").strip().lower()
+    if not raw:
+        return False
+    words = re.findall(r"(?u)\w+", raw)
+    if not words or len(words) > 2:
+        return False
+    if not any(w in _BARE_TOWEL_AMBIGUOUS_TOKENS for w in words):
+        return False
+    return all(w in _BARE_TOWEL_AMBIGUOUS_TOKENS for w in words)
 
 
 # «su ısıtıcım yok» — odada yok / bende yok = tedarik; kısa EN «kettle yok» bilgi sorusu olarak kalır.
@@ -2732,7 +3377,7 @@ def _is_baby_equipment_intent(text: str) -> bool:
     """
     if _is_baby_formula_guest_relations_request(text):
         return False
-    if extract_request_category_from_text(text) == "baby_bed":
+    if extract_request_category_from_text(text) == "hk_baby_crib":
         return True
     t = (text or "").lower()
     if any(
@@ -2776,24 +3421,19 @@ def _text_suggests_celebration_notif(text: str) -> bool:
 # «terlik yok odamda» / «bornoz yok» = tedarik talebi. «minibar yok» bilgi (RAG) kalsın (test_minibar_yok).
 _INVENTORY_YOK_STRONG_SUPPLY_CATEGORIES: frozenset[str] = frozenset(
     {
-        "slippers",
-        "bathrobe",
-        "bedding_pillow",
-        "bedding_blanket",
-        "bedding_sheet",
-        "towel_extra",
-        "room_towel",
-        "kettle",
-        "hanger",
-        "toilet_paper",
-        "toiletries",
-        "tea_coffee",
-        "bottled_water",
-        "climate_request",
-        "room_refresh",
-        "turndown",
-        "baby_bed",
-        "room_safe",
+        "hk_slippers",
+        "other",
+        "hk_pillow_request",
+        "hk_duvet_request",
+        "hk_sheet_change",
+        "hk_towel_request",
+        "hk_towel_change",
+        "hk_toilet_paper",
+        "hk_amenity_kit",
+        "hk_coffee_tea_supplies",
+        "hk_water",
+        "hk_bad_odor",
+        "hk_baby_crib",
     }
 )
 
@@ -2828,6 +3468,9 @@ def _inventory_yok_implies_strong_supply_request(text: str) -> bool:
         return False
     cat = _request_item_category_from_inventory_phrases(text)
     if cat is None or cat not in _INVENTORY_YOK_STRONG_SUPPLY_CATEGORIES:
+        return False
+    tl = (text or "").lower()
+    if cat == "other" and ("minibar" in tl or "mini bar" in tl or "mini-bar" in tl):
         return False
     return True
 
@@ -4121,6 +4764,12 @@ class RuleEngine:
         """text: `normalize_text` çıktısı veya en azından küçük harf / tutarlı boşluk."""
         return extract_request_category_from_text(text)
 
+    def extract_fault_category(self, text: str) -> str | None:
+        return extract_fault_category_from_text(text)
+
+    def extract_complaint_category(self, text: str) -> str | None:
+        return extract_complaint_category_from_text(text)
+
     @staticmethod
     def is_strong_service_item_request(normalized_text: str) -> bool:
         return _has_strong_service_request_intent(normalized_text)
@@ -4168,11 +4817,11 @@ class RuleEngine:
         if cat is None:
             cat = extract_request_category_from_text(normalized_text)
         if cat is None and implicit_eq:
-            cat = "tea_coffee"
+            cat = "hk_coffee_tea_supplies"
         if cat is None:
             return None
         entity = self._extract_entity(normalized_text)
-        if cat == "room_cleaning":
+        if cat == "hk_room_cleaning":
             entity = "housekeeping_service"
         else:
             entity = _adjust_water_entity_for_supply_context(normalized_text, entity)
@@ -4886,6 +5535,19 @@ class RuleEngine:
                 needs_rag=True,
                 response_mode="answer",
                 confidence=0.92,
+                source="rule",
+            )
+
+        if _is_bare_towel_ambiguous_for_rag(normalized_text):
+            logger.info("RULE MATCH: hotel_info (bare_towel_ambiguous_rag)")
+            return IntentResult(
+                intent="hotel_info",
+                sub_intent="service_information",
+                entity="towel",
+                department=None,
+                needs_rag=True,
+                response_mode="answer",
+                confidence=0.93,
                 source="rule",
             )
 
@@ -6268,6 +6930,94 @@ class RuleEngine:
             return "staff_complaint"
         if text_suggests_lost_property_not_room_complaint(text):
             return "lost_property_complaint"
+        tl = tl_raw
+        if any(
+            x in tl
+            for x in (
+                "klima şikayet",
+                "klima sikayet",
+                "oda çok sıcak",
+                "oda cok sicak",
+                "oda çok soğuk",
+                "oda cok soguk",
+                "too hot in room",
+                "too cold in room",
+                "room temperature",
+                "climate complaint",
+            )
+        ):
+            return "climate_complaint"
+        if any(
+            x in tl
+            for x in (
+                "internet yavaş",
+                "internet yavas",
+                "wi-fi çalışmıyor",
+                "wifi çalışmıyor",
+                "wifi calismiyor",
+                "wlan problem",
+                "connection slow",
+                "tv şikayet",
+                "tv sikayet",
+                "tv sorun",
+            )
+        ) or (
+            ("wifi" in tl or "wi-fi" in tl or "internet" in tl)
+            and any(s in tl for s in ("şikayet", "sikayet", "yavaş", "yavas", "çalışmıyor", "calismiyor", "kopuyor", "ağır", "agir"))
+        ):
+            return "connectivity_complaint"
+        if "minibar" in tl and any(s in tl for s in ("şikayet", "sikayet", "wrong", "yanlış", "yanlis", "charge", "ücret", "ucret")):
+            return "minibar_complaint"
+        if any(
+            x in tl
+            for x in (
+                "restoran şikayet",
+                "restoran sikayet",
+                "restaurant complaint",
+                "açık büfe",
+                "acik bufe",
+                "bufe şikayet",
+                "bufe sikayet",
+                "buffet complaint",
+            )
+        ):
+            return "dining_complaint"
+        if any(
+            x in tl
+            for x in (
+                "hijyen",
+                "hygiene",
+                "unsanitary",
+                "mikrop",
+                "kirli havuz",
+                "dirty pool",
+            )
+        ):
+            return "hygiene_complaint"
+        if any(
+            x in tl
+            for x in (
+                "ortak alan",
+                "lobi şikayet",
+                "lobi sikayet",
+                "asansör şikayet",
+                "asansor sikayet",
+                "koridor",
+                "public area complaint",
+            )
+        ):
+            return "public_areas_complaint"
+        if any(
+            x in tl
+            for x in (
+                "yatak rahatsız",
+                "yatak rahatsiz",
+                "uncomfortable bed",
+                "matratze",
+                "oda konfor",
+            )
+        ):
+            return "room_comfort_complaint"
         if "oda" in text or "room" in text:
             return "room_condition_complaint"
         # «şikayetçiyim» + konu: butonlu şikayet formu için alt tür (genel «şikayetçiyim» tek başına değil).

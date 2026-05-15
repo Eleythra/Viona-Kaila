@@ -21,6 +21,7 @@ import path from "path";
 import { existsSync, readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { sendOperationalWhatsappNotification } from "../../services/whatsapp-operational-notification.service.js";
+import ExcelJS from "exceljs";
 
 function toPositiveInt(v, fallback) {
   const n = Number(v);
@@ -1502,6 +1503,131 @@ const CHAT_OBS_CSV_COL_META = {
   },
 };
 
+const CHAT_OBS_EXPORT_ROW_CAP = 5000;
+
+const CHAT_OBS_XLSX_WRAP_KEYS = new Set([
+  "user_message",
+  "user_message_tr",
+  "assistant_response",
+  "assistant_response_tr",
+  "fallback_reason",
+  "decision_path",
+  "review_note",
+  "raw_payload",
+]);
+
+/** Excel sütun genişlikleri (yaklaşık karakter birimi). */
+const CHAT_OBS_XLSX_COL_WIDTH = {
+  created_at: 22,
+  session_id: 28,
+  user_id: 18,
+  user_message: 52,
+  user_message_tr: 52,
+  ui_language: 12,
+  detected_language: 12,
+  intent: 22,
+  domain: 14,
+  sub_intent: 20,
+  entity: 18,
+  confidence: 11,
+  multi_intent: 14,
+  response_type: 15,
+  route_target: 18,
+  recommendation_made: 14,
+  layer_used: 14,
+  fallback_reason: 42,
+  decision_path: 44,
+  assistant_response: 52,
+  assistant_response_tr: 52,
+  is_correct: 14,
+  review_note: 40,
+  reviewed_by: 18,
+  reviewed_at: 22,
+  raw_payload: 48,
+};
+
+async function loadChatObservationsExportRows(query = {}) {
+  const nq = normalizeAdminChatLogQuery({ ...query });
+  let qb = getSupabase().from("chat_observations").select("*").order("created_at", { ascending: false });
+  qb = applyChatObservationListFilters(qb, nq);
+  const { data, error } = await sb(() => qb.limit(CHAT_OBS_EXPORT_ROW_CAP));
+  if (error) rethrowSupabaseError(error);
+  const rows = (data || []).filter((r) => !isLikelyTestChatObservation(r));
+  const includeRawPayload = String(query.include_raw_payload || "false") === "true";
+  const emptyShape = mapObservationRow({}, includeRawPayload);
+  const mapped = rows.map((row) => mapObservationRow(row, includeRawPayload));
+  const columns = Object.keys(mapped.length ? mapped[0] : emptyShape);
+  return { mapped, columns, includeRawPayload };
+}
+
+async function buildChatObservationsXlsxBuffer(query, mapped, columns) {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "Viona Admin";
+  workbook.created = new Date();
+
+  const dataSheet = workbook.addWorksheet("Veriler", {
+    views: [{ state: "frozen", xSplit: 0, ySplit: 1 }],
+  });
+
+  dataSheet.addRow(columns.map((c) => CHAT_OBS_CSV_COL_META[c]?.trHeader || c));
+  const headerRow = dataSheet.getRow(1);
+  headerRow.font = { bold: true };
+  headerRow.alignment = { vertical: "middle", wrapText: false };
+
+  const valueRows = mapped.map((row) => columns.map((c) => row[c]));
+  if (valueRows.length) dataSheet.addRows(valueRows);
+
+  const wrapCol1Based = [];
+  columns.forEach((key, idx) => {
+    const col = dataSheet.getColumn(idx + 1);
+    col.width = CHAT_OBS_XLSX_COL_WIDTH[key] ?? 16;
+    if (CHAT_OBS_XLSX_WRAP_KEYS.has(key)) wrapCol1Based.push(idx + 1);
+  });
+  const lastDataRow = dataSheet.rowCount;
+  for (let r = 2; r <= lastDataRow && wrapCol1Based.length; r++) {
+    const sheetRow = dataSheet.getRow(r);
+    for (let i = 0; i < wrapCol1Based.length; i++) {
+      sheetRow.getCell(wrapCol1Based[i]).alignment = { wrapText: true, vertical: "top" };
+    }
+  }
+
+  const metaSheet = workbook.addWorksheet("Aciklama");
+  const f = extractExportFilters(query);
+  const exportedAt = new Date().toISOString();
+
+  metaSheet.addRow(["Özet"]);
+  metaSheet.getRow(1).font = { bold: true };
+  metaSheet.addRow([]);
+  metaSheet.addRow(["Ürün", "Viona — Sohbet gözlemleri (chat_observations)"]);
+  metaSheet.addRow(["Dışa aktarım zamanı (UTC)", exportedAt]);
+  metaSheet.addRow(["Veri satırı sayısı", String(mapped.length)]);
+  metaSheet.addRow(["Üst satır sınırı", String(CHAT_OBS_EXPORT_ROW_CAP)]);
+  metaSheet.addRow(["Sıralama", "En yeni kayıt önce (created_at azalan)"]);
+  metaSheet.addRow(["Filtre özeti", summarizeExportFiltersTr(f)]);
+  metaSheet.addRow([]);
+  const dictHeader = metaSheet.addRow(["Alan anahtarı (API)", "Dışa aktarım başlığı", "Açıklama (TR)"]);
+  dictHeader.font = { bold: true };
+  const dictHeaderRowNum = dictHeader.number;
+
+  metaSheet.addRows(
+    columns.map((c) => [
+      c,
+      CHAT_OBS_CSV_COL_META[c]?.trHeader || c,
+      CHAT_OBS_CSV_COL_META[c]?.trDesc || "",
+    ]),
+  );
+
+  metaSheet.getColumn(1).width = 26;
+  metaSheet.getColumn(2).width = 26;
+  metaSheet.getColumn(3).width = 62;
+  for (let r = dictHeaderRowNum + 1; r <= metaSheet.rowCount; r++) {
+    metaSheet.getCell(r, 3).alignment = { wrapText: true, vertical: "top" };
+  }
+
+  const buf = await workbook.xlsx.writeBuffer();
+  return Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
+}
+
 function csvCommentLine(text) {
   const t = String(text || "").replaceAll("\r\n", " ").replaceAll("\n", " ").replaceAll("\r", " ");
   return `# ${t}`;
@@ -1535,7 +1661,7 @@ function buildChatObservationCsvPreamble(query, columns, dataRowCount) {
       "Bu dosya yönetim panelindeki liste ile aynı filtre mantığını kullanır; veri satırları aşağıdadır."
     ),
     csvCommentLine(`Dışa aktarım zamanı (ISO UTC): ${exportedAt}`),
-    csvCommentLine(`Aktarılan veri satırı sayısı: ${dataRowCount} (üst sınır 5000; daha çok eşleşme varsa kesilir).`),
+    csvCommentLine(`Aktarılan veri satırı sayısı: ${dataRowCount} (üst sınır ${CHAT_OBS_EXPORT_ROW_CAP}; daha çok eşleşme varsa kesilir).`),
     csvCommentLine("Sıralama: en yeni kayıt önce (created_at azalan)."),
     csvCommentLine(`Uygulanan filtre özeti: ${summarizeExportFiltersTr(f)}`),
     csvCommentLine(""),
@@ -1552,23 +1678,14 @@ function buildChatObservationCsvPreamble(query, columns, dataRowCount) {
 }
 
 export async function exportChatObservations(query = {}, format = "csv") {
-  const nq = normalizeAdminChatLogQuery({ ...query });
-  let qb = getSupabase().from("chat_observations").select("*").order("created_at", { ascending: false });
-  qb = applyChatObservationListFilters(qb, nq);
-  const { data, error } = await sb(() => qb.limit(5000));
-  if (error) rethrowSupabaseError(error);
-  const rows = (data || []).filter((r) => !isLikelyTestChatObservation(r));
-  const includeRawPayload = String(query.include_raw_payload || "false") === "true";
-  const mapped = rows.map((row) => mapObservationRow(row, includeRawPayload));
-  const columns = Object.keys(mapped[0] || mapObservationRow({}, includeRawPayload));
+  const { mapped, columns } = await loadChatObservationsExportRows(query);
   if (format === "json") {
     return JSON.stringify(
       {
         exported_at: new Date().toISOString(),
         record_count: mapped.length,
-        export_row_cap: 5000,
-        note_tr:
-          "En fazla 5000 satır döner; filtre listeyle aynıdır. Sütun açıklamaları için CSV dışa aktarımına bakın.",
+        export_row_cap: CHAT_OBS_EXPORT_ROW_CAP,
+        note_tr: `En fazla ${CHAT_OBS_EXPORT_ROW_CAP} satır döner; filtre listeyle aynıdır. Sütun açıklamaları .xlsx «Aciklama» sayfasında veya CSV önsözünde.`,
         filters: extractExportFilters(query),
         columns,
         column_descriptions_tr: Object.fromEntries(
@@ -1579,6 +1696,9 @@ export async function exportChatObservations(query = {}, format = "csv") {
       null,
       2
     );
+  }
+  if (format === "xlsx") {
+    return buildChatObservationsXlsxBuffer(query, mapped, columns);
   }
 
   const preamble = buildChatObservationCsvPreamble(query, columns, mapped.length);

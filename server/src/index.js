@@ -892,6 +892,10 @@ app.post("/api/chat", async (req, res) => {
     if (verifiedGuestRoom) payload.verified_guest_room = verifiedGuestRoom;
     const guestFullName = String(req.body?.guest_full_name ?? "").trim().slice(0, 120);
     if (guestFullName) payload.guest_full_name = guestFullName;
+    const guestPhone = String(req.body?.guest_phone ?? "").trim().slice(0, 40);
+    if (guestPhone) payload.guest_phone = guestPhone;
+    const guestEmail = String(req.body?.guest_email ?? "").trim().slice(0, 120);
+    if (guestEmail) payload.guest_email = guestEmail;
     const abortController = new AbortController();
     const timer = setTimeout(() => abortController.abort(), timeoutMs);
     const upstream = await fetch(ASSISTANT_CHAT_ENDPOINT, {

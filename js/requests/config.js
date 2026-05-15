@@ -1,6 +1,8 @@
 /**
  * Misafir talepleri — kategori seçenekleri (API ile uyumlu).
- * İstekler: düz seçim (Tür/alt kategori yok); bölüm başlıkları requestSections ile.
+ * İstekler: HOUSEKEEPING grupları; Arızalar: faultSections (Teknik).
+ * Sohbet senkronu: server/src/assistant/services/form_schema.py → REQUEST_CATEGORY_CHAT_SECTIONS,
+ *   FAULT_TECH_IDS sırası (faultSections), COMPLAINT_CATEGORIES sırası (categories.complaint).
  */
 (function () {
   "use strict";
@@ -9,7 +11,6 @@
     return n < 10 ? "0" + n : String(n);
   }
 
-  /** Takvim: geçmiş günler kapalı — yalnızca bugün ve sonrası (yerel tarih). */
   window.getCalendarMinDateISO = function () {
     var today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -50,65 +51,146 @@
         ],
       },
     ],
-    /**
-     * İstek formu: gruplu düz seçim (sunucu category = id).
-     * Sohbet asistanı sırası: `server/src/assistant/services/form_schema.py` → REQUEST_CATEGORY_CHAT_SECTIONS ile senkron tutun.
-     * CI: `PYTHONPATH=src pytest src/assistant/tests/test_request_schema_sync.py`.
-     */
     requestSections: [
       {
-        sectionKey: "reqReqSecTowels",
+        sectionKey: "reqReqSecHkSleepComfort",
         items: [
-          { id: "bedding_pillow", key: "reqReqBeddingPillow" },
-          { id: "room_towel", key: "reqReqRoomTowelExtra" },
-          { id: "bathrobe", key: "reqReqBathrobe" },
-          { id: "slippers", key: "reqReqSlippers" },
+          { id: "hk_duvet_request", key: "reqReqHkDuvet" },
+          { id: "hk_bed_join", key: "reqReqHkBedJoin" },
+          { id: "hk_bed_soften", key: "reqReqHkBedSoften" },
+          { id: "hk_pillow_request", key: "reqReqHkPillow" },
+          { id: "hk_pique_request", key: "reqReqHkPique" },
+          { id: "hk_extra_bed", key: "reqReqHkExtraBed" },
+          { id: "hk_baby_crib", key: "reqReqHkBabyCrib" },
+          { id: "hk_sheet_change", key: "reqReqHkSheetChange" },
         ],
       },
       {
-        sectionKey: "reqReqSecBedding",
+        sectionKey: "reqReqSecHkTowelBath",
         items: [
-          { id: "bedding_sheet", key: "reqReqBeddingSheet" },
-          { id: "bedding_blanket", key: "reqReqBeddingBlanket" },
+          { id: "hk_towel_request", key: "reqReqHkTowelRequest" },
+          { id: "hk_towel_change", key: "reqReqHkTowelChange" },
+          { id: "hk_toilet_paper", key: "reqReqHkToiletPaper" },
+          { id: "hk_slippers", key: "reqReqHkSlippers" },
+          { id: "hk_dental_set", key: "reqReqHkDentalSet" },
+          { id: "hk_amenity_kit", key: "reqReqHkAmenityKit" },
         ],
       },
       {
-        sectionKey: "reqReqSecRoomService",
-        items: [{ id: "room_cleaning", key: "reqReqRoomCleaningOnly" }],
-      },
-      {
-        sectionKey: "reqReqSecMinibarDrinks",
+        sectionKey: "reqReqSecHkDrinks",
         items: [
-          { id: "bottled_water", key: "reqReqBottledWater" },
-          { id: "tea_coffee", key: "reqReqTeaCoffee" },
+          { id: "hk_water", key: "reqReqHkWater" },
+          { id: "hk_coffee_tea_supplies", key: "reqReqHkCoffeeTeaSupplies" },
+          { id: "hk_cup_request", key: "reqReqHkCup" },
         ],
       },
       {
-        sectionKey: "reqReqSecBathAmenities",
+        sectionKey: "reqReqSecHkCleaning",
         items: [
-          { id: "toilet_paper", key: "reqReqToiletPaper" },
-          { id: "toiletries", key: "reqReqToiletries" },
+          { id: "hk_room_cleaning", key: "reqReqHkRoomCleaning" },
+          { id: "hk_trash_removal", key: "reqReqHkTrashRemoval" },
+          { id: "hk_balcony_cleaning", key: "reqReqHkBalconyCleaning" },
+          { id: "hk_cleaning_dnd_coordinate", key: "reqReqHkCleaningDnd" },
+          { id: "hk_bad_odor", key: "reqReqHkBadOdor" },
+          { id: "hk_pest_control", key: "reqReqHkPestControl" },
         ],
       },
       {
-        sectionKey: "reqReqSecComfort",
+        sectionKey: "reqReqSecHkEquipment",
         items: [
-          { id: "climate_request", key: "reqReqClimate" },
-          { id: "room_refresh", key: "reqReqRoomRefresh" },
+          { id: "hk_iron", key: "reqReqHkIron" },
+          { id: "hk_vase", key: "reqReqHkVase" },
         ],
       },
       {
-        sectionKey: "reqReqSecEquipment",
-        items: [
-          { id: "hanger", key: "reqReqHanger" },
-          { id: "kettle", key: "reqReqKettle" },
-          { id: "room_safe", key: "reqReqRoomSafe" },
-          { id: "baby_bed", key: "reqReqBabyBedOnly" },
-        ],
-      },
-      {
-        sectionKey: "reqReqSecOther",
+        sectionKey: "reqReqSecHkOther",
         items: [{ id: "other", key: "reqCatOther" }],
+      },
+    ],
+    faultSections: [
+      {
+        sectionKey: "reqFaultSecHvac",
+        items: [
+          { id: "ft_ac_not_cooling", key: "reqFaultAcNotCooling" },
+          { id: "ft_ac_not_heating", key: "reqFaultAcNotHeating" },
+          { id: "ft_ac_remote", key: "reqFaultAcRemote" },
+          { id: "ft_ac_fault", key: "reqFaultAcGeneral" },
+          { id: "ft_ventilation_fault", key: "reqFaultVentilation" },
+        ],
+      },
+      {
+        sectionKey: "reqFaultSecElectric",
+        items: [
+          { id: "ft_socket_fault", key: "reqFaultSocket" },
+          { id: "ft_electric_fault", key: "reqFaultElectricGeneral" },
+          { id: "ft_led_fault", key: "reqFaultLed" },
+          { id: "ft_lamp_fault", key: "reqFaultLamp" },
+          { id: "ft_sconce_fault", key: "reqFaultSconce" },
+        ],
+      },
+      {
+        sectionKey: "reqFaultSecWaterBath",
+        items: [
+          { id: "ft_ceiling_water_leak", key: "reqFaultCeilingLeak" },
+          { id: "ft_bidet_faucet_fault", key: "reqFaultBidetFaucet" },
+          { id: "ft_cold_water_no_flow", key: "reqFaultColdWater" },
+          { id: "ft_hot_water_no_flow", key: "reqFaultHotWater" },
+          { id: "ft_siphon_fault", key: "reqFaultSiphon" },
+          { id: "ft_faucet_fault", key: "reqFaultFaucet" },
+          { id: "ft_sink_drain_fault", key: "reqFaultSinkDrain" },
+          { id: "ft_toilet_seat_broken", key: "reqFaultToiletSeat" },
+          { id: "ft_shower_cabin_fault", key: "reqFaultShowerCabin" },
+          { id: "ft_shower_head_fault", key: "reqFaultShowerHead" },
+          { id: "ft_towel_rail_fault", key: "reqFaultTowelRail" },
+          { id: "ft_bathroom_drain_clog", key: "reqFaultBathroomClog" },
+        ],
+      },
+      {
+        sectionKey: "reqFaultSecTvElectronics",
+        items: [
+          { id: "ft_tv_remote", key: "reqFaultTvRemote" },
+          { id: "ft_tv_fault", key: "reqFaultTv" },
+          { id: "ft_phone_fault", key: "reqFaultPhone" },
+          { id: "ft_minibar_fault", key: "reqFaultMinibar" },
+          { id: "ft_safe_fault", key: "reqFaultSafe" },
+          { id: "ft_kettle_fault", key: "reqFaultKettle" },
+          { id: "ft_hair_dryer_fault", key: "reqFaultHairDryer" },
+          { id: "ft_tv_channel_fault", key: "reqFaultTvChannel" },
+        ],
+      },
+      {
+        sectionKey: "reqFaultSecDoorWindow",
+        items: [
+          { id: "ft_curtain_fallen", key: "reqFaultCurtain" },
+          { id: "ft_window_fault", key: "reqFaultWindow" },
+          { id: "ft_window_cleaning", key: "reqFaultWindowCleaning" },
+          { id: "ft_room_door_fault", key: "reqFaultRoomDoor" },
+          { id: "ft_bathroom_door_fault", key: "reqFaultBathroomDoor" },
+          { id: "ft_balcony_door_fault", key: "reqFaultBalconyDoor" },
+          { id: "ft_balcony_railing_loose", key: "reqFaultBalconyRailing" },
+          { id: "ft_cornice_fault", key: "reqFaultCornice" },
+        ],
+      },
+      {
+        sectionKey: "reqFaultSecFurniture",
+        items: [
+          { id: "ft_headboard_fault", key: "reqFaultHeadboard" },
+          { id: "ft_dresser_drawer_fault", key: "reqFaultDresserDrawer" },
+          { id: "ft_drawer_fault", key: "reqFaultDrawer" },
+          { id: "ft_wardrobe_fault", key: "reqFaultWardrobe" },
+          { id: "ft_mirror_damage", key: "reqFaultMirror" },
+        ],
+      },
+      {
+        sectionKey: "reqFaultSecGeneralFacility",
+        items: [
+          { id: "ft_elevator_fault", key: "reqFaultElevator" },
+          { id: "ft_indoor_pool_temperature", key: "reqFaultIndoorPoolTemp" },
+        ],
+      },
+      {
+        sectionKey: "reqFaultSecOther",
+        items: [{ id: "ft_other", key: "reqCatOther" }],
       },
     ],
     categories: {
@@ -127,17 +209,7 @@
         { id: "other", key: "reqCatOther" },
         { id: "lost_property", key: "reqCatComplaintLostProperty" },
       ],
-      fault: [
-        { id: "hvac", key: "reqCatFaultHvac" },
-        { id: "electric", key: "reqCatFaultElectric" },
-        { id: "water_bathroom", key: "reqCatFaultWaterBathroom" },
-        { id: "tv_electronics", key: "reqCatFaultTvElectronics" },
-        { id: "door_lock", key: "reqCatFaultDoorLock" },
-        { id: "furniture_item", key: "reqCatFaultFurnitureItem" },
-        { id: "cleaning_equipment_damage", key: "reqCatFaultCleaningEquipmentDamage" },
-        { id: "balcony_window", key: "reqCatFaultBalconyWindow" },
-        { id: "other", key: "reqCatOther" },
-      ],
+      fault: [],
     },
     nationalities: [
       { value: "TR", key: "reqNatTR" },
@@ -161,5 +233,16 @@
       });
     });
     cfg.categories.request = out;
+  })();
+
+  (function flattenFaultCats() {
+    var cfg = window.REQUESTS_CONFIG;
+    var out = [];
+    (cfg.faultSections || []).forEach(function (sec) {
+      (sec.items || []).forEach(function (it) {
+        out.push(it);
+      });
+    });
+    cfg.categories.fault = out;
   })();
 })();

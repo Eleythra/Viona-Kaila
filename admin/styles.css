@@ -6146,6 +6146,28 @@
 .ops-manual-form-host {
   margin-bottom: 0.75rem;
 }
+.ops-manual-form__scope {
+  margin: 0 0 0.55rem;
+  font-size: 0.82rem;
+  line-height: 1.48;
+  color: var(--admin-text-muted);
+}
+.ops-manual-form__scope strong {
+  color: #c5d4ec;
+  font-weight: 600;
+}
+.op-filter-field__hint {
+  font-weight: 500;
+  font-size: 0.72em;
+  letter-spacing: 0.02em;
+  color: #7d92b5;
+}
+abbr.op-filter-req-star {
+  text-decoration: none;
+  font-weight: 800;
+  color: #f87171;
+  margin-left: 0.1rem;
+}
 .ops-manual-form {
   padding: 0.75rem 0.9rem;
   margin-bottom: 0;

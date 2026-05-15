@@ -63,6 +63,9 @@ TRANSLATIONS_PL: Dict[str, str] = {
         'to nie awaria pokoju — w poniższym formularzu reklamacji wybierz «Zgubione rzeczy».\n\n'
         'Aby uzyskać najlepszą pomoc, udaj się do Guest Relations lub recepcji. Możesz też wypełnić poniższy formularz reklamacji i opisać sytuację na piśmie — zespół zadba o Twój wpis.'
     ),
+    'complaint_lost_property_description_suffix': (
+        'Proszę krótko opisać sytuację; możesz podać numer pokoju.'
+    ),
     'complaint_form_guidance': (
         'Reklamację możesz zgłosić w aplikacji Viona — wybór właściwej kategorii ułatwia naszemu zespołowi sprawne rozpatrzenie sprawy. '
         'Przycisk poniżej otwiera formularz; możesz też zwrócić się do recepcji lub działu relacji z gośćmi.'

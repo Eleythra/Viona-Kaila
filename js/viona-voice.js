@@ -37,26 +37,51 @@
 
   var els = {};
 
+  var _cachedVoiceLangCode = null;
+  var _tVoiceLocaleCode = null;
+  var _tVoiceLocaleTable = null;
+
+  function invalidateVoiceLangCache() {
+    _cachedVoiceLangCode = null;
+    _tVoiceLocaleCode = null;
+    _tVoiceLocaleTable = null;
+  }
+
   function getAppLang() {
+    if (_cachedVoiceLangCode !== null) return _cachedVoiceLangCode;
     try {
       var raw = localStorage.getItem(LANG_KEY);
-      if (!raw) return "tr";
+      if (!raw) {
+        _cachedVoiceLangCode = "tr";
+        return "tr";
+      }
       var c = String(raw).trim();
       if (window.VIONA_LANG && typeof window.VIONA_LANG.normalizeToUiLang === "function") {
         c = window.VIONA_LANG.normalizeToUiLang(c);
       } else {
         c = String(raw).toLowerCase().slice(0, 2);
       }
-      if (I18N[c]) return c;
-      if (I18N.en) return "en";
+      if (I18N[c]) {
+        _cachedVoiceLangCode = c;
+        return c;
+      }
+      if (I18N.en) {
+        _cachedVoiceLangCode = "en";
+        return "en";
+      }
     } catch (e) {}
+    _cachedVoiceLangCode = "tr";
     return "tr";
   }
 
   /** `app.js` ile aynı sıra: seçili dil → İngilizce → Türkçe → anahtar (sesli metin hiç düşmesin). */
   function t(key) {
     var code = getAppLang();
-    var L = I18N[code] || I18N.tr;
+    if (code !== _tVoiceLocaleCode) {
+      _tVoiceLocaleCode = code;
+      _tVoiceLocaleTable = I18N[code] || I18N.tr;
+    }
+    var L = _tVoiceLocaleTable;
     if (L[key] !== undefined) return L[key];
     var E = I18N.en;
     if (E && E[key] !== undefined) return E[key];
@@ -774,6 +799,7 @@
   }
 
   window.vionaVoiceRefreshI18n = function () {
+    invalidateVoiceLangCache();
     cacheEls();
     setStatusText();
     syncPanelUi();

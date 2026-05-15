@@ -8,18 +8,53 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
 from assistant.core.chatbot_languages import CHATBOT_UI_LANGS  # noqa: E402
 from assistant.schemas.chat import ChatRequest  # noqa: E402
-from assistant.services.form_schema import request_categories_for_chat_ui  # noqa: E402
+from assistant.services.form_schema import (  # noqa: E402
+    COMPLAINT_CATEGORIES,
+    fault_categories_for_chat_ui,
+    request_categories_for_chat_ui,
+)
 
 
 def _request_section_ids_from_js(js_text: str) -> list[str]:
     m = re.search(
-        r"requestSections:\s*\[(.*?)\n\s*\],\s*\n\s*categories:",
+        r"requestSections:\s*\[(.*?)\n\s*\],\s*\n\s*faultSections:",
         js_text,
         re.DOTALL,
     )
     assert m, "requestSections block not found in js/requests/config.js"
     block = m.group(1)
     return re.findall(r"\bid:\s*\"([^\"]+)\"", block)
+
+
+def _fault_section_ids_from_js(js_text: str) -> list[str]:
+    m = re.search(
+        r"faultSections:\s*\[(.*?)\n\s*\],\s*\n\s*categories:",
+        js_text,
+        re.DOTALL,
+    )
+    assert m, "faultSections block not found in js/requests/config.js"
+    block = m.group(1)
+    return re.findall(r"\bid:\s*\"([^\"]+)\"", block)
+
+
+def _complaint_ids_from_js(js_text: str) -> list[str]:
+    m = re.search(
+        r"complaint:\s*\[(.*?)\n\s*\],\s*\n\s*fault:",
+        js_text,
+        re.DOTALL,
+    )
+    assert m, "categories.complaint block not found in js/requests/config.js"
+    block = m.group(1)
+    return re.findall(r'\bid:\s*"([^"]+)"', block)
+
+
+def test_fault_chat_category_order_matches_js_requests_config():
+    root = Path(__file__).resolve().parents[4]
+    js_path = root / "js" / "requests" / "config.js"
+    js_text = js_path.read_text(encoding="utf-8")
+    js_ids = _fault_section_ids_from_js(js_text)
+    py_ids = list(fault_categories_for_chat_ui())
+    assert js_ids == py_ids, f"faultSections order mismatch:\n  js ({len(js_ids)}): {js_ids}\n  py ({len(py_ids)}): {py_ids}"
 
 
 def test_request_chat_category_order_matches_js_requests_config():
@@ -29,6 +64,15 @@ def test_request_chat_category_order_matches_js_requests_config():
     js_ids = _request_section_ids_from_js(js_text)
     py_ids = list(request_categories_for_chat_ui())
     assert js_ids == py_ids, f"requestSections order mismatch:\n  js ({len(js_ids)}): {js_ids}\n  py ({len(py_ids)}): {py_ids}"
+
+
+def test_complaint_chat_category_order_matches_js_requests_config():
+    root = Path(__file__).resolve().parents[4]
+    js_path = root / "js" / "requests" / "config.js"
+    js_text = js_path.read_text(encoding="utf-8")
+    js_ids = _complaint_ids_from_js(js_text)
+    py_ids = list(COMPLAINT_CATEGORIES)
+    assert js_ids == py_ids, f"categories.complaint order mismatch:\n  js ({len(js_ids)}): {js_ids}\n  py ({len(py_ids)}): {py_ids}"
 
 
 def test_chat_request_accepts_client_channel_alias_for_voice():

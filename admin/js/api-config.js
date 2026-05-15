@@ -50,6 +50,7 @@
     adminLogsEndpoint: base + "/admin/logs",
     adminLogsSummaryEndpoint: base + "/admin/logs/summary",
     adminLogsExportCsvEndpoint: base + "/admin/logs/export.csv",
+    adminLogsExportXlsxEndpoint: base + "/admin/logs/export.xlsx",
     adminLogsExportJsonEndpoint: base + "/admin/logs/export.json",
   };
 })();

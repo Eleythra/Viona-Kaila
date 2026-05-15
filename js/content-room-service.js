@@ -2,7 +2,7 @@
   "use strict";
 
   /**
-   * Çok dillilik: menü gövdesi yalnızca ROOM_SERVICE_MENU_DATA içinden gelir (i18n.js ile karıştırılmaz).
+   * Çok dillilik: menü + üst uyarı (serviceBanner) yalnızca ROOM_SERVICE_MENU_DATA içinden gelir (i18n.js ile karıştırılmaz).
    * Dil: app’teki UI kodu → normalizeToUiLang → paket varsa o dil, yoksa en. Bölüm başlığı/marka anahtarlar JSON’da.
    * Ana sayfa karosu vb. için modRoomService → i18n (t) kullanılmaya devam eder.
    */
@@ -89,6 +89,19 @@
       inner.setAttribute("lang", window.VIONA_LANG.htmlLangFor(menuLang));
     } else {
       inner.setAttribute("lang", menuLang);
+    }
+
+    if (pack.serviceBanner && pack.serviceBanner.lines && pack.serviceBanner.lines.length) {
+      var ban = el("div", "room-service-mod__banner");
+      ban.setAttribute("role", "note");
+      if (pack.serviceBanner.kicker) {
+        ban.setAttribute("aria-label", pack.serviceBanner.kicker);
+        ban.appendChild(el("span", "room-service-mod__banner-kicker", pack.serviceBanner.kicker));
+      }
+      for (var bi = 0; bi < pack.serviceBanner.lines.length; bi++) {
+        ban.appendChild(el("p", "room-service-mod__banner-line", pack.serviceBanner.lines[bi]));
+      }
+      inner.appendChild(ban);
     }
 
     var header = el("header", "room-service-mod__header");

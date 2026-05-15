@@ -336,6 +336,21 @@ router.get("/logs/export.csv", async (req, res) => {
   }
 });
 
+router.get("/logs/export.xlsx", async (req, res) => {
+  try {
+    const buf = await exportChatObservations(req.query || {}, "xlsx");
+    const payload = Buffer.isBuffer(buf) ? buf : Buffer.from(buf);
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    res.setHeader("Content-Disposition", 'attachment; filename="chat_observations.xlsx"');
+    return res.status(200).send(payload);
+  } catch (error) {
+    return adminErr(res, error, "admin_logs_export_xlsx_failed");
+  }
+});
+
 router.get("/logs/export.json", async (req, res) => {
   try {
     const json = await exportChatObservations(req.query || {}, "json");

@@ -22,72 +22,136 @@ const SIMPLE_TYPES = new Set(["request", "complaint", "fault", "guest_notificati
 const RESERVATION_TYPES = new Set(["reservation_alacarte", "reservation_spa"]);
 /** Yalnızca web formu; ayrı tablo guest_late_checkouts. */
 const LATE_CHECKOUT_TYPE = "late_checkout";
-const REQUEST_CATEGORIES = new Set([
-  "towel_extra",
-  "room_towel",
-  "bathrobe",
-  "bedding_sheet",
-  "bedding_pillow",
-  "bedding_blanket",
-  "room_cleaning",
-  "turndown",
-  "slippers",
-  "minibar_refill",
-  "bottled_water",
-  "tea_coffee",
-  "toilet_paper",
-  "toiletries",
-  "climate_request",
-  "room_refresh",
-  "hanger",
-  "kettle",
-  "room_safe",
-  "baby_bed",
-  "other",
-]);
-/** Adet zorunlu (form: detail_quantity). */
-const REQUEST_QUANTITY_CATEGORIES = new Set([
-  "towel_extra",
-  "room_towel",
-  "bathrobe",
-  "bedding_sheet",
-  "bedding_pillow",
-  "bedding_blanket",
-  "slippers",
-  "hanger",
-  "baby_bed",
-  "toilet_paper",
-  "toiletries",
-]);
-const REQUEST_TIMING_CATEGORIES = new Set(["room_cleaning", "turndown"]);
-const LEGACY_REQUEST_CATEGORIES = new Set([
-  "towel",
-  "bedding",
-  "minibar",
-  "baby_equipment",
-  "room_equipment",
-]);
+
+/** HOUSEKEEPING — `js/requests/config.js` requestSections id’leri ile birebir. */
+const HK_REQUEST_IDS = [
+  "hk_duvet_request",
+  "hk_bed_join",
+  "hk_bed_soften",
+  "hk_pillow_request",
+  "hk_pique_request",
+  "hk_extra_bed",
+  "hk_baby_crib",
+  "hk_sheet_change",
+  "hk_towel_request",
+  "hk_towel_change",
+  "hk_toilet_paper",
+  "hk_slippers",
+  "hk_dental_set",
+  "hk_amenity_kit",
+  "hk_water",
+  "hk_coffee_tea_supplies",
+  "hk_cup_request",
+  "hk_room_cleaning",
+  "hk_trash_removal",
+  "hk_balcony_cleaning",
+  "hk_cleaning_dnd_coordinate",
+  "hk_bad_odor",
+  "hk_pest_control",
+  "hk_iron",
+  "hk_vase",
+];
+
+/** Teknik arıza — `js/requests/config.js` faultSections id’leri + eski kaba kategoriler. */
+const FAULT_TECH_IDS = [
+  "ft_ac_not_cooling",
+  "ft_ac_not_heating",
+  "ft_ac_remote",
+  "ft_ac_fault",
+  "ft_ventilation_fault",
+  "ft_socket_fault",
+  "ft_electric_fault",
+  "ft_led_fault",
+  "ft_lamp_fault",
+  "ft_sconce_fault",
+  "ft_ceiling_water_leak",
+  "ft_bidet_faucet_fault",
+  "ft_cold_water_no_flow",
+  "ft_hot_water_no_flow",
+  "ft_siphon_fault",
+  "ft_faucet_fault",
+  "ft_sink_drain_fault",
+  "ft_toilet_seat_broken",
+  "ft_shower_cabin_fault",
+  "ft_shower_head_fault",
+  "ft_towel_rail_fault",
+  "ft_bathroom_drain_clog",
+  "ft_tv_remote",
+  "ft_tv_fault",
+  "ft_phone_fault",
+  "ft_minibar_fault",
+  "ft_safe_fault",
+  "ft_kettle_fault",
+  "ft_hair_dryer_fault",
+  "ft_tv_channel_fault",
+  "ft_curtain_fallen",
+  "ft_window_fault",
+  "ft_window_cleaning",
+  "ft_room_door_fault",
+  "ft_bathroom_door_fault",
+  "ft_balcony_door_fault",
+  "ft_balcony_railing_loose",
+  "ft_cornice_fault",
+  "ft_headboard_fault",
+  "ft_dresser_drawer_fault",
+  "ft_drawer_fault",
+  "ft_wardrobe_fault",
+  "ft_mirror_damage",
+  "ft_elevator_fault",
+  "ft_indoor_pool_temperature",
+  "ft_other",
+];
+
+/** Yalnızca HOUSEKEEPING (`hk_*`) + `other`; eski kategori sözcükleri alias ile `hk_*`e düşer. */
+const REQUEST_CATEGORIES = new Set([...HK_REQUEST_IDS, "other"]);
+
+function isRequestQuantityCategory(category) {
+  if (!category || category === "other") return false;
+  return String(category).startsWith("hk_");
+}
+
 const REQUEST_CATEGORY_ALIASES = {
-  extraTowels: "towel_extra",
-  extra_towels: "towel_extra",
-  towels: "towel_extra",
-  towel: "towel_extra",
-  linen: "bedding_sheet",
-  bedding: "bedding_sheet",
-  roomCleaning: "room_cleaning",
-  room_cleaning_request: "room_cleaning",
-  minibarRefill: "minibar_refill",
-  minibar_request: "minibar_refill",
-  minibar: "minibar_refill",
-  babyNeeds: "baby_bed",
-  baby_equipment_request: "baby_bed",
-  baby_equipment: "baby_bed",
-  roomSupplies: "hanger",
-  room_equipment_request: "hanger",
-  room_equipment: "hanger",
+  extraTowels: "hk_towel_request",
+  extra_towels: "hk_towel_request",
+  towels: "hk_towel_request",
+  towel: "hk_towel_request",
+  hand_towel: "hk_towel_change",
+  bath_towel: "hk_towel_request",
+  linen: "hk_sheet_change",
+  bedding: "hk_pillow_request",
+  roomCleaning: "hk_room_cleaning",
+  room_cleaning_request: "hk_room_cleaning",
+  room_cleaning: "hk_room_cleaning",
+  turndown: "hk_sheet_change",
+  towel_extra: "hk_towel_request",
+  room_towel: "hk_towel_change",
+  bathrobe: "other",
+  bedding_sheet: "hk_sheet_change",
+  bedding_pillow: "hk_pillow_request",
+  bedding_blanket: "hk_duvet_request",
+  slippers: "hk_slippers",
+  minibarRefill: "other",
+  minibar_request: "other",
+  minibar: "other",
+  minibar_refill: "other",
+  babyNeeds: "hk_baby_crib",
+  baby_equipment_request: "hk_baby_crib",
+  baby_equipment: "hk_baby_crib",
+  baby_bed: "hk_baby_crib",
+  roomSupplies: "other",
+  room_equipment_request: "other",
+  room_equipment: "other",
   otherRequest: "other",
-  hand_towel: "room_towel",
-  bath_towel: "towel_extra",
+  bottled_water: "hk_water",
+  tea_coffee: "hk_coffee_tea_supplies",
+  toilet_paper: "hk_toilet_paper",
+  toiletries: "hk_amenity_kit",
+  climate_request: "other",
+  room_refresh: "hk_bad_odor",
+  hanger: "other",
+  // Çay/kahve tedarik satırı — hk_coffee_tea_supplies (sohbet / envanter ile aynı).
+  kettle: "hk_coffee_tea_supplies",
+  room_safe: "other",
 };
 const COMPLAINT_CATEGORIES = new Set([
   "room_cleaning",
@@ -132,37 +196,36 @@ const GUEST_NOTIFICATION_DESC_REQUIRED = new Set([
   "other_health",
   "other_celebration",
 ]);
-const FAULT_CATEGORIES = new Set([
-  "hvac",
-  "electric",
-  "water_bathroom",
-  "tv_electronics",
-  "door_lock",
-  "furniture_item",
-  "cleaning_equipment_damage",
-  "balcony_window",
-  "other",
-]);
+/** Yalnızca `ft_*`; eski kaba kodlar ve kısa aliaslar `normalizeFaultCategory` ile teknik id’ye çevrilir. */
+const FAULT_CATEGORIES = new Set(FAULT_TECH_IDS);
+
 const FAULT_CATEGORY_ALIASES = {
-  ac: "hvac",
-  klima: "hvac",
-  heating: "hvac",
-  electric_issue: "electric",
-  electricity: "electric",
-  water: "water_bathroom",
-  bathroom: "water_bathroom",
-  tv: "tv_electronics",
-  electronics: "tv_electronics",
-  door: "door_lock",
-  lock: "door_lock",
-  furniture: "furniture_item",
-  cleaning_damage: "cleaning_equipment_damage",
-  balcony: "balcony_window",
-  window: "balcony_window",
-  otherFault: "other",
+  ac: "ft_ac_fault",
+  klima: "ft_ac_fault",
+  heating: "ft_ac_fault",
+  electric_issue: "ft_electric_fault",
+  electricity: "ft_electric_fault",
+  water: "ft_cold_water_no_flow",
+  bathroom: "ft_faucet_fault",
+  tv: "ft_tv_fault",
+  electronics: "ft_tv_fault",
+  door: "ft_room_door_fault",
+  lock: "ft_room_door_fault",
+  furniture: "ft_drawer_fault",
+  cleaning_damage: "ft_other",
+  balcony: "ft_balcony_door_fault",
+  window: "ft_window_fault",
+  otherFault: "ft_other",
+  hvac: "ft_ac_fault",
+  electric: "ft_electric_fault",
+  water_bathroom: "ft_faucet_fault",
+  tv_electronics: "ft_tv_fault",
+  door_lock: "ft_room_door_fault",
+  furniture_item: "ft_drawer_fault",
+  cleaning_equipment_damage: "ft_other",
+  balcony_window: "ft_window_fault",
+  other: "ft_other",
 };
-const FAULT_LOCATIONS = new Set(["room_inside", "bathroom", "balcony", "other"]);
-const FAULT_URGENCY = new Set(["normal", "urgent"]);
 
 function cleanText(value, maxLen = 5000) {
   return String(value || "").trim().slice(0, maxLen);
@@ -200,20 +263,23 @@ function normalizePayload(payload) {
     payload?.checkoutTime ?? payload?.details?.checkoutTime,
     16,
   );
+  const detailsIn = payload?.details && typeof payload.details === "object" ? payload.details : {};
+  const details = { ...detailsIn };
+  const description = String(payload?.description ?? payload?.note ?? "")
+    .trim()
+    .slice(0, 4000);
+  const qtyTop = toPositiveInt(payload?.quantity ?? details.quantity);
+  if (qtyTop) details.quantity = qtyTop;
   const base = {
     type,
     name: cleanText(payload?.name, GUEST_NAME_MAX_LEN),
     room: cleanText(payload?.room, 50),
     nationality: cleanText(payload?.nationality, 20),
-    description: String(payload?.description ?? "")
-      .trim()
-      .slice(0, 4000),
+    description,
     checkoutDate,
     checkoutTime,
     category: cleanText(payload?.category, 64),
-    details: payload?.details && typeof payload.details === "object" ? payload.details : {},
-    location: cleanText(payload?.location, 64),
-    urgency: cleanText(payload?.urgency, 32),
+    details,
     language: cleanText(payload?.language, 8),
     guestCount: toPositiveInt(payload?.guestCount),
     categories: toArray(payload?.categories),
@@ -269,71 +335,15 @@ function normalizeFaultCategory(value) {
   return FAULT_CATEGORY_ALIASES[raw] || raw;
 }
 
-function migrateLegacyRequestShape(normalized) {
-  const rawCat = String(normalized.category || "").trim();
-  if (!LEGACY_REQUEST_CATEGORIES.has(rawCat) && rawCat !== "room_cleaning") return;
-  const d = normalized.details && typeof normalized.details === "object" ? normalized.details : {};
-  if (rawCat === "towel") {
-    normalized.category = d.itemType === "hand_towel" ? "room_towel" : "towel_extra";
-    normalized.details = { quantity: toPositiveInt(d.quantity) };
-    return;
-  }
-  if (rawCat === "bedding") {
-    const map = { pillow: "bedding_pillow", duvet_cover: "bedding_sheet", blanket: "bedding_blanket" };
-    normalized.category = map[String(d.itemType || "").trim()] || "bedding_sheet";
-    normalized.details = { quantity: toPositiveInt(d.quantity) };
-    return;
-  }
-  if (rawCat === "minibar") {
-    normalized.category = "minibar_refill";
-    normalized.details = {};
-    return;
-  }
-  if (rawCat === "baby_equipment") {
-    normalized.category = "baby_bed";
-    normalized.details = { quantity: toPositiveInt(d.quantity) };
-    return;
-  }
-  if (rawCat === "room_equipment") {
-    const map = {
-      bathrobe: "bathrobe",
-      slippers: "slippers",
-      hanger: "hanger",
-      kettle: "kettle",
-    };
-    const next = map[String(d.itemType || "").trim()];
-    if (!next) {
-      normalized.category = "other";
-      return;
-    }
-    normalized.category = next;
-    if (REQUEST_QUANTITY_CATEGORIES.has(next)) {
-      normalized.details = { quantity: toPositiveInt(d.quantity) };
-    } else {
-      normalized.details = {};
-    }
-    return;
-  }
-  if (rawCat === "room_cleaning" && d.requestType) {
-    normalized.details = {
-      timing: cleanEnum(d.timing, new Set(["now", "later"])) || "now",
-    };
-  }
-}
-
 function normalizeRequestDetails(category, details = {}) {
   const d = details && typeof details === "object" ? details : {};
-  if (REQUEST_QUANTITY_CATEGORIES.has(category)) {
+  if (isRequestQuantityCategory(category)) {
     return { quantity: toPositiveInt(d.quantity) };
-  }
-  if (REQUEST_TIMING_CATEGORIES.has(category)) {
-    return { timing: cleanEnum(d.timing, new Set(["now", "later"])) };
   }
   return {};
 }
 
 function validateRequestDetails(normalized) {
-  migrateLegacyRequestShape(normalized);
   var category = normalizeRequestCategory(normalized.category);
   if (!category && Array.isArray(normalized.categories) && normalized.categories.length) {
     category = normalizeRequestCategory(String(normalized.categories[0] || "").trim());
@@ -347,12 +357,8 @@ function validateRequestDetails(normalized) {
   normalized.categories = [category];
   normalized.otherCategoryNote = category === "other" ? normalized.description || null : null;
 
-  if (REQUEST_QUANTITY_CATEGORIES.has(category)) {
+  if (isRequestQuantityCategory(category)) {
     if (!details.quantity || details.quantity < 1) throw new Error("request details are required");
-    return;
-  }
-  if (REQUEST_TIMING_CATEGORIES.has(category)) {
-    if (!details.timing) throw new Error("request details are required");
     return;
   }
   if (category === "other" && !normalized.description) {
@@ -386,25 +392,20 @@ function validateFaultPayload(normalized) {
   if (!FAULT_CATEGORIES.has(category)) {
     throw new Error("fault category is required");
   }
-  const location = cleanText(normalized.location || normalized.details?.location, 64);
-  const urgency = cleanText(normalized.urgency || normalized.details?.urgency, 64);
-  if (!FAULT_LOCATIONS.has(location)) {
-    throw new Error("fault location is required");
-  }
-  if (!FAULT_URGENCY.has(urgency)) {
-    throw new Error("fault urgency is required");
-  }
   normalized.category = category;
   normalized.categories = [category];
-  normalized.details = {
-    ...(normalized.details && typeof normalized.details === "object" ? normalized.details : {}),
-    location,
-    urgency,
-  };
-  normalized.location = location;
-  normalized.urgency = urgency;
-  if ((category === "other" || location === "other") && !normalized.description) {
+  const prev = normalized.details && typeof normalized.details === "object" ? normalized.details : {};
+  normalized.details = { ...prev };
+  delete normalized.details.location;
+  delete normalized.details.urgency;
+  const q = toPositiveInt(normalized.details.quantity);
+  normalized.details.quantity = q != null && q >= 1 ? q : 1;
+  const desc = String(normalized.description || "").trim();
+  if ((category === "ft_other" || category === "other") && !desc) {
     throw new Error("description is required for other category");
+  }
+  if (category === "ft_other" || category === "other") {
+    normalized.otherCategoryNote = normalized.description || normalized.otherCategoryNote || null;
   }
 }
 
@@ -462,7 +463,10 @@ function validateLateCheckoutPayload(normalized) {
   const ti = normalizeCheckoutTime(normalized.checkoutTime);
   if (!isIsoDateYmd(d)) throw new Error("checkout date is required (YYYY-MM-DD)");
   if (!ti) throw new Error("checkout time is required (HH:MM)");
-  const desc = String(normalized.description || "").trim();
+  let desc = String(normalized.description || "").trim();
+  if (!desc && normalized.source === VIONA_OPS_MANUAL_SOURCE) {
+    desc = "Geç çıkış talebi (personel)";
+  }
   if (!desc) throw new Error("description is required for late checkout");
   const today = hotelTodayIsoYmd();
   if (d < today) throw new Error("checkout date cannot be in the past");
@@ -478,6 +482,12 @@ function validateLateCheckoutPayload(normalized) {
 
 function validate(normalized) {
   if (!normalized.type) throw new Error("type is required");
+  if (normalized.source === VIONA_OPS_MANUAL_SOURCE) {
+    const nm0 = String(normalized.name || "").trim();
+    if (!nm0) normalized.name = "Manuel giriş";
+    const nat0 = String(normalized.nationality || "").trim();
+    if (!nat0) normalized.nationality = "-";
+  }
   if (!normalized.name) throw new Error("name is required");
   if (!normalized.room) throw new Error("room is required");
   if (!normalized.nationality) throw new Error("nationality is required");

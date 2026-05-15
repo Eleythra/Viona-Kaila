@@ -4,66 +4,108 @@
   var VIONA_OPS_MANUAL_SOURCE = "viona_ops_manual";
 
   var REQUEST_QUANTITY = {
-    towel_extra: 1,
-    room_towel: 1,
-    bathrobe: 1,
-    bedding_sheet: 1,
-    bedding_pillow: 1,
-    bedding_blanket: 1,
-    slippers: 1,
-    hanger: 1,
-    baby_bed: 1,
-    toilet_paper: 1,
-    toiletries: 1,
+    hk_duvet_request: 1,
+    hk_bed_join: 1,
+    hk_bed_soften: 1,
+    hk_pillow_request: 1,
+    hk_pique_request: 1,
+    hk_extra_bed: 1,
+    hk_baby_crib: 1,
+    hk_sheet_change: 1,
+    hk_towel_request: 1,
+    hk_towel_change: 1,
+    hk_toilet_paper: 1,
+    hk_slippers: 1,
+    hk_dental_set: 1,
+    hk_amenity_kit: 1,
+    hk_water: 1,
+    hk_coffee_tea_supplies: 1,
+    hk_cup_request: 1,
+    hk_room_cleaning: 1,
+    hk_trash_removal: 1,
+    hk_balcony_cleaning: 1,
+    hk_cleaning_dnd_coordinate: 1,
+    hk_bad_odor: 1,
+    hk_pest_control: 1,
+    hk_iron: 1,
+    hk_vase: 1,
   };
-  var REQUEST_TIMING = { room_cleaning: 1, turndown: 1 };
-
   var REQUEST_OPTS = [
-    ["towel_extra", "Ek havlu"],
-    ["room_towel", "Ek oda havlusu"],
-    ["bathrobe", "Bornoz"],
-    ["bedding_sheet", "Çarşaf / nevresim"],
-    ["bedding_pillow", "Yastık"],
-    ["bedding_blanket", "Battaniye"],
-    ["room_cleaning", "Oda temizliği"],
-    ["turndown", "Turndown"],
-    ["slippers", "Terlik"],
-    ["minibar_refill", "Minibar yenileme"],
-    ["bottled_water", "Şişe su"],
-    ["tea_coffee", "Çay / kahve"],
-    ["toilet_paper", "Tuvalet kağıdı"],
-    ["toiletries", "Şampuan / sabun"],
-    ["climate_request", "Klima ayarı"],
-    ["room_refresh", "Oda kokusu"],
-    ["hanger", "Askı"],
-    ["kettle", "Su ısıtıcı"],
-    ["room_safe", "Kasa"],
-    ["baby_bed", "Bebek yatağı"],
+    ["hk_duvet_request", "Yorgan isteği (adet)"],
+    ["hk_bed_join", "Yatak birleştirme (adet)"],
+    ["hk_bed_soften", "Yatağın yumuşatılması (adet)"],
+    ["hk_pillow_request", "Yastık isteği (adet)"],
+    ["hk_pique_request", "Pike isteği (adet)"],
+    ["hk_extra_bed", "Ek yatak (adet)"],
+    ["hk_baby_crib", "Bebek yatağı (adet)"],
+    ["hk_sheet_change", "Çarşaf değişimi (adet)"],
+    ["hk_towel_request", "Havlu isteği (adet)"],
+    ["hk_towel_change", "Havlu değişimi (adet)"],
+    ["hk_toilet_paper", "Tuvalet kağıdı (adet)"],
+    ["hk_slippers", "Terlik isteği (adet)"],
+    ["hk_dental_set", "Diş seti isteği (adet)"],
+    ["hk_amenity_kit", "Banyo ve kişisel bakım seti (şampuan, sabun vb.) (adet)"],
+    ["hk_water", "Su isteği (adet)"],
+    ["hk_coffee_tea_supplies", "Kahve, süt tozu, çay isteği (adet)"],
+    ["hk_cup_request", "Kupa isteği (adet)"],
+    ["hk_room_cleaning", "Oda temizliği (adet)"],
+    ["hk_trash_removal", "Çöplerin alınması (adet)"],
+    ["hk_balcony_cleaning", "Balkon temizliği (adet)"],
+    ["hk_cleaning_dnd_coordinate", "Temizlik ve DND koordinasyonu (adet)"],
+    ["hk_bad_odor", "Kötü koku şikayeti (adet)"],
+    ["hk_pest_control", "İlaçlama isteği (adet)"],
+    ["hk_iron", "Ütü isteği (adet)"],
+    ["hk_vase", "Vazo isteği (adet)"],
     ["other", "Diğer"],
   ];
 
   var FAULT_OPTS = [
-    ["hvac", "Klima / Isıtma"],
-    ["electric", "Elektrik"],
-    ["water_bathroom", "Su / Banyo"],
-    ["tv_electronics", "TV / Elektronik"],
-    ["door_lock", "Kapı kilidi"],
-    ["furniture_item", "Mobilya"],
-    ["cleaning_equipment_damage", "Temizlik ekipmanı hasarı"],
-    ["balcony_window", "Balkon / Pencere"],
-    ["other", "Diğer"],
-  ];
-
-  var FAULT_LOC_OPTS = [
-    ["room_inside", "Oda içi"],
-    ["bathroom", "Banyo"],
-    ["balcony", "Balkon"],
-    ["other", "Diğer"],
-  ];
-
-  var URGENCY_OPTS = [
-    ["normal", "Normal"],
-    ["urgent", "Acil"],
+    ["ft_ac_not_cooling", "Klima soğutmuyor"],
+    ["ft_ac_not_heating", "Klima ısıtmıyor"],
+    ["ft_ac_remote", "Klima kumandası"],
+    ["ft_ac_fault", "Klima arızası"],
+    ["ft_ventilation_fault", "Havalandırma arızası"],
+    ["ft_socket_fault", "Priz arızası"],
+    ["ft_electric_fault", "Elektrik arızası"],
+    ["ft_led_fault", "LED arızası"],
+    ["ft_lamp_fault", "Lamba arızası"],
+    ["ft_sconce_fault", "Aplik arızası"],
+    ["ft_ceiling_water_leak", "Tavandan su akıyor"],
+    ["ft_bidet_faucet_fault", "Taharet musluğu arızası"],
+    ["ft_cold_water_no_flow", "Su soğuk akmıyor"],
+    ["ft_hot_water_no_flow", "Su sıcak akmıyor"],
+    ["ft_siphon_fault", "Sifon arızası"],
+    ["ft_faucet_fault", "Musluk arızası"],
+    ["ft_sink_drain_fault", "Lavabo gideri arızası"],
+    ["ft_toilet_seat_broken", "Klozet kapağı kırık"],
+    ["ft_shower_cabin_fault", "Duşakabin arızası"],
+    ["ft_shower_head_fault", "Duş başlığı arızası"],
+    ["ft_towel_rail_fault", "Banyo havluluk"],
+    ["ft_bathroom_drain_clog", "Banyo gideri tıkalı"],
+    ["ft_tv_remote", "Televizyon kumandası"],
+    ["ft_tv_fault", "Televizyon arızası"],
+    ["ft_phone_fault", "Telefon arızası"],
+    ["ft_minibar_fault", "Minibar arızası"],
+    ["ft_safe_fault", "Kasa arızası"],
+    ["ft_kettle_fault", "Kettle arızası"],
+    ["ft_hair_dryer_fault", "Fön makinesi çalışmıyor"],
+    ["ft_tv_channel_fault", "Kanal arızası"],
+    ["ft_curtain_fallen", "Perde düşmüş"],
+    ["ft_window_fault", "Pencere arızası"],
+    ["ft_window_cleaning", "Pencere temizliği"],
+    ["ft_room_door_fault", "Oda kapısı arızası"],
+    ["ft_bathroom_door_fault", "Banyo kapısı arızası"],
+    ["ft_balcony_door_fault", "Balkon kapısı arızası"],
+    ["ft_balcony_railing_loose", "Balkon korkuluğu gevşek / sallanıyor"],
+    ["ft_cornice_fault", "Korniş arızası"],
+    ["ft_headboard_fault", "Yatak başlığı arızası"],
+    ["ft_dresser_drawer_fault", "Şifonyer çekmecesi"],
+    ["ft_drawer_fault", "Çekmece arızası"],
+    ["ft_wardrobe_fault", "Gardırop arızası"],
+    ["ft_mirror_damage", "Ayna kırık / çatlak"],
+    ["ft_elevator_fault", "Asansör arızası"],
+    ["ft_indoor_pool_temperature", "Kapalı havuz sıcaklığı / ayar arızası"],
+    ["ft_other", "Diğer (teknik)"],
   ];
 
   var COMPLAINT_OPTS = [
@@ -99,6 +141,75 @@
     ["other_celebration", "Diğer kutlama"],
   ];
 
+  var NATIONALITY_OPTS = [
+    ["TR", "Türkiye"],
+    ["DE", "Almanya"],
+    ["RU", "Rusya"],
+    ["GB", "Birleşik Krallık"],
+    ["NL", "Hollanda"],
+    ["PL", "Polonya"],
+    ["UA", "Ukrayna"],
+    ["RO", "Romanya"],
+    ["FR", "Fransa"],
+    ["IT", "İtalya"],
+    ["ES", "İspanya"],
+    ["AT", "Avusturya"],
+    ["CH", "İsviçre"],
+    ["BE", "Belçika"],
+    ["SE", "İsveç"],
+    ["NO", "Norveç"],
+    ["DK", "Danimarka"],
+    ["FI", "Finlandiya"],
+    ["CZ", "Çekya"],
+    ["GR", "Yunanistan"],
+    ["PT", "Portekiz"],
+    ["IE", "İrlanda"],
+    ["US", "ABD"],
+    ["CA", "Kanada"],
+    ["AZ", "Azerbaycan"],
+    ["KZ", "Kazakistan"],
+    ["UZ", "Özbekistan"],
+    ["BG", "Bulgaristan"],
+    ["RS", "Sırbistan"],
+    ["HR", "Hırvatistan"],
+    ["BA", "Bosna Hersek"],
+    ["MK", "Kuzey Makedonya"],
+    ["AL", "Arnavutluk"],
+    ["GE", "Gürcistan"],
+    ["AM", "Ermenistan"],
+    ["IR", "İran"],
+    ["IQ", "Irak"],
+    ["SY", "Suriye"],
+    ["EG", "Mısır"],
+    ["SA", "Suudi Arabistan"],
+    ["AE", "BAE"],
+    ["IL", "İsrail"],
+    ["JO", "Ürdün"],
+    ["LB", "Lübnan"],
+    ["CN", "Çin"],
+    ["JP", "Japonya"],
+    ["KR", "Güney Kore"],
+    ["IN", "Hindistan"],
+    ["AU", "Avustralya"],
+    ["BR", "Brezilya"],
+    ["AR", "Arjantin"],
+    ["MX", "Meksika"],
+    ["OTHER", "Diğer"],
+  ];
+
+  function nationalitySelectFieldHtml() {
+    var inner = NATIONALITY_OPTS.map(function (pair) {
+      return '<option value="' + esc(pair[0]) + '">' + esc(pair[1]) + " (" + esc(pair[0]) + ")</option>";
+    }).join("");
+    return (
+      '<label class="op-filter-field"><span class="op-filter-field__lbl">Uyruk <span class="op-filter-field__hint">isteğe bağlı</span></span>' +
+      '<select class="op-filter-input js-manual-nat" aria-label="Uyruk (isteğe bağlı)">' +
+      '<option value="">Belirtilmedi</option>' +
+      inner +
+      "</select></label>"
+    );
+  }
+
   function esc(s) {
     var d = document.createElement("div");
     d.textContent = String(s == null ? "" : s);
@@ -117,16 +228,19 @@
     var cat = root.querySelector(".js-manual-req-cat");
     var wrapQty = root.querySelector(".js-manual-req-qty-wrap");
     var wrapTim = root.querySelector(".js-manual-req-tim-wrap");
-    if (!cat || !wrapQty || !wrapTim) return;
+    if (!cat || !wrapQty) return;
     var v = String(cat.value || "").trim();
     wrapQty.classList.toggle("hidden", !REQUEST_QUANTITY[v]);
-    wrapTim.classList.toggle("hidden", !REQUEST_TIMING[v]);
+    if (wrapTim) wrapTim.classList.add("hidden");
   }
 
   function currentFrontType(root, opts) {
+    if (opts && typeof opts.getRecordType === "function") {
+      var g = String(opts.getRecordType() || "complaint").trim() || "complaint";
+      if (g === "complaint" || g === "guest_notification" || g === "late_checkout") return g;
+    }
     var sel = root.querySelector(".js-manual-front-type");
     if (sel && sel.value) return String(sel.value).trim();
-    if (opts.getRecordType) return String(opts.getRecordType() || "complaint").trim() || "complaint";
     return "complaint";
   }
 
@@ -150,9 +264,14 @@
     var desc = root.querySelector(".js-manual-desc");
     var n = name && name.value ? String(name.value).trim() : "";
     var r = room && room.value ? String(room.value).trim() : "";
-    var nt = nat && nat.value ? String(nat.value).trim() : "-";
+    var nt = "";
+    if (nat && nat.tagName === "SELECT") {
+      nt = nat.value != null ? String(nat.value).trim() : "";
+    } else if (nat && nat.value != null && nat.value !== "") {
+      nt = String(nat.value).trim();
+    }
+    if (!nt) nt = "-";
     var dtxt = desc && desc.value ? String(desc.value).trim() : "";
-    if (!n) throw new Error("Misafir adı gerekli");
     if (!r) throw new Error("Oda numarası gerekli");
 
     if (mode === "fixed") {
@@ -168,32 +287,24 @@
           if (!q || q < 1) throw new Error("Geçerli adet girin");
           details.quantity = q;
         }
-        if (REQUEST_TIMING[cat]) {
-          var tm = root.querySelector(".js-manual-req-tim");
-          var tv = tm && tm.value ? String(tm.value).trim() : "";
-          if (!tv) throw new Error("Zamanlama seçin");
-          details.timing = tv;
-        }
         if (cat === "other" && !dtxt) throw new Error("Diğer kategoride açıklama gerekli");
         return { type: "request", name: n, room: r, nationality: nt || "-", category: cat, details: details, description: dtxt, language: "tr" };
       }
       if (rt === "fault") {
         var fc = root.querySelector(".js-manual-fault-cat");
-        var fl = root.querySelector(".js-manual-fault-loc");
-        var fu = root.querySelector(".js-manual-fault-urg");
         var fcat = fc && fc.value ? String(fc.value).trim() : "";
-        var loc = fl && fl.value ? String(fl.value).trim() : "";
-        var urg = fu && fu.value ? String(fu.value).trim() : "";
-        if (!fcat || !loc || !urg) throw new Error("Arıza kategorisi, konum ve aciliyet gerekli");
-        if ((fcat === "other" || loc === "other") && !dtxt) throw new Error("Açıklama gerekli");
+        if (!fcat) throw new Error("Arıza kategorisi gerekli");
+        if ((fcat === "ft_other") && !dtxt) throw new Error("Diğer arıza için açıklama gerekli");
+        var fq = root.querySelector(".js-manual-fault-qty");
+        var fqN = fq ? parseInt(String(fq.value || "1"), 10) : 1;
+        if (!fqN || fqN < 1) throw new Error("Geçerli adet girin");
         return {
           type: "fault",
           name: n,
           room: r,
           nationality: nt || "-",
           category: fcat,
-          location: loc,
-          urgency: urg,
+          details: { quantity: fqN },
           description: dtxt,
           language: "tr",
         };
@@ -208,7 +319,6 @@
       var ymd = ld && ld.value ? String(ld.value).trim() : "";
       var hm = lt && lt.value ? String(lt.value).trim().slice(0, 5) : "";
       if (!ymd || !hm) throw new Error("Geç çıkış tarihi ve saati gerekli");
-      if (!dtxt) throw new Error("Geç çıkış açıklaması gerekli");
       return {
         type: "late_checkout",
         name: n,
@@ -266,19 +376,9 @@
           ? "Yeni kayıt (personel · HK)"
           : "Yeni kayıt (personel · teknik)";
 
-    var frontTypeRow =
-      mode === "front"
-        ? '<label class="op-filter-field op-filter-field--grow"><span class="op-filter-field__lbl">Kayıt türü</span>' +
-          '<select class="op-filter-input js-manual-front-type">' +
-          '<option value="complaint">Şikâyet</option>' +
-          '<option value="guest_notification">Misafir bildirimi</option>' +
-          '<option value="late_checkout">Geç çıkış</option>' +
-          "</select></label>"
-        : "";
-
     var requestBlock =
       mode === "fixed" && opts.recordType === "request"
-        ? '<label class="op-filter-field"><span class="op-filter-field__lbl">Talep kategorisi</span>' +
+        ? '<label class="op-filter-field"><span class="op-filter-field__lbl">Talep kategorisi <abbr class="op-filter-req-star" title="Zorunlu">*</abbr></span>' +
           '<select class="op-filter-input js-manual-req-cat">' +
           optionsHtml(REQUEST_OPTS) +
           "</select></label>" +
@@ -293,24 +393,18 @@
 
     var faultBlock =
       mode === "fixed" && opts.recordType === "fault"
-        ? '<label class="op-filter-field"><span class="op-filter-field__lbl">Arıza kategorisi</span>' +
+        ? '<label class="op-filter-field"><span class="op-filter-field__lbl">Arıza kategorisi <abbr class="op-filter-req-star" title="Zorunlu">*</abbr></span>' +
           '<select class="op-filter-input js-manual-fault-cat">' +
           optionsHtml(FAULT_OPTS) +
           "</select></label>" +
-          '<label class="op-filter-field"><span class="op-filter-field__lbl">Konum</span>' +
-          '<select class="op-filter-input js-manual-fault-loc">' +
-          optionsHtml(FAULT_LOC_OPTS) +
-          "</select></label>" +
-          '<label class="op-filter-field"><span class="op-filter-field__lbl">Aciliyet</span>' +
-          '<select class="op-filter-input js-manual-fault-urg">' +
-          optionsHtml(URGENCY_OPTS) +
-          "</select></label>"
+          '<label class="op-filter-field"><span class="op-filter-field__lbl">Adet</span>' +
+          '<input type="number" class="op-filter-input js-manual-fault-qty" min="1" max="99" value="1" /></label>'
         : "";
 
     var frontComplaint =
       mode === "front"
         ? '<div class="js-manual-pan-complaint manual-front-panel">' +
-          '<label class="op-filter-field op-filter-field--grow"><span class="op-filter-field__lbl">Şikâyet kategorisi</span>' +
+          '<label class="op-filter-field op-filter-field--grow"><span class="op-filter-field__lbl">Şikâyet kategorisi <abbr class="op-filter-req-star" title="Zorunlu">*</abbr></span>' +
           '<select class="op-filter-input js-manual-complaint-cat">' +
           optionsHtml(COMPLAINT_OPTS) +
           "</select></label></div>"
@@ -319,7 +413,7 @@
     var frontGn =
       mode === "front"
         ? '<div class="js-manual-pan-gn manual-front-panel hidden">' +
-          '<label class="op-filter-field op-filter-field--grow"><span class="op-filter-field__lbl">Bildirim kategorisi</span>' +
+          '<label class="op-filter-field op-filter-field--grow"><span class="op-filter-field__lbl">Bildirim kategorisi <abbr class="op-filter-req-star" title="Zorunlu">*</abbr></span>' +
           '<select class="op-filter-input js-manual-gn-cat">' +
           optionsHtml(GUEST_NOTIF_OPTS) +
           "</select></label></div>"
@@ -328,38 +422,50 @@
     var frontLc =
       mode === "front"
         ? '<div class="js-manual-pan-lc manual-front-panel hidden">' +
-          '<label class="op-filter-field"><span class="op-filter-field__lbl">Çıkış tarihi</span>' +
+          '<label class="op-filter-field"><span class="op-filter-field__lbl">Çıkış tarihi <abbr class="op-filter-req-star" title="Zorunlu">*</abbr></span>' +
           '<input type="date" class="op-filter-input js-manual-lc-date" autocomplete="off" /></label>' +
-          '<label class="op-filter-field"><span class="op-filter-field__lbl">Çıkış saati</span>' +
+          '<label class="op-filter-field"><span class="op-filter-field__lbl">Çıkış saati <abbr class="op-filter-req-star" title="Zorunlu">*</abbr></span>' +
           '<input type="time" class="op-filter-input js-manual-lc-time" autocomplete="off" /></label>' +
           "</div>"
         : "";
 
+    var scopeLine =
+      mode === "front"
+        ? '<p class="ops-manual-form__scope">Kayıt türü, alttaki listelerdeki <strong>aktif sekme</strong> ile aynıdır — önce sekmeyi seçin, sonra odayı ve kategori alanlarını doldurun. Misafir adı ve uyruk isteğe bağlı.</p>'
+        : mode === "fixed" && opts.recordType === "request"
+          ? '<p class="ops-manual-form__scope"><strong>Oda</strong> ve <strong>talep kategorisi</strong> zorunlu. Misafir adı isteğe bağlı — boşsa sistem «Manuel giriş» kullanır.</p>'
+          : '<p class="ops-manual-form__scope"><strong>Oda</strong> ve arıza <strong>kategorisi</strong> zorunlu; «Diğer (teknik)» ve eski «Diğer» için açıklama gerekir. Misafir adı isteğe bağlı.</p>';
+
+    var roomField =
+      '<label class="op-filter-field"><span class="op-filter-field__lbl">Oda numarası <abbr class="op-filter-req-star" title="Zorunlu">*</abbr></span>' +
+      '<input type="text" class="op-filter-input js-manual-room" maxlength="20" autocomplete="off" /></label>';
+
+    var nameField =
+      '<label class="op-filter-field"><span class="op-filter-field__lbl">Misafir adı <span class="op-filter-field__hint">isteğe bağlı</span></span>' +
+      '<input type="text" class="op-filter-input js-manual-name" maxlength="120" autocomplete="name" placeholder="Boş bırakılabilir" /></label>';
+
+    var natField = nationalitySelectFieldHtml();
+
     var descLbl =
-      '<label class="op-filter-field op-filter-field--grow op-filter-field--textarea"><span class="op-filter-field__lbl">Açıklama / not</span>' +
-      '<textarea class="op-filter-input js-manual-desc" rows="2" placeholder="İsteğe bağlı veya zorunlu (kategoriye göre)"></textarea></label>';
+      '<label class="op-filter-field op-filter-field--grow op-filter-field--textarea"><span class="op-filter-field__lbl">Açıklama <span class="op-filter-field__hint">isteğe bağlı · bazı kategoriler zorunlu tutar</span></span>' +
+      '<textarea class="op-filter-input js-manual-desc" rows="2" placeholder="İsteğe bağlı"></textarea></label>';
+
+    var manualFieldsCore =
+      mode === "front"
+        ? roomField + frontComplaint + frontGn + frontLc + nameField + natField
+        : roomField + requestBlock + faultBlock + nameField + natField;
 
     host.innerHTML =
       '<div class="glass-block ops-manual-form">' +
       '<h3 class="ops-manual-form__title">' +
       esc(title) +
       "</h3>" +
-      '<p class="ops-manual-form__hint">Personel girişi veritabanına <code>' +
+      scopeLine +
+      '<p class="ops-manual-form__hint">Kayıt <code>' +
       esc(VIONA_OPS_MANUAL_SOURCE) +
-      "</code> kaynağıyla yazılır; operasyon WhatsApp (misafir kaydıyla aynı akış) tetiklenir.</p>" +
+      "</code> kaynağıyla yazılır; uygunsa operasyon WhatsApp iletilir.</p>" +
       '<div class="op-filter-bar__row op-filter-bar__row--manual">' +
-      '<label class="op-filter-field"><span class="op-filter-field__lbl">Misafir adı</span>' +
-      '<input type="text" class="op-filter-input js-manual-name" maxlength="120" autocomplete="name" /></label>' +
-      '<label class="op-filter-field"><span class="op-filter-field__lbl">Oda</span>' +
-      '<input type="text" class="op-filter-input js-manual-room" maxlength="20" autocomplete="off" /></label>' +
-      '<label class="op-filter-field"><span class="op-filter-field__lbl">Uyruk</span>' +
-      '<input type="text" class="op-filter-input js-manual-nat" maxlength="12" value="-" placeholder="TR veya -" autocomplete="off" /></label>' +
-      frontTypeRow +
-      requestBlock +
-      faultBlock +
-      frontComplaint +
-      frontGn +
-      frontLc +
+      manualFieldsCore +
       descLbl +
       '<div class="op-filter-actions op-filter-actions--manual">' +
       '<button type="button" class="btn-primary btn-small js-manual-submit">Kaydet ve WhatsApp’a gönder</button>' +
@@ -377,16 +483,6 @@
       syncRequestExtras(root);
     }
 
-    var ftSel = root.querySelector(".js-manual-front-type");
-    if (ftSel && opts.getRecordType) {
-      var iv = String(opts.getRecordType() || "complaint").trim();
-      if (iv === "complaint" || iv === "guest_notification" || iv === "late_checkout") ftSel.value = iv;
-    }
-    if (ftSel) {
-      ftSel.addEventListener("change", function () {
-        syncFrontPanels(root, opts);
-      });
-    }
     syncFrontPanels(root, opts);
 
     var sub = root.querySelector(".js-manual-submit");
@@ -401,8 +497,10 @@
           if (st) st.textContent = "Kaydedildi.";
           var nameEl = root.querySelector(".js-manual-name");
           var descEl = root.querySelector(".js-manual-desc");
+          var natEl = root.querySelector(".js-manual-nat");
           if (nameEl) nameEl.value = "";
           if (descEl) descEl.value = "";
+          if (natEl && natEl.tagName === "SELECT") natEl.value = "";
           if (typeof opts.onSuccess === "function") opts.onSuccess();
         } catch (e) {
           if (st) st.textContent = e && e.message ? String(e.message) : "Hata";
@@ -416,15 +514,11 @@
     host._vionaManualRoot = root;
   }
 
-  function syncFrontType(type) {
-    var t = String(type || "").trim();
-    if (!t) return;
+  function syncFrontType(_type) {
     document.querySelectorAll(".ops-manual-form-host").forEach(function (host) {
       var root = host._vionaManualRoot;
       var opts = host._vionaManualOpts;
       if (!root || !opts || opts.mode !== "front") return;
-      var sel = root.querySelector(".js-manual-front-type");
-      if (sel) sel.value = t;
       syncFrontPanels(root, opts);
     });
   }

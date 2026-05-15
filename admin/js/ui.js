@@ -563,75 +563,63 @@
 
   /** İstek tablosu «Kategori» sütunu: web formundaki grup başlığı (seçilemez üst başlık). */
   var REQUEST_GROUP_LABELS = {
-    towel_extra: "Yastık, havlu, bornoz ve terlik",
-    room_towel: "Yastık, havlu, bornoz ve terlik",
-    bathrobe: "Yastık, havlu, bornoz ve terlik",
-    slippers: "Yastık, havlu, bornoz ve terlik",
-    towel: "Yastık, havlu, bornoz ve terlik",
-    bedding_sheet: "Çarşaf ve battaniye",
-    bedding_blanket: "Çarşaf ve battaniye",
-    bedding: "Çarşaf ve battaniye",
-    bedding_pillow: "Yastık, havlu, bornoz ve terlik",
-    room_cleaning: "Oda hizmeti",
-    turndown: "Oda hizmeti",
-    minibar_refill: "Şişe su ve çay / kahve",
-    bottled_water: "Şişe su ve çay / kahve",
-    tea_coffee: "Şişe su ve çay / kahve",
-    minibar: "Şişe su ve çay / kahve",
-    toilet_paper: "Tuvalet kağıdı ve şampuan / sabun",
-    toiletries: "Tuvalet kağıdı ve şampuan / sabun",
-    climate_request: "Konfor ve klima",
-    room_refresh: "Konfor ve klima",
-    hanger: "Ekipman",
-    kettle: "Ekipman",
-    room_safe: "Ekipman",
-    baby_bed: "Ekipman",
-    baby_equipment: "Ekipman",
-    room_equipment: "Ekipman",
+    hk_duvet_request: "Yatak & uyku konforu",
+    hk_bed_join: "Yatak & uyku konforu",
+    hk_bed_soften: "Yatak & uyku konforu",
+    hk_pillow_request: "Yatak & uyku konforu",
+    hk_pique_request: "Yatak & uyku konforu",
+    hk_extra_bed: "Yatak & uyku konforu",
+    hk_baby_crib: "Yatak & uyku konforu",
+    hk_sheet_change: "Yatak & uyku konforu",
+    hk_towel_request: "Havlu & banyo ihtiyaçları",
+    hk_towel_change: "Havlu & banyo ihtiyaçları",
+    hk_toilet_paper: "Havlu & banyo ihtiyaçları",
+    hk_slippers: "Havlu & banyo ihtiyaçları",
+    hk_dental_set: "Havlu & banyo ihtiyaçları",
+    hk_amenity_kit: "Havlu & banyo ihtiyaçları",
+    hk_water: "İçecek & oda ikramları",
+    hk_coffee_tea_supplies: "İçecek & oda ikramları",
+    hk_cup_request: "İçecek & oda ikramları",
+    hk_room_cleaning: "Temizlik & hijyen",
+    hk_trash_removal: "Temizlik & hijyen",
+    hk_balcony_cleaning: "Temizlik & hijyen",
+    hk_cleaning_dnd_coordinate: "Temizlik & hijyen",
+    hk_bad_odor: "Temizlik & hijyen",
+    hk_pest_control: "Temizlik & hijyen",
+    hk_iron: "Ekipman & diğer",
+    hk_vase: "Ekipman & diğer",
     other: "Diğer",
   };
 
   var CATEGORY_LABELS = {
     request: {
-      towel_extra: "Ek havlu",
-      room_towel: "Ek oda havlusu",
-      bathrobe: "Bornoz",
-      bedding_sheet: "Çarşaf / nevresim",
-      bedding_pillow: "Yastık",
-      bedding_blanket: "Battaniye",
-      turndown: "Yatak düzenleme",
-      slippers: "Terlik",
-      minibar_refill: "Minibar yenileme",
-      bottled_water: "Şişe su",
-      tea_coffee: "Çay / kahve",
-      toilet_paper: "Tuvalet kağıdı",
-      toiletries: "Şampuan / sabun",
-      climate_request: "Klima ayarı",
-      room_refresh: "Oda kokusu",
-      hanger: "Askı",
-      kettle: "Su ısıtıcı",
-      room_safe: "Kasa",
-      baby_bed: "Bebek yatağı",
-      towel: "Havlu",
-      extraTowels: "Havlu",
-      extra_towels: "Havlu",
-      towels: "Havlu",
-      bedding: "Yastık / Nevresim",
-      linen: "Yastık / Nevresim",
-      room_cleaning: "Oda temizliği",
-      roomCleaning: "Oda temizliği",
-      room_cleaning_request: "Oda temizliği",
-      minibar: "Minibar",
-      minibarRefill: "Minibar",
-      minibar_request: "Minibar",
-      baby_equipment: "Bebek ekipmanı",
-      babyNeeds: "Bebek ekipmanı",
-      baby_equipment_request: "Bebek ekipmanı",
-      room_equipment: "Oda ekipmanı",
-      roomSupplies: "Oda ekipmanı",
-      room_equipment_request: "Oda ekipmanı",
+      hk_duvet_request: "Yorgan isteği (adet)",
+      hk_bed_join: "Yatak birleştirme (adet)",
+      hk_bed_soften: "Yatağın yumuşatılması (adet)",
+      hk_pillow_request: "Yastık isteği (adet)",
+      hk_pique_request: "Pike isteği (adet)",
+      hk_extra_bed: "Ek yatak (adet)",
+      hk_baby_crib: "Bebek yatağı (adet)",
+      hk_sheet_change: "Çarşaf değişimi (adet)",
+      hk_towel_request: "Havlu isteği (adet)",
+      hk_towel_change: "Havlu değişimi (adet)",
+      hk_toilet_paper: "Tuvalet kağıdı (adet)",
+      hk_slippers: "Terlik isteği (adet)",
+      hk_dental_set: "Diş seti isteği (adet)",
+      hk_amenity_kit: "Banyo ve kişisel bakım seti (şampuan, sabun vb.) (adet)",
+      hk_water: "Su isteği (adet)",
+      hk_coffee_tea_supplies: "Kahve, süt tozu, çay isteği (adet)",
+      hk_cup_request: "Kupa isteği (adet)",
+      hk_room_cleaning: "Oda temizliği (adet)",
+      hk_trash_removal: "Çöplerin alınması (adet)",
+      hk_balcony_cleaning: "Balkon temizliği (adet)",
+      hk_cleaning_dnd_coordinate:
+        "Temizlik ve rahatsız etmeyin koordinasyonu / tercih bildirimi (adet)",
+      hk_bad_odor: "Kötü koku şikayeti (adet)",
+      hk_pest_control: "İlaçlama isteği (adet)",
+      hk_iron: "Ütü isteği (adet)",
+      hk_vase: "Vazo isteği (adet)",
       other: "Diğer",
-      otherRequest: "Diğer",
     },
     complaint: {
       room_cleaning: "Oda temizliği",
@@ -666,16 +654,52 @@
       other_celebration: "Diğer kutlama talebi",
     },
     fault: {
-      hvac: "Klima / ısıtma",
-      ac: "Klima / ısıtma",
-      electric: "Elektrik",
-      water_bathroom: "Su / banyo",
-      tv_electronics: "TV / elektronik",
-      door_lock: "Kapı / kilit",
-      furniture_item: "Mobilya / eşya",
-      cleaning_equipment_damage: "Temizlik ekipmanı hasarı",
-      balcony_window: "Balkon / pencere",
-      other: "Diğer",
+      ft_ac_not_cooling: "Klima soğutmuyor",
+      ft_ac_not_heating: "Klima ısıtmıyor",
+      ft_ac_remote: "Klima kumandası",
+      ft_ac_fault: "Klima arızası",
+      ft_ventilation_fault: "Havalandırma arızası",
+      ft_socket_fault: "Priz arızası",
+      ft_electric_fault: "Elektrik arızası",
+      ft_led_fault: "LED arızası",
+      ft_lamp_fault: "Lamba arızası",
+      ft_sconce_fault: "Aplik arızası",
+      ft_ceiling_water_leak: "Tavandan su akıyor",
+      ft_bidet_faucet_fault: "Taharet musluğu arızası",
+      ft_cold_water_no_flow: "Su soğuk akmıyor",
+      ft_hot_water_no_flow: "Su sıcak akmıyor",
+      ft_siphon_fault: "Sifon arızası",
+      ft_faucet_fault: "Musluk arızası",
+      ft_sink_drain_fault: "Lavabo gideri arızası",
+      ft_toilet_seat_broken: "Klozet kapağı kırık",
+      ft_shower_cabin_fault: "Duşakabin arızası",
+      ft_shower_head_fault: "Duş başlığı arızası",
+      ft_towel_rail_fault: "Banyo havluluk",
+      ft_bathroom_drain_clog: "Banyo gideri tıkalı",
+      ft_tv_remote: "Televizyon kumandası",
+      ft_tv_fault: "Televizyon arızası",
+      ft_phone_fault: "Telefon arızası",
+      ft_minibar_fault: "Minibar arızası",
+      ft_safe_fault: "Kasa arızası",
+      ft_kettle_fault: "Kettle arızası",
+      ft_hair_dryer_fault: "Fön makinesi çalışmıyor",
+      ft_tv_channel_fault: "Kanal arızası",
+      ft_curtain_fallen: "Perde düşmüş",
+      ft_window_fault: "Pencere arızası",
+      ft_window_cleaning: "Pencere temizliği",
+      ft_room_door_fault: "Oda kapısı arızası",
+      ft_bathroom_door_fault: "Banyo kapısı arızası",
+      ft_balcony_door_fault: "Balkon kapısı arızası",
+      ft_balcony_railing_loose: "Balkon korkuluğu gevşek / sallanıyor",
+      ft_cornice_fault: "Korniş arızası",
+      ft_headboard_fault: "Yatak başlığı arızası",
+      ft_dresser_drawer_fault: "Şifonyer çekmecesi",
+      ft_drawer_fault: "Çekmece arızası",
+      ft_wardrobe_fault: "Gardırop arızası",
+      ft_mirror_damage: "Ayna kırık / çatlak",
+      ft_elevator_fault: "Asansör arızası",
+      ft_indoor_pool_temperature: "Kapalı havuz sıcaklığı / ayar arızası",
+      ft_other: "Diğer (teknik)",
     },
   };
 
@@ -731,7 +755,7 @@
     return REQUEST_GROUP_LABELS[cat] || (CATEGORY_LABELS.request && CATEGORY_LABELS.request[cat]) || cat;
   }
 
-  /** Seçilen talep satırı (tür) + varsa zamanlama; grup adı değil. */
+  /** Seçilen talep satırı (tür) + varsa zamanötesi eski kayıt ayrıntıları. */
   function requestFormTypeLabel(row) {
     if (!row || typeof row !== "object") return "-";
     var ctx = requestDetailsAndCategory(row);
@@ -739,7 +763,9 @@
     var cat = ctx.category;
     var vm = requestValueMap();
     var catTitle = (CATEGORY_LABELS.request && CATEGORY_LABELS.request[cat]) || "";
-
+    if (cat.indexOf("hk_") === 0) return catTitle || cat || "-";
+    if (cat === "other") return (CATEGORY_LABELS.request && CATEGORY_LABELS.request.other) || "Diğer";
+    /* Arşiv: eski şema satırları */
     if (cat === "room_cleaning" && details.requestType) {
       var leg = [];
       leg.push(vm[String(details.requestType)] || String(details.requestType));
@@ -757,31 +783,15 @@
       if (details.timing) return catTitle + " · " + (vm[String(details.timing)] || String(details.timing));
       return catTitle;
     }
-
-    if (cat === "towel") {
-      if (details.itemType) return vm[String(details.itemType)] || String(details.itemType);
-      return "-";
-    }
-    if (cat === "bedding") {
-      if (details.itemType) return vm[String(details.itemType)] || String(details.itemType);
-      return "-";
-    }
-    if (cat === "baby_equipment" || cat === "room_equipment") {
-      if (details.itemType) return vm[String(details.itemType)] || String(details.itemType);
-      return "-";
-    }
-    if (cat === "minibar") {
-      if (details.requestType) return vm[String(details.requestType)] || String(details.requestType);
-      return "-";
-    }
-    if (cat === "other") {
-      return (CATEGORY_LABELS.request && CATEGORY_LABELS.request.other) || "Diğer";
-    }
-
+    if (cat === "towel" && details.itemType) return vm[String(details.itemType)] || String(details.itemType);
+    if (cat === "bedding" && details.itemType) return vm[String(details.itemType)] || String(details.itemType);
+    if ((cat === "baby_equipment" || cat === "room_equipment") && details.itemType)
+      return vm[String(details.itemType)] || String(details.itemType);
+    if (cat === "minibar" && details.requestType) return vm[String(details.requestType)] || String(details.requestType);
     if (details.itemType) return vm[String(details.itemType)] || String(details.itemType);
     if (details.requestType) return vm[String(details.requestType)] || String(details.requestType);
     if (details.timing) return vm[String(details.timing)] || String(details.timing);
-    return "-";
+    return catTitle || cat || "-";
   }
 
   /** Adet yalnızca ilgili türlerde; yoksa «-» (WhatsApp ile aynı). */
@@ -790,22 +800,7 @@
     var ctx = requestDetailsAndCategory(row);
     var details = ctx.details;
     var cat = ctx.category;
-    var withQty =
-      cat === "towel_extra" ||
-      cat === "room_towel" ||
-      cat === "bathrobe" ||
-      cat === "bedding_sheet" ||
-      cat === "bedding_pillow" ||
-      cat === "bedding_blanket" ||
-      cat === "slippers" ||
-      cat === "hanger" ||
-      cat === "baby_bed" ||
-      cat === "toilet_paper" ||
-      cat === "toiletries" ||
-      cat === "towel" ||
-      cat === "bedding" ||
-      cat === "baby_equipment" ||
-      cat === "room_equipment";
+    var withQty = cat.indexOf("hk_") === 0;
     if (!withQty) return "-";
     var q = details.quantity;
     if (q == null || String(q).trim() === "") return "-";
@@ -1077,38 +1072,6 @@
     return rc ? [rc] : [];
   }
 
-  function faultRawLocation(row) {
-    var raw = row && row.raw_payload && typeof row.raw_payload === "object" ? row.raw_payload : {};
-    var details = faultMergedDetails(row);
-    return String(row.location || raw.location || details.location || "").trim();
-  }
-
-  function faultRawUrgency(row) {
-    var raw = row && row.raw_payload && typeof row.raw_payload === "object" ? row.raw_payload : {};
-    var details = faultMergedDetails(row);
-    return String(row.urgency || raw.urgency || details.urgency || "").trim();
-  }
-
-  function faultLocationLabel(row) {
-    var loc = faultRawLocation(row);
-    var locMap = {
-      room_inside: "Oda içi",
-      bathroom: "Banyo",
-      balcony: "Balkon",
-      other: "Diğer",
-    };
-    return loc ? locMap[loc] || loc : "—";
-  }
-
-  function faultUrgencyLabel(row) {
-    var urg = faultRawUrgency(row);
-    var urgMap = {
-      normal: "Normal",
-      urgent: "Acil",
-    };
-    return urg ? urgMap[urg] || urg : "—";
-  }
-
   /** Arıza formu: açıklama; kolon boşsa details / raw_payload yedeği. */
   function faultFormDescription(row) {
     if (!row || typeof row !== "object") return "—";
@@ -1173,13 +1136,15 @@
       var fse = String(row.category || "").trim() || (fce.length ? fce[0] : "");
       var rawE = row.raw_payload && typeof row.raw_payload === "object" ? row.raw_payload : {};
       if (!fse) fse = String(rawE.category || "").trim();
-      outFault.push("Kategori: " + categoryText("fault", fce, fse || null));
-      var locL = faultLocationLabel(row);
-      if (locL !== "—") outFault.push("Lokasyon: " + locL);
-      var urgL = faultUrgencyLabel(row);
-      if (urgL !== "—") outFault.push("Aciliyet: " + urgL);
+      var rCat = String(rawE.requestCategory || "").trim();
+      if (rCat) outFault.push("Talep kategorisi: " + rCat);
+      outFault.push("Talep türü: " + categoryText("fault", fce, fse || null));
+      var fd = faultMergedDetails(row);
+      var qNum = parseInt(String(fd.quantity != null ? fd.quantity : "1"), 10);
+      if (!qNum || qNum < 1) qNum = 1;
+      outFault.push("Adet: " + qNum);
       var descFault = faultFormDescription(row);
-      if (descFault !== "—") outFault.push("Açıklama: " + descFault);
+      if (descFault !== "—") outFault.push("Açıklama notu: " + descFault);
       return outFault.join(" | ");
     }
     var out = [];
@@ -3774,7 +3739,7 @@
       '<p class="bucket-help bucket-help--faults">' +
       (ro
         ? "Salt izleme; durum teknik operasyon sayfasından. Misafir memnuniyeti burada kaydedilir."
-        : "Kategori, lokasyon, aciliyet ve açıklama formdan. Personel notu dahilidir. Gelen kayıtlar operasyon WhatsApp (Cloud API) hattına düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
+        : "Kategori ve açıklama misafir formundan. Personel notu dahilidir. Gelen kayıtlar operasyon WhatsApp (Cloud API) hattına düşer; gerekirse satırdaki WhatsApp ile tekrar gönderin.") +
       "</p>" +
       '<div class="bucket-toolbar bucket-toolbar--faults">' +
       '<label class="bucket-filter-date-label">Kayıt tarihi' +
@@ -3783,7 +3748,7 @@
       '<span class="reservation-date-combo__display">Tümü</span>' +
       '<button type="button" class="btn-small bucket-filter-date-clear" title="Tüm tarihler">Temizle</button>' +
       "</div></label>" +
-      '<input class="bucket-search" type="search" placeholder="Oda, misafir, kategori, lokasyon, aciliyet, açıklama veya not ara..." />' +
+      '<input class="bucket-search" type="search" placeholder="Oda, misafir, kategori, açıklama veya not ara..." />' +
       '<select class="bucket-filter-status">' +
       '<option value="all">Tüm Durumlar</option>' +
       '<option value="new_pending">Beklemede</option>' +
@@ -3795,14 +3760,14 @@
       '<div class="viona-table-scroll viona-table-scroll--compact">' +
       '<table class="admin-table viona-table admin-table--faults">' +
       "<thead><tr>" +
-      "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Arıza kategorisi</th><th>Lokasyon</th><th>Aciliyet</th><th>Açıklama</th>" +
+      "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Arıza kategorisi</th><th>Açıklama</th>" +
       (ro
         ? "<th>Personel notu (salt okunur)</th><th>Süre</th><th>Durum</th>" + (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
         : "<th>Personel notu</th><th>Süre</th><th>Durum</th><th>İşlemler</th>") +
       "</tr></thead><tbody>";
 
     if (!rows.length) {
-      html += '<tr><td colspan="12" class="admin-table__empty">Henüz arıza kaydı yok.</td></tr>';
+      html += '<tr><td colspan="10" class="admin-table__empty">Henüz arıza kaydı yok.</td></tr>';
     } else {
       rows.forEach(function (r) {
         var st = normalizeBucketStatus(r.status);
@@ -3811,8 +3776,6 @@
         var rawR = r.raw_payload && typeof r.raw_payload === "object" ? r.raw_payload : {};
         if (!fSingR) fSingR = String(rawR.category || "").trim();
         var catLabel = categoryText("fault", fCatsR, fSingR || null);
-        var locLabel = faultLocationLabel(r);
-        var urgLabel = faultUrgencyLabel(r);
         var descFull = faultFormDescription(r);
         var staffNote = getFaultStaffNote(r.id);
         var rowSearchText = [
@@ -3820,8 +3783,6 @@
           operationGuestName(r),
           String(r.nationality || ""),
           catLabel,
-          locLabel,
-          urgLabel,
           descFull,
           staffNote,
         ]
@@ -3849,8 +3810,6 @@
         html += "<td>" + esc(operationGuestName(r) || "-") + "</td>";
         html += "<td>" + esc(r.nationality || "-") + "</td>";
         html += '<td><span class="cat-badge cat-badge--fault">' + esc(catLabel) + "</span></td>";
-        html += '<td class="fault-cell-loc">' + esc(locLabel) + "</td>";
-        html += '<td class="fault-cell-urg"><span class="fault-urg fault-urg--' + esc(String(faultRawUrgency(r) || "na")) + '">' + esc(urgLabel) + "</span></td>";
         html += '<td class="fault-cell-desc">' + esc(descFull) + "</td>";
         if (ro) {
           html += '<td class="request-cell-staff">' + esc(staffNote) + "</td>";
@@ -3920,8 +3879,6 @@
       var rawS = row.raw_payload && typeof row.raw_payload === "object" ? row.raw_payload : {};
       if (!fSingS) fSingS = String(rawS.category || "").trim();
       var catLabel = categoryText("fault", fCatsS, fSingS || null);
-      var locLabel = faultLocationLabel(row);
-      var urgLabel = faultUrgencyLabel(row);
       var descFull = faultFormDescription(row);
       var staffNote = String(ta.value || "");
       var rowSearchText = [
@@ -3929,8 +3886,6 @@
         operationGuestName(row),
         String(row.nationality || ""),
         catLabel,
-        locLabel,
-        urgLabel,
         descFull,
         staffNote,
       ]
@@ -3994,10 +3949,6 @@
       if (!fs) fs = String(rwf.category || "").trim();
       var c = categoryText("fault", fc, fs || null);
       if (c && c !== "-" && c !== "—") out.push({ k: "Kategori", v: c });
-      var locC = faultLocationLabel(r);
-      if (locC && locC !== "—") out.push({ k: "Lokasyon", v: locC });
-      var urgC = faultUrgencyLabel(r);
-      if (urgC && urgC !== "—") out.push({ k: "Aciliyet", v: urgC });
       var fd = faultFormDescription(r);
       if (fd) out.push({ k: "Açıklama", v: fd, long: true });
     } else if (bucketType === "complaint" || bucketType === "guest_notification") {
@@ -4385,8 +4336,6 @@
         "Misafir",
         "Milliyet",
         "Arıza kategorisi",
-        "Lokasyon",
-        "Aciliyet",
         "Açıklama",
         "Personel notu",
         "Durum",
@@ -4444,8 +4393,6 @@
         String(operationGuestName(r) || "-"),
         String(r.nationality || "-"),
         catLabel,
-        faultLocationLabel(r),
-        faultUrgencyLabel(r),
         faultFormDescription(r),
         getFaultStaffNote(r.id),
         issueStatusLabel("fault", st),
@@ -4514,10 +4461,6 @@
       if (gnf) partsOp.push(gnf);
       var catLab = categoryText("fault", fcats, fsingle || null);
       if (catLab && catLab !== "-" && catLab !== "—") partsOp.push(catLab);
-      var locLf = faultLocationLabel(r);
-      if (locLf && locLf !== "—") partsOp.push(locLf);
-      var urgLf = faultUrgencyLabel(r);
-      if (urgLf && urgLf !== "—") partsOp.push(urgLf);
       var descF = faultFormDescription(r);
       if (descF && descF !== "—") partsOp.push(descF);
       return partsOp.length ? partsOp.join(" · ") : "—";

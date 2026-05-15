@@ -1,8 +1,8 @@
 import {
   opReportComplaintSubject,
   opReportFaultCategory,
-  opReportFaultLocation,
-  opReportFaultUrgency,
+  opReportFaultQuantityDisplay,
+  opReportFaultRequestSection,
   opReportGuestNotificationMain,
   opReportGuestNotificationSub,
   opReportRequestQuantityDisplay,
@@ -144,16 +144,16 @@ export function buildDailyOperationReportHtml(data) {
     .join("");
 
   const techHead =
-    "<tr><th>Oda</th><th>Misafir</th><th>Uyruk</th><th>Arıza</th><th>Konum</th><th>Öncelik</th><th>Açıklama</th><th>Durum</th><th>Kayıt</th></tr>";
+    "<tr><th>Oda</th><th>Misafir</th><th>Uyruk</th><th>Talep kategorisi</th><th>Talep türü</th><th>Adet</th><th>Açıklama</th><th>Durum</th><th>Kayıt</th></tr>";
   const techBody = (data.rowsFault || [])
     .map((r) => {
       return `<tr>
 <td>${esc(dash(r.room_number))}</td>
 <td>${esc(dash(r.guest_name))}</td>
 <td>${esc(dash(r.nationality))}</td>
+<td>${esc(opReportFaultRequestSection(r))}</td>
 <td>${esc(opReportFaultCategory(r))}</td>
-<td>${esc(opReportFaultLocation(r))}</td>
-<td>${esc(opReportFaultUrgency(r))}</td>
+<td>${esc(opReportFaultQuantityDisplay(r))}</td>
 <td class="wrap">${esc(dash(r.description))}</td>
 <td>${esc(issueStatusLabelTr("fault", r.status))}</td>
 <td>${esc(formatSubmittedAtTr(r.submitted_at))}</td>

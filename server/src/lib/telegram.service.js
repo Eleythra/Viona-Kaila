@@ -1,8 +1,9 @@
 import { getEnv } from "../config/env.js";
 import {
-  FAULT_CATEGORY_TR,
-  FAULT_LOCATION_TR,
-  FAULT_URGENCY_TR,
+  operationalCategoryLabelTr,
+  operationalFaultRequestCategoryTr,
+} from "../services/operational-template-format.js";
+import {
   labelOrRaw,
   REQUEST_CATEGORY_TR,
   REQUEST_ITEM_TYPE_TR,
@@ -43,24 +44,30 @@ function buildFaultTelegramText(normalized) {
   const { date, time } = formatSubmittedDateTime(normalized.submittedAt);
   const name = truncate(normalized.name, 120) || "—";
   const room = truncate(normalized.room, 20) || "—";
-  const category = labelOrRaw(FAULT_CATEGORY_TR, normalized.category);
-  const location = labelOrRaw(
-    FAULT_LOCATION_TR,
-    normalized.location || normalized.details?.location,
-  );
-  const urgency = labelOrRaw(FAULT_URGENCY_TR, normalized.urgency || normalized.details?.urgency);
+  const cat = String(normalized.category || "")
+    .trim()
+    .toLowerCase();
+  const requestCategory =
+    truncate(operationalFaultRequestCategoryTr(cat), 160).replace(/^—$/, "—") || "—";
+  const requestType =
+    truncate(operationalCategoryLabelTr("fault", cat), 160).replace(/^—$/, "—") || "—";
+  const d = normalized.details && typeof normalized.details === "object" ? normalized.details : {};
+  const qn = Number(d.quantity);
+  const quantity = Number.isFinite(qn) && qn >= 1 ? Math.floor(qn) : 1;
+  const note = String(normalized.description || "").trim();
 
   const lines = [
-    "Yeni arıza kaydı",
+    "Yeni teknik destek kaydı",
     "",
     `Ad Soyad: ${name}`,
     `Oda: ${room}`,
-    `Arıza kategorisi: ${category}`,
-    `Lokasyon: ${location}`,
-    `Aciliyet: ${urgency}`,
+    `Talep kategorisi: ${requestCategory}`,
+    `Talep türü: ${requestType}`,
+    `Adet: ${quantity}`,
     `Tarih: ${date}`,
     `Saat: ${time}`,
   ];
+  if (note) lines.push("", `Açıklama notu: ${truncate(note, 500)}`);
   return lines.join("\n");
 }
 

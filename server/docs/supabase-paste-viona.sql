@@ -1,7 +1,7 @@
 -- =============================================================================
 -- VIONA / KAILA — Supabase SQL Editor’a TEK SEFERDE yapıştırın
 -- Sıra: uzantı → chat_observations → CHECK’ler → indeksler → chat_logs backfill
---       → özet view’lar → şikâyet/arıza kolonları → 8a istek category CHECK → 8b kova status CHECK
+--       → özet view’lar → şikâyet/arıza kolonları → 8a istek category CHECK → 8a-fault arıza category CHECK → 8b kova status CHECK
 --       → guest_reservations revizyonu
 --       → rezervasyon status (rejected = admin “Onaylanmadı”) → guest_notifications → guest_late_checkouts (geç çıkış)
 --       → platform_reviews (harici platform yorumları; isteğe bağlı tablo)
@@ -324,11 +324,9 @@ alter table if exists public.guest_faults
   add column if not exists details jsonb not null default '{}'::jsonb;
 
 -- -----------------------------------------------------------------------------
--- 8a) guest_requests — category CHECK (guest-requests.service.js REQUEST_CATEGORIES)
---     Eski SQL’deki dar liste (yalnızca towel, bedding, …) room_towel / bedding_pillow vb.
---     gönderiminde "violates check constraint guest_requests_category_chk" üretir.
+-- 8a) guest_requests — category CHECK (guest-requests.service.js)
+--     Canlı kayıtlar: hk_* + other. Eski satırlar için legacy slug'lar da listede.
 --     Her yapıştırmada drop+add ile güncellenir (idempotent).
---     CHECK başarısız olursa: önce tabloda izin verilmeyen category stringleri düzeltin (aşağı OPSİYONEL).
 -- -----------------------------------------------------------------------------
 alter table if exists public.guest_requests drop constraint if exists guest_requests_category_chk;
 
@@ -337,6 +335,32 @@ alter table if exists public.guest_requests
   check (
     category is null
     or category in (
+      'hk_duvet_request',
+      'hk_bed_join',
+      'hk_bed_soften',
+      'hk_pillow_request',
+      'hk_pique_request',
+      'hk_extra_bed',
+      'hk_baby_crib',
+      'hk_sheet_change',
+      'hk_towel_request',
+      'hk_towel_change',
+      'hk_toilet_paper',
+      'hk_slippers',
+      'hk_dental_set',
+      'hk_amenity_kit',
+      'hk_water',
+      'hk_coffee_tea_supplies',
+      'hk_cup_request',
+      'hk_room_cleaning',
+      'hk_trash_removal',
+      'hk_balcony_cleaning',
+      'hk_cleaning_dnd_coordinate',
+      'hk_bad_odor',
+      'hk_pest_control',
+      'hk_iron',
+      'hk_vase',
+      'other',
       'towel_extra',
       'room_towel',
       'bathrobe',
@@ -357,7 +381,6 @@ alter table if exists public.guest_requests
       'kettle',
       'room_safe',
       'baby_bed',
-      'other',
       'towel',
       'bedding',
       'minibar',
@@ -383,14 +406,87 @@ alter table if exists public.guest_requests
 -- update public.guest_requests set category = 'other'
 -- where category is not null
 --   and category not in (
+--     'hk_duvet_request','hk_bed_join','hk_bed_soften','hk_pillow_request','hk_pique_request',
+--     'hk_extra_bed','hk_baby_crib','hk_sheet_change','hk_towel_request','hk_towel_change',
+--     'hk_toilet_paper','hk_slippers','hk_dental_set','hk_amenity_kit','hk_water','hk_coffee_tea_supplies',
+--     'hk_cup_request','hk_room_cleaning','hk_trash_removal','hk_balcony_cleaning','hk_cleaning_dnd_coordinate',
+--     'hk_bad_odor','hk_pest_control','hk_iron','hk_vase','other',
 --     'towel_extra','room_towel','bathrobe','bedding_sheet','bedding_pillow','bedding_blanket',
 --     'room_cleaning','turndown','slippers','minibar_refill','bottled_water','tea_coffee',
 --     'toilet_paper','toiletries','climate_request','room_refresh','hanger','kettle','room_safe',
---     'baby_bed','other','towel','bedding','minibar','baby_equipment','room_equipment',
+--     'baby_bed','towel','bedding','minibar','baby_equipment','room_equipment',
 --     'extraTowels','extra_towels','towels','linen','roomCleaning','room_cleaning_request',
 --     'minibarRefill','minibar_request','babyNeeds','baby_equipment_request','roomSupplies',
 --     'room_equipment_request','otherRequest'
 --   );
+
+-- -----------------------------------------------------------------------------
+-- 8a-fault) guest_faults — category CHECK (guest-requests.service.js FAULT_TECH_IDS + eski kaba kodlar)
+-- -----------------------------------------------------------------------------
+alter table if exists public.guest_faults drop constraint if exists guest_faults_category_chk;
+
+alter table if exists public.guest_faults
+  add constraint guest_faults_category_chk
+  check (
+    category is null
+    or category in (
+      'ft_ac_not_cooling',
+      'ft_ac_not_heating',
+      'ft_ac_remote',
+      'ft_ac_fault',
+      'ft_ventilation_fault',
+      'ft_socket_fault',
+      'ft_electric_fault',
+      'ft_led_fault',
+      'ft_lamp_fault',
+      'ft_sconce_fault',
+      'ft_ceiling_water_leak',
+      'ft_bidet_faucet_fault',
+      'ft_cold_water_no_flow',
+      'ft_hot_water_no_flow',
+      'ft_siphon_fault',
+      'ft_faucet_fault',
+      'ft_sink_drain_fault',
+      'ft_toilet_seat_broken',
+      'ft_shower_cabin_fault',
+      'ft_shower_head_fault',
+      'ft_towel_rail_fault',
+      'ft_bathroom_drain_clog',
+      'ft_tv_remote',
+      'ft_tv_fault',
+      'ft_phone_fault',
+      'ft_minibar_fault',
+      'ft_safe_fault',
+      'ft_kettle_fault',
+      'ft_hair_dryer_fault',
+      'ft_tv_channel_fault',
+      'ft_curtain_fallen',
+      'ft_window_fault',
+      'ft_window_cleaning',
+      'ft_room_door_fault',
+      'ft_bathroom_door_fault',
+      'ft_balcony_door_fault',
+      'ft_balcony_railing_loose',
+      'ft_cornice_fault',
+      'ft_headboard_fault',
+      'ft_dresser_drawer_fault',
+      'ft_drawer_fault',
+      'ft_wardrobe_fault',
+      'ft_mirror_damage',
+      'ft_elevator_fault',
+      'ft_indoor_pool_temperature',
+      'ft_other',
+      'hvac',
+      'electric',
+      'water_bathroom',
+      'tv_electronics',
+      'door_lock',
+      'furniture_item',
+      'cleaning_equipment_damage',
+      'balcony_window',
+      'other'
+    )
+  );
 
 -- -----------------------------------------------------------------------------
 -- 8b) İstek / şikâyet / arıza — status CHECK içinde 'rejected' (Yapılamadı / Dikkate alınmadı)
@@ -781,7 +877,7 @@ create index if not exists platform_reviews_rating_idx
 comment on table public.platform_reviews is 'Harici platform yorumları; upsert anahtarı (source, external_review_id).';
 
 -- =============================================================================
--- Bitti. chat_observations, view’lar; istek/şikâyet/arıza kolonları + 8a category + 8b status;
+-- Bitti. chat_observations, view’lar; istek/şikâyet/arıza kolonları + 8a (guest_requests) + 8a-fault (guest_faults) + 8b status;
 -- guest_reservations; guest_notifications (bölüm 10); guest_late_checkouts (bölüm 11); platform_reviews (bölüm 12).
 --
 -- Node API (guest-requests.service.js) kolon eşlemesi — şema sapması insert hatası verir:
