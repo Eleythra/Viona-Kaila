@@ -57,7 +57,20 @@ export function speechClientAuthMiddleware(req, res, next) {
 }
 
 const OPENAI_REALTIME_SESSION_URL = "https://api.openai.com/v1/realtime/sessions";
-const OPENAI_SESSION_FETCH_MS = 18_000;
+/** İstemci `realtimeSessionTimeoutMs` (varsayılan 22s) ile hizalı; aksi halde sunucu önce keser. */
+const OPENAI_SESSION_FETCH_MS = 22_000;
+
+/** OpenAI JSON gövdesinden güvenli kısa özet (API anahtarı sızmaz). */
+function openAiErrorPublicDetail(data) {
+  const e = data && typeof data === "object" ? data.error : null;
+  if (!e || typeof e !== "object") return undefined;
+  const typ = typeof e.type === "string" ? e.type.trim() : "";
+  const cod = e.code != null ? String(e.code).trim() : "";
+  const msg = typeof e.message === "string" ? e.message.trim() : "";
+  const parts = [typ, cod, msg].filter(Boolean);
+  if (!parts.length) return undefined;
+  return parts.join(" — ").slice(0, 280);
+}
 
 let realtimeSessionLimiterMemo = null;
 function getRealtimeSessionLimiter() {
@@ -128,12 +141,18 @@ export function createSpeechRouter() {
 
         if (!upstream.ok) {
           const snippet = String(rawText || "").slice(0, 200);
+          const detail = openAiErrorPublicDetail(data) || snippet;
           console.warn(
-            "openai_realtime_session_upstream status=%s snippet=%s",
+            "openai_realtime_session_upstream status=%s snippet=%s detail=%s",
             upstream.status,
             snippet,
+            detail,
           );
-          return res.status(502).json({ ok: false, error: "realtime_upstream" });
+          return res.status(502).json({
+            ok: false,
+            error: "realtime_upstream",
+            detail,
+          });
         }
 
         const cs = data?.client_secret;
@@ -145,7 +164,11 @@ export function createSpeechRouter() {
             "openai_realtime_session_missing_client_secret keys=%s",
             data ? Object.keys(data).join(",") : "",
           );
-          return res.status(502).json({ ok: false, error: "realtime_bad_response" });
+          return res.status(502).json({
+            ok: false,
+            error: "realtime_bad_response",
+            detail: openAiErrorPublicDetail(data),
+          });
         }
 
         return res.status(200).json({
@@ -163,7 +186,11 @@ export function createSpeechRouter() {
         if (name === "AbortError") {
           return res.status(504).json({ ok: false, error: "realtime_upstream_timeout" });
         }
-        return res.status(502).json({ ok: false, error: "realtime_upstream" });
+        return res.status(502).json({
+          ok: false,
+          error: "realtime_upstream",
+          detail: err?.message ? String(err.message).slice(0, 280) : undefined,
+        });
       }
     },
   );

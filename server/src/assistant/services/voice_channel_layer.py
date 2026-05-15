@@ -1,8 +1,8 @@
 """
 Sesli asistan katmanı — metin sohbetinden ayrı kanal (channel=voice).
 
-- v2: Seslide yalnızca bilgi tabanı (RAG) yanıtı veya saat (`current_time`); modül/form/aksiyon
-  veya RAG dışı metin `coerce_voice_channel_v2_response` ile kısa premium yönlendirme
+- v2: Seslide bilgi tabanı (RAG) yanıtı, saat (`current_time`) ve kısa selam / sohbet (`chitchat`, aksiyonsuz);
+  modül/form/aksiyon veya diğer niyetler `coerce_voice_channel_v2_response` ile kısa premium yönlendirme
   (metin sohbet + ön büro).
 - TTS çıkışı: sadeleştirilmiş metin, meta.action ve exit_chat_after_ms temizlenir (`finalize_voice_channel_response`).
 """
@@ -32,7 +32,7 @@ VOICE_OUT_OF_SCOPE_PREMIUM_TEXT: dict[str, str] = {
 VOICE_OPERATIONAL_USE_TEXT = VOICE_OUT_OF_SCOPE_PREMIUM_TEXT
 
 def _voice_response_allowed_for_tts(response: ChatResponse) -> bool:
-    """Ses: yalnızca bilgi tabanı (RAG) cevabı veya saat; modül/form meta.action yok, mesaj dolu."""
+    """Ses: RAG bilgisi, saat veya aksiyonsuz chitchat (selam vb.); modül/form için meta.action yok, mesaj dolu."""
     intent = str(response.meta.intent or "").strip()
     source = str(response.meta.source or "").strip().lower()
     if response.meta.action is not None:
@@ -44,11 +44,13 @@ def _voice_response_allowed_for_tts(response: ChatResponse) -> bool:
         return True
     if intent == "current_time":
         return True
+    if intent == "chitchat":
+        return True
     return False
 
 
 def coerce_voice_channel_v2_response(response: ChatResponse, reply_lang: str) -> ChatResponse:
-    """Ses v2: yalnızca RAG bilgisi veya saat; diğer her şey premium yönlendirme (metin + resepsiyon)."""
+    """Ses v2: RAG, saat veya chitchat (aksiyonsuz); aksi halde premium yönlendirme (metin + resepsiyon)."""
     if _voice_response_allowed_for_tts(response):
         return response
     lg = voice_dict_lang(reply_lang)

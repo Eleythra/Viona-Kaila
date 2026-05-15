@@ -1,7 +1,24 @@
 import { timingSafeEqual } from "node:crypto";
 
+/**
+ * Render / panel yapıştırması: UTF-8 BOM, çevreleyen tırnak, satır sonu.
+ * Aksi halde tarayıcıdaki token ile sunucu bayt bayt eşleşmez (401).
+ */
+function normalizeAdminApiTokenFromEnv(raw) {
+  if (raw == null) return "";
+  let s = String(raw).trim();
+  if (s.charCodeAt(0) === 0xfeff) s = s.slice(1).trim();
+  if (
+    s.length >= 2 &&
+    ((s[0] === '"' && s[s.length - 1] === '"') || (s[0] === "'" && s[s.length - 1] === "'"))
+  ) {
+    s = s.slice(1, -1).trim();
+  }
+  return s.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
+}
+
 export function getAdminApiToken() {
-  return String(process.env.ADMIN_API_TOKEN || "").trim();
+  return normalizeAdminApiTokenFromEnv(process.env.ADMIN_API_TOKEN);
 }
 
 export function extractAdminToken(req) {

@@ -83,7 +83,8 @@ def test_ru_voice_empty_message_fallback_is_russian():
     assert "чат" in fin.message.lower() or "текст" in fin.message.lower()
 
 
-def test_coerce_voice_v2_replaces_chitchat_with_premium():
+def test_coerce_voice_v2_passes_chitchat_through_for_voice_tts():
+    """Ses: kısa selam/sohbet (chitchat, aksiyonsuz) premium'a çevrilmez."""
     from assistant.services.voice_channel_layer import coerce_voice_channel_v2_response
 
     meta = ChatMeta(
@@ -95,9 +96,26 @@ def test_coerce_voice_v2_replaces_chitchat_with_premium():
     )
     resp = ChatResponse(type="inform", message="Hello there!", meta=meta)
     out = coerce_voice_channel_v2_response(resp, "en")
-    assert out.meta.intent == "hotel_info"
+    assert out.meta.intent == "chitchat"
     assert out.meta.action is None
-    assert "text chat" in out.message.lower()
+    assert out.message == "Hello there!"
+
+
+def test_coerce_voice_v2_chitchat_with_action_becomes_premium():
+    from assistant.services.voice_channel_layer import VOICE_OUT_OF_SCOPE_PREMIUM_TEXT, coerce_voice_channel_v2_response
+
+    meta = ChatMeta(
+        intent="chitchat",
+        confidence=0.9,
+        language="tr",
+        ui_language="tr",
+        source="rule",
+        action=ChatMeta.ChatAction(kind="open_reservation_form"),
+    )
+    resp = ChatResponse(type="inform", message="Merhaba", meta=meta)
+    out = coerce_voice_channel_v2_response(resp, "tr")
+    assert out.message.strip() == VOICE_OUT_OF_SCOPE_PREMIUM_TEXT["tr"].strip()
+    assert out.meta.intent == "hotel_info"
 
 
 def test_coerce_voice_v2_rule_hotel_info_becomes_premium():

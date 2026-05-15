@@ -3592,6 +3592,30 @@
     });
   }
 
+  /** Giriş doğrulama (validate) hatası → kullanıcıya Türkçe açıklama. */
+  function adminLoginValidateErrorMessage(e) {
+    var m = e && e.message ? String(e.message) : "";
+    if (m === "admin_auth_not_configured" || m === "http_503") {
+      return "Sunucuda yönetici anahtarı yok veya servis hazır değil (ADMIN_API_TOKEN). Ortamı kontrol edip API’yi yeniden başlatın.";
+    }
+    if (m === "unauthorized" || m === "http_401") {
+      return "Şifre sunucudaki ADMIN_API_TOKEN ile eşleşmiyor (boşluk / tırnak / yanlış kopya). .env’deki değerle birebir aynı olmalı.";
+    }
+    if (m === "cors_not_allowed" || m === "http_403") {
+      return "Tarayıcı CORS ile isteği engelledi. Panel adresi sunucunun izin listesinde olmalı (CORS_ALLOWED_ORIGINS veya gömülü allowlist).";
+    }
+    if (isBrowserNetworkFailure(e)) {
+      return "API’ye ulaşılamıyor (ağ, yanlış API adresi veya HTTPS sayfadan HTTP çağrısı). Konsoldaki [viona] API baseUrl satırını ve data-viona-live-api / proxy ayarını kontrol edin.";
+    }
+    if (/^http_5\d\d$/.test(m)) {
+      return "Sunucu hatası (" + m.replace(/^http_/, "") + "). API kökü veya barındırıcıyı kontrol edin.";
+    }
+    if (/^http_404$/.test(m)) {
+      return "API yolu bulunamadı (404). baseUrl yanlış olabilir; /admin/auth/validate yerine statik sayfa dönüyor olabilir.";
+    }
+    return m ? "Giriş doğrulanamadı: " + m : "Giriş doğrulanamadı.";
+  }
+
   function wireLogin() {
     var form = document.getElementById("admin-login-form");
     var err = document.getElementById("admin-login-error");
@@ -3623,13 +3647,17 @@
           await adapter.validateAdminToken();
           sessionStorage.setItem(LOGIN_OK_KEY, "1");
           sessionStorage.setItem(LOGIN_USER_KEY, ADMIN_USERNAME_REQUIRED);
-        } catch (_e) {}
+        } catch (loginErr) {
+          if (err) err.textContent = adminLoginValidateErrorMessage(loginErr);
+        }
         if (sessionStorage.getItem(LOGIN_OK_KEY) !== "1") {
           adapter.clearAdminToken();
           try {
             sessionStorage.removeItem(LOGIN_USER_KEY);
           } catch (_x) {}
-          if (err) err.textContent = "Geçersiz veya yetkisiz şifre.";
+          if (err && !String(err.textContent || "").trim()) {
+            err.textContent = "Geçersiz veya yetkisiz şifre.";
+          }
           return;
         }
         if (err) err.textContent = "";

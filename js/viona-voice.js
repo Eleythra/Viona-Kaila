@@ -554,7 +554,7 @@
     }
     if (ev.type === "error") {
       if (realtimeMuteConnectionErrors || voiceState === STATE_IDLE) return;
-      voiceDebugLog("realtime_err", ev);
+      voiceDebugLog("realtime_err", ev.error != null ? ev.error : ev);
       goIdleWithVoiceHint("voiceErrorRealtimeUpstream");
     }
   }
@@ -617,10 +617,12 @@
       })
       .then(function (data) {
         if (data && data.__err) {
+          voiceDebugLog("realtime_session_error", data.__err);
           goIdleWithVoiceHint(voiceHintKeyFromRealtimeSessionPayload(data.__err));
           return null;
         }
         if (!data || !data.ok || !data.client_secret || !String(data.client_secret.value || "").trim()) {
+          voiceDebugLog("realtime_session_invalid", data || {});
           goIdleWithVoiceHint(voiceHintKeyFromRealtimeSessionPayload(data || {}));
           return null;
         }

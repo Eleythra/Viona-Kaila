@@ -213,13 +213,14 @@ def test_voice_reservation_keyword_returns_premium_not_long_hint():
     assert "rezervasyon yapmak" not in low
 
 
-def test_voice_chitchat_greeting_coerced_to_premium():
-    """Ses v2: sohbet selamı seslide bilgi dışı → coerce ile premium metin."""
+def test_voice_chitchat_greeting_passes_through_for_tts():
+    """Ses v2: kısa selam (chitchat) premium yerine gerçek karşılama metni okunur."""
     orch, _, _ = build_orchestrator()
     res = orch.handle(ChatRequest(message="günaydın", ui_language="tr", locale="tr", channel="voice"))
-    assert res.meta.intent == "hotel_info"
+    assert res.meta.intent == "chitchat"
     assert res.meta.action is None
-    assert "yazılı" in res.message.lower() or "metin" in res.message.lower()
+    assert res.message.strip()
+    assert res.message.strip() != VOICE_OUT_OF_SCOPE_PREMIUM_TEXT["tr"].strip()
 
 
 def test_fault_cases():
