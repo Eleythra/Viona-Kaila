@@ -3,7 +3,16 @@
 
   var adapter = window.AdminDataAdapter;
   var ui = window.AdminUI;
-  if (!adapter || !ui) return;
+  if (!adapter || !ui) {
+    try {
+      var el = document.getElementById("admin-login-error");
+      if (el) {
+        el.textContent =
+          "Panel betikleri tam yüklenmedi (AdminDataAdapter veya AdminUI yok). Sayfayı sert yenileyin (Ctrl+Shift+R); Ağ sekmesinde ui.js / data-adapter.js için 200 veya hata olmadığını kontrol edin.";
+      }
+    } catch (_e) {}
+    return;
+  }
   /** Aynı sayfada app.js iki kez çalışırsa (üretim CDN/şablon hatası) tüm dinleyiciler çoğalır; Loglar CSV/JSON ardı arkasına iner. */
   if (window.__VIONA_ADMIN_APP_BOOTED) return;
   window.__VIONA_ADMIN_APP_BOOTED = true;
@@ -3640,7 +3649,7 @@
         }
         return;
       }
-      var p = (document.getElementById("admin-password").value || "").trim();
+      var p = String((pw && pw.value) || "").trim();
       if (p) {
         try {
           adapter.setAdminToken(p);
@@ -3674,11 +3683,12 @@
     wireLogin();
     wireLogout();
     var ok = false;
+    var ssOk = "";
+    var ssUser = "";
     try {
-      ok =
-        sessionStorage.getItem(LOGIN_OK_KEY) === "1" &&
-        sessionStorage.getItem(LOGIN_USER_KEY) === ADMIN_USERNAME_REQUIRED &&
-        adapter.hasAdminToken();
+      ssOk = sessionStorage.getItem(LOGIN_OK_KEY);
+      ssUser = sessionStorage.getItem(LOGIN_USER_KEY);
+      ok = ssOk === "1" && ssUser === ADMIN_USERNAME_REQUIRED && adapter.hasAdminToken();
     } catch (_e) {
       ok = false;
     }

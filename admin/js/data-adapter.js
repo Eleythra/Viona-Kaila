@@ -1,26 +1,36 @@
 (function () {
   "use strict";
   var ADMIN_TOKEN_KEY = "viona_admin_api_token";
+  /** İlk çözümden sonra sabit; panel oturumunda yüzlerce kez getApiBase çağrısını DOM’suz yapar. */
+  var apiBaseMemo = null;
+  /** sessionStorage token okumasını set/clear dışında tekilleştirir. */
+  var tokenMemo = { stale: true, value: "" };
 
   function getApiBase() {
+    if (apiBaseMemo !== null) return apiBaseMemo;
     if (typeof document !== "undefined" && document.documentElement) {
       var domAttr = document.documentElement.getAttribute("data-viona-live-api");
       if (domAttr && String(domAttr).trim()) {
-        return String(domAttr).trim().replace(/\/+$/, "");
+        apiBaseMemo = String(domAttr).trim().replace(/\/+$/, "");
+        return apiBaseMemo;
       }
     }
     if (typeof window.vionaGetApiBase === "function") {
-      return window.vionaGetApiBase();
+      apiBaseMemo = String(window.vionaGetApiBase() || "").trim().replace(/\/+$/, "") || "/api";
+      return apiBaseMemo;
     }
     var custom = window.__VIONA_API_BASE__;
     if (typeof custom === "string" && custom.trim()) {
-      return custom.trim().replace(/\/+$/, "");
+      apiBaseMemo = custom.trim().replace(/\/+$/, "");
+      return apiBaseMemo;
     }
     var c = window.VIONA_API_CONFIG || {};
     if (c.baseUrl && String(c.baseUrl).trim()) {
-      return String(c.baseUrl).trim().replace(/\/+$/, "");
+      apiBaseMemo = String(c.baseUrl).trim().replace(/\/+$/, "");
+      return apiBaseMemo;
     }
-    return "/api";
+    apiBaseMemo = "/api";
+    return apiBaseMemo;
   }
 
   /** Liste GET ile aynı kök. */
@@ -70,11 +80,14 @@
   }
 
   function getAdminToken() {
+    if (!tokenMemo.stale) return tokenMemo.value;
     try {
-      return String(sessionStorage.getItem(ADMIN_TOKEN_KEY) || "").trim();
+      tokenMemo.value = String(sessionStorage.getItem(ADMIN_TOKEN_KEY) || "").trim();
     } catch (_e) {
-      return "";
+      tokenMemo.value = "";
     }
+    tokenMemo.stale = false;
+    return tokenMemo.value;
   }
 
   function setAdminToken(token) {
@@ -83,12 +96,16 @@
     try {
       sessionStorage.setItem(ADMIN_TOKEN_KEY, value);
     } catch (_e) {}
+    tokenMemo.value = value;
+    tokenMemo.stale = false;
   }
 
   function clearAdminToken() {
     try {
       sessionStorage.removeItem(ADMIN_TOKEN_KEY);
     } catch (_e) {}
+    tokenMemo.value = "";
+    tokenMemo.stale = false;
   }
 
   function buildQuery(params) {

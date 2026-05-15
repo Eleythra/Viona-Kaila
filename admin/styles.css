@@ -90,6 +90,17 @@
   color: #eaf0ff;
   padding: 8px;
 }
+
+/* Chrome/Safari otomatik doldurma: sarı arka plan + görünmez yazı — kullanıcı «şifre görünmüyor» sanıyor */
+.admin-login__card input:-webkit-autofill,
+.admin-login__card input:-webkit-autofill:hover,
+.admin-login__card input:-webkit-autofill:focus,
+.admin-login__card input:-webkit-autofill:active {
+  -webkit-text-fill-color: #eaf0ff !important;
+  caret-color: #eaf0ff;
+  box-shadow: 0 0 0 1000px #0d141f inset !important;
+  transition: background-color 99999s ease-out;
+}
 .admin-login__field-label {
   margin: 0;
   font-size: 0.9rem;
