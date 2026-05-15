@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Literal, Dict
 
 from assistant.core.chatbot_languages import CHATBOT_UI_LANG_SET, FORM_LABEL_FALLBACK_ORDER
-from assistant.services.form_labels_extra_langs import merge_extra_lang_columns
+from assistant.services.form_labels_extra_langs import merge_extra_lang_columns, merge_section_label_columns
 
 Lang = Literal["tr", "en", "de", "pl"]
 
@@ -47,6 +47,60 @@ REQUEST_SECTION_LABELS: Dict[str, Dict[Lang, str]] = {
         "pl": "Inne",
     },
 }
+
+# `js/requests/config.js` faultSections.sectionKey — i18n ile aynı metinler.
+FAULT_SECTION_LABELS: Dict[str, Dict[Lang, str]] = {
+    "reqFaultSecHvac": {
+        "tr": "Klima & havalandırma",
+        "en": "Climate & ventilation",
+        "de": "Klima & Lüftung",
+        "pl": "Klimatyzacja i wentylacja",
+    },
+    "reqFaultSecElectric": {
+        "tr": "Elektrik & aydınlatma",
+        "en": "Electricity & lighting",
+        "de": "Elektrik & Beleuchtung",
+        "pl": "Elektryka i oświetlenie",
+    },
+    "reqFaultSecWaterBath": {
+        "tr": "Su & banyo sistemleri",
+        "en": "Water & bathroom",
+        "de": "Wasser & Bad",
+        "pl": "Woda i łazienka",
+    },
+    "reqFaultSecTvElectronics": {
+        "tr": "TV & elektronik",
+        "en": "TV & electronics",
+        "de": "TV & Elektronik",
+        "pl": "TV i elektronika",
+    },
+    "reqFaultSecDoorWindow": {
+        "tr": "Kapı, pencere & balkon",
+        "en": "Door, window & balcony",
+        "de": "Tür, Fenster & Balkon",
+        "pl": "Drzwi, okno i balkon",
+    },
+    "reqFaultSecFurniture": {
+        "tr": "Mobilya & oda ekipmanları",
+        "en": "Furniture & room fittings",
+        "de": "Möbel & Einrichtung",
+        "pl": "Meble i wyposażenie",
+    },
+    "reqFaultSecGeneralFacility": {
+        "tr": "Genel tesis & ortak alan",
+        "en": "General / public areas",
+        "de": "Allgemeine Anlagen",
+        "pl": "Obiekt wspólny",
+    },
+    "reqFaultSecOther": {
+        "tr": "Diğer teknik arızalar",
+        "en": "Other technical faults",
+        "de": "Sonstige technische Störungen",
+        "pl": "Inne usterki techniczne",
+    },
+}
+
+merge_section_label_columns(REQUEST_SECTION_LABELS, FAULT_SECTION_LABELS)
 
 CATEGORY_LABELS: Dict[str, Dict[str, Dict[Lang, str]]] = {
     "request": {
@@ -771,6 +825,13 @@ def category_label(intent: str, category: str, lang: str | None) -> str:
 
 def request_section_label(section_key: str, lang: str | None) -> str:
     row = REQUEST_SECTION_LABELS.get(section_key, {})
+    if not row:
+        return section_key
+    return _label_from_row(row, lang) or section_key
+
+
+def fault_section_label(section_key: str, lang: str | None) -> str:
+    row = FAULT_SECTION_LABELS.get(section_key, {})
     if not row:
         return section_key
     return _label_from_row(row, lang) or section_key

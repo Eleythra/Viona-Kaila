@@ -9,6 +9,8 @@ from typing import Literal, Optional, Dict, Tuple
 NotifGroupFilter = Literal["diet", "health", "celebration", "reception"]
 OperationType = Literal["request", "fault", "complaint", "guest_notification"]
 FormStep = Literal[
+    "request_section",
+    "fault_section",
     "category",
     "detail_enum",
     "detail_int",
@@ -29,6 +31,7 @@ class ChatFormState:
     """Sohbet misafir bildirimi: yalnızca bir grubun kategorileri (None = tümü)."""
     notif_group: NotifGroupFilter | None = None
     step: FormStep = "category"
+    section_index: int | None = None  # HK / arıza sohbet bölümü (0-tabanlı)
     category: Optional[str] = None
     subcategory: Optional[str] = None
     quantity: Optional[int] = None

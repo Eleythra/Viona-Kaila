@@ -206,3 +206,60 @@ export async function verifyHotelGuest(params) {
     guestEmail: normalizeGuestContact(matchedGuest.EMAIL, 120),
   };
 }
+
+function normalizeGuestNameLoose(s) {
+  return String(s ?? "")
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function scoreGuestNameMatch(hotspotFullNameNorm, requestNameRaw) {
+  const tokens = normalizeGuestNameLoose(requestNameRaw)
+    .split(/\s+/)
+    .filter((t) => t.length >= 2);
+  if (!tokens.length || !hotspotFullNameNorm) return 0;
+  let score = 0;
+  for (const tok of tokens) {
+    if (hotspotFullNameNorm.includes(tok)) score += tok.length >= 4 ? 3 : 2;
+  }
+  return score;
+}
+
+/**
+ * Aktif konaklamada oda + misafir adına göre Hotspot `PHONE` arar (en iyi skor).
+ * @param {string} roomNo
+ * @param {string} guestName
+ * @returns {Promise<string|null>}
+ */
+export async function findHotspotPhoneForRoomAndGuestName(roomNo, guestName) {
+  const roomKey = normalizeGuestRoomForMatch(String(roomNo ?? "").trim());
+  const nm = String(guestName ?? "").trim();
+  if (!roomKey || !nm) return null;
+
+  let guests;
+  try {
+    guests = await getHotelGuests();
+  } catch {
+    return null;
+  }
+
+  let bestGuest = null;
+  let bestScore = 0;
+  for (const g of guests) {
+    const gr = normalizeGuestRoomForMatch(String(g.ROOMNO ?? "").trim());
+    if (gr !== roomKey) continue;
+    if (!isActiveStay(g.CHECKIN, g.CHECKOUT)) continue;
+    const fullNorm = normalizeGuestNameLoose(`${g.NAME ?? ""} ${g.LNAME ?? ""}`);
+    const sc = scoreGuestNameMatch(fullNorm, nm);
+    if (sc > bestScore) {
+      bestScore = sc;
+      bestGuest = g;
+    }
+  }
+
+  if (!bestGuest || bestScore < 4) return null;
+  return normalizeGuestContact(bestGuest.PHONE, 40);
+}

@@ -236,14 +236,16 @@ def test_fault_sub_intent_is_preserved():
     res = orch.handle(ChatRequest(message="duşum bozuldu", ui_language="tr", locale="tr"))
     assert res.type == "inform"
     assert res.meta.intent == "fault_report"
-    assert "kategori" in res.message.lower()
-    assert "Su" in res.message or "Banyo" in res.message
+    low = res.message.lower()
+    assert "arıza" in low and ("grup" in low or "kategori" in low)
+    assert "su" in low or "banyo" in low
 
     res = orch.handle(ChatRequest(message="kart çalışmıyor", ui_language="tr", locale="tr"))
     assert res.type == "inform"
     assert res.meta.intent == "fault_report"
-    assert "kategori" in res.message.lower()
-    assert "kapı" in res.message.lower()
+    low2 = res.message.lower()
+    assert "arıza" in low2 and ("grup" in low2 or "kategori" in low2)
+    assert "kapı" in low2
 
 
 def test_special_need_cases():
@@ -1491,8 +1493,8 @@ def test_odam_su_akityor_is_fault_not_water_request():
     assert res.type == "inform"
     assert res.meta.action and res.meta.action.kind == "chat_form"
     low = res.message.lower()
-    assert "kategori" in low
-    assert "su" in res.message.lower() or "banyo" in low
+    assert res.meta.action.step == "fault_section"
+    assert "su" in res.message.lower() or "banyo" in low or "water" in low
     assert intent.calls == 0
 
 
@@ -2198,6 +2200,7 @@ def test_full_operational_routing_matrix():
     assert r.meta.intent == "fault_report"
     assert r.meta.action and r.meta.action.kind == "chat_form"
     assert r.meta.action.operation == "fault"
+    assert r.meta.action.step == "fault_section"
     assert intent.calls == 0
 
 
@@ -2357,7 +2360,7 @@ def test_request_form_detail_enum_allows_switch_before_valid_choice():
             session_id=sid,
         )
     )
-    assert r1.meta.action and r1.meta.action.step == "category"
+    assert r1.meta.action and r1.meta.action.step == "request_section"
     r2 = orch.handle(
         ChatRequest(message="battaniye lazım", ui_language="tr", locale="tr", user_id=uid, session_id=sid)
     )
@@ -2380,7 +2383,7 @@ def test_request_form_detail_enum_off_topic_can_answer_hotel_info():
             session_id=sid,
         )
     )
-    assert r1.meta.action and r1.meta.action.step == "category"
+    assert r1.meta.action and r1.meta.action.step == "request_section"
     rag.called = False
     r2 = orch.handle(ChatRequest(message="havuz saatleri", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     assert r2.meta.intent == "hotel_info"
@@ -2445,7 +2448,7 @@ def test_sikayetciyim_with_noise_gets_complaint_form_button():
 def test_full_name_rejects_ah_requires_two_words():
     orch, _, _ = build_orchestrator()
     uid, sid = "u-fn-ah", "s-fn-ah"
-    for m in ("odada teknik arıza", "6", "not"):
+    for m in ("priz çalışmıyor", "not"):
         orch.handle(ChatRequest(message=m, ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     r = orch.handle(ChatRequest(message="ah", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     assert r.meta.action and r.meta.action.step == "full_name"
@@ -2593,7 +2596,7 @@ def test_premium_table_reservation_handoff_reception_redirect():
 def test_tamam_after_form_cancel_short_ack_not_generic_greeting():
     orch, _, _ = build_orchestrator()
     uid, sid = "u-ack", "s-ack"
-    for m in ("odada teknik arıza", "6", "x"):
+    for m in ("priz çalışmıyor", "x"):
         orch.handle(ChatRequest(message=m, ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     orch.handle(ChatRequest(message="Test User", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     orch.handle(ChatRequest(message="1001", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
@@ -2608,7 +2611,7 @@ def test_tamam_after_cancel_then_hotel_info_not_cancel_ack():
     """Konu değişince iptal bağlamı silinir; RAG sonrası «tamam» iptal onayı gibi yanıtlanmaz."""
     orch, rag, _ = build_orchestrator()
     uid, sid = "u-ack-hotel", "s-ack-hotel"
-    for m in ("odada teknik arıza", "6", "x"):
+    for m in ("priz çalışmıyor", "x"):
         orch.handle(ChatRequest(message=m, ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     orch.handle(ChatRequest(message="Test User", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     orch.handle(ChatRequest(message="1001", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
@@ -2625,7 +2628,7 @@ def test_second_tamam_after_cancel_ack_not_cancel_ack_again():
     """İlk «tamam» iptal bağlamını kapatır; ikinci «tamam» aynı kısa onayı tekrarlamaz."""
     orch, _, _ = build_orchestrator()
     uid, sid = "u-ack2", "s-ack2"
-    for m in ("odada teknik arıza", "6", "x"):
+    for m in ("priz çalışmıyor", "x"):
         orch.handle(ChatRequest(message=m, ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     orch.handle(ChatRequest(message="Test User", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     orch.handle(ChatRequest(message="1001", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
@@ -2642,7 +2645,7 @@ def test_fault_form_description_talebi_iptal_et_cancels_with_fault_ack():
     """Açıklama adımında «talebi iptal et» isim sorusuna gitmeden arıza iptal metnini verir."""
     orch, _, _ = build_orchestrator()
     uid, sid = "u-abort-desc", "s-abort-desc"
-    for m in ("odada teknik arıza", "6"):
+    for m in ("priz çalışmıyor",):
         orch.handle(ChatRequest(message=m, ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     r = orch.handle(ChatRequest(message="talebi iptal et", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     assert r.meta.action is None
@@ -2689,7 +2692,7 @@ def test_guest_notification_optional_description_yok_means_no_extra_note_not_can
 def test_anlamadim_after_form_cancel_uses_context_not_only_greeting():
     orch, _, _ = build_orchestrator()
     uid, sid = "u-cx", "s-cx"
-    for m in ("odada teknik arıza", "6", "arıza metni"):
+    for m in ("priz çalışmıyor", "arıza metni"):
         orch.handle(ChatRequest(message=m, ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     orch.handle(ChatRequest(message="Test User", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     orch.handle(ChatRequest(message="1001", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
@@ -2833,7 +2836,7 @@ def test_invalid_room_stays_on_room_step_not_category():
     """Geçersiz oda numarası formu sıfırlamaz; oda adımında kalınır."""
     orch, _, _ = build_orchestrator()
     uid, sid = "u-rm-bad", "s-rm-bad"
-    for m in ("odada teknik arıza", "6", "kısa"):
+    for m in ("priz çalışmıyor", "kısa"):
         orch.handle(ChatRequest(message=m, ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     orch.handle(ChatRequest(message="Ali Yılmaz", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     r = orch.handle(ChatRequest(message="10000", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
@@ -2846,7 +2849,7 @@ def test_chat_form_full_name_rejects_digits_stays_on_step():
     """Adım: rakam içeren metin kabul edilmez; aynı adımda kalınır."""
     orch, _, _ = build_orchestrator()
     uid, sid = "u-fn-dig", "s-fn-dig"
-    for m in ("odada teknik arıza", "6", "arıza özeti"):
+    for m in ("priz çalışmıyor", "arıza özeti"):
         orch.handle(ChatRequest(message=m, ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     r = orch.handle(ChatRequest(message="Ali 123", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     assert r.meta.action and r.meta.action.step == "full_name"
@@ -2856,7 +2859,7 @@ def test_chat_form_full_name_rejects_digits_stays_on_step():
 def test_chat_form_full_name_help_then_valid_advances_to_room():
     orch, _, _ = build_orchestrator()
     uid, sid = "u-fn-hlp", "s-fn-hlp"
-    for m in ("odada teknik arıza", "6", "kısa not"):
+    for m in ("priz çalışmıyor", "kısa not"):
         orch.handle(ChatRequest(message=m, ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     h = orch.handle(ChatRequest(message="ne yazayım", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     assert h.meta.action and h.meta.action.step == "full_name"
@@ -2868,7 +2871,7 @@ def test_chat_form_full_name_help_then_valid_advances_to_room():
 def test_chat_form_full_name_invisible_only_treated_as_empty():
     orch, _, _ = build_orchestrator()
     uid, sid = "u-fn-zw", "s-fn-zw"
-    for m in ("odada teknik arıza", "6", "not"):
+    for m in ("priz çalışmıyor", "not"):
         orch.handle(ChatRequest(message=m, ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     r = orch.handle(ChatRequest(message="\u200b\u200b", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     assert r.meta.action and r.meta.action.step == "full_name"
@@ -2878,7 +2881,7 @@ def test_chat_form_full_name_invisible_only_treated_as_empty():
 def test_chat_form_full_name_single_letter_stays_on_step():
     orch, _, _ = build_orchestrator()
     uid, sid = "u-fn-1c", "s-fn-1c"
-    for m in ("odada teknik arıza", "6", "not"):
+    for m in ("priz çalışmıyor", "not"):
         orch.handle(ChatRequest(message=m, ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     r = orch.handle(ChatRequest(message="A", ui_language="tr", locale="tr", user_id=uid, session_id=sid))
     assert r.meta.action and r.meta.action.step == "full_name"
@@ -2989,4 +2992,29 @@ def test_operational_quiet_hours_blocks_chat_form_start():
     low = res.message.lower()
     assert "resepsiyon" in low
     assert "00:00" in low or "08:00" in low
+
+
+def test_chat_form_confirm_uses_ui_lang_for_type_and_category_values():
+    """Ek UI dilleri (ör. ru): onay gövdesi EN şablonunda kalır; Tip satırı değeri hedef dilde."""
+    orch, _, _ = build_orchestrator()
+    state = ChatFormState(
+        operation="fault",
+        language="ru",
+        ui_language="ru",
+        step="confirm",
+        category="ft_socket_fault",
+        description="priz",
+        full_name="Ivan Testov",
+        room="101",
+        initial_message="",
+    )
+    res = orch._build_chat_form_confirm_inform(
+        state,
+        intent="fault_report",
+        reply_language="ru",
+        ui_language="ru",
+    )
+    body = res.message
+    assert "Please confirm" in body
+    assert "Сообщение о неисправности" in body
 

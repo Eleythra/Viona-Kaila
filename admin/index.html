@@ -65,6 +65,9 @@
             <button type="button" data-tab="faults" aria-controls="tab-faults" title="Arıza kayıtlarını açar">Arızalar</button>
             <button type="button" data-tab="guest_notifications" aria-controls="tab-guest-notifications" title="Misafir bildirim kayıtlarını açar">Misafir bildirimleri</button>
             <button type="button" data-tab="evaluations" aria-controls="tab-evaluations" title="Misafir anket özeti">Değerlendirmeler</button>
+            <button type="button" data-tab="guest_feedback" aria-controls="tab-guest-feedback" title="Misafir geri bildirimi — WhatsApp şablonu ve public sayfa">
+              Misafir geri bildirimi
+            </button>
             <button type="button" data-tab="logs" aria-controls="tab-logs" title="Sohbet günlükleri: filtre, tablo ve dışa aktarım">Loglar</button>
             <button type="button" data-tab="app_entries" aria-controls="tab-app-entries" title="Misafir web kapısı — doğrulanmış giriş kayıtları (ad, oda, yöntem)">Uygulama girişleri</button>
             <button type="button" data-tab="rooms" aria-controls="tab-rooms" title="Oda haritası: HK istek ve teknik arıza geçmişi">Odalar</button>
@@ -447,6 +450,20 @@
           </div>
           <p id="evaluations-status" class="eval-status" role="status"></p>
           <div id="evaluations-mount" class="eval-mount"></div>
+        </section>
+
+        <section id="tab-guest-feedback" class="admin-tab hidden" aria-label="Misafir geri bildirimi">
+          <div class="section-head">
+            <h2>Misafir geri bildirimi</h2>
+            <button type="button" class="btn-small" id="guest-feedback-refresh">Yenile</button>
+            <button type="button" class="btn-small js-back-home">Ana Sayfaya Dön</button>
+          </div>
+          <p class="section-lead">
+            «Yapıldı» istek ve arıza satırlarından WhatsApp ile tek kullanımlık form bağlantısı gönderilir. Aşağıda sunucunun gördüğü ortam özeti ve Meta’da bağlantının nasıl kurulacağı yer alır. Davet göndermek için
+            <strong>İstekler</strong>, <strong>Arızalar</strong> veya HK / Teknik operasyon sekmelerini kullanın.
+          </p>
+          <p id="guest-feedback-guide-status" class="section-lead guest-feedback-guide-status" role="status"></p>
+          <div id="guest-feedback-guide-mount" class="guest-feedback-guide-mount"></div>
         </section>
 
         <section id="tab-pdf-report" class="admin-tab hidden">

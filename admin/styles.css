@@ -2432,6 +2432,101 @@
   border: 1px solid rgba(255, 120, 120, 0.4);
 }
 .status-cancelled { background: #2a323c; color: #9aa7b8; }
+.status-reopened {
+  background: rgba(180, 83, 9, 0.35);
+  color: #fef3c7;
+  border: 1px solid rgba(251, 191, 36, 0.42);
+}
+
+.guest-feedback-cell {
+  font-size: 0.82rem;
+  vertical-align: middle;
+  white-space: normal;
+}
+.guest-feedback-cell .guest-feedback-summary {
+  display: inline-block;
+  margin-right: 0.35rem;
+}
+.guest-feedback-cell .guest-feedback-detail {
+  margin-top: 6px;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--admin-text-muted);
+  max-width: min(24rem, 100%);
+  font-variant-numeric: tabular-nums;
+}
+.guest-feedback-cell .guest-feedback-detail--note {
+  margin-top: 4px;
+}
+.guest-feedback-cell .guest-feedback-detail strong {
+  color: var(--admin-text-title);
+  font-weight: 650;
+}
+
+/* Misafir geri bildirimi — rehber sekmesi */
+.guest-feedback-guide-mount {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.guest-feedback-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.guest-feedback-kpi {
+  padding: 14px 16px;
+  border-radius: var(--admin-radius-sm);
+  border: 1px solid var(--admin-border-subtle);
+  background: rgba(0, 0, 0, 0.18);
+}
+.guest-feedback-kpi__label {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--admin-text-muted);
+}
+.guest-feedback-kpi__value {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--admin-text-title);
+  line-height: 1.35;
+  word-break: break-word;
+}
+.guest-feedback-kpi--ok .guest-feedback-kpi__value {
+  color: #6ee7b7;
+}
+.guest-feedback-kpi--warn .guest-feedback-kpi__value {
+  color: #fcd34d;
+}
+.guest-feedback-kpi--bad .guest-feedback-kpi__value {
+  color: #fca5a5;
+}
+.guest-feedback-guide-panel {
+  padding: 16px 18px;
+  border-radius: var(--admin-radius-sm);
+  border: 1px solid var(--admin-border-subtle);
+  background: rgba(15, 23, 42, 0.45);
+}
+.guest-feedback-guide-panel h3 {
+  margin: 0 0 10px;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--admin-text-title);
+}
+.guest-feedback-guide-panel ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--admin-text-muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+.guest-feedback-guide-panel code {
+  font-size: 0.84em;
+}
 .row-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 /* Satır Sil — Loglar «Seçilenleri sil» ile aynı kırmızı ton (tehlikeli eylem) */
 .btn-small.btn-sil--danger {
@@ -5481,6 +5576,13 @@
   background: rgba(51, 65, 85, 0.35);
   color: #e2e8f0;
   box-shadow: none;
+}
+.op-table--front .status-badge.status-reopened,
+.op-table--hktech .status-badge.status-reopened {
+  border: 1px solid rgba(251, 191, 36, 0.88);
+  background: rgba(217, 119, 6, 0.32);
+  color: #fffbeb;
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.22);
 }
 
 .admin-body .viona-table-scroll--ops .admin-table.viona-table.op-table td:last-child {

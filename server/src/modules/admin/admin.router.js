@@ -29,6 +29,7 @@ import {
 } from "./admin.service.js";
 import { translateGuestRequestApiError } from "../../lib/guest-request-api-error-tr.js";
 import { createOperationalManualEntry } from "../guest-requests/guest-requests.service.js";
+import { inviteGuestFeedback } from "../feedback/feedback.service.js";
 const router = Router();
 const ADMIN_API_TOKEN = getAdminApiToken();
 
@@ -217,6 +218,23 @@ router.post("/requests/:type/:id/whatsapp-resend", async (req, res) => {
     return res.status(200).json({ ok: true, ...data });
   } catch (error) {
     return adminErr(res, error, "admin_whatsapp_resend_failed");
+  }
+});
+
+router.post("/requests/:type/:id/feedback-invite", async (req, res) => {
+  try {
+    const data = await inviteGuestFeedback(req.params.type, req.params.id);
+    return res.status(200).json({ ok: true, ...data });
+  } catch (error) {
+    const msg = String(error?.message || "");
+    const code = Number(error?.statusCode) || 400;
+    if (msg === "record_not_found") return res.status(404).json({ ok: false, error: msg });
+    if (msg === "feedback_invite_already_pending") return res.status(409).json({ ok: false, error: msg });
+    if (msg === "feedback_public_origin_not_configured") return res.status(503).json({ ok: false, error: msg });
+    if (msg === "feedback_test_phone_not_configured") return res.status(503).json({ ok: false, error: msg });
+    if (msg === "feedback_feature_disabled") return res.status(503).json({ ok: false, error: msg });
+    if (code >= 400 && code < 600) return res.status(code).json({ ok: false, error: msg || "feedback_invite_failed" });
+    return adminErr(res, error, "feedback_invite_failed");
   }
 });
 

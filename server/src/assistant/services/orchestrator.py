@@ -5,6 +5,7 @@ from assistant.services.language_service import LanguageService
 from assistant.services.localization_service import LocalizationService
 from assistant.services.rule_engine import (
     RuleEngine,
+    extract_fault_category_from_text,
     extract_request_category_from_text,
     extract_room_supply_request_entity,
 )
@@ -43,15 +44,24 @@ from assistant.services.form_name_input import (
 from assistant.services.form_schema import (
     COMPLAINT_CATEGORIES,
     FAULT_CATEGORIES,
+    FAULT_CATEGORY_CHAT_SECTIONS,
     GUEST_NOTIFICATION_BY_GROUP,
     REQUEST_CATEGORY_CHAT_SECTIONS,
     REQUEST_CATEGORIES,
     REQUEST_DETAIL_FIELDS,
     fault_categories_for_chat_ui,
+    fault_section_index_for_category,
     guest_notification_categories_for_group,
     request_categories_for_chat_ui,
+    request_section_index_for_category,
 )
-from assistant.services.form_labels import category_label, field_label, request_section_label, value_label
+from assistant.services.form_labels import (
+    category_label,
+    fault_section_label,
+    field_label,
+    request_section_label,
+    value_label,
+)
 
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -66,8 +76,14 @@ def operational_quiet_hours_active(now: datetime | None = None) -> bool:
 
 
 def _reset_chat_form_to_category(state: ChatFormState) -> None:
-    """Serbest metin / oda hatası sonrası kategori seçimine dönmek için form alanlarını sıfırlar."""
-    state.step = "category"
+    """Serbest metin / oda hatası sonrası listeleme adımına dönmek için form alanlarını sıfırlar."""
+    if state.operation == "request":
+        state.step = "request_section"
+    elif state.operation == "fault":
+        state.step = "fault_section"
+    else:
+        state.step = "category"
+    state.section_index = None
     state.category = None
     state.subcategory = None
     state.quantity = None
@@ -131,6 +147,16 @@ def _guest_notif_optional_no_extra_note_phrases_normalized() -> frozenset[str]:
 
 
 _GN_OPT_DESC_NO_NOTE = _guest_notif_optional_no_extra_note_phrases_normalized()
+
+
+def _normalize_chat_form_optional_description(text: str) -> str:
+    """İstek / arıza opsiyonel açıklama: «-», «yok» vb. → boş (kayıt özeti / API ile uyum)."""
+    raw = (text or "").strip()
+    if not raw:
+        return ""
+    if normalize_text(raw) in _GN_OPT_DESC_NO_NOTE:
+        return ""
+    return raw
 
 
 def _parsed_guest_identity_for_chat_form_skip(payload: ChatRequest) -> tuple[str | None, str | None]:
@@ -264,19 +290,38 @@ def _localized_request_detail_int_prompt(
     return f"«{cat_lbl}» talebi için lütfen {fld_label} olarak bir sayı giriniz."
 
 
-def _request_chat_category_prompt(reply_language: str) -> str:
-    """İstek sohbet formu: uygulamadaki İstekler sekmesiyle aynı bölüm başlıkları ve sıra."""
-    lines: list[str] = []
-    n = 1
-    for section_key, cats in REQUEST_CATEGORY_CHAT_SECTIONS:
-        lines.append(request_section_label(section_key, reply_language) + ":")
-        for cat in cats:
-            lbl = category_label("request", cat, reply_language)
-            lines.append(f"{n}. {lbl}")
-            n += 1
-    body = "\n".join(lines)
-    lead = LocalizationService().get("chat_request_category_prompt_lead", reply_language)
-    return lead + body
+def _request_chat_section_prompt(reply_language: str) -> str:
+    """İstek formu — numaralı bölüm listesi (requestSections)."""
+    lead = LocalizationService().get("chat_form_request_section_prompt_lead", reply_language)
+    lines = [
+        f"{i}. {request_section_label(sk, reply_language)}"
+        for i, (sk, _cats) in enumerate(REQUEST_CATEGORY_CHAT_SECTIONS, 1)
+    ]
+    return lead + "\n".join(lines)
+
+
+def _fault_chat_section_prompt(reply_language: str) -> str:
+    """Arıza formu — numaralı teknik bölüm listesi (faultSections)."""
+    lead = LocalizationService().get("chat_form_fault_section_prompt_lead", reply_language)
+    lines = [
+        f"{i}. {fault_section_label(sk, reply_language)}"
+        for i, (sk, _cats) in enumerate(FAULT_CATEGORY_CHAT_SECTIONS, 1)
+    ]
+    return lead + "\n".join(lines)
+
+
+def _request_chat_items_in_section_body(section_index: int, reply_language: str) -> str:
+    _sk, cats = REQUEST_CATEGORY_CHAT_SECTIONS[section_index]
+    return "\n".join(
+        f"{i}. {category_label('request', cat, reply_language)}" for i, cat in enumerate(cats, 1)
+    )
+
+
+def _fault_chat_items_in_section_body(section_index: int, reply_language: str) -> str:
+    _sk, cats = FAULT_CATEGORY_CHAT_SECTIONS[section_index]
+    return "\n".join(
+        f"{i}. {category_label('fault', cat, reply_language)}" for i, cat in enumerate(cats, 1)
+    )
 
 
 _REQUEST_CATEGORY_RESOLVE_INFO_MARKERS: tuple[str, ...] = (
@@ -360,6 +405,16 @@ def _request_resolve_category_at_form_step(normalized: str) -> str | None:
         return None
     g = extract_request_category_from_text(normalized)
     if g and g in REQUEST_CATEGORIES:
+        return g
+    return None
+
+
+def _fault_resolve_category_at_form_step(normalized: str) -> str | None:
+    """Arıza sohbet formu — metin ile doğrudan ft_* seçimi (bölüm / kategori adımı)."""
+    if not (normalized or "").strip():
+        return None
+    g = extract_fault_category_from_text(normalized)
+    if g and g in FAULT_CATEGORIES:
         return g
     return None
 
@@ -533,7 +588,40 @@ def _enum_options_for_detail(
 
 # Liste ekranında (detay enum) geçerli numara seçilmeden kategori gibi başka konuya geçilebilir.
 # Adet (detail_int) ve sonrası adımlar seçim yapıldıktan sonra kilitlidir.
-_FORM_TOPIC_SWITCH_STEPS = frozenset({"category", "detail_enum"})
+_FORM_TOPIC_SWITCH_STEPS = frozenset(
+    {"request_section", "fault_section", "category", "detail_enum"}
+)
+
+_CHAT_FORM_LIST_SELECTION_STEPS = frozenset(
+    {"request_section", "fault_section", "category", "detail_enum", "detail_int"}
+)
+
+
+def _chat_form_list_selection_matches_numeric_step(state: ChatFormState, text: str) -> bool:
+    """Konu değişiminde yanlışlıkla formu terk etmemek: geçerli bölüm / kalem numarası."""
+    t = (text or "").strip()
+    if not t:
+        return False
+    try:
+        idx = int(t)
+    except ValueError:
+        return False
+    op = state.operation
+    if state.step == "request_section" and op == "request":
+        return 1 <= idx <= len(REQUEST_CATEGORY_CHAT_SECTIONS)
+    if state.step == "fault_section" and op == "fault":
+        return 1 <= idx <= len(FAULT_CATEGORY_CHAT_SECTIONS)
+    if state.step == "category" and op == "request":
+        if state.section_index is None:
+            return False
+        cats = REQUEST_CATEGORY_CHAT_SECTIONS[state.section_index][1]
+        return 1 <= idx <= len(cats)
+    if state.step == "category" and op == "fault":
+        if state.section_index is None:
+            return False
+        cats = FAULT_CATEGORY_CHAT_SECTIONS[state.section_index][1]
+        return 1 <= idx <= len(cats)
+    return False
 
 
 def _request_choice_text_matches_current_step(
@@ -554,6 +642,18 @@ def _request_choice_text_matches_current_step(
         return False
     opts = _enum_options_for_detail(state, state.category or "", field_name, reply_language)
     return 1 <= idx <= len(opts)
+
+
+def _chat_form_topic_switch_should_skip(
+    state: ChatFormState,
+    text: str,
+    reply_language: str,
+) -> bool:
+    if _chat_form_list_selection_matches_numeric_step(state, text):
+        return True
+    return state.step != "category" and _request_choice_text_matches_current_step(
+        state, text, reply_language
+    )
 
 
 # Bu alt niyetler chat formu yerine ResponseComposer yönlendirme metni kullanır (öğle paketi, transfer, …).
@@ -912,8 +1012,6 @@ def _is_short_how_followup_message(normalized_lower: str) -> bool:
     return t in _FOLLOWUP_HOW_NORMALIZED_PHRASES
 
 
-_CHAT_FORM_LIST_SELECTION_STEPS = frozenset({"category", "detail_enum", "detail_int"})
-
 # Liste adımında «hayır» benzeri = genelde «arıza yok»; form iptali sayma.
 _CHAT_FORM_LIST_STEP_NO_LIKE = frozenset(
     {
@@ -1141,10 +1239,12 @@ class ChatOrchestrator:
                 else ("fault" if guest_type == "fault" else "complaint")
             )
         )
-        # Şablon dalları (tr/en/de/pl): ek UI dilleri `orchestrator_branch_lang` ile EN’e hizalanır.
+        # Şablon (başlık / alan adları / onay seçenekleri): tr|en|de|pl — ek UI dilleri EN dalına düşer.
+        # Özet satırlarındaki tip ve kategori *metinleri* tam `reply_language` ile (ru, da, …) yerelleştirilir.
         branch_lang = _tpl_lang(reply_language)
-        category_display = category_label(cat_intent, category, branch_lang)
-        type_display = _form_record_type_label(guest_type, branch_lang)
+        label_lang = normalize_chatbot_lang(reply_language)
+        category_display = category_label(cat_intent, category, label_lang)
+        type_display = _form_record_type_label(guest_type, label_lang)
 
         if branch_lang == "en":
             header = "Please confirm the record details:\n"
@@ -1179,10 +1279,26 @@ class ChatOrchestrator:
             room_label = "Oda"
             confirm_line = "\nLütfen seçin:\n1. Onayla ve kayıt aç\n2. İptal et"
 
+        desc_primary = _normalize_chat_form_optional_description(state.description or "")
+        desc_fallback_raw = (state.initial_message or "").strip()
+        desc_fallback = (
+            _normalize_chat_form_optional_description(desc_fallback_raw) if desc_primary == "" else ""
+        )
+        desc_val = desc_primary or desc_fallback
+        if not desc_val:
+            desc_display = self.localization_service.get("chat_form_confirm_description_empty", reply_language)
+            if not desc_display or desc_display == "chat_form_confirm_description_empty":
+                desc_display = self.localization_service.get("chat_form_confirm_description_empty", "tr")
+        else:
+            desc_display = desc_val
+
         lines = [header.rstrip()]
         lines.append(f"- {type_label}: {type_display}")
         lines.append(f"- {cat_label}: {category_display}")
-        lines.append(f"- {desc_label}: {state.description or state.initial_message or ''}")
+        lines.append(f"- {desc_label}: {desc_display}")
+        if guest_type == "request" and details.get("quantity") is not None:
+            qty_lbl = field_label("quantity", reply_language)
+            lines.append(f"- {qty_lbl}: {details.get('quantity')}")
         lines.append(f"- {name_label}: {state.full_name or ''}")
         lines.append(f"- {room_label}: {state.room or ''}")
         lines.append(confirm_line.strip())
@@ -2521,7 +2637,7 @@ class ChatOrchestrator:
             and _request_category_prefills_description_from_first_message(chosen_category)
             and _initial_message_substantive_for_request_prefill(first_turn)
         ):
-            state.description = first_turn
+            state.description = _normalize_chat_form_optional_description(first_turn)
             pre_name, pre_room = _parsed_guest_identity_for_chat_form_skip(payload)
             if pre_name and pre_room:
                 state.full_name = pre_name
@@ -2670,6 +2786,10 @@ class ChatOrchestrator:
             and initial_request_category in REQUEST_CATEGORIES
         ):
             ic = initial_request_category.strip()
+            si_req = request_section_index_for_category(ic)
+            if si_req is None:
+                raise AssertionError(f"request category has no chat section: {ic!r}")
+            state.section_index = si_req
             fields = REQUEST_DETAIL_FIELDS.get(ic) or ()
             state.category = ic
             state.pending_detail_fields = [f.name for f in fields]
@@ -2690,6 +2810,10 @@ class ChatOrchestrator:
             and initial_fault_category.strip() in FAULT_CATEGORIES
         ):
             ic = initial_fault_category.strip()
+            si_ft = fault_section_index_for_category(ic)
+            if si_ft is None:
+                raise AssertionError(f"fault category has no chat section: {ic!r}")
+            state.section_index = si_ft
             state.category = ic
             self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
             return self._emit_after_category_selected(
@@ -2720,27 +2844,36 @@ class ChatOrchestrator:
 
         self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
 
+        action_step = "category"
         if op == "guest_notification":
             prompt = _guest_notification_category_prompt(notif_group, reply_language)
             meta_intent = "guest_notification"
         elif op == "request":
-            prompt = _request_chat_category_prompt(reply_language)
+            state.step = "request_section"
+            state.section_index = None
+            self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+            prompt = _request_chat_section_prompt(reply_language)
             meta_intent = "request"
+            action_step = "request_section"
         else:
             if op == "fault":
-                categories = list(fault_categories_for_chat_ui())
+                state.step = "fault_section"
+                state.section_index = None
+                self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+                prompt = _fault_chat_section_prompt(reply_language)
+                meta_intent = "fault_report"
+                action_step = "fault_section"
             else:
                 categories = COMPLAINT_CATEGORIES
 
-            options: list[str] = []
-            for idx, cat in enumerate(categories, start=1):
-                cat_intent = "fault" if op == "fault" else "complaint"
-                label = category_label(cat_intent, cat, reply_language)
-                options.append(f"{idx}. {label}")
+                options: list[str] = []
+                for idx, cat in enumerate(categories, start=1):
+                    label = category_label("complaint", cat, reply_language)
+                    options.append(f"{idx}. {label}")
 
-            lead = self.localization_service.get("chat_form_category_prompt_lead", reply_language)
-            prompt = lead + "\n" + "\n".join(options)
-            meta_intent = "fault_report" if op == "fault" else "complaint"
+                lead = self.localization_service.get("chat_form_category_prompt_lead", reply_language)
+                prompt = lead + "\n" + "\n".join(options)
+                meta_intent = "complaint"
 
         return self.response_service.build(
             "inform",
@@ -2753,7 +2886,7 @@ class ChatOrchestrator:
             action={
                 "kind": "chat_form",
                 "operation": op,
-                "step": "category",
+                "step": action_step,
             },
         )
 
@@ -2840,12 +2973,41 @@ class ChatOrchestrator:
                 reply_language, ui_language, intent
             )
 
+        if state.operation == "request" and state.step == "category" and state.section_index is None:
+            state.step = "request_section"
+            self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+            if not text:
+                msg = _request_chat_section_prompt(reply_language)
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "request_section"},
+                )
+        if state.operation == "fault" and state.step == "category" and state.section_index is None:
+            state.step = "fault_section"
+            self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+            if not text:
+                msg = _fault_chat_section_prompt(reply_language)
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "fault_section"},
+                )
+
         # Bağlamsal güncelleme: kategori veya talep detay listesinde / adet sorulurken geçerli numara girilmediyse
         # başka soruya veya bilgiye geçilebilir. Geçerli seçim yapıldıktan sonra (açıklama, isim, oda, onay vb.)
         # form kilitli kalır; yanlış yanıtta aynı soru tekrar sorulur.
-        _skip_topic_switch = state.step != "category" and _request_choice_text_matches_current_step(
-            state, text, reply_language
-        )
+        _skip_topic_switch = _chat_form_topic_switch_should_skip(state, text, reply_language)
         if text and state.step in _FORM_TOPIC_SWITCH_STEPS and not _skip_topic_switch:
             re_intent = self.rule_engine.match(normalized)
             if re_intent:
@@ -2878,8 +3040,14 @@ class ChatOrchestrator:
                     # bağlamda talep türü seçimi say — formu bozma.
                     if (
                         state.operation == "request"
-                        and state.step == "category"
+                        and state.step in ("category", "request_section")
                         and _request_resolve_category_at_form_step(normalized)
+                    ):
+                        pass
+                    elif (
+                        state.operation == "fault"
+                        and state.step in ("category", "fault_section")
+                        and _fault_resolve_category_at_form_step(normalized)
                     ):
                         pass
                     else:
@@ -3025,15 +3193,19 @@ class ChatOrchestrator:
             if op == "guest_notification":
                 return _guest_notification_category_prompt(state.notif_group, reply_language)
             if op == "request":
-                return _request_chat_category_prompt(reply_language)
+                if state.section_index is None:
+                    return _request_chat_section_prompt(reply_language)
+                lead = self.localization_service.get("chat_form_category_prompt_lead", reply_language)
+                return lead + "\n" + _request_chat_items_in_section_body(state.section_index, reply_language)
             if op == "fault":
-                categories = list(fault_categories_for_chat_ui())
-            else:
-                categories = COMPLAINT_CATEGORIES
+                if state.section_index is None:
+                    return _fault_chat_section_prompt(reply_language)
+                lead = self.localization_service.get("chat_form_category_prompt_lead", reply_language)
+                return lead + "\n" + _fault_chat_items_in_section_body(state.section_index, reply_language)
+            categories = COMPLAINT_CATEGORIES
             lines: list[str] = []
             for idx, cat in enumerate(categories, start=1):
-                cat_intent = "fault" if op == "fault" else "complaint"
-                lbl = category_label(cat_intent, cat, reply_language)
+                lbl = category_label("complaint", cat, reply_language)
                 lines.append(f"{idx}. {lbl}")
             lead = self.localization_service.get("chat_form_category_prompt_lead", reply_language)
             return lead + "\n" + "\n".join(lines)
@@ -3043,10 +3215,144 @@ class ChatOrchestrator:
             if op == "guest_notification":
                 return guest_notification_categories_for_group(state.notif_group)
             if op == "request":
-                return list(request_categories_for_chat_ui())
+                if state.section_index is None:
+                    return list(request_categories_for_chat_ui())
+                return list(REQUEST_CATEGORY_CHAT_SECTIONS[state.section_index][1])
             if op == "fault":
-                return list(fault_categories_for_chat_ui())
-            return COMPLAINT_CATEGORIES
+                if state.section_index is None:
+                    return list(fault_categories_for_chat_ui())
+                return list(FAULT_CATEGORY_CHAT_SECTIONS[state.section_index][1])
+            return list(COMPLAINT_CATEGORIES)
+
+        # İstek: önce bölüm (requestSections).
+        if state.step == "request_section":
+            if not text:
+                msg = _request_chat_section_prompt(reply_language)
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "request_section"},
+                )
+            chosen_sec: int | None = None
+            try:
+                idx = int(text)
+                if 1 <= idx <= len(REQUEST_CATEGORY_CHAT_SECTIONS):
+                    chosen_sec = idx - 1
+            except ValueError:
+                chosen_sec = None
+            guessed_cat = _request_resolve_category_at_form_step(normalized)
+            if guessed_cat and guessed_cat in REQUEST_CATEGORIES:
+                si_g = request_section_index_for_category(guessed_cat)
+                if si_g is not None:
+                    state.section_index = si_g
+                    state.pending_detail_fields = []
+                    state.current_detail_field = None
+                    fields = REQUEST_DETAIL_FIELDS.get(guessed_cat) or ()
+                    state.pending_detail_fields = [f.name for f in fields]
+                    self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+                    return self._emit_after_category_selected(
+                        payload=payload,
+                        state=state,
+                        chosen_category=guessed_cat,
+                        reply_language=reply_language,
+                        ui_language=ui_language,
+                        intent=intent,
+                    )
+            if chosen_sec is not None:
+                state.section_index = chosen_sec
+                state.step = "category"
+                self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+                lead = self.localization_service.get("chat_form_category_prompt_lead", reply_language)
+                msg = lead + "\n" + _request_chat_items_in_section_body(chosen_sec, reply_language)
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "category"},
+                )
+            msg = _request_chat_section_prompt(reply_language)
+            return self.response_service.build(
+                "inform",
+                msg,
+                intent,
+                1.0,
+                reply_language,
+                ui_language,
+                "rule",
+                action={"kind": "chat_form", "operation": state.operation, "step": "request_section"},
+            )
+
+        # Arıza: önce teknik bölüm (faultSections).
+        if state.step == "fault_section":
+            if not text:
+                msg = _fault_chat_section_prompt(reply_language)
+                return self.response_service.build(
+                    "inform",
+                    msg,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "fault_section"},
+                )
+            chosen_sec_f: int | None = None
+            try:
+                idx_f = int(text)
+                if 1 <= idx_f <= len(FAULT_CATEGORY_CHAT_SECTIONS):
+                    chosen_sec_f = idx_f - 1
+            except ValueError:
+                chosen_sec_f = None
+            guessed_ft = _fault_resolve_category_at_form_step(normalized)
+            if guessed_ft and guessed_ft in FAULT_CATEGORIES:
+                si_f = fault_section_index_for_category(guessed_ft)
+                if si_f is not None:
+                    state.section_index = si_f
+                    self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+                    return self._emit_after_category_selected(
+                        payload=payload,
+                        state=state,
+                        chosen_category=guessed_ft,
+                        reply_language=reply_language,
+                        ui_language=ui_language,
+                        intent=intent,
+                    )
+            if chosen_sec_f is not None:
+                state.section_index = chosen_sec_f
+                state.step = "category"
+                self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
+                lead_f = self.localization_service.get("chat_form_category_prompt_lead", reply_language)
+                msg_f = lead_f + "\n" + _fault_chat_items_in_section_body(chosen_sec_f, reply_language)
+                return self.response_service.build(
+                    "inform",
+                    msg_f,
+                    intent,
+                    1.0,
+                    reply_language,
+                    ui_language,
+                    "rule",
+                    action={"kind": "chat_form", "operation": state.operation, "step": "category"},
+                )
+            msg = _fault_chat_section_prompt(reply_language)
+            return self.response_service.build(
+                "inform",
+                msg,
+                intent,
+                1.0,
+                reply_language,
+                ui_language,
+                "rule",
+                action={"kind": "chat_form", "operation": state.operation, "step": "fault_section"},
+            )
 
         # Kategori adımı: kullanıcı bir kategori seçer ve detay akışı hazırlanır.
         if state.step == "category":
@@ -3075,6 +3381,10 @@ class ChatOrchestrator:
                 guessed = _request_resolve_category_at_form_step(normalized)
                 if guessed:
                     chosen_category = guessed
+            if not chosen_category and state.operation == "fault":
+                guessedf2 = _fault_resolve_category_at_form_step(normalized)
+                if guessedf2:
+                    chosen_category = guessedf2
             if not chosen_category:
                 msg = _category_prompt(state.operation)
                 return self.response_service.build(
@@ -3094,6 +3404,13 @@ class ChatOrchestrator:
             if state.operation == "request":
                 fields = REQUEST_DETAIL_FIELDS.get(picked) or ()
                 state.pending_detail_fields = [f.name for f in fields]
+                si_fix = request_section_index_for_category(picked)
+                if si_fix is not None:
+                    state.section_index = si_fix
+            elif state.operation == "fault":
+                si_ff = fault_section_index_for_category(picked)
+                if si_ff is not None:
+                    state.section_index = si_ff
             self.form_store.upsert(payload.channel, payload.user_id, payload.session_id, state)
             return self._emit_after_category_selected(
                 payload=payload,
@@ -3465,7 +3782,10 @@ class ChatOrchestrator:
                         "step": "description",
                     },
                 )
-            state.description = text
+            if state.operation in ("request", "fault"):
+                state.description = _normalize_chat_form_optional_description(text)
+            else:
+                state.description = text
             pre_name, pre_room = _parsed_guest_identity_for_chat_form_skip(payload)
             if pre_name and pre_room:
                 state.full_name = pre_name

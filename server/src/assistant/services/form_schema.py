@@ -151,55 +151,91 @@ def assert_complaint_chat_schema_invariants() -> None:
     assert set(tpl) == allowed, "COMPLAINT_CATEGORIES must match ComplaintCategory Literal exactly"
 
 
-FAULT_TECH_IDS: tuple[str, ...] = (
-    "ft_ac_not_cooling",
-    "ft_ac_not_heating",
-    "ft_ac_remote",
-    "ft_ac_fault",
-    "ft_ventilation_fault",
-    "ft_socket_fault",
-    "ft_electric_fault",
-    "ft_led_fault",
-    "ft_lamp_fault",
-    "ft_sconce_fault",
-    "ft_ceiling_water_leak",
-    "ft_bidet_faucet_fault",
-    "ft_cold_water_no_flow",
-    "ft_hot_water_no_flow",
-    "ft_siphon_fault",
-    "ft_faucet_fault",
-    "ft_sink_drain_fault",
-    "ft_toilet_seat_broken",
-    "ft_shower_cabin_fault",
-    "ft_shower_head_fault",
-    "ft_towel_rail_fault",
-    "ft_bathroom_drain_clog",
-    "ft_tv_remote",
-    "ft_tv_fault",
-    "ft_phone_fault",
-    "ft_minibar_fault",
-    "ft_safe_fault",
-    "ft_kettle_fault",
-    "ft_hair_dryer_fault",
-    "ft_tv_channel_fault",
-    "ft_curtain_fallen",
-    "ft_window_fault",
-    "ft_window_cleaning",
-    "ft_room_door_fault",
-    "ft_bathroom_door_fault",
-    "ft_balcony_door_fault",
-    "ft_balcony_railing_loose",
-    "ft_cornice_fault",
-    "ft_headboard_fault",
-    "ft_dresser_drawer_fault",
-    "ft_drawer_fault",
-    "ft_wardrobe_fault",
-    "ft_mirror_damage",
-    "ft_elevator_fault",
-    "ft_indoor_pool_temperature",
-    "ft_other",
+# Sohbet arıza formu: `js/requests/config.js` → `faultSections` ile aynı gruplama ve sıra.
+FAULT_CATEGORY_CHAT_SECTIONS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    (
+        "reqFaultSecHvac",
+        (
+            "ft_ac_not_cooling",
+            "ft_ac_not_heating",
+            "ft_ac_remote",
+            "ft_ac_fault",
+            "ft_ventilation_fault",
+        ),
+    ),
+    (
+        "reqFaultSecElectric",
+        (
+            "ft_socket_fault",
+            "ft_electric_fault",
+            "ft_led_fault",
+            "ft_lamp_fault",
+            "ft_sconce_fault",
+        ),
+    ),
+    (
+        "reqFaultSecWaterBath",
+        (
+            "ft_ceiling_water_leak",
+            "ft_bidet_faucet_fault",
+            "ft_cold_water_no_flow",
+            "ft_hot_water_no_flow",
+            "ft_siphon_fault",
+            "ft_faucet_fault",
+            "ft_sink_drain_fault",
+            "ft_toilet_seat_broken",
+            "ft_shower_cabin_fault",
+            "ft_shower_head_fault",
+            "ft_towel_rail_fault",
+            "ft_bathroom_drain_clog",
+        ),
+    ),
+    (
+        "reqFaultSecTvElectronics",
+        (
+            "ft_tv_remote",
+            "ft_tv_fault",
+            "ft_phone_fault",
+            "ft_minibar_fault",
+            "ft_safe_fault",
+            "ft_kettle_fault",
+            "ft_hair_dryer_fault",
+            "ft_tv_channel_fault",
+        ),
+    ),
+    (
+        "reqFaultSecDoorWindow",
+        (
+            "ft_curtain_fallen",
+            "ft_window_fault",
+            "ft_window_cleaning",
+            "ft_room_door_fault",
+            "ft_bathroom_door_fault",
+            "ft_balcony_door_fault",
+            "ft_balcony_railing_loose",
+            "ft_cornice_fault",
+        ),
+    ),
+    (
+        "reqFaultSecFurniture",
+        (
+            "ft_headboard_fault",
+            "ft_dresser_drawer_fault",
+            "ft_drawer_fault",
+            "ft_wardrobe_fault",
+            "ft_mirror_damage",
+        ),
+    ),
+    (
+        "reqFaultSecGeneralFacility",
+        ("ft_elevator_fault", "ft_indoor_pool_temperature"),
+    ),
+    ("reqFaultSecOther", ("ft_other",)),
 )
 
+FAULT_TECH_IDS: tuple[str, ...] = tuple(
+    ft for _section_key, cats in FAULT_CATEGORY_CHAT_SECTIONS for ft in cats
+)
 FAULT_CATEGORIES: tuple[str, ...] = FAULT_TECH_IDS
 
 
@@ -208,8 +244,37 @@ def fault_categories_for_chat_ui() -> tuple[str, ...]:
     return FAULT_TECH_IDS
 
 
+def request_section_index_for_category(cat_id: str) -> int | None:
+    """Tek bölüm indeksi (0-tabanlı); şema hatasında AssertionError."""
+    found: int | None = None
+    for i, (_sk, cats) in enumerate(REQUEST_CATEGORY_CHAT_SECTIONS):
+        if cat_id in cats:
+            assert found is None, f"Duplicate request section for {cat_id!r}"
+            found = i
+    return found
+
+
+def fault_section_index_for_category(ft_id: str) -> int | None:
+    """Tek bölüm indeksi (0-tabanlı); şema hatasında AssertionError."""
+    found: int | None = None
+    for i, (_sk, cats) in enumerate(FAULT_CATEGORY_CHAT_SECTIONS):
+        if ft_id in cats:
+            assert found is None, f"Duplicate fault section for {ft_id!r}"
+            found = i
+    return found
+
+
 def assert_fault_chat_schema_invariants() -> None:
     assert len(FAULT_CATEGORIES) == len(set(FAULT_CATEGORIES)), "Duplicate fault category id"
+    flat = tuple(ft for _sk, cats in FAULT_CATEGORY_CHAT_SECTIONS for ft in cats)
+    assert flat == FAULT_TECH_IDS, "FAULT_CATEGORY_CHAT_SECTIONS flatten must equal FAULT_TECH_IDS"
+    allowed = set(FAULT_CATEGORIES)
+    seen: list[str] = []
+    for _sk, cats in FAULT_CATEGORY_CHAT_SECTIONS:
+        for c in cats:
+            assert c in allowed, f"Unknown fault in chat sections: {c}"
+            seen.append(c)
+    assert len(seen) == len(set(seen)), "Duplicate fault in FAULT_CATEGORY_CHAT_SECTIONS"
 
 
 # Web `REQUESTS_CONFIG.guestNotificationGroups` ile aynı sıra ve id’ler.

@@ -52,32 +52,15 @@ def test_parsed_guest_identity_missing_fields():
 
 
 def test_fault_flow_description_with_identity_goes_to_confirm():
-    """Arıza: kategori/lokasyon/aciliyet sonrası açıklama; geçerli ad+oda ile doğrudan onay adımı."""
+    """Arıza: spesifik arıza ifadesi → açıklama; geçerli ad+oda ile doğrudan onay adımı."""
     orch, _, _ = build_orchestrator()
     uid, sid = "u-fault-guest-id", "s-fault-guest-id"
     base = dict(ui_language="tr", locale="tr", user_id=uid, session_id=sid)
 
-    r = orch.handle(ChatRequest(message="odada teknik arıza", **base))
+    r = orch.handle(ChatRequest(message="priz çalışmıyor", **base))
     assert r.meta.action and r.meta.action.kind == "chat_form"
     assert r.meta.action.operation == "fault"
-
-    for _ in range(8):
-        act = r.meta.action
-        if not act:
-            break
-        st = act.step
-        if st == "description":
-            break
-        if st == "category":
-            r = orch.handle(ChatRequest(message="2", **base))
-        elif st == "location":
-            r = orch.handle(ChatRequest(message="1", **base))
-        elif st == "urgency":
-            r = orch.handle(ChatRequest(message="1", **base))
-        else:
-            break
-
-    assert r.meta.action and r.meta.action.step == "description"
+    assert r.meta.action.step == "description"
 
     r_final = orch.handle(
         ChatRequest(
@@ -114,11 +97,12 @@ def test_request_category_fast_path_skips_full_name_with_verified_identity():
             language="tr",
             ui_language="tr",
             step="category",
+            section_index=2,
             initial_message="şişe su rica ediyorum",
         ),
     )
-    # hk_water = 15; tüm HK kalemlerinde adet (detail_int) + kısa açıklama sonrası kimlikle onay
-    r_qty = orch.handle(ChatRequest(message="15", **base))
+    # İçecekler bölümünde: hk_water ilk sırada
+    r_qty = orch.handle(ChatRequest(message="1", **base))
     assert r_qty.meta.action and r_qty.meta.action.kind == "chat_form"
     assert r_qty.meta.action.step == "detail_int"
     orch.handle(ChatRequest(message="1", **base))

@@ -168,3 +168,25 @@ Tüm uçlar diğer admin API’leri gibi **admin bearer token** gerektirir (`Aut
 - **`GET /api/admin/guest-gate-entries/summary`** — Aynı filtrelerle özet: toplam ve yöntem bazlı sayılar (`hotelAdvisorCount`, `operatorBypassCount`, `passwordDualCount`, `deployBypassCount`, `elektraCount`).
 - **`GET /api/admin/guest-gate-entries/export.csv`** — Filtrelerle uyumlu CSV indirimi (`Content-Disposition`).
 - **`DELETE /api/admin/guest-gate-entries/:id`** — Tek kayıt silme (UUID); yanıt `{ ok: true, id }`.
+
+### Misafir geri bildirimi (public token + admin davet)
+
+**Admin (Bearer):**
+
+- **`POST /api/admin/requests/:type/:id/feedback-invite`** — `type` yalnız `request` \| `fault`. Kayıt durumu `done` olmalı; aynı satırda `feedback_status=pending` iken `409` (`feedback_invite_already_pending`). Misafir telefonu `guest_phone` veya Hotspot eşlemesi ile çözülür; yoksa `400` (`feedback_guest_phone_missing`). `VIONA_GUEST_FEEDBACK_ENABLED=false` (veya `0`/`off`) iken `503` (`feedback_feature_disabled`). `VIONA_FEEDBACK_PUBLIC_ORIGIN` boşsa `503` (`feedback_public_origin_not_configured`). `WHATSAPP_TEST_MODE=true` iken `WHATSAPP_TEST_PHONE` geçersiz/boşsa `503` (`feedback_test_phone_not_configured`). Başarıda `{ ok, feedbackUrl, testMode, item }`.
+
+**Public (auth yok; CORS: izinli misafir site kökenleri + rate limit):**
+
+- **`GET /api/public/feedback/:token`** — Token `fb_` ile başlar. `VIONA_GUEST_FEEDBACK_ENABLED` kapalıysa `503` (`feedback_feature_disabled`). `feedback_status=pending` iken `{ ok, guestName, roomNumber, bucket }`. Kullanılmış / geçersiz: `410` / `404`.
+- **`POST /api/public/feedback/:token/submit`** — Kapalı özellikte `503` (`feedback_feature_disabled`). JSON gövde:
+  - `solved`: `"yes"` \| `"no"` (zorunlu)
+  - Evet: `speedRating`, `staffRating`, `solutionRating` (1–5), `revisitPreference` (`yes` \| `unsure` \| `no`), isteğe bağlı `feedbackNote`
+  - Hayır: `reopenNote` (zorunlu, kısa); sunucu kaydı `status=reopened` yapar ve operasyon WhatsApp’ı yeniden dener.
+
+**Ortam:** `VIONA_GUEST_FEEDBACK_ENABLED` (`true`/`1`/`on` = açık; `false`/`0`/`off` = kapalı — origin dolu olsa bile; boş = `VIONA_FEEDBACK_PUBLIC_ORIGIN` tanımlıysa açık kabul edilir), `VIONA_FEEDBACK_PUBLIC_ORIGIN` (public sayfa kökü), `WHATSAPP_FEEDBACK_TEMPLATE_NAME` (varsayılan `viona_feedback_completed`), `WHATSAPP_FEEDBACK_URL_BUTTON_MODE` (`token` \| `full`), `WHATSAPP_TEST_MODE` + `WHATSAPP_TEST_PHONE` (E.164 rakamları; test modu açıkken telefon **zorunlu**, yoksa davet `503` `feedback_test_phone_not_configured`). **Meta şablondaki parametre sırası ile kod içindeki `components` birebir eşleşmeli** — aksi halde gönderim reddedilir.
+
+**Meta URL düğmesi:** `token` modunda şablonda **Dynamic URL** seçilir; Website URL sabit olarak `VIONA_FEEDBACK_PUBLIC_ORIGIN` ile birleşen `/feedback/` yolu (sonunda slash) yazılır ve API butona yalnızca `fb_…` son ekini gönderir. `full` modunda API tam `https://…/feedback/fb_…` adresini üretir; şablondaki URL alanı buna göre tam URL kabul etmelidir.
+
+**CORS:** Statik geri bildirim sayfasının kökeni (`Origin`), misafir siteniz için allowlist’te olmalı (`CORS_ALLOWED_ORIGINS` veya `server/src/lib/public-site-origins.js` içi sabitler); aksi halde tarayıcıdan `POST /submit` `403 cors_not_allowed` ile düşer.
+
+Statik sayfa: kök `feedback.html` (`/feedback/<token>` için nginx / hosting kuralı gerekir).

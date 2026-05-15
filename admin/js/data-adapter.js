@@ -236,10 +236,35 @@
         "/whatsapp-resend";
       return jfetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
     },
+    /** Misafir geri bildirimi: WhatsApp şablonu + tek kullanımlık public token (yalnız istek / arıza, durum yapıldı). */
+    sendGuestFeedbackInvite: function (type, id) {
+      var url =
+        adminRequestsCollectionUrl() +
+        "/" +
+        encodeURIComponent(type) +
+        "/" +
+        encodeURIComponent(id) +
+        "/feedback-invite";
+      return jfetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }).then(function (d) {
+        try {
+          if (typeof BroadcastChannel !== "undefined") {
+            var c = new BroadcastChannel("viona-ops-mutations");
+            c.postMessage({ t: Date.now(), v: 1, source: "admin-panel-feedback-invite", type: type });
+            c.close();
+          }
+        } catch (_e) {}
+        return d;
+      });
+    },
     /** Operasyon WhatsApp özeti: kök zaten …/api; burada /health → sunucuda /api/health. */
     getWhatsappAdminDiagnostics: function () {
       return jfetch(getApiBase() + "/health").then(function (d) {
-        return { operational: (d && d.whatsappOperational) || {}, healthOk: Boolean(d && d.ok) };
+        return {
+          operational: (d && d.whatsappOperational) || {},
+          guestFeedback: (d && d.guestFeedback) || null,
+          hasSupabase: Boolean(d && d.hasSupabase),
+          healthOk: Boolean(d && d.ok),
+        };
       });
     },
     updateStatus: function (type, id, status) {

@@ -2198,6 +2198,10 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
     (
         "hk_slippers",
         [
+            "terlik istiyorum",
+            "terlik lazım",
+            "terlik lazim",
+            "terlik rica",
             "terlik",
             "slippers",
             "hausschuhe",
@@ -2347,6 +2351,10 @@ REQUEST_ITEM_CATEGORY_PHRASES: list[tuple[str, list[str]]] = [
     (
         "hk_extra_bed",
         [
+            "ek yatak talep",
+            "ek yatak talep ediyorum",
+            "ek yatak istiyorum",
+            "ek yatak rica",
             "ek yatak",
             "ekstra yatak",
             "extra bed",

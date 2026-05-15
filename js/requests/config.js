@@ -2,7 +2,7 @@
  * Misafir talepleri — kategori seçenekleri (API ile uyumlu).
  * İstekler: HOUSEKEEPING grupları; Arızalar: faultSections (Teknik).
  * Sohbet senkronu: server/src/assistant/services/form_schema.py → REQUEST_CATEGORY_CHAT_SECTIONS,
- *   FAULT_TECH_IDS sırası (faultSections), COMPLAINT_CATEGORIES sırası (categories.complaint).
+ *   FAULT_CATEGORY_CHAT_SECTIONS (faultSections düz sıra = FAULT_TECH_IDS), COMPLAINT_CATEGORIES (categories.complaint).
  */
 (function () {
   "use strict";

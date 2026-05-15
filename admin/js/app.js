@@ -114,6 +114,7 @@
     logs: "tab-logs",
     app_entries: "tab-app-entries",
     rooms: "tab-rooms",
+    guest_feedback: "tab-guest-feedback",
   };
   /** Odalar sekmesi: seçili oda detayı (HK istek + teknik arıza). */
   var roomDetailMeta = null;
@@ -939,6 +940,17 @@
                 window.alert(msg);
               }
             },
+            onFeedbackInvite: async function (itemType, id) {
+              try {
+                var d = await adapter.sendGuestFeedbackInvite(itemType, id);
+                var url = d && d.feedbackUrl ? String(d.feedbackUrl) : "";
+                var testNote = d && d.testMode ? "\n\n(Test modu: WHATSAPP_TEST_MODE.)" : "";
+                window.alert("WhatsApp ile geri bildirim daveti gönderildi." + testNote + (url ? "\n\n" + url : ""));
+                await loadOpHk(opHkPage);
+              } catch (err) {
+                window.alert(formatFeedbackInviteError(err));
+              }
+            },
           },
           opsToolbarListHandlers(),
         ),
@@ -957,6 +969,177 @@
     var d = document.createElement("div");
     d.textContent = String(s || "");
     return d.innerHTML;
+  }
+
+  var guestFeedbackGuideUiBound = false;
+  function wireGuestFeedbackGuidePanelOnce() {
+    if (guestFeedbackGuideUiBound) return;
+    guestFeedbackGuideUiBound = true;
+    var btn = document.getElementById("guest-feedback-refresh");
+    if (btn)
+      btn.addEventListener("click", function () {
+        void loadGuestFeedbackGuide();
+      });
+  }
+
+  function guestFeedbackKpiClass(ok, warn) {
+    if (ok) return "guest-feedback-kpi guest-feedback-kpi--ok";
+    if (warn) return "guest-feedback-kpi guest-feedback-kpi--warn";
+    return "guest-feedback-kpi guest-feedback-kpi--bad";
+  }
+
+  async function loadGuestFeedbackGuide() {
+    wireGuestFeedbackGuidePanelOnce();
+    var mount = document.getElementById("guest-feedback-guide-mount");
+    var statusEl = document.getElementById("guest-feedback-guide-status");
+    if (!mount) return;
+    if (statusEl) {
+      statusEl.textContent = "Sunucu durumu alınıyor…";
+      statusEl.classList.remove("admin-load-error");
+    }
+    try {
+      var pack = await adapter.getWhatsappAdminDiagnostics();
+      var gf = pack.guestFeedback || {};
+      var origin = gf.publicOrigin ? String(gf.publicOrigin).replace(/\/+$/, "") : "";
+      var mode = String(gf.urlButtonMode || "token").toLowerCase();
+      var modeFull = mode === "full";
+      var tplRaw = gf.templateName || "viona_feedback_completed";
+      var tplEsc = escHtml(tplRaw);
+      var originOk = Boolean(gf.publicOriginConfigured && origin);
+
+      if (statusEl) {
+        if (gf.featureEnabled === false) {
+          statusEl.textContent =
+            "Özellik şu an kapalı (VIONA_GUEST_FEEDBACK_ENABLED). Açmak için sunucu ortamında true yapıp yeniden başlatın.";
+          statusEl.classList.add("admin-load-error");
+        } else {
+          statusEl.classList.remove("admin-load-error");
+          statusEl.textContent = pack.healthOk
+            ? "Durum güncellendi — aşağıdaki kartlar ve Meta adımları canlı ortamı yansıtır."
+            : "Sunucu health göstergesi sorunlu; davet veya webhook akışı etkilenebilir.";
+          if (!pack.healthOk) statusEl.classList.add("admin-load-error");
+        }
+      }
+
+      var kpis = [];
+      kpis.push({
+        label: "Health",
+        value: pack.healthOk ? "Tamam" : "Sorunlu",
+        ok: pack.healthOk,
+        warn: false,
+      });
+      kpis.push({
+        label: "Özellik anahtarı",
+        value:
+          gf.featureEnabled === false
+            ? "Kapalı — VIONA_GUEST_FEEDBACK_ENABLED=false (davet ve form API kapalı)"
+            : "Açık — davet ve public form çalışır (diğer koşullar sağlanırsa)",
+        ok: gf.featureEnabled !== false,
+        warn: gf.featureEnabled === false,
+      });
+      kpis.push({
+        label: "Supabase",
+        value: pack.hasSupabase
+          ? "Yapılandırılmış (feedback kolonları kullanılabilir)"
+          : "Eksik — migration veya env kontrol edin",
+        ok: pack.hasSupabase,
+        warn: !pack.hasSupabase,
+      });
+      kpis.push({
+        label: "Public kök",
+        value: originOk ? origin : "VIONA_FEEDBACK_PUBLIC_ORIGIN tanımlı değil",
+        ok: originOk,
+        warn: false,
+      });
+      kpis.push({
+        label: "Şablon adı",
+        value: tplRaw,
+        ok: true,
+        warn: false,
+      });
+      kpis.push({
+        label: "URL buton modu",
+        value: modeFull ? "full — tam URL parametresi" : "token — Dynamic URL + fb_… son eki",
+        ok: true,
+        warn: false,
+      });
+      var testOk = !gf.testMode || gf.testPhoneConfigured;
+      kpis.push({
+        label: "WhatsApp test modu",
+        value: gf.testMode
+          ? gf.testPhoneConfigured
+            ? "Açık — WHATSAPP_TEST_PHONE kullanılır"
+            : "Açık — WHATSAPP_TEST_PHONE eksik veya geçersiz"
+          : "Kapalı — gerçek misafir numarası",
+        ok: testOk,
+        warn: gf.testMode && !gf.testPhoneConfigured,
+      });
+
+      var kpiHtml =
+        '<div class="guest-feedback-kpi-grid">' +
+        kpis
+          .map(function (k) {
+            var cls = guestFeedbackKpiClass(k.ok, k.warn);
+            return (
+              '<div class="' +
+              cls +
+              '"><p class="guest-feedback-kpi__label">' +
+              escHtml(k.label) +
+              '</p><p class="guest-feedback-kpi__value">' +
+              escHtml(k.value) +
+              "</p></div>"
+            );
+          })
+          .join("") +
+        "</div>";
+
+      var dynamicUrlExample = originOk ? escHtml(origin + "/feedback/") : escHtml("https://SITE/feedback/");
+      var exampleFull = originOk ? escHtml(origin + "/feedback/fb_…") : "—";
+
+      var metaPanel =
+        '<div class="guest-feedback-guide-panel">' +
+        "<h3>Meta şablonu ve bağlantı</h3>" +
+        "<ol>" +
+        "<li><strong>Şablon adı</strong> Business Manager ile birebir aynı olmalı: <code>" +
+        tplEsc +
+        "</code>. Dil kodu üretim şablonunuzla eşleşmeli.</li>" +
+        "<li><strong>Gövde parametreleri:</strong> sıra sunucunun gönderdiği sırayla aynı olmalı (tipik: misafir adı, oda). Uyuşmazlıkta Meta gönderimi reddeder.</li>" +
+        (modeFull
+          ? "<li><strong>Mod <code>full</code>:</strong> URL düğmesinde tek dinamik alan kullanın; API tam adresi üretir (<code>https://…/feedback/fb_…</code>). Şablon düzenleyicide tam URL’yi kabul eden seçeneği işaretleyin.</li>"
+          : "<li><strong>Mod <code>token</code>:</strong> URL için <em>Dynamic URL</em> seçin. <strong>Website URL</strong> sabit kök + yol: <code>" +
+            dynamicUrlExample +
+            "</code> (sonunda slash). Sunucu butona yalnızca <code>fb_…</code> son ekini gönderir; Meta bunu bu köke yapıştırır.</li>") +
+        "<li>Onaydan sonra gerçek bir «Yapıldı» satırından küçük bir davet deneyin; form bağlantısı tek kullanımlıktır.</li>" +
+        "</ol>" +
+        '<p style="margin:12px 0 0;font-size:0.85rem;color:var(--admin-text-muted)">Örnek tam adres: <code>' +
+        exampleFull +
+        "</code></p>" +
+        "</div>";
+
+      var envPanel =
+        '<div class="guest-feedback-guide-panel">' +
+        "<h3>Ortam değişkenleri</h3>" +
+        "<ol>" +
+        "<li><code>VIONA_GUEST_FEEDBACK_ENABLED</code> — <code>true</code> / <code>1</code> ile açın; <code>false</code> / <code>0</code> ile kapatın (origin dolu olsa bile). Boş bırakırsanız: public kök tanımlıysa açık kabul edilir (eski davranış).</li>" +
+        "<li><code>VIONA_FEEDBACK_PUBLIC_ORIGIN</code> — HTTPS kök (slash yok), örn. <code>https://otel.example.com</code>.</li>" +
+        "<li><code>WHATSAPP_FEEDBACK_TEMPLATE_NAME</code> — Meta şablon adı (varsayılan <code>viona_feedback_completed</code>).</li>" +
+        "<li><code>WHATSAPP_FEEDBACK_URL_BUTTON_MODE</code> — <code>token</code> veya <code>full</code>.</li>" +
+        "<li>Test: <code>WHATSAPP_TEST_MODE=1</code> ve geçerli rakamlardan oluşan <code>WHATSAPP_TEST_PHONE</code>.</li>" +
+        "</ol>" +
+        "</div>";
+
+      mount.innerHTML = kpiHtml + metaPanel + envPanel;
+    } catch (e) {
+      if (statusEl) {
+        statusEl.textContent =
+          "Durum alınamadı: " + (e && e.message ? String(e.message) : String(e));
+        statusEl.classList.add("admin-load-error");
+      }
+      mount.innerHTML =
+        '<p class="admin-load-error">' +
+        escHtml(e && e.message ? String(e.message) : String(e)) +
+        "</p>";
+    }
   }
 
   async function loadOpTech(page) {
@@ -1007,6 +1190,17 @@
                     ? String(err.message)
                     : "WhatsApp iletimi tamamlanamadı. Bağlantıyı veya sunucu yanıtını kontrol edin.";
                 window.alert(msg);
+              }
+            },
+            onFeedbackInvite: async function (itemType, id) {
+              try {
+                var d = await adapter.sendGuestFeedbackInvite(itemType, id);
+                var url = d && d.feedbackUrl ? String(d.feedbackUrl) : "";
+                var testNote = d && d.testMode ? "\n\n(Test modu: WHATSAPP_TEST_MODE.)" : "";
+                window.alert("WhatsApp ile geri bildirim daveti gönderildi." + testNote + (url ? "\n\n" + url : ""));
+                await loadOpTech(opTechPage);
+              } catch (err) {
+                window.alert(formatFeedbackInviteError(err));
               }
             },
           },
@@ -1617,6 +1811,8 @@
         await loadLogs();
       } else if (activeAdminTab === "rooms" && isRoomsDetailOpen()) {
         await loadRoomBucket(roomDetailPage);
+      } else if (activeAdminTab === "guest_feedback") {
+        /* Durum paneli: otomatik yenileme API’yi gereksiz sıkmaması için elle «Yenile» kullanılır. */
       }
     } catch (_e) {
     } finally {
@@ -1979,6 +2175,32 @@
     syncRoomDateModeUi();
   }
 
+  function formatFeedbackInviteError(err) {
+    var m = err && err.message ? String(err.message) : "";
+    if (m === "feedback_feature_disabled") {
+      return "Misafir geri bildirimi sunucuda kapalı (VIONA_GUEST_FEEDBACK_ENABLED). Açmak için ortamı güncelleyin.";
+    }
+    if (m === "feedback_guest_phone_missing") {
+      return "Misafir telefonu çözülemedi (kayıt alanı veya Hotspot). Telefonu kontrol edin.";
+    }
+    if (m === "feedback_invite_already_pending") {
+      return "Bu kayıt için davet zaten beklemede; misafir formunu tamamlayana kadar yeniden gönderilmez.";
+    }
+    if (m === "feedback_only_when_done") return "Yalnızca «Yapıldı» kayıtlarında kullanılabilir.";
+    if (m === "feedback_invalid_type") return "Bu liste türü için kullanılamaz.";
+    if (m === "feedback_public_origin_not_configured") return "Sunucuda VIONA_FEEDBACK_PUBLIC_ORIGIN eksik.";
+    if (m === "feedback_test_phone_not_configured") {
+      return "WHATSAPP_TEST_MODE açık ama WHATSAPP_TEST_PHONE tanımlı değil veya geçersiz.";
+    }
+    if (m === "whatsapp_feedback_failed" || m === "template_send_failed" || m === "missing_credentials") {
+      return "WhatsApp şablon gönderimi başarısız. Token, şablon adı ve Meta parametre sırasını kontrol edin.";
+    }
+    if (String(m).indexOf("http_502") === 0 || m === "http_502") {
+      return "Sunucu WhatsApp’a iletemiyor (502). Şablon / API yanıtını kontrol edin.";
+    }
+    return m || "Geri bildirim daveti gönderilemedi.";
+  }
+
   function formatAdminBucketLoadError(e) {
     var m = e && e.message ? String(e.message) : "";
     var tail = " Ağ bağlantısını, API tabanını (data-viona-live-api) ve panel girişini kontrol edin.";
@@ -2091,6 +2313,19 @@
             await loadBucket(type, mountId);
           };
         }
+      }
+      if (type === "request" || type === "fault") {
+        bucketHandlers.onFeedbackInvite = async function (itemType, id) {
+          try {
+            var d = await adapter.sendGuestFeedbackInvite(itemType, id);
+            var url = d && d.feedbackUrl ? String(d.feedbackUrl) : "";
+            var testNote = d && d.testMode ? "\n\n(Test modu: WHATSAPP_TEST_MODE.)" : "";
+            window.alert("WhatsApp ile geri bildirim daveti gönderildi." + testNote + (url ? "\n\n" + url : ""));
+            await loadBucket(type, mountId, undefined, { rethrow: true });
+          } catch (err) {
+            window.alert(formatFeedbackInviteError(err));
+          }
+        };
       }
       ui.renderBucketTable(mount, type, rows, bucketHandlers);
     } catch (e) {
@@ -3024,6 +3259,7 @@
         if (tab === "pdf-report") setPdfCustomRangeUi(Boolean(document.getElementById("pdf-custom-range") && document.getElementById("pdf-custom-range").checked));
         if (tab === "logs") await loadLogs();
         if (tab === "app_entries") await loadAppGateEntries();
+        if (tab === "guest_feedback") await loadGuestFeedbackGuide();
         if (tab === "rooms") exitRoomDetailToGrid();
         if (isOperasyonAdminTab(tab) && isOperasyonAdminTab(previousActive) && tab !== previousActive) {
           resetOpCalendarToHotelToday();

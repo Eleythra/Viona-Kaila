@@ -146,6 +146,128 @@ REQUEST_CATEGORY_PROMPT_LEAD: dict[str, str] = {
     ),
 }
 
+# İstek sohbet formu — önce bölüm (requestSections); numaralı yanıt.
+CHAT_FORM_REQUEST_SECTION_PROMPT_LEAD: dict[str, str] = {
+    "tr": (
+        "Lütfen önce talep grubunu seçiniz (numara ile yanıtlayın). "
+        "İsterseniz doğrudan ürün adını da yazabilirsiniz (ör. terlik, ek yatak). "
+        "Gruplar uygulamadaki İstekler sekmesiyle aynıdır:\n\n"
+    ),
+    "en": (
+        "Please first choose a request group (reply with the number). "
+        "You may also type the item directly (e.g. slippers, extra bed). "
+        "Groups match the Requests tab in the app:\n\n"
+    ),
+    "de": (
+        "Bitte wählen Sie zuerst eine Anfragengruppe (Antwort mit Nummer). "
+        "Sie können auch direkt den Artikel nennen (z. B. Hausschuhe, Zustellbett). "
+        "Die Gruppen entsprechen dem Reiter «Anfragen» in der App:\n\n"
+    ),
+    "pl": (
+        "Najpierw wybierz grupę prośby (odpowiedz numerem). "
+        "Możesz też od razu wpisać nazwę (np. kapcie, dostawka). "
+        "Grupy odpowiadają zakładce „Prośby” w aplikacji:\n\n"
+    ),
+    "da": (
+        "Vælg først en forespørgselsgruppe (svar med nummeret). "
+        "Du kan også skrive varen direkte (f.eks. hjemmesko, ekstra seng). "
+        "Grupperne svarer til fanen «Forespørgsler» i appen:\n\n"
+    ),
+    "nl": (
+        "Kies eerst een aanvraaggroep (antwoord met het nummer). "
+        "U kunt ook direct de naam van het item typen (bijv. pantoffels, extra bed). "
+        "De groepen komen overeen met het tabblad «Verzoeken» in de app:\n\n"
+    ),
+    "cs": (
+        "Nejprve vyberte skupinu požadavků (odpovězte číslem). "
+        "Můžete také přímo napsat název položky (např. přezůvky, přistýlka). "
+        "Skupiny odpovídají záložce «Požadavky» v aplikaci:\n\n"
+    ),
+    "ro": (
+        "Alegeți mai întâi grupul cererii (răspundeți cu numărul). "
+        "Puteți scrie și direct articolul (ex. papuci de casă, pat suplimentar). "
+        "Grupurile corespund filei «Cereri» din aplicație:\n\n"
+    ),
+    "sk": (
+        "Najprv vyberte skupinu požiadavky (odpovedzte číslom). "
+        "Môžete napísať aj priamo názov položky (napr. papuče, prístelok). "
+        "Skupiny zodpovedajú karte «Požiadavky» v aplikácii:\n\n"
+    ),
+    "ru": (
+        "Сначала выберите группу запроса (ответьте номером). "
+        "Можно сразу написать название (например, тапочки, дополнительная кровать). "
+        "Группы соответствуют вкладке «Запросы» в приложении:\n\n"
+    ),
+}
+
+# Arıza sohbet formu — önce teknik bölüm (faultSections).
+CHAT_FORM_FAULT_SECTION_PROMPT_LEAD: dict[str, str] = {
+    "tr": (
+        "Lütfen önce arıza grubunu seçiniz (numara ile yanıtlayın). "
+        "İsterseniz arıza türünü doğrudan yazarak da ilerleyebilirsiniz. "
+        "Gruplar uygulamadaki Arıza bölümüyle aynıdır:\n\n"
+    ),
+    "en": (
+        "Please first choose a fault group (reply with the number). "
+        "You may also describe the fault type in your own words. "
+        "Groups match the fault section in the app:\n\n"
+    ),
+    "de": (
+        "Bitte wählen Sie zuerst eine Störungsgruppe (Antwort mit Nummer). "
+        "Sie können die Störung auch direkt beschreiben. "
+        "Die Gruppen entsprechen dem Bereich «Störung» in der App:\n\n"
+    ),
+    "pl": (
+        "Najpierw wybierz grupę awarii (odpowiedz numerem). "
+        "Możesz też od razu opisać usterkę. "
+        "Grupy odpowiadają sekcji awarii w aplikacji:\n\n"
+    ),
+    "da": (
+        "Vælg først en fejlgruppe (svar med nummeret). "
+        "Du kan også beskrive fejlen med egne ord. "
+        "Grupperne svarer til fejlsektionen i appen:\n\n"
+    ),
+    "nl": (
+        "Kies eerst een storingsgroep (antwoord met het nummer). "
+        "U kunt de storing ook direct beschrijven. "
+        "De groepen komen overeen met de storingssectie in de app:\n\n"
+    ),
+    "cs": (
+        "Nejprve vyberte skupinu závady (odpovězte číslem). "
+        "Závadu můžete také popsat vlastními slovy. "
+        "Skupiny odpovídají části závad v aplikaci:\n\n"
+    ),
+    "ro": (
+        "Alegeți mai întâi grupul defecțiunii (răspundeți cu numărul). "
+        "Puteți descrie și direct defecțiunea. "
+        "Grupurile corespund secțiunii de defecțiuni din aplicație:\n\n"
+    ),
+    "sk": (
+        "Najprv vyberte skupinu poruchy (odpovedzte číslom). "
+        "Poruchu môžete opísať aj priamo. "
+        "Skupiny zodpovedajú časti porúch v aplikácii:\n\n"
+    ),
+    "ru": (
+        "Сначала выберите группу неисправности (ответьте номером). "
+        "Можно сразу описать тип поломки. "
+        "Группы соответствуют разделу неисправностей в приложении:\n\n"
+    ),
+}
+
+# Onay özeti: açıklama yok / yalnızca tire vb.
+CHAT_FORM_CONFIRM_DESCRIPTION_EMPTY: dict[str, str] = {
+    "tr": "Ek not yok",
+    "en": "No extra note",
+    "de": "Keine Zusatznotiz",
+    "pl": "Bez dodatkowej notatki",
+    "da": "Ingen ekstra note",
+    "nl": "Geen extra opmerking",
+    "cs": "Bez další poznámky",
+    "ro": "Fără notă suplimentară",
+    "sk": "Bez dodatočnej poznámky",
+    "ru": "Без дополнительной заметки",
+}
+
 # Misafir bildirimi — açıklama adımı (zorunlu / isteğe bağlı).
 GUEST_NOTIF_DESCRIPTION: dict[str, dict[str, str]] = {
     "tr": {
@@ -235,6 +357,15 @@ def inject_chat_form_strings(translations: dict[str, dict[str, Any]]) -> None:
     for lang, lead in CHAT_FORM_CATEGORY_PROMPT_LEAD.items():
         if lang in translations:
             translations[lang]["chat_form_category_prompt_lead"] = lead
+    for lang, text in CHAT_FORM_REQUEST_SECTION_PROMPT_LEAD.items():
+        if lang in translations:
+            translations[lang]["chat_form_request_section_prompt_lead"] = text
+    for lang, text in CHAT_FORM_FAULT_SECTION_PROMPT_LEAD.items():
+        if lang in translations:
+            translations[lang]["chat_form_fault_section_prompt_lead"] = text
+    for lang, text in CHAT_FORM_CONFIRM_DESCRIPTION_EMPTY.items():
+        if lang in translations:
+            translations[lang]["chat_form_confirm_description_empty"] = text
     for lang, text in REQUEST_CATEGORY_PROMPT_LEAD.items():
         if lang in translations:
             translations[lang]["chat_request_category_prompt_lead"] = text

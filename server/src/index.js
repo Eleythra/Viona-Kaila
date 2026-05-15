@@ -9,6 +9,7 @@ import guestRequestsRouter from "./modules/guest-requests/guest-requests.router.
 import { createGuestGateRouter } from "./modules/guest-gate/guest-gate.router.js";
 import surveysRouter from "./modules/surveys/surveys.router.js";
 import adminRouter from "./modules/admin/admin.router.js";
+import { createPublicFeedbackRouter } from "./modules/feedback/public-feedback.router.js";
 import opsLinkRouter from "./modules/ops-link/ops-link.router.js";
 import { createSpeechRouter } from "./modules/speech/speech.router.js";
 import { getSupabase, isSupabaseConfigured, withSupabaseFetchGuard } from "./lib/supabase.js";
@@ -789,6 +790,20 @@ app.get("/api/health", (req, res) => {
     hotelAdvisorConfigured: Boolean(env.hotelAdvisorConfigured),
     /** `HOTEL_ADVISOR_TEST_ENABLED=1` iken /api/test/hotel-login ve /test/hotel-advisor açık. */
     hotelAdvisorTestEnabled: Boolean(env.hotelAdvisorTestEnabled),
+    /** Misafir geri bildirimi (WA daveti + public form): kök URL ve şablon modu — anahtar sızmaz; kök URL kamuya yöneliktir. */
+    guestFeedback: {
+      featureEnabled: Boolean(env.guestFeedbackFeatureEnabled),
+      publicOriginConfigured: Boolean(String(env.vionaFeedbackPublicOrigin || "").trim()),
+      publicOrigin: String(env.vionaFeedbackPublicOrigin || "").trim() || null,
+      templateName: String(env.whatsappFeedbackTemplateName || "viona_feedback_completed").trim(),
+      urlButtonMode: String(env.whatsappFeedbackUrlButtonMode || "token").trim().toLowerCase(),
+      testMode: Boolean(env.whatsappTestMode),
+      testPhoneConfigured: Boolean(
+        String(env.whatsappTestPhone || "")
+          .replace(/\D/g, "")
+          .trim().length >= 10,
+      ),
+    },
   };
   const pretty =
     String(req.query?.pretty || "") === "1" ||
@@ -818,6 +833,7 @@ app.use(
     },
   }),
 );
+app.use("/api/public/feedback", createPublicFeedbackRouter());
 app.use("/api/guest-requests", guestRequestsRouter);
 app.use("/api/surveys", surveysRouter);
 app.use("/api/admin", adminRouter);

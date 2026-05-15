@@ -221,6 +221,7 @@
     ) {
       s = "done";
     }
+    if (s === "yeniden_acildi" || s === "yeniden_açıldı") s = "reopened";
     return s;
   }
 
@@ -252,7 +253,7 @@
     if (st === "rejected" && Number.isFinite(rEnd)) {
       return "Yapılmadı · " + formatDurationHumanTr(rEnd - t0);
     }
-    if (st === "new" || st === "pending" || st === "in_progress") {
+    if (st === "new" || st === "pending" || st === "in_progress" || st === "reopened") {
       return "Geçen süre " + formatDurationHumanTr(Date.now() - t0);
     }
     return "—";
@@ -438,7 +439,147 @@
 
   function issueIsWaitStatus(st) {
     var s = normalizeBucketStatus(st);
-    return s === "new" || s === "pending" || s === "in_progress";
+    return s === "new" || s === "pending" || s === "in_progress" || s === "reopened";
+  }
+
+  /** İstek / arıza satırı: misafir geri bildirimi özeti (WhatsApp daveti sonrası). */
+  function guestFeedbackSummaryLabel(r) {
+    var st = normalizeBucketStatus(r.status);
+    var fs = String(r.feedback_status || "").trim().toLowerCase();
+    var gc = String(r.guest_confirmation || "").trim().toLowerCase();
+    if (st === "reopened") return "Yeniden açıldı";
+    if (fs === "pending") return "Form bekliyor";
+    if (fs === "submitted" && gc === "completed") return "Tamamlandı";
+    if (fs === "submitted" && gc === "not_completed") return "Sorun sürüyor";
+    return "—";
+  }
+
+  function formatFeedbackSentClock(iso) {
+    var s = String(iso || "").trim();
+    if (!s) return "";
+    var d = new Date(s);
+    if (isNaN(d.getTime())) return "";
+    var pad = function (n) {
+      return n < 10 ? "0" + n : String(n);
+    };
+    return pad(d.getDate()) + "/" + pad(d.getMonth() + 1) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+
+  function revisitPreferenceLabelTr(v) {
+    var x = String(v || "").trim().toLowerCase();
+    if (x === "yes") return "Evet";
+    if (x === "no") return "Hayır";
+    if (x === "unsure") return "Emin değilim";
+    return "—";
+  }
+
+  /** Puanlar ve notlar — liste / HK / Teknik hücresinde gösterilir. */
+  function guestFeedbackDetailHtml(r) {
+    var fs = String(r.feedback_status || "").trim().toLowerCase();
+    var gc = String(r.guest_confirmation || "").trim().toLowerCase();
+    if (fs === "pending") {
+      var clk = formatFeedbackSentClock(r.feedback_sent_at);
+      if (clk)
+        return '<div class="guest-feedback-detail">Davet: ' + esc(clk) + "</div>";
+      return "";
+    }
+    if (fs !== "submitted") return "";
+    var sub = formatFeedbackSentClock(r.feedback_submitted_at);
+    var subLine = sub ? " · " + sub : "";
+    if (gc === "completed") {
+      var sp = Number(r.speed_rating);
+      var stf = Number(r.staff_rating);
+      var sol = Number(r.solution_rating);
+      var nums =
+        Number.isFinite(sp) && Number.isFinite(stf) && Number.isFinite(sol)
+          ? "Hız " + sp + " · Personel " + stf + " · Çözüm " + sol
+          : "—";
+      var rv = revisitPreferenceLabelTr(r.revisit_preference);
+      var note = String(r.feedback_note || "").trim();
+      var noteHtml =
+        note.length > 0
+          ? '<div class="guest-feedback-detail guest-feedback-detail--note" title="' +
+            esc(note) +
+            '">' +
+            esc(shortText(note, 140)) +
+            "</div>"
+          : "";
+      return (
+        '<div class="guest-feedback-detail">' +
+        esc(nums) +
+        " · Tekrar: " +
+        esc(rv) +
+        esc(subLine) +
+        "</div>" +
+        noteHtml
+      );
+    }
+    if (gc === "not_completed") {
+      var rn = String(r.reopen_note || "").trim();
+      return (
+        '<div class="guest-feedback-detail guest-feedback-detail--note" title="' +
+        esc(rn) +
+        '">' +
+        "<strong>Misafir:</strong> " +
+        esc(shortText(rn || "—", 160)) +
+        esc(subLine) +
+        "</div>"
+      );
+    }
+    return "";
+  }
+
+  function guestFeedbackCellHtml(issueType, r, cellOpts) {
+    cellOpts = cellOpts || {};
+    var ro = Boolean(cellOpts.readOnly);
+    var label = guestFeedbackSummaryLabel(r);
+    var st = normalizeBucketStatus(r.status);
+    var fs = String(r.feedback_status || "").trim().toLowerCase();
+    var it = String(issueType || "");
+    var showInvite = ro && (it === "request" || it === "fault") && st === "done" && fs !== "pending";
+    var btn = "";
+    if (showInvite) {
+      btn =
+        ' <button type="button" class="btn-small js-feedback-invite" data-type="' +
+        esc(it) +
+        '" data-id="' +
+        esc(r.id) +
+        '" title="Misafire WhatsApp ile tek kullanımlık geri bildirim bağlantısı gönder">Geri bildirim</button>';
+    }
+    var detail = guestFeedbackDetailHtml(r);
+    return (
+      '<td class="guest-feedback-cell"><span class="guest-feedback-summary">' +
+      esc(label) +
+      "</span>" +
+      detail +
+      btn +
+      "</td>"
+    );
+  }
+
+  /** Admin / HK / Teknik tablolarda misafir geri bildirim daveti (salt istek & arıza, yapıldı). */
+  function wireGuestFeedbackInviteButtons(mountEl, handlers) {
+    if (!mountEl || !handlers || typeof handlers.onFeedbackInvite !== "function") return;
+    mountEl.querySelectorAll(".js-feedback-invite").forEach(function (btn) {
+      btn.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        var el = btn;
+        if (el.disabled || el.getAttribute("aria-busy") === "true") return;
+        el.disabled = true;
+        el.setAttribute("aria-busy", "true");
+        var p = handlers.onFeedbackInvite(el.getAttribute("data-type"), el.getAttribute("data-id"));
+        if (p && typeof p.then === "function") {
+          p.finally(function () {
+            el.disabled = false;
+            el.removeAttribute("aria-busy");
+          });
+        } else {
+          el.disabled = false;
+          el.removeAttribute("aria-busy");
+        }
+      });
+    });
   }
 
   /** İstek / arıza / şikâyet / bildirim: Bekliyor · Yapılıyor · Yapıldı · Yapılmadı · Geç çıkış: onay dili. */
@@ -457,6 +598,7 @@
       if (issueType === "late_checkout") return "Onaylanmadı";
       return "Yapılmadı";
     }
+    if (s === "reopened") return "Yeniden açıldı";
     return s;
   }
 
@@ -468,14 +610,18 @@
     var st = normalizeBucketStatus(rowStatus);
     var f = String(filterVal || "all");
     if (f === "all") return true;
-    if (f === "new_pending") return st === "new" || st === "pending" || st === "in_progress";
+    if (f === "new_pending")
+      return st === "new" || st === "pending" || st === "in_progress" || st === "reopened";
     if (f === "rejected") return st === "rejected";
     return st === f;
   }
 
-  function issueRowActionsHtml(issueType, id, st) {
-    st = normalizeBucketStatus(st);
-    var type = issueType;
+  function issueRowActionsHtml(issueType, row) {
+    var r = row && typeof row === "object" ? row : { id: row, status: arguments[2] };
+    var id = r.id;
+    var st = normalizeBucketStatus(r.status);
+    var issueTypeStr = String(issueType || "");
+    var type = issueTypeStr;
     var posLabel;
     var negLabel;
     if (type === "late_checkout") {
@@ -510,6 +656,17 @@
       h += stBtn("done", posLabel);
     } else {
       h += stBtn("new", "Bekliyor");
+    }
+    var fbSt = String(r.feedback_status || "").trim().toLowerCase();
+    if ((type === "request" || type === "fault") && st === "done") {
+      h +=
+        '<button type="button" class="btn-small js-feedback-invite"' +
+        (fbSt === "pending" ? ' disabled title="Misafir formu bekleniyor"' : "") +
+        ' data-type="' +
+        esc(type) +
+        '" data-id="' +
+        esc(id) +
+        '">Geri bildirim gönder</button>';
     }
     h +=
       '<button type="button" class="btn-small btn-wa-resend js-wa-resend" data-type="' +
@@ -3010,7 +3167,7 @@
       : "";
     var open = rows.filter(function (r) {
       var s = normalizeBucketStatus(r.status);
-      return s === "new" || s === "pending" || s === "in_progress";
+      return s === "new" || s === "pending" || s === "in_progress" || s === "reopened";
     }).length;
     var done = rows.filter(function (r) {
       return normalizeBucketStatus(r.status) === "done";
@@ -3047,6 +3204,7 @@
       '<select class="bucket-filter-status">' +
       '<option value="all">Tüm Durumlar</option>' +
       '<option value="new_pending">Beklemede</option>' +
+      '<option value="reopened">Yeniden açıldı</option>' +
       '<option value="done">Yapıldı</option>' +
       '<option value="rejected">Yapılmadı</option>' +
       "</select>" +
@@ -3057,12 +3215,13 @@
       "<thead><tr>" +
       "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Kategori</th><th>Tür</th><th>Adet</th><th>Açıklama</th>" +
       (ro
-        ? "<th>Personel notu (salt okunur)</th><th>Süre</th><th>Durum</th>" + (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
-        : "<th>Personel notu</th><th>Süre</th><th>Durum</th><th>İşlemler</th>") +
+        ? "<th>Personel notu (salt okunur)</th><th>Süre</th><th>Durum</th><th title="WhatsApp sonrası durum; tamamlanınca puanlar ve misafir notu burada görünür">Misafir geri bildirimi</th>" +
+          (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
+        : "<th>Personel notu</th><th>Süre</th><th>Durum</th><th title="WhatsApp sonrası durum; tamamlanınca puanlar ve misafir notu burada görünür">Misafir geri bildirimi</th><th>İşlemler</th>") +
       "</tr></thead><tbody>";
 
     if (!rows.length) {
-      html += '<tr><td colspan="12" class="admin-table__empty">Henüz istek kaydı yok.</td></tr>';
+      html += '<tr><td colspan="13" class="admin-table__empty">Henüz istek kaydı yok.</td></tr>';
     } else {
       rows.forEach(function (r) {
         var st = normalizeBucketStatus(r.status);
@@ -3120,11 +3279,12 @@
         }
         html += '<td class="viona-sla-cell">' + esc(operationalSlaDisplayTr(r)) + "</td>";
         html += '<td><span class="status-badge status-' + esc(st) + '">' + esc(issueStatusLabel("request", st)) + "</span></td>";
+        html += guestFeedbackCellHtml("request", r, { readOnly: ro });
         if (ro) {
           html += satH ? "<td>" + satisfactionEditCellHtml("request", r) + "</td>" : "<td></td>";
         } else {
           html += '<td><div class="row-actions">';
-          html += issueRowActionsHtml("request", r.id, st);
+          html += issueRowActionsHtml("request", r);
           html += "</div></td>";
         }
         html += "</tr>";
@@ -3215,6 +3375,7 @@
       }
       wireWhatsappResendButtons(mountEl, handlers);
     }
+    wireGuestFeedbackInviteButtons(mountEl, handlers);
 
     if (search) search.addEventListener("input", applyFilters);
     if (statusFilter) statusFilter.addEventListener("change", applyFilters);
@@ -3234,7 +3395,7 @@
       : "";
     var open = rows.filter(function (r) {
       var s = normalizeBucketStatus(r.status);
-      return s === "new" || s === "pending" || s === "in_progress";
+      return s === "new" || s === "pending" || s === "in_progress" || s === "reopened";
     }).length;
     var done = rows.filter(function (r) {
       return normalizeBucketStatus(r.status) === "done";
@@ -3337,7 +3498,7 @@
           html += satH ? "<td>" + satisfactionEditCellHtml("complaint", r) + "</td>" : "<td></td>";
         } else {
           html += '<td><div class="row-actions">';
-          html += issueRowActionsHtml("complaint", r.id, st);
+          html += issueRowActionsHtml("complaint", r);
           html += "</div></td>";
         }
         html += "</tr>";
@@ -3424,6 +3585,7 @@
       }
       wireWhatsappResendButtons(mountEl, handlers);
     }
+    wireGuestFeedbackInviteButtons(mountEl, handlers);
 
     if (search) search.addEventListener("input", applyFilters);
     if (statusFilter) statusFilter.addEventListener("change", applyFilters);
@@ -3443,7 +3605,7 @@
       : "";
     var open = rows.filter(function (r) {
       var s = normalizeBucketStatus(r.status);
-      return s === "new" || s === "pending" || s === "in_progress";
+      return s === "new" || s === "pending" || s === "in_progress" || s === "reopened";
     }).length;
     var done = rows.filter(function (r) {
       return normalizeBucketStatus(r.status) === "done";
@@ -3551,7 +3713,7 @@
           html += satH ? "<td>" + satisfactionEditCellHtml("guest_notification", r) + "</td>" : "<td></td>";
         } else {
           html += '<td><div class="row-actions">';
-          html += issueRowActionsHtml("guest_notification", r.id, st);
+          html += issueRowActionsHtml("guest_notification", r);
           html += "</div></td>";
         }
         html += "</tr>";
@@ -3638,6 +3800,7 @@
       }
       wireWhatsappResendButtons(mountEl, handlers);
     }
+    wireGuestFeedbackInviteButtons(mountEl, handlers);
 
     if (search) search.addEventListener("input", applyFilters);
     if (statusFilter) statusFilter.addEventListener("change", applyFilters);
@@ -3655,7 +3818,7 @@
     var topstatsTitle = pag ? BUCKET_QUAD_STATS_TITLE_WHEN_PAGED : "";
     var open = rows.filter(function (r) {
       var s = normalizeBucketStatus(r.status);
-      return s === "new" || s === "pending" || s === "in_progress";
+      return s === "new" || s === "pending" || s === "in_progress" || s === "reopened";
     }).length;
     var done = rows.filter(function (r) {
       return normalizeBucketStatus(r.status) === "done";
@@ -3772,7 +3935,7 @@
           html += satH ? "<td>" + satisfactionEditCellHtml("late_checkout", r) + "</td>" : "<td></td>";
         } else {
           html += '<td><div class="row-actions">';
-          html += issueRowActionsHtml("late_checkout", r.id, st);
+          html += issueRowActionsHtml("late_checkout", r);
           html += "</div></td>";
         }
         html += "</tr>";
@@ -3861,6 +4024,7 @@
       }
       wireWhatsappResendButtons(mountEl, handlers);
     }
+    wireGuestFeedbackInviteButtons(mountEl, handlers);
 
     if (search) search.addEventListener("input", applyFilters);
     if (statusFilter) statusFilter.addEventListener("change", applyFilters);
@@ -3880,7 +4044,7 @@
       : "";
     var open = rows.filter(function (r) {
       var s = normalizeBucketStatus(r.status);
-      return s === "new" || s === "pending" || s === "in_progress";
+      return s === "new" || s === "pending" || s === "in_progress" || s === "reopened";
     }).length;
     var done = rows.filter(function (r) {
       return normalizeBucketStatus(r.status) === "done";
@@ -3915,6 +4079,7 @@
       '<select class="bucket-filter-status">' +
       '<option value="all">Tüm Durumlar</option>' +
       '<option value="new_pending">Beklemede</option>' +
+      '<option value="reopened">Yeniden açıldı</option>' +
       '<option value="done">Yapıldı</option>' +
       '<option value="rejected">Yapılmadı</option>' +
       "</select>" +
@@ -3925,12 +4090,13 @@
       "<thead><tr>" +
       "<th>Tarih</th><th>Oda</th><th>Misafir</th><th>Milliyet</th><th>Arıza grubu</th><th>Arıza türü</th><th>Açıklama</th>" +
       (ro
-        ? "<th>Personel notu (salt okunur)</th><th>Süre</th><th>Durum</th>" + (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
-        : "<th>Personel notu</th><th>Süre</th><th>Durum</th><th>İşlemler</th>") +
+        ? "<th>Personel notu (salt okunur)</th><th>Süre</th><th>Durum</th><th title="WhatsApp sonrası durum; tamamlanınca puanlar ve misafir notu burada görünür">Misafir geri bildirimi</th>" +
+          (satH ? "<th>Misafir memnuniyeti</th>" : "<th></th>")
+        : "<th>Personel notu</th><th>Süre</th><th>Durum</th><th title="WhatsApp sonrası durum; tamamlanınca puanlar ve misafir notu burada görünür">Misafir geri bildirimi</th><th>İşlemler</th>") +
       "</tr></thead><tbody>";
 
     if (!rows.length) {
-      html += '<tr><td colspan="11" class="admin-table__empty">Henüz arıza kaydı yok.</td></tr>';
+      html += '<tr><td colspan="12" class="admin-table__empty">Henüz arıza kaydı yok.</td></tr>';
     } else {
       rows.forEach(function (r) {
         var st = normalizeBucketStatus(r.status);
@@ -3985,11 +4151,12 @@
         }
         html += '<td class="viona-sla-cell">' + esc(operationalSlaDisplayTr(r)) + "</td>";
         html += '<td><span class="status-badge status-' + esc(st) + '">' + esc(issueStatusLabel("fault", st)) + "</span></td>";
+        html += guestFeedbackCellHtml("fault", r, { readOnly: ro });
         if (ro) {
           html += satH ? "<td>" + satisfactionEditCellHtml("fault", r) + "</td>" : "<td></td>";
         } else {
           html += '<td><div class="row-actions">';
-          html += issueRowActionsHtml("fault", r.id, st);
+          html += issueRowActionsHtml("fault", r);
           html += "</div></td>";
         }
         html += "</tr>";
@@ -4078,6 +4245,7 @@
       }
       wireWhatsappResendButtons(mountEl, handlers);
     }
+    wireGuestFeedbackInviteButtons(mountEl, handlers);
 
     if (search) search.addEventListener("input", applyFilters);
     if (statusFilter) statusFilter.addEventListener("change", applyFilters);
@@ -5441,6 +5609,7 @@
         "</div>";
     },
     wireWhatsappResendButtons: wireWhatsappResendButtons,
+    wireGuestFeedbackInviteButtons: wireGuestFeedbackInviteButtons,
     renderBucketTable: function (mountEl, type, rows, handlers) {
       if (type === "request") {
         renderRequestsPanel(mountEl, rows || [], handlers);
@@ -5555,7 +5724,7 @@
           html += "<td>" + esc(detailText) + "</td>";
           html += '<td><span class="status-badge status-' + esc(st) + '">' + esc(issueStatusLabel(type, st)) + "</span></td>";
           html += '<td><div class="row-actions">';
-          html += issueRowActionsHtml(type, r.id, st);
+          html += issueRowActionsHtml(type, r);
           html += "</div></td>";
           html += "</tr>";
         });
@@ -5579,6 +5748,7 @@
         });
       }
       wireWhatsappResendButtons(mountEl, handlers);
+      wireGuestFeedbackInviteButtons(mountEl, handlers);
 
       var search = mountEl.querySelector(".bucket-search");
       var statusFilter = mountEl.querySelector(".bucket-filter-status");

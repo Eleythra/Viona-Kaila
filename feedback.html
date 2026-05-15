@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0a101c" />
+    <meta name="color-scheme" content="dark" />
+    <title>Viona · Misafir geri bildirimi</title>
+    <script src="js/api-config.js"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap");
+
+      :root {
+        --bg: #070b12;
+        --card: rgba(16, 22, 36, 0.94);
+        --border: rgba(148, 163, 184, 0.18);
+        --border-strong: rgba(148, 163, 184, 0.28);
+        --text: #f8fafc;
+        --muted: #94a3b8;
+        --accent: #2dd4bf;
+        --accent-2: #38bdf8;
+        --accent-glow: rgba(45, 212, 191, 0.12);
+        --sand: #fde68a;
+        --surface: rgba(0, 0, 0, 0.22);
+        --radius: 16px;
+        --radius-sm: 12px;
+        --space: 1.25rem;
+        --font: "DM Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background-color: var(--bg);
+        background-image:
+          radial-gradient(ellipse 720px 380px at 50% -12%, rgba(45, 212, 191, 0.07), transparent 60%),
+          radial-gradient(ellipse 540px 320px at 100% 35%, rgba(56, 189, 248, 0.06), transparent 55%),
+          radial-gradient(ellipse 480px 360px at -5% 85%, rgba(129, 140, 248, 0.06), transparent 50%);
+        color: var(--text);
+        padding: clamp(1rem, 4vw, 2rem);
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+      }
+      .page {
+        position: relative;
+        min-height: calc(100vh - 2rem);
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding-bottom: 2rem;
+      }
+      .bg-blob {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(72px);
+        opacity: 0.38;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .bg-blob--a {
+        width: 300px;
+        height: 300px;
+        background: rgba(45, 212, 191, 0.22);
+        top: -90px;
+        right: -50px;
+      }
+      .bg-blob--b {
+        width: 240px;
+        height: 240px;
+        background: rgba(253, 230, 138, 0.12);
+        bottom: 8%;
+        left: -50px;
+      }
+      .shell {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 27rem;
+      }
+      .card {
+        position: relative;
+        background: var(--card);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        overflow: hidden;
+        box-shadow:
+          0 1px 0 rgba(255, 255, 255, 0.06) inset,
+          0 28px 64px rgba(0, 0, 0, 0.55);
+        animation: fb-card-in 0.45s ease-out both;
+      }
+      @keyframes fb-card-in {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .card.fb-loading .card-inner {
+        opacity: 0.72;
+        pointer-events: none;
+      }
+      .card-accent {
+        height: 3px;
+        background: linear-gradient(90deg, var(--sand), var(--accent), var(--accent-2), #a78bfa);
+        opacity: 1;
+      }
+      .card-inner {
+        padding: clamp(1.15rem, 4vw, 1.6rem);
+      }
+      .brand-row {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        flex-wrap: wrap;
+        margin-bottom: var(--space);
+      }
+      .brand-mark {
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+      .brand-pill {
+        font-size: 0.68rem;
+        font-weight: 600;
+        padding: 0.28rem 0.62rem;
+        border-radius: 999px;
+        background: var(--accent-glow);
+        border: 1px solid rgba(45, 212, 191, 0.35);
+        color: #ccfbf1;
+      }
+      .brand-pill--outline {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: var(--border-strong);
+        color: var(--muted);
+      }
+      h1 {
+        font-size: clamp(1.2rem, 4vw, 1.38rem);
+        font-weight: 700;
+        margin: 0 0 0.35rem;
+        letter-spacing: -0.03em;
+        line-height: 1.2;
+      }
+      .guest-line {
+        margin: 0 0 0.65rem;
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--text);
+        letter-spacing: -0.02em;
+      }
+      .guest-line span.room {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .lead {
+        margin: 0 0 0.75rem;
+        color: var(--muted);
+        font-size: 0.875rem;
+      }
+      .wa-context {
+        margin: 0 0 1.1rem;
+        padding: 0.75rem 0.85rem;
+        border-radius: var(--radius-sm);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        font-size: 0.8125rem;
+        line-height: 1.55;
+        color: #cbd5e1;
+      }
+      .fb-step {
+        margin-top: 1.15rem;
+        padding: 1rem 1rem 1.05rem;
+        border-radius: var(--radius);
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border);
+      }
+      .fb-step:first-of-type {
+        margin-top: 0;
+      }
+      .fb-step__head {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.55rem;
+      }
+      .fb-step__num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        background: linear-gradient(145deg, rgba(45, 212, 191, 0.25), rgba(56, 189, 248, 0.15));
+        color: #ecfdf5;
+        flex-shrink: 0;
+      }
+      .fb-step__title {
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #cbd5e1;
+      }
+      .fb-step__lead {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #e2e8f0;
+        line-height: 1.5;
+      }
+      .fb-grid {
+        display: grid;
+        gap: 0.35rem 0.75rem;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 380px) {
+        .fb-grid--ratings {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      .fb-field label {
+        margin-top: 0.65rem;
+      }
+      .fb-field label:first-child {
+        margin-top: 0;
+      }
+      .banner {
+        padding: 0.85rem 1rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+        line-height: 1.5;
+      }
+      .banner--err {
+        background: rgba(251, 113, 133, 0.08);
+        border: 1px solid rgba(251, 113, 133, 0.35);
+        color: #fecdd3;
+      }
+      .banner--ok {
+        background: rgba(52, 211, 153, 0.09);
+        border: 1px solid rgba(52, 211, 153, 0.38);
+        color: #d1fae5;
+      }
+      label {
+        display: block;
+        font-size: 0.74rem;
+        font-weight: 600;
+        margin: 0.85rem 0 0.35rem;
+        color: var(--muted);
+        letter-spacing: 0.03em;
+      }
+      .choice-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.6rem;
+        margin-top: 0.75rem;
+      }
+      button.choice {
+        padding: 0.72rem 0.85rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-strong);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        font-weight: 650;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: border-color 0.18s ease, background 0.18s ease, transform 0.12s ease;
+      }
+      button.choice:hover {
+        border-color: rgba(148, 163, 184, 0.55);
+        background: rgba(255, 255, 255, 0.06);
+      }
+      button.choice:active {
+        transform: scale(0.98);
+      }
+      button.choice.is-on {
+        border-color: var(--accent);
+        background: var(--accent-glow);
+        box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.25);
+      }
+      select,
+      textarea {
+        width: 100%;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-strong);
+        background: var(--surface);
+        color: var(--text);
+        padding: 0.62rem 0.75rem;
+        font-size: 0.95rem;
+        font-family: inherit;
+      }
+      select {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        padding-right: 2rem;
+      }
+      select:focus,
+      textarea:focus,
+      button.choice:focus-visible {
+        outline: 2px solid rgba(45, 212, 191, 0.5);
+        outline-offset: 2px;
+      }
+      textarea {
+        min-height: 5rem;
+        resize: vertical;
+      }
+      .actions {
+        margin-top: 1.25rem;
+        padding-top: 0.25rem;
+      }
+      .btn-primary {
+        width: 100%;
+        padding: 0.82rem 1rem;
+        border: none;
+        border-radius: var(--radius-sm);
+        background: linear-gradient(135deg, #0d9488 0%, #0ea5e9 48%, #6366f1 100%);
+        color: #fff;
+        font-weight: 700;
+        font-size: 1rem;
+        font-family: inherit;
+        cursor: pointer;
+        box-shadow: 0 14px 36px rgba(14, 165, 233, 0.28);
+        transition: filter 0.15s ease, transform 0.1s ease;
+      }
+      .btn-primary:hover:not(:disabled) {
+        filter: brightness(1.06);
+      }
+      .btn-primary:active:not(:disabled) {
+        transform: translateY(1px);
+      }
+      .btn-primary:disabled {
+        opacity: 0.38;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 0.8125rem;
+        margin-top: 1rem;
+        text-align: center;
+      }
+      .foot-note {
+        margin: 1.25rem 0 0;
+        text-align: center;
+        font-size: 0.7rem;
+        color: rgba(148, 163, 184, 0.58);
+        letter-spacing: 0.06em;
+        line-height: 1.45;
+        max-width: 22rem;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .hidden {
+        display: none !important;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .card {
+          animation: none;
+        }
+        button.choice:active {
+          transform: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="bg-blob bg-blob--a" aria-hidden="true"></div>
+      <div class="bg-blob bg-blob--b" aria-hidden="true"></div>
+      <div class="shell">
+        <div class="card" id="root">
+          <div class="card-accent" aria-hidden="true"></div>
+          <div class="card-inner">
+            <div class="brand-row">
+              <span class="brand-mark">Viona</span>
+              <span class="brand-pill">Kısa geri bildirim</span>
+            </div>
+            <h1>Geri bildiriminiz</h1>
+            <p class="guest-line hidden" id="guest-line" aria-live="polite"></p>
+            <p class="lead" id="subtitle">Kayıt doğrulanıyor…</p>
+            <div class="wa-context hidden" id="wa-context" role="note"></div>
+            <div id="banner" class="hidden"></div>
+            <div id="form-wrap" class="hidden"></div>
+            <div id="done-wrap" class="hidden"></div>
+          </div>
+        </div>
+        <p class="foot-note">Tek kullanımlık güvenli bağlantı · Kişisel verileriniz yalnızca bu form için işlenir</p>
+      </div>
+    </div>
+    <script>
+      (function () {
+        "use strict";
+
+        function apiBase() {
+          var c = window.VIONA_API_CONFIG || {};
+          return String(c.baseUrl || "").replace(/\/+$/, "");
+        }
+
+        function tokenFromPath() {
+          var p = String(location.pathname || "").replace(/\/+$/, "");
+          var seg = p.split("/").filter(Boolean);
+          var last = seg.length ? seg[seg.length - 1] : "";
+          return /^fb_[0-9A-Za-z_-]+$/.test(last) ? last : "";
+        }
+
+        function showBanner(el, cls, text) {
+          el.className = "banner " + cls;
+          el.textContent = text;
+          el.classList.remove("hidden");
+        }
+
+        function countdownSeconds(el, seconds, done) {
+          var n = seconds;
+          function tick() {
+            el.textContent = String(n);
+            if (n <= 0) {
+              done();
+              return;
+            }
+            n -= 1;
+            setTimeout(tick, 1000);
+          }
+          tick();
+        }
+
+        var tok = tokenFromPath();
+        var rootEl = document.getElementById("root");
+        var guestLine = document.getElementById("guest-line");
+        var sub = document.getElementById("subtitle");
+        var waCtx = document.getElementById("wa-context");
+        var banner = document.getElementById("banner");
+        var formWrap = document.getElementById("form-wrap");
+        var doneWrap = document.getElementById("done-wrap");
+
+        function setCardLoading(on) {
+          if (!rootEl) return;
+          rootEl.classList.toggle("fb-loading", Boolean(on));
+        }
+
+        if (!tok) {
+          sub.textContent = "Geçersiz bağlantı.";
+          showBanner(banner, "banner--err", "Bu sayfa yalnızca WhatsApp’taki kişisel geri bildirim linki ile açılmalıdır.");
+          return;
+        }
+
+        var base = apiBase();
+        if (!base) {
+          sub.textContent = "Yapılandırma hatası";
+          showBanner(banner, "banner--err", "API adresi bulunamadı.");
+          return;
+        }
+
+        var solved = "";
+        var submitting = false;
+
+        function branchHtml() {
+          return (
+            '<section class="fb-step" aria-labelledby="fb-q">' +
+            '<div class="fb-step__head"><span class="fb-step__num" aria-hidden="true">1</span><span id="fb-q" class="fb-step__title">Çözüm durumu</span></div>' +
+            '<p class="fb-step__lead">WhatsApp’taki bildiriminize göre yapılan işlem sorununuzu tamamen çözdü mü?</p>' +
+            '<div class="choice-row">' +
+            '<button type="button" class="choice" data-solved="yes">Evet</button>' +
+            '<button type="button" class="choice" data-solved="no">Hayır</button>' +
+            "</div></section>" +
+            '<section id="branch-yes" class="fb-step hidden" aria-labelledby="fb-yes-h">' +
+            '<div class="fb-step__head"><span class="fb-step__num" aria-hidden="true">2</span><span id="fb-yes-h" class="fb-step__title">Değerlendirme</span></div>' +
+            '<div class="fb-grid fb-grid--ratings">' +
+            '<div class="fb-field"><label for="speedRating">Hız (1–5)</label><select id="speedRating">' +
+            [1, 2, 3, 4, 5].map(function (n) {
+              return '<option value="' + n + '">' + n + "</option>";
+            }).join("") +
+            "</select></div>" +
+            '<div class="fb-field"><label for="staffRating">Personel ilgisi (1–5)</label><select id="staffRating">' +
+            [1, 2, 3, 4, 5].map(function (n) {
+              return '<option value="' + n + '">' + n + "</option>";
+            }).join("") +
+            "</select></div>" +
+            '<div class="fb-field"><label for="solutionRating">Çözüm kalitesi (1–5)</label><select id="solutionRating">' +
+            [1, 2, 3, 4, 5].map(function (n) {
+              return '<option value="' + n + '">' + n + "</option>";
+            }).join("") +
+            "</select></div>" +
+            '<div class="fb-field"><label for="revisitPreference">Tekrar konaklama</label><select id="revisitPreference">' +
+            '<option value="yes">Evet</option>' +
+            '<option value="unsure">Emin değilim</option>' +
+            '<option value="no">Hayır</option>' +
+            "</select></div></div>" +
+            '<div class="fb-field"><label for="feedbackNote">İsteğe bağlı not</label>' +
+            '<textarea id="feedbackNote" maxlength="4000" placeholder="İsterseniz kısa bir yorum"></textarea></div>' +
+            "</section>" +
+            '<section id="branch-no" class="fb-step hidden" aria-labelledby="fb-no-h">' +
+            '<div class="fb-step__head"><span class="fb-step__num" aria-hidden="true">2</span><span id="fb-no-h" class="fb-step__title">Ek bilgi</span></div>' +
+            '<p class="fb-step__lead">Ekibimiz kaydı yeniden açar; lütfen durumu özetleyin.</p>' +
+            '<div class="fb-field"><label for="reopenNote">Sorun devam ediyor</label>' +
+            '<textarea id="reopenNote" maxlength="4000" placeholder="Örn. klima hâlâ çalışmıyor"></textarea></div>' +
+            "</section>" +
+            '<div class="actions">' +
+            '<button type="button" class="btn-primary" id="submitBtn" disabled>Gönder</button>' +
+            "</div>"
+          );
+        }
+
+        function wireBranchUi() {
+          formWrap.querySelectorAll("button.choice").forEach(function (b) {
+            b.addEventListener("click", function () {
+              solved = b.getAttribute("data-solved") || "";
+              formWrap.querySelectorAll("button.choice").forEach(function (x) {
+                x.classList.toggle("is-on", x === b);
+              });
+              var y = document.getElementById("branch-yes");
+              var n = document.getElementById("branch-no");
+              if (y) y.classList.toggle("hidden", solved !== "yes");
+              if (n) n.classList.toggle("hidden", solved !== "no");
+              var sb = document.getElementById("submitBtn");
+              if (sb) sb.disabled = !(solved === "yes" || solved === "no");
+            });
+          });
+          var sb = document.getElementById("submitBtn");
+          if (sb) {
+            sb.addEventListener("click", function () {
+              void submit();
+            });
+          }
+        }
+
+        async function submit() {
+          if (submitting) return;
+          if (!(solved === "yes" || solved === "no")) return;
+          submitting = true;
+          var sb = document.getElementById("submitBtn");
+          if (sb) sb.disabled = true;
+          banner.classList.add("hidden");
+          var body = { solved: solved };
+          if (solved === "yes") {
+            body.speedRating = Number(document.getElementById("speedRating").value);
+            body.staffRating = Number(document.getElementById("staffRating").value);
+            body.solutionRating = Number(document.getElementById("solutionRating").value);
+            body.revisitPreference = document.getElementById("revisitPreference").value;
+            body.feedbackNote = document.getElementById("feedbackNote").value.trim();
+          } else {
+            body.reopenNote = document.getElementById("reopenNote").value.trim();
+          }
+          try {
+            var res = await fetch(base + "/public/feedback/" + encodeURIComponent(tok) + "/submit", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(body),
+            });
+            var raw = await res.text();
+            var d = null;
+            try {
+              d = raw ? JSON.parse(raw) : null;
+            } catch (_e) {
+              d = null;
+            }
+            if (!res.ok || !d || d.ok === false) {
+              var err = (d && d.error) || "Gönderilemedi";
+              throw new Error(err);
+            }
+            formWrap.classList.add("hidden");
+            doneWrap.classList.remove("hidden");
+            try {
+              document.title = "Teşekkürler · Viona";
+            } catch (_t) {}
+            if (waCtx) waCtx.classList.add("hidden");
+            sub.textContent = "Teşekkürler";
+            var outcome = d.outcome === "reopened" ? "Kaydınız yeniden ekip ile paylaşıldı." : "Geri bildiriminiz kaydedildi.";
+            doneWrap.innerHTML =
+              '<div class="banner banner--ok">' +
+              outcome +
+              "</div>" +
+              '<p class="muted">Bu pencereyi kapatabilirsiniz. Kapanışa kalan süre: <strong id="sec">10</strong> sn</p>';
+            var secEl = document.getElementById("sec");
+            countdownSeconds(secEl, 10, function () {
+              try {
+                window.close();
+              } catch (_e) {}
+            });
+          } catch (e) {
+            showBanner(banner, "banner--err", String((e && e.message) || e || "Gönderim hatası."));
+            if (sb) sb.disabled = false;
+          } finally {
+            submitting = false;
+          }
+        }
+
+        setCardLoading(true);
+        fetch(base + "/public/feedback/" + encodeURIComponent(tok), { cache: "no-store" })
+          .then(function (r) {
+            return r.text().then(function (t) {
+              var d = null;
+              try {
+                d = t ? JSON.parse(t) : null;
+              } catch (_e) {
+                d = null;
+              }
+              return { ok: r.ok, status: r.status, d: d };
+            });
+          })
+          .then(function (x) {
+            if (!x.ok || !x.d || x.d.ok === false) {
+              var err = (x.d && x.d.error) || "not_found";
+              if (x.status === 503 && err === "feedback_feature_disabled") {
+                sub.textContent = "Şu an kullanılamıyor";
+                showBanner(
+                  banner,
+                  "banner--err",
+                  "Misafir geri bildirimi tesis tarafından geçici olarak kapatılmıştır. Daha sonra tekrar deneyin veya resepsiyonla iletişime geçin.",
+                );
+                return;
+              }
+              if (x.status === 410 || err === "already_used") {
+                sub.textContent = "Bu bağlantı kullanılmış";
+                showBanner(banner, "banner--err", "Form zaten dolduruldu veya bağlantı kullanılamıyor.");
+                return;
+              }
+              sub.textContent = "Bağlantı geçersiz";
+              showBanner(banner, "banner--err", "Bu geri bildirim bağlantısı bulunamadı.");
+              return;
+            }
+            var room = x.d.roomNumber || "—";
+            var gn = x.d.guestName || "Misafir";
+            var bucket = String(x.d.bucket || "").trim().toLowerCase();
+            var bucketTr =
+              bucket === "fault"
+                ? "Teknik arıza"
+                : bucket === "request"
+                  ? "HK isteği"
+                  : "Kayıt";
+            try {
+              document.title = "Viona · Oda " + room + " · Geri bildirim";
+            } catch (_t) {}
+            if (guestLine) {
+              guestLine.textContent = gn + " · Oda " + room;
+              guestLine.classList.remove("hidden");
+            }
+            sub.textContent = "Yanıtlarınız paneldeki kayıt satırıyla senkron gider.";
+            if (waCtx) {
+              waCtx.textContent =
+                "Kayıt türü: " +
+                bucketTr +
+                ". Gönderdiğinizde bağlantı kapanır; puan ve notlar yönetim panelinde «Misafir geri bildirimi» sütununda görünür.";
+              waCtx.classList.remove("hidden");
+            }
+            formWrap.innerHTML = branchHtml();
+            formWrap.classList.remove("hidden");
+            wireBranchUi();
+          })
+          .catch(function () {
+            sub.textContent = "Bağlantı hatası";
+            showBanner(banner, "banner--err", "Sunucuya erişilemedi. Ağınızı kontrol edip yeniden deneyin.");
+          })
+          .finally(function () {
+            setCardLoading(false);
+          });
+      })();
+    </script>
+  </body>
+</html>

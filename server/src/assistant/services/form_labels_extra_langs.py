@@ -309,9 +309,140 @@ _EXTRA: dict[str, dict[str, dict[str, str]]] = {
     },
 }
 
+# `js/i18n-requests-fault-catalog.js` / uygulama bölüm başlıkları — chat formu numaralı listesi (ru, da, nl, cs, ro, sk).
+_EXTRA_REQUEST_SECTION: dict[str, dict[str, str]] = {
+    "reqReqSecHkSleepComfort": {
+        "da": "Seng & søvnkomfort",
+        "nl": "Bed & slaapcomfort",
+        "cs": "Postel a spánkový komfort",
+        "ro": "Pat & confort somn",
+        "sk": "Posteľ a spánkový komfort",
+        "ru": "Кровать и комфорт сна",
+    },
+    "reqReqSecHkTowelBath": {
+        "da": "Håndklæder & badeværelse",
+        "nl": "Handdoeken & badkamer",
+        "cs": "Ručníky a koupelna",
+        "ro": "Prosoape & baie",
+        "sk": "Uteráky a kúpeľňa",
+        "ru": "Полотенца и ванная",
+    },
+    "reqReqSecHkDrinks": {
+        "da": "Drikkevarer & værelsesforplejning",
+        "nl": "Drankjes & voorzieningen op de kamer",
+        "cs": "Nápoje a vybavení pokoje",
+        "ro": "Băuturi & dotări cameră",
+        "sk": "Nápoje a vybavenie izby",
+        "ru": "Напитки и удобства в номере",
+    },
+    "reqReqSecHkCleaning": {
+        "da": "Rengøring & hygiejne",
+        "nl": "Schoonmaak & hygiëne",
+        "cs": "Úklid a hygiena",
+        "ro": "Curățenie & igienă",
+        "sk": "Upratovanie a hygiena",
+        "ru": "Уборка и гигиена",
+    },
+    "reqReqSecHkEquipment": {
+        "da": "Udstyr & andet",
+        "nl": "Apparatuur & overig",
+        "cs": "Vybavení a ostatní",
+        "ro": "Echipamente & altele",
+        "sk": "Vybavenie a ostatné",
+        "ru": "Оборудование и прочее",
+    },
+    "reqReqSecHkOther": {
+        "da": "Andet",
+        "nl": "Overig",
+        "cs": "Jiné",
+        "ro": "Altele",
+        "sk": "Iné",
+        "ru": "Другое",
+    },
+}
+
+_EXTRA_FAULT_SECTION: dict[str, dict[str, str]] = {
+    "reqFaultSecHvac": {
+        "da": "Klima & ventilation",
+        "nl": "Klimaat & ventilatie",
+        "cs": "Klimatizace a větrání",
+        "ro": "Climatizare & ventilație",
+        "sk": "Klimatizácia a vetranie",
+        "ru": "Климат и вентиляция",
+    },
+    "reqFaultSecElectric": {
+        "da": "Elektricitet & belysning",
+        "nl": "Elektriciteit & verlichting",
+        "cs": "Elektřina a osvětlení",
+        "ro": "Electricitate & iluminat",
+        "sk": "Elektrina a osvetlenie",
+        "ru": "Электричество и освещение",
+    },
+    "reqFaultSecWaterBath": {
+        "da": "Vand & badeværelse",
+        "nl": "Water & badkamer",
+        "cs": "Voda a koupelna",
+        "ro": "Apă & baie",
+        "sk": "Voda a kúpeľňa",
+        "ru": "Вода и ванная",
+    },
+    "reqFaultSecTvElectronics": {
+        "da": "TV & elektronik",
+        "nl": "TV & elektronica",
+        "cs": "TV a elektronika",
+        "ro": "TV & electronică",
+        "sk": "TV a elektronika",
+        "ru": "ТВ и электроника",
+    },
+    "reqFaultSecDoorWindow": {
+        "da": "Dør, vindue & altan",
+        "nl": "Deur, raam & balkon",
+        "cs": "Dveře, okno a balkón",
+        "ro": "Ușă, fereastră & balcon",
+        "sk": "Dvere, okno a balkón",
+        "ru": "Дверь, окно и балкон",
+    },
+    "reqFaultSecFurniture": {
+        "da": "Møbler & værelsesudstyr",
+        "nl": "Meubilair & kameruitrusting",
+        "cs": "Nábytek a vybavení pokoje",
+        "ro": "Mobilier & dotări cameră",
+        "sk": "Nábytok a vybavenie izby",
+        "ru": "Мебель и обстановка номера",
+    },
+    "reqFaultSecGeneralFacility": {
+        "da": "Generelle faciliteter / fællesområder",
+        "nl": "Algemene voorzieningen / gemeenschappelijke ruimtes",
+        "cs": "Obecný provoz / společné prostory",
+        "ro": "Zone generale / spații comune",
+        "sk": "Všeobecné zariadenie / spoločné priestory",
+        "ru": "Общие зоны и территория отеля",
+    },
+    "reqFaultSecOther": {
+        "da": "Andre tekniske fejl",
+        "nl": "Overige technische storingen",
+        "cs": "Ostatní technické závady",
+        "ro": "Alte defecțiuni tehnice",
+        "sk": "Iné technické poruchy",
+        "ru": "Прочие технические неисправности",
+    },
+}
+
 
 def merge_extra_lang_columns(category_labels: dict[str, Any]) -> None:
     for intent, by_cat in _EXTRA.items():
         for cat_id, langs in by_cat.items():
             if intent in category_labels and cat_id in category_labels[intent]:
                 category_labels[intent][cat_id].update(langs)
+
+
+def merge_section_label_columns(
+    request_section_labels: dict[str, Any],
+    fault_section_labels: dict[str, Any],
+) -> None:
+    for sk, langs in _EXTRA_REQUEST_SECTION.items():
+        if sk in request_section_labels:
+            request_section_labels[sk].update(langs)
+    for sk, langs in _EXTRA_FAULT_SECTION.items():
+        if sk in fault_section_labels:
+            fault_section_labels[sk].update(langs)

@@ -313,5 +313,35 @@ export function getEnv() {
           String(this.hotelAdvisorToken || "").trim(),
       );
     },
+    /** Misafir geri bildirimi WhatsApp: `true` iken her zaman `whatsappTestPhone` kullanılır. */
+    whatsappTestMode: optional("WHATSAPP_TEST_MODE", "").trim().toLowerCase() === "true",
+    /** Test modunda kullanılacak alıcı; yalnızca rakamlar (ülke kodu dahil). */
+    whatsappTestPhone: optional("WHATSAPP_TEST_PHONE", "").replace(/\D/g, ""),
+    /** Public feedback sayfası kökü; sonda `/` yok. Örn. https://viona.eleythra.com */
+    vionaFeedbackPublicOrigin: optional("VIONA_FEEDBACK_PUBLIC_ORIGIN", "").replace(/\/+$/, ""),
+    /**
+     * Misafir geri bildirimi (WA daveti + public form) ana anahtarı.
+     * `false` / `0` / `off` → davet ve public uçlar kapalı (origin dolu olsa bile).
+     * `true` / `1` / `on` → açık (origin yine zorunlu).
+     * Boş → geriye dönük: `VIONA_FEEDBACK_PUBLIC_ORIGIN` tanımlıysa açık, yoksa kapalı.
+     */
+    vionaGuestFeedbackEnabledRaw: optional("VIONA_GUEST_FEEDBACK_ENABLED", ""),
+    get guestFeedbackFeatureEnabled() {
+      const raw = String(this.vionaGuestFeedbackEnabledRaw || "").trim().toLowerCase();
+      const hasOrigin = Boolean(String(this.vionaFeedbackPublicOrigin || "").trim());
+      if (raw === "0" || raw === "false" || raw === "off" || raw === "no") return false;
+      if (raw === "1" || raw === "true" || raw === "on" || raw === "yes") return true;
+      return hasOrigin;
+    },
+    /** Meta şablon adı (misafir tamamlama bildirimi). */
+    whatsappFeedbackTemplateName: optional("WHATSAPP_FEEDBACK_TEMPLATE_NAME", "viona_feedback_completed"),
+    /** URL butonunda gönderilecek metin: `token` = yalnızca `fb_…`; `full` = tam `origin/feedback/fb_…`. */
+    whatsappFeedbackUrlButtonMode: optional("WHATSAPP_FEEDBACK_URL_BUTTON_MODE", "token").toLowerCase(),
+    /** Hotspot’tan gelen 10 haneli `5…` yerel GSM için varsayılan ülke kodu (rakam, örn. 90). */
+    whatsappGuestDefaultCountryCode: optional("WHATSAPP_GUEST_DEFAULT_COUNTRY_CODE", "90").replace(/\D/g, ""),
+    feedbackSubmitWindowMs: optionalInt("FEEDBACK_SUBMIT_RATE_LIMIT_WINDOW_MS", 60_000),
+    feedbackSubmitMax: optionalInt("FEEDBACK_SUBMIT_RATE_LIMIT_MAX", 40),
+    feedbackGetWindowMs: optionalInt("FEEDBACK_GET_RATE_LIMIT_WINDOW_MS", 60_000),
+    feedbackGetMax: optionalInt("FEEDBACK_GET_RATE_LIMIT_MAX", 120),
   };
 }

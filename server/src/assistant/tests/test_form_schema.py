@@ -39,6 +39,18 @@ def test_hidden_request_categories_not_in_chat_picker():
         assert h not in chat
 
 
+def test_request_and_fault_section_index_helpers():
+    from assistant.services.form_schema import (
+        fault_section_index_for_category,
+        request_section_index_for_category,
+    )
+
+    assert request_section_index_for_category("hk_slippers") == 1
+    assert request_section_index_for_category("hk_extra_bed") == 0
+    assert fault_section_index_for_category("ft_ac_not_cooling") == 0
+    assert fault_section_index_for_category("ft_other") == 7
+
+
 def test_oda_havlusu_extracts_room_towel_before_towel_extra():
     """«oda havlusu» içinde «havlu» geçer; room_towel önceliği towel_extra genel eşlemesinden önce olmalı."""
     t = normalize_text("oda havlusu istiyorum")

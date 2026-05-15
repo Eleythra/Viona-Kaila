@@ -325,6 +325,10 @@ function applyGuestBucketStatusFilter(qb, type, query = {}) {
   const st = String(query?.status || "").trim();
   if (!st) return qb;
   if (st === "pending" && GUEST_BUCKET_TYPES_WITH_NEW.has(String(type || ""))) {
+    const t = String(type || "");
+    if (t === "request" || t === "fault") {
+      return qb.in("status", ["new", "pending", "reopened"]);
+    }
     return qb.in("status", ["new", "pending"]);
   }
   return qb.eq("status", st);
@@ -404,16 +408,17 @@ function stripPagingAndType(query = {}) {
 async function countFrontTypeStatusGroups(type, q0) {
   const table = tableForType(type);
   /** `.in()` + `head` bazı ortamlarda güvenilir olmayabildiği için new ve pending ayrı sayılır. */
-  const [bekNew, bekPending, islemde, yapildi, yapilmadi, iptal, toplam] = await Promise.all([
+  const [bekNew, bekPending, reopened, islemde, yapildi, yapilmadi, iptal, toplam] = await Promise.all([
     countGuestBucketHead(table, type, q0, { kind: "eq", value: "new" }),
     countGuestBucketHead(table, type, q0, { kind: "eq", value: "pending" }),
+    countGuestBucketHead(table, type, q0, { kind: "eq", value: "reopened" }),
     countGuestBucketHead(table, type, q0, { kind: "eq", value: "in_progress" }),
     countGuestBucketHead(table, type, q0, { kind: "eq", value: "done" }),
     countGuestBucketHead(table, type, q0, { kind: "eq", value: "rejected" }),
     countGuestBucketHead(table, type, q0, { kind: "eq", value: "cancelled" }),
     countGuestBucketHead(table, type, q0, null),
   ]);
-  const bekliyor = bekNew + bekPending;
+  const bekliyor = bekNew + bekPending + reopened;
   return { bekliyor, islemde, yapildi, yapilmadi, iptal, toplam };
 }
 
@@ -641,7 +646,7 @@ function tableForType(type) {
   return t;
 }
 
-const VALID_STATUS = new Set(["new", "pending", "in_progress", "done", "cancelled", "rejected"]);
+const VALID_STATUS = new Set(["new", "pending", "in_progress", "done", "cancelled", "rejected", "reopened"]);
 
 function normalizeIncomingAdminStatus(status) {
   const s = String(status ?? "")
@@ -649,6 +654,8 @@ function normalizeIncomingAdminStatus(status) {
     .toLowerCase()
     .replace(/\s+/g, "_");
   const aliases = {
+    yeniden_acildi: "reopened",
+    yeniden_açıldı: "reopened",
     inprogress: "in_progress",
     denied: "rejected",
     declined: "rejected",
@@ -709,6 +716,9 @@ export async function updateAdminItemStatus(type, id, status) {
   const table = tableForType(type);
 
   let patch = { status: normalized };
+  if (normalized === "reopened") {
+    patch = { ...patch, resolved_at: null };
+  }
   if (SLA_TIMESTAMP_TYPES.has(String(type))) {
     const { data: prev, error: prevErr } = await sb(() =>
       getSupabase().from(table).select("status,work_started_at,resolved_at").eq("id", idStr).maybeSingle(),
