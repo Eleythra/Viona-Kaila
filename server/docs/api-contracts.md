@@ -202,4 +202,4 @@ API butona yalnızca `fb_…` gönderir; Meta bunu köke yapıştırır. Şablon
 
 **CORS:** Statik geri bildirim sayfasının kökeni (`Origin`), misafir siteniz için allowlist’te olmalı (`CORS_ALLOWED_ORIGINS` veya `server/src/lib/public-site-origins.js` içi sabitler); aksi halde tarayıcıdan `POST /submit` `403 cors_not_allowed` ile düşer.
 
-Statik sayfa: kök `feedback.html`. **Vercel:** `vercel.json` içinde `/feedback/:path*` ve `/feedback` → `feedback.html` rewrite (aksi halde WA linki `404 NOT_FOUND` verir).
+Statik sayfa: kök `feedback.html`. **Vercel:** `vercel.json` içinde `/feedback/:path*`, `/feedback` ve `/feedback/` → `feedback.html` rewrite (Meta kökü sondaki `/` ile tanımlıdır; `/feedback/` kuralı yoksa Vercel `404 NOT_FOUND` verir). Canlı test için kökü tek başına açmayın; admin’den dönen `feedbackUrl` veya `/feedback/fb_…` kullanın.

@@ -30,7 +30,7 @@
 # Misafir geri bildirimi (admin «Geri bildirim» + otomatik «Yapıldı» + public /feedback/…):
 #   VIONA_GUEST_FEEDBACK_ENABLED=true, VIONA_GUEST_FEEDBACK_AUTO_ON_DONE=true
 #   VIONA_FEEDBACK_PUBLIC_ORIGIN=https://viona.eleythra.com
-#   Vercel (misafir site): vercel.json /feedback/:path* → feedback.html (WA link 404 önleme)
+#   Vercel (misafir site): vercel.json /feedback/:path*, /feedback, /feedback/ → feedback.html
 #   WHATSAPP_FEEDBACK_TEMPLATE_NAME=viona_feedback_completed, WHATSAPP_TEMPLATE_FAULT=viona_issue_notification
 # PDF raporu (admin): GEMINI_API_KEY önerilir. Chromium proje içi önbellek + build’de kurulum (aşağıda).
 #   PUPPETEER_CACHE_DIR=.cache/puppeteer, buildCommand içinde browsers install chrome zorunlu.
