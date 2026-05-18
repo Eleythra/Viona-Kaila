@@ -11,6 +11,11 @@
       "has": [{ "type": "host", "value": "viona-admin.eleythra.com" }],
       "destination": "/admin/",
       "permanent": true
+    },
+    {
+      "source": "/feedbackfb_:path*",
+      "destination": "/feedback/:path*",
+      "permanent": true
     }
   ],
   "rewrites": [

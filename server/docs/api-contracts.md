@@ -196,7 +196,9 @@ Tüm uçlar diğer admin API’leri gibi **admin bearer token** gerektirir (`Aut
 | `{{1}}` örnek (inceleme) | `fb_ornekTokenInceleme123` (yalnızca son ek; `https://` yazmayın) |
 | Tam canlı link | `https://viona.eleythra.com/feedback/` + `fb_…` → örn. `https://viona.eleythra.com/feedback/fb_abc123` |
 
-API butona yalnızca `fb_…` gönderir; Meta bunu köke yapıştırır. Şablon gövdesi (`viona_feedback_completed`): `{{1}}` misafir adı, `{{2}}` oda (kodla aynı sıra).
+API butona `buildFeedbackUrlSuffix` ile yalnızca `fb_…` gönderir (paneldeki `ops-*.html?id=` suffix ile aynı model); Meta bunu köke yapıştırır. Şablon gövdesi (`viona_feedback_completed`): `{{1}}` misafir adı, `{{2}}` oda (kodla aynı sıra).
+
+**Yanlış kök (slash yok):** `https://viona.eleythra.com/feedback` + `fb_abc` → `https://viona.eleythra.com/feedbackfb_abc` → Vercel `404` (`/feedbackfb_*` yolu). **Doğru:** kök `…/feedback/`. Eski WA mesajları için Vercel `vercel.json` içinde `/feedbackfb_:path*` → `/feedback/:path*` yönlendirmesi vardır.
 
 `full` modunda API tam `https://…/feedback/fb_…` üretir; şablondaki URL alanı tam URL kabul etmelidir.
 

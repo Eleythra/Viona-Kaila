@@ -1157,6 +1157,9 @@
 
       var dynamicUrlExample = originOk ? escHtml(origin + "/feedback/") : escHtml("https://SITE/feedback/");
       var exampleFull = originOk ? escHtml(origin + "/feedback/fb_…") : "—";
+      var exampleWrong = originOk
+        ? escHtml(origin + "/feedbackfb_…")
+        : escHtml("https://SITE/feedbackfb_…");
 
       var metaPanel =
         '<div class="guest-feedback-guide-panel">' +
@@ -1171,10 +1174,14 @@
           : "<li><strong>Mod <code>token</code>:</strong> URL için <em>Dynamic URL</em> seçin. <strong>Website URL</strong> sabit kök + yol: <code>" +
             dynamicUrlExample +
             "</code> (sonunda slash). Sunucu butona yalnızca <code>fb_…</code> son ekini gönderir; Meta bunu bu köke yapıştırır.</li>") +
+        "<li><strong>Slash zorunlu:</strong> Website URL <code>…/feedback/</code> olmalı (sonda <code>/</code>). Kök <code>…/feedback</code> (slash yok) ise Meta <code>…/feedbackfb_…</code> üretir → <code>404</code>. Yanlış örnek: <code>" +
+        exampleWrong +
+        "</code></li>" +
+        "<li>Davet sonrası admin satırındaki <code>feedbackUrl</code> ile WhatsApp düğmesindeki link aynı yapıda olmalı (<code>/feedback/fb_…</code>).</li>" +
         "<li>Onaydan sonra gerçek bir «Yapıldı» satırından küçük bir davet deneyin; form bağlantısı tek kullanımlıktır.</li>" +
-        "<li><strong>Vercel deploy:</strong> misafir sitesinde <code>vercel.json</code> — <code>/feedback/:path*</code> ve <code>/feedback</code> → <code>feedback.html</code> rewrite olmadan WhatsApp düğmesi <code>404 NOT_FOUND</code> verir.</li>" +
+        "<li><strong>Vercel:</strong> <code>/feedback/:path*</code> rewrite; eski bozuk linkler <code>/feedbackfb_*</code> → <code>/feedback/*</code> yönlendirmesi.</li>" +
         "</ol>" +
-        '<p style="margin:12px 0 0;font-size:0.85rem;color:var(--admin-text-muted)">Örnek tam adres: <code>' +
+        '<p style="margin:12px 0 0;font-size:0.85rem;color:var(--admin-text-muted)">Doğru tam adres: <code>' +
         exampleFull +
         "</code></p>" +
         "</div>";

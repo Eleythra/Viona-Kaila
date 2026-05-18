@@ -3,7 +3,8 @@
  *
  * Meta Manager’daki şablon sırası kodla birebir olmalı:
  * - Gövde: {{1}} misafir adı, {{2}} oda numarası (HEADER/FOOTER sabit metin varsayımı).
- * - URL butonu index 0: `WHATSAPP_FEEDBACK_URL_BUTTON_MODE=token` → yalnızca `fb_…`;
+ * - URL butonu index 0: `WHATSAPP_FEEDBACK_URL_BUTTON_MODE=token` → `buildFeedbackUrlSuffix` (`fb_…`);
+ *   Meta Website URL kökü `…/feedback/` olmalı (sonda `/`); yoksa `…/feedback` + `fb_…` → `…/feedbackfb_…` (404).
  *   `full` → tam geri bildirim URL’si (şablonda base sabit değilse).
  */
 
@@ -17,6 +18,7 @@ import {
 } from "./whatsapp-operational-notification.service.js";
 
 const BODY_CLIP = 900;
+const FEEDBACK_TOKEN_RE = /^fb_[0-9A-Za-z_-]+$/;
 
 function clip(s) {
   const t = String(s ?? "").trim();
@@ -47,6 +49,18 @@ export function formatGuestWhatsAppPhoneDisplay(digitsOnly) {
 }
 
 /**
+ * Meta «Dynamic URL» suffix — «Panelde Aç» (`ops-tech.html?id=…`) ile aynı model.
+ * Base URL şablonda `https://…/feedback/` (sonda `/`); API yalnızca `fb_…` gönderir.
+ * @param {string} feedbackToken
+ * @returns {string|null}
+ */
+export function buildFeedbackUrlSuffix(feedbackToken) {
+  const s = String(feedbackToken ?? "").trim();
+  if (!s.startsWith("fb_") || s.length < 11 || !FEEDBACK_TOKEN_RE.test(s)) return null;
+  return s;
+}
+
+/**
  * @param {{
  *   toDigits: string,
  *   guestDisplayName: string,
@@ -70,8 +84,13 @@ export async function sendFeedbackCompletedWhatsApp(p) {
   const templateName = env.whatsappFeedbackTemplateName || "viona_feedback_completed";
   const lang = templateLanguageCode();
   const mode = String(env.whatsappFeedbackUrlButtonMode || "token").toLowerCase();
-  const urlButtonText =
-    mode === "full" ? clip(String(p.feedbackUrlFull || "").trim()) : clip(String(p.feedbackToken || "").trim());
+  let urlButtonText;
+  if (mode === "full") {
+    urlButtonText = clip(String(p.feedbackUrlFull || "").trim());
+  } else {
+    const suffix = buildFeedbackUrlSuffix(p.feedbackToken);
+    urlButtonText = clip(suffix || String(p.feedbackToken || "").trim());
+  }
 
   const components = [
     {

@@ -17,6 +17,15 @@ check() {
 check "$ORIGIN/feedback/" 200
 check "$ORIGIN/feedback" 200
 check "$ORIGIN/feedback/fb_test" 200
+# Meta slash eksik → feedbackfb_… ; Vercel redirect (deploy sonrası)
+redir_code=$(curl -sS -o /dev/null -w "%{http_code}" -L --max-redirs 0 "$ORIGIN/feedbackfb_fb_test" 2>/dev/null || true)
+if [[ "$redir_code" == "308" || "$redir_code" == "301" || "$redir_code" == "307" ]]; then
+  echo "OK redirect $redir_code $ORIGIN/feedbackfb_fb_test → /feedback/fb_test"
+elif [[ "$redir_code" == "200" ]]; then
+  echo "OK $redir_code $ORIGIN/feedbackfb_fb_test (already rewritten)"
+else
+  echo "WARN feedbackfb redirect: got $redir_code (deploy vercel.json redirect?)"
+fi
 api=$(curl -sS "$ORIGIN/api/public/feedback/fb_gecersiz")
 if echo "$api" | grep -q '"error":"not_found"'; then
   echo "OK API feature up: $api"
