@@ -202,6 +202,64 @@ export async function mintEphemeralRealtimeSession({ apiKey, model, uiLang, voic
 }
 
 /**
+ * Ephemeral token ile SDP → OpenAI `/v1/realtime/calls` (yalnızca sunucu; tarayıcı CORS’a takılmaz).
+ */
+export async function relayRealtimeSdpViaEphemeral({ apiKey, model, uiLang, voice, sdp }) {
+  const minted = await mintEphemeralRealtimeSession({ apiKey, model, uiLang, voice });
+  if (!minted.ok) {
+    return { ok: false, error: minted.error, detail: minted.detail };
+  }
+
+  const offerSdp = String(sdp || "").trim();
+  if (!offerSdp) {
+    return { ok: false, error: "bad_json", detail: "missing SDP" };
+  }
+
+  const ac = new AbortController();
+  const tid = setTimeout(() => ac.abort(), OPENAI_CALLS_FETCH_MS);
+  try {
+    const upstream = await fetch(OPENAI_REALTIME_CALLS_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${minted.value}`,
+        "Content-Type": "application/sdp",
+      },
+      body: offerSdp,
+      signal: ac.signal,
+    });
+    const answerSdp = await upstream.text();
+    if (!upstream.ok) {
+      let data = null;
+      try {
+        data = answerSdp ? JSON.parse(answerSdp) : null;
+      } catch {
+        data = null;
+      }
+      const detail = openAiErrorPublicDetail(data) || String(answerSdp || "").slice(0, 280);
+      console.warn("openai_realtime_ephemeral_call status=%s detail=%s", upstream.status, detail);
+      return { ok: false, error: "realtime_upstream", detail, status: upstream.status };
+    }
+    if (!String(answerSdp || "").trim()) {
+      return { ok: false, error: "realtime_bad_response", detail: "empty SDP answer" };
+    }
+    return { ok: true, sdp: answerSdp, via: "ephemeral" };
+  } catch (err) {
+    const name = err?.name || "";
+    console.warn("openai_realtime_ephemeral_call_error name=%s msg=%s", name, err?.message || err);
+    if (name === "AbortError") {
+      return { ok: false, error: "realtime_upstream_timeout" };
+    }
+    return {
+      ok: false,
+      error: "realtime_upstream",
+      detail: err?.message ? String(err.message).slice(0, 280) : undefined,
+    };
+  } finally {
+    clearTimeout(tid);
+  }
+}
+
+/**
  * Unified interface: SDP + session JSON → OpenAI `/v1/realtime/calls`.
  */
 export async function proxyRealtimeCallSdp({ apiKey, model, uiLang, voice, sdp }) {
@@ -276,13 +334,26 @@ export function createSpeechRouter() {
       }
       const { uiLang, voice } = parseVoiceOptsFromRequest(req);
       const model = String(env.openAiRealtimeModel || "gpt-realtime").trim();
-      const result = await proxyRealtimeCallSdp({
+      let result = await proxyRealtimeCallSdp({
         apiKey: env.openAiApiKey,
         model,
         uiLang,
         voice,
         sdp,
       });
+      if (!result.ok) {
+        console.warn(
+          "openai_realtime_call_unified_fallback detail=%s",
+          result.detail || result.error,
+        );
+        result = await relayRealtimeSdpViaEphemeral({
+          apiKey: env.openAiApiKey,
+          model,
+          uiLang,
+          voice,
+          sdp,
+        });
+      }
       if (!result.ok) {
         const status = result.error === "realtime_upstream_timeout" ? 504 : 502;
         return res.status(status).json({
@@ -292,6 +363,9 @@ export function createSpeechRouter() {
         });
       }
       res.setHeader("Content-Type", "application/sdp");
+      if (result.via === "ephemeral") {
+        res.setHeader("X-Viona-Realtime-Via", "ephemeral");
+      }
       return res.status(200).send(result.sdp);
     },
   );

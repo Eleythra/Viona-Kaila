@@ -8,6 +8,7 @@ import {
   openAiErrorPublicDetail,
   mintEphemeralRealtimeSession,
   proxyRealtimeCallSdp,
+  relayRealtimeSdpViaEphemeral,
 } from "./speech.router.js";
 
 test("extractEphemeralClientSecret reads client_secret.value", () => {
@@ -118,4 +119,39 @@ test("proxyRealtimeCallSdp posts FormData to OpenAI calls", async (t) => {
   assert.ok(result.sdp.includes("v=0"));
   assert.equal(capturedUrl, "https://api.openai.com/v1/realtime/calls");
   assert.equal(hadFormData, true);
+});
+
+test("relayRealtimeSdpViaEphemeral mints token then posts SDP with Bearer", async (t) => {
+  const originalFetch = globalThis.fetch;
+  let call = 0;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+  globalThis.fetch = async (url, init) => {
+    call += 1;
+    if (String(url).includes("/realtime/client_secrets")) {
+      return new Response(JSON.stringify({ value: "ek_relay", expires_at: 1 }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    if (String(url).includes("/realtime/calls")) {
+      assert.match(String(init?.headers?.Authorization || ""), /ek_relay/);
+      assert.equal(init?.headers?.["Content-Type"], "application/sdp");
+      assert.ok(String(init?.body || "").includes("offer"));
+      return new Response("v=0\r\nanswer\r\n", { status: 200 });
+    }
+    return new Response("{}", { status: 404 });
+  };
+  const result = await relayRealtimeSdpViaEphemeral({
+    apiKey: "sk-test",
+    model: "gpt-realtime",
+    uiLang: "tr",
+    voice: "marin",
+    sdp: "v=0\r\noffer\r\n",
+  });
+  assert.equal(call, 2);
+  assert.equal(result.ok, true);
+  assert.equal(result.via, "ephemeral");
+  assert.ok(result.sdp.includes("answer"));
 });

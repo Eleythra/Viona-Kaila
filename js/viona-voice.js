@@ -418,7 +418,6 @@
     } catch (e) {}
   }
 
-  var OPENAI_REALTIME_CALLS = "https://api.openai.com/v1/realtime/calls";
   var REALTIME_NO_SPEECH_MS = 36000;
 
   function waitIceGatheringComplete(pc, maxMs) {
@@ -677,65 +676,11 @@
     });
   }
 
-  function postSdpToOpenAiEphemeral(offerSdp, ephemeral) {
-    return fetchWithTimeout(
-      OPENAI_REALTIME_CALLS,
-      {
-        method: "POST",
-        headers: {
-          Authorization: "Bearer " + ephemeral,
-          "Content-Type": "application/sdp",
-        },
-        body: offerSdp,
-      },
-      speechTimeoutMs("realtimeCallsTimeoutMs", 35000),
-    ).then(function (sdpRes) {
-      return sdpRes.text().then(function (answerSdp) {
-        if (!sdpRes.ok) {
-          voiceDebugLog("realtime_sdp_http", { status: sdpRes.status, body: answerSdp.slice(0, 500) });
-          return { __err: { error: "realtime_upstream", detail: answerSdp.slice(0, 280) } };
-        }
-        return { sdp: answerSdp };
-      });
-    });
-  }
-
-  function fetchEphemeralSession(uiLang, openVoice) {
-    var cfg = window.VIONA_CHAT_CONFIG || {};
-    var base = typeof window.vionaGetApiBase === "function" ? window.vionaGetApiBase() : "";
-    var ep = String(cfg.realtimeSessionEndpoint || base + "/realtime/session").trim();
-    return fetchWithTimeout(
-      ep,
-      {
-        method: "POST",
-        headers: Object.assign({ "Content-Type": "application/json" }, speechAuthHeaders()),
-        body: JSON.stringify({
-          ui_language: uiLang,
-          voice: String(openVoice).trim(),
-        }),
-      },
-      speechTimeoutMs("realtimeSessionTimeoutMs", 22000),
-    ).then(function (res) {
-      return res.text().then(function (raw) {
-        var data = null;
-        try {
-          data = raw ? JSON.parse(raw) : null;
-        } catch (e) {
-          data = null;
-        }
-        if (!res.ok) {
-          return { __err: data && typeof data === "object" ? data : { error: "http_" + res.status } };
-        }
-        return data || { ok: false, error: "bad_json" };
-      });
-    });
-  }
-
   function negotiateRealtimeAnswer(pc, offer, uiLang, openVoice) {
     return postSdpToUnifiedProxy(offer.sdp, uiLang, openVoice)
       .then(function (proxyResult) {
         if (proxyResult && !proxyResult.__err && proxyResult.sdp) {
-          voiceDebugLog("realtime_negotiate", "unified_proxy");
+          voiceDebugLog("realtime_negotiate", "call_proxy");
           return pc
             .setRemoteDescription({ type: "answer", sdp: proxyResult.sdp })
             .catch(function (err) {
@@ -744,50 +689,13 @@
               return null;
             });
         }
-        var proxyErr = proxyResult && proxyResult.__err ? proxyResult.__err : null;
-        voiceDebugLog("realtime_negotiate_fallback", proxyErr || "no_sdp");
-        var lastNegotiateDetail =
-          proxyErr && (proxyErr.detail || proxyErr.error) ? String(proxyErr.detail || proxyErr.error) : "";
-        return fetchEphemeralSession(uiLang, openVoice).then(function (sess) {
-          if (sess && sess.__err) {
-            voiceDebugLog("realtime_session_error", sess.__err);
-            goIdleWithVoiceHint(
-              voiceHintKeyFromRealtimeSessionPayload(sess.__err),
-              sess.__err && sess.__err.detail ? sess.__err.detail : sess.__err.error,
-            );
-            return null;
-          }
-          if (!sess || !sess.ok || !sess.client_secret || !String(sess.client_secret.value || "").trim()) {
-            voiceDebugLog("realtime_session_invalid", sess || {});
-            goIdleWithVoiceHint(
-              voiceHintKeyFromRealtimeSessionPayload(sess || {}),
-              sess && sess.detail ? sess.detail : "",
-            );
-            return null;
-          }
-          var ephemeral = String(sess.client_secret.value).trim();
-          return postSdpToOpenAiEphemeral(offer.sdp, ephemeral).then(function (ephemResult) {
-            if (ephemResult && ephemResult.__err) {
-              goIdleWithVoiceHint(
-                voiceHintKeyFromRealtimeSessionPayload(ephemResult.__err),
-                ephemResult.__err.detail || ephemResult.__err.error,
-              );
-              return null;
-            }
-            if (!ephemResult || !ephemResult.sdp) {
-              goIdleWithVoiceHint("voiceErrorRealtimeUpstream", lastNegotiateDetail);
-              return null;
-            }
-            voiceDebugLog("realtime_negotiate", "ephemeral");
-            return pc
-              .setRemoteDescription({ type: "answer", sdp: ephemResult.sdp })
-              .catch(function (err) {
-                voiceDebugLog("realtime_sdp_set_err", err && err.message ? err.message : err);
-                goIdleWithVoiceHint("voiceErrorRealtimeUpstream");
-                return null;
-              });
-          });
-        });
+        var proxyErr = proxyResult && proxyResult.__err ? proxyResult.__err : { error: "realtime_upstream" };
+        voiceDebugLog("realtime_negotiate_failed", proxyErr);
+        goIdleWithVoiceHint(
+          voiceHintKeyFromRealtimeSessionPayload(proxyErr),
+          proxyErr.detail || proxyErr.error || "",
+        );
+        return null;
       })
       .catch(function (err) {
         voiceDebugLog("realtime_negotiate_err", err && err.name ? err.name : err);
