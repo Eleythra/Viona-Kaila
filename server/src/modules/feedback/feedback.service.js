@@ -11,7 +11,8 @@ import {
 import { sendOperationalWhatsappNotification } from "../../services/whatsapp-operational-notification.service.js";
 
 const TOKEN_PREFIX = "fb_";
-const FEEDBACK_TYPES = new Set(["request", "fault"]);
+export const FEEDBACK_INVITE_TYPES = new Set(["request", "fault"]);
+const FEEDBACK_TYPES = FEEDBACK_INVITE_TYPES;
 
 /** @param {string} type */
 function tableForFeedbackType(type) {
@@ -69,6 +70,69 @@ function assertGuestFeedbackFeatureEnabled() {
   if (!env.guestFeedbackFeatureEnabled) {
     throw Object.assign(new Error("feedback_feature_disabled"), { statusCode: 503 });
   }
+}
+
+/**
+ * Otomatik davet koşulları (saf; test edilebilir).
+ * @param {{
+ *   type: string,
+ *   normalizedStatus: string,
+ *   previousStatus?: string,
+ *   feedbackStatus?: string,
+ *   featureEnabled?: boolean,
+ *   autoOnDoneEnabled?: boolean,
+ * }} p
+ * @returns {{ ok: boolean, reason?: string }}
+ */
+export function shouldAutoInviteGuestFeedbackOnDone(p) {
+  const type = String(p?.type || "").trim();
+  const normalized = normalizeRowStatus(p?.normalizedStatus);
+  const prev = normalizeRowStatus(p?.previousStatus);
+  const fb = String(p?.feedbackStatus || "")
+    .trim()
+    .toLowerCase();
+  if (!FEEDBACK_INVITE_TYPES.has(type)) return { ok: false, reason: "invalid_type" };
+  if (!p?.featureEnabled) return { ok: false, reason: "feature_disabled" };
+  if (!p?.autoOnDoneEnabled) return { ok: false, reason: "auto_disabled" };
+  if (normalized !== "done") return { ok: false, reason: "not_done" };
+  if (prev === "done") return { ok: false, reason: "already_done" };
+  if (fb === "pending" || fb === "submitted") return { ok: false, reason: `feedback_${fb}` };
+  return { ok: true };
+}
+
+/**
+ * Admin «Yapıldı» sonrası arka planda WhatsApp daveti (yanıtı bloklamaz).
+ * @param {string} type
+ * @param {string} id
+ * @param {{ normalizedStatus?: string, previousStatus?: string, feedbackStatus?: string }} ctx
+ */
+export function scheduleAutoGuestFeedbackInviteOnDone(type, id, ctx = {}) {
+  const env = getEnv();
+  const idStr = String(id ?? "").trim();
+  const gate = shouldAutoInviteGuestFeedbackOnDone({
+    type,
+    normalizedStatus: ctx.normalizedStatus,
+    previousStatus: ctx.previousStatus,
+    feedbackStatus: ctx.feedbackStatus,
+    featureEnabled: env.guestFeedbackFeatureEnabled,
+    autoOnDoneEnabled: env.guestFeedbackAutoOnDoneEnabled,
+  });
+  if (!gate.ok) {
+    console.info("[feedback_auto_invite] skip type=%s id=%s reason=%s", type, idStr, gate.reason || "unknown");
+    return;
+  }
+  void inviteGuestFeedback(type, idStr)
+    .then((r) => {
+      console.info(
+        "[feedback_auto_invite] ok type=%s id=%s testMode=%s",
+        type,
+        idStr,
+        Boolean(r?.testMode),
+      );
+    })
+    .catch((err) => {
+      console.warn("[feedback_auto_invite] failed type=%s id=%s error=%s", type, idStr, err?.message || err);
+    });
 }
 
 /**
@@ -208,13 +272,33 @@ export async function getFeedbackPublicSnapshot(token) {
   const found = await findFeedbackRowByToken(token);
   if (!found) throw Object.assign(new Error("feedback_not_found"), { statusCode: 404 });
   const st = String(found.row.feedback_status || "").trim().toLowerCase();
-  if (st !== "pending") throw Object.assign(new Error("feedback_already_used"), { statusCode: 410 });
+  const guestName = clipGuestDisplayName(String(found.row.guest_name || ""));
+  const roomNumber = String(found.row.room_number || "").trim() || "-";
+  const bucket = found.table === "guest_faults" ? "fault" : "request";
+
+  if (st === "submitted") {
+    const guestConfirmation = String(found.row.guest_confirmation || "").trim().toLowerCase();
+    const outcome = guestConfirmation === "not_completed" ? "reopened" : "completed";
+    return {
+      ok: true,
+      state: "submitted",
+      outcome,
+      guestName,
+      roomNumber,
+      bucket,
+    };
+  }
+
+  if (st !== "pending") {
+    throw Object.assign(new Error("feedback_already_used"), { statusCode: 410 });
+  }
 
   return {
     ok: true,
-    guestName: clipGuestDisplayName(String(found.row.guest_name || "")),
-    roomNumber: String(found.row.room_number || "").trim() || "-",
-    bucket: found.table === "guest_faults" ? "fault" : "request",
+    state: "pending",
+    guestName,
+    roomNumber,
+    bucket,
   };
 }
 

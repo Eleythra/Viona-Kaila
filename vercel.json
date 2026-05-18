@@ -15,6 +15,14 @@
   ],
   "rewrites": [
     {
+      "source": "/feedback/:path*",
+      "destination": "/feedback.html"
+    },
+    {
+      "source": "/feedback",
+      "destination": "/feedback.html"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://viona-node-api.onrender.com/api/:path*"
     }

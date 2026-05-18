@@ -1,6 +1,6 @@
 /**
- * OpenAI Realtime — POST /v1/realtime/sessions gövdesi (ephemeral client_secret).
- * Anahtar yalnızca sunucuda; istemciye yalnızca client_secret.value gider.
+ * OpenAI Realtime — oturum gövdeleri (ephemeral `/sessions`, unified `/calls`, `client_secrets`).
+ * Anahtar yalnızca sunucuda; istemciye yalnızca ephemeral token veya SDP cevabı gider.
  */
 
 /** `js/lang-registry.js` / CHATBOT_UI_LANG_SET ile uyumlu 10 kod */
@@ -43,7 +43,24 @@ const ALLOWED_VOICES = new Set([
   "cedar",
 ]);
 
-function normalizeUiLang(value) {
+const VIONA_BACKEND_REPLY_TOOL = {
+  type: "function",
+  name: "viona_backend_reply",
+  description:
+    "Send the guest spoken message to the hotel assistant backend and receive the official short reply text to read aloud.",
+  parameters: {
+    type: "object",
+    properties: {
+      user_message: {
+        type: "string",
+        description: "The guest's spoken request, verbatim in the guest UI language.",
+      },
+    },
+    required: ["user_message"],
+  },
+};
+
+export function normalizeUiLang(value) {
   const v = String(value || "")
     .toLowerCase()
     .trim()
@@ -75,40 +92,19 @@ function buildInstructions(uiLang) {
   ].join(" ");
 }
 
-/**
- * @param {object} opts
- * @param {string} opts.model — OPENAI_REALTIME_MODEL
- * @param {string} opts.uiLanguage — tr|en|…
- * @param {string} opts.voice — OpenAI built-in voice name
- */
-export function buildOpenAiRealtimeSessionBody({ model, uiLanguage, voice }) {
+function buildRealtimeSessionCore({ model, uiLanguage, voice }) {
   const lang = normalizeUiLang(uiLanguage);
   const whisperLang = UI_LANG_WHISPER[lang];
   const v = resolveRealtimeVoice(voice);
+  const m = String(model || "gpt-realtime").trim();
 
   return {
-    model: String(model || "gpt-realtime").trim(),
-    modalities: ["text", "audio"],
+    lang,
+    whisperLang,
     voice: v,
+    model: m,
     instructions: buildInstructions(lang),
-    tools: [
-      {
-        type: "function",
-        name: "viona_backend_reply",
-        description:
-          "Send the guest spoken message to the hotel assistant backend and receive the official short reply text to read aloud.",
-        parameters: {
-          type: "object",
-          properties: {
-            user_message: {
-              type: "string",
-              description: "The guest's spoken request, verbatim in the guest UI language.",
-            },
-          },
-          required: ["user_message"],
-        },
-      },
-    ],
+    tools: [VIONA_BACKEND_REPLY_TOOL],
     tool_choice: "auto",
     temperature: 0.6,
     max_response_output_tokens: 1200,
@@ -123,4 +119,68 @@ export function buildOpenAiRealtimeSessionBody({ model, uiLanguage, voice }) {
       language: whisperLang,
     },
   };
+}
+
+/**
+ * Unified WebRTC (`POST /v1/realtime/calls` FormData `session` alanı).
+ */
+export function buildOpenAiRealtimeUnifiedSession({ model, uiLanguage, voice }) {
+  const core = buildRealtimeSessionCore({ model, uiLanguage, voice });
+  return {
+    type: "realtime",
+    model: core.model,
+    instructions: core.instructions,
+    audio: { output: { voice: core.voice } },
+    tools: core.tools,
+    tool_choice: core.tool_choice,
+    temperature: core.temperature,
+    max_response_output_tokens: core.max_response_output_tokens,
+    turn_detection: core.turn_detection,
+    input_audio_transcription: core.input_audio_transcription,
+  };
+}
+
+/** `POST /v1/realtime/client_secrets` gövdesi (yedek ephemeral). */
+export function buildClientSecretsRequestBody(opts) {
+  return {
+    session: buildOpenAiRealtimeUnifiedSession(opts),
+  };
+}
+
+/**
+ * Eski ephemeral oturum (`POST /v1/realtime/sessions`) — düz şema.
+ */
+export function buildOpenAiRealtimeSessionBody(opts) {
+  const core = buildRealtimeSessionCore(opts);
+  return {
+    model: core.model,
+    modalities: ["text", "audio"],
+    voice: core.voice,
+    instructions: core.instructions,
+    tools: core.tools,
+    tool_choice: core.tool_choice,
+    temperature: core.temperature,
+    max_response_output_tokens: core.max_response_output_tokens,
+    turn_detection: core.turn_detection,
+    input_audio_transcription: core.input_audio_transcription,
+  };
+}
+
+/** OpenAI yanıtından ephemeral token (sessions veya client_secrets). */
+export function extractEphemeralClientSecret(data) {
+  if (!data || typeof data !== "object") {
+    return { value: "", expiresAt: null };
+  }
+  const cs = data.client_secret;
+  if (cs && typeof cs === "object" && typeof cs.value === "string" && cs.value.trim()) {
+    const expiresAt =
+      typeof cs.expires_at === "number" || typeof cs.expires_at === "string" ? cs.expires_at : null;
+    return { value: cs.value.trim(), expiresAt };
+  }
+  if (typeof data.value === "string" && data.value.trim()) {
+    const expiresAt =
+      typeof data.expires_at === "number" || typeof data.expires_at === "string" ? data.expires_at : null;
+    return { value: data.value.trim(), expiresAt };
+  }
+  return { value: "", expiresAt: null };
 }

@@ -21,6 +21,7 @@ import path from "path";
 import { existsSync, readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { sendOperationalWhatsappNotification } from "../../services/whatsapp-operational-notification.service.js";
+import { scheduleAutoGuestFeedbackInviteOnDone } from "../feedback/feedback.service.js";
 import ExcelJS from "exceljs";
 
 function toPositiveInt(v, fallback) {
@@ -716,14 +717,20 @@ export async function updateAdminItemStatus(type, id, status) {
   const table = tableForType(type);
 
   let patch = { status: normalized };
+  let prevRow = null;
   if (normalized === "reopened") {
     patch = { ...patch, resolved_at: null };
   }
   if (SLA_TIMESTAMP_TYPES.has(String(type))) {
     const { data: prev, error: prevErr } = await sb(() =>
-      getSupabase().from(table).select("status,work_started_at,resolved_at").eq("id", idStr).maybeSingle(),
+      getSupabase()
+        .from(table)
+        .select("status,work_started_at,resolved_at,feedback_status")
+        .eq("id", idStr)
+        .maybeSingle(),
     );
     if (!prevErr && prev) {
+      prevRow = prev;
       const prevSt = String(prev.status || "");
       const nowIso = new Date().toISOString();
       if (normalized === "in_progress" && prevSt !== "in_progress" && !prev.work_started_at) {
@@ -751,6 +758,11 @@ export async function updateAdminItemStatus(type, id, status) {
         : " Kayıt bulunamadı veya güncelleme sonrası satır dönmedi (id / RLS).";
     throw new Error(`status_update_no_row.${hint}`);
   }
+  scheduleAutoGuestFeedbackInviteOnDone(type, idStr, {
+    normalizedStatus: normalized,
+    previousStatus: prevRow ? String(prevRow.status || "") : "",
+    feedbackStatus: prevRow ? String(prevRow.feedback_status || "") : "",
+  });
   return data;
 }
 

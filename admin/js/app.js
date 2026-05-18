@@ -1172,6 +1172,7 @@
             dynamicUrlExample +
             "</code> (sonunda slash). Sunucu butona yalnızca <code>fb_…</code> son ekini gönderir; Meta bunu bu köke yapıştırır.</li>") +
         "<li>Onaydan sonra gerçek bir «Yapıldı» satırından küçük bir davet deneyin; form bağlantısı tek kullanımlıktır.</li>" +
+        "<li><strong>Vercel deploy:</strong> misafir sitesinde <code>vercel.json</code> — <code>/feedback/:path*</code> ve <code>/feedback</code> → <code>feedback.html</code> rewrite olmadan WhatsApp düğmesi <code>404 NOT_FOUND</code> verir.</li>" +
         "</ol>" +
         '<p style="margin:12px 0 0;font-size:0.85rem;color:var(--admin-text-muted)">Örnek tam adres: <code>' +
         exampleFull +
@@ -1183,6 +1184,7 @@
         "<h3>Ortam değişkenleri</h3>" +
         "<ol>" +
         "<li><code>VIONA_GUEST_FEEDBACK_ENABLED</code> — <code>true</code> / <code>1</code> ile açın; <code>false</code> / <code>0</code> ile kapatın (origin dolu olsa bile). Boş bırakırsanız: public kök tanımlıysa açık kabul edilir (eski davranış).</li>" +
+        "<li><code>VIONA_GUEST_FEEDBACK_AUTO_ON_DONE</code> — «Yapıldı» geçişinde otomatik WhatsApp daveti (istek + arıza). Kapatmak: <code>false</code>.</li>" +
         "<li><code>VIONA_FEEDBACK_PUBLIC_ORIGIN</code> — HTTPS kök (slash yok), örn. <code>https://otel.example.com</code>.</li>" +
         "<li><code>WHATSAPP_FEEDBACK_TEMPLATE_NAME</code> — Meta şablon adı (varsayılan <code>viona_feedback_completed</code>).</li>" +
         "<li><code>WHATSAPP_FEEDBACK_URL_BUTTON_MODE</code> — <code>token</code> veya <code>full</code>.</li>" +

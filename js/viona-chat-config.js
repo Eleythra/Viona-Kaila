@@ -21,6 +21,8 @@
   window.VIONA_CHAT_CONFIG = {
     endpoint: chatEndpoint,
     realtimeSessionEndpoint: apiBase + "/realtime/session",
+    /** Birincil: sunucu SDP proxy (OpenAI unified interface); başarısızsa ephemeral yedek. */
+    realtimeCallEndpoint: apiBase + "/realtime/call",
     /** OpenAI Realtime built-in ses adı (ör. marin, alloy). */
     openAiRealtimeVoice: "marin",
     realtimeSessionTimeoutMs: 22000,

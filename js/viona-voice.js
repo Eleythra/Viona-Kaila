@@ -90,12 +90,16 @@
 
   function voiceHintKeyFromRealtimeSessionPayload(data) {
     var code = data && data.error ? String(data.error) : "";
+    if (data && data.detail) {
+      voiceDebugLog("realtime_error_detail", { code: code, detail: data.detail });
+    }
     if (code === "speech_unauthorized") return "voiceErrorSpeechUnauthorized";
     if (code === "realtime_not_configured") return "voiceErrorSpeechNotConfigured";
     if (code === "realtime_upstream_timeout") return "voiceErrorRealtimeTimeout";
     if (code === "http_429") return "voiceErrorRateLimit";
     if (code === "realtime_upstream" || code === "realtime_bad_response" || code === "bad_json")
       return "voiceErrorRealtimeUpstream";
+    if (code.indexOf("http_") === 0) return "voiceErrorRealtimeUpstream";
     return "voiceErrorRealtimeSession";
   }
 
@@ -578,162 +582,260 @@
     }, REALTIME_NO_SPEECH_MS);
   }
 
-  function startRealtimeVoiceSession() {
-    if (typeof RTCPeerConnection === "undefined") {
-      goIdleWithVoiceHint("voiceErrorRealtimeSession");
-      return;
-    }
+  function attachRealtimePeerHandlers(pc) {
+    pc.ontrack = function (e) {
+      if (e.streams && e.streams[0]) {
+        realtimeRemoteAudio.srcObject = e.streams[0];
+        var p = realtimeRemoteAudio.play();
+        if (p && typeof p.catch === "function") {
+          p.catch(function () {});
+        }
+      }
+    };
+    pc.onconnectionstatechange = function () {
+      if (realtimeMuteConnectionErrors) return;
+      var st = pc && pc.connectionState;
+      if (st === "failed" || st === "disconnected") {
+        if (voiceState !== STATE_IDLE) goIdleWithVoiceHint("voiceErrorNetwork");
+      }
+    };
+  }
+
+  function wireRealtimeDataChannel(dc) {
+    dc.onopen = function () {
+      if (voiceState !== STATE_IDLE && voiceState !== STATE_SPEAKING) {
+        applyVoiceState(STATE_LISTENING);
+      }
+      scheduleRealtimeNoSpeechTimer();
+    };
+    dc.onmessage = function (e) {
+      try {
+        var msg = JSON.parse(e.data);
+        handleRealtimeServerEvent(msg);
+      } catch (err) {
+        voiceDebugLog("realtime_parse", err);
+      }
+    };
+    dc.onerror = function () {
+      if (realtimeMuteConnectionErrors) return;
+      if (!realtimeDc || realtimeDc.readyState !== "open") return;
+      goIdleWithVoiceHint("voiceErrorRealtimeUpstream");
+    };
+  }
+
+  function createLocalOffer(pc) {
+    return pc
+      .createOffer()
+      .then(function (offer) {
+        return pc.setLocalDescription(offer).then(function () {
+          return waitIceGatheringComplete(pc, 7500).then(function () {
+            var ld = pc.localDescription;
+            if (ld && ld.sdp) {
+              return { type: ld.type, sdp: ld.sdp };
+            }
+            return offer;
+          });
+        });
+      });
+  }
+
+  function postSdpToUnifiedProxy(offerSdp, uiLang, openVoice) {
+    var cfg = window.VIONA_CHAT_CONFIG || {};
+    var base = typeof window.vionaGetApiBase === "function" ? window.vionaGetApiBase() : "";
+    var callEp = String(cfg.realtimeCallEndpoint || base + "/realtime/call").trim();
+    var q =
+      "?ui_language=" +
+      encodeURIComponent(uiLang) +
+      "&voice=" +
+      encodeURIComponent(String(openVoice).trim());
+    return fetchWithTimeout(
+      callEp + q,
+      {
+        method: "POST",
+        headers: Object.assign({ "Content-Type": "application/sdp" }, speechAuthHeaders()),
+        body: offerSdp,
+      },
+      speechTimeoutMs("realtimeCallsTimeoutMs", 35000),
+    ).then(function (res) {
+      return res.text().then(function (raw) {
+        if (!res.ok) {
+          var errObj = { ok: false, error: "http_" + res.status };
+          try {
+            var parsed = raw ? JSON.parse(raw) : null;
+            if (parsed && typeof parsed === "object") errObj = parsed;
+          } catch (e) {}
+          voiceDebugLog("realtime_call_proxy_http", { status: res.status, body: errObj });
+          return { __err: errObj };
+        }
+        return { sdp: raw };
+      });
+    });
+  }
+
+  function postSdpToOpenAiEphemeral(offerSdp, ephemeral) {
+    return fetchWithTimeout(
+      OPENAI_REALTIME_CALLS,
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + ephemeral,
+          "Content-Type": "application/sdp",
+        },
+        body: offerSdp,
+      },
+      speechTimeoutMs("realtimeCallsTimeoutMs", 35000),
+    ).then(function (sdpRes) {
+      return sdpRes.text().then(function (answerSdp) {
+        if (!sdpRes.ok) {
+          voiceDebugLog("realtime_sdp_http", { status: sdpRes.status, body: answerSdp.slice(0, 500) });
+          return { __err: { error: "realtime_upstream", detail: answerSdp.slice(0, 280) } };
+        }
+        return { sdp: answerSdp };
+      });
+    });
+  }
+
+  function fetchEphemeralSession(uiLang, openVoice) {
     var cfg = window.VIONA_CHAT_CONFIG || {};
     var base = typeof window.vionaGetApiBase === "function" ? window.vionaGetApiBase() : "";
     var ep = String(cfg.realtimeSessionEndpoint || base + "/realtime/session").trim();
-    var openVoice = cfg.openAiRealtimeVoice || "marin";
-
     return fetchWithTimeout(
       ep,
       {
         method: "POST",
         headers: Object.assign({ "Content-Type": "application/json" }, speechAuthHeaders()),
         body: JSON.stringify({
-          ui_language: getAppLang(),
+          ui_language: uiLang,
           voice: String(openVoice).trim(),
         }),
       },
       speechTimeoutMs("realtimeSessionTimeoutMs", 22000),
-    )
-      .then(function (res) {
-        return res.text().then(function (raw) {
-          var data = null;
-          try {
-            data = raw ? JSON.parse(raw) : null;
-          } catch (e) {
-            data = null;
-          }
-          if (!res.ok) {
-            var errObj = data && typeof data === "object" ? data : { ok: false, error: "http_" + res.status };
-            return { __err: errObj };
-          }
-          return data || { ok: false, error: "bad_json" };
-        });
-      })
-      .then(function (data) {
-        if (data && data.__err) {
-          voiceDebugLog("realtime_session_error", data.__err);
-          goIdleWithVoiceHint(voiceHintKeyFromRealtimeSessionPayload(data.__err));
-          return null;
+    ).then(function (res) {
+      return res.text().then(function (raw) {
+        var data = null;
+        try {
+          data = raw ? JSON.parse(raw) : null;
+        } catch (e) {
+          data = null;
         }
-        if (!data || !data.ok || !data.client_secret || !String(data.client_secret.value || "").trim()) {
-          voiceDebugLog("realtime_session_invalid", data || {});
-          goIdleWithVoiceHint(voiceHintKeyFromRealtimeSessionPayload(data || {}));
-          return null;
+        if (!res.ok) {
+          return { __err: data && typeof data === "object" ? data : { error: "http_" + res.status } };
         }
-        var ephemeral = String(data.client_secret.value).trim();
+        return data || { ok: false, error: "bad_json" };
+      });
+    });
+  }
 
-        return navigator.mediaDevices
-          .getUserMedia({
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true,
-              channelCount: { ideal: 1 },
-            },
-          })
-          .then(function (stream) {
-            mediaStream = stream;
-            realtimePc = new RTCPeerConnection({
-              iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+  function negotiateRealtimeAnswer(pc, offer, uiLang, openVoice) {
+    return postSdpToUnifiedProxy(offer.sdp, uiLang, openVoice)
+      .then(function (proxyResult) {
+        if (proxyResult && !proxyResult.__err && proxyResult.sdp) {
+          voiceDebugLog("realtime_negotiate", "unified_proxy");
+          return pc
+            .setRemoteDescription({ type: "answer", sdp: proxyResult.sdp })
+            .catch(function (err) {
+              voiceDebugLog("realtime_sdp_set_err", err && err.message ? err.message : err);
+              goIdleWithVoiceHint("voiceErrorRealtimeUpstream");
+              return null;
             });
-
-            realtimeRemoteAudio = new Audio();
-            realtimeRemoteAudio.autoplay = true;
-            realtimeRemoteAudio.setAttribute("playsinline", "true");
-
-            realtimePc.ontrack = function (e) {
-              if (e.streams && e.streams[0]) {
-                realtimeRemoteAudio.srcObject = e.streams[0];
-                var p = realtimeRemoteAudio.play();
-                if (p && typeof p.catch === "function") {
-                  p.catch(function () {});
-                }
-              }
-            };
-
-            realtimePc.onconnectionstatechange = function () {
-              if (realtimeMuteConnectionErrors) return;
-              var st = realtimePc && realtimePc.connectionState;
-              if (st === "failed" || st === "disconnected") {
-                if (voiceState !== STATE_IDLE) goIdleWithVoiceHint("voiceErrorNetwork");
-              }
-            };
-
-            try {
-              stream.getTracks().forEach(function (track) {
-                realtimePc.addTrack(track, stream);
-              });
-            } catch (e) {
-              goIdleWithVoiceHint("voiceErrorRealtimeSession");
+        }
+        voiceDebugLog("realtime_negotiate_fallback", proxyResult && proxyResult.__err ? proxyResult.__err : "no_sdp");
+        return fetchEphemeralSession(uiLang, openVoice).then(function (sess) {
+          if (sess && sess.__err) {
+            voiceDebugLog("realtime_session_error", sess.__err);
+            goIdleWithVoiceHint(voiceHintKeyFromRealtimeSessionPayload(sess.__err));
+            return null;
+          }
+          if (!sess || !sess.ok || !sess.client_secret || !String(sess.client_secret.value || "").trim()) {
+            voiceDebugLog("realtime_session_invalid", sess || {});
+            goIdleWithVoiceHint(voiceHintKeyFromRealtimeSessionPayload(sess || {}));
+            return null;
+          }
+          var ephemeral = String(sess.client_secret.value).trim();
+          return postSdpToOpenAiEphemeral(offer.sdp, ephemeral).then(function (ephemResult) {
+            if (ephemResult && ephemResult.__err) {
+              goIdleWithVoiceHint(voiceHintKeyFromRealtimeSessionPayload(ephemResult.__err));
               return null;
             }
-
-            realtimeDc = realtimePc.createDataChannel("oai-events");
-
-            realtimeDc.onopen = function () {
-              scheduleRealtimeNoSpeechTimer();
-            };
-
-            realtimeDc.onmessage = function (e) {
-              try {
-                var msg = JSON.parse(e.data);
-                handleRealtimeServerEvent(msg);
-              } catch (err) {
-                voiceDebugLog("realtime_parse", err);
-              }
-            };
-
-            realtimeDc.onerror = function () {
+            if (!ephemResult || !ephemResult.sdp) {
               goIdleWithVoiceHint("voiceErrorRealtimeUpstream");
-            };
-
-            return realtimePc
-              .createOffer()
-              .then(function (offer) {
-                return realtimePc.setLocalDescription(offer).then(function () {
-                  return waitIceGatheringComplete(realtimePc, 7500).then(function () {
-                    var ld = realtimePc.localDescription;
-                    if (ld && ld.sdp) {
-                      offer = { type: ld.type, sdp: ld.sdp };
-                    }
-                    return offer;
-                  });
-                });
-              })
-              .then(function (offer) {
-                return fetchWithTimeout(
-                  OPENAI_REALTIME_CALLS,
-                  {
-                    method: "POST",
-                    headers: {
-                      Authorization: "Bearer " + ephemeral,
-                      "Content-Type": "application/sdp",
-                    },
-                    body: offer.sdp,
-                  },
-                  speechTimeoutMs("realtimeCallsTimeoutMs", 35000),
-                ).then(function (sdpRes) {
-                  return sdpRes.text().then(function (answerSdp) {
-                    if (!sdpRes.ok) {
-                      voiceDebugLog("realtime_sdp_http", sdpRes.status);
-                      goIdleWithVoiceHint("voiceErrorRealtimeUpstream");
-                      return null;
-                    }
-                    return realtimePc.setRemoteDescription({ type: "answer", sdp: answerSdp });
-                  });
-                });
+              return null;
+            }
+            voiceDebugLog("realtime_negotiate", "ephemeral");
+            return pc
+              .setRemoteDescription({ type: "answer", sdp: ephemResult.sdp })
+              .catch(function (err) {
+                voiceDebugLog("realtime_sdp_set_err", err && err.message ? err.message : err);
+                goIdleWithVoiceHint("voiceErrorRealtimeUpstream");
+                return null;
               });
+          });
+        });
+      })
+      .catch(function (err) {
+        voiceDebugLog("realtime_negotiate_err", err && err.name ? err.name : err);
+        goIdleWithVoiceHint("voiceErrorRealtimeUpstream");
+        return null;
+      });
+  }
+
+  function startRealtimeVoiceSession() {
+    if (typeof RTCPeerConnection === "undefined") {
+      goIdleWithVoiceHint("voiceErrorRealtimeSession");
+      return;
+    }
+    var cfg = window.VIONA_CHAT_CONFIG || {};
+    var openVoice = cfg.openAiRealtimeVoice || "marin";
+    var uiLang = getAppLang();
+
+    return navigator.mediaDevices
+      .getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: { ideal: 1 },
+        },
+      })
+      .then(function (stream) {
+        mediaStream = stream;
+        realtimePc = new RTCPeerConnection({
+          iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+        });
+        realtimeRemoteAudio = new Audio();
+        realtimeRemoteAudio.autoplay = true;
+        realtimeRemoteAudio.setAttribute("playsinline", "true");
+        attachRealtimePeerHandlers(realtimePc);
+
+        try {
+          stream.getTracks().forEach(function (track) {
+            realtimePc.addTrack(track, stream);
+          });
+        } catch (e) {
+          goIdleWithVoiceHint("voiceErrorRealtimeSession");
+          return null;
+        }
+
+        realtimeDc = realtimePc.createDataChannel("oai-events");
+        wireRealtimeDataChannel(realtimeDc);
+
+        return createLocalOffer(realtimePc)
+          .then(function (offer) {
+            return negotiateRealtimeAnswer(realtimePc, offer, uiLang, openVoice);
+          })
+          .then(function (negotiated) {
+            if (negotiated === null && (voiceState === STATE_THINKING || voiceState === STATE_LISTENING)) {
+              goIdleWithVoiceHint("voiceErrorRealtimeUpstream");
+            }
           });
       })
       .catch(function (err) {
         voiceDebugLog("realtime_catch", err && err.name ? err.name : err);
-        goIdleWithVoiceHint("voiceErrorNetwork");
+        if (err && err.name === "NotAllowedError") {
+          goIdleWithVoiceHint("voiceErrorNetwork");
+        } else {
+          goIdleWithVoiceHint("voiceErrorNetwork");
+        }
       });
   }
 
@@ -745,7 +847,7 @@
     stopTtsPlayback();
     primeVoiceAudioPlayback();
     setComposerLocked(true);
-    applyVoiceState(STATE_LISTENING);
+    applyVoiceState(STATE_THINKING);
 
     startRealtimeVoiceSession();
   }

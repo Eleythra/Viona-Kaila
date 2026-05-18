@@ -409,11 +409,68 @@
           return String(c.baseUrl || "").replace(/\/+$/, "");
         }
 
+        var FB_TOKEN_KEY = "viona_fb_token";
+        var FB_DONE_KEY = "viona_fb_done";
+
+        function isValidFeedbackToken(t) {
+          return /^fb_[0-9A-Za-z_-]+$/.test(String(t || ""));
+        }
+
         function tokenFromPath() {
           var p = String(location.pathname || "").replace(/\/+$/, "");
           var seg = p.split("/").filter(Boolean);
           var last = seg.length ? seg[seg.length - 1] : "";
-          return /^fb_[0-9A-Za-z_-]+$/.test(last) ? last : "";
+          if (last === "feedback.html") return "";
+          return isValidFeedbackToken(last) ? last : "";
+        }
+
+        function tokenFromQuery() {
+          try {
+            var q = new URLSearchParams(location.search || "");
+            var t = q.get("t") || q.get("token") || "";
+            return isValidFeedbackToken(t) ? t : "";
+          } catch (_e) {
+            return "";
+          }
+        }
+
+        function resolveToken() {
+          return tokenFromPath() || tokenFromQuery();
+        }
+
+        function canonicalFeedbackPath(token) {
+          return "/feedback/" + token;
+        }
+
+        function ensureCanonicalUrl(token) {
+          var want = canonicalFeedbackPath(token);
+          var path = String(location.pathname || "").replace(/\/+$/, "") || "/";
+          if (path !== want) {
+            history.replaceState(null, "", want);
+          } else if (location.search) {
+            history.replaceState(null, "", want);
+          }
+        }
+
+        function bindFeedbackToken(token) {
+          try {
+            var stored = sessionStorage.getItem(FB_TOKEN_KEY);
+            if (!stored) {
+              sessionStorage.setItem(FB_TOKEN_KEY, token);
+              return true;
+            }
+            return stored === token;
+          } catch (_e) {
+            return true;
+          }
+        }
+
+        function markFeedbackDone(token) {
+          try {
+            sessionStorage.setItem(FB_DONE_KEY, token);
+          } catch (_e) {
+            /* yoksay */
+          }
         }
 
         function showBanner(el, cls, text) {
@@ -436,7 +493,6 @@
           tick();
         }
 
-        var tok = tokenFromPath();
         var rootEl = document.getElementById("root");
         var guestLine = document.getElementById("guest-line");
         var sub = document.getElementById("subtitle");
@@ -450,11 +506,86 @@
           rootEl.classList.toggle("fb-loading", Boolean(on));
         }
 
+        function showLinkInvalid(message) {
+          formWrap.classList.add("hidden");
+          doneWrap.classList.add("hidden");
+          if (guestLine) guestLine.classList.add("hidden");
+          if (waCtx) waCtx.classList.add("hidden");
+          sub.textContent = "Geçersiz bağlantı";
+          showBanner(
+            banner,
+            "banner--err",
+            message ||
+              "Bu sayfa yalnızca WhatsApp mesajınızdaki kişisel geri bildirim linki ile kullanılabilir. Bağlantıyı değiştirmeyin.",
+          );
+        }
+
+        function showThankYou(outcome, opts) {
+          opts = opts || {};
+          formWrap.classList.add("hidden");
+          doneWrap.classList.remove("hidden");
+          banner.classList.add("hidden");
+          if (waCtx) waCtx.classList.add("hidden");
+          try {
+            document.title = "Teşekkürler · Viona";
+          } catch (_t) {}
+          sub.textContent = "Teşekkürler";
+          var msg =
+            outcome === "reopened"
+              ? "Kaydınız yeniden ekip ile paylaşıldı."
+              : "Geri bildiriminiz kaydedildi.";
+          if (opts.alreadySubmitted) {
+            msg =
+              outcome === "reopened"
+                ? "Bu bağlantı için geri bildirim daha önce iletildi; kayıt ekiple paylaşıldı."
+                : "Bu bağlantı için geri bildiriminiz zaten kaydedildi.";
+          }
+          doneWrap.innerHTML =
+            '<div class="banner banner--ok">' +
+            msg +
+            "</div>" +
+            (opts.showCountdown !== false
+              ? '<p class="muted">Bu pencereyi kapatabilirsiniz. Kapanışa kalan süre: <strong id="sec">10</strong> sn</p>'
+              : '<p class="muted">Bu pencereyi kapatabilirsiniz.</p>');
+          if (opts.showCountdown !== false) {
+            var secEl = document.getElementById("sec");
+            if (secEl) {
+              countdownSeconds(secEl, 10, function () {
+                try {
+                  window.close();
+                } catch (_e) {}
+              });
+            }
+          }
+        }
+
+        var tok = resolveToken();
         if (!tok) {
-          sub.textContent = "Geçersiz bağlantı.";
-          showBanner(banner, "banner--err", "Bu sayfa yalnızca WhatsApp’taki kişisel geri bildirim linki ile açılmalıdır.");
+          showLinkInvalid("Bu sayfa yalnızca WhatsApp’taki kişisel geri bildirim linki ile açılmalıdır.");
           return;
         }
+
+        ensureCanonicalUrl(tok);
+
+        if (!bindFeedbackToken(tok)) {
+          showLinkInvalid(
+            "Bu oturumda başka bir geri bildirim bağlantısı açılmış. Lütfen yalnızca size gelen WhatsApp mesajındaki linke dokunun.",
+          );
+          return;
+        }
+
+        window.addEventListener("popstate", function () {
+          var now = resolveToken();
+          var bound = "";
+          try {
+            bound = sessionStorage.getItem(FB_TOKEN_KEY) || "";
+          } catch (_e) {
+            bound = "";
+          }
+          if (!now || now !== bound) {
+            showLinkInvalid("Bağlantı değiştirildi veya geçersiz. Yalnızca WhatsApp’taki orijinal linke dönün.");
+          }
+        });
 
         var base = apiBase();
         if (!base) {
@@ -570,25 +701,8 @@
               var err = (d && d.error) || "Gönderilemedi";
               throw new Error(err);
             }
-            formWrap.classList.add("hidden");
-            doneWrap.classList.remove("hidden");
-            try {
-              document.title = "Teşekkürler · Viona";
-            } catch (_t) {}
-            if (waCtx) waCtx.classList.add("hidden");
-            sub.textContent = "Teşekkürler";
-            var outcome = d.outcome === "reopened" ? "Kaydınız yeniden ekip ile paylaşıldı." : "Geri bildiriminiz kaydedildi.";
-            doneWrap.innerHTML =
-              '<div class="banner banner--ok">' +
-              outcome +
-              "</div>" +
-              '<p class="muted">Bu pencereyi kapatabilirsiniz. Kapanışa kalan süre: <strong id="sec">10</strong> sn</p>';
-            var secEl = document.getElementById("sec");
-            countdownSeconds(secEl, 10, function () {
-              try {
-                window.close();
-              } catch (_e) {}
-            });
+            markFeedbackDone(tok);
+            showThankYou(d.outcome === "reopened" ? "reopened" : "completed", { showCountdown: true });
           } catch (e) {
             showBanner(banner, "banner--err", String((e && e.message) || e || "Gönderim hatası."));
             if (sb) sb.disabled = false;
@@ -623,12 +737,17 @@
                 return;
               }
               if (x.status === 410 || err === "already_used") {
-                sub.textContent = "Bu bağlantı kullanılmış";
-                showBanner(banner, "banner--err", "Form zaten dolduruldu veya bağlantı kullanılamıyor.");
+                showThankYou("completed", { alreadySubmitted: true, showCountdown: false });
                 return;
               }
               sub.textContent = "Bağlantı geçersiz";
               showBanner(banner, "banner--err", "Bu geri bildirim bağlantısı bulunamadı.");
+              return;
+            }
+            if (x.d.state === "submitted") {
+              var outSubmitted = x.d.outcome === "reopened" ? "reopened" : "completed";
+              markFeedbackDone(tok);
+              showThankYou(outSubmitted, { alreadySubmitted: true, showCountdown: false });
               return;
             }
             var room = x.d.roomNumber || "—";

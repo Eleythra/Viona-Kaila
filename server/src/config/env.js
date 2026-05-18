@@ -352,6 +352,17 @@ export function getEnv() {
       if (raw === "1" || raw === "true" || raw === "on" || raw === "yes") return true;
       return hasOrigin;
     },
+    /**
+     * «Yapıldı» geçişinde otomatik WhatsApp geri bildirim daveti.
+     * Boş → özellik açıksa açık; `false` / `0` / `off` ile kapatılır.
+     */
+    vionaGuestFeedbackAutoOnDoneRaw: optional("VIONA_GUEST_FEEDBACK_AUTO_ON_DONE", ""),
+    get guestFeedbackAutoOnDoneEnabled() {
+      const raw = String(this.vionaGuestFeedbackAutoOnDoneRaw || "").trim().toLowerCase();
+      if (raw === "0" || raw === "false" || raw === "off" || raw === "no") return false;
+      if (raw === "1" || raw === "true" || raw === "on" || raw === "yes") return true;
+      return this.guestFeedbackFeatureEnabled;
+    },
     /** Meta şablon adı (misafir tamamlama bildirimi). */
     whatsappFeedbackTemplateName: optional("WHATSAPP_FEEDBACK_TEMPLATE_NAME", "viona_feedback_completed"),
     /** URL butonunda gönderilecek metin: `token` = yalnızca `fb_…`; `full` = tam `origin/feedback/fb_…`. */
