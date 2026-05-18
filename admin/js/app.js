@@ -2250,7 +2250,9 @@
     }
     if (m === "feedback_only_when_done") return "Yalnızca «Yapıldı» kayıtlarında kullanılabilir.";
     if (m === "feedback_invalid_type") return "Bu liste türü için kullanılamaz.";
-    if (m === "feedback_public_origin_not_configured") return "Sunucuda VIONA_FEEDBACK_PUBLIC_ORIGIN eksik.";
+    if (m === "feedback_public_origin_not_configured") {
+      return "Sunucuda VIONA_FEEDBACK_PUBLIC_ORIGIN eksik. Render Environment: VIONA_FEEDBACK_PUBLIC_ORIGIN=https://viona.eleythra.com (sonda / yok) ve yeniden deploy.";
+    }
     if (m === "feedback_test_phone_not_configured") {
       return "WHATSAPP_TEST_MODE açık ama WHATSAPP_TEST_PHONE tanımlı değil veya geçersiz.";
     }

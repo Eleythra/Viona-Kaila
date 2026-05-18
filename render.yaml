@@ -27,6 +27,9 @@
 # Misafir kapısı Elektra / HotelAdvisor Hotspot (isteğe bağlı; üçü dolunca oda+doğum zorunlu):
 #   HOTEL_ADVISOR_BASE_URL, HOTEL_ADVISOR_HOTEL_ID, HOTEL_ADVISOR_TOKEN
 #   HOTEL_ADVISOR_GUESTS_CACHE_MS (isteğe bağlı; varsayılan 12000, 0=önbellek kapalı)
+# Misafir geri bildirimi (admin «Geri bildirim» + public /feedback/…):
+#   VIONA_GUEST_FEEDBACK_ENABLED=true, VIONA_FEEDBACK_PUBLIC_ORIGIN=https://viona.eleythra.com
+#   WHATSAPP_FEEDBACK_TEMPLATE_NAME=viona_feedback_completed, WHATSAPP_TEMPLATE_FAULT=viona_issue_notification
 # PDF raporu (admin): GEMINI_API_KEY önerilir. Chromium proje içi önbellek + build’de kurulum (aşağıda).
 #   PUPPETEER_CACHE_DIR=.cache/puppeteer, buildCommand içinde browsers install chrome zorunlu.
 #   İsteğe bağlı: PUPPETEER_EXECUTABLE_PATH, PDF_GEMINI_TIMEOUT_MS, PDF_SET_CONTENT_TIMEOUT_MS
@@ -69,6 +72,14 @@ services:
       - key: WHATSAPP_HK_RECIPIENTS
         sync: false
       - key: WHATSAPP_FRONT_RECIPIENTS
+        sync: false
+      - key: VIONA_FEEDBACK_PUBLIC_ORIGIN
+        sync: false
+      - key: VIONA_GUEST_FEEDBACK_ENABLED
+        sync: false
+      - key: WHATSAPP_TEMPLATE_FAULT
+        sync: false
+      - key: WHATSAPP_FEEDBACK_TEMPLATE_NAME
         sync: false
       - key: WHATSAPP_DAILY_REPORT_HK_RECIPIENTS
         sync: false

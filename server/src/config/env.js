@@ -124,6 +124,23 @@ function optionalAny(names, fallback = "") {
   return fallback;
 }
 
+/** Misafir geri bildirim formu kökü; yoksa CORS’taki misafir sitesi (admin host hariç). */
+function resolveFeedbackPublicOrigin() {
+  const explicit = optional("VIONA_FEEDBACK_PUBLIC_ORIGIN", "").replace(/\/+$/, "");
+  if (explicit) return explicit;
+  const cors = optional("CORS_ALLOWED_ORIGINS", "");
+  if (!cors) return "";
+  for (const part of cors.split(/[,;\s]+/)) {
+    const u = String(part || "")
+      .trim()
+      .replace(/\/+$/, "");
+    if (!/^https:\/\//i.test(u)) continue;
+    if (/admin/i.test(u)) continue;
+    return u;
+  }
+  return "";
+}
+
 /**
  * Render/Meta panelinden yapıştırma: UTF-8 BOM, çevreleyen tırnak, fazla boşluk.
  * İkinci isim: eski dokümantasyonda görülen FACEBOOK_APP_SECRET (aynı App Secret).
@@ -320,7 +337,7 @@ export function getEnv() {
     /** Test modunda kullanılacak alıcı; yalnızca rakamlar (ülke kodu dahil). */
     whatsappTestPhone: optional("WHATSAPP_TEST_PHONE", "").replace(/\D/g, ""),
     /** Public feedback sayfası kökü; sonda `/` yok. Örn. https://viona.eleythra.com */
-    vionaFeedbackPublicOrigin: optional("VIONA_FEEDBACK_PUBLIC_ORIGIN", "").replace(/\/+$/, ""),
+    vionaFeedbackPublicOrigin: resolveFeedbackPublicOrigin(),
     /**
      * Misafir geri bildirimi (WA daveti + public form) ana anahtarı.
      * `false` / `0` / `off` → davet ve public uçlar kapalı (origin dolu olsa bile).

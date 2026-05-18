@@ -13,7 +13,7 @@
  * Yönlendirme: arıza → WHATSAPP_TECH_RECIPIENTS | istek → WHATSAPP_HK_RECIPIENTS |
  * şikayet + misafir bildirimi + geç çıkış → WHATSAPP_FRONT_RECIPIENTS (ön büro).
  *
- * Teknik bildirim: HK isteği 8 parametre; arıza şablonu varsayılan 7 parametre (adet yok). Meta’da eski 8 parametreli arıza şablonu varsa `WHATSAPP_CLOUD_FAULT_PARAM_COUNT=8` veya şablonu güncelleyin; `WHATSAPP_TEMPLATE_FAULT` ile HK şablon adını (`viona_request_notification`) paylaşın.
+ * Teknik bildirim: HK isteği 8 parametre (`viona_request_notification`); arıza 7 parametre (`viona_issue_notification`, adet yok). Meta’da eski 8 parametreli arıza şablonu varsa `WHATSAPP_CLOUD_FAULT_PARAM_COUNT=8`.
  *
  * Meta «Visit Website / Dynamic URL» butonu: şablonda Base URL (örn. https://viona-admin.eleythra.com/admin/) tanımlı;
  * gövde aynı kalır. Env ile açılır; suffix sunucu üretir (şablonda URL butonu index 0 ile uyumlu olmalı):
@@ -39,7 +39,7 @@ import {
 } from "./operational-template-format.js";
 import { isOperationalRecordType } from "./operational-notification-routing.service.js";
 
-const TEMPLATE_FAULT = "viona_request_notification";
+const TEMPLATE_FAULT = "viona_issue_notification";
 const TEMPLATE_REQUEST = "viona_request_notification";
 const TEMPLATE_COMPLAINT = "viona_complaint_notification";
 const DEFAULT_TEMPLATE_GUEST_RELATION = "viona_guest_relation_notification";
