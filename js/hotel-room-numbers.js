@@ -41,16 +41,35 @@
     return !!SET[String(v || "").trim()];
   };
 
+  function bypassRoomAliasesClient(raw) {
+    var extra = String(raw == null ? "" : raw).trim();
+    if (!extra) return [];
+    var out = [extra];
+    if (/^\d+$/.test(extra)) {
+      var n = parseInt(extra, 10);
+      if (Number.isFinite(n)) {
+        out.push(String(n));
+        out.push(String(n).padStart(4, "0"));
+      }
+    }
+    return out;
+  }
+
   /** Status’tan gelen ek odalar (ör. operatör bypass); SET ve sayaç güncellenir. */
   global.vionaMergeExtraHotelRoomNumbers = function (arr) {
     if (!Array.isArray(arr)) return;
     var i;
+    var j;
+    var aliases;
     for (i = 0; i < arr.length; i++) {
-      var sn = String(arr[i] == null ? "" : arr[i]).trim();
-      if (!sn) continue;
-      if (!SET[sn]) {
-        SET[sn] = true;
-        validRoomCount += 1;
+      aliases = bypassRoomAliasesClient(arr[i]);
+      for (j = 0; j < aliases.length; j++) {
+        var sn = String(aliases[j] || "").trim();
+        if (!sn) continue;
+        if (!SET[sn]) {
+          SET[sn] = true;
+          validRoomCount += 1;
+        }
       }
     }
     global.VIONA_HOTEL_VALID_ROOM_COUNT = validRoomCount;

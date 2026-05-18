@@ -50,17 +50,19 @@ export function createGuestGateRouter(envSlice) {
     };
     if (e.operatorGateBypassConfigured) {
       const r = String(e.operatorGateRoom || "").trim();
-      const birth = String(e.operatorGateBirthdate || "").trim();
-      const displayName = String(e.operatorGateDisplayName || "Viona Kontrol").trim() || "Viona Kontrol";
       if (r) {
-        const canon = normalizeGuestRoomForMatch(r) || r;
-        out.extraValidRoomNumbers = [canon];
+        const aliases = new Set([r]);
+        const canon = normalizeGuestRoomForMatch(r);
+        if (canon) aliases.add(canon);
+        if (/^\d+$/.test(r)) {
+          const n = parseInt(r, 10);
+          if (Number.isFinite(n)) {
+            aliases.add(String(n));
+            aliases.add(String(n).padStart(4, "0"));
+          }
+        }
+        out.extraValidRoomNumbers = [...aliases];
       }
-      out.operatorBypassPrefill = {
-        roomNo: normalizeGuestRoomForMatch(r) || r,
-        birthDate: birth,
-        displayName,
-      };
     }
     res.json(out);
   });

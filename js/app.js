@@ -1153,30 +1153,6 @@
     return dt > today;
   }
 
-  /** Operatör bypass env: kapı ekranında oda + doğum tarihi (YYYY-MM-DD). */
-  function gateSetBirthFromIso(iso) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(iso || ""))) return;
-    const p = String(iso).split("-");
-    const ySel = gateBirthYearEl();
-    const mSel = gateBirthMonthEl();
-    const dSel = gateBirthDayEl();
-    if (!ySel || !mSel || !dSel) return;
-    gateWireBirthSelectsOnce();
-    ySel.value = p[0];
-    mSel.value = p[1];
-    gateHydrateBirthDayOptions();
-    dSel.value = p[2];
-  }
-
-  function applyOperatorGatePrefill(prefill) {
-    if (!prefill || typeof prefill !== "object") return;
-    const roomNo = String(prefill.roomNo || "").trim();
-    const birthDate = String(prefill.birthDate || "").trim();
-    const roomEl = el("gate-room");
-    if (roomNo && roomEl && !String(roomEl.value || "").trim()) roomEl.value = roomNo;
-    if (birthDate) gateSetBirthFromIso(birthDate);
-  }
-
   function resetGateForm() {
     const c1 = el("gate-check-privacy");
     const room = el("gate-room");
@@ -1256,9 +1232,6 @@
           typeof window.vionaMergeExtraHotelRoomNumbers === "function"
         ) {
           window.vionaMergeExtraHotelRoomNumbers(data.extraValidRoomNumbers);
-        }
-        if (gateIdentityRequired && data && data.operatorBypassPrefill) {
-          applyOperatorGatePrefill(data.operatorBypassPrefill);
         }
       } catch (_e) {
         gateIdentityRequired = false;

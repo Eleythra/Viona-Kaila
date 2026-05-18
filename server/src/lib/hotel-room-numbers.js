@@ -2,6 +2,8 @@
  * Kaila Beach geçerli oda numaraları. `HOTEL_VALID_ROOM_COUNT` aralıklardan türetilir; Python `hotel_room_numbers.py` ile senkron tutun.
  * Admin «Odalar» blok/kat ayrımı: tarayıcıda `js/hotel-room-numbers.js` → `vionaParseRoomLayout` (binler=blok A/B/C, yüzler=kat).
  */
+import { normalizeGuestRoomForMatch } from "./guest-match-normalize.js";
+
 const ROOM_RANGES = [
   [1001, 1008],
   [1101, 1123],
@@ -32,9 +34,28 @@ function buildSet() {
   if (process.env.VIONA_OPERATOR_GATE_BYPASS === "1") {
     const extra = String(process.env.VIONA_OPERATOR_GATE_ROOM || "").trim();
     const birth = String(process.env.VIONA_OPERATOR_GATE_BIRTHDATE || "").trim();
-    if (extra && /^\d{4}-\d{2}-\d{2}$/.test(birth)) s.add(extra);
+    if (extra && /^\d{4}-\d{2}-\d{2}$/.test(birth)) {
+      for (const alias of bypassRoomAliases(extra)) s.add(alias);
+    }
   }
   return s;
+}
+
+/** Bypass test odası: `7`, `0007`, `07`… aynı kabul (kapı + form gönderimi). */
+function bypassRoomAliases(raw) {
+  const extra = String(raw || "").trim();
+  if (!extra) return [];
+  const out = new Set([extra]);
+  const canon = normalizeGuestRoomForMatch(extra);
+  if (canon) out.add(canon);
+  if (/^\d+$/.test(extra)) {
+    const n = parseInt(extra, 10);
+    if (Number.isFinite(n)) {
+      out.add(String(n));
+      out.add(String(n).padStart(4, "0"));
+    }
+  }
+  return [...out];
 }
 
 export const HOTEL_VALID_ROOM_NUMBERS = buildSet();
