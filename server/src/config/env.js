@@ -365,8 +365,10 @@ export function getEnv() {
     },
     /** Meta şablon adı (misafir tamamlama bildirimi). */
     whatsappFeedbackTemplateName: optional("WHATSAPP_FEEDBACK_TEMPLATE_NAME", "viona_feedback_completed"),
-    /** URL butonunda gönderilecek metin: `token` = yalnızca `fb_…`; `full` = tam `origin/feedback/fb_…`. */
-    whatsappFeedbackUrlButtonMode: optional("WHATSAPP_FEEDBACK_URL_BUTTON_MODE", "token").toLowerCase(),
+    /** URL butonunda gönderilecek metin: `full` = tam URL (önerilir); `token` = yalnızca `fb_…` (Meta kök `…/feedback/` şart). */
+    whatsappFeedbackUrlButtonMode: optional("WHATSAPP_FEEDBACK_URL_BUTTON_MODE", "full").toLowerCase(),
+    /** Kayıt başına en fazla WhatsApp geri bildirim daveti (admin elle; otomatik «Yapıldı» sayılmaz). */
+    feedbackInviteMax: optionalInt("VIONA_FEEDBACK_INVITE_MAX", 3),
     /** Hotspot’tan gelen 10 haneli `5…` yerel GSM için varsayılan ülke kodu (rakam, örn. 90). */
     whatsappGuestDefaultCountryCode: optional("WHATSAPP_GUEST_DEFAULT_COUNTRY_CODE", "90").replace(/\D/g, ""),
     feedbackSubmitWindowMs: optionalInt("FEEDBACK_SUBMIT_RATE_LIMIT_WINDOW_MS", 60_000),

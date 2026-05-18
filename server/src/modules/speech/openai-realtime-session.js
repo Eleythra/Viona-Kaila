@@ -106,15 +106,15 @@ function buildRealtimeSessionCore({ model, uiLanguage, voice }) {
     instructions: buildInstructions(lang),
     tools: [VIONA_BACKEND_REPLY_TOOL],
     tool_choice: "auto",
-    temperature: 0.6,
-    max_response_output_tokens: 1200,
+    /** GA Realtime: `audio.input.turn_detection` (üst seviye `turn_detection` artık geçersiz). */
     turn_detection: {
       type: "server_vad",
       silence_duration_ms: 550,
       threshold: 0.45,
       prefix_padding_ms: 320,
+      create_response: true,
     },
-    input_audio_transcription: {
+    transcription: {
       model: "whisper-1",
       language: whisperLang,
     },
@@ -123,6 +123,7 @@ function buildRealtimeSessionCore({ model, uiLanguage, voice }) {
 
 /**
  * Unified WebRTC (`POST /v1/realtime/calls` FormData `session` alanı).
+ * OpenAI GA: `audio.input/output`, `max_output_tokens`; `temperature` yok.
  */
 export function buildOpenAiRealtimeUnifiedSession({ model, uiLanguage, voice }) {
   const core = buildRealtimeSessionCore({ model, uiLanguage, voice });
@@ -130,13 +131,17 @@ export function buildOpenAiRealtimeUnifiedSession({ model, uiLanguage, voice }) 
     type: "realtime",
     model: core.model,
     instructions: core.instructions,
-    audio: { output: { voice: core.voice } },
+    output_modalities: ["audio"],
     tools: core.tools,
     tool_choice: core.tool_choice,
-    temperature: core.temperature,
-    max_response_output_tokens: core.max_response_output_tokens,
-    turn_detection: core.turn_detection,
-    input_audio_transcription: core.input_audio_transcription,
+    max_output_tokens: 1200,
+    audio: {
+      input: {
+        transcription: core.transcription,
+        turn_detection: core.turn_detection,
+      },
+      output: { voice: core.voice },
+    },
   };
 }
 
@@ -159,10 +164,14 @@ export function buildOpenAiRealtimeSessionBody(opts) {
     instructions: core.instructions,
     tools: core.tools,
     tool_choice: core.tool_choice,
-    temperature: core.temperature,
-    max_response_output_tokens: core.max_response_output_tokens,
-    turn_detection: core.turn_detection,
-    input_audio_transcription: core.input_audio_transcription,
+    max_response_output_tokens: 1200,
+    turn_detection: {
+      type: core.turn_detection.type,
+      silence_duration_ms: core.turn_detection.silence_duration_ms,
+      threshold: core.turn_detection.threshold,
+      prefix_padding_ms: core.turn_detection.prefix_padding_ms,
+    },
+    input_audio_transcription: core.transcription,
   };
 }
 

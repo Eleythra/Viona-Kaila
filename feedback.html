@@ -438,6 +438,14 @@
           return tokenFromPath() || tokenFromQuery();
         }
 
+        function rawPathTail() {
+          var p = String(location.pathname || "").replace(/\/+$/, "");
+          var seg = p.split("/").filter(Boolean);
+          var last = seg.length ? seg[seg.length - 1] : "";
+          if (last === "feedback.html") return "";
+          return last;
+        }
+
         function canonicalFeedbackPath(token) {
           return "/feedback/" + token;
         }
@@ -561,7 +569,16 @@
 
         var tok = resolveToken();
         if (!tok) {
-          showLinkInvalid("Bu sayfa yalnızca WhatsApp’taki kişisel geri bildirim linki ile açılmalıdır.");
+          var tail = rawPathTail();
+          var hint =
+            "Bu sayfa yalnızca WhatsApp’taki kişisel geri bildirim linki ile açılmalıdır (adres «/feedback/fb_…» ile biter).";
+          if (tail && !isValidFeedbackToken(tail)) {
+            hint +=
+              " Adresteki «" +
+              tail +
+              "» geçerli bir kod değil. Meta şablonda URL düğmesi oda numarası veya yanlış {{…}} ile bağlanmış olabilir; kök «…/feedback/» ve son ek «fb_…» olmalı.";
+          }
+          showLinkInvalid(hint);
           return;
         }
 

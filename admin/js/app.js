@@ -979,16 +979,10 @@
                 window.alert(msg);
               }
             },
-            onFeedbackInvite: async function (itemType, id) {
-              try {
-                var d = await adapter.sendGuestFeedbackInvite(itemType, id);
-                var url = d && d.feedbackUrl ? String(d.feedbackUrl) : "";
-                var testNote = d && d.testMode ? "\n\n(Test modu: WHATSAPP_TEST_MODE.)" : "";
-                window.alert("WhatsApp ile geri bildirim daveti gönderildi." + testNote + (url ? "\n\n" + url : ""));
-                await loadOpHk(opHkPage);
-              } catch (err) {
-                window.alert(formatFeedbackInviteError(err));
-              }
+            onFeedbackInvite: function (itemType, id, meta) {
+              return runGuestFeedbackInvite(adapter, itemType, id, meta, function () {
+                return loadOpHk(opHkPage);
+              });
             },
           },
           opsToolbarListHandlers(),
@@ -1177,7 +1171,8 @@
         "<li><strong>Slash zorunlu:</strong> Website URL <code>…/feedback/</code> olmalı (sonda <code>/</code>). Kök <code>…/feedback</code> (slash yok) ise Meta <code>…/feedbackfb_…</code> üretir → <code>404</code>. Yanlış örnek: <code>" +
         exampleWrong +
         "</code></li>" +
-        "<li>Davet sonrası admin satırındaki <code>feedbackUrl</code> ile WhatsApp düğmesindeki link aynı yapıda olmalı (<code>/feedback/fb_…</code>).</li>" +
+        "<li>Davet sonrası admin satırındaki <code>feedbackUrl</code> ile WhatsApp düğmesindeki link aynı yapıda olmalı (<code>/feedback/fb_…</code>). <code>/feedback/3</code> gibi kısa kodlar geçersizdir — URL düğmesi oda numarası (gövde {{2}}) ile karışmış olabilir.</li>" +
+        "<li><code>VIONA_GUEST_FEEDBACK_AUTO_ON_DONE=true</code> iken «Yapıldı» zaten davet gönderir; elle «Geri bildirim gönder» ile çift mesaj oluşmaması için ikinciye basmayın.</li>" +
         "<li>Onaydan sonra gerçek bir «Yapıldı» satırından küçük bir davet deneyin; form bağlantısı tek kullanımlıktır.</li>" +
         "<li><strong>Vercel:</strong> <code>/feedback/:path*</code> rewrite; eski bozuk linkler <code>/feedbackfb_*</code> → <code>/feedback/*</code> yönlendirmesi.</li>" +
         "</ol>" +
@@ -1263,16 +1258,10 @@
                 window.alert(msg);
               }
             },
-            onFeedbackInvite: async function (itemType, id) {
-              try {
-                var d = await adapter.sendGuestFeedbackInvite(itemType, id);
-                var url = d && d.feedbackUrl ? String(d.feedbackUrl) : "";
-                var testNote = d && d.testMode ? "\n\n(Test modu: WHATSAPP_TEST_MODE.)" : "";
-                window.alert("WhatsApp ile geri bildirim daveti gönderildi." + testNote + (url ? "\n\n" + url : ""));
-                await loadOpTech(opTechPage);
-              } catch (err) {
-                window.alert(formatFeedbackInviteError(err));
-              }
+            onFeedbackInvite: function (itemType, id, meta) {
+              return runGuestFeedbackInvite(adapter, itemType, id, meta, function () {
+                return loadOpTech(opTechPage);
+              });
             },
           },
           opsToolbarListHandlers(),
@@ -2246,6 +2235,45 @@
     syncRoomDateModeUi();
   }
 
+  function confirmGuestFeedbackInvite(meta) {
+    meta = meta && typeof meta === "object" ? meta : {};
+    var max = Math.max(1, Number(meta.inviteMax) || 3);
+    var sent = Math.max(0, Number(meta.inviteCount) || 0);
+    var left = Math.max(0, max - sent);
+    if (left <= 0) {
+      window.alert("Bu kayıt için en fazla " + max + " WhatsApp geri bildirim daveti gönderilebilir.");
+      return false;
+    }
+    var fs = String(meta.feedbackStatus || "").trim().toLowerCase();
+    var lines = [
+      "Misafire WhatsApp ile geri bildirim formu gönderilsin mi?",
+      "",
+      "Her onayda yalnızca 1 WhatsApp mesajı gider.",
+      "Kalan gönderim hakkı: " + left + " / " + max + " (bu gönderimden sonra " + (left - 1) + ").",
+      "Yeni link önceki form bağlantısını geçersiz kılar.",
+    ];
+    if (fs === "pending") lines.push("", "Not: Bekleyen bir davet vardı; yeni link ile değiştirilir.");
+    if (fs === "submitted") lines.push("", "Not: Misafir daha önce yanıtlamıştı; yeni bir tur başlar.");
+    return window.confirm(lines.join("\n"));
+  }
+
+  async function runGuestFeedbackInvite(adapter, itemType, id, meta, reloadFn) {
+    if (!confirmGuestFeedbackInvite(meta)) return;
+    try {
+      var d = await adapter.sendGuestFeedbackInvite(itemType, id);
+      var url = d && d.feedbackUrl ? String(d.feedbackUrl) : "";
+      var testNote = d && d.testMode ? "\n\n(Test modu: WHATSAPP_TEST_MODE.)" : "";
+      var quota =
+        d && d.invitesRemaining != null
+          ? "\n\nKalan hak: " + String(d.invitesRemaining) + "/" + String(d.invitesMax || 3)
+          : "";
+      window.alert("WhatsApp ile geri bildirim daveti gönderildi (1 mesaj)." + testNote + quota + (url ? "\n\n" + url : ""));
+      if (typeof reloadFn === "function") await reloadFn();
+    } catch (err) {
+      window.alert(formatFeedbackInviteError(err));
+    }
+  }
+
   function formatFeedbackInviteError(err) {
     var m = err && err.message ? String(err.message) : "";
     if (m === "feedback_feature_disabled") {
@@ -2255,7 +2283,13 @@
       return "Misafir telefonu çözülemedi (kayıt alanı veya Hotspot). Telefonu kontrol edin.";
     }
     if (m === "feedback_invite_already_pending") {
-      return "Bu kayıt için davet zaten beklemede; misafir formunu tamamlayana kadar yeniden gönderilmez.";
+      return "Bu kayıt için davet zaten beklemede (veya az önce gönderildi). «Yapıldı» otomatik daveti açıksa ayrıca «Geri bildirim gönder»e basmayın — tek mesaj yeterlidir.";
+    }
+    if (m === "feedback_invite_already_submitted") {
+      return "Misafir bu kayıt için geri bildirimi zaten göndermiş; yeni davet için kalan hak varsa tekrar deneyin.";
+    }
+    if (m === "feedback_invite_limit_reached") {
+      return "Bu kayıt için WhatsApp geri bildirim daveti limitine ulaşıldı (en fazla 3 gönderim).";
     }
     if (m === "feedback_only_when_done") return "Yalnızca «Yapıldı» kayıtlarında kullanılabilir.";
     if (m === "feedback_invalid_type") return "Bu liste türü için kullanılamaz.";
@@ -2388,16 +2422,10 @@
         }
       }
       if (type === "request" || type === "fault") {
-        bucketHandlers.onFeedbackInvite = async function (itemType, id) {
-          try {
-            var d = await adapter.sendGuestFeedbackInvite(itemType, id);
-            var url = d && d.feedbackUrl ? String(d.feedbackUrl) : "";
-            var testNote = d && d.testMode ? "\n\n(Test modu: WHATSAPP_TEST_MODE.)" : "";
-            window.alert("WhatsApp ile geri bildirim daveti gönderildi." + testNote + (url ? "\n\n" + url : ""));
-            await loadBucket(type, mountId, undefined, { rethrow: true });
-          } catch (err) {
-            window.alert(formatFeedbackInviteError(err));
-          }
+        bucketHandlers.onFeedbackInvite = function (itemType, id, meta) {
+          return runGuestFeedbackInvite(adapter, itemType, id, meta, function () {
+            return loadBucket(type, mountId, undefined, { rethrow: true });
+          });
         };
       }
       ui.renderBucketTable(mount, type, rows, bucketHandlers);

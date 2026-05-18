@@ -56,6 +56,7 @@ alter table if exists public.guest_requests add column if not exists feedback_no
 alter table if exists public.guest_requests add column if not exists reopen_note text;
 alter table if exists public.guest_requests add column if not exists feedback_submitted_at timestamptz;
 alter table if exists public.guest_requests add column if not exists reopened_at timestamptz;
+alter table if exists public.guest_requests add column if not exists feedback_invite_count int not null default 0;
 
 alter table if exists public.guest_faults add column if not exists guest_phone text;
 alter table if exists public.guest_faults add column if not exists feedback_token text;
@@ -70,6 +71,7 @@ alter table if exists public.guest_faults add column if not exists feedback_note
 alter table if exists public.guest_faults add column if not exists reopen_note text;
 alter table if exists public.guest_faults add column if not exists feedback_submitted_at timestamptz;
 alter table if exists public.guest_faults add column if not exists reopened_at timestamptz;
+alter table if exists public.guest_faults add column if not exists feedback_invite_count int not null default 0;
 
 -- feedback_status / guest_confirmation CHECK (opsiyonel ama tutarlı veri)
 alter table if exists public.guest_requests drop constraint if exists guest_requests_feedback_status_chk;

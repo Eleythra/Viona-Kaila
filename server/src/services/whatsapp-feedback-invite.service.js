@@ -89,7 +89,9 @@ export async function sendFeedbackCompletedWhatsApp(p) {
     urlButtonText = clip(String(p.feedbackUrlFull || "").trim());
   } else {
     const suffix = buildFeedbackUrlSuffix(p.feedbackToken);
-    urlButtonText = clip(suffix || String(p.feedbackToken || "").trim());
+    const tok = suffix || String(p.feedbackToken || "").trim();
+    // Kök `…/feedback` (slash yok) iken `fb_…` → `feedbackfb_…` olmasın diye başa `/` eklenir.
+    urlButtonText = clip(tok.startsWith("/") ? tok : `/${tok}`);
   }
 
   const components = [

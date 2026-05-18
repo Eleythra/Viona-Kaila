@@ -59,6 +59,18 @@ test("shouldAutoInviteGuestFeedbackOnDone skips pending feedback", () => {
   assert.equal(r.reason, "feedback_pending");
 });
 
+test("shouldAutoInviteGuestFeedbackOnDone skips when invite already sent", () => {
+  const r = shouldAutoInviteGuestFeedbackOnDone({
+    type: "request",
+    normalizedStatus: "done",
+    previousStatus: "in_progress",
+    feedbackInviteCount: 1,
+    ...enabled,
+  });
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, "invite_already_sent");
+});
+
 test("shouldAutoInviteGuestFeedbackOnDone skips submitted feedback", () => {
   const r = shouldAutoInviteGuestFeedbackOnDone({
     type: "request",

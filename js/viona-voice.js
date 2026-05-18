@@ -363,14 +363,19 @@
   }
 
   /** Kısa kullanıcı mesajı; ardından varsayılan idle metnine döner */
-  function goIdleWithVoiceHint(i18nKey) {
+  function goIdleWithVoiceHint(i18nKey, debugDetail) {
     cleanupRealtime();
     stopTtsPlayback();
     stopMicAndAnalysis();
     applyVoiceState(STATE_IDLE);
     setComposerLocked(false);
     if (els.status && i18nKey) {
-      els.status.textContent = t(i18nKey);
+      var hint = t(i18nKey);
+      if (voiceDebugEnabled() && debugDetail) {
+        var d = String(debugDetail).trim().slice(0, 120);
+        if (d) hint = hint + " [" + d + "]";
+      }
+      els.status.textContent = hint;
       setTimeout(function () {
         cacheEls();
         if (voiceState === STATE_IDLE && els.status) {
@@ -739,26 +744,38 @@
               return null;
             });
         }
-        voiceDebugLog("realtime_negotiate_fallback", proxyResult && proxyResult.__err ? proxyResult.__err : "no_sdp");
+        var proxyErr = proxyResult && proxyResult.__err ? proxyResult.__err : null;
+        voiceDebugLog("realtime_negotiate_fallback", proxyErr || "no_sdp");
+        var lastNegotiateDetail =
+          proxyErr && (proxyErr.detail || proxyErr.error) ? String(proxyErr.detail || proxyErr.error) : "";
         return fetchEphemeralSession(uiLang, openVoice).then(function (sess) {
           if (sess && sess.__err) {
             voiceDebugLog("realtime_session_error", sess.__err);
-            goIdleWithVoiceHint(voiceHintKeyFromRealtimeSessionPayload(sess.__err));
+            goIdleWithVoiceHint(
+              voiceHintKeyFromRealtimeSessionPayload(sess.__err),
+              sess.__err && sess.__err.detail ? sess.__err.detail : sess.__err.error,
+            );
             return null;
           }
           if (!sess || !sess.ok || !sess.client_secret || !String(sess.client_secret.value || "").trim()) {
             voiceDebugLog("realtime_session_invalid", sess || {});
-            goIdleWithVoiceHint(voiceHintKeyFromRealtimeSessionPayload(sess || {}));
+            goIdleWithVoiceHint(
+              voiceHintKeyFromRealtimeSessionPayload(sess || {}),
+              sess && sess.detail ? sess.detail : "",
+            );
             return null;
           }
           var ephemeral = String(sess.client_secret.value).trim();
           return postSdpToOpenAiEphemeral(offer.sdp, ephemeral).then(function (ephemResult) {
             if (ephemResult && ephemResult.__err) {
-              goIdleWithVoiceHint(voiceHintKeyFromRealtimeSessionPayload(ephemResult.__err));
+              goIdleWithVoiceHint(
+                voiceHintKeyFromRealtimeSessionPayload(ephemResult.__err),
+                ephemResult.__err.detail || ephemResult.__err.error,
+              );
               return null;
             }
             if (!ephemResult || !ephemResult.sdp) {
-              goIdleWithVoiceHint("voiceErrorRealtimeUpstream");
+              goIdleWithVoiceHint("voiceErrorRealtimeUpstream", lastNegotiateDetail);
               return null;
             }
             voiceDebugLog("realtime_negotiate", "ephemeral");
@@ -825,7 +842,7 @@
           })
           .then(function (negotiated) {
             if (negotiated === null && (voiceState === STATE_THINKING || voiceState === STATE_LISTENING)) {
-              goIdleWithVoiceHint("voiceErrorRealtimeUpstream");
+              goIdleWithVoiceHint("voiceErrorRealtimeUpstream", "negotiate_failed");
             }
           });
       })

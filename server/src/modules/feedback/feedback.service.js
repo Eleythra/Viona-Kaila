@@ -14,6 +14,9 @@ const TOKEN_PREFIX = "fb_";
 export const FEEDBACK_INVITE_TYPES = new Set(["request", "fault"]);
 const FEEDBACK_TYPES = FEEDBACK_INVITE_TYPES;
 
+/** Aynı kayıt için eşzamanlı davet (otomatik «Yapıldı» + elle «Geri bildirim») tek WA mesajına indirgenir. */
+const feedbackInviteInflight = new Map();
+
 /** @param {string} type */
 function tableForFeedbackType(type) {
   const t = String(type || "").trim();
@@ -79,6 +82,7 @@ function assertGuestFeedbackFeatureEnabled() {
  *   normalizedStatus: string,
  *   previousStatus?: string,
  *   feedbackStatus?: string,
+ *   feedbackInviteCount?: number,
  *   featureEnabled?: boolean,
  *   autoOnDoneEnabled?: boolean,
  * }} p
@@ -91,13 +95,24 @@ export function shouldAutoInviteGuestFeedbackOnDone(p) {
   const fb = String(p?.feedbackStatus || "")
     .trim()
     .toLowerCase();
+  const inviteCount = Math.max(0, Number(p?.feedbackInviteCount) || 0);
   if (!FEEDBACK_INVITE_TYPES.has(type)) return { ok: false, reason: "invalid_type" };
   if (!p?.featureEnabled) return { ok: false, reason: "feature_disabled" };
   if (!p?.autoOnDoneEnabled) return { ok: false, reason: "auto_disabled" };
   if (normalized !== "done") return { ok: false, reason: "not_done" };
   if (prev === "done") return { ok: false, reason: "already_done" };
+  if (inviteCount > 0) return { ok: false, reason: "invite_already_sent" };
   if (fb === "pending" || fb === "submitted") return { ok: false, reason: `feedback_${fb}` };
   return { ok: true };
+}
+
+function feedbackInviteMaxFromEnv(env) {
+  const n = Number(env?.feedbackInviteMax);
+  return Number.isFinite(n) && n > 0 ? Math.min(20, Math.floor(n)) : 3;
+}
+
+function feedbackInviteCountFromRow(row) {
+  return Math.max(0, Number(row?.feedback_invite_count) || 0);
 }
 
 /**
@@ -114,6 +129,7 @@ export function scheduleAutoGuestFeedbackInviteOnDone(type, id, ctx = {}) {
     normalizedStatus: ctx.normalizedStatus,
     previousStatus: ctx.previousStatus,
     feedbackStatus: ctx.feedbackStatus,
+    feedbackInviteCount: ctx.feedbackInviteCount,
     featureEnabled: env.guestFeedbackFeatureEnabled,
     autoOnDoneEnabled: env.guestFeedbackAutoOnDoneEnabled,
   });
@@ -160,6 +176,22 @@ export async function findFeedbackRowByToken(token) {
 export async function inviteGuestFeedback(type, id) {
   const t = String(type || "").trim();
   const idStr = String(id ?? "").trim();
+  const inflightKey = `${t}:${idStr}`;
+  if (feedbackInviteInflight.has(inflightKey)) {
+    return feedbackInviteInflight.get(inflightKey);
+  }
+  const run = inviteGuestFeedbackOnce(t, idStr).finally(() => {
+    feedbackInviteInflight.delete(inflightKey);
+  });
+  feedbackInviteInflight.set(inflightKey, run);
+  return run;
+}
+
+/**
+ * @param {string} t request | fault
+ * @param {string} idStr
+ */
+async function inviteGuestFeedbackOnce(t, idStr) {
   if (!FEEDBACK_TYPES.has(t)) throw Object.assign(new Error("feedback_invalid_type"), { statusCode: 400 });
   if (!idStr) throw Object.assign(new Error("feedback_id_required"), { statusCode: 400 });
 
@@ -180,9 +212,14 @@ export async function inviteGuestFeedback(type, id) {
   const st = normalizeRowStatus(row.status);
   if (st !== "done") throw Object.assign(new Error("feedback_only_when_done"), { statusCode: 400 });
 
-  const pendingSt = String(row.feedback_status || "").trim().toLowerCase();
-  if (pendingSt === "pending") {
-    throw Object.assign(new Error("feedback_invite_already_pending"), { statusCode: 409 });
+  const maxInvites = feedbackInviteMaxFromEnv(env);
+  const inviteCount = feedbackInviteCountFromRow(row);
+  if (inviteCount >= maxInvites) {
+    throw Object.assign(new Error("feedback_invite_limit_reached"), {
+      statusCode: 409,
+      invitesSent: inviteCount,
+      invitesMax: maxInvites,
+    });
   }
 
   let phoneRaw = String(row.guest_phone || "").trim();
@@ -210,27 +247,13 @@ export async function inviteGuestFeedback(type, id) {
 
   const token = generateFeedbackToken();
   const feedbackUrlFull = `${origin}/feedback/${encodeURIComponent(token)}`;
-
-  const guestDisplayName = clipGuestDisplayName(String(row.guest_name || "Misafir"));
-  const roomNumber = String(row.room_number || "-").trim() || "-";
-
-  const wa = await sendFeedbackCompletedWhatsApp({
-    toDigits,
-    guestDisplayName,
-    roomNumber,
-    feedbackToken: token,
-    feedbackUrlFull,
-  });
-
-  if (!wa.ok) {
-    throw Object.assign(new Error(String(wa.reason || "whatsapp_feedback_failed")), { statusCode: 502 });
-  }
-
   const nowIso = new Date().toISOString();
-  const patch = {
+  const newInviteCount = inviteCount + 1;
+  const claimPatch = {
     feedback_token: token,
     feedback_sent_at: nowIso,
     feedback_status: "pending",
+    feedback_invite_count: newInviteCount,
     guest_confirmation: null,
     speed_rating: null,
     staff_rating: null,
@@ -242,18 +265,69 @@ export async function inviteGuestFeedback(type, id) {
     reopened_at: null,
   };
 
-  const { data: updated, error: upErr } = await sb(() =>
-    getSupabase().from(table).update(patch).eq("id", idStr).select("*").maybeSingle(),
+  const { data: claimed, error: claimErr } = await sb(() =>
+    getSupabase()
+      .from(table)
+      .update(claimPatch)
+      .eq("id", idStr)
+      .eq("status", "done")
+      .lt("feedback_invite_count", maxInvites)
+      .select("*")
+      .maybeSingle(),
   );
-  if (upErr) throwIfSupabaseDatastoreDnsError(upErr);
-  if (upErr) throw Object.assign(new Error(upErr.message || "feedback_db_update_failed"), { statusCode: 400 });
-  if (!updated) throw Object.assign(new Error("feedback_update_no_row"), { statusCode: 500 });
+  if (claimErr) throwIfSupabaseDatastoreDnsError(claimErr);
+  if (claimErr) throw Object.assign(new Error(claimErr.message || "feedback_claim_failed"), { statusCode: 400 });
+  if (!claimed) {
+    throw Object.assign(new Error("feedback_invite_limit_reached"), {
+      statusCode: 409,
+      invitesSent: inviteCount,
+      invitesMax: maxInvites,
+    });
+  }
+
+  const guestDisplayName = clipGuestDisplayName(String(claimed.guest_name || "Misafir"));
+  const roomNumber = String(claimed.room_number || "-").trim() || "-";
+
+  const wa = await sendFeedbackCompletedWhatsApp({
+    toDigits,
+    guestDisplayName,
+    roomNumber,
+    feedbackToken: token,
+    feedbackUrlFull,
+  });
+
+  if (!wa.ok) {
+    await sb(() =>
+      getSupabase()
+        .from(table)
+        .update({
+          feedback_token: null,
+          feedback_sent_at: null,
+          feedback_status: null,
+          feedback_invite_count: inviteCount,
+          guest_confirmation: null,
+          speed_rating: null,
+          staff_rating: null,
+          solution_rating: null,
+          revisit_preference: null,
+          feedback_note: null,
+          reopen_note: null,
+          feedback_submitted_at: null,
+          reopened_at: null,
+        })
+        .eq("id", idStr),
+    ).catch(() => {});
+    throw Object.assign(new Error(String(wa.reason || "whatsapp_feedback_failed")), { statusCode: 502 });
+  }
 
   return {
     ok: true,
     feedbackUrl: feedbackUrlFull,
     testMode: Boolean(env.whatsappTestMode),
-    item: updated,
+    invitesSent: newInviteCount,
+    invitesMax: maxInvites,
+    invitesRemaining: Math.max(0, maxInvites - newInviteCount),
+    item: claimed,
   };
 }
 

@@ -256,6 +256,15 @@ router.post("/requests/:type/:id/feedback-invite", async (req, res) => {
     const code = Number(error?.statusCode) || 400;
     if (msg === "record_not_found") return res.status(404).json({ ok: false, error: msg });
     if (msg === "feedback_invite_already_pending") return res.status(409).json({ ok: false, error: msg });
+    if (msg === "feedback_invite_already_submitted") return res.status(409).json({ ok: false, error: msg });
+    if (msg === "feedback_invite_limit_reached") {
+      return res.status(409).json({
+        ok: false,
+        error: msg,
+        invitesSent: Number(error?.invitesSent) || 0,
+        invitesMax: Number(error?.invitesMax) || 0,
+      });
+    }
     if (msg === "feedback_public_origin_not_configured") return res.status(503).json({ ok: false, error: msg });
     if (msg === "feedback_test_phone_not_configured") return res.status(503).json({ ok: false, error: msg });
     if (msg === "feedback_feature_disabled") return res.status(503).json({ ok: false, error: msg });

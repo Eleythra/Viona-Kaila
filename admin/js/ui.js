@@ -442,15 +442,20 @@
     return s === "new" || s === "pending" || s === "in_progress" || s === "reopened";
   }
 
+  var GUEST_FEEDBACK_INVITE_MAX = 3;
+
   /** İstek / arıza satırı: misafir geri bildirimi özeti (WhatsApp daveti sonrası). */
   function guestFeedbackSummaryLabel(r) {
     var st = normalizeBucketStatus(r.status);
     var fs = String(r.feedback_status || "").trim().toLowerCase();
     var gc = String(r.guest_confirmation || "").trim().toLowerCase();
+    var ic = Math.max(0, Number(r.feedback_invite_count) || 0);
+    var waQuota = ic > 0 ? " · WA " + ic + "/" + GUEST_FEEDBACK_INVITE_MAX : "";
     if (st === "reopened") return "Yeniden açıldı";
-    if (fs === "pending") return "Form bekliyor";
-    if (fs === "submitted" && gc === "completed") return "Tamamlandı";
-    if (fs === "submitted" && gc === "not_completed") return "Sorun sürüyor";
+    if (fs === "pending") return "Form bekliyor" + waQuota;
+    if (fs === "submitted" && gc === "completed") return "Tamamlandı" + waQuota;
+    if (fs === "submitted" && gc === "not_completed") return "Sorun sürüyor" + waQuota;
+    if (st === "done" && ic > 0) return "—" + waQuota;
     return "—";
   }
 
@@ -536,7 +541,9 @@
     var st = normalizeBucketStatus(r.status);
     var fs = String(r.feedback_status || "").trim().toLowerCase();
     var it = String(issueType || "");
-    var showInvite = ro && (it === "request" || it === "fault") && st === "done" && fs !== "pending";
+    var inviteCount = Math.max(0, Number(r.feedback_invite_count) || 0);
+    var inviteLeft = Math.max(0, GUEST_FEEDBACK_INVITE_MAX - inviteCount);
+    var showInvite = ro && (it === "request" || it === "fault") && st === "done" && inviteLeft > 0;
     var btn = "";
     if (showInvite) {
       btn =
@@ -544,7 +551,19 @@
         esc(it) +
         '" data-id="' +
         esc(r.id) +
-        '" title="Misafire WhatsApp ile tek kullanımlık geri bildirim bağlantısı gönder">Geri bildirim</button>';
+        '" data-feedback-invite-count="' +
+        esc(String(inviteCount)) +
+        '" data-feedback-invite-max="' +
+        esc(String(GUEST_FEEDBACK_INVITE_MAX)) +
+        '" data-feedback-status="' +
+        esc(fs) +
+        '" title="Misafire WhatsApp geri bildirim gönder (kalan ' +
+        esc(String(inviteLeft)) +
+        "/" +
+        esc(String(GUEST_FEEDBACK_INVITE_MAX)) +
+        ' hak)">Geri bildirim (' +
+        esc(String(inviteLeft)) +
+        ")</button>";
     }
     var detail = guestFeedbackDetailHtml(r);
     return (
@@ -568,7 +587,11 @@
         if (el.disabled || el.getAttribute("aria-busy") === "true") return;
         el.disabled = true;
         el.setAttribute("aria-busy", "true");
-        var p = handlers.onFeedbackInvite(el.getAttribute("data-type"), el.getAttribute("data-id"));
+        var p = handlers.onFeedbackInvite(el.getAttribute("data-type"), el.getAttribute("data-id"), {
+          inviteCount: Number(el.getAttribute("data-feedback-invite-count")) || 0,
+          inviteMax: Number(el.getAttribute("data-feedback-invite-max")) || GUEST_FEEDBACK_INVITE_MAX,
+          feedbackStatus: el.getAttribute("data-feedback-status") || "",
+        });
         if (p && typeof p.then === "function") {
           p.finally(function () {
             el.disabled = false;
@@ -658,15 +681,28 @@
       h += stBtn("new", "Bekliyor");
     }
     var fbSt = String(r.feedback_status || "").trim().toLowerCase();
-    if ((type === "request" || type === "fault") && st === "done") {
+    var inviteCount = Math.max(0, Number(r.feedback_invite_count) || 0);
+    var inviteLeft = Math.max(0, GUEST_FEEDBACK_INVITE_MAX - inviteCount);
+    if ((type === "request" || type === "fault") && st === "done" && inviteLeft > 0) {
       h +=
         '<button type="button" class="btn-small js-feedback-invite"' +
-        (fbSt === "pending" ? ' disabled title="Misafir formu bekleniyor"' : "") +
         ' data-type="' +
         esc(type) +
         '" data-id="' +
         esc(id) +
-        '">Geri bildirim gönder</button>';
+        '" data-feedback-invite-count="' +
+        esc(String(inviteCount)) +
+        '" data-feedback-invite-max="' +
+        esc(String(GUEST_FEEDBACK_INVITE_MAX)) +
+        '" data-feedback-status="' +
+        esc(fbSt) +
+        '" title="WhatsApp geri bildirim (kalan ' +
+        esc(String(inviteLeft)) +
+        "/" +
+        esc(String(GUEST_FEEDBACK_INVITE_MAX)) +
+        ' hak)">Geri bildirim gönder (' +
+        esc(String(inviteLeft)) +
+        ")</button>";
     }
     h +=
       '<button type="button" class="btn-small btn-wa-resend js-wa-resend" data-type="' +

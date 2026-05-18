@@ -40,7 +40,7 @@ test("buildOpenAiRealtimeUnifiedSession includes viona_backend_reply tool", () =
   assert.equal(s.tools[0].name, "viona_backend_reply");
 });
 
-test("mintEphemeralRealtimeSession uses sessions then client_secrets fallback", async (t) => {
+test("mintEphemeralRealtimeSession uses client_secrets then legacy sessions fallback", async (t) => {
   const originalFetch = globalThis.fetch;
   let call = 0;
   t.after(() => {
@@ -48,14 +48,14 @@ test("mintEphemeralRealtimeSession uses sessions then client_secrets fallback", 
   });
   globalThis.fetch = async (url) => {
     call += 1;
-    if (String(url).includes("/realtime/sessions")) {
-      return new Response(JSON.stringify({ error: { message: "legacy fail" } }), { status: 400 });
-    }
     if (String(url).includes("/realtime/client_secrets")) {
-      return new Response(JSON.stringify({ value: "ek_fallback_token", expires_at: 1 }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(JSON.stringify({ error: { message: "ga fail" } }), { status: 400 });
+    }
+    if (String(url).includes("/realtime/sessions")) {
+      return new Response(
+        JSON.stringify({ client_secret: { value: "ek_legacy_token", expires_at: 1 } }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
     }
     return new Response("{}", { status: 404 });
   };
@@ -67,7 +67,29 @@ test("mintEphemeralRealtimeSession uses sessions then client_secrets fallback", 
   });
   assert.equal(call, 2);
   assert.equal(result.ok, true);
-  assert.equal(result.value, "ek_fallback_token");
+  assert.equal(result.value, "ek_legacy_token");
+});
+
+test("mintEphemeralRealtimeSession client_secrets body has no temperature", async (t) => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+  });
+  globalThis.fetch = async (_url, init) => {
+    const body = JSON.parse(String(init?.body || "{}"));
+    assert.equal("temperature" in (body.session || {}), false);
+    return new Response(JSON.stringify({ value: "ek_ok", expires_at: 1 }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  };
+  const result = await mintEphemeralRealtimeSession({
+    apiKey: "sk-test",
+    model: "gpt-realtime",
+    uiLang: "tr",
+    voice: "marin",
+  });
+  assert.equal(result.ok, true);
 });
 
 test("proxyRealtimeCallSdp posts FormData to OpenAI calls", async (t) => {

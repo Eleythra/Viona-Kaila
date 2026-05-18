@@ -128,65 +128,62 @@ async function openAiFetchJson(url, apiKey, body, timeoutMs) {
 }
 
 /**
- * Ephemeral token: önce `/sessions`, başarısızsa `/client_secrets`.
+ * Ephemeral token: birincil GA `client_secrets`; yedek eski `/sessions` (legacy şema).
  * @returns {{ ok: true, value: string, expiresAt: unknown, model: string, session_id: string|null } | { ok: false, error: string, detail?: string }}
  */
 export async function mintEphemeralRealtimeSession({ apiKey, model, uiLang, voice }) {
   const opts = { model, uiLanguage: uiLang, voice };
+  const secretsBody = buildClientSecretsRequestBody(opts);
   const legacyBody = buildOpenAiRealtimeSessionBody(opts);
 
   let lastDetail;
   try {
-    const first = await openAiFetchJson(OPENAI_REALTIME_SESSION_URL, apiKey, legacyBody, OPENAI_UPSTREAM_FETCH_MS);
-    if (first.upstream.ok) {
-      const { value, expiresAt } = extractEphemeralClientSecret(first.data);
-      if (value) {
-        return {
-          ok: true,
-          value,
-          expiresAt,
-          model: first.data?.model || model,
-          session_id: first.data?.id || null,
-        };
-      }
-      lastDetail = openAiErrorPublicDetail(first.data) || "missing client_secret";
-      console.warn(
-        "openai_realtime_session_missing_client_secret keys=%s",
-        first.data ? Object.keys(first.data).join(",") : "",
-      );
-    } else {
-      lastDetail = openAiErrorPublicDetail(first.data) || String(first.rawText || "").slice(0, 200);
-      console.warn(
-        "openai_realtime_session_upstream status=%s detail=%s",
-        first.upstream.status,
-        lastDetail,
-      );
-    }
-
-    const secretsBody = buildClientSecretsRequestBody(opts);
-    const second = await openAiFetchJson(
+    const primary = await openAiFetchJson(
       OPENAI_CLIENT_SECRETS_URL,
       apiKey,
       secretsBody,
       OPENAI_UPSTREAM_FETCH_MS,
     );
-    if (second.upstream.ok) {
-      const { value, expiresAt } = extractEphemeralClientSecret(second.data);
+    if (primary.upstream.ok) {
+      const { value, expiresAt } = extractEphemeralClientSecret(primary.data);
       if (value) {
-        console.warn("openai_realtime_session_fallback client_secrets ok");
         return {
           ok: true,
           value,
           expiresAt,
-          model: second.data?.model || model,
-          session_id: second.data?.id || null,
+          model: primary.data?.session?.model || primary.data?.model || model,
+          session_id: primary.data?.session?.id || primary.data?.id || null,
         };
       }
-      lastDetail = openAiErrorPublicDetail(second.data) || "missing value in client_secrets";
+      lastDetail = openAiErrorPublicDetail(primary.data) || "missing value in client_secrets";
+      console.warn("openai_realtime_client_secrets_missing_value keys=%s", primary.data ? Object.keys(primary.data).join(",") : "");
     } else {
-      const d2 = openAiErrorPublicDetail(second.data) || String(second.rawText || "").slice(0, 200);
-      console.warn("openai_realtime_client_secrets_upstream status=%s detail=%s", second.upstream.status, d2);
-      lastDetail = d2 || lastDetail;
+      lastDetail = openAiErrorPublicDetail(primary.data) || String(primary.rawText || "").slice(0, 200);
+      console.warn(
+        "openai_realtime_client_secrets_upstream status=%s detail=%s",
+        primary.upstream.status,
+        lastDetail,
+      );
+    }
+
+    const legacy = await openAiFetchJson(OPENAI_REALTIME_SESSION_URL, apiKey, legacyBody, OPENAI_UPSTREAM_FETCH_MS);
+    if (legacy.upstream.ok) {
+      const { value, expiresAt } = extractEphemeralClientSecret(legacy.data);
+      if (value) {
+        console.warn("openai_realtime_session_legacy_fallback ok");
+        return {
+          ok: true,
+          value,
+          expiresAt,
+          model: legacy.data?.model || model,
+          session_id: legacy.data?.id || null,
+        };
+      }
+      lastDetail = openAiErrorPublicDetail(legacy.data) || lastDetail || "missing client_secret";
+    } else {
+      const dLegacy = openAiErrorPublicDetail(legacy.data) || String(legacy.rawText || "").slice(0, 200);
+      console.warn("openai_realtime_session_legacy_upstream status=%s detail=%s", legacy.upstream.status, dLegacy);
+      lastDetail = dLegacy || lastDetail;
     }
 
     return { ok: false, error: "realtime_bad_response", detail: lastDetail };

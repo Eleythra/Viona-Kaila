@@ -796,7 +796,8 @@ app.get("/api/health", (req, res) => {
       publicOriginConfigured: Boolean(String(env.vionaFeedbackPublicOrigin || "").trim()),
       publicOrigin: String(env.vionaFeedbackPublicOrigin || "").trim() || null,
       templateName: String(env.whatsappFeedbackTemplateName || "viona_feedback_completed").trim(),
-      urlButtonMode: String(env.whatsappFeedbackUrlButtonMode || "token").trim().toLowerCase(),
+      urlButtonMode: String(env.whatsappFeedbackUrlButtonMode || "full").trim().toLowerCase(),
+      inviteMax: Number(env.feedbackInviteMax) || 3,
       testMode: Boolean(env.whatsappTestMode),
       testPhoneConfigured: Boolean(
         String(env.whatsappTestPhone || "")

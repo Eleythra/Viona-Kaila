@@ -725,7 +725,7 @@ export async function updateAdminItemStatus(type, id, status) {
     const { data: prev, error: prevErr } = await sb(() =>
       getSupabase()
         .from(table)
-        .select("status,work_started_at,resolved_at,feedback_status")
+        .select("status,work_started_at,resolved_at,feedback_status,feedback_invite_count")
         .eq("id", idStr)
         .maybeSingle(),
     );
@@ -762,6 +762,7 @@ export async function updateAdminItemStatus(type, id, status) {
     normalizedStatus: normalized,
     previousStatus: prevRow ? String(prevRow.status || "") : "",
     feedbackStatus: prevRow ? String(prevRow.feedback_status || "") : "",
+    feedbackInviteCount: prevRow ? Number(prevRow.feedback_invite_count) || 0 : 0,
   });
   return data;
 }

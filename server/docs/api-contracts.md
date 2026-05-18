@@ -196,7 +196,9 @@ Tüm uçlar diğer admin API’leri gibi **admin bearer token** gerektirir (`Aut
 | `{{1}}` örnek (inceleme) | `fb_ornekTokenInceleme123` (yalnızca son ek; `https://` yazmayın) |
 | Tam canlı link | `https://viona.eleythra.com/feedback/` + `fb_…` → örn. `https://viona.eleythra.com/feedback/fb_abc123` |
 
-API butona `buildFeedbackUrlSuffix` ile yalnızca `fb_…` gönderir (paneldeki `ops-*.html?id=` suffix ile aynı model); Meta bunu köke yapıştırır. Şablon gövdesi (`viona_feedback_completed`): `{{1}}` misafir adı, `{{2}}` oda (kodla aynı sıra).
+API butona `buildFeedbackUrlSuffix` ile yalnızca `fb_…` gönderir (paneldeki `ops-*.html?id=` suffix ile aynı model); Meta bunu köke yapıştırır. Şablon gövdesi (`viona_feedback_completed`): `{{1}}` misafir adı, `{{2}}` oda (kodla aynı sıra). **URL düğmesi gövde {{2}} (oda) ile aynı değişken olmamalı** — aksi halde link `…/feedback/3` gibi olur ve form «Geçersiz bağlantı» gösterir.
+
+Davet eşzamanlılığı: aynı kayıt için otomatik «Yapıldı» + elle «Geri bildirim» yarışında sunucu tek uçuş birleştirir; DB claim yalnızca boş `feedback_status` iken `pending` yazar.
 
 **Yanlış kök (slash yok):** `https://viona.eleythra.com/feedback` + `fb_abc` → `https://viona.eleythra.com/feedbackfb_abc` → Vercel `404` (`/feedbackfb_*` yolu). **Doğru:** kök `…/feedback/`. Eski WA mesajları için Vercel `vercel.json` içinde `/feedbackfb_:path*` → `/feedback/:path*` yönlendirmesi vardır.
 
