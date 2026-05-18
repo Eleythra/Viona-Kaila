@@ -1038,6 +1038,12 @@
     }
     try {
       var pack = await adapter.getWhatsappAdminDiagnostics();
+      var bypassCfg = null;
+      try {
+        bypassCfg = await adapter.getBypassAdminConfig();
+      } catch (_cfgErr) {
+        bypassCfg = null;
+      }
       var gf = pack.guestFeedback || {};
       var origin = gf.publicOrigin ? String(gf.publicOrigin).replace(/\/+$/, "") : "";
       var mode = String(gf.urlButtonMode || "token").toLowerCase();
@@ -1113,6 +1119,23 @@
         ok: testOk,
         warn: gf.testMode && !gf.testPhoneConfigured,
       });
+      if (bypassCfg && bypassCfg.configured) {
+        var opRoom = bypassCfg.room ? String(bypassCfg.room).trim() : "";
+        var opName = bypassCfg.displayName ? String(bypassCfg.displayName).trim() : "";
+        var opPh = bypassCfg.phoneDisplay ? String(bypassCfg.phoneDisplay).trim() : "";
+        kpis.push({
+          label: "Bypass",
+          value:
+            "Test — " +
+            (opName || "ad yok") +
+            " · " +
+            (opRoom ? "oda " + opRoom : "oda yok") +
+            (opPh ? " · " + opPh : " · telefon yok (VIONA_OPERATOR_GATE_PHONE)") +
+            " · geri bildirim WA bu numaraya",
+          ok: Boolean(opRoom && opPh),
+          warn: !opRoom || !opPh,
+        });
+      }
 
       var kpiHtml =
         '<div class="guest-feedback-kpi-grid">' +

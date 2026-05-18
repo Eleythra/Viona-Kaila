@@ -6053,9 +6053,9 @@
         ) +
         card(
           "logs-kpi-card--multi",
-          "Operatör bypass",
+          "Bypass",
           String(s.operatorBypassCount != null ? s.operatorBypassCount : 0),
-          "Env oda + doğum eşleşmesi (test); aynı tarih penceresi.",
+          "Test kapı geçişi (env oda + doğum); gerçek misafir sayılmaz.",
         ) +
         card(
           "logs-kpi-card--fallback",
@@ -6087,7 +6087,7 @@
         if (x === "deploy_bypass") return "Kurulum eşleşmesi (eski)";
         if (x === "elektra") return "Elektra (eski)";
         if (x === "hotel_advisor") return "HotelAdvisor (PMS)";
-        if (x === "operator_bypass") return "Operatör bypass";
+        if (x === "operator_bypass") return "Bypass";
         return esc(String(m || "-"));
       }
       function truncateUa(ua, max) {

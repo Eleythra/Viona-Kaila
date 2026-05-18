@@ -30,6 +30,10 @@ import {
 import { translateGuestRequestApiError } from "../../lib/guest-request-api-error-tr.js";
 import { createOperationalManualEntry } from "../guest-requests/guest-requests.service.js";
 import { inviteGuestFeedback } from "../feedback/feedback.service.js";
+import {
+  formatGuestWhatsAppPhoneDisplay,
+  normalizeGuestWhatsAppRecipientDigits,
+} from "../../services/whatsapp-feedback-invite.service.js";
 const router = Router();
 const ADMIN_API_TOKEN = getAdminApiToken();
 
@@ -219,6 +223,28 @@ router.post("/requests/:type/:id/whatsapp-resend", async (req, res) => {
   } catch (error) {
     return adminErr(res, error, "admin_whatsapp_resend_failed");
   }
+});
+
+/** Yalnızca kapı bypass testi (admin panel «Bypass» kartı). */
+router.get("/bypass/config", (req, res) => {
+  const env = getEnv();
+  if (!env.operatorGateBypassConfigured) {
+    return res.status(200).json({ ok: true, configured: false });
+  }
+  const operatorRoom = String(env.operatorGateRoom || "").trim();
+  const bypassDigits = normalizeGuestWhatsAppRecipientDigits(
+    env.operatorGatePhone,
+    env.whatsappGuestDefaultCountryCode || "90",
+  );
+  const phoneDisplay = formatGuestWhatsAppPhoneDisplay(bypassDigits);
+  return res.status(200).json({
+    ok: true,
+    configured: true,
+    displayName: String(env.operatorGateDisplayName || "Viona Kontrol").trim() || "Viona Kontrol",
+    room: operatorRoom || null,
+    phoneDisplay: phoneDisplay || null,
+    phoneConfigured: Boolean(phoneDisplay),
+  });
 });
 
 router.post("/requests/:type/:id/feedback-invite", async (req, res) => {

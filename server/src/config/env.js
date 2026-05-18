@@ -290,6 +290,8 @@ export function getEnv() {
     operatorGateRoom: optional("VIONA_OPERATOR_GATE_ROOM", ""),
     operatorGateBirthdate: optional("VIONA_OPERATOR_GATE_BIRTHDATE", ""),
     operatorGateDisplayName: optional("VIONA_OPERATOR_GATE_DISPLAY_NAME", "Viona Kontrol"),
+    /** Operatör bypass misafirinin telefonu (geri bildirim WA / profil; PMS’teki gibi). */
+    operatorGatePhone: optional("VIONA_OPERATOR_GATE_PHONE", "").replace(/\D/g, ""),
     get operatorGateBypassConfigured() {
       if (!this.operatorGateBypassEnabled) return false;
       const r = String(this.operatorGateRoom || "").trim();

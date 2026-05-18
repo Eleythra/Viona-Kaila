@@ -284,6 +284,9 @@
         };
       });
     },
+    getBypassAdminConfig: function () {
+      return jfetch(getApiBase() + "/admin/bypass/config");
+    },
     updateStatus: function (type, id, status) {
       var endpoint =
         adminRequestsCollectionUrl() +

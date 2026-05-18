@@ -5,6 +5,10 @@ import { clearVerifiedGuestCookie, setVerifiedGuestCookie } from "../../lib/gues
 import { recordGuestGateEntry } from "./guest-gate-log.service.js";
 import { normalizeGuestRoomForMatch } from "../../lib/guest-match-normalize.js";
 import { verifyHotelGuest } from "../../services/hotel-advisor.service.js";
+import {
+  formatGuestWhatsAppPhoneDisplay,
+  normalizeGuestWhatsAppRecipientDigits,
+} from "../../services/whatsapp-feedback-invite.service.js";
 
 /**
  * @param {{
@@ -46,10 +50,17 @@ export function createGuestGateRouter(envSlice) {
     };
     if (e.operatorGateBypassConfigured) {
       const r = String(e.operatorGateRoom || "").trim();
+      const birth = String(e.operatorGateBirthdate || "").trim();
+      const displayName = String(e.operatorGateDisplayName || "Viona Kontrol").trim() || "Viona Kontrol";
       if (r) {
         const canon = normalizeGuestRoomForMatch(r) || r;
         out.extraValidRoomNumbers = [canon];
       }
+      out.operatorBypassPrefill = {
+        roomNo: normalizeGuestRoomForMatch(r) || r,
+        birthDate: birth,
+        displayName,
+      };
     }
     res.json(out);
   });
@@ -97,6 +108,12 @@ export function createGuestGateRouter(envSlice) {
           birthDate,
         });
         setVerifiedGuestCookie(res, roomCanonical);
+        let guestPhone = null;
+        const bypassDigits = normalizeGuestWhatsAppRecipientDigits(
+          cfg.operatorGatePhone,
+          cfg.whatsappGuestDefaultCountryCode || "90",
+        );
+        if (bypassDigits) guestPhone = formatGuestWhatsAppPhoneDisplay(bypassDigits);
         return res.status(200).json({
           ok: true,
           verification: "operator_bypass",
@@ -105,7 +122,7 @@ export function createGuestGateRouter(envSlice) {
             roomNo: roomCanonical,
             resId: null,
             resNameId: null,
-            guestPhone: null,
+            guestPhone,
             guestEmail: null,
           },
         });

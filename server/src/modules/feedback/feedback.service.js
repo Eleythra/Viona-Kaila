@@ -1,8 +1,10 @@
 import crypto from "node:crypto";
 import { getEnv } from "../../config/env.js";
 import { getSupabase, throwIfSupabaseDatastoreDnsError, withSupabaseFetchGuard } from "../../lib/supabase.js";
+import { normalizeGuestRoomForMatch } from "../../lib/guest-match-normalize.js";
 import { findHotspotPhoneForRoomAndGuestName } from "../../services/hotel-advisor.service.js";
 import {
+  formatGuestWhatsAppPhoneDisplay,
   normalizeGuestWhatsAppRecipientDigits,
   sendFeedbackCompletedWhatsApp,
 } from "../../services/whatsapp-feedback-invite.service.js";
@@ -39,6 +41,27 @@ function normalizeRowStatus(st) {
 
 async function sb(fn) {
   return withSupabaseFetchGuard(fn);
+}
+
+/** Operatör bypass misafiri: kayıtta telefon yoksa env telefonu (PMS misafiri gibi). */
+function operatorBypassGuestPhoneRaw(env, row) {
+  if (!env.operatorGateBypassConfigured) return "";
+  const room = normalizeGuestRoomForMatch(String(row.room_number || ""));
+  const wantRoom = normalizeGuestRoomForMatch(String(env.operatorGateRoom || ""));
+  if (!room || !wantRoom || room !== wantRoom) return "";
+  const gn = String(row.guest_name || "")
+    .trim()
+    .toLowerCase();
+  const wn = String(env.operatorGateDisplayName || "")
+    .trim()
+    .toLowerCase();
+  if (wn && gn !== wn) return "";
+  const digits = normalizeGuestWhatsAppRecipientDigits(
+    env.operatorGatePhone,
+    env.whatsappGuestDefaultCountryCode || "90",
+  );
+  if (!digits) return "";
+  return formatGuestWhatsAppPhoneDisplay(digits) || digits;
 }
 
 function assertGuestFeedbackFeatureEnabled() {
@@ -103,6 +126,7 @@ export async function inviteGuestFeedback(type, id) {
     phoneRaw =
       (await findHotspotPhoneForRoomAndGuestName(String(row.room_number || ""), String(row.guest_name || ""))) || "";
   }
+  if (!phoneRaw) phoneRaw = operatorBypassGuestPhoneRaw(env, row);
 
   let toDigits = normalizeGuestWhatsAppRecipientDigits(phoneRaw, env.whatsappGuestDefaultCountryCode || "90");
   if (env.whatsappTestMode) {

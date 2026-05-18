@@ -39,6 +39,13 @@ export function normalizeGuestWhatsAppRecipientDigits(raw, defaultCc = "90") {
   return null;
 }
 
+/** Admin / misafir profilinde gösterim: yalnızca rakamlardan `+…` (ör. +905061449208). */
+export function formatGuestWhatsAppPhoneDisplay(digitsOnly) {
+  const d = String(digitsOnly ?? "").replace(/\D/g, "");
+  if (!d || d.length < 10) return null;
+  return `+${d}`;
+}
+
 /**
  * @param {{
  *   toDigits: string,
